@@ -1,0 +1,5 @@
+# DeclarativePackages
+https://github.com/rened/DeclarativePackages.jl
+Pkg.add("DeclarativePackages") 
+symlink(Pkg.dir("DeclarativePackages")*"/bin/jdp",  "$(homedir())/local/bin/jdp")
+
