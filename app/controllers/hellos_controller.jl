@@ -6,6 +6,11 @@ function index(_::Hellos_Controller, req)
 	"Listing hellos"
 end
 
+function show(_::Hellos_Controller, req)
+  println("Hellos_Controller::show for GET")
+  "Showing hello"
+end
+
 function create(_::Hellos_Controller, req)
 	println("Hellos_Controller::create for POST")
 	"Creating hellos"

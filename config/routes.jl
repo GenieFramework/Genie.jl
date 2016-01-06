@@ -1,12 +1,16 @@
 routes =
 	quote
-		page(
+		route(
 			"/hellos", 
+				get(
+					"/:id", 
+					req -> show(Hellos_Controller(), req)
+				),
+				get( 
+					req -> index(Hellos_Controller(), req)
+				),
 				post(
 					req -> create(Hellos_Controller(), req)
-				),
-				get(
-					req -> index(Hellos_Controller(), req)
 				),
 				put(
 					req -> update(Hellos_Controller(), req)
@@ -16,7 +20,7 @@ routes =
 				),
 				Mux.notfound()
 			),
-		@resources(:photos, [:get]),
+		@resources("photos", [:get, :put]),
 		page(
 			"/",
 				req -> index(Hellos_Controller(), req)
