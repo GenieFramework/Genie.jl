@@ -1,0 +1,23 @@
+For V1
++ complete routing to support "route", :controller, :action
++ @resources to take a dict for :only and :except
++ rendering -> auto-rendering layouts, views and partials (mustache only first or directly to ejl)
++ models - DataFrames & LINQ
++ DeclarativePackages to go by the gemfile and gemfile.lock pattern - a file with the app's dependencies and one with the locked versions. Should only take into account the explicit versioning when pinning. Should by default store the package sources in the app's file structure. 
++ ejl - embedded julia HTML rendering
++ json output
++ react output 
++ static sites generation 
++ parsing of command line args for server, console, websockets
++ channels? (like phoenix)
++ validators
++ form renderers ?
++ trailblazer architecture? 
++ logging
++ code generators (controllers)
++ code reloading when files are changed
+
+======
+
+refactor
+Jinnie.render - all rendering methods should be DRY and support various rendering engines

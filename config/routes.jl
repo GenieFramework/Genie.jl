@@ -1,39 +1,36 @@
 routes =
 	quote
-		route(
+		get("/books", :books, :index),
+		get(
+			"/hellos/new", 
+			req -> new(Hellos_Controller(), req)
+			),
+		get(
+				"/hellos/:id", 
+				req -> show(Hellos_Controller(), req)
+			),
+		get(
+			"/hellos/:id/edit", 
+			req -> edit(Hellos_Controller(), req)
+			),
+		get( 
 			"/hellos", 
-				get(
-					"/:id", 
-					req -> show(Hellos_Controller(), req)
-				),
-				get( 
-					req -> index(Hellos_Controller(), req)
-				),
-				post(
-					req -> create(Hellos_Controller(), req)
-				),
-				put(
-					req -> update(Hellos_Controller(), req)
-				),
-				delete(
-					req -> destroy(Hellos_Controller(), req)
-				),
-				Mux.notfound()
+			req -> index(Hellos_Controller(), req)
 			),
-		@resources("photos", [:get, :put]),
-		page(
-			"/",
-				req -> index(Hellos_Controller(), req)
+		post(
+			"/hellos", 
+			req -> create(Hellos_Controller(), req)
 			),
-		page(
-			"/about",
-				probabilty(0.1, respond("<h1>Boo!</h1>")),
-				respond("<h1>About Me</h1>")
+		put(
+			"/hellos/:id", 
+			req -> update(Hellos_Controller(), req)
 			),
-		page(
-			"/user/:user",
-				req -> "<h1>Hello, $(req[:params][:user])!</h1>"
-			)
+		delete(
+			"/hellos/:id", 
+			req -> destroy(Hellos_Controller(), req)
+			),
+		@resources("photos", [:index, :show, :edit, :create])..., 
+		get("/", :welcome, :index)
 	end
 
 export routes

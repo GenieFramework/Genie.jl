@@ -9,10 +9,9 @@ JSON 0.5.0
 Lazy 42b81abaf56c29e2f42de3ef574d864b822749de
 MacroTools 0.2.0
 MbedTLS 0.2.0
-Mux 0.2.0
 Nettle 0.2.1
+Requires 57b2746da78f15df7912a1af17dfe3045471f1c1
 SHA 0.1.1
 URIParser 0.1.2
-WebSockets 0.1.2
-https://github.com/JuliaLang/METADATA.jl.git d6089882e11561ef5d81b180f43d437d28a6e438
+https://github.com/JuliaLang/METADATA.jl.git 94869f6d5e98963183f21458767786359a0d82ea
 @osx Homebrew 0.2.0

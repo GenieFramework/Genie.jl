@@ -8,7 +8,17 @@ end
 
 function show(_::Hellos_Controller, req)
   println("Hellos_Controller::show for GET")
-  "Showing hello"
+  "Showing hello nr $(req[:params][:id])"
+end
+
+function new(_::Hellos_Controller, req)
+  println("Hellos_Controller::new for GET")
+  "Rendering new hello form"
+end
+
+function edit(_::Hellos_Controller, req)
+  println("Hellos_Controller::edit for GET")
+  "Showing edit hello form"
 end
 
 function create(_::Hellos_Controller, req)
