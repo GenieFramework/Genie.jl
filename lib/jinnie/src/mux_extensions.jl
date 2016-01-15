@@ -8,13 +8,20 @@ function req!(req, controller, action)
   true 
 end
 
+function rendering!(req, controller, action)
+  renderer.view = abspath(joinpath("app/views", string(controller), string(action)))
+  true
+end
+
 http_verbs(verb, p::Vector, controller::ControllerActionParams="", action::ControllerActionParams="", app...) = 
                                                             branch(
-                                                              req -> lowercase(req[:method]) == string(verb) && 
-                                                              length(p) == length(req[:path]) && 
-                                                              Mux.matchpath!(p, req) && 
-                                                              req!(req, controller, action), 
-                                                              app...
+                                                              req -> 
+                                                                lowercase(req[:method]) == string(verb) && 
+                                                                length(p) == length(req[:path]) && 
+                                                                Mux.matchpath!(p, req) && 
+                                                                req!(req, controller, action) && 
+                                                                rendering!(req, controller, action), 
+                                                                app...
                                                             )
 http_verbs(verb, p::AbstractString, app...) = http_verbs(verb, Mux.splitpath(p), "", "", app...)
 http_verbs(verb, p::AbstractString, controller::ControllerActionParams, action::ControllerActionParams) = 
@@ -32,18 +39,23 @@ patch(p, controller::ControllerActionParams, action::ControllerActionParams)    
 delete(p, app)                                                                    = http_verbs(:delete, p, app)
 delete(p, controller::ControllerActionParams, action::ControllerActionParams)     = http_verbs(:delete, p, controller, action)
 
+root(app)                                                                         = get("/", app)
+root(controller::ControllerActionParams, action::ControllerActionParams)          = get("/", controller, action)
+
 macro resources(routes_params...) 
   function extract_params(route_params)
     if ( length(routes_params) == 3 ) 
-      return tuple(routes_params[1], eval(routes_params[2]), eval(routes_params[3]))
+      return (routes_params[1], eval(routes_params[2]), eval(routes_params[3]))
     elseif ( length(routes_params) == 2 ) 
-      return tuple(routes_params[1], eval(routes_params[2]), [])
+      return (routes_params[1], eval(routes_params[2]), [])
     elseif ( length(routes_params) == 1 ) 
-      return tuple(routes_params[1], [], [])
+      return (routes_params[1], [], [])
     end
   end
 
-  resource_name, only, except = extract_params(routes_params)
+  resource_name, only, except = #length(routes_params) == 2 && isa(routes_params[2], Dict) ? 
+                                #(route_params[1], eval(eval(route_params[2])[:only]), eval(eval(route_params[2])[:except])) : 
+                                extract_params(routes_params)
 
   rest_actions = Dict(
     :index    => Dict(:verb => :get,    :path => ""), 

@@ -1,21 +1,27 @@
 For V1
-+ complete routing to support "route", :controller, :action
-+ @resources to take a dict for :only and :except
-+ rendering -> auto-rendering layouts, views and partials (mustache only first or directly to ejl)
++ json output <- with request type matching
++ add tests
 + models - DataFrames & LINQ
++ validators
 + DeclarativePackages to go by the gemfile and gemfile.lock pattern - a file with the app's dependencies and one with the locked versions. Should only take into account the explicit versioning when pinning. Should by default store the package sources in the app's file structure. 
-+ ejl - embedded julia HTML rendering
-+ json output
 + react output 
 + static sites generation 
-+ parsing of command line args for server, console, websockets
-+ channels? (like phoenix)
-+ validators
-+ form renderers ?
-+ trailblazer architecture? 
-+ logging
++ trailblazer architecture 
 + code generators (controllers)
 + code reloading when files are changed
++ ejl - embedded julia HTML rendering
+? form renderers 
+? channels (like phoenix) (for sockets)
+
+- @resources to take a dict for :only and :except [deffered] (I couldn't get it to work yet, not worth the trouble for now)
+
+√ logging (via the logging.jl pkg or Lumberjack.jl)
+√ parsing of command line args for server, console, websockets (via ArgParse pkg) 
+  -> parsing logic implemented, needs logic for whatever options will be provided
+√ rendering -> auto-rendering layouts, views and partials (mustache only first or directly to ejl)
+  -> looks good but needs testing
+  -> also, should be switched to use relative paths when including partials
+√ complete routing to support "route", :controller, :action [done]
 
 ======
 

@@ -1,6 +1,10 @@
 routes =
 	quote
+		root(:welcome, :index), 
 		get("/books", :books, :index),
+		@resources("products")...,
+		@resources("photos", [:index, :show])...,
+		@resources("habbits", [], [:delete])...,
 		get(
 			"/hellos/new", 
 			req -> new(Hellos_Controller(), req)
@@ -28,9 +32,7 @@ routes =
 		delete(
 			"/hellos/:id", 
 			req -> destroy(Hellos_Controller(), req)
-			),
-		@resources("photos", [:index, :show, :edit, :create])..., 
-		get("/", :welcome, :index)
+			)
 	end
 
 export routes
