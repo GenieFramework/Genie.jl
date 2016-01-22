@@ -1,6 +1,3 @@
-# include(abspath("lib/Mux/src/Mux.jl"))
-# include(abspath("lib/Mustache/src/Mustache.jl"))
-
 using Mux
 using Mustache
 
@@ -32,9 +29,11 @@ function app_setup()
 	return app
 end
 
-function start_server()
-	@info "Starting server"
-	s = @sync serve( app_setup() )
-	# Base.throwto(s, InterruptException())
-	# close(http.sock)
+function start_server(server_port)
+	@info AnsiColor.green("Starting server")
+	@sync serve( app_setup() )
+	
+	# app = Mux.http_handler(app_setup())
+	#server = Mux.Server(app)
+	#@sync Mux.run(server, server_port)
 end

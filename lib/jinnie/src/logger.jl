@@ -1,6 +1,6 @@
 function log(message, level="info")
   message = string(message)
-  Logging.info(message)
+  eval(parse("Logging.$level($message)"))
  
   for l in loggers
     eval(parse("$level($(l.name), " * message * ")"))

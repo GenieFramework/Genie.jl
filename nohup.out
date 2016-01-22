@@ -1,0 +1,12 @@
+WARNING: Method definition info(Any...) in module Base at util.jl:334 overwritten in module Logging at C:\Users\adria_000\.julia\v0.4\Logging\src\Logging.jl:61.
+WARNING: Method definition warn(Any...) in module Base at util.jl:364 overwritten in module Logging at C:\Users\adria_000\.julia\v0.4\Logging\src\Logging.jl:61.
+WARNING: using Mustache.render in module Jinnie conflicts with an existing identifier.
+WARNING: Method definition call(Type{HttpCommon.Response}, Base.Associative) in module Mux at C:\Users\adria_000\Dropbox\Projects\jinnie\lib\Mux\src\basics.jl:37 overwritten in module Mux at C:\Users\adria_000\Dropbox\Projects\jinnie\lib\Mux\src\basics.jl:37.
+WARNING: Method definition call(Type{HttpCommon.Response}, Any) in module Mux at C:\Users\adria_000\Dropbox\Projects\jinnie\lib\Mux\src\basics.jl:42 overwritten in module Mux at C:\Users\adria_000\Dropbox\Projects\jinnie\lib\Mux\src\basics.jl:42.
+WARNING: Method definition joinpath() in module Mux at C:\Users\adria_000\Dropbox\Projects\jinnie\lib\Mux\src\examples/files.jl:7 overwritten in module Mux at C:\Users\adria_000\Dropbox\Projects\jinnie\lib\Mux\src\examples/files.jl:7.
+WARNING: using AnsiColor.AnsiColor in module Jinnie conflicts with an existing identifier.
+21-Jan 00:35:15:INFO:root:[0;32;49mStarting server[0m
+Listening on 0.0.0.0:8000...
+21-Jan 00:35:37:INFO:root:Dict{Any,Any}(:query=>"",:method=>"GET",:headers=>Dict{AbstractString,AbstractString}("Connection"=>"Keep-Alive","Accept-Encoding"=>"gzip, deflate","Host"=>"localhost:8000","Accept"=>"text/html, application/xhtml+xml, image/jxr, */*","http_minor"=>"1","Accept-Language"=>"en-US,en;q=0.5","Keep-Alive"=>"1","User-Agent"=>"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2486.0 Safari/537.36 Edge/13.10586","http_major"=>"1"),:path=>SubString{ASCIIString}["hellos","new"],:data=>UInt8[])
+Hellos_Controller::new for GET
+21-Jan 00:35:41:INFO:root:Dict{Any,Any}(:query=>"",:method=>"GET",:headers=>Dict{AbstractString,AbstractString}("Connection"=>"Keep-Alive","Accept-Encoding"=>"gzip, deflate","Host"=>"localhost:8000","Accept"=>"text/html, application/xhtml+xml, image/jxr, */*","http_minor"=>"1","Accept-Language"=>"en-US,en;q=0.5","Keep-Alive"=>"1","User-Agent"=>"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2486.0 Safari/537.36 Edge/13.10586","http_major"=>"1"),:path=>SubString{ASCIIString}[],:data=>UInt8[])

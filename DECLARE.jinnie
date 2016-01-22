@@ -4,3 +4,4 @@ DataFrames
 Requests
 Logging
 ArgParse
+AnsiColor

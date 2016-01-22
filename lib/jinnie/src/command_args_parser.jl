@@ -6,8 +6,8 @@ function parse_commandline_args()
     @add_arg_table s begin
         "s"
             help = "starts HTTP server"
-        # "--server-port", "-sp"
-            # help = "HTTP server port"
+        "--server-port", "-p"
+            help = "HTTP server port"
         # "--opt2", "-o"
         #     help = "another option with an argument"
         #     arg_type = Int

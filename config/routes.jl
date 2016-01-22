@@ -10,8 +10,8 @@ routes =
 			req -> new(Hellos_Controller(), req)
 			),
 		get(
-				"/hellos/:id", 
-				req -> show(Hellos_Controller(), req)
+			"/hellos/:id", 
+			req -> show(Hellos_Controller(), req)
 			),
 		get(
 			"/hellos/:id/edit", 

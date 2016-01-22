@@ -19,9 +19,17 @@ include(abspath("lib/Jinnie/src/middlewares.jl"))
 include(abspath("lib/Jinnie/src/renderer.jl"))
 include(abspath("lib/Jinnie/src/jinnie.jl"))
 
+# manually loaded packages
+include(abspath("lib/AnsiColor/src/AnsiColor.jl"))
+include(abspath("lib/Mux/src/Mux.jl"))
+# include(abspath("lib/Mustache/src/Mustache.jl"))
+
+using AnsiColor
+
 (function startup()
   parsed_args = parse_commandline_args()
-  parsed_args["s"] == "s" ? Jinnie.start_server() : nothing
+  server_port = parsed_args["server-port"] != nothing ? parsed_args["server-port"] : 8000
+  parsed_args["s"] == "s" ? Jinnie.start_server(server_port) : println(AnsiColor.cyan("Use the <s> option to start the server"))
 end)()
 
 end

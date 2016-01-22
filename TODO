@@ -1,15 +1,20 @@
 For V1
 + json output <- with request type matching
-+ add tests
-+ models - DataFrames & LINQ
-+ validators
++ add tests with https://github.com/JuliaLang/FactCheck.jl https://github.com/codeneomatrix/Faker.jl https://github.com/burrowsa/Fixtures.jl
++ models - DataFrames & https://github.com/JuliaStats/DataFramesMeta.jl
++ validators with https://github.com/eraviart/Biryani.jl
 + DeclarativePackages to go by the gemfile and gemfile.lock pattern - a file with the app's dependencies and one with the locked versions. Should only take into account the explicit versioning when pinning. Should by default store the package sources in the app's file structure. 
-+ react output 
-+ static sites generation 
 + trailblazer architecture 
 + code generators (controllers)
-+ code reloading when files are changed
++ code reloading when files are changed (via Autoreload [https://github.com/malmaud/Autoreload.jl] or https://github.com/rened/Watcher.jl) or https://github.com/wavexx/Expect.jl
 + ejl - embedded julia HTML rendering
++ color the logging output with AnsiColors
++ add support for environments with AppConf
++ debugger https://github.com/toivoh/Debug.jl or gallium
++ docs https://github.com/MichaelHatherly/Lexicon.jl https://github.com/MichaelHatherly/Docile.jl
++ mailers
++ static sites generation 
++ react output (patchwork or react.js)
 ? form renderers 
 ? channels (like phoenix) (for sockets)
 
@@ -27,3 +32,54 @@ For V1
 
 refactor
 Jinnie.render - all rendering methods should be DRY and support various rendering engines
+
+Other
+https://github.com/zachallaun/ValueDispatch.jl
+https://github.com/snotskie/Helpme.jl
+https://github.com/IainNZ/Humanize.jl
+https://github.com/Rory-Finnegan/Interfaces.jl
+https://github.com/JuliaLang/JSON.jl
+https://github.com/arypurnomoz/JulieTest.jl
+https://github.com/one-more-minute/Lazy.jl
+https://github.com/zenna/Lens.jl
+https://github.com/JuliaLang/LightXML.jl
+https://github.com/tonyhffong/Lint.jl
+https://github.com/one-more-minute/MacroTools.jl
+https://github.com/JuliaArchive/Markdown.jl
+https://github.com/kmsquire/Match.jl
+https://github.com/tanmaykm/Memcache.jl
+https://github.com/simonster/Memoize.jl
+https://github.com/IainNZ/MetadataTools.jl
+https://github.com/wookay/Millboard.jl
+https://github.com/pzion/Mongo.jl
+https://github.com/aviks/Mongrel2.jl
+https://github.com/JuliaDB/MySQL.jl
+https://github.com/jonasrauber/OSXNotifier.jl
+https://github.com/shashi/Patchwork.jl
+https://github.com/eschnett/Persist.jl
+https://github.com/wavexx/Polyglot.jl
+https://github.com/MichaelHatherly/PrivateModules.jl
+https://github.com/timholy/ProfileView.jl
+https://github.com/timholy/ProgressMeter.jl
+https://github.com/jkaye2012/Redis.jl
+https://github.com/JuliaWeb/Requests.jl
+https://github.com/one-more-minute/Requires.jl
+https://github.com/simonster/Reexport.jl
+https://github.com/JuliaDB/SQLite.jl
+https://github.com/sjkelly/SaveREPL.jl
+https://github.com/JockLawrie/SecureSessions.jl
+https://github.com/mbauman/Sparklines.jl
+https://github.com/invenia/StackTraces.jl
+https://github.com/aviks/Taro.jl
+https://github.com/sunetos/TextPlots.jl
+https://github.com/rohitvarkey/ThreeJS.jl
+https://github.com/quinnj/TimeZones.jl
+https://github.com/randyzwitch/Twitter.jl
+https://github.com/JuliaWeb/URIParser.jl
+https://github.com/Keno/SIUnits.jl
+https://github.com/zachallaun/ValueDispatch.jl
+https://github.com/rened/Watcher.jl
+https://github.com/JuliaWeb/WebSockets.jl
+https://github.com/dcjones/YAML.jl
+https://github.com/JuliaLang/ZMQ.jl
+
