@@ -8,6 +8,8 @@ function parse_commandline_args()
             help = "starts HTTP server"
         "--server-port", "-p"
             help = "HTTP server port"
+        "--monitor", "-m"
+            help = "monitor files for changes and reload app"
         # "--opt2", "-o"
         #     help = "another option with an argument"
         #     arg_type = Int

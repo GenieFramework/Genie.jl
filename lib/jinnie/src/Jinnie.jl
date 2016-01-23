@@ -29,11 +29,6 @@ function app_setup()
 	return app
 end
 
-function start_server(server_port)
-	@info AnsiColor.green("Starting server")
-	@sync serve( app_setup() )
-	
-	# app = Mux.http_handler(app_setup())
-	#server = Mux.Server(app)
-	#@sync Mux.run(server, server_port)
+function start_server(server_port = 8000)
+	serve( app_setup(), server_port )
 end

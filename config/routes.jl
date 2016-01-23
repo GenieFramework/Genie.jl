@@ -32,7 +32,8 @@ routes =
 		delete(
 			"/hellos/:id", 
 			req -> destroy(Hellos_Controller(), req)
-			)
+			), 
+		get("go", respond("Yeeessooo"))
 	end
 
 export routes

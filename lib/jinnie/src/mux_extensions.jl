@@ -1,3 +1,5 @@
+using Mux
+
 export @resources
 
 ControllerActionParams = Union{Symbol, AbstractString}

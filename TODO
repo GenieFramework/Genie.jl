@@ -3,18 +3,18 @@ For V1
 + add tests with https://github.com/JuliaLang/FactCheck.jl https://github.com/codeneomatrix/Faker.jl https://github.com/burrowsa/Fixtures.jl
 + models - DataFrames & https://github.com/JuliaStats/DataFramesMeta.jl
 + validators with https://github.com/eraviart/Biryani.jl
-+ DeclarativePackages to go by the gemfile and gemfile.lock pattern - a file with the app's dependencies and one with the locked versions. Should only take into account the explicit versioning when pinning. Should by default store the package sources in the app's file structure. 
 + trailblazer architecture 
 + code generators (controllers)
-+ code reloading when files are changed (via Autoreload [https://github.com/malmaud/Autoreload.jl] or https://github.com/rened/Watcher.jl) or https://github.com/wavexx/Expect.jl
-+ ejl - embedded julia HTML rendering
++ view caching
 + color the logging output with AnsiColors
 + add support for environments with AppConf
 + debugger https://github.com/toivoh/Debug.jl or gallium
 + docs https://github.com/MichaelHatherly/Lexicon.jl https://github.com/MichaelHatherly/Docile.jl
++ DeclarativePackages to go by the gemfile and gemfile.lock pattern - a file with the app's dependencies and one with the locked versions. Should only take into account the explicit versioning when pinning. Should by default store the package sources in the app's file structure. 
 + mailers
 + static sites generation 
 + react output (patchwork or react.js)
++ ejl - embedded julia HTML rendering
 ? form renderers 
 ? channels (like phoenix) (for sockets)
 
@@ -26,7 +26,9 @@ For V1
 √ rendering -> auto-rendering layouts, views and partials (mustache only first or directly to ejl)
   -> looks good but needs testing
   -> also, should be switched to use relative paths when including partials
+  -> and view caching
 √ complete routing to support "route", :controller, :action [done]
+√ code reloading when files are changed (via Autoreload [https://github.com/malmaud/Autoreload.jl] or https://github.com/rened/Watcher.jl) or https://github.com/wavexx/Expect.jl
 
 ======
 
