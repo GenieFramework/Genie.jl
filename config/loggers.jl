@@ -1,7 +1,7 @@
 using Logging
 
 # @Logging.configure(level=DEBUG)
-# Logging.configure(level=DEBUG)
+# @info "Logging ready"
 
 console_logger = Logger("console_logger")
 Logging.configure(console_logger, level = DEBUG)

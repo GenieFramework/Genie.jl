@@ -1,3 +1,8 @@
+Experiment app:
+  use the Pkg, Metadata, Github packages to get extended information about official packages: details, commit history, stars, watchers, etc. 
+  provide functionality to search packages by various criteria
+  provide a web ui for searching packages
+
 For V1
 + json output <- with request type matching
 + add tests with https://github.com/JuliaLang/FactCheck.jl https://github.com/codeneomatrix/Faker.jl https://github.com/burrowsa/Fixtures.jl
@@ -37,6 +42,7 @@ Jinnie.render - all rendering methods should be DRY and support various renderin
 
 Other
 https://github.com/zachallaun/ValueDispatch.jl
+https://github.com/JuliaWeb/GitHub.jl
 https://github.com/snotskie/Helpme.jl
 https://github.com/IainNZ/Humanize.jl
 https://github.com/Rory-Finnegan/Interfaces.jl
