@@ -1,23 +1,26 @@
-using Mux
-using Mustache
-
 renderer = Renderer() 
 
-function include_controllers()
-	include(abspath("lib/Jinnie/src/controller.jl"))
-	for filename in readdir(abspath("app/controllers"))
-		include(abspath(joinpath("app/controllers", filename)))
-	end
+function include_resources(dir = "$APP_PATH/app/resources")
+  f = readdir(abspath(dir))
+  for i in f
+    full_path = joinpath(dir, i)
+    if isdir(full_path)
+      include_resources(full_path)
+    else 
+      if ( i == "controller.jl" || i == "model.jl" ) 
+        include(full_path)
+      end
+    end
+  end
 end
 
 function include_libs()
+	include(abspath("lib/Jinnie/src/controller.jl"))
+  include(abspath("lib/Jinnie/src/model.jl"))
 	include(abspath("lib/Jinnie/src/mux_extensions.jl"))
 end
 
-function app_setup()
-	include_libs()
-	include_controllers()
-
+function start_server(server_port = 8000; reload = false)
 	@app app =
 			(
 				Mux.defaults,
@@ -25,10 +28,8 @@ function app_setup()
 				eval(routes)...,
 				Mux.notfound()
 			)
-	
-	return app
-end
 
-function start_server(server_port = 8000)
-	serve( app_setup(), server_port )
+	if reload return end
+
+	serve(app, server_port)
 end

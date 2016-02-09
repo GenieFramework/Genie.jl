@@ -1,0 +1,7 @@
+dev:
+  adapter: Postgres
+  database: pkg_info_dev
+  host: localhost
+  username: adrian
+  password: adrian
+  port: 5432

@@ -1,9 +1,8 @@
-export routes
-
-routes =
+routes = 
 	quote
-		# root(:welcome, :index), 
-		# get("/books", :books, :index),
+		(
+		root(:package, :index), 
+		# get("/books", :books, :index)
 		# @resources("products")...,
 		# @resources("photos", [:index, :show])...,
 		# @resources("habbits", [], [:delete])...,
@@ -36,4 +35,7 @@ routes =
 		# 	req -> destroy(Hellos_Controller(), req)
 		# 	), 
 		# get("go", respond("Yeeessooo"))
+	)
 	end
+
+export routes

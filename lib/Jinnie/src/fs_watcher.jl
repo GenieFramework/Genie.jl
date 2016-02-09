@@ -8,8 +8,13 @@ function monitor_changes()
   if fs_changes("./") 
     println("Reloading...")
     refreshed_at = time()
+
     load_dependencies()
-    app_setup()
+    include_libs()
+    include_resources()
+    reload("Jinnie")
+    
+    start_server(reload = true)
   end
 
   monitor_changes()
