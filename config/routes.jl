@@ -2,7 +2,7 @@ routes =
 	quote
 		(
 		root(:package, :index), 
-		# get("/books", :books, :index)
+		get("/api", :package, :api)
 		# @resources("products")...,
 		# @resources("photos", [:index, :show])...,
 		# @resources("habbits", [], [:delete])...,

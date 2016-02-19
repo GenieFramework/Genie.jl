@@ -34,16 +34,16 @@ function migration_class_name(underscored_migration_name)
   mapreduce( x -> ucfirst(x), *, split(replace(underscored_migration_name, ".jl", ""), "_") )
 end
 
-function last_up(cmd_args, config)
-  if ( cmd_args["db:migration:up"] == "true" ) 
-    run_migration(last_migration(), config, :up)
-  end
+function last_up()
+  run_migration(last_migration(), :up)
 end
 
-function last_down(cmd_args, config)
-  if ( cmd_args["db:migration:down"] == "true" ) 
-    run_migration(last_migration(), config, :down)
-  end
+function last_down()
+  run_migration(last_migration(), :down)
+end
+
+function up_by_name(migration_name)
+  error("not implemented")
 end
 
 @memoize function all_migrations()
@@ -65,9 +65,14 @@ end
   return migrations_files[migrations[length(migrations)]]
 end
 
-function run_migration(migration, config, direction)
-  include(abspath(joinpath(config.db_migrations_folder, migration.migration_file_name)))
-  eval(parse("Jinnie.$(string(direction))(Jinnie.$(migration.migration_class_name)())"))
+function run_migration(migration, direction)
+  include(abspath(joinpath(Jinnie.config.db_migrations_folder, migration.migration_file_name)))
+  eval(parse("Jinnie.$(string(direction))(Jinnie.$(migration.migration_class_name)())")) 
+
+  store_migration_status(migration, direction)
+end
+
+function store_migration_status(migration, direction)
   if ( direction == :up )
     Database.query("INSERT INTO $(Jinnie.config.db_migrations_table_name) VALUES ('$(migration.migration_hash)')")
   else 
@@ -80,7 +85,7 @@ function upped_migrations()
   return map(x -> x[1], result)
 end
 
-function status(parsed_args, config)
+function status()
   migrations, migrations_files = all_migrations()
   up_migrations = upped_migrations()
 

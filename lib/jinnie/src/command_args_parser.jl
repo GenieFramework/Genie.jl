@@ -18,21 +18,25 @@ function parse_commandline_args()
             help = "HTTP server port"
             default = 8000
         "--monitor"
-            help = "monitor files for changes and reload app"
+            help = "=true -> monitor files for changes and reload app"
             default = false
         "--env", "-e"
-            help = "app execution environment"
+            help = "app execution environment [dev|prod|test]"
             default = "dev"
         "--db:init"
-            help = "Create database"
+            help = "=true -> create database and core tables"
         "--db:migrations:status"
-            help = "List migrations and their status"
+            help = "=true -> list migrations and their status"
         "--db:migration:new"
-            help = "Create a new migration"
+            help = "=true -> create a new migration"
         "--db:migration:up"
-            help = "Run last migration up"
+            help = "=true -> run last migration up \n =migration_name -> run migration up" 
         "--db:migration:down"
-            help = "Run last migration down"
+            help = "=true -> run last migration down \n =migration_name -> run migration down" 
+        "--tasks:list"
+            help = "=true -> list tasks" 
+        "--task:run"
+            help = "=task_name -> run task" 
     end
 
     return parse_args(s)

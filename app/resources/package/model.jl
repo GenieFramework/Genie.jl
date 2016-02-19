@@ -1,8 +1,8 @@
-type Package_Model <: Jinnie_Model
+type Package <: Jinnie_Model
+  _table_name::AbstractString
+  _id::AbstractString
   name::AbstractString
   url::AbstractString
-  readme::AbstractString
-  stars::Int
-  followers::Int
-  # stats
+
+  Package(; name = "", url = "") = new("packages", "name", name, url)
 end

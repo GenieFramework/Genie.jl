@@ -1,6 +1,6 @@
 renderer = Renderer() 
 
-function include_resources(dir = "$APP_PATH/app/resources")
+function include_resources(dir = abspath(joinpath("$APP_PATH", "app", "resources")))
   f = readdir(abspath(dir))
   for i in f
     full_path = joinpath(dir, i)
@@ -24,7 +24,7 @@ function start_server(server_port = 8000; reload = false)
 	@app app =
 			(
 				Mux.defaults,
-				stack(Jinnie.req_logger),
+				Mux.stack(Jinnie.req_logger),
 				eval(routes)...,
 				Mux.notfound()
 			)

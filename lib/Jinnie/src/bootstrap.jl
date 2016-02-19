@@ -7,6 +7,7 @@ using Mux
 using Mustache
 using ArgParse
 
+using Util
 using Database
 using Migrations
 
@@ -22,6 +23,7 @@ function load_dependencies()
   include(abspath("lib/Jinnie/src/middlewares.jl"))
   include(abspath("lib/Jinnie/src/renderer.jl"))
   include(abspath("lib/Jinnie/src/jinnie.jl"))
+  include(abspath("lib/Jinnie/src/tasks.jl"))
 end
 
 function setup_defaults(parsed_args)
