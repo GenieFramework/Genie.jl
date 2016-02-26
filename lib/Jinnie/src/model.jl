@@ -4,6 +4,29 @@ using Memoize
 
 abstract Jinnie_Model
 
+function find(m::Jinnie_Model; where = "TRUE", limit = "ALL", offset = "0", order = m._id, group = "", having = "")
+  sql = """SELECT * FROM $(m._table_name) WHERE $where ORDER BY $order LIMIT $limit OFFSET $offset"""
+
+  return run_query_df(sql)
+end
+
+function df_to_m(df::DataFrames.DataFrame, m)
+  models = []
+  fields = fieldnames(m)
+  df_cols = names(df)
+  settable_fields = intersect(fields, df_cols)
+  for row = eachrow(df)
+    params = []
+    for field = settable_fields
+      push!(params, "$(string(field)) = \"$(row[field])\"")
+    end
+    obj = eval(parse("""$(typeof(m))(; $(join(params, ",")) )"""))
+    push!(models, obj)
+  end
+
+  return models
+end
+
 function all(m::Jinnie_Model)
   sql = "SELECT * FROM $(m._table_name)"
 
