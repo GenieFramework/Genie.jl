@@ -1,7 +1,6 @@
-type FileTemplate
-end
+module FileTemplates
 
-function new_database_migration(_::FileTemplate, class_name)
+function new_database_migration(class_name)
   """
   using Jinnie
   using Database 
@@ -17,4 +16,6 @@ function new_database_migration(_::FileTemplate, class_name)
     error("Not implemented")
   end
   """
+end
+
 end

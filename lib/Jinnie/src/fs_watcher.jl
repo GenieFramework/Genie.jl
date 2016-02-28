@@ -12,7 +12,9 @@ function monitor_changes()
     load_dependencies()
     include_libs()
     include_resources()
+    
     reload("Jinnie")
+    reload("Mux")
     
     start_server(reload = true)
   end

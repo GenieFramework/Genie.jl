@@ -8,13 +8,18 @@ function up(_::CreateTablePackages)
   conn, adapter = Database.query_tools()
   if ( adapter != Database.POSTGRESQL_ADAPTER ) error("Not implemented") end
 
-  result = Database.query("""
+  Database.query("""CREATE SEQUENCE packages__seq_id""")
+  Database.query("""
     CREATE TABLE IF NOT EXISTS packages (
-      name          varchar(100) CONSTRAINT idx_name PRIMARY KEY, 
-      url           text,
-      updated_at    timestamp DEFAULT current_timestamp
+      id            integer CONSTRAINT packages__idx_id PRIMARY KEY DEFAULT NEXTVAL('packages__seq_id'), 
+      name          varchar(100) NOT NULL, 
+      url           text NOT NULL,
+      updated_at    timestamp DEFAULT current_timestamp, 
+      CONSTRAINT packages__idx_name UNIQUE(name), 
+      CONSTRAINT packages__idx_url UNIQUE(url)
     )
   """)
+  Database.query("""ALTER SEQUENCE packages__seq_id OWNED BY packages.id;""")
 
   Jinnie.log("Executed migration CreateTablePackages::up")
 end

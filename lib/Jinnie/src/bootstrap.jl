@@ -24,6 +24,7 @@ function load_dependencies()
   include(abspath("lib/Jinnie/src/renderer.jl"))
   include(abspath("lib/Jinnie/src/jinnie.jl"))
   include(abspath("lib/Jinnie/src/tasks.jl"))
+  include(abspath("lib/Jinnie/src/filetemplates.jl"))
 end
 
 function setup_defaults(parsed_args)

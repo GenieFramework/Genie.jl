@@ -28,11 +28,13 @@ function parse_commandline_args()
         "--db:migrations:status"
             help = "=true -> list migrations and their status"
         "--db:migration:new"
-            help = "=true -> create a new migration"
+            help = "=migration_name -> create a new migration, ex: create_table_foos"
         "--db:migration:up"
-            help = "=true -> run last migration up \n =migration_name -> run migration up" 
+            help = "=true -> run last migration up \n 
+                    =migration_class_name -> run migration up, ex: CrateTableFoos" 
         "--db:migration:down"
-            help = "=true -> run last migration down \n =migration_name -> run migration down" 
+            help = "=true -> run last migration down \n 
+                    =migration_class_name -> run migration down, ex: CreateTableFoos" 
         "--tasks:list"
             help = "=true -> list tasks" 
         "--task:run"

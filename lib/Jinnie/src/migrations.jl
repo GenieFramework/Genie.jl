@@ -3,22 +3,21 @@ module Migrations
 using Memoize
 using Database
 using Jinnie
+using FileTemplates
 
-type Migration 
+type Migration # todo: rename the "migration_" prefix for the fields
   migration_hash::AbstractString
   migration_file_name::AbstractString 
   migration_class_name::AbstractString
 end
 
 function new(cmd_args, config)
-  include(abspath("lib/jinnie/src/file_templates.jl"))
   mfn = migration_file_name(cmd_args, config)
   f = open(mfn, "w")
-  ft = FileTemplate()
-  write(f, new_database_migration(ft, migration_class_name(cmd_args["db:migration:new"])))
+  write(f, FileTemplates.new_database_migration(migration_class_name(cmd_args["db:migration:new"])))
   close(f)
 
-  log("New migration created at $mfn")
+  Jinnie.log("New migration created at $mfn")
 end
 
 function migration_hash()
@@ -42,8 +41,34 @@ function last_down()
   run_migration(last_migration(), :down)
 end
 
-function up_by_name(migration_name)
-  error("not implemented")
+function up_by_class_name(migration_class_name)
+  migration = migration_by_class_name(migration_class_name)
+  if migration != nothing 
+    run_migration(migration, :up)
+  else 
+    error("Migration $migration_class_name not found")
+  end
+end
+
+function down_by_class_name(migration_class_name)
+  migration = migration_by_class_name(migration_class_name)
+  if migration != nothing 
+    run_migration(migration, :down)
+  else 
+    error("Migration $migration_class_name not found")
+  end
+end
+
+function migration_by_class_name(migration_class_name)
+  ids, migrations = all_migrations()
+  for id in ids
+    migration = migrations[id]
+    if migration.migration_class_name == migration_class_name 
+      return migration
+    end
+  end
+
+  return nothing # TODO: use nullables
 end
 
 @memoize function all_migrations()

@@ -30,7 +30,7 @@ function all_tasks(; filter_type_name = nothing)
     if ( endswith(i, "_task.jl") ) 
       include_path = joinpath(tasks_folder, i)
       include(include_path)
-
+      
       type_name = Util.file_name_to_type_name(i)
       task_instance = eval(parse(string(current_module()) * "." * type_name * "()"))
       ti = Task_Info(i, type_name, task_instance, current_module().description(task_instance))
