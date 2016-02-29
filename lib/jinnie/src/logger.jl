@@ -4,12 +4,15 @@ const console_logger = Logger("console_logger")
 const file_logger = Logger("file_logger")
 
 function log(message, level="info")
-  message = string(message)
-  # eval(parse("Logging.$level($message)")) -- default console logging is broken due to Logging pkg
- 
+  message = replace(string(message), "\$", "\\\$")
+  
   for l in config.loggers
     eval( parse( "$level($(l.name), \"\"\" " * message * " \"\"\" )" ) )
   end
+end
+
+function log(message, level::Symbol)
+  log(message, string(level))
 end
 
 function setup_loggers()

@@ -8,9 +8,10 @@ function up(_::CreateTableRepos)
   conn, adapter = Database.query_tools()
   if ( adapter != Database.POSTGRESQL_ADAPTER ) error("Not implemented") end
 
-  result = Database.query("""
+  Database.query("""CREATE SEQUENCE repos__seq_id""")
+  Database.query("""
     CREATE TABLE IF NOT EXISTS repos (
-      id              integer CONSTRAINT repo__idx_id PRIMARY KEY, 
+      id              integer CONSTRAINT repo__idx_id PRIMARY KEY DEFAULT NEXTVAL('repos__seq_id'), 
       package_id      integer, 
       fullname        varchar(100) NOT NULL, 
       readme          text,
@@ -20,6 +21,7 @@ function up(_::CreateTableRepos)
       CONSTRAINT repo__idx_package_id UNIQUE(package_id)
     )
   """)
+  Database.query("""ALTER SEQUENCE repos__seq_id OWNED BY repos.id;""")
 
   Jinnie.log("Executed migration CreateTableRepos::up")
 end

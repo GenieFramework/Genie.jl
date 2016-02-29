@@ -12,6 +12,7 @@ include(abspath("lib/Jinnie/src/logger.jl"))
 include(abspath("lib/Jinnie/src/jinnie_app.jl"))
 const jinnie_app = Jinnie_App(config)
 
+include(abspath("lib/Jinnie/src/macros.jl"))
 include(abspath("lib/Jinnie/src/bootstrap.jl"))
 include(abspath("lib/Jinnie/src/commands.jl"))
 

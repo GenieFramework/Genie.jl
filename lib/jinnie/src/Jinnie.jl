@@ -14,6 +14,14 @@ function include_resources(dir = abspath(joinpath("$APP_PATH", "app", "resources
   end
 end
 
+function include_initializers()
+  dir = abspath(joinpath("$APP_PATH", "initializers"))
+  f = readdir(dir)
+  for i in f
+    include(joinpath(dir, i))
+  end
+end
+
 function include_libs()
 	include(abspath("lib/Jinnie/src/controller.jl"))
   include(abspath("lib/Jinnie/src/model.jl"))

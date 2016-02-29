@@ -13,6 +13,6 @@ end
 
 function run_task!(_::Packages_Import_Task, parsed_args = Dict())
   for pkg in MetadataTools.get_all_pkg()
-    Jinnie.Model.save!( Jinnie.Package( name = pkg[2].name, url = pkg[2].url ), upsert_strategy = :nothing )
+    Jinnie.Model.save( Jinnie.Package( name = pkg[2].name, url = pkg[2].url ), upsert_strategy = :nothing )
   end
 end

@@ -76,11 +76,22 @@ function query(sql; skip_db = false, disconnect = false)
   conn, adapter = query_tools(skip_db)
 
   stmt = adapter.prepare(conn, sql)
-  result = adapter.execute(stmt)
+
+  Jinnie.log("SQL QUERY: $sql")
+
+  @run_with_time result = adapter.execute(stmt)
   adapter.finish(stmt)
+
   if (disconnect) adapter.disconnect(conn) end
 
   return result
+end
+
+function add_sql_quotes(str, quote_type = "'")
+  if quote_type == "'"
+    str = replace(str, quote_type, quote_type * quote_type)
+    return "$quote_type$str$quote_type"
+  end
 end
 
 end

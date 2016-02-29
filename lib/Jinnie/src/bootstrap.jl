@@ -13,6 +13,7 @@ using Migrations
 
 function load_configurations()
   include(abspath("config/loggers.jl"))
+  include(abspath("config/secrets.jl"))
   include(abspath("config/renderers.jl"))
   include(abspath("config/routes.jl"))
 end
@@ -50,4 +51,5 @@ load_configurations()
 load_dependencies()
 config.auto_connect && db_connect()
 include_libs()
+include_initializers()
 include_resources()

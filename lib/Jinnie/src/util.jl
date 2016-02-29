@@ -9,8 +9,4 @@ function add_quotes(str)
   return "\"$str\""
 end
 
-function add_sql_quotes(str, quote_type = "'")
-  return "$quote_type$str$quote_type"
-end
-
 end

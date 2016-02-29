@@ -12,8 +12,8 @@ function description(_::Repos_Import_Task)
 end
 
 function run_task!(_::Repos_Import_Task, parsed_args = Dict())
-  for package_row = eachrow(Jinnie.all(Package()))
-    package = dfrow_to_m(package_row, Package())
-    repo = Jinnie.from_package(package)
+  for package in Jinnie.Model.all(Jinnie.Package)
+    repo = Jinnie.Repos.from_package(package)
+    Jinnie.Model.save(repo)
   end
 end
