@@ -3,6 +3,8 @@ push!(LOAD_PATH, abspath("config"))
 push!(LOAD_PATH, abspath("lib/"))
 push!(LOAD_PATH, abspath("lib/Jinnie/src"))
 
+const TYPE_FIELD_MAX_DEBUG_LENGTH = 150
+
 using Mux
 using Mustache
 using ArgParse

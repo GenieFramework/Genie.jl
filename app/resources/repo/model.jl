@@ -1,13 +1,13 @@
 using GitHub
 
-type Repo <: Jinnie_Model
+type Repo <: JinnieModel
   _table_name::AbstractString
   _id::AbstractString
 
   github::Nullable{GitHub.Repo}
 
-  id::DbId
-  package_id::DbId
+  id::Model.DbId
+  package_id::Model.DbId
   fullname::AbstractString
   readme::AbstractString
   participation::Array{Int}

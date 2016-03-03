@@ -19,3 +19,8 @@ include(abspath("lib/Jinnie/src/commands.jl"))
 run_app_with_command_line_args(config)
 
 end
+
+J = Jinnie
+
+# quick dev / repl helpers
+__rj!() = reload("Jinnie")

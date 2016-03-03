@@ -88,10 +88,12 @@ function query(sql; skip_db = false, disconnect = false)
 end
 
 function add_sql_quotes(str, quote_type = "'")
-  if quote_type == "'"
-    str = replace(str, quote_type, quote_type * quote_type)
-    return "$quote_type$str$quote_type"
-  end
+  str = escape_db_quotes(str, quote_type)
+  return "$quote_type$str$quote_type"
+end
+
+function escape_db_quotes(str, quote_type = "'")
+  return replace(str, quote_type, quote_type * quote_type)
 end
 
 end

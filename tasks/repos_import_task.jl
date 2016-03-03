@@ -14,6 +14,7 @@ end
 function run_task!(_::Repos_Import_Task, parsed_args = Dict())
   for package in Jinnie.Model.all(Jinnie.Package)
     repo = Jinnie.Repos.from_package(package)
-    Jinnie.Model.save(repo)
+    @show repo
+    Jinnie.Model.save(repo, upsert_strategy = :update)
   end
 end

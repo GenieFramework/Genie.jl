@@ -7,7 +7,7 @@ function log(message, level="info")
   message = replace(string(message), "\$", "\\\$")
   
   for l in config.loggers
-    eval( parse( "$level($(l.name), \"\"\" " * message * " \"\"\" )" ) )
+    eval( parse( "$level($(l.name), \"\"\" " * "\n" * message * " \"\"\")" ) )
   end
 end
 

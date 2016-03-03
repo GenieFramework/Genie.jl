@@ -1,8 +1,8 @@
-type Package <: Jinnie_Model
+type Package <: JinnieModel
   _table_name::AbstractString
   _id::AbstractString
 
-  id::DbId
+  id::Model.DbId
   name::AbstractString
   url::AbstractString
 
