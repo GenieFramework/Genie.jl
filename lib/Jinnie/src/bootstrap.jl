@@ -16,6 +16,7 @@ using Migrations
 function load_configurations()
   include(abspath("config/loggers.jl"))
   include(abspath("config/secrets.jl"))
+  include(abspath("config/converters.jl"))
   include(abspath("config/renderers.jl"))
   include(abspath("config/routes.jl"))
 end

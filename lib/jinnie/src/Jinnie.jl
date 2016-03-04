@@ -2,7 +2,7 @@ import Base.string
 import Base.print
 import Base.show
 
-export JinnieType, JinnieModel
+export JinnieType, JinnieModel, Model, M
 export jinnietype_to_string
 
 abstract JinnieType

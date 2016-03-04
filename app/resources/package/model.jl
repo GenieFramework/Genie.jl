@@ -2,11 +2,11 @@ type Package <: JinnieModel
   _table_name::AbstractString
   _id::AbstractString
 
-  id::Model.DbId
+  id::Nullable{Model.DbId}
   name::AbstractString
   url::AbstractString
 
-  Package(; id = Nullable{Int}(), name = "", url = "") = new("packages", "id", id, name, url) # todo: switch to using symbols or a union type of symbol & string
+  Package(; id = Nullable{Model.DbId}(), name = "", url = "") = new("packages", "id", id, name, url) # todo: switch to using symbols or a union type of symbol & string
 end
 
 module Packages

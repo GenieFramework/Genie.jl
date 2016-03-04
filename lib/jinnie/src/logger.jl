@@ -3,11 +3,15 @@ using Logging
 const console_logger = Logger("console_logger")
 const file_logger = Logger("file_logger")
 
-function log(message, level="info")
+function log(message, level = "info")
   message = replace(string(message), "\$", "\\\$")
   
   for l in config.loggers
-    eval( parse( "$level($(l.name), \"\"\" " * "\n" * message * " \"\"\")" ) )
+    try 
+      eval( parse( "$level($(l.name), \"\"\" " * "\n" * message * " \"\"\")") )
+    catch 
+      log("=== CAN'T LOG MESSAGE, INVALID CHARS ===", level)
+    end
   end
 end
 

@@ -87,13 +87,21 @@ function query(sql; skip_db = false, disconnect = false)
   return result
 end
 
-function add_sql_quotes(str, quote_type = "'")
-  str = escape_db_quotes(str, quote_type)
-  return "$quote_type$str$quote_type"
+function escape_column_name(str, q = "\"")
+  return  if startswith(str, "(") && endswith(str, ")") # expression let it through
+            str
+          elseif startswith(str, "\"") && endswith(str, "\"") 
+            str
+          else "$q$str$q"
+          end
 end
 
-function escape_db_quotes(str, quote_type = "'")
-  return replace(str, quote_type, quote_type * quote_type)
+function escape_value(str, q = "'")
+  if startswith(str, q) && endswith(str, q) 
+      str
+  else 
+    q * replace(str, q, "$q$q") * q
+  end
 end
 
 end

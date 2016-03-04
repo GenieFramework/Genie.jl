@@ -24,5 +24,6 @@ function run_app_with_command_line_args(config)
   else 
     config.auto_connect = true
     jinnie_app.server = startup(parsed_args) 
+    include(abspath("lib/Jinnie/src/interactive_session.jl"))
   end
 end

@@ -6,10 +6,10 @@ type Repo <: JinnieModel
 
   github::Nullable{GitHub.Repo}
 
-  id::Model.DbId
-  package_id::Model.DbId
+  id::Nullable{Model.DbId}
+  package_id::Nullable{Model.DbId}
   fullname::AbstractString
-  readme::AbstractString
+  readme::UTF8String
   participation::Array{Int}
 
   on_dehydration::Nullable{Function}
@@ -17,8 +17,8 @@ type Repo <: JinnieModel
 
   Repo(; 
         github = Nullable{GitHub.Repo}(), 
-        id = Nullable{Int}(), 
-        package_id = Nullable{Int}(), 
+        id = Nullable{Model.DbId}(), 
+        package_id = Nullable{Model.DbId}(), 
         fullname = "", 
         readme = "", 
         participation = [], 
@@ -36,14 +36,22 @@ using JSON
 using Jinnie
 
 function dehydrate(repo::Jinnie.Repo, field::Symbol, value)
-  return field == :participation ? join(value, ",") : value
+  return  if field == :participation 
+            join(value, ",")
+          else
+            value
+          end
 end
 
 function hydrate(repo::Jinnie.Repo, field::Symbol, value)
-  return field == :participation ? map(x -> parse(x), split(value, ",")) : value
+  return  if field == :participation 
+            map(x -> parse(x), split(value, ",")) 
+          else
+            value
+          end
 end
 
-@memoize function readme_from_github(repo::Jinnie.Repo; parse_markdown = true)
+@memoize function readme_from_github(repo::Jinnie.Repo; parse_markdown = false)
   readme = GitHub.readme(Base.get(repo.github), auth = Jinnie.GITHUB_AUTH)
   content = try 
     mapreduce(x -> string(Char(x)), *, base64decode( Base.get(readme.content) ))
@@ -78,6 +86,34 @@ function from_package(package::Jinnie.Package)
   readme_from_github!(repo)
   participation_from_github!(repo)
   return repo
+end
+
+function search(search_term::AbstractString)
+  sql = """
+    SELECT 
+      id, 
+      fullname, 
+      readme, 
+      ts_rank(repos_search.repo_info, query) rank, 
+      ts_headline(readme, query) 
+    FROM 
+      (
+      SELECT 
+        id, 
+        fullname, 
+        readme, 
+        to_tsvector(fullname) || to_tsvector(readme) AS repo_info, 
+        participation
+      FROM repos
+      LIMIT 10
+      ) repos_search, 
+      to_tsquery($(Jinnie.Model.SQLInput(search_term))) query 
+    WHERE 
+      repos_search.repo_info @@ query
+    ORDER BY 
+      rank DESC
+  """
+  result = Model.query(sql)
 end
 
 end
