@@ -22,6 +22,7 @@ function up(_::CreateTableRepos)
     )
   """)
   Database.query("""ALTER SEQUENCE repos__seq_id OWNED BY repos.id;""")
+  Database.query("""CREATE INDEX repo__idx_readme ON repos USING gin(to_tsvector('english', readme))""")
 
   Jinnie.log("Executed migration CreateTableRepos::up")
 end

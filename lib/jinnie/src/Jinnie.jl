@@ -9,12 +9,12 @@ abstract JinnieType
 abstract JinnieModel <: JinnieType
 
 string{T<:JinnieType}(io::IO, t::T) = jinnietype_to_string(t)
-print{T<:JinnieType}(io::IO, t::T) = print(io, jinnietype_to_string(t))
-show{T<:JinnieType}(io::IO, t::T) = print(io, jinnietype_to_string(t))
+print{T<:JinnieType}(io::IO, t::T) = print(io, jinnietype_to_print(t))
+show{T<:JinnieType}(io::IO, t::T) = print(io, jinnietype_to_print(t))
 
 renderer = Renderer() 
 
-function include_resources(dir = abspath(joinpath("$APP_PATH", "app", "resources")))
+function include_resources(dir = abspath(joinpath(APP_PATH, "app", "resources")))
   f = readdir(abspath(dir))
   for i in f
     full_path = joinpath(dir, i)
@@ -51,7 +51,19 @@ function jinnietype_to_string{T<:JinnieType}(m::T)
     end
     output = output * "  + $f \t $(value) \n"
   end
-  return output
+  
+  output
+end
+
+function jinnietype_to_print{T<:JinnieType}(m::T)
+  output = "$(typeof(m)) <: $(super(typeof(m)))" * "\n"
+  output *= string(Millboard.table(M.to_dict(m)))
+  
+  output
+end
+
+function to_dict(m::Any; all_fields = false) 
+  [string(f) => getfield(m, Symbol(f)) for f in fieldnames(m)]
 end
 
 function start_server(server_port = 8000; reload = false)

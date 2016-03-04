@@ -18,9 +18,12 @@ function run_app_with_command_line_args(config)
   elseif (  parsed_args["db:migration:down"] != nothing )
     Migrations.down_by_class_name(parsed_args["db:migration:down"])
   elseif (  parsed_args["tasks:list"] == "true" )
-    list_tasks()
+    Tasks.print_all_tasks()
   elseif (  parsed_args["task:run"] != nothing )
-    run_task(parsed_args["task:run"])
+    Tasks.run_task(parsed_args["task:run"])
+  elseif ( parsed_args["task:new"] != nothing )
+    if ! endswith(parsed_args["task:new"], "_task") parsed_args["task:new"] *= "_task" end
+    Tasks.new(parsed_args, config)
   else 
     config.auto_connect = true
     jinnie_app.server = startup(parsed_args) 

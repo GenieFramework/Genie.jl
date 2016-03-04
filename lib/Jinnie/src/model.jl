@@ -292,13 +292,13 @@ end
             udt_name, is_identity, is_updatable
           FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '$(_m._table_name)'"
 
-  return run_query_df(sql, supress_output = true)
+  run_query_df(sql, supress_output = true)
 end
 
 @memoize function updatable_fields(m::JinnieModel)
   object_fields = map(x -> string(x), fieldnames(m))
   db_columns = columns(typeof(m))[:column_name]
-  return intersect(object_fields, db_columns)
+  intersect(object_fields, db_columns)
 end
 
 function save_sql(m::JinnieModel; conflict_strategy = :error) # upsert strateygy = :none | :error | :ignore | :update
@@ -389,6 +389,11 @@ function run_query_df(sql::AbstractString; supress_output = false)
   if !supress_output Jinnie.log(df) end
 
   return df
+end
+
+function to_dict(m::JinnieModel; all_fields = false) 
+  fields = all_fields ? fieldnames(m) : updatable_fields(m)
+  [string(f) => getfield(m, Symbol(f)) for f in fields]
 end
 
 end

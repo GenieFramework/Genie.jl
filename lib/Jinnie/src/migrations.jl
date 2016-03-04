@@ -4,6 +4,7 @@ using Memoize
 using Database
 using Jinnie
 using FileTemplates
+using Millboard
 
 type Migration # todo: rename the "migration_" prefix for the fields
   migration_hash::AbstractString
@@ -13,6 +14,11 @@ end
 
 function new(cmd_args, config)
   mfn = migration_file_name(cmd_args, config)
+
+  if ispath(mfn)
+    error("Migration file already exists")
+  end
+
   f = open(mfn, "w")
   write(f, FileTemplates.new_database_migration(migration_class_name(cmd_args["db:migration:new"])))
   close(f)
@@ -26,7 +32,7 @@ function migration_hash()
 end
 
 function migration_file_name(cmd_args, config)
-  return config.db_migrations_folder * "/" * migration_hash() * "_" * cmd_args["db:migration:new"] * ".jl"
+  return joinpath(config.db_migrations_folder, migration_hash() * "_" * cmd_args["db:migration:new"] * ".jl")
 end
 
 function migration_class_name(underscored_migration_name)
@@ -99,29 +105,28 @@ end
 
 function store_migration_status(migration, direction)
   if ( direction == :up )
-    Database.query("INSERT INTO $(Jinnie.config.db_migrations_table_name) VALUES ('$(migration.migration_hash)')")
+    Database.query("INSERT INTO $(Jinnie.config.db_migrations_table_name) VALUES ('$(migration.migration_hash)')", system_query = true)
   else 
-    Database.query("""DELETE FROM $(Jinnie.config.db_migrations_table_name) WHERE version = ('$(migration.migration_hash)')""")
+    Database.query("DELETE FROM $(Jinnie.config.db_migrations_table_name) WHERE version = ('$(migration.migration_hash)')", system_query = true)
   end
 end
 
 function upped_migrations()
-  result = Database.query("SELECT * FROM $(Jinnie.config.db_migrations_table_name) ORDER BY version DESC")
+  result = Database.query("SELECT * FROM $(Jinnie.config.db_migrations_table_name) ORDER BY version DESC", system_query = true)
   return map(x -> x[1], result)
 end
 
 function status()
   migrations, migrations_files = all_migrations()
   up_migrations = upped_migrations()
-
-  println("")
+  arr_output = []
   
   for m in migrations
     status = ( findfirst(up_migrations, m) > 0 ) ? "up" : "down"
-    println( "$m \t|\t $status \t|\t $(migrations_files[m].migration_class_name) \t|\t $(migrations_files[m].migration_file_name)" )
+    push!(arr_output, [migrations_files[m].migration_class_name * ": " * uppercase(status); migrations_files[m].migration_file_name])
   end
 
-  println("")
+  Millboard.table(arr_output, :colnames => ["Class name & status \nFile name "], :rownames => []) |> println
 end
 
 end

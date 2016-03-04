@@ -2,17 +2,17 @@ using GitHub
 using Jinnie
 using Database
 
-type Repos_Import_Task
+type ReposImportTask
 end
 
-function description(_::Repos_Import_Task)
+function description(_::ReposImportTask)
   """
   Imports list of repos (name, URL) in database, using local package information and the GitHub pkg
   """
 end
 
-function run_task!(_::Repos_Import_Task, parsed_args = Dict())
-  for package in Jinnie.Model.find(Jinnie.Package, Jinnie.Model.SQLQuery(where = [Jinnie.Model.SQLWhere(:id, 50, "AND", ">")], limit = Jinnie.Model.SQLLimit(50)))
+function run_task!(_::ReposImportTask, parsed_args = Dict())
+  for package in Jinnie.Model.find(Jinnie.Package, Jinnie.Model.SQLQuery(where = [Jinnie.Model.SQLWhere(:id, 100, "AND", ">")], limit = Jinnie.Model.SQLLimit(5000)))
     new_repo = Jinnie.Repos.from_package(package)
     existing_repo = Jinnie.Model.find_one_by(Jinnie.Repo, :package_id, Base.get(package.id))
 

@@ -37,6 +37,8 @@ function parse_commandline_args()
                     =migration_class_name -> run migration down, ex: CreateTableFoos" 
         "--tasks:list"
             help = "=true -> list tasks" 
+        "--task:new"
+            help = "=task_name -> create a new task, ex: sync_files_task"
         "--task:run"
             help = "=task_name -> run task" 
     end

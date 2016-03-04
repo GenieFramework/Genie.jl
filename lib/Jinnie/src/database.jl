@@ -72,12 +72,12 @@ function create_migrations_table()
   Jinnie.log("Created table $(Jinnie.config.db_migrations_table_name) or table already exists")
 end
 
-function query(sql; skip_db = false, disconnect = false)
+function query(sql; skip_db = false, disconnect = false, system_query = false)
   conn, adapter = query_tools(skip_db)
 
   stmt = adapter.prepare(conn, sql)
 
-  Jinnie.log("SQL QUERY: $sql")
+  if ! system_query Jinnie.log("SQL QUERY: $sql") end
 
   @run_with_time result = adapter.execute(stmt)
   adapter.finish(stmt)
