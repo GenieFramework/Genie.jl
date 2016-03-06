@@ -5,6 +5,7 @@ using Database
 using DataFrames
 using Memoize
 using JSON
+using Debug
 
 import Base.string
 import Base.print
@@ -139,11 +140,11 @@ type SQLQuery <: SQLType
     new(columns, where, limit, offset, order, group, having)
 end
 
-@memoize function is_subtype(m, parent_model = JinnieModel)
+function is_subtype{T<:JinnieModel}(m::Type{T}, parent_model = JinnieModel)
   return m <: parent_model
 end
 
-@memoize function disposable_instance(m)
+function disposable_instance{T<:JinnieModel}(m::Type{T})
   if is_subtype(m)
     return m()
   else 
@@ -151,11 +152,11 @@ end
   end
 end
 
-function prepare(m, q::SQLQuery)
+function prepare{T<:JinnieModel}(m::Type{T}, q::SQLQuery)
   _m = disposable_instance(m)
 
   columns_part =  if ( length(q.columns) > 0 ) string(q.columns)
-                  else join(updatable_fields(_m), ", ")
+                  else join(to_fully_qualified_sql_column_names(_m, persistable_fields(_m)), ", ")
                   end
 
   where_part =    if ( length(q.where) == 0 ) "TRUE"
@@ -177,41 +178,41 @@ function prepare(m, q::SQLQuery)
   Dict(:columns_part => columns_part, :where_part => where_part, :order_part => order_part, :group_part => group_part, :limit => q.limit, :offset => q.offset, :having_part => having_part)
 end
 
-function to_sql(m, parts::Dict)
+function find_sql{T<:JinnieModel}(m::Type{T}, parts::Dict)
   _m = disposable_instance(m)
   """SELECT $(parts[:columns_part]) FROM $(_m._table_name) WHERE $(parts[:where_part]) $(parts[:group_part]) ORDER BY $(parts[:order_part]) LIMIT $(parts[:limit].value) OFFSET $(parts[:offset])"""
 end
 
-function find_df(m, q::SQLQuery)
-  query(to_sql(m, prepare(m, q)))
+function find_df{T<:JinnieModel}(m::Type{T}, q::SQLQuery)
+  query(find_sql(m, prepare(m, q)))
 end
 
-function find(m, q::SQLQuery)
+function find{T<:JinnieModel}(m::Type{T}, q::SQLQuery)
   to_models(m, find_df(m, q))
 end
-function find(m)
+function find{T<:JinnieModel}(m::Type{T})
   find(m, SQLQuery())
 end
 
-function find_by(m, column_name::SQLColumn, value::SQLInput)
+function find_by{T<:JinnieModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput)
   find(m, SQLQuery(where = [SQLWhere(column_name, value)]))
 end
-function find_by(m, column_name::Any, value::Any)
+function find_by{T<:JinnieModel}(m::Type{T}, column_name::Any, value::Any)
   find_by(m, SQLColumn(column_name), SQLInput(value))
 end
 
-function find_one_by(m, column_name::SQLColumn, value::SQLInput)
+function find_one_by{T<:JinnieModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput)
   to_nullable(find_by(m, column_name, value))
 end
-function find_one_by(m, column_name::Any, value::Any)
+function find_one_by{T<:JinnieModel}(m::Type{T}, column_name::Any, value::Any)
   find_one_by(m, SQLColumn(column_name), SQLInput(value))
 end
 
-function rand(m; limit = 1)
+function rand{T<:JinnieModel}(m::Type{T}; limit = 1)
   find(m, SQLQuery(limit = SQLLimit(limit), order = [SQLOrder("random()")]) )
 end
 
-function rand_one(m)
+function rand_one{T<:JinnieModel}(m::Type{T})
   to_nullable(rand(m, limit = 1))
 end
 
@@ -232,24 +233,45 @@ function to_models(m, df::DataFrames.DataFrame)
   return models
 end
 
-function to_model(m, row::DataFrames.DataFrameRow)
+function to_model{T<:JinnieModel}(m::Type{T}, row::DataFrames.DataFrameRow)
    _m = disposable_instance(m) 
-  fields = fieldnames(_m)
-  df_cols = names(row)
-  settable_fields = intersect(fields, df_cols)
-
   obj = m()
+  sf = settable_fields(_m, row)
 
-  for field in settable_fields
+  for field in sf
     value = try 
       Base.get(_m.on_hydration)(_m, field, row[field])
     catch 
       row[field]
     end
-    setfield!(obj, symbol(field), convert(typeof(getfield(_m, symbol(field))), value))
+
+    field = from_fully_qualified(_m, field)
+    setfield!(obj, field, convert(typeof(getfield(_m, field)), value))
   end
 
   obj    
+end
+
+function has_field{T<:JinnieModel}(m::T, f::Symbol)
+  in(f, fieldnames(m))
+end
+
+function strip_table_name{T<:JinnieModel}(m::T, f::Symbol)
+  replace(string(f), Regex("^$(m._table_name)_"), "", 1) |> Symbol
+end
+
+function is_fully_qualified{T<:JinnieModel}(m::T, f::Symbol)
+  startswith(string(f), m._table_name) && has_field(m, strip_table_name(m, f))
+end
+
+function from_fully_qualified{T<:JinnieModel}(m::T, f::Symbol)
+  is_fully_qualified(m, f) ? strip_table_name(m, f) : f
+end
+
+function settable_fields{T<:JinnieModel}(m::T, row::DataFrames.DataFrameRow)
+  df_cols = names(row)
+  fields = is_fully_qualified(m, df_cols[1]) ? to_sql_column_names(m, fieldnames(m)) : fieldnames(m)
+  intersect(fields, df_cols)
 end
 
 function escape_type(value)
@@ -295,14 +317,35 @@ end
   run_query_df(sql, supress_output = true)
 end
 
-@memoize function updatable_fields(m::JinnieModel)
+function persistable_fields{T<:JinnieModel}(m::T; fully_qualified = false)
   object_fields = map(x -> string(x), fieldnames(m))
   db_columns = columns(typeof(m))[:column_name]
-  intersect(object_fields, db_columns)
+  persistable_fields = intersect(object_fields, db_columns)
+  fully_qualified ? to_fully_qualified_sql_column_names(m, persistable_fields) : persistable_fields
 end
 
-function save_sql(m::JinnieModel; conflict_strategy = :error) # upsert strateygy = :none | :error | :ignore | :update
-  uf = updatable_fields(m)
+function to_fully_qualified{T<:JinnieModel}(m::T, f::AbstractString)
+  "$(m._table_name).$f"
+end
+
+function  to_sql_column_names{T<:JinnieModel}(m::T, fields::Array{Symbol, 1})
+  map(x -> (to_sql_column_name(m, string(x))) |> Symbol, fields)
+end
+
+function to_sql_column_name{T<:JinnieModel}(m::T, f::AbstractString)
+  "$(m._table_name)_$f"
+end
+
+function to_fully_qualified_sql_column_names{T<:JinnieModel, S<:AbstractString}(m::T, persistable_fields::Array{S, 1})
+  map(x -> to_fully_qualified_sql_column_name(m, x), persistable_fields)
+end
+
+function to_fully_qualified_sql_column_name{T<:JinnieModel}(m::T, f::AbstractString)
+  "$(to_fully_qualified(m, f)) AS $(to_sql_column_name(m, f))"
+end
+
+function save_sql{T<:JinnieModel}(m::T; conflict_strategy = :error) # upsert strateygy = :none | :error | :ignore | :update
+  uf = persistable_fields(m)
 
   sql = if ! persisted(m) || (persisted(m) && conflict_strategy == :update)
     pos = findfirst(uf, m._id) 
@@ -325,16 +368,17 @@ function save_sql(m::JinnieModel; conflict_strategy = :error) # upsert strateygy
   return sql * " RETURNING *"
 end
 
-function persisted(m::JinnieModel)
+function persisted{T<:JinnieModel}(m::T)
   ! ( isa(getfield(m, symbol(m._id)), Nullable) && isnull( getfield(m, symbol(m._id)) ) )
 end
 
-function update_query_part(m::JinnieModel)
-  update_values = join(map(x -> "$(string(SQLColumn(x))) = $( string(prepare_for_db_save(m, symbol(x), getfield(m, symbol(x)))) )", updatable_fields(m)), ", ")
+function update_query_part{T<:JinnieModel}(m::T)
+  update_values = join(map(x -> "$(string(SQLColumn(x))) = $( string(prepare_for_db_save(m, symbol(x), getfield(m, symbol(x)))) )", 
+                            persistable_fields(m)), ", ")
   return " $update_values WHERE $(m._table_name).$(m._id) = '$(get(m.id))'"
 end
 
-function prepare_for_db_save(m::JinnieModel, field::Symbol, value)
+function prepare_for_db_save{T<:JinnieModel}(m::T, field::Symbol, value)
   value = try 
             Base.get(m.on_dehydration)(m, field, value)
           catch 
@@ -346,7 +390,7 @@ function prepare_for_db_save(m::JinnieModel, field::Symbol, value)
           end
 end
 
-function delete_all(m; truncate = true, reset_sequence = true, cascade = false)
+function delete_all{T<:JinnieModel}(m::Type{T}; truncate = true, reset_sequence = true, cascade = false)
   _m = disposable_instance(m)
   if truncate 
     sql = "TRUNCATE $(_m._table_name)"
@@ -391,8 +435,8 @@ function run_query_df(sql::AbstractString; supress_output = false)
   return df
 end
 
-function to_dict(m::JinnieModel; all_fields = false) 
-  fields = all_fields ? fieldnames(m) : updatable_fields(m)
+function to_dict{T<:JinnieModel}(m::T; all_fields = false) 
+  fields = all_fields ? fieldnames(m) : persistable_fields(m)
   [string(f) => getfield(m, Symbol(f)) for f in fields]
 end
 
