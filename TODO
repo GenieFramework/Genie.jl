@@ -93,3 +93,7 @@ https://github.com/JuliaWeb/WebSockets.jl
 https://github.com/dcjones/YAML.jl
 https://github.com/JuliaLang/ZMQ.jl
 
+# DeclarativePackages
+https://github.com/rened/DeclarativePackages.jl
+Pkg.add("DeclarativePackages") 
+symlink(Pkg.dir("DeclarativePackages")*"/bin/jdp",  "$(homedir())/local/bin/jdp")

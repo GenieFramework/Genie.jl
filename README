@@ -1,5 +1,4 @@
-# DeclarativePackages
-https://github.com/rened/DeclarativePackages.jl
-Pkg.add("DeclarativePackages") 
-symlink(Pkg.dir("DeclarativePackages")*"/bin/jdp",  "$(homedir())/local/bin/jdp")
+A professional grade web framework in Julia - at very early stage, a lot more left to do, not usable yet. 
 
+Done so far: Database low level abstraction layer on top of Postgres, ORM, Migrations, Tasks runner, Tests runner, Logging, Controllers, extended routing based on Mux
+Left to do: the view layer, asset management, and probably swap Mix with HttpServer + Router
