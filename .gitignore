@@ -3,3 +3,9 @@ config/secrets.jl
 log/
 jinnie.sublime-project
 jinnie.sublime-workspace
+
+lib/AnsiColor
+lib/ArgParse
+lib/DeclarativePackages
+lib/HttpServer
+lib/Mux
