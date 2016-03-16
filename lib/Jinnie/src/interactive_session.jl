@@ -6,6 +6,9 @@ if current_module() == Main
   # quick dev / repl helpers
   function r!() 
     reload("Jinnie")
+    reload("Database")
     reload("Model")
+    reload("Migration")
+    reload("FileTemplates")
   end
 end

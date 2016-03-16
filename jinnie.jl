@@ -1,4 +1,4 @@
-#!/usr/local/bin/julia
+#!/usr/local/bin/julia --color=yes
 
 #__precompile__()
 module Jinnie

@@ -1,4 +1,4 @@
-module Migrations
+module Migration
 
 using Memoize
 using Database
@@ -6,7 +6,7 @@ using Jinnie
 using FileTemplates
 using Millboard
 
-type Migration # todo: rename the "migration_" prefix for the fields
+type DbMigration # todo: rename the "migration_" prefix for the fields
   migration_hash::AbstractString
   migration_file_name::AbstractString 
   migration_class_name::AbstractString
@@ -84,7 +84,7 @@ end
     if ( ismatch(r"\d{17}_.*\.jl", f) )
       parts = split(f, "_", limit = 2)
       push!(migrations, parts[1])
-      migrations_files[parts[1]] = Migration(parts[1], f, migration_class_name(parts[2]))
+      migrations_files[parts[1]] = DbMigration(parts[1], f, migration_class_name(parts[2]))
     end
   end
 
@@ -96,14 +96,16 @@ end
   return migrations_files[migrations[length(migrations)]]
 end
 
-function run_migration(migration, direction)
+function run_migration(migration::DbMigration, direction::Symbol)
   include(abspath(joinpath(Jinnie.config.db_migrations_folder, migration.migration_file_name)))
-  eval(parse("Jinnie.$(string(direction))(Jinnie.$(migration.migration_class_name)())")) 
+  eval(parse("$(current_module()).$(string(direction))($(current_module()).$(migration.migration_class_name)())")) 
 
   store_migration_status(migration, direction)
+
+  ! config.supress_output && Jinnie.log("Executed migration $(migration.migration_class_name) $(direction)")
 end
 
-function store_migration_status(migration, direction)
+function store_migration_status(migration::DbMigration, direction::Symbol)
   if ( direction == :up )
     Database.query("INSERT INTO $(Jinnie.config.db_migrations_table_name) VALUES ('$(migration.migration_hash)')", system_query = true)
   else 
@@ -122,11 +124,49 @@ function status()
   arr_output = []
   
   for m in migrations
-    status = ( findfirst(up_migrations, m) > 0 ) ? "up" : "down"
-    push!(arr_output, [migrations_files[m].migration_class_name * ": " * uppercase(status); migrations_files[m].migration_file_name])
+    status = ( findfirst(up_migrations, m) > 0 ) ? :up : :down
+    push!(arr_output, [migrations_files[m].migration_class_name * ": " * uppercase(string(status)); migrations_files[m].migration_file_name])
   end
 
   Millboard.table(arr_output, :colnames => ["Class name & status \nFile name "], :rownames => []) |> println
+end
+
+function all_with_status()
+  migrations, migrations_files = all_migrations()
+  up_migrations = upped_migrations()
+  indexes = []
+  result = Dict()
+  
+  for m in migrations
+    status = ( findfirst(up_migrations, m) > 0 ) ? :up : :down
+    push!(indexes, migrations_files[m].migration_hash)
+    result[migrations_files[m].migration_hash] = Dict(
+      :migration => DbMigration(migrations_files[m].migration_hash, migrations_files[m].migration_file_name, migrations_files[m].migration_class_name), 
+      :status => status
+    )
+  end
+
+  indexes, result
+end
+
+function all_down()
+  i, m = all_with_status()
+  for v in values(m)
+    if v[:status] == :up
+      mm = v[:migration]
+      down_by_class_name(mm.migration_class_name)
+    end
+  end
+end
+
+function all_up()
+  i, m = all_with_status()
+  for v in values(m)
+    if v[:status] == :down
+      mm = v[:migration]
+      up_by_class_name(mm.migration_class_name)
+    end
+  end
 end
 
 end

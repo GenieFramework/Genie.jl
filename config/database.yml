@@ -5,3 +5,11 @@ dev:
   username: adrian
   password: adrian
   port: 5432
+
+test:
+  adapter: Postgres
+  database: pkg_info_test
+  host: localhost
+  username: adrian
+  password: adrian
+  port: 5432

@@ -25,7 +25,7 @@ For V1
 
 To add / use: 
 https://github.com/tonyhffong/Lint.jl   <-- for linting
-https://github.com/wookay/Millboard.jl   <-- use it to print your objects as tables
+https://github.com/invenia/DateParser.jl  <-- extended date time parsing
 
 - @resources to take a dict for :only and :except [deffered] (I couldn't get it to work yet, not worth the trouble for now)
 

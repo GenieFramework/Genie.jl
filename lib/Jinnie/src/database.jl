@@ -1,7 +1,5 @@
 module Database
 
-using Lazy
-using Memoize
 using PostgreSQL
 using YAML
 using Jinnie
@@ -42,22 +40,23 @@ function db_connect(skip_db = false)
 end
 
 @memoize function conn_data()
-  return Base.get(env_connection_data())
+  Base.get(env_connection_data())
 end
 
 @memoize function query_tools(skip_db = false)
   adapter = db_adapter(conn_data()["adapter"])
   conn = db_connect(skip_db)
 
-  return conn, adapter
+  conn, adapter
 end
 
 function create_database()
-  query("CREATE DATABASE $(conn_data()["database"])", skip_db = true, disconnect = true)
-  Jinnie.log("Created database $(conn_data()["database"]) or database already exists")
+  db_name = parse_connection_data()[Jinnie.config.app_env]["database"]
+  query("CREATE DATABASE $db_name", skip_db = true, disconnect = true)
+  Jinnie.log("Created database $db_name or database already exists")
 end
 
-function db_adapter(adapter_name)
+function db_adapter(adapter_name::AbstractString)
   if adapter_name == "Postgres" 
     return eval(parse("PostgreSQL"))
   end
@@ -72,14 +71,19 @@ function create_migrations_table()
   Jinnie.log("Created table $(Jinnie.config.db_migrations_table_name) or table already exists")
 end
 
-function query(sql; skip_db = false, disconnect = false, system_query = false)
+function query(sql::AbstractString; skip_db = false, disconnect = false, system_query = false)
+  supress_output = system_query || config.supress_output
   conn, adapter = query_tools(skip_db)
 
   stmt = adapter.prepare(conn, sql)
 
-  if ! system_query Jinnie.log("SQL QUERY: $sql") end
+  result = if ! supress_output
+    Jinnie.log("SQL QUERY: $sql") 
+    @run_with_time adapter.execute(stmt)
+  else 
+    adapter.execute(stmt)
+  end
 
-  @run_with_time result = adapter.execute(stmt)
   adapter.finish(stmt)
 
   if (disconnect) adapter.disconnect(conn) end
@@ -87,21 +91,18 @@ function query(sql; skip_db = false, disconnect = false, system_query = false)
   return result
 end
 
-function escape_column_name(str, q = "\"")
-  return  if startswith(str, "(") && endswith(str, ")") # expression let it through
-            str
-          elseif startswith(str, "\"") && endswith(str, "\"") 
-            str
-          else "$q$str$q"
-          end
+@memoize function escape_column_name(c::AbstractString)
+  conn, adapter = query_tools()
+  strptr = adapter.PQescapeIdentifier(conn.ptr, c, sizeof(c))
+  str = bytestring(strptr)
+  adapter.PQfreemem(strptr)
+
+  str
 end
 
-function escape_value(str, q = "'")
-  if startswith(str, q) && endswith(str, q) 
-      str
-  else 
-    q * replace(str, q, "$q$q") * q
-  end
+@memoize function escape_value(v::Union{AbstractString, Real})
+  conn, adapter = query_tools()
+  adapter.escapeliteral(conn, v)
 end
 
 end

@@ -5,14 +5,25 @@ push!(LOAD_PATH, abspath("lib/Jinnie/src"))
 
 const TYPE_FIELD_MAX_DEBUG_LENGTH = 150
 
+using Reexport
 using Mux
 using Mustache
 using ArgParse
-using Millboard
+
+@reexport using Lazy
+@reexport using Memoize
+@reexport using JSON
+@reexport using Millboard
+
+if is_dev()
+  @reexport using Debug
+  @reexport using StackTraces
+end
 
 using Util
 using Database
-using Migrations
+using Migration
+using Tester
 
 function load_configurations()
   include(abspath("config/loggers.jl"))
@@ -24,11 +35,9 @@ end
 
 function load_dependencies()
   include(abspath("lib/Jinnie/src/fs_watcher.jl"))
-  include(abspath("lib/Jinnie/src/command_args_parser.jl"))
   include(abspath("lib/Jinnie/src/middlewares.jl"))
   include(abspath("lib/Jinnie/src/renderer.jl"))
   include(abspath("lib/Jinnie/src/jinnie.jl"))
-  include(abspath("lib/Jinnie/src/tasks.jl"))
   include(abspath("lib/Jinnie/src/filetemplates.jl"))
 end
 

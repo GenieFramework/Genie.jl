@@ -5,7 +5,7 @@ type Task_Info
   description::AbstractString
 end
 
-module Tasks
+module Task
 
 using Jinnie
 using Util

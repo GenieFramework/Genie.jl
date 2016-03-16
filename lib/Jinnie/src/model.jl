@@ -1,151 +1,17 @@
 module Model
 
-using Jinnie
 using Database
 using DataFrames
-using Memoize
-using JSON
-using Debug
+using Jinnie
 
-import Base.string
-import Base.print
-import Base.show
-import Base.convert
-import Base.endof
-import Base.length
-import Base.next
-
-export DbId
-
-abstract SQLType <: JinnieType
-
-type SQLString <: AbstractString
-  value::AbstractString
-  SQLString(v::AbstractString) = new(v)
-end
-SQLString(a::Array) = map(x -> SQLString(x), a)
-string(a::Array{SQLString}) = join(map(x -> string(SQLString(x)), a), ",")
-string(s::SQLString) = safe(s.value)
-print(io::IO, s::SQLString) = print(io, string(s))
-show(io::IO, s::SQLString) = print(io, string(s))
-convert(::Type{SQLString}, r::Real) = SQLString(string(r))
-endof(s::SQLString) = endof(s.value)
-length(s::SQLString) = length(s.value)
-next(s::SQLString, i::Int) = next(s.value, i)
-safe(s::SQLString) = safe(s.value)
-
-safe(s::AbstractString) = Jinnie.Database.escape_value(s)
-safe(n::Real) = n
-
-type SQLReal <: Real
-  value::Real
-  SQLReal(v::Real) = new(v)
-end
-SQLReal(a::Array) = map(x -> SQLReal(x), a)
-string(a::Array{SQLReal}) = join(map(x -> string(SQLReal(x)), a), ",")
-string(s::SQLReal) = safe(s.value)
-print(io::IO, s::SQLReal) = print(io, string(s))
-show(io::IO, s::SQLReal) = print(io, string(s))
-safe(s::SQLReal) = s.value
-convert(::Type{SQLReal}, r::Nullable{Int32}) = SQLReal(Base.get(r))
-
-SQLInput = Union{SQLString, SQLReal}
-convert(::Type{SQLInput}, s::AbstractString) = SQLString(s)
-convert(::Type{SQLInput}, s::Real) = SQLReal(s)
-
-type SQLColumn <: SQLType
-  value::AbstractString
-  SQLColumn(v::Symbol) = new(string(v))
-end
-function SQLColumn(v::AbstractString) 
-  if contains(v, ",") && !( startswith(v, "(") && endswith(v, ")") )
-    return map(x -> SQLColumn(symbol(strip(x))), split(v, ","))
-  else 
-    return SQLColumn(symbol(strip(v)))
-  end
-end
-SQLColumn(a::Array) = map(x -> SQLColumn(string(x)), a)
-string(a::Array{SQLColumn}) = join(map(x -> string(x), a), ", ")
-print(io::IO, a::Array{SQLColumn}) = print(io, string(a))
-show(io::IO, a::Array{SQLColumn}) = print(io, string(a))
-string(s::SQLColumn) = safe(s)
-print(io::IO, s::SQLColumn) = print(io, string(s))
-show(io::IO, s::SQLColumn) = print(io, string(s))
-safe(s::SQLColumn) = Jinnie.Database.escape_column_name(s.value)
-
-SQLColumns = SQLColumn # so we can use both
-
-type SQLLogicOperator <: SQLType
-  value::AbstractString
-  SQLLogicOperator() = new("AND")
-  SQLLogicOperator(v::AbstractString) = new(v)
-  SQLLogicOperator(v::Any) = new( string(v) == "OR" ? SQLLogicOperator("OR") : SQLLogicOperator("AND") )
-end
-string(s::SQLLogicOperator) = s.value
-
-type SQLWhere <: SQLType
-  column::SQLColumn
-  value::SQLInput
-  condition::SQLLogicOperator
-  operator::AbstractString
-
-  SQLWhere(column::Any, value::Any, condition::Any, operator::Any) =  new(
-                                                                        SQLColumn(string(column)), 
-                                                                        SQLInput(value), 
-                                                                        SQLLogicOperator(uppercase(string(condition))), 
-                                                                        string(operator)
-                                                                      )
-end
-SQLWhere(column::Any, value::Any, condition::Any) = SQLWhere(column, value, condition, "=")
-SQLWhere(column::Any, value::Any) = SQLWhere(column, value, "AND")
-string(w::SQLWhere) = "$(w.condition.value) ( $(string(w.column)) $(w.operator) ( $(string(w.value)) ) )"
-print{T<:SQLWhere}(io::IO, w::T) = print(io, "$(jinnietype_to_string(w)) \n $(string(w))")
-show{T<:SQLWhere}(io::IO, w::T) = print(io, "$(jinnietype_to_string(w)) \n $(string(w))")
-
-type SQLLimit <: SQLType
-  value::Union{Int, AbstractString}
-  SQLLimit(v::Int) = new(v)
-  SQLLimit(v::AbstractString) = new("ALL")
-  SQLLimit() = new("ALL")
-end
-
-type SQLFunction <: SQLType
-  value::AbstractString
-  SQLFunction(v::AbstractString) = endswith(v, "()") ? new(v) : error("Invalid SQL Function argument")
-end
-
-SQLIdentifier = Union{SQLColumn, SQLFunction}
-
-typealias DbId Int32
-convert(::Type{Nullable{DbId}}, v::Number) = Nullable{DbId}(DbId(v))
-
-type SQLOrder <: SQLType
-  column::SQLIdentifier
-  direction::AbstractString
-  SQLOrder(column::Any, direction::Any) = new(  endswith(string(column), "()") ? SQLFunction(string(column)) : SQLColumn(string(column)), 
-                                                uppercase(string(direction)) == "DESC" ? "DESC" : "ASC" )
-end
-SQLOrder(column::Any) = SQLOrder(column, "ASC")
-
-type SQLQuery <: SQLType
-  columns::Array{SQLColumn} 
-  where::Array{SQLWhere} 
-  limit::SQLLimit  
-  offset::Int 
-  order::Array{SQLOrder} 
-  group::Array{SQLColumn} 
-  having::Array{SQLWhere}
-
-  SQLQuery(; columns = SQLColumn[], where = SQLWhere[], limit = SQLLimit("ALL"), offset = 0, order = SQLOrder[], group = SQLColumn[], having = SQLWhere[]) = 
-    new(columns, where, limit, offset, order, group, having)
-end
+include(abspath(joinpath("lib", "Jinnie", "src", "model_types.jl")))
 
 #
 # ORM methods
 # 
 
 function find_df{T<:JinnieModel}(m::Type{T}, q::SQLQuery)
-  query(find_sql(m, prepare(m, q)))
+  query(to_fetch_sql(m, prepare(m, q)))
 end
 
 function find{T<:JinnieModel}(m::Type{T}, q::SQLQuery)
@@ -169,15 +35,20 @@ function find_one_by{T<:JinnieModel}(m::Type{T}, column_name::Any, value::Any)
   find_one_by(m, SQLColumn(column_name), SQLInput(value))
 end
 
+function find_one{T<:JinnieModel}(m::Type{T}, value::Any)
+  _m = disposable_instance(m)
+  find_one_by(m, SQLColumn(_m._id), SQLInput(value))
+end
+
 function rand{T<:JinnieModel}(m::Type{T}; limit = 1)
-  find(m, SQLQuery(limit = SQLLimit(limit), order = [SQLOrder("random()")]) )
+  find(m, SQLQuery(limit = SQLLimit(limit), order = [SQLOrder("random()", raw = true)]) )
 end
 
 function rand_one{T<:JinnieModel}(m::Type{T})
   to_nullable(rand(m, limit = 1))
 end
 
-function all(m)
+function all{T<:JinnieModel}(m::Type{T})
   find(m)
 end
 
@@ -191,7 +62,7 @@ function save{T<:JinnieModel}(m::T; conflict_strategy = :error)
 end
 
 function save!{T<:JinnieModel}(m::T; conflict_strategy = :error)
-  sql = save_sql(m, conflict_strategy = conflict_strategy)
+  sql = to_store_sql(m, conflict_strategy = conflict_strategy)
   to_models(typeof(m), query(sql)) |> first
 end
 
@@ -231,12 +102,12 @@ end
 # Query generation
 # 
 
-function find_sql{T<:JinnieModel}(m::Type{T}, parts::Dict)
+function to_fetch_sql{T<:JinnieModel}(m::Type{T}, parts::Dict)
   _m = disposable_instance(m)
   """SELECT $(parts[:columns_part]) FROM $(_m._table_name) WHERE $(parts[:where_part]) $(parts[:group_part]) ORDER BY $(parts[:order_part]) LIMIT $(parts[:limit].value) OFFSET $(parts[:offset])"""
 end
 
-function save_sql{T<:JinnieModel}(m::T; conflict_strategy = :error) # upsert strateygy = :none | :error | :ignore | :update
+function to_store_sql{T<:JinnieModel}(m::T; conflict_strategy = :error) # upsert strateygy = :none | :error | :ignore | :update
   uf = persistable_fields(m)
 
   sql = if ! persisted(m) || (persisted(m) && conflict_strategy == :update)
@@ -272,10 +143,8 @@ function prepare_for_db_save{T<:JinnieModel}(m::T, field::Symbol, value)
           catch 
             value
           end
-  return  if isa(value, AbstractString) || isa(value, Char)
-            SQLString(value)
-          else SQLReal(value)
-          end
+
+  SQLInput(value)
 end
 
 # 
@@ -309,10 +178,11 @@ end
 # 
 
 function query(sql::AbstractString)
-  run_query_df(sql)
+  query_df(sql)
 end
 
-function run_query_df(sql::AbstractString; supress_output = false) 
+function query_df(sql::AbstractString; supress_output = false) 
+  supress_output = supress_output || config.supress_output
   conn, adapter = Database.query_tools()
   stmt = adapter.prepare(conn, sql)
 
@@ -330,7 +200,7 @@ function run_query_df(sql::AbstractString; supress_output = false)
   df = adapter.fetchdf(result)
   adapter.finish(stmt)
 
-  if !supress_output Jinnie.log(df) end
+  @unless(supress_output, Jinnie.log(df))
 
   return df
 end
@@ -362,8 +232,8 @@ function prepare{T<:JinnieModel}(m::Type{T}, q::SQLQuery)
                   else (q.where[1].condition.value == "AND" ? "TRUE " : "FALSE ") * join(map(w -> string(w), q.where), " ")
                   end
 
-  order_part =    if ( length(q.order) == 0 ) _m._id
-                  else join(map(x -> "$(x.column.value) $(x.direction)", q.order), ", ")
+  order_part =    if ( length(q.order) == 0 ) to_sql_column_name(_m, _m._id)
+                  else join(map(x -> "$(x.column) $(x.direction)", q.order), ", ")
                   end
 
   group_part =    if ( length(q.group) > 0 ) " GROUP BY " * join(map(x -> safe(x.value), q.group), ", ")
@@ -387,7 +257,7 @@ end
             udt_name, is_identity, is_updatable
           FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '$(_m._table_name)'"
 
-  run_query_df(sql, supress_output = true)
+  query_df(sql, supress_output = true)
 end
 
 function persisted{T<:JinnieModel}(m::T)
@@ -405,6 +275,46 @@ function settable_fields{T<:JinnieModel}(m::T, row::DataFrames.DataFrameRow)
   df_cols = names(row)
   fields = is_fully_qualified(m, df_cols[1]) ? to_sql_column_names(m, fieldnames(m)) : fieldnames(m)
   intersect(fields, df_cols)
+end
+
+#
+# Data sanitization 
+# 
+
+@memoize function to_sql(sql::AbstractString, params::Tuple)
+  i = 0
+  function splat_params(_) 
+    i += 1
+    Database.escape_value(params[i])
+  end
+
+  sql = replace(sql, '?', splat_params)
+end
+@memoize function to_sql(sql::AbstractString, params::Dict)
+  function dict_params(key) 
+    key = Symbol(replace(key, r"^:", ""))
+    Database.escape_value(params[key])
+  end
+
+  replace(sql, r":([a-zA-Z0-9]*)", dict_params)
+end
+
+@memoize function escape_column_name(c::SQLColumn)
+  if ! c.escaped && ! c.raw
+    c.value = Database.escape_column_name(c.value)
+    c.escaped = true
+  end
+
+  c
+end
+
+@memoize function escape_value(i::SQLInput)
+  if ! i.escaped && ! i.raw
+    i.value = Database.escape_value(i.value)
+    i.escaped = true
+  end
+
+  return i
 end
 
 # 
@@ -450,6 +360,17 @@ end
 function to_dict{T<:JinnieModel}(m::T; all_fields = false) 
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
   [string(f) => getfield(m, Symbol(f)) for f in fields]
+end
+function to_dict{T<:JinnieType}(m::T) 
+  Jinnie.to_dict(m)
+end
+
+function to_string_dict{T<:JinnieModel}(m::T; all_fields = false) 
+  fields = all_fields ? fieldnames(m) : persistable_fields(m)
+  [string(f) => string(getfield(m, Symbol(f))) for f in fields]
+end
+function to_string_dict{T<:JinnieType}(m::T) 
+  Jinnie.to_string_dict(m)
 end
 
 function to_nullable(result)

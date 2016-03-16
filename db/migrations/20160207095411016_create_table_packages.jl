@@ -20,8 +20,6 @@ function up(_::CreateTablePackages)
     )
   """)
   Database.query("""ALTER SEQUENCE packages__seq_id OWNED BY packages.id;""")
-
-  Jinnie.log("Executed migration CreateTablePackages::up")
 end
 
 function down(_::CreateTablePackages)
@@ -29,6 +27,4 @@ function down(_::CreateTablePackages)
   if ( adapter != Database.POSTGRESQL_ADAPTER ) error("Not implemented") end
 
   Database.query("DROP TABLE packages")
-
-  Jinnie.log("Executed migration CreateTablePackages::down")
 end
