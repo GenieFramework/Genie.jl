@@ -5,8 +5,7 @@ type CreateTableRepos
 end 
 
 function up(_::CreateTableRepos)
-  conn, adapter = Database.query_tools()
-  if ( adapter != Database.POSTGRESQL_ADAPTER ) error("Not implemented") end
+  # conn, adapter = Database.query_tools()
 
   Database.query("""CREATE SEQUENCE repos__seq_id""")
   Database.query("""
@@ -26,8 +25,7 @@ function up(_::CreateTableRepos)
 end
 
 function down(_::CreateTableRepos)
-  conn, adapter = Database.query_tools()
-  if ( adapter != Database.POSTGRESQL_ADAPTER ) error("Not implemented") end
+  # conn, adapter = Database.query_tools()
 
   Database.query("DROP TABLE repos")
 end

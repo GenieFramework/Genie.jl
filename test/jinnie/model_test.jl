@@ -1,20 +1,20 @@
 using Faker
-@reexport using Jinnie.Model
+@reexport using Model
 
 function setup()
   Tester.reset_db()
 
   for i in 1:10 
-    p = Jinnie.Package()
-    p.name = Faker.word() * "_" * Faker.word()
+    p = Package()
+    p.name = Faker.word() * "_" * Faker.word() * "_" * Faker.word()
     p.url = Faker.uri() * "?" * string(hash(randn()))
 
-    Jinnie.Model.save!(p)
+    Model.save!(p)
   end
 end
 
 function teardown()
-  
+  Model.delete_all(Package)
 end
 
 facts("SQLWhere constructors") do
@@ -89,8 +89,22 @@ facts("SQLLimit constructors") do
   @fact SQLLimit("ALL") |> string --> "ALL"
 end
 
+facts("Fetch Select part") do 
+  @fact Model.to_select_part(Package, collect(SQLColumn([:name, :url]))) |> string --> "SELECT \"name\", \"url\""
+  @fact Model.to_select_part(Package, SQLColumn([:name, :url])) |> string --> "SELECT \"name\", \"url\""
+  @fact Model.to_select_part(Package) |> string --> "SELECT \"packages\".\"id\" AS \"packages_id\", \"packages\".\"name\" AS \"packages_name\", \"packages\".\"url\" AS \"packages_url\", \"repos\".\"id\" AS \"repos_id\", \"repos\".\"package_id\" AS \"repos_package_id\", \"repos\".\"fullname\" AS \"repos_fullname\", \"repos\".\"readme\" AS \"repos_readme\", \"repos\".\"participation\" AS \"repos_participation\""
+  @fact Model.to_select_part(Package, "*") |> string --> "SELECT *"
+  @fact Model.to_select_part(Package, "name") |> string --> "SELECT \"name\""
+end
+
+facts("Join part") do 
+  context("Empty join should use default columns") do 
+    @fact Model.to_join_part(Package) |> strip --> "LEFT JOIN \"repos\" ON \"repos\".\"package_id\" = \"packages\".\"id\""
+  end
+end
+
 facts("SQLQuery constructors") do 
-  
+  q = SQLQuery()
 end
 
 facts("Model basics") do
@@ -139,5 +153,5 @@ facts("Model basics") do
     @pending Model.find_one() --> :?
   end
 
-  teardown()
+  @psst teardown()
 end

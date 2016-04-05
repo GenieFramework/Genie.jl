@@ -6,9 +6,9 @@ push!(LOAD_PATH, abspath("lib/Jinnie/src"))
 const TYPE_FIELD_MAX_DEBUG_LENGTH = 150
 
 using Reexport
-using Mux
-using Mustache
 using ArgParse
+# using Mux
+# using Mustache
 
 @reexport using Lazy
 @reexport using Memoize
@@ -20,8 +20,12 @@ if is_dev()
   @reexport using StackTraces
 end
 
+include(abspath("lib/Jinnie/src/jinnie_types.jl"))
+
 using Util
 using Database
+using Model
+using Controller
 using Migration
 using Tester
 
@@ -39,6 +43,28 @@ function load_dependencies()
   include(abspath("lib/Jinnie/src/renderer.jl"))
   include(abspath("lib/Jinnie/src/jinnie.jl"))
   include(abspath("lib/Jinnie/src/filetemplates.jl"))
+end
+
+function load_resources(dir = abspath(joinpath(APP_PATH, "app", "resources")))
+  f = readdir(abspath(dir))
+  for i in f
+    full_path = joinpath(dir, i)
+    if isdir(full_path)
+      load_resources(full_path)
+    else 
+      if ( i == "controller.jl" || i == "model.jl" ) 
+        include(full_path)
+      end
+    end
+  end
+end
+
+function load_initializers()
+  dir = abspath(joinpath(APP_PATH, "config", "initializers"))
+  f = readdir(dir)
+  for i in f
+    include(joinpath(dir, i))
+  end
 end
 
 function setup_defaults(parsed_args)
@@ -62,7 +88,5 @@ end
 
 load_configurations()
 load_dependencies()
-config.auto_connect && db_connect()
-include_libs()
-include_initializers()
-include_resources()
+load_initializers()
+load_resources()

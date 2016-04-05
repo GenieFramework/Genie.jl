@@ -12,6 +12,8 @@ type Repo <: JinnieModel
   readme::UTF8String
   participation::Array{Int}
 
+  belongs_to::Nullable{Array{Model.SQLRelation, 1}}
+
   on_dehydration::Nullable{Function}
   on_hydration::Nullable{Function}
 
@@ -22,10 +24,13 @@ type Repo <: JinnieModel
         fullname = "", 
         readme = "", 
         participation = [], 
+
+        belongs_to = [Model.SQLRelation(:package, required = false)], 
+        
         on_dehydration = Jinnie.Repos.dehydrate, 
         on_hydration = Jinnie.Repos.hydrate
       ) = 
-    new("repos", "id", github, id, package_id, fullname, readme, participation, on_dehydration, on_hydration)
+    new("repos", "id", github, id, package_id, fullname, readme, participation, belongs_to, on_dehydration, on_hydration)
 end
 
 module Repos

@@ -1,5 +1,5 @@
 dev:
-  adapter: Postgres
+  adapter: PostgreSQL
   database: pkg_info_dev
   host: localhost
   username: adrian
@@ -7,7 +7,7 @@ dev:
   port: 5432
 
 test:
-  adapter: Postgres
+  adapter: PostgreSQL
   database: pkg_info_test
   host: localhost
   username: adrian

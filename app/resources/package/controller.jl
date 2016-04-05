@@ -1,4 +1,4 @@
-type Package_Controller <: Jinnie_Controller
+type PackageController <: JinnieController
 end
 
-index(_::Package_Controller, req) = "[Cool, welcome! Search for some packages!] [search]" 
+index(_::PackageController, req) = "[Cool, welcome! Search for some packages!] [search]" 

@@ -6,7 +6,14 @@ type Package <: JinnieModel
   name::AbstractString
   url::AbstractString
 
-  Package(; id = Nullable{Model.DbId}(), name = "", url = "") = new("packages", "id", id, name, url) # todo: switch to using symbols or a union type of symbol & string
+  has_one::Nullable{Array{Model.SQLRelation, 1}}
+
+  Package(; 
+            id = Nullable{Model.DbId}(), 
+            name = "", 
+            url = "", 
+            has_one = [Model.SQLRelation(:repo, required = false)]) = 
+        new("packages", "id", id, name, url, has_one) 
 end
 
 module Packages
