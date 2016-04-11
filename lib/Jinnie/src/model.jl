@@ -82,28 +82,38 @@ end
 
 @debug function to_models{T<:JinnieModel}(m::Type{T}, df::DataFrames.DataFrame)
   models = []
+
   for row in eachrow(df)
     dfs = df_result_to_models_data(m, df)
-    push!(models, to_model(m, dfs[disposable_instance(m)._table_name]))
+    main_model = to_model(m, dfs[disposable_instance(m)._table_name])
 
     # @bp
+    index = 1
     for relationship in relationships(m)
       r, r_type = relationship
-      __m = constantize(r.model_name)
+      related_model = constantize(r.model_name)
+      related_model_df = dfs[disposable_instance(related_model)._table_name]
+
       # @bp
-      push!(models, to_model(__m, dfs[disposable_instance(__m)._table_name]))
+      r.data = Nullable( to_model(related_model, related_model_df) )
+      r.raw_data = Nullable(related_model_df)
+
+      model_rels = getfield(main_model, r_type) |> Base.get # []
+      model_rels[index] = r
+
+      index += 1
     end
+
+    push!(models, main_model)
   end
 
   #+TODO: delete me
   #+TODO: you're here
-  # Jinnie.log("Good job! You now have the models for each relationship - and you need to implement the accessor methods.", :debug)
+  # Jinnie.log("Good job! You now have the models for each relationship - and you need to implement the accessor methods.", :debug) <-- 
   # Jinnie.log("Also, look into lazy and eager relationships - so you skip joining with the resources if not necessary", :debug)
   # Jinnie.log("Now, check out 'models', it's where you're at", :debug)
 
-  # Jinnie.log("Oh crap balls! Works just for Package, not for Repo (does not return the Package)", :debug)
-
-  @bp
+  # @bp
   return models
 end
 
@@ -555,10 +565,21 @@ function to_dict{T<:JinnieType}(m::T)
   Jinnie.to_dict(m)
 end
 
-function to_string_dict{T<:JinnieModel}(m::T; all_fields::Bool = false, all_output::Bool = false) 
+@debug function to_string_dict{T<:JinnieModel}(m::T; all_fields::Bool = false, all_output::Bool = false) 
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
   output_length = all_output ? 100_000_000 : Jinnie.config.output_length
-  [string(f) => string(getfield(m, Symbol(f))) for f in fields]
+  # @bp
+  response = Dict{AbstractString, AbstractString}()
+  for f in fields 
+    key = string(f)
+    value = string(getfield(m, Symbol(f)))
+    if length(value) > output_length 
+      value = value[1:output_length] * "..."
+    end
+    response[key] = value
+  end
+  
+  response
 end
 function to_string_dict{T<:JinnieType}(m::T) 
   Jinnie.to_string_dict(m)

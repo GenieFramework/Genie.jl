@@ -193,10 +193,14 @@ QQ = SQLQuery
 
 type SQLRelation <: SQLType
   model_name::Symbol
-  required::Bool
   condition::Nullable{Array{SQLWhere, 1}}
+  required::Bool
+  lazy::Bool
+  data::Nullable{JinnieModel}
+  raw_data::Nullable{DataFrames.DataFrame}
 
-  SQLRelation(model_name; required = true, condition = Nullable{Array{SQLWhere, 1}}()) = new(model_name, required, condition)
+  SQLRelation(model_name; condition = Nullable{Array{SQLWhere, 1}}(), required = true, lazy = false, data = nothing, raw_data = nothing) = 
+    new(model_name, condition, required, lazy, data, raw_data)
 end
 
 QR = SQLRelation

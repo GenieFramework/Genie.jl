@@ -1,5 +1,9 @@
 using Logging
 
+const DEV = "dev"
+const PROD = "prod"
+const TEST = "test"
+
 type Config
   server_port::Int
   app_env::AbstractString
@@ -15,7 +19,7 @@ type Config
 
   Config(;  
             server_port = 8000, 
-            app_env = "dev", 
+            app_env = DEV, 
             loggers = [], 
             running_as_task = false, 
             auto_connect = false, 
@@ -29,10 +33,6 @@ type Config
               new(server_port, app_env, loggers, running_as_task, auto_connect, supress_output, 
                   db_migrations_table_name, db_migrations_folder, task_folder, test_folder, output_length)
 end
-
-const DEV = "dev"
-const PROD = "prod"
-const TEST = "test"
 
 is_dev() = config.app_env == DEV
 is_prod() = config.app_env == PROD

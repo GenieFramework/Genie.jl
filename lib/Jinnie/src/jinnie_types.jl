@@ -26,10 +26,24 @@ function jinnietype_to_print{T<:JinnieType}(m::T)
   output
 end
 
-function to_dict(m::Any; all_fields = false) 
+function to_dict(m::Any; all_fields::Bool = false) 
   [string(f) => getfield(m, Symbol(f)) for f in fieldnames(m)]
 end
 
-function to_string_dict(m::Any; all_fields = false) 
-  [string(f) => string(getfield(m, Symbol(f))) for f in fieldnames(m)]
+function to_string_dict(m::Any; all_output::Bool = false) 
+  to_string_dict(m, fieldnames(m), all_output = all_output)
+end
+function to_string_dict(m::Any, fields::Array{Symbol,1}; all_output::Bool = false)
+  output_length = all_output ? 100_000_000 : Jinnie.config.output_length
+  response = Dict{AbstractString, AbstractString}()
+  for f in fields 
+    key = string(f)
+    value = string(getfield(m, Symbol(f)))
+    if length(value) > output_length 
+      value = value[1:output_length] * "..."
+    end
+    response[key] = value
+  end
+  
+  response
 end
