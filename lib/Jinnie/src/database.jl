@@ -47,10 +47,10 @@ function create_migrations_table()
   Jinnie.log("Created table $(Jinnie.config.db_migrations_table_name) or table already exists")
 end
 
-function query(sql::AbstractString; skip_db = false, disconnect = false, system_query = false)
+function query(sql::AbstractString; skip_db = false, system_query = false)
   supress_output = system_query || config.supress_output
   conn, adapter = query_tools(skip_db)
-  adapter_query(sql, supress_output, conn, adapter, skip_db)
+  current_module().adapter_query(sql, supress_output, conn, adapter, skip_db)
 end
 
 @memoize function escape_column_name(c::AbstractString)

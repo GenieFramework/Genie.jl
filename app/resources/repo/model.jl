@@ -11,6 +11,7 @@ type Repo <: JinnieModel
   fullname::AbstractString
   readme::UTF8String
   participation::Array{Int}
+  updated_at::Nullable{DateTime}
 
   belongs_to::Nullable{Array{Model.SQLRelation, 1}}
 
@@ -23,19 +24,19 @@ type Repo <: JinnieModel
         package_id = Nullable{Model.DbId}(), 
         fullname = "", 
         readme = "", 
-        participation = [], 
+        participation = [],
+        updated_at = Nullable{DateTime}(),
 
         belongs_to = [Model.SQLRelation(:package, required = false)], 
         
         on_dehydration = Jinnie.Repos.dehydrate, 
         on_hydration = Jinnie.Repos.hydrate
       ) = 
-    new("repos", "id", github, id, package_id, fullname, readme, participation, belongs_to, on_dehydration, on_hydration)
+    new("repos", "id", github, id, package_id, fullname, readme, participation, updated_at, belongs_to, on_dehydration, on_hydration)
 end
 
 module Repos
 
-using Memoize
 using GitHub
 using JSON
 using Jinnie
@@ -43,6 +44,8 @@ using Jinnie
 function dehydrate(repo::Jinnie.Repo, field::Symbol, value)
   return  if field == :participation 
             join(value, ",")
+          elseif field == :updated_at
+            value = Dates.now()
           else
             value
           end
@@ -51,20 +54,35 @@ end
 function hydrate(repo::Jinnie.Repo, field::Symbol, value)
   return  if field == :participation 
             map(x -> parse(x), split(value, ",")) 
+          elseif field == :updated_at
+            value = DateParser.parse(DateTime, value)
           else
             value
           end
 end
 
 @memoize function readme_from_github(repo::Jinnie.Repo; parse_markdown = false)
-  readme = GitHub.readme(Base.get(repo.github), auth = Jinnie.GITHUB_AUTH)
-  content = try 
-    mapreduce(x -> string(Char(x)), *, base64decode( Base.get(readme.content) ))
-  catch 
-    readall(download(string(Base.get(readme.download_url))))
-  end
+  readme =  try 
+              Nullable(GitHub.readme(Base.get(repo.github), auth = Jinnie.GITHUB_AUTH))
+            catch ex 
+              Jinnie.log(ex, :debug)
+              Nullable()
+            end
 
-  return parse_markdown ? Markdown.parse(content) : content
+  content = if isnull(readme)
+              ""
+            else 
+              readme = Base.get(readme)
+
+              try 
+                mapreduce(x -> string(Char(x)), *, base64decode( Base.get(readme.content) ))
+              catch ex
+                Jinnie.log(ex, :debug)
+                readall(download(string(Base.get(readme.download_url)))) 
+              end
+            end
+  
+  parse_markdown ? Markdown.parse(content) : content
 end
 
 function readme_from_github!(repo::Jinnie.Repo)
@@ -72,13 +90,19 @@ function readme_from_github!(repo::Jinnie.Repo)
 end
 
 function readme(repo::Jinnie.Repo; parse_markdown = true)
-  return parse_markdown ? Markdown.parse(repo.readme) : repo.readme
+  parse_markdown ? Markdown.parse(repo.readme) : repo.readme
 end
 
 @memoize function participation_from_github(repo::Jinnie.Repo)
   stats = GitHub.stats(Base.get(repo.github), "participation", auth = Jinnie.GITHUB_AUTH)
   part_data = mapreduce(x -> string(Char(x)), *, stats.data) |> JSON.parse
-  return part_data["all"]
+  
+  try   
+    part_data["all"]
+  catch ex
+    Jinnie.log(ex)
+    zeros(Int, 52) # 52 = nr of weeks in year
+  end
 end
 
 function participation_from_github!(repo::Jinnie.Repo)
@@ -90,7 +114,8 @@ function from_package(package::Jinnie.Package)
   repo = Jinnie.Repo(github = github_repo, package_id = package.id, fullname = Jinnie.Packages.fullname(package))
   readme_from_github!(repo)
   participation_from_github!(repo)
-  return repo
+
+  repo
 end
 
 function search(search_term::AbstractString)

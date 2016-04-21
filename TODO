@@ -3,41 +3,51 @@ Experiment app:
   provide functionality to search packages by various criteria
   provide a web ui for searching packages
 
+
+Important parts: 
+  1. lazy relationships - to skip relationship if lazy
+  1.1. force loading relationship (with relationship!()) if the relationship has not been loaded (cause lazy)
+  2. streaming queries - get the result set (dataframe) but don't convert each row to models - instead iterate row by row as the data is requested
+  3. batch query results - convenience method to batch results (behind the scene using limit and offset and an iterator)
+  4. propery use show() and print() for types
+  5. updated_at does not work because it's not defined in type
+
 For V1
-+ json output <- with request type matching
-+ add tests with https://github.com/JuliaLang/FactCheck.jl https://github.com/codeneomatrix/Faker.jl https://github.com/burrowsa/Fixtures.jl +++ linting 
-+ models - DataFrames & https://github.com/JuliaStats/DataFramesMeta.jl
-+ validators with https://github.com/eraviart/Biryani.jl
-+ trailblazer architecture 
+
+[
++ = todo 
+! = reopened
+. = postponed
+- = canceled
+]
+
++ json output <- with json views / renderer & request type matching
++ validators with https://github.com/eraviart/Biryani.jl <- Biryani won't do, need custom validators
 + code generators (controllers)
 + view caching
-+ color the logging output with AnsiColors
 + add support for environments with AppConf
-+ debugger https://github.com/toivoh/Debug.jl or gallium
 + docs https://github.com/MichaelHatherly/Lexicon.jl https://github.com/MichaelHatherly/Docile.jl
 + DeclarativePackages to go by the gemfile and gemfile.lock pattern - a file with the app's dependencies and one with the locked versions. Should only take into account the explicit versioning when pinning. Should by default store the package sources in the app's file structure. 
 + mailers
-+ static sites generation 
-+ react output (patchwork or react.js)
-+ ejl - embedded julia HTML rendering
-? form renderers 
-? channels (like phoenix) (for sockets)
++ channels (like phoenix) (for sockets)
 
-To add / use: 
-https://github.com/tonyhffong/Lint.jl   <-- for linting
-https://github.com/invenia/DateParser.jl  <-- extended date time parsing
+! complete routing to support "route", :controller, :action [done]
+! code reloading when files are changed (via Autoreload [https://github.com/malmaud/Autoreload.jl] or https://github.com/rened/Watcher.jl) or https://github.com/wavexx/Expect.jl
+! rendering -> auto-rendering layouts, views and partials (mustache only first or directly to ejl)
 
-- @resources to take a dict for :only and :except [deffered] (I couldn't get it to work yet, not worth the trouble for now)
+. static sites generation (postponed)
+. react output (patchwork or react.js) (postponed)
+. ejl - embedded julia HTML rendering (postponed, maybe cancelled, mustache will do)
+. form renderers 
+
+- trailblazer architecture
+- color the logging output with AnsiColors 
 
 √ logging (via the logging.jl pkg or Lumberjack.jl)
 √ parsing of command line args for server, console, websockets (via ArgParse pkg) 
-  -> parsing logic implemented, needs logic for whatever options will be provided
-√ rendering -> auto-rendering layouts, views and partials (mustache only first or directly to ejl)
-  -> looks good but needs testing
-  -> also, should be switched to use relative paths when including partials
-  -> and view caching
-√ complete routing to support "route", :controller, :action [done]
-√ code reloading when files are changed (via Autoreload [https://github.com/malmaud/Autoreload.jl] or https://github.com/rened/Watcher.jl) or https://github.com/wavexx/Expect.jl
+√ debugger https://github.com/toivoh/Debug.jl or gallium (gallium does not work, let's see in v0.5. using Debug)
+√ add tests with https://github.com/JuliaLang/FactCheck.jl https://github.com/codeneomatrix/Faker.jl https://github.com/burrowsa/Fixtures.jl +++ linting 
+√ models - DataFrames & https://github.com/JuliaStats/DataFramesMeta.jl
 
 ======
 
@@ -46,6 +56,7 @@ Jinnie.render - all rendering methods should be DRY and support various renderin
 
 Other
 https://github.com/zachallaun/ValueDispatch.jl
+https://github.com/invenia/DateParser.jl  <-- extended date time parsing
 https://github.com/JuliaWeb/GitHub.jl
 https://github.com/snotskie/Helpme.jl
 https://github.com/IainNZ/Humanize.jl  <-- Humanize numbers
@@ -55,6 +66,7 @@ https://github.com/arypurnomoz/JulieTest.jl
 https://github.com/one-more-minute/Lazy.jl
 https://github.com/zenna/Lens.jl
 https://github.com/JuliaLang/LightXML.jl
+https://github.com/tonyhffong/Lint.jl   <-- for linting
 https://github.com/one-more-minute/MacroTools.jl
 https://github.com/JuliaArchive/Markdown.jl
 https://github.com/kmsquire/Match.jl

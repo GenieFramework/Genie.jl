@@ -3,6 +3,7 @@ module Model
 using Database
 using DataFrames
 using Jinnie
+using Util
 
 include(abspath(joinpath("lib", "Jinnie", "src", "model_types.jl")))
 
@@ -45,7 +46,7 @@ function find_one_by{T<:JinnieModel}(m::Type{T}, column_name::Any, value::Any; d
 end
 
 function find_one{T<:JinnieModel}(m::Type{T}, value::Any; df::Bool = false)
-  _m = disposable_instance(m)
+  _m::T = disposable_instance(m)
   find_one_by(m, SQLColumn(_m._id), SQLInput(value), df = df)
 end
 
@@ -65,15 +66,21 @@ end
 function save{T<:JinnieModel}(m::T; conflict_strategy = :error)
   try 
     save!(m, conflict_strategy)
+
     true
-  catch 
+  catch ex
+    Jinnie.log(ex)
+
     false
   end
 end
 
-function save!{T<:JinnieModel}(m::T; conflict_strategy = :error)
-  sql = to_store_sql(m, conflict_strategy = conflict_strategy)
-  to_models(typeof(m), query(sql)) |> first
+@debug function save!{T<:JinnieModel}(m::T; conflict_strategy = :error)
+  sql::AbstractString = to_store_sql(m, conflict_strategy = conflict_strategy)
+  query_result_df::DataFrames.DataFrame = query(sql)
+  insert_id::Any = query_result_df[1, Symbol(m._id)]
+
+  find_one_by(typeof(m), Symbol(m._id), insert_id)
 end
 
 #
@@ -81,50 +88,51 @@ end
 # 
 
 @debug function to_models{T<:JinnieModel}(m::Type{T}, df::DataFrames.DataFrame)
-  models = []
+  models = Array{T, 1}()
+  dfs = df_result_to_models_data(m, df)
 
+  # @bp
+  row_count::Int = 1
   for row in eachrow(df)
-    dfs = df_result_to_models_data(m, df)
-    main_model = to_model(m, dfs[disposable_instance(m)._table_name])
+    main_model::T = to_model(m, dfs[disposable_instance(m)._table_name][row_count, :])
 
     # @bp
-    index = 1
+    index::Int = 1
     for relationship in relationships(m)
-      r, r_type = relationship
+      r::SQLRelation, r_type::Symbol = relationship
       related_model = constantize(r.model_name)
-      related_model_df = dfs[disposable_instance(related_model)._table_name]
+      related_model_df::DataFrames.DataFrame = dfs[disposable_instance(related_model)._table_name][row_count, :]
 
       # @bp
       r.data = Nullable( to_model(related_model, related_model_df) )
-      r.raw_data = Nullable(related_model_df)
+      r.raw_data::Nullable{DataFrames.DataFrame} = Nullable(related_model_df)
 
-      model_rels = getfield(main_model, r_type) |> Base.get # []
+      model_rels::Array{Model.SQLRelation, 1} = getfield(main_model, r_type) |> Base.get # []
       model_rels[index] = r
 
       index += 1
     end
 
+    # @bp
     push!(models, main_model)
+    row_count += 1
   end
-
-  #+TODO: delete me
-  #+TODO: you're here
-  # Jinnie.log("Good job! You now have the models for each relationship - and you need to implement the accessor methods.", :debug) <-- 
-  # Jinnie.log("Also, look into lazy and eager relationships - so you skip joining with the resources if not necessary", :debug)
-  # Jinnie.log("Now, check out 'models', it's where you're at", :debug)
 
   # @bp
   return models
 end
 
 @debug function to_model{T<:JinnieModel}(m::Type{T}, row::DataFrames.DataFrameRow)
-  _m = disposable_instance(m) 
+  _m::T = disposable_instance(m) 
   obj = m()
   sf = settable_fields(_m, row)
   # @bp
 
   for field in sf
     unq_field = from_fully_qualified(_m, field)
+
+    isna(row[field]) && continue # if it's NA we just leave the default value of the empty obj
+
     value = if in(:on_hydration, fieldnames(_m))
               try 
                 Base.get(_m.on_hydration)(_m, unq_field, row[field])
@@ -245,25 +253,40 @@ function relationships{T<:JinnieModel}(m::Type{T})
   _m = disposable_instance(m)
   # indirect_relationships = [:has_one_through, :has_many_through]
 
-  relationships = []
+  rls = []
 
   for r in direct_relationships()
     if has_field(_m, r) && ! isnull(getfield(_m, r)) 
       relationship = Base.get(getfield(_m, r)) 
       if ! isempty(relationship) 
         for rel in relationship 
-          push!(relationships, (rel, r))
+          push!(rls, (rel, r))
         end
       end
     end
   end
 
-  relationships
+  rls
+end
+
+function relationship{T<:JinnieModel}(m::T, model_name::Symbol, relationship_type::Symbol)
+  nullable_defined_rels::Nullable{Array{SQLRelation, 1}} = getfield(m, relationship_type) 
+  if ! isnull(nullable_defined_rels) 
+    defined_rels::Array{SQLRelation, 1} = Base.get(nullable_defined_rels)
+
+    for rel::SQLRelation in defined_rels
+      if rel.model_name == model_name
+        return Nullable{SQLRelation}(rel)
+      end
+    end
+  end
+
+  Nullable{SQLRelation}()
 end
 
 @debug function df_result_to_models_data{T<:JinnieModel}(m::Type{T}, df::DataFrame)
-  _m = disposable_instance(m)
-  tables_names = [_m._table_name]
+  _m::T = disposable_instance(m)
+  tables_names::Array{AbstractString, 1} = [_m._table_name]
   tables_columns = Dict()
   sub_dfs = Dict()
   
@@ -271,8 +294,8 @@ end
     for r in relationships(m)
       # @bp
       r, r_type = r
-      rm = disposable_instance( constantize(r.model_name) )
-      push!(tables_names, rm._table_name)
+      rmdl = disposable_instance( constantize(r.model_name) )
+      push!(tables_names, rmdl._table_name)
     end
   end
 
@@ -342,12 +365,12 @@ function to_store_sql{T<:JinnieModel}(m::T; conflict_strategy = :error) # upsert
     pos > 0 && splice!(uf, pos)
 
     fields = SQLColumn(uf)
-    values = join( map(x -> string(prepare_for_db_save(m, symbol(x), getfield(m, symbol(x)))), uf), ", ")
+    vals = join( map(x -> string(prepare_for_db_save(m, Symbol(x), getfield(m, Symbol(x)))), uf), ", ")
 
-    "INSERT INTO $(m._table_name) ( $fields ) VALUES ( $values )" * 
+    "INSERT INTO $(m._table_name) ( $fields ) VALUES ( $vals )" * 
         if ( conflict_strategy == :error ) "" 
         elseif ( conflict_strategy == :ignore ) " ON CONFLICT DO NOTHING"
-        elseif ( conflict_strategy == :update && !id_is_null ) 
+        elseif ( conflict_strategy == :update && ! isnull( getfield(m, Symbol(m._id)) ) ) 
            " ON CONFLICT ($(m._id)) DO UPDATE SET $(update_query_part(m))"
         else ""
         end
@@ -355,13 +378,13 @@ function to_store_sql{T<:JinnieModel}(m::T; conflict_strategy = :error) # upsert
     "UPDATE $(m._table_name) SET $(update_query_part(m))"
   end 
 
-  return sql * " RETURNING *"
+  return sql * " RETURNING $(m._id)"
 end
 
 function update_query_part{T<:JinnieModel}(m::T)
-  update_values = join(map(x -> "$(string(SQLColumn(x))) = $( string(prepare_for_db_save(m, symbol(x), getfield(m, symbol(x)))) )", 
+  update_values = join(map(x -> "$(string(SQLColumn(x))) = $( string(prepare_for_db_save(m, Symbol(x), getfield(m, Symbol(x)))) )", 
                             persistable_fields(m)), ", ")
-  return " $update_values WHERE $(m._table_name).$(m._id) = '$(get(m.id))'"
+  return " $update_values WHERE $(m._table_name).$(m._id) = '$(Base.get(m.id))'"
 end
 
 function prepare_for_db_save{T<:JinnieModel}(m::T, field::Symbol, value)
@@ -408,6 +431,17 @@ function query(sql::AbstractString)
   Database.query_df(sql)
 end
 
+#
+# sql utility queries
+# 
+
+@debug function count{T<:JinnieModel}(m::Type{T})
+  _m = disposable_instance(m)
+  result::DataFrames.DataFrame = query("SELECT COUNT(*) AS $(_m._table_name)_count FROM $(_m._table_name)")
+
+  result[1, Symbol("$(_m._table_name)_count")]
+end
+
 # 
 # ORM utils
 # 
@@ -433,18 +467,18 @@ end
 end
 
 function persisted{T<:JinnieModel}(m::T)
-  ! ( isa(getfield(m, symbol(m._id)), Nullable) && isnull( getfield(m, symbol(m._id)) ) )
+  ! ( isa(getfield(m, Symbol(m._id)), Nullable) && isnull( getfield(m, Symbol(m._id)) ) )
 end
 
 function persistable_fields{T<:JinnieModel}(m::T; fully_qualified = false)
   object_fields = map(x -> string(x), fieldnames(m))
   db_columns = columns(typeof(m))[:column_name]
-  persistable_fields = intersect(object_fields, db_columns)
-  fully_qualified ? to_fully_qualified_sql_column_names(m, persistable_fields) : persistable_fields
+  pst_fields = intersect(object_fields, db_columns)
+  fully_qualified ? to_fully_qualified_sql_column_names(m, pst_fields) : pst_fields
 end
 
 function settable_fields{T<:JinnieModel}(m::T, row::DataFrames.DataFrameRow)
-  df_cols = names(row)
+  df_cols::Array{Symbol, 1} = names(row)
   fields = is_fully_qualified(m, df_cols[1]) ? to_sql_column_names(m, fieldnames(m)) : fieldnames(m)
   intersect(fields, df_cols)
 end
@@ -557,15 +591,15 @@ function to_fully_qualified_sql_column_name{T<:JinnieModel}(m::T, f::AbstractStr
   end
 end
 
-function to_dict{T<:JinnieModel}(m::T; all_fields::Bool = false) 
+function to_dict{T<:JinnieModel}(m::T; all_fields::Bool = false, expand_nullables::Bool = false)
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
-  [string(f) => getfield(m, Symbol(f)) for f in fields]
+  [string(f) => Util.expand_nullable( getfield(m, Symbol(f)), expand_nullables ) for f in fields]
 end
 function to_dict{T<:JinnieType}(m::T) 
   Jinnie.to_dict(m)
 end
 
-@debug function to_string_dict{T<:JinnieModel}(m::T; all_fields::Bool = false, all_output::Bool = false) 
+function to_string_dict{T<:JinnieModel}(m::T; all_fields::Bool = false, all_output::Bool = false) 
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
   output_length = all_output ? 100_000_000 : Jinnie.config.output_length
   # @bp

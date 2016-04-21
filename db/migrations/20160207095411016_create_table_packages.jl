@@ -13,8 +13,8 @@ function up(_::CreateTablePackages)
       name          varchar(100) NOT NULL, 
       url           text NOT NULL,
       updated_at    timestamp DEFAULT current_timestamp, 
-      CONSTRAINT packages__idx_name UNIQUE(name), 
-      CONSTRAINT packages__idx_url UNIQUE(url)
+      CONSTRAINT packages__idx_name UNIQUE(name)
+      -- CONSTRAINT packages__idx_url UNIQUE(url)
     )
   """)
   Database.query("""ALTER SEQUENCE packages__seq_id OWNED BY packages.id;""")

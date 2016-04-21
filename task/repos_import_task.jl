@@ -12,22 +12,29 @@ function description(_::ReposImportTask)
 end
 
 function run_task!(_::ReposImportTask, parsed_args = Dict())
-  for package in Jinnie.Model.find(Jinnie.Package, Jinnie.Model.SQLQuery(where = [Jinnie.Model.SQLWhere(:id, 100, "AND", ">")], limit = Jinnie.Model.SQLLimit(5000)))
+  # for package in Jinnie.Model.find(Jinnie.Package)
+  for i in (1:Model.count(Package))
+    package = Model.find(Package, SQLQuery(limit = 1, offset = i-1, order = SQLOrder(:id, :asc))) |> first
     new_repo = Jinnie.Repos.from_package(package)
     existing_repo = Jinnie.Model.find_one_by(Jinnie.Repo, :package_id, Base.get(package.id))
 
-    if ! isnull( existing_repo )
-      println("REPO EXISTS")
+    repo =  if ! isnull( existing_repo )
+              Jinnie.log("REPO EXISTS", :debug)
 
-      existing_repo = Base.get(existing_repo)
+              existing_repo = Base.get(existing_repo)
 
-      existing_repo.fullname = new_repo.fullname
-      existing_repo.readme = new_repo.readme
-      existing_repo.participation = new_repo.participation
+              existing_repo.fullname = new_repo.fullname
+              existing_repo.readme = new_repo.readme
+              existing_repo.participation = new_repo.participation
 
-      Jinnie.Model.save!(existing_repo)
-    else 
-      Jinnie.Model.save!(new_repo)
+              existing_repo
+            else 
+              new_repo
+            end
+    try 
+      Jinnie.Model.save!(repo)
+    catch ex
+      Jinnie.log(ex, :debug)
     end
   end
 end

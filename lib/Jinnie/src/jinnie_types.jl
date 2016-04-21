@@ -12,7 +12,7 @@ show{T<:JinnieType}(io::IO, t::T) = print(io, jinnietype_to_print(t))
 function jinnietype_to_string{T<:JinnieType}(m::T)
   output = "$(typeof(m)) <: $(super(typeof(m)))" * "\n"
   for f in fieldnames(m)
-    value = getfield(m, symbol(f))
+    value = getfield(m, Symbol(f))
     output = output * "  + $f \t $(value) \n"
   end
   
@@ -26,7 +26,7 @@ function jinnietype_to_print{T<:JinnieType}(m::T)
   output
 end
 
-function to_dict(m::Any; all_fields::Bool = false) 
+function to_dict(m::Any) 
   [string(f) => getfield(m, Symbol(f)) for f in fieldnames(m)]
 end
 

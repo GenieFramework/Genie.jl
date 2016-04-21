@@ -124,8 +124,8 @@ function status()
   arr_output = []
   
   for m in migrations
-    status = ( findfirst(up_migrations, m) > 0 ) ? :up : :down
-    push!(arr_output, [migrations_files[m].migration_class_name * ": " * uppercase(string(status)); migrations_files[m].migration_file_name])
+    sts = ( findfirst(up_migrations, m) > 0 ) ? :up : :down
+    push!(arr_output, [migrations_files[m].migration_class_name * ": " * uppercase(string(sts)); migrations_files[m].migration_file_name])
   end
 
   Millboard.table(arr_output, :colnames => ["Class name & status \nFile name "], :rownames => []) |> println

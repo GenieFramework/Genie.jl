@@ -1,4 +1,4 @@
-type RepoController <: JinnieController
+type ReposController <: Jinnie.JinnieController
 end
 
-index(_::RepoController, req) = "Repo index" 
+index(_::ReposController, req, res, params) = "Repo index" 

@@ -9,7 +9,7 @@ import Base.==
 
 export DbId, SQLType, JinnieModel
 export SQLInput, SQLColumn, SQLColumns, SQLLogicOperator
-export SQLWhere, SQLLimit, SQLOrder, SQLQuery
+export SQLWhere, SQLLimit, SQLOrder, SQLQuery, SQLRelation
 export QI, QC, QLO, QW, QL, QO, QQ, QR
 
 abstract SQLType <: Jinnie.JinnieType
@@ -44,7 +44,9 @@ print(io::IO, s::SQLInput) = print(io, string(s))
 show(io::IO, s::SQLInput) = print(io, string(s))
 
 convert(::Type{SQLInput}, r::Real) = SQLInput(parse(r))
-convert(::Type{Model.SQLInput}, s::Symbol) = SQLInput(string(s))
+convert(::Type{SQLInput}, s::Symbol) = SQLInput(string(s))
+convert(::Type{SQLInput}, i::Nullable{Int32}) = (! isnull(i) ? Base.get(i) : -1) |> SQLInput
+convert(::Type{SQLInput}, d::DateTime) = SQLInput(string(d))
 
 QI = SQLInput
 
@@ -58,7 +60,9 @@ type SQLColumn <: SQLType
   raw::Bool
   table_name::Union{AbstractString, Symbol}
   function SQLColumn(v::AbstractString; escaped = false, raw = false, table_name = "") 
-    if v == "*" raw = true end
+    if v == "*" 
+      raw = true 
+    end
     new(v, escaped, raw, string(table_name))
   end
 end
@@ -160,6 +164,8 @@ SQLOrder(column::Any, direction::Any; raw::Bool = false) = SQLOrder(SQLColumn(co
 SQLOrder(column::Any; raw::Bool = false) = SQLOrder(SQLColumn(column, raw = raw), "ASC")
 string(o::SQLOrder) = "($(o.column) $(o.direction))"
 
+convert(::Type{Array{SQLOrder, 1}}, o::SQLOrder) = [o]
+
 QO = SQLOrder
 
 #
@@ -167,20 +173,20 @@ QO = SQLOrder
 # 
 
 type SQLQuery <: SQLType
-  columns::Array{SQLColumn} 
-  where::Array{SQLWhere} 
+  columns::Array{SQLColumn, 1} 
+  where::Array{SQLWhere, 1} 
   limit::SQLLimit  
   offset::Int 
-  order::Array{SQLOrder} 
-  group::Array{SQLColumn} 
-  having::Array{SQLWhere}
+  order::Array{SQLOrder, 1} 
+  group::Array{SQLColumn, 1} 
+  having::Array{SQLWhere, 1}
 
   SQLQuery(;  columns = SQLColumn[], where = SQLWhere[], limit = SQLLimit("ALL"), offset = 0, 
               order = SQLOrder[], group = SQLColumn[], having = SQLWhere[]) = 
     new(columns, where, limit, offset, order, group, having)
 end
 string{T<:JinnieModel}(q::SQLQuery, m::Type{T}) = to_fetch_sql(m, q)
-function string(q::SQLQuery)
+function string(_::SQLQuery)
   Jinnie.log("Can't generate the SQL Query string without an instance of a model. Please use string(q::SQLQuery, m::Type{JinnieModel}) instead.", :debug) 
   error("Incorrect string call")
 end

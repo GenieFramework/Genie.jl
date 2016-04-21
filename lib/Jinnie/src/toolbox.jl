@@ -1,17 +1,19 @@
+module Toolbox
+
 type Task_Info
   file_name::AbstractString
   type_name::AbstractString
-  instance
+  instance::Any
   description::AbstractString
 end
-
-module Task
 
 using Jinnie
 using Util
 using Millboard
 using FileTemplates
 using Debug
+
+export Task_Info
 
 function run_task(task_type_name)
   task = all_tasks(filter_type_name = task_type_name)
@@ -30,7 +32,7 @@ function print_all_tasks()
   Millboard.table(arr_output, :colnames => ["Task name \nFilename \nDescription "], :rownames => []) |> println
 end
 
-function all_tasks(; filter_type_name = nothing)
+@debug function all_tasks(; filter_type_name = nothing)
   tasks = []
 
   tasks_folder = abspath(Jinnie.config.tasks_folder)
@@ -42,7 +44,7 @@ function all_tasks(; filter_type_name = nothing)
       
       type_name = Util.file_name_to_type_name(i)
       task_instance = eval(parse(string(current_module()) * "." * type_name * "()"))
-      ti = Jinnie.Task_Info(i, type_name, task_instance, current_module().description(task_instance))
+      ti = Task_Info(i, type_name, task_instance, current_module().description(task_instance))
       
       if ( filter_type_name == nothing ) push!(tasks, ti)
       elseif ( filter_type_name == type_name ) return ti

@@ -6,7 +6,7 @@ module Jinnie
 const APP_PATH = pwd()
 
 include(abspath("lib/Jinnie/src/config.jl"))
-const config = Config(output_length = 600)
+const config = Config(output_length = 100)
 
 include(abspath("lib/Jinnie/src/logger.jl"))
 include(abspath("lib/Jinnie/src/jinnie_app.jl"))

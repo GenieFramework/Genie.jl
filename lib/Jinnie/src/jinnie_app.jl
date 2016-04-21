@@ -1,7 +1,7 @@
 type Jinnie_App
   config::Config
-  server
+  server::Nullable{RemoteRef{Channel{Any}}}
 
-  Jinnie_App() = new(nothing, nothing)
-  Jinnie_App(c) = new(c, nothing)
+  Jinnie_App() = new(nothing, Nullable{RemoteRef{Channel{Any}}}())
+  Jinnie_App(c) = new(c, Nullable{RemoteRef{Channel{Any}}}())
 end

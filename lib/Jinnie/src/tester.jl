@@ -15,7 +15,7 @@ module Tester
     end
   end
 
-  function reset_db(; supress_output = true)
+  function reset_db(; supress_output::Bool = true)
     Migration.all_down()
     Migration.all_up()
   end

@@ -1,41 +1,7 @@
-routes = 
-	quote
-		(
-		root(:package, :index), 
-		get("/api", :package, :api)
-		# @resources("products")...,
-		# @resources("photos", [:index, :show])...,
-		# @resources("habbits", [], [:delete])...,
-		# get(
-		# 	"/hellos/new", 
-		# 	req -> new(Hellos_Controller(), req)
-		# 	),
-		# get(
-		# 	"/hellos/:id", 
-		# 	req -> show(Hellos_Controller(), req)
-		# 	),
-		# get(
-		# 	"/hellos/:id/edit", 
-		# 	req -> edit(Hellos_Controller(), req)
-		# 	),
-		# get( 
-		# 	"/hellos", 
-		# 	req -> index(Hellos_Controller(), req)
-		# 	),
-		# post(
-		# 	"/hellos", 
-		# 	req -> create(Hellos_Controller(), req)
-		# 	),
-		# put(
-		# 	"/hellos/:id", 
-		# 	req -> update(Hellos_Controller(), req)
-		# 	),
-		# delete(
-		# 	"/hellos/:id", 
-		# 	req -> destroy(Hellos_Controller(), req)
-		# 	), 
-		# get("go", respond("Yeeessooo"))
-	)
-	end
+using Router
 
-export routes
+route(GET, "/packages", "packages#index")
+route(GET, "/packages/:package_id", "packages#show")
+
+# API v1
+route(GET, "/api/v1/packages", "packages#API.V1.index", with = Dict{Symbol, Any}(:is_api => true))

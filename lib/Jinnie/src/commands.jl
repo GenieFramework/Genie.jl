@@ -7,28 +7,28 @@
     Database.create_database()
     Database.create_migrations_table()
 
-  elseif ( parsed_args["db:migrations:status"] == "true" )
+  elseif ( parsed_args["migration:status"] == "true" )
     Migration.status()
-  elseif ( parsed_args["db:migration:new"] != nothing )
+  elseif ( parsed_args["migration:new"] != nothing )
     Migration.new(parsed_args, config)
 
-  elseif (  parsed_args["db:migration:up"] == "true" )
+  elseif (  parsed_args["migration:up"] == "true" )
     Migration.last_up()
-  elseif (  parsed_args["db:migration:up"] != nothing )
+  elseif (  parsed_args["migration:up"] != nothing )
     Migration.up_by_class_name(parsed_args["db:migration:up"])
 
-  elseif (  parsed_args["db:migration:down"] == "true" )
+  elseif (  parsed_args["migration:down"] == "true" )
     Migration.last_down()
-  elseif (  parsed_args["db:migration:down"] != nothing )
+  elseif (  parsed_args["migration:down"] != nothing )
     Migration.down_by_class_name(parsed_args["db:migration:down"])
   
-  elseif (  parsed_args["tasks:list"] == "true" )
-    Task.print_all_tasks()
+  elseif (  parsed_args["task:list"] == "true" )
+    Toolbox.print_all_tasks()
   elseif (  parsed_args["task:run"] != nothing )
-    Task.run_task(parsed_args["task:run"])
+    Toolbox.run_task(parsed_args["task:run"])
   elseif ( parsed_args["task:new"] != nothing )
     if ! endswith(parsed_args["task:new"], "_task") parsed_args["task:new"] *= "_task" end
-    Task.new(parsed_args, config)
+    Toolbox.new(parsed_args, config)
 
   elseif (  parsed_args["test:run"] == "true" )
     config.app_env = "test"
@@ -36,7 +36,7 @@
     
   else 
     config.auto_connect = true
-    jinnie_app.server = startup(parsed_args) 
+    Jinnie.jinnie_app.server = startup(parsed_args) 
     include(abspath("lib/Jinnie/src/interactive_session.jl"))
   end
 end
@@ -59,7 +59,7 @@ function parse_commandline_args()
             help = "starts HTTP server"
         "--server-port", "-p"
             help = "HTTP server port"
-            default = 8000
+            default = "8000"
         "--monitor", "-m"
             help = "true -> monitor files for changes and reload app"
             default = "false"
@@ -71,19 +71,19 @@ function parse_commandline_args()
             help = "true -> create database and core tables"
             default = "false"
         
-        "--db:migrations:status"
+        "--migration:status"
             help = "true -> list migrations and their status"
             default = "false"
-        "--db:migration:new"
+        "--migration:new"
             help = "migration_name -> create a new migration, ex: create_table_foos"
-        "--db:migration:up"
+        "--migration:up"
             help = "true -> run last migration up \n 
                     migration_class_name -> run migration up, ex: CrateTableFoos" 
-        "--db:migration:down"
+        "--migration:down"
             help = "true -> run last migration down \n 
                     migration_class_name -> run migration down, ex: CreateTableFoos" 
         
-        "--tasks:list"
+        "--task:list"
             help = "true -> list tasks" 
             default = "false"
         "--task:new"

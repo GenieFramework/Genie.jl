@@ -11,8 +11,15 @@ function description(_::PackagesImportTask)
   """
 end
 
-function run_task!(_::PackagesImportTask, parsed_args = Dict())
+@debug function run_task!(_::PackagesImportTask, parsed_args = Dict())
   for pkg in MetadataTools.get_all_pkg()
-    Jinnie.Model.save( Jinnie.Package( name = pkg[2].name, url = pkg[2].url ), upsert_strategy = :ignore )
+    existing_pkg = Model.find_one_by(Package, :name, pkg[2].name) 
+    if ! isnull(existing_pkg) 
+      existing_pkg = Base.get(existing_pkg)
+      existing_pkg.url = pkg[2].url
+      Model.save!(existing_pkg)
+    else 
+      Model.save!(Package(name = pkg[2].name, url = pkg[2].url))
+    end
   end
 end

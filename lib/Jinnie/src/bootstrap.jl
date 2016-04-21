@@ -7,13 +7,15 @@ const TYPE_FIELD_MAX_DEBUG_LENGTH = 150
 
 using Reexport
 using ArgParse
-# using Mux
-# using Mustache
+using Requests
+using Mustache
 
 @reexport using Lazy
 @reexport using Memoize
 @reexport using JSON
 @reexport using Millboard
+@reexport using HttpServer
+@reexport using DateParser
 
 if is_dev()
   @reexport using Debug
@@ -22,30 +24,31 @@ end
 
 include(abspath("lib/Jinnie/src/jinnie_types.jl"))
 
-using Util
 using Database
-using Model
 using Controller
+using Toolbox
 using Migration
 using Tester
+using AppServer
+using Router
+
+@reexport using Model
+@reexport using Render
+@reexport using Render.JSONAPI
+@reexport using Util
 
 function load_configurations()
   include(abspath("config/loggers.jl"))
   include(abspath("config/secrets.jl"))
-  include(abspath("config/converters.jl"))
-  include(abspath("config/renderers.jl"))
-  include(abspath("config/routes.jl"))
 end
 
 function load_dependencies()
-  include(abspath("lib/Jinnie/src/fs_watcher.jl"))
   include(abspath("lib/Jinnie/src/middlewares.jl"))
-  include(abspath("lib/Jinnie/src/renderer.jl"))
   include(abspath("lib/Jinnie/src/jinnie.jl"))
   include(abspath("lib/Jinnie/src/filetemplates.jl"))
 end
 
-function load_resources(dir = abspath(joinpath(APP_PATH, "app", "resources")))
+function load_resources(dir = abspath(joinpath(Jinnie.APP_PATH, "app", "resources")))
   f = readdir(abspath(dir))
   for i in f
     full_path = joinpath(dir, i)
@@ -60,7 +63,7 @@ function load_resources(dir = abspath(joinpath(APP_PATH, "app", "resources")))
 end
 
 function load_initializers()
-  dir = abspath(joinpath(APP_PATH, "config", "initializers"))
+  dir = abspath(joinpath(Jinnie.APP_PATH, "config", "initializers"))
   f = readdir(dir)
   for i in f
     include(joinpath(dir, i))
@@ -77,13 +80,19 @@ function startup(parsed_args = Dict, start_server = false)
   setup_defaults(parsed_args)
 
   if parsed_args["s"] == "s" || start_server == true 
+    Jinnie.jinnie_app.server = Nullable{RemoteRef{Channel{Any}}}(AppServer.spawn(Jinnie.config.server_port))
+
     if parsed_args["monitor"] == "true" 
-      Jinnie.start_server(config.server_port)
+      include(abspath("lib/Jinnie/src/fs_watcher.jl"))
       monitor_changes() 
-    else
-      @sync Jinnie.start_server(config.server_port) 
+    end
+
+    while true 
+      sleep(1)
     end
   end
+
+  Jinnie.jinnie_app.server = Nullable{RemoteRef{Channel{Any}}}()
 end
 
 load_configurations()

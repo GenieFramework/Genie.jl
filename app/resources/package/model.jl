@@ -12,8 +12,8 @@ type Package <: JinnieModel
             id = Nullable{Model.DbId}(), 
             name = "", 
             url = "", 
-            has_one = [Model.SQLRelation(:repo, required = false)]) = 
-        new("packages", "id", id, name, url, has_one) 
+            has_one = [Model.SQLRelation(:repo, required = false, lazy = false)]
+          ) = new("packages", "id", id, name, url, has_one) 
 end
 
 module Packages

@@ -1,5 +1,3 @@
-using Mux
-
 export @resources
 
 ControllerActionParams = Union{Symbol, AbstractString}
@@ -7,11 +5,13 @@ ControllerActionParams = Union{Symbol, AbstractString}
 function req!(req, controller, action) 
   req[:controller] = string(controller)
   req[:action] = string(action)
+
   true 
 end
 
 function rendering!(_, controller, action)
   renderer.view = abspath(joinpath("app/views", string(controller), string(action)))
+  
   true
 end
 
