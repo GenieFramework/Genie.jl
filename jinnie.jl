@@ -1,23 +1,13 @@
 #!/usr/local/bin/julia --color=yes
+module App
 
-#__precompile__()
-module Jinnie
+push!(LOAD_PATH, abspath("lib/Jinnie/src"))
 
-const APP_PATH = pwd()
+export config
 
-include(abspath("lib/Jinnie/src/config.jl"))
-const config = Config(output_length = 100)
+using Configuration
 
-include(abspath("lib/Jinnie/src/logger.jl"))
-include(abspath("lib/Jinnie/src/jinnie_app.jl"))
-const jinnie_app = Jinnie_App(config)
-
-include(abspath("lib/Jinnie/src/macros.jl"))
-include(abspath("lib/Jinnie/src/bootstrap.jl"))
-include(abspath("lib/Jinnie/src/commands.jl"))
-
-run_app_with_command_line_args(config)
+const config = Config(output_length = 100) #, supress_output = true, debug_db = false, debug_requests = false, debug_responses = false)
+using Jinnie
 
 end
-
-include(abspath("lib/Jinnie/src/interactive_session.jl")) # interactive session

@@ -2,7 +2,7 @@ import Base.string
 import Base.print
 import Base.show
 
-export JinnieType
+export JinnieType, JinnieController
 
 abstract JinnieType
 string{T<:JinnieType}(io::IO, t::T) = jinnietype_to_string(t)
@@ -46,4 +46,7 @@ function to_string_dict(m::Any, fields::Array{Symbol,1}; all_output::Bool = fals
   end
   
   response
+end
+
+type JinnieController <: JinnieType
 end

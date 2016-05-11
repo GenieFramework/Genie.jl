@@ -1,3 +1,4 @@
+using App
 using Logging
 using Millboard
 
@@ -50,7 +51,7 @@ function setup_loggers()
   Logging.configure(console_logger, output = STDOUT)
 
   Logging.configure(file_logger, level = DEBUG)
-  Logging.configure(file_logger, filename = joinpath("log", "$(Jinnie.config.app_env).log"))
+  Logging.configure(file_logger, filename = joinpath("log", "$(App.config.app_env).log"))
 
   push!(Jinnie.config.loggers, console_logger)
   push!(Jinnie.config.loggers, file_logger)

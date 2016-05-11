@@ -11,7 +11,7 @@ function description(_::PackagesImportTask)
   """
 end
 
-@debug function run_task!(_::PackagesImportTask, parsed_args = Dict())
+function run_task!(_::PackagesImportTask, parsed_args = Dict())
   for pkg in MetadataTools.get_all_pkg()
     existing_pkg = Model.find_one_by(Package, :name, pkg[2].name) 
     if ! isnull(existing_pkg) 

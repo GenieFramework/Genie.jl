@@ -131,6 +131,8 @@ end
 print{T<:SQLWhere}(io::IO, w::T) = print(io, Jinnie.jinnietype_to_print(w))
 show{T<:SQLWhere}(io::IO, w::T) = print(io, Jinnie.jinnietype_to_print(w))
 
+convert(::Type{Array{SQLWhere,1}}, w::SQLWhere) = [w]
+
 SQLHaving = SQLWhere
 QW = SQLWhere
 

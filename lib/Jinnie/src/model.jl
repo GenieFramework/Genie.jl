@@ -1,5 +1,6 @@
 module Model
 
+using Memoize
 using Database
 using DataFrames
 using Jinnie
@@ -19,12 +20,17 @@ direct_relationships() = [RELATIONSHIP_HAS_ONE, RELATIONSHIP_BELONGS_TO, RELATIO
 # 
 
 function find_df{T<:JinnieModel}(m::Type{T}, q::SQLQuery)
-  query(to_fetch_sql(m, q))
+  sql::UTF8String = to_fetch_sql(m, q)
+  query(sql)
+end
+
+function find_m{T<:JinnieModel}(m::Type{T}, q::SQLQuery)
+  result::DataFrames.DataFrame = find_df(m, q)
+  to_models(m, result)
 end
 
 function find{T<:JinnieModel}(m::Type{T}, q::SQLQuery; df::Bool = false)
-  result = find_df(m, q)
-  df ? result : to_models(m, result)
+  df ? find_df(m, q) : find_m(m, q)
 end
 function find{T<:JinnieModel}(m::Type{T}; df::Bool = false)
   find(m, SQLQuery(), df = df)
@@ -75,8 +81,8 @@ function save{T<:JinnieModel}(m::T; conflict_strategy = :error)
   end
 end
 
-@debug function save!{T<:JinnieModel}(m::T; conflict_strategy = :error)
-  sql::AbstractString = to_store_sql(m, conflict_strategy = conflict_strategy)
+function save!{T<:JinnieModel}(m::T; conflict_strategy = :error)
+  sql::UTF8String = to_store_sql(m, conflict_strategy = conflict_strategy)
   query_result_df::DataFrames.DataFrame = query(sql)
   insert_id::Any = query_result_df[1, Symbol(m._id)]
 
@@ -87,7 +93,7 @@ end
 # Object generation 
 # 
 
-@debug function to_models{T<:JinnieModel}(m::Type{T}, df::DataFrames.DataFrame)
+function to_models{T<:JinnieModel}(m::Type{T}, df::DataFrames.DataFrame)
   models = Array{T, 1}()
   dfs = df_result_to_models_data(m, df)
 
@@ -100,16 +106,17 @@ end
     index::Int = 1
     for relationship in relationships(m)
       r::SQLRelation, r_type::Symbol = relationship
+
+      if r.lazy continue end
+
       related_model = constantize(r.model_name)
       related_model_df::DataFrames.DataFrame = dfs[disposable_instance(related_model)._table_name][row_count, :]
+      r = set_relationship_data(r, related_model, related_model_df)
 
-      # @bp
-      r.data = Nullable( to_model(related_model, related_model_df) )
-      r.raw_data::Nullable{DataFrames.DataFrame} = Nullable(related_model_df)
-
-      model_rels::Array{Model.SQLRelation, 1} = getfield(main_model, r_type) |> Base.get # []
+      if ! isdefined(:model_rels)
+        model_rels::Array{Model.SQLRelation, 1} = getfield(main_model, r_type) |> Base.get 
+      end
       model_rels[index] = r
-
       index += 1
     end
 
@@ -122,7 +129,16 @@ end
   return models
 end
 
-@debug function to_model{T<:JinnieModel}(m::Type{T}, row::DataFrames.DataFrameRow)
+function set_relationship_data{T<:JinnieModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame)
+  r.data = Nullable( to_model(related_model, related_model_df) )
+  if is_dev()
+    r.raw_data::Nullable{DataFrames.DataFrame} = Nullable(related_model_df)
+  end
+
+  r
+end
+
+function to_model{T<:JinnieModel}(m::Type{T}, row::DataFrames.DataFrameRow)
   _m::T = disposable_instance(m) 
   obj = m()
   sf = settable_fields(_m, row)
@@ -153,7 +169,7 @@ end
   obj
 end
 
-@debug function to_model{T<:JinnieModel}(m::Type{T}, df::DataFrames.DataFrame)
+function to_model{T<:JinnieModel}(m::Type{T}, df::DataFrames.DataFrame)
   for row in eachrow(df)
     return to_model(m, row)
   end
@@ -163,7 +179,7 @@ end
 # Query generation
 # 
 
-@debug function to_select_part{T<:JinnieModel}(m::Type{T}, c::Array{SQLColumn, 1})
+function to_select_part{T<:JinnieModel}(m::Type{T}, c::Array{SQLColumn, 1})
   _m = disposable_instance(m)
   "SELECT " * if ( length(c) > 0 ) string(c)
               else 
@@ -171,14 +187,16 @@ end
 
                 # @bp
                 if has_relationship(_m, RELATIONSHIP_HAS_ONE)
-                  rels = Base.get(_m.has_one)
-                  joined_tables = vcat(joined_tables, map(x -> disposable_instance(x.model_name), rels))
+                  rels = Base.get(_m.has_one) |> values |> collect
+                  joined_tables = vcat(joined_tables, map(x -> x.lazy ? nothing : disposable_instance(x.model_name), rels))
                 end
 
                 if has_relationship(_m, RELATIONSHIP_BELONGS_TO)
-                  rels = Base.get(_m.belongs_to)
-                  joined_tables = vcat(joined_tables, map(x -> disposable_instance(x.model_name), rels))
+                  rels = Base.get(_m.belongs_to) |> values |> collect
+                  joined_tables = vcat(joined_tables, map(x -> x.lazy ? nothing : disposable_instance(x.model_name), rels))
                 end
+
+                filter!(x -> x != nothing, joined_tables)
 
                 # @bp
                 table_columns = join(to_fully_qualified_sql_column_names(_m, persistable_fields(_m), escape_columns = true), ", ")
@@ -243,6 +261,7 @@ function to_join_part{T<:JinnieModel}(m::Type{T})
   join_part = ""
    
   for rel in relationships(m)
+    if ( first(rel).lazy ) continue end
     join_part *= (first(rel).required ? "INNER " : "LEFT ") * "JOIN " * relation_to_sql(_m, rel)
   end
 
@@ -257,7 +276,7 @@ function relationships{T<:JinnieModel}(m::Type{T})
 
   for r in direct_relationships()
     if has_field(_m, r) && ! isnull(getfield(_m, r)) 
-      relationship = Base.get(getfield(_m, r)) 
+      relationship = Base.get(getfield(_m, r)) |> values |> collect
       if ! isempty(relationship) 
         for rel in relationship 
           push!(rls, (rel, r))
@@ -270,9 +289,9 @@ function relationships{T<:JinnieModel}(m::Type{T})
 end
 
 function relationship{T<:JinnieModel}(m::T, model_name::Symbol, relationship_type::Symbol)
-  nullable_defined_rels::Nullable{Array{SQLRelation, 1}} = getfield(m, relationship_type) 
+  nullable_defined_rels::Nullable{Dict{Symbol, SQLRelation}} = getfield(m, relationship_type) 
   if ! isnull(nullable_defined_rels) 
-    defined_rels::Array{SQLRelation, 1} = Base.get(nullable_defined_rels)
+    defined_rels::Array{SQLRelation, 1} = Base.get(nullable_defined_rels) |> values |> collect
 
     for rel::SQLRelation in defined_rels
       if rel.model_name == model_name
@@ -284,7 +303,55 @@ function relationship{T<:JinnieModel}(m::T, model_name::Symbol, relationship_typ
   Nullable{SQLRelation}()
 end
 
-@debug function df_result_to_models_data{T<:JinnieModel}(m::Type{T}, df::DataFrame)
+function relationship_data!{T<:JinnieModel}(m::T, model_name::Symbol, relationship_type::Symbol)
+  rel = relationship(m, model_name, relationship_type)
+
+  # @bp
+
+  if ! isnull(rel) 
+    rel = Base.get(rel) 
+    if rel.lazy && isnull(rel.data)
+      return get_relationship_data(m, rel, relationship_type) |> Base.get
+    elseif ! isnull(rel.data)
+      return Base.get(rel.data)
+    end
+  end
+
+  nothing
+end
+
+function get_relationship_data{T<:JinnieModel}(m::T, rel::SQLRelation, relationship_type::Symbol)
+  conditions =  if ! isnull( rel.condition ) 
+                  Base.get(rel.condition)
+                else 
+                  Array{SQLWhere, 1}()
+                end
+  limit = if relationship_type == RELATIONSHIP_HAS_ONE || relationship_type == RELATIONSHIP_BELONGS_TO
+            1
+          else 
+            "ALL"
+          end
+  where = if relationship_type == RELATIONSHIP_HAS_ONE 
+            SQLColumn( ( (lowercase(string(typeof(m))) |> strip_module_name) * "_" * m._id |> escape_column_name), raw = true ), m.id
+          elseif relationship_type == RELATIONSHIP_BELONGS_TO
+            _r = constantize(rel.model_name)()
+            SQLColumn(to_fully_qualified(_r._id, _r._table_name), raw = true), getfield(m, Symbol((lowercase(string(typeof(_r))) |> strip_module_name) * "_" * _r._id)) |> Base.get
+          end
+  push!(conditions, SQLWhere(where...))
+  data = Model.find( constantize(rel.model_name), SQLQuery( where = conditions, limit = limit ) )
+
+  if isempty(data) return nothing end
+
+  if relationship_type == RELATIONSHIP_HAS_ONE || relationship_type == RELATIONSHIP_BELONGS_TO
+    return Nullable(first(data))
+  else 
+    return Nullable(data)
+  end
+
+  nothing
+end
+
+function df_result_to_models_data{T<:JinnieModel}(m::Type{T}, df::DataFrame)
   _m::T = disposable_instance(m)
   tables_names::Array{AbstractString, 1} = [_m._table_name]
   tables_columns = Dict()
@@ -292,7 +359,6 @@ end
   
   function relationships_tables_names{T<:JinnieModel}(m::Type{T})
     for r in relationships(m)
-      # @bp
       r, r_type = r
       rmdl = disposable_instance( constantize(r.model_name) )
       push!(tables_names, rmdl._table_name)
@@ -351,9 +417,9 @@ function relation_to_sql{T<:JinnieModel}(m::T, rel::Tuple{SQLRelation, Symbol})
 end
 
 function to_fetch_sql{T<:JinnieModel}(m::Type{T}, q::SQLQuery)
-  sql = ("$(to_select_part(m, q.columns)) $(to_from_part(m)) $(to_join_part(m)) $(to_where_part(m, q.where)) " * 
-          "$(to_group_part(q.group)) $(to_order_part(m, q.order)) " * 
-          "$(to_having_part(q.having)) $(to_limit_part(q.limit)) $(to_offset_part(q.offset))") |> strip
+  sql::UTF8String = ( "$(to_select_part(m, q.columns)) $(to_from_part(m)) $(to_join_part(m)) $(to_where_part(m, q.where)) " * 
+                      "$(to_group_part(q.group)) $(to_order_part(m, q.order)) " * 
+                      "$(to_having_part(q.having)) $(to_limit_part(q.limit)) $(to_offset_part(q.offset))") |> strip
   replace(sql, r"\s+", " ")
 end
 
@@ -401,7 +467,7 @@ end
 # delete methods 
 # 
 
-function delete_all{T<:JinnieModel}(m::Type{T}; truncate = true, reset_sequence = true, cascade = false)
+function delete_all{T<:JinnieModel}(m::Type{T}; truncate::Bool = true, reset_sequence::Bool = true, cascade::Bool = false)
   _m = disposable_instance(m)
   if truncate 
     sql = "TRUNCATE $(_m._table_name)"
@@ -428,14 +494,15 @@ end
 # 
 
 function query(sql::AbstractString)
-  Database.query_df(sql)
+  df::DataFrames.DataFrame = Database.query_df(sql)
+  df
 end
 
 #
 # sql utility queries
 # 
 
-@debug function count{T<:JinnieModel}(m::Type{T})
+function count{T<:JinnieModel}(m::Type{T})
   _m = disposable_instance(m)
   result::DataFrames.DataFrame = query("SELECT COUNT(*) AS $(_m._table_name)_count FROM $(_m._table_name)")
 
@@ -470,7 +537,7 @@ function persisted{T<:JinnieModel}(m::T)
   ! ( isa(getfield(m, Symbol(m._id)), Nullable) && isnull( getfield(m, Symbol(m._id)) ) )
 end
 
-function persistable_fields{T<:JinnieModel}(m::T; fully_qualified = false)
+function persistable_fields{T<:JinnieModel}(m::T; fully_qualified::Bool = false)
   object_fields = map(x -> string(x), fieldnames(m))
   db_columns = columns(typeof(m))[:column_name]
   pst_fields = intersect(object_fields, db_columns)
@@ -641,6 +708,15 @@ end
 
 function has_relationship{T<:JinnieType}(m::T, relationship_type::Symbol)
   has_field(m, relationship_type) && ! isnull(getfield(m, relationship_type))
+end
+
+function dataframe_to_dict(df::DataFrames.DataFrame)
+  result = Array{Dict{Symbol, Any}, 1}()
+  for r in eachrow(df)
+    push!(result, Dict{Symbol, Any}( [k => r[k] for k in DataFrames.names(df)] ) )
+  end
+
+  result
 end
 
 end

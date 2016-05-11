@@ -1,14 +1,17 @@
+module Configuration
+
+using App
 using Logging
 
-export is_dev, is_prod, is_test
+export is_dev, is_prod, is_test, Config, DEV, PROD, TEST
 
 const DEV = "dev"
 const PROD = "prod"
 const TEST = "test"
 
-is_dev() = Jinnie.config.app_env == DEV
-is_prod() = Jinnie.config.app_env == PROD
-is_test() = Jinnie.config.app_env = TEST
+is_dev() = App.config.app_env == DEV
+is_prod() = App.config.app_env == PROD
+is_test() = App.config.app_env = TEST
 
 type Config
   server_port::Int
@@ -28,6 +31,11 @@ type Config
   debug_requests::Bool
   debug_responses::Bool
 
+  pagination_jsonapi_default_items_per_page::Int
+  pagination_jsonapi_page_param_name::AbstractString
+
+  server_workers_count::Int
+
   Config(;  
             server_port = 8000, 
             app_env = DEV, 
@@ -35,8 +43,10 @@ type Config
             running_as_task = false, 
             auto_connect = false, 
             supress_output = false, 
+            
             db_migrations_table_name = "schema_migrations", 
             db_migrations_folder = abspath(joinpath("db", "migrations")), 
+
             task_folder = abspath(joinpath("task")), 
             test_folder = abspath(joinpath("test")), 
             output_length = 10_000, 
@@ -44,9 +54,18 @@ type Config
             debug_router = false, 
             debug_db = true, 
             debug_requests = true, 
-            debug_responses = true
+            debug_responses = true, 
+
+            pagination_jsonapi_default_items_per_page = 20, 
+            pagination_jsonapi_page_param_name = "page", 
+
+            server_workers_count = 1
         ) = 
               new(server_port, app_env, loggers, running_as_task, auto_connect, supress_output, 
                   db_migrations_table_name, db_migrations_folder, task_folder, test_folder, output_length, 
-                  debug_router, debug_db, debug_requests, debug_responses)
+                  debug_router, debug_db, debug_requests, debug_responses, 
+                  pagination_jsonapi_default_items_per_page, pagination_jsonapi_page_param_name, 
+                  server_workers_count)
+end
+
 end

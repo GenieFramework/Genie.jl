@@ -11,7 +11,6 @@ using Jinnie
 using Util
 using Millboard
 using FileTemplates
-using Debug
 
 export Task_Info
 
@@ -32,7 +31,7 @@ function print_all_tasks()
   Millboard.table(arr_output, :colnames => ["Task name \nFilename \nDescription "], :rownames => []) |> println
 end
 
-@debug function all_tasks(; filter_type_name = nothing)
+function all_tasks(; filter_type_name = nothing)
   tasks = []
 
   tasks_folder = abspath(Jinnie.config.tasks_folder)

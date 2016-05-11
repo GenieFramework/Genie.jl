@@ -1,8 +1,8 @@
 module Migration
 
+using Jinnie
 using Memoize
 using Database
-using Jinnie
 using FileTemplates
 using Millboard
 

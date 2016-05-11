@@ -1,8 +1,9 @@
 module Router
 
+using App
 using HttpServer
-using URIParser
 using Debug
+using URIParser
 using Jinnie
 using AppServer
 
@@ -15,18 +16,18 @@ const PUT     = "PUT"
 const PATCH   = "PATCH"
 const DELETE  = "DELETE"
 
-include(abspath("lib/Jinnie/src/controller.jl"))
-
 routes = Array{Any, 1}()
 params = Dict{Symbol, Any}()
 
 function route_request(req::Request, res::Response)
+  empty!(params)
+
   if isempty(routes) 
     load_routes_from_file()
-  elseif is_dev()
+  elseif App.is_dev()
     empty!(routes)
     load_routes_from_file()
-    Jinnie.load_resources()
+    Jinnie.load_models()
   end
 
   match_routes(req, res)
@@ -55,10 +56,8 @@ function match_routes(req::Request, res::Response)
 
     extract_uri_params(uri, regex_route, param_names)
     extract_extra_params(extra_params)
-    
-    return invoke_controller(to, req, res, params)
 
-    #return Response( 200, Dict{AbstractString, AbstractString}(), uri.path )
+    return invoke_controller(to, req, res, params)
   end
 
   Jinnie.config.debug_router ? Jinnie.log("Router: No route matched - defaulting 404") : nothing
@@ -81,10 +80,30 @@ function parse_route(route::AbstractString)
   "/" * join(parts, "/"), param_names
 end
 
-function extract_uri_params(uri::URI, regex_route::Regex, param_names::Array{AbstractString, 1})
+@debug function extract_uri_params(uri::URI, regex_route::Regex, param_names::Array{AbstractString, 1})
+  # in path params
   matches = match(regex_route, uri.path)
   for param_name in param_names 
     params[Symbol(param_name)] = matches[param_name]
+  end
+
+  # GET params
+  if ! isempty(uri.query)
+    for query_part in split(uri.query, "&")
+      qp = split(query_part, "=")
+      params[Symbol(qp[1])] = qp[2]
+    end
+  end
+
+  # POST params
+  
+
+  # pagination
+  if ! haskey(params, Symbol("$(Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name)_number"))
+    params[Symbol("$(Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name)_number")] = haskey(params, Symbol("$(Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name)[number]")) ? parse(Int, params[Symbol("$(Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name)[number]")]) : 1
+  end
+  if ! haskey(params, Symbol("$(Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name)_size"))
+    params[Symbol("$(Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name)_size")] = haskey(params, Symbol("$(Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name)[size]")) ? parse(Int, params[Symbol("$(Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name)[size]")]) : Jinnie.jinnie_app.config.pagination_jsonapi_default_items_per_page
   end
 end
 
@@ -98,11 +117,13 @@ end
 
 @debug function invoke_controller(to::AbstractString, req::Request, res::Response, params::Dict{Symbol, Any})
   to_parts = split(to, "#")
-  controller = eval(parse("Jinnie." * ucfirst(to_parts[1]) * "Controller"))()
-  action_name = "Jinnie." * to_parts[2]
+  Jinnie.load_controller(abspath(joinpath(Jinnie.APP_PATH, "app", "resources", to_parts[1])))
 
-  response = invoke( eval(parse(action_name)), ( typeof(controller), typeof(params), typeof(req), typeof(res) ), controller, params, req, res )
-  
+  controller = Jinnie.JinnieController()
+  action_name = string(current_module()) * "." * to_parts[2]
+
+  response = invoke( eval(parse(string(current_module()) * "." * action_name)), ( typeof(controller), typeof(params), typeof(req), typeof(res) ), controller, params, req, res )
+
   if ! isa(response, Response)
     if isa(response, Tuple)
       response = Response(response...)

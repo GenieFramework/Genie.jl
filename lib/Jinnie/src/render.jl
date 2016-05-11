@@ -1,51 +1,43 @@
 module Render
 
-module JSONAPI
+export respond, json, mustache
 
-using Render
 using Jinnie
-
-export json_builder, json, data, attributes
-
-const EXT = "json.jl"
-const SCOPED_VAR_NAME = :__render__item__in__scope__
+using Util
+using JSON
+using Mustache
 
 function json(resource::Symbol, action::Symbol; vars...)
+  const EXT = "json.jl"
+
   for arg in vars
     k, v = arg
     spawn_vars(k, v)
   end
+
   include(abspath(joinpath("app", "resources", string(resource), "views", string(action) * ".$EXT")))
 end
 
-function json_builder(; params...)
-  response = Dict()
-  for p in params 
-    response[p[1]] = p[2]
+function mustache(resource::Symbol, action::Symbol; vars...)
+  const EXT = "mustache.jl"
+
+  for arg in vars
+    k, v = arg
+    spawn_vars(k, v)
   end
 
-  JSON.json(response)
-end
+  template = Mustache.template_from_file(abspath(joinpath("app", "resources", string(resource), "views", string(action) * ".$EXT")))
+  vals = Dict([k => v for (k, v) in vars])
+  r = Mustache.render(template, vals)
 
-function data(resources; structure...)
-  data_items = []
-  for resource in resources 
-    spawn_vars(SCOPED_VAR_NAME, resource)
-    push!(data_items, structure_to_dict(structure, resource))
-  end
-
-  data_items
-end
-
-function attributes(; structure...)
-  () -> structure_to_dict(structure, eval(:(SCOPED_VAR_NAME)))
+  r
 end
 
 function spawn_vars(key, value)
   eval(current_module(), :($key = $value))
 end
 
-function structure_to_dict(structure, resource)
+function structure_to_dict(structure, resource = nothing)
   data_item = Dict()
   for (k, v) in structure 
     k = endswith(string(k), "_") ? Symbol(string(k)[1:end-1]) : k
@@ -61,6 +53,84 @@ function structure_to_dict(structure, resource)
   data_item
 end
 
-end # end module Render.JSONAPI
+function respond(body, code::Int = 200, headers::Dict{AbstractString, AbstractString} = Dict{AbstractString, AbstractString}("Content-Type" => "text/json"), as::Symbol = :json)
+  body =  if as == :json 
+            JSON.json(body)
+          elseif as == :is 
+            body
+          end
+  (code, headers, body)
+end
 
+module JSONAPI
+
+using Render
+using Jinnie
+
+export builder, elem, pagination
+
+function builder(; params...)
+  response = Dict()
+  for p in params 
+    response[p[1]] =  if isa(p[2], Function)
+                        p[2]()
+                      else 
+                        p[2]
+                      end
+  end
+
+  response
+end
+
+function elem(collection, instance_name; structure...)
+  if ! isa(collection, Array)  
+    Render.spawn_vars(instance_name, collection)
+    return Render.structure_to_dict(structure, collection)
+  end
+
+  data_items = []
+  for resource in collection
+    Render.spawn_vars(instance_name, resource)
+    push!(data_items, Render.structure_to_dict(structure, resource))
+  end
+
+  data_items
+end
+
+function elem(instance_var; structure...)
+  () -> Render.structure_to_dict(structure,  if isa(instance_var, Symbol)
+                                                current_module().eval(instance_var)
+                                              else 
+                                                instance_var
+                                              end)
+end
+
+function elem(;structure...)
+  () -> Render.structure_to_dict(structure)
+end
+
+function pagination(path::AbstractString, total_items::Int; current_page::Int = 1, page_size::Int = Jinnie.jinnie_app.config.pagination_jsonapi_default_items_per_page)
+  pagination = Dict{Symbol, AbstractString}()
+  pagination[:first] = path
+
+  pagination[:first] = path * "?" * Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name * "[number]=1&" * 
+                          Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
+
+  if current_page > 1 
+    pagination[:prev] = path * "?" * Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(current_page - 1) * "&" * 
+                          Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
+  end
+
+  if current_page * page_size < total_items
+    pagination[:next] = path * "?" * Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(current_page + 1) * "&" * 
+                          Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
+  end
+
+  pagination[:last] = path * "?" * Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(Int(ceil(total_items / page_size))) * "&" * 
+                          Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
+
+  pagination
+end
+
+end # end module Render.JSONAPI
 end # end module Render

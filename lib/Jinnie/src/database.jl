@@ -2,6 +2,7 @@ module Database
 
 using YAML
 using Jinnie
+using Memoize
 
 function parse_connection_data()
   YAML.load(open(abspath("config/database.yml")))
@@ -20,7 +21,7 @@ end
   end
 end
 
-@memoize function db_connect(skip_db = false)
+@memoize function db_connect(skip_db::Bool = false)
   env_db_conn_data = env_connection_data()
   if isnull(env_db_conn_data) 
     error("Database connection failed")
@@ -35,7 +36,7 @@ end
   Base.get(env_connection_data())
 end
 
-@memoize function query_tools(skip_db = false)
+@memoize function query_tools(skip_db::Bool = false)
   conn = db_connect(skip_db)
   adapter = current_module().db_adapter()
 
@@ -47,7 +48,7 @@ function create_migrations_table()
   Jinnie.log("Created table $(Jinnie.config.db_migrations_table_name) or table already exists")
 end
 
-function query(sql::AbstractString; skip_db = false, system_query = false)
+function query(sql::AbstractString; skip_db::Bool = false, system_query::Bool = false)
   supress_output = system_query || config.supress_output
   conn, adapter = query_tools(skip_db)
   current_module().adapter_query(sql, supress_output, conn, adapter, skip_db)
@@ -68,7 +69,7 @@ end
   query_df(current_module().adapter_table_columns_sql(table_name), supress_output = true)
 end
 
-function query_df(sql::AbstractString; supress_output = false) 
+function query_df(sql::AbstractString; supress_output::Bool = false) 
   supress_output = supress_output || config.supress_output
   conn, adapter = query_tools()
   current_module().adapter_query_df(sql, supress_output, conn, adapter)

@@ -1,4 +1,6 @@
-type Package <: JinnieModel
+export Package
+
+type Package <: Jinnie.JinnieModel
   _table_name::AbstractString
   _id::AbstractString
 
@@ -6,13 +8,13 @@ type Package <: JinnieModel
   name::AbstractString
   url::AbstractString
 
-  has_one::Nullable{Array{Model.SQLRelation, 1}}
+  has_one::Nullable{Dict{Symbol, Model.SQLRelation}}
 
   Package(; 
             id = Nullable{Model.DbId}(), 
             name = "", 
             url = "", 
-            has_one = [Model.SQLRelation(:repo, required = false, lazy = false)]
+            has_one = Dict(:has_one_repo => Model.SQLRelation(:repo, required = false, lazy = true))
           ) = new("packages", "id", id, name, url, has_one) 
 end
 
@@ -20,10 +22,11 @@ module Packages
 
 using Jinnie
 
-function fullname(p::Jinnie.Package)
+function fullname(p::Package)
   url_parts = split(p.url, '/', keep = false)
   package_name = replace(url_parts[length(url_parts)], r"\.git$", "")
-  return url_parts[length(url_parts) - 1] * "/" * package_name
+
+  url_parts[length(url_parts) - 1] * "/" * package_name
 end
 
 end

@@ -1,1 +1,0 @@
-abstract Jinnie_Operation

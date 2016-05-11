@@ -1,5 +1,5 @@
 using Faker
-@reexport using Model
+using Model
 
 function setup()
   Tester.reset_db()

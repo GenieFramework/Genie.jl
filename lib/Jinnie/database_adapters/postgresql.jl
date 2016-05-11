@@ -1,6 +1,5 @@
-# module DatabaseAdapter
-
 using PostgreSQL
+using DataFrames
 using Jinnie
 using Database
 
@@ -38,7 +37,7 @@ function adapter_escape_column_name(c::AbstractString, conn, adapter)
 end
 
 function adapter_query_df(sql::AbstractString, supress_output::Bool, conn, adapter)
-  df = adapter.fetchdf(adapter_query(sql, supress_output, conn, adapter, false))
+  df::DataFrames.DataFrame = adapter.fetchdf(adapter_query(sql, supress_output, conn, adapter, false))
   Jinnie.@unless(supress_output, Jinnie.log(df))
 
   df
@@ -65,5 +64,3 @@ end
 function db_adapter()
   PostgreSQL
 end
-
-# end

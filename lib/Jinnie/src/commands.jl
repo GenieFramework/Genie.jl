@@ -1,7 +1,11 @@
-@debug function run_app_with_command_line_args(config) 
+using ArgParse
+
+function run_app_with_command_line_args(config) 
   parsed_args = parse_commandline_args()
 
   config.app_env = parsed_args["env"]
+  config.server_port = parse(Int, parsed_args["server:port"])
+  config.server_workers_count = parse(Int, parsed_args["server:workers"])
 
   if ( parsed_args["db:init"] == "true" ) 
     Database.create_database()
@@ -10,6 +14,7 @@
   elseif ( parsed_args["migration:status"] == "true" )
     Migration.status()
   elseif ( parsed_args["migration:new"] != nothing )
+    Jinnie.load_file_templates()
     Migration.new(parsed_args, config)
 
   elseif (  parsed_args["migration:up"] == "true" )
@@ -27,17 +32,16 @@
   elseif (  parsed_args["task:run"] != nothing )
     Toolbox.run_task(parsed_args["task:run"])
   elseif ( parsed_args["task:new"] != nothing )
-    if ! endswith(parsed_args["task:new"], "_task") parsed_args["task:new"] *= "_task" end
+    ! endswith(parsed_args["task:new"], "_task") && (parsed_args["task:new"] *= "_task")
+    Jinnie.load_file_templates()
     Toolbox.new(parsed_args, config)
 
   elseif (  parsed_args["test:run"] == "true" )
     config.app_env = "test"
     Tester.run_all_tests(parsed_args["test:run"], config)
-    
+
   else 
-    config.auto_connect = true
-    Jinnie.jinnie_app.server = startup(parsed_args) 
-    include(abspath("lib/Jinnie/src/interactive_session.jl"))
+    Jinnie.jinnie_app.server = Jinnie.startup(parsed_args) 
   end
 end
 
@@ -57,12 +61,17 @@ function parse_commandline_args()
         #     required = true
         "s"
             help = "starts HTTP server"
-        "--server-port", "-p"
+        "--server:port", "-p"
             help = "HTTP server port"
             default = "8000"
-        "--monitor", "-m"
-            help = "true -> monitor files for changes and reload app"
-            default = "false"
+        "--server:workers", "-w"
+            help = "Number of workers, one per server instance. Additional workers are spawned onto 1 increments of port"
+            default = "1"
+
+        # "--monitor", "-m"
+        #     help = "true -> monitor files for changes and reload app"
+        #     default = "false"
+        
         "--env", "-e"
             help = "app execution environment [dev|prod|test]"
             default = "dev"

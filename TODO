@@ -55,6 +55,7 @@ refactor
 Jinnie.render - all rendering methods should be DRY and support various rendering engines
 
 Other
+https://github.com/JockLawrie/AccessControl.jl <-- 
 https://github.com/zachallaun/ValueDispatch.jl
 https://github.com/invenia/DateParser.jl  <-- extended date time parsing
 https://github.com/JuliaWeb/GitHub.jl
