@@ -1,4 +1,4 @@
-using Jinnie
+using Genie
 using Database 
 
 type CreateTableRepos

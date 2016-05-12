@@ -1,4 +1,4 @@
-using Jinnie
+using Genie
 using Lint
 
 type LintFilesTask
@@ -11,7 +11,7 @@ function description(_::LintFilesTask)
 end
 
 function run_task!(_::LintFilesTask, parsed_args = Dict())
-  dir = joinpath("lib", "Jinnie", "src")
+  dir = joinpath("lib", "Genie", "src")
   for filename in Task(() -> walk_dir(dir))
     println(filename)
     lintfile(filename)

@@ -1,6 +1,6 @@
 module Migration
 
-using Jinnie
+using Genie
 using Memoize
 using Database
 using FileTemplates
@@ -23,7 +23,7 @@ function new(cmd_args, config)
   write(f, FileTemplates.new_database_migration(migration_class_name(cmd_args["db:migration:new"])))
   close(f)
 
-  Jinnie.log("New migration created at $mfn")
+  Genie.log("New migration created at $mfn")
 end
 
 function migration_hash()
@@ -80,7 +80,7 @@ end
 @memoize function all_migrations()
   migrations = []
   migrations_files = Dict()
-  for (f in readdir(Jinnie.config.db_migrations_folder))
+  for (f in readdir(Genie.config.db_migrations_folder))
     if ( ismatch(r"\d{17}_.*\.jl", f) )
       parts = split(f, "_", limit = 2)
       push!(migrations, parts[1])
@@ -97,24 +97,24 @@ end
 end
 
 function run_migration(migration::DbMigration, direction::Symbol)
-  include(abspath(joinpath(Jinnie.config.db_migrations_folder, migration.migration_file_name)))
+  include(abspath(joinpath(Genie.config.db_migrations_folder, migration.migration_file_name)))
   eval(parse("$(current_module()).$(string(direction))($(current_module()).$(migration.migration_class_name)())")) 
 
   store_migration_status(migration, direction)
 
-  ! config.supress_output && Jinnie.log("Executed migration $(migration.migration_class_name) $(direction)")
+  ! config.supress_output && Genie.log("Executed migration $(migration.migration_class_name) $(direction)")
 end
 
 function store_migration_status(migration::DbMigration, direction::Symbol)
   if ( direction == :up )
-    Database.query("INSERT INTO $(Jinnie.config.db_migrations_table_name) VALUES ('$(migration.migration_hash)')", system_query = true)
+    Database.query("INSERT INTO $(Genie.config.db_migrations_table_name) VALUES ('$(migration.migration_hash)')", system_query = true)
   else 
-    Database.query("DELETE FROM $(Jinnie.config.db_migrations_table_name) WHERE version = ('$(migration.migration_hash)')", system_query = true)
+    Database.query("DELETE FROM $(Genie.config.db_migrations_table_name) WHERE version = ('$(migration.migration_hash)')", system_query = true)
   end
 end
 
 function upped_migrations()
-  result = Database.query("SELECT * FROM $(Jinnie.config.db_migrations_table_name) ORDER BY version DESC", system_query = true)
+  result = Database.query("SELECT * FROM $(Genie.config.db_migrations_table_name) ORDER BY version DESC", system_query = true)
   return map(x -> x[1], result)
 end
 

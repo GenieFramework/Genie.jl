@@ -1,7 +1,7 @@
 module Database
 
 using YAML
-using Jinnie
+using Genie
 using Memoize
 
 function parse_connection_data()
@@ -11,8 +11,8 @@ end
 @memoize function env_connection_data()
   db_conn_data = parse_connection_data()
 
-  if ( haskey(db_conn_data, Jinnie.config.app_env) ) 
-    env_db_conn_data = db_conn_data[Jinnie.config.app_env]
+  if ( haskey(db_conn_data, Genie.config.app_env) ) 
+    env_db_conn_data = db_conn_data[Genie.config.app_env]
     if ( haskey(env_db_conn_data, "adapter") )
       return Nullable(env_db_conn_data)
     else 
@@ -28,7 +28,7 @@ end
   end
 
   env_db_conn_data = Base.get(env_db_conn_data)
-  joinpath("lib", "jinnie", "database_adapters", lowercase(conn_data()["adapter"]) * ".jl") |> abspath |> include
+  joinpath("lib", "genie", "database_adapters", lowercase(conn_data()["adapter"]) * ".jl") |> abspath |> include
   current_module().adapter_connect(env_db_conn_data, skip_db)
 end
 
@@ -45,7 +45,7 @@ end
 
 function create_migrations_table()
   query(create_migrations_table_sql())
-  Jinnie.log("Created table $(Jinnie.config.db_migrations_table_name) or table already exists")
+  Genie.log("Created table $(Genie.config.db_migrations_table_name) or table already exists")
 end
 
 function query(sql::AbstractString; skip_db::Bool = false, system_query::Bool = false)

@@ -4,7 +4,7 @@ using DateParser
 
 export Repo, Repos
 
-type Repo <: Jinnie.JinnieModel
+type Repo <: Genie.GenieModel
   _table_name::AbstractString
   _id::AbstractString
 
@@ -41,7 +41,7 @@ end
 
 module Repos
 
-using Jinnie
+using Genie
 using Model
 using Memoize
 using DateParser
@@ -68,9 +68,9 @@ end
 
 @memoize function readme_from_github(repo::Repo; parse_markdown = false)
   readme =  try 
-              Nullable(GitHub.readme(Base.get(repo.github), auth = Jinnie.GITHUB_AUTH))
+              Nullable(GitHub.readme(Base.get(repo.github), auth = Genie.GITHUB_AUTH))
             catch ex 
-              Jinnie.log(ex, :debug)
+              Genie.log(ex, :debug)
               Nullable()
             end
 
@@ -82,7 +82,7 @@ end
               try 
                 mapreduce(x -> string(Char(x)), *, base64decode( Base.get(readme.content) ))
               catch ex
-                Jinnie.log(ex, :debug)
+                Genie.log(ex, :debug)
                 readall(download(string(Base.get(readme.download_url)))) 
               end
             end
@@ -99,13 +99,13 @@ function readme(repo::Repo; parse_markdown = true)
 end
 
 @memoize function participation_from_github(repo::Repo)
-  stats = GitHub.stats(Base.get(repo.github), "participation", auth = Jinnie.GITHUB_AUTH)
+  stats = GitHub.stats(Base.get(repo.github), "participation", auth = Genie.GITHUB_AUTH)
   part_data = mapreduce(x -> string(Char(x)), *, stats.data) |> JSON.parse
   
   try   
     part_data["all"]
   catch ex
-    Jinnie.log(ex)
+    Genie.log(ex)
     zeros(Int, 52) # 52 = nr of weeks in year
   end
 end
@@ -115,8 +115,8 @@ function participation_from_github!(repo::Repo)
 end
 
 function from_package(package::Package)
-  github_repo = GitHub.Repo(Jinnie.Packages.fullname(package))
-  repo = Jinnie.Repo(github = github_repo, package_id = package.id, fullname = Jinnie.Packages.fullname(package))
+  github_repo = GitHub.Repo(Genie.Packages.fullname(package))
+  repo = Genie.Repo(github = github_repo, package_id = package.id, fullname = Genie.Packages.fullname(package))
   readme_from_github!(repo)
   participation_from_github!(repo)
 
@@ -140,7 +140,7 @@ function search(search_term::AbstractString; limit::SQLLimit = SQLLimit(), offse
       FROM 
         repos
       ) repos_search, 
-      to_tsquery($(Jinnie.Model.SQLInput(search_term))) query 
+      to_tsquery($(Genie.Model.SQLInput(search_term))) query 
     WHERE 
       repos_search.repo_info @@ query
     ORDER BY 

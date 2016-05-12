@@ -1,6 +1,6 @@
 export @run_with_time, @unless
 
-if Jinnie.config.app_env == "dev" 
+if Genie.config.app_env == "dev" 
   macro run_with_time(expr)
     quote
         @time $(esc(expr))
@@ -13,9 +13,9 @@ else
 end
 
 macro psst(expr)
-  Jinnie.config.supress_output = true
+  Genie.config.supress_output = true
   evx = eval(expr)
-  Jinnie.config.supress_output = false
+  Genie.config.supress_output = false
   evx
 end
 

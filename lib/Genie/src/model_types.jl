@@ -7,13 +7,14 @@ import Base.length
 import Base.next
 import Base.==
 
-export DbId, SQLType, JinnieModel
+export DbId, SQLType, GenieModel, SearchLight
 export SQLInput, SQLColumn, SQLColumns, SQLLogicOperator
 export SQLWhere, SQLLimit, SQLOrder, SQLQuery, SQLRelation
 export QI, QC, QLO, QW, QL, QO, QQ, QR
 
-abstract SQLType <: Jinnie.JinnieType
-abstract JinnieModel <: Jinnie.JinnieType
+abstract SQLType <: Genie.GenieType
+abstract GenieModel <: Genie.GenieType
+typealias SearchLight GenieModel
 
 typealias DbId Int32
 convert(::Type{Nullable{DbId}}, v::Number) = Nullable{DbId}(DbId(v))
@@ -124,12 +125,12 @@ SQLWhere(column::SQLColumn, value::SQLInput) = SQLWhere(column, value, SQLLogicO
 SQLWhere(column::Any, value::Any) = SQLWhere(SQLColumn(column), SQLInput(value))
 
 string(w::SQLWhere) = "$(w.condition.value) ( $(w.column) $(w.operator) ( $(w.value) ) )"
-function string{T <: JinnieModel}(w::SQLWhere, m::T) 
+function string{T <: GenieModel}(w::SQLWhere, m::T) 
   w.column = SQLColumn(w.column.value, escaped = w.column.escaped, raw = w.column.raw, table_name = m._table_name)
   "$(w.condition.value) ( $(w.column) $(w.operator) ( $(w.value) ) )"
 end
-print{T<:SQLWhere}(io::IO, w::T) = print(io, Jinnie.jinnietype_to_print(w))
-show{T<:SQLWhere}(io::IO, w::T) = print(io, Jinnie.jinnietype_to_print(w))
+print{T<:SQLWhere}(io::IO, w::T) = print(io, Genie.genietype_to_print(w))
+show{T<:SQLWhere}(io::IO, w::T) = print(io, Genie.genietype_to_print(w))
 
 convert(::Type{Array{SQLWhere,1}}, w::SQLWhere) = [w]
 
@@ -187,9 +188,9 @@ type SQLQuery <: SQLType
               order = SQLOrder[], group = SQLColumn[], having = SQLWhere[]) = 
     new(columns, where, limit, offset, order, group, having)
 end
-string{T<:JinnieModel}(q::SQLQuery, m::Type{T}) = to_fetch_sql(m, q)
+string{T<:GenieModel}(q::SQLQuery, m::Type{T}) = to_fetch_sql(m, q)
 function string(_::SQLQuery)
-  Jinnie.log("Can't generate the SQL Query string without an instance of a model. Please use string(q::SQLQuery, m::Type{JinnieModel}) instead.", :debug) 
+  Genie.log("Can't generate the SQL Query string without an instance of a model. Please use string(q::SQLQuery, m::Type{GenieModel}) instead.", :debug) 
   error("Incorrect string call")
 end
 
@@ -204,7 +205,7 @@ type SQLRelation <: SQLType
   condition::Nullable{Array{SQLWhere, 1}}
   required::Bool
   lazy::Bool
-  data::Nullable{JinnieModel}
+  data::Nullable{GenieModel}
   raw_data::Nullable{DataFrames.DataFrame}
 
   SQLRelation(model_name; condition = Nullable{Array{SQLWhere, 1}}(), required = true, lazy = false, data = nothing, raw_data = nothing) = 

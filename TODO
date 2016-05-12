@@ -52,7 +52,7 @@ For V1
 ======
 
 refactor
-Jinnie.render - all rendering methods should be DRY and support various rendering engines
+Genie.render - all rendering methods should be DRY and support various rendering engines
 
 Other
 https://github.com/JockLawrie/AccessControl.jl <-- 

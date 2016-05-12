@@ -132,7 +132,7 @@ facts("Model basics") do
 
   context("Model::rand_one should return a not null nullable model") do 
     package = @psst Model.rand_one(Package)
-    @fact typeof(package) --> Nullable{JinnieModel}
+    @fact typeof(package) --> Nullable{GenieModel}
     @fact isnull(package) --> false
   end
 

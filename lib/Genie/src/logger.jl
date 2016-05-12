@@ -8,7 +8,7 @@ const file_logger = Logger("file_logger")
 function log(message, level = "info")
   message = replace(string(message), "\$", "\\\$")
   
-  for l in Jinnie.config.loggers
+  for l in Genie.config.loggers
     try 
       eval( parse( "$level($(l.name), \"\"\" " * "\n" * message * "\n" * " \"\"\")") )
     catch 
@@ -39,8 +39,8 @@ function log_dict(dict::Dict, level::Symbol = :info)
 end
 
 function truncate_logged_output(output::AbstractString)
-  if length(output) > Jinnie.config.output_length 
-    output = output[1:Jinnie.config.output_length] * "..."
+  if length(output) > Genie.config.output_length 
+    output = output[1:Genie.config.output_length] * "..."
   end
 
   output
@@ -53,8 +53,8 @@ function setup_loggers()
   Logging.configure(file_logger, level = DEBUG)
   Logging.configure(file_logger, filename = joinpath("log", "$(App.config.app_env).log"))
 
-  push!(Jinnie.config.loggers, console_logger)
-  push!(Jinnie.config.loggers, file_logger)
+  push!(Genie.config.loggers, console_logger)
+  push!(Genie.config.loggers, file_logger)
 end
 
 setup_loggers()

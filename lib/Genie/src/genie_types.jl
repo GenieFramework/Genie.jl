@@ -2,14 +2,19 @@ import Base.string
 import Base.print
 import Base.show
 
-export JinnieType, JinnieController
+export GenieType, GenieController, Controller
 
-abstract JinnieType
-string{T<:JinnieType}(io::IO, t::T) = jinnietype_to_string(t)
-print{T<:JinnieType}(io::IO, t::T) = print(io, jinnietype_to_print(t))
-show{T<:JinnieType}(io::IO, t::T) = print(io, jinnietype_to_print(t))
+abstract GenieType
+string{T<:GenieType}(io::IO, t::T) = genietype_to_string(t)
+print{T<:GenieType}(io::IO, t::T) = print(io, genietype_to_print(t))
+show{T<:GenieType}(io::IO, t::T) = print(io, genietype_to_print(t))
 
-function jinnietype_to_string{T<:JinnieType}(m::T)
+type GenieController <: GenieType
+end
+
+typealias Controller GenieController
+
+function genietype_to_string{T<:GenieType}(m::T)
   output = "$(typeof(m)) <: $(super(typeof(m)))" * "\n"
   for f in fieldnames(m)
     value = getfield(m, Symbol(f))
@@ -19,9 +24,9 @@ function jinnietype_to_string{T<:JinnieType}(m::T)
   output
 end
 
-function jinnietype_to_print{T<:JinnieType}(m::T)
+function genietype_to_print{T<:GenieType}(m::T)
   output = "\n" * "$(typeof(m))" * "\n"
-  output *= string(Millboard.table(Jinnie.Model.to_string_dict(m))) * "\n"
+  output *= string(Millboard.table(Genie.Model.to_string_dict(m))) * "\n"
   
   output
 end
@@ -34,7 +39,7 @@ function to_string_dict(m::Any; all_output::Bool = false)
   to_string_dict(m, fieldnames(m), all_output = all_output)
 end
 function to_string_dict(m::Any, fields::Array{Symbol,1}; all_output::Bool = false)
-  output_length = all_output ? 100_000_000 : Jinnie.config.output_length
+  output_length = all_output ? 100_000_000 : Genie.config.output_length
   response = Dict{AbstractString, AbstractString}()
   for f in fields 
     key = string(f)
@@ -46,7 +51,4 @@ function to_string_dict(m::Any, fields::Array{Symbol,1}; all_output::Bool = fals
   end
   
   response
-end
-
-type JinnieController <: JinnieType
 end

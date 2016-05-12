@@ -14,7 +14,7 @@ function run_app_with_command_line_args(config)
   elseif ( parsed_args["migration:status"] == "true" )
     Migration.status()
   elseif ( parsed_args["migration:new"] != nothing )
-    Jinnie.load_file_templates()
+    Genie.load_file_templates()
     Migration.new(parsed_args, config)
 
   elseif (  parsed_args["migration:up"] == "true" )
@@ -33,7 +33,7 @@ function run_app_with_command_line_args(config)
     Toolbox.run_task(parsed_args["task:run"])
   elseif ( parsed_args["task:new"] != nothing )
     ! endswith(parsed_args["task:new"], "_task") && (parsed_args["task:new"] *= "_task")
-    Jinnie.load_file_templates()
+    Genie.load_file_templates()
     Toolbox.new(parsed_args, config)
 
   elseif (  parsed_args["test:run"] == "true" )
@@ -41,7 +41,7 @@ function run_app_with_command_line_args(config)
     Tester.run_all_tests(parsed_args["test:run"], config)
 
   else 
-    Jinnie.jinnie_app.server = Jinnie.startup(parsed_args) 
+    Genie.genie_app.server = Genie.startup(parsed_args) 
   end
 end
 

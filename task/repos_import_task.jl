@@ -1,5 +1,5 @@
 using GitHub
-using Jinnie
+using Genie
 using Database
 
 type ReposImportTask
@@ -12,14 +12,14 @@ function description(_::ReposImportTask)
 end
 
 function run_task!(_::ReposImportTask, parsed_args = Dict())
-  # for package in Jinnie.Model.find(Jinnie.Package)
+  # for package in Genie.Model.find(Genie.Package)
   for i in (1:Model.count(Package))
     package = Model.find(Package, SQLQuery(limit = 1, offset = i-1, order = SQLOrder(:id, :asc))) |> first
-    new_repo = Jinnie.Repos.from_package(package)
-    existing_repo = Jinnie.Model.find_one_by(Jinnie.Repo, :package_id, Base.get(package.id))
+    new_repo = Genie.Repos.from_package(package)
+    existing_repo = Genie.Model.find_one_by(Genie.Repo, :package_id, Base.get(package.id))
 
     repo =  if ! isnull( existing_repo )
-              Jinnie.log("REPO EXISTS", :debug)
+              Genie.log("REPO EXISTS", :debug)
 
               existing_repo = Base.get(existing_repo)
 
@@ -32,9 +32,9 @@ function run_task!(_::ReposImportTask, parsed_args = Dict())
               new_repo
             end
     try 
-      Jinnie.Model.save!(repo)
+      Genie.Model.save!(repo)
     catch ex
-      Jinnie.log(ex, :debug)
+      Genie.log(ex, :debug)
     end
   end
 end

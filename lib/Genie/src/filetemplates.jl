@@ -2,7 +2,7 @@ module FileTemplates
 
 function new_database_migration(class_name)
   """
-  using Jinnie
+  using Genie
   using Database 
 
   type $class_name
@@ -20,7 +20,7 @@ end
 
 function new_task(class_name)
   """
-  using Jinnie
+  using Genie
 
   type $class_name
   end

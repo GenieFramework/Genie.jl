@@ -1,15 +1,15 @@
 module API 
 module V1
 
-using Jinnie
+using Genie
 using Model
 
-function show(p::Jinnie.JinnieController, params::Dict{Symbol, Any}, req::Request, res::Response)
-  package = Model.find_one(Jinnie.Package, params[:package_id]) |> Base.get
+function show(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Request, res::Response)
+  package = Model.find_one(Genie.Package, params[:package_id]) |> Base.get
   Render.respond(Render.json(:packages, :show, package = package))
 end
 
-function search(p::Jinnie.JinnieController, params::Dict{Symbol, Any}, req::Request, res::Response)
+function search(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Request, res::Response)
   results_count = Repos.count_search_results(params[:q]) 
   search_results_df = Repos.search(params[:q], limit = SQLLimit(params[:page_size]), offset = (params[:page_number] - 1) * params[:page_size]) 
 

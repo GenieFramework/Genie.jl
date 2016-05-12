@@ -4,7 +4,7 @@ using App
 using HttpServer
 using Debug
 using URIParser
-using Jinnie
+using Genie
 using AppServer
 
 export route, routes, params
@@ -27,7 +27,7 @@ function route_request(req::Request, res::Response)
   elseif App.is_dev()
     empty!(routes)
     load_routes_from_file()
-    Jinnie.load_models()
+    Genie.load_models()
   end
 
   match_routes(req, res)
@@ -44,7 +44,7 @@ function match_routes(req::Request, res::Response)
     protocol, route, to = route_def
     protocol != req.method && continue
     
-    Jinnie.config.debug_router ? Jinnie.log("Router: Checking against " * route) : nothing
+    Genie.config.debug_router ? Genie.log("Router: Checking against " * route) : nothing
 
     parsed_route, param_names = parse_route(route)
 
@@ -52,7 +52,7 @@ function match_routes(req::Request, res::Response)
     regex_route = Regex("^" * parsed_route * "\$")
     
     (! ismatch(regex_route, uri.path)) && continue
-    Jinnie.config.debug_router ? Jinnie.log("Router: Matched route " * uri.path) : nothing
+    Genie.config.debug_router ? Genie.log("Router: Matched route " * uri.path) : nothing
 
     extract_uri_params(uri, regex_route, param_names)
     extract_extra_params(extra_params)
@@ -60,7 +60,7 @@ function match_routes(req::Request, res::Response)
     return invoke_controller(to, req, res, params)
   end
 
-  Jinnie.config.debug_router ? Jinnie.log("Router: No route matched - defaulting 404") : nothing
+  Genie.config.debug_router ? Genie.log("Router: No route matched - defaulting 404") : nothing
   Response( 404, Dict{AbstractString, AbstractString}(), "not found" )
 end
 
@@ -99,11 +99,11 @@ end
   
 
   # pagination
-  if ! haskey(params, Symbol("$(Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name)_number"))
-    params[Symbol("$(Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name)_number")] = haskey(params, Symbol("$(Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name)[number]")) ? parse(Int, params[Symbol("$(Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name)[number]")]) : 1
+  if ! haskey(params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_number"))
+    params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_number")] = haskey(params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[number]")) ? parse(Int, params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[number]")]) : 1
   end
-  if ! haskey(params, Symbol("$(Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name)_size"))
-    params[Symbol("$(Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name)_size")] = haskey(params, Symbol("$(Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name)[size]")) ? parse(Int, params[Symbol("$(Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name)[size]")]) : Jinnie.jinnie_app.config.pagination_jsonapi_default_items_per_page
+  if ! haskey(params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_size"))
+    params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_size")] = haskey(params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[size]")) ? parse(Int, params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[size]")]) : Genie.genie_app.config.pagination_jsonapi_default_items_per_page
   end
 end
 
@@ -117,9 +117,9 @@ end
 
 @debug function invoke_controller(to::AbstractString, req::Request, res::Response, params::Dict{Symbol, Any})
   to_parts = split(to, "#")
-  Jinnie.load_controller(abspath(joinpath(Jinnie.APP_PATH, "app", "resources", to_parts[1])))
+  Genie.load_controller(abspath(joinpath(Genie.APP_PATH, "app", "resources", to_parts[1])))
 
-  controller = Jinnie.JinnieController()
+  controller = Genie.GenieController()
   action_name = string(current_module()) * "." * to_parts[2]
 
   response = invoke( eval(parse(string(current_module()) * "." * action_name)), ( typeof(controller), typeof(params), typeof(req), typeof(res) ), controller, params, req, res )
@@ -132,7 +132,7 @@ end
     end
   end
 
-  Jinnie.config.debug_responses ? AppServer.log_request_response(response) : nothing
+  Genie.config.debug_responses ? AppServer.log_request_response(response) : nothing
 
   response
 end

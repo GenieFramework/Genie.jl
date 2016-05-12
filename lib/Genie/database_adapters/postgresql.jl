@@ -1,6 +1,6 @@
 using PostgreSQL
 using DataFrames
-using Jinnie
+using Genie
 using Database
 
 export adapter_connect, db_adapter, adapter_table_columns_sql, create_migrations_table_sql, adapter_escape_column_name
@@ -38,7 +38,7 @@ end
 
 function adapter_query_df(sql::AbstractString, supress_output::Bool, conn, adapter)
   df::DataFrames.DataFrame = adapter.fetchdf(adapter_query(sql, supress_output, conn, adapter, false))
-  Jinnie.@unless(supress_output, Jinnie.log(df))
+  Genie.@unless(supress_output, Genie.log(df))
 
   df
 end
@@ -49,8 +49,8 @@ function adapter_query(sql::AbstractString, supress_output::Bool, conn, adapter,
   result = if supress_output
     adapter.execute(stmt)
   else 
-    Jinnie.log("SQL QUERY: $(escape_string(sql))")
-    Jinnie.@run_with_time adapter.execute(stmt)
+    Genie.log("SQL QUERY: $(escape_string(sql))")
+    Genie.@run_with_time adapter.execute(stmt)
   end
   adapter.finish(stmt)
 

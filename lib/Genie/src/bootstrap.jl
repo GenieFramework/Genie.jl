@@ -1,6 +1,6 @@
-push!(LOAD_PATH, abspath("lib/Jinnie/src"))
+push!(LOAD_PATH, abspath("lib/Genie/src"))
 
-include(abspath(joinpath("lib", "Jinnie", "src", "jinnie_types.jl")))
+include(abspath(joinpath("lib", "Genie", "src", "genie_types.jl")))
 
 using Model
 using Migration
@@ -24,10 +24,10 @@ function load_configurations()
 end
 
 function load_file_templates()
-  include(abspath("lib/Jinnie/src/filetemplates.jl"))
+  include(abspath("lib/Genie/src/filetemplates.jl"))
 end
 
-function load_models(dir = abspath(joinpath(Jinnie.APP_PATH, "app", "resources")))
+function load_models(dir = abspath(joinpath(Genie.APP_PATH, "app", "resources")))
   f = readdir(abspath(dir))
   for i in f
     full_path = joinpath(dir, i)
@@ -53,7 +53,7 @@ function load_controller(dir::AbstractString)
 end
 
 function load_initializers()
-  dir = abspath(joinpath(Jinnie.APP_PATH, "config", "initializers"))
+  dir = abspath(joinpath(Genie.APP_PATH, "config", "initializers"))
   f = readdir(dir)
   for i in f
     include(joinpath(dir, i))
@@ -63,12 +63,12 @@ end
 function startup(parsed_args::Dict{AbstractString, Any} = Dict(), start_server::Bool = false)
   if ( isempty(parsed_args) ) parsed_args = parse_commandline_args() end
   if parsed_args["s"] == "s" || start_server == true 
-    Jinnie.jinnie_app.server = Nullable{RemoteRef{Channel{Any}}}(AppServer.spawn(Jinnie.config.server_port))
+    Genie.genie_app.server = Nullable{RemoteRef{Channel{Any}}}(AppServer.spawn(Genie.config.server_port))
 
     if config.server_workers_count > 1 
-      next_port = Jinnie.config.server_port + 1
+      next_port = Genie.config.server_port + 1
       for w in 0:(config.server_workers_count - 1)
-        push!(Jinnie.jinnie_app.server_workers, AppServer.spawn(next_port))
+        push!(Genie.genie_app.server_workers, AppServer.spawn(next_port))
         next_port += 1
       end
     end 
@@ -78,7 +78,7 @@ function startup(parsed_args::Dict{AbstractString, Any} = Dict(), start_server::
     end
   end
 
-  Jinnie.jinnie_app.server = Nullable{RemoteRef{Channel{Any}}}()
+  Genie.genie_app.server = Nullable{RemoteRef{Channel{Any}}}()
 end
 
 load_configurations()

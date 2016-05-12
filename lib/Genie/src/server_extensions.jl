@@ -79,7 +79,7 @@ macro resources(routes_params...)
   end
 
   allowed_rest_actions = filter( (k, _) -> in(k, allowed_actions), rest_actions)
-  routes = ["""Jinnie.$(props[:verb])("/$(resource_name * props[:path])","$resource_name","$action")""" for (action, props) in allowed_rest_actions]
+  routes = ["""Genie.$(props[:verb])("/$(resource_name * props[:path])","$resource_name","$action")""" for (action, props) in allowed_rest_actions]
   code = length(routes) == 1 ? routes[1] * "," : join(routes, ",")
 
   return parse(code)

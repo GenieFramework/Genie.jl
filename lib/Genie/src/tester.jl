@@ -1,10 +1,10 @@
 module Tester
 
-using Jinnie
+using Genie
 using Util
 using Migration
 
-function bootstrap_tests(cmd_args::AbstractString, config::Jinnie.Config)
+function bootstrap_tests(cmd_args::AbstractString, config::Genie.Config)
   include(abspath(joinpath(config.test_folder, "test_config.jl")))
 
   for file_name in Task(() -> Util.walk_dir(abspath(joinpath(config.test_folder))))
@@ -19,7 +19,7 @@ function reset_db(; supress_output::Bool = true)
   Migration.all_up()
 end
 
-function run_all_tests(cmd_args::AbstractString, config::Jinnie.Config)
+function run_all_tests(cmd_args::AbstractString, config::Genie.Config)
   bootstrap_tests(cmd_args, config)
 end
 

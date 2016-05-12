@@ -1,6 +1,6 @@
 export Package
 
-type Package <: Jinnie.JinnieModel
+type Package <: Genie.GenieModel
   _table_name::AbstractString
   _id::AbstractString
 
@@ -20,7 +20,7 @@ end
 
 module Packages
 
-using Jinnie
+using Genie
 
 function fullname(p::Package)
   url_parts = split(p.url, '/', keep = false)

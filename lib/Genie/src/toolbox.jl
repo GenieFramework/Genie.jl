@@ -7,7 +7,7 @@ type Task_Info
   description::AbstractString
 end
 
-using Jinnie
+using Genie
 using Util
 using Millboard
 using FileTemplates
@@ -24,7 +24,7 @@ function print_all_tasks()
   output = ""
   arr_output = []
   for t in all_tasks()
-    td = Jinnie.to_dict(t)
+    td = Genie.to_dict(t)
     push!(arr_output, [td["type_name"], td["file_name"], td["description"]])
   end
 
@@ -34,7 +34,7 @@ end
 function all_tasks(; filter_type_name = nothing)
   tasks = []
 
-  tasks_folder = abspath(Jinnie.config.tasks_folder)
+  tasks_folder = abspath(Genie.config.tasks_folder)
   f = readdir(tasks_folder)
   for i in f
     if ( endswith(i, "_task.jl") ) 
@@ -65,7 +65,7 @@ function new(cmd_args, config)
   write(f, FileTemplates.new_task(task_class_name(cmd_args["task:new"])))
   close(f)
 
-  Jinnie.log("New task created at $tfn")
+  Genie.log("New task created at $tfn")
 end
 
 function task_file_name(cmd_args, config)

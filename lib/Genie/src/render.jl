@@ -2,7 +2,7 @@ module Render
 
 export respond, json, mustache
 
-using Jinnie
+using Genie
 using Util
 using JSON
 using Mustache
@@ -65,7 +65,7 @@ end
 module JSONAPI
 
 using Render
-using Jinnie
+using Genie
 
 export builder, elem, pagination
 
@@ -109,25 +109,25 @@ function elem(;structure...)
   () -> Render.structure_to_dict(structure)
 end
 
-function pagination(path::AbstractString, total_items::Int; current_page::Int = 1, page_size::Int = Jinnie.jinnie_app.config.pagination_jsonapi_default_items_per_page)
+function pagination(path::AbstractString, total_items::Int; current_page::Int = 1, page_size::Int = Genie.genie_app.config.pagination_jsonapi_default_items_per_page)
   pagination = Dict{Symbol, AbstractString}()
   pagination[:first] = path
 
-  pagination[:first] = path * "?" * Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name * "[number]=1&" * 
-                          Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
+  pagination[:first] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=1&" * 
+                          Genie.genie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
 
   if current_page > 1 
-    pagination[:prev] = path * "?" * Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(current_page - 1) * "&" * 
-                          Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
+    pagination[:prev] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(current_page - 1) * "&" * 
+                          Genie.genie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
   end
 
   if current_page * page_size < total_items
-    pagination[:next] = path * "?" * Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(current_page + 1) * "&" * 
-                          Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
+    pagination[:next] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(current_page + 1) * "&" * 
+                          Genie.genie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
   end
 
-  pagination[:last] = path * "?" * Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(Int(ceil(total_items / page_size))) * "&" * 
-                          Jinnie.jinnie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
+  pagination[:last] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(Int(ceil(total_items / page_size))) * "&" * 
+                          Genie.genie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
 
   pagination
 end
