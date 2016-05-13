@@ -4,7 +4,7 @@ using DateParser
 
 export Repo, Repos
 
-type Repo <: Genie.GenieModel
+type Repo <: AbstractModel
   _table_name::AbstractString
   _id::AbstractString
 
@@ -45,8 +45,10 @@ using Genie
 using Model
 using Memoize
 using DateParser
+using GitHub
+using JSON
 
-function dehydrate(repo::Repo, field::Symbol, value)
+function dehydrate(repo::Genie.Repo, field::Symbol, value)
   return  if field == :participation 
             join(value, ",")
           elseif field == :updated_at
@@ -56,7 +58,7 @@ function dehydrate(repo::Repo, field::Symbol, value)
           end
 end
 
-function hydrate(repo::Repo, field::Symbol, value)
+function hydrate(repo::Genie.Repo, field::Symbol, value)
   return  if field == :participation 
             map(x -> parse(x), split(value, ",")) 
           elseif field == :updated_at
@@ -66,7 +68,7 @@ function hydrate(repo::Repo, field::Symbol, value)
           end
 end
 
-@memoize function readme_from_github(repo::Repo; parse_markdown = false)
+@memoize function readme_from_github(repo::Genie.Repo; parse_markdown = false)
   readme =  try 
               Nullable(GitHub.readme(Base.get(repo.github), auth = Genie.GITHUB_AUTH))
             catch ex 
@@ -90,15 +92,15 @@ end
   parse_markdown ? Markdown.parse(content) : content
 end
 
-function readme_from_github!(repo::Repo)
+function readme_from_github!(repo::Genie.Repo)
   repo.readme = readme_from_github(repo, parse_markdown = false)
 end
 
-function readme(repo::Repo; parse_markdown = true)
+function readme(repo::Genie.Repo; parse_markdown = true)
   parse_markdown ? Markdown.parse(repo.readme) : repo.readme
 end
 
-@memoize function participation_from_github(repo::Repo)
+@memoize function participation_from_github(repo::Genie.Repo)
   stats = GitHub.stats(Base.get(repo.github), "participation", auth = Genie.GITHUB_AUTH)
   part_data = mapreduce(x -> string(Char(x)), *, stats.data) |> JSON.parse
   
@@ -110,7 +112,7 @@ end
   end
 end
 
-function participation_from_github!(repo::Repo)
+function participation_from_github!(repo::Genie.Repo)
   repo.participation = participation_from_github(repo)
 end
 

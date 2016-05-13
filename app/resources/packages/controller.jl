@@ -5,8 +5,12 @@ using Genie
 using Model
 
 function show(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Request, res::Response)
-  package = Model.find_one(Genie.Package, params[:package_id]) |> Base.get
-  Render.respond(Render.json(:packages, :show, package = package))
+  try 
+    package = Model.find_one(Genie.Package, params[:package_id]) |> Base.get
+    Render.respond(Render.json(:packages, :show, package = package))
+  catch 
+    Render.respond(Render.JSONAPI.error(404))
+  end
 end
 
 function search(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Request, res::Response)

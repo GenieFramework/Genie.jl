@@ -1,33 +1,37 @@
 using ArgParse
 
+function called_command(args, key)
+    args[key] == "true" || args["s"] == key
+end
+
 function run_app_with_command_line_args(config) 
-  parsed_args = parse_commandline_args()
+  parsed_args = parse_commandline_args()::Dict{AbstractString, Any}
 
   config.app_env = parsed_args["env"]
   config.server_port = parse(Int, parsed_args["server:port"])
   config.server_workers_count = parse(Int, parsed_args["server:workers"])
 
-  if ( parsed_args["db:init"] == "true" ) 
+  if ( called_command(parsed_args, "db:init") ) 
     Database.create_database()
     Database.create_migrations_table()
 
-  elseif ( parsed_args["migration:status"] == "true" )
+  elseif ( called_command(parsed_args, "migration:status") )
     Migration.status()
   elseif ( parsed_args["migration:new"] != nothing )
     Genie.load_file_templates()
     Migration.new(parsed_args, config)
 
-  elseif (  parsed_args["migration:up"] == "true" )
+  elseif (  called_command(parsed_args, "migration:up") )
     Migration.last_up()
   elseif (  parsed_args["migration:up"] != nothing )
     Migration.up_by_class_name(parsed_args["db:migration:up"])
 
-  elseif (  parsed_args["migration:down"] == "true" )
+  elseif (  called_command(parsed_args, "migration:down") )
     Migration.last_down()
   elseif (  parsed_args["migration:down"] != nothing )
     Migration.down_by_class_name(parsed_args["db:migration:down"])
   
-  elseif (  parsed_args["task:list"] == "true" )
+  elseif (  called_command(parsed_args, "task:list") )
     Toolbox.print_all_tasks()
   elseif (  parsed_args["task:run"] != nothing )
     Toolbox.run_task(parsed_args["task:run"])
@@ -36,7 +40,7 @@ function run_app_with_command_line_args(config)
     Genie.load_file_templates()
     Toolbox.new(parsed_args, config)
 
-  elseif (  parsed_args["test:run"] == "true" )
+  elseif (  called_command(parsed_args, "test:run") )
     config.app_env = "test"
     Tester.run_all_tests(parsed_args["test:run"], config)
 
@@ -87,7 +91,7 @@ function parse_commandline_args()
             help = "migration_name -> create a new migration, ex: create_table_foos"
         "--migration:up"
             help = "true -> run last migration up \n 
-                    migration_class_name -> run migration up, ex: CrateTableFoos" 
+                    migration_class_name -> run migration up, ex: CreateTableFoos" 
         "--migration:down"
             help = "true -> run last migration down \n 
                     migration_class_name -> run migration down, ex: CreateTableFoos" 

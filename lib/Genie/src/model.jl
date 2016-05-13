@@ -19,57 +19,52 @@ direct_relationships() = [RELATIONSHIP_HAS_ONE, RELATIONSHIP_BELONGS_TO, RELATIO
 # ORM methods
 # 
 
-function find_df{T<:GenieModel}(m::Type{T}, q::SQLQuery)
+function find_df{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
   sql::UTF8String = to_fetch_sql(m, q)
-  query(sql)
+  query(sql)::DataFrames.DataFrame
 end
 
-function find_m{T<:GenieModel}(m::Type{T}, q::SQLQuery)
+function find{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
   result::DataFrames.DataFrame = find_df(m, q)
   to_models(m, result)
 end
-
-function find{T<:GenieModel}(m::Type{T}, q::SQLQuery; df::Bool = false)
-  df ? find_df(m, q) : find_m(m, q)
-end
-function find{T<:GenieModel}(m::Type{T}; df::Bool = false)
-  find(m, SQLQuery(), df = df)
+function find{T<:AbstractModel}(m::Type{T})
+  find(m, SQLQuery())
 end
 
-function find_by{T<:GenieModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput; df::Bool = false)
-  find(m, SQLQuery(where = [SQLWhere(column_name, value)]), df = df)
+function find_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput)
+  find(m, SQLQuery(where = [SQLWhere(column_name, value)]))
 end
-function find_by{T<:GenieModel}(m::Type{T}, column_name::Any, value::Any; df::Bool = false)
-  find_by(m, SQLColumn(column_name), SQLInput(value), df = df)
-end
-
-function find_one_by{T<:GenieModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput; df::Bool = false)
-  result = find_by(m, column_name, value, df = df)
-  df ? result : to_nullable(result)
-end
-function find_one_by{T<:GenieModel}(m::Type{T}, column_name::Any, value::Any; df::Bool = false)
-  find_one_by(m, SQLColumn(column_name), SQLInput(value), df = df)
+function find_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
+  find_by(m, SQLColumn(column_name), SQLInput(value))
 end
 
-function find_one{T<:GenieModel}(m::Type{T}, value::Any; df::Bool = false)
+function find_one_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput)
+  find_by(m, column_name, value) |> to_nullable
+end
+function find_one_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
+  find_one_by(m, SQLColumn(column_name), SQLInput(value))
+end
+
+function find_one{T<:AbstractModel}(m::Type{T}, value::Any)
   _m::T = disposable_instance(m)
-  find_one_by(m, SQLColumn(_m._id), SQLInput(value), df = df)
+  find_one_by(m, SQLColumn(_m._id), SQLInput(value))
 end
 
-function rand{T<:GenieModel}(m::Type{T}; limit = 1, df::Bool = false)
-  find(m, SQLQuery(limit = SQLLimit(limit), order = [SQLOrder("random()", raw = true)]), df = df)
+function rand{T<:AbstractModel}(m::Type{T}; limit = 1)
+  find(m, SQLQuery(limit = SQLLimit(limit), order = [SQLOrder("random()", raw = true)]))
 end
 
-function rand_one{T<:GenieModel}(m::Type{T}; df::Bool = false)
-  result = rand(m, limit = 1, df = df)
+function rand_one{T<:AbstractModel}(m::Type{T})
+  result = rand(m, limit = 1)
   df ? result : to_nullable(result)
 end
 
-function all{T<:GenieModel}(m::Type{T}; df::Bool = false)
-  find(m, df = df)
+function all{T<:AbstractModel}(m::Type{T})
+  find(m)
 end
 
-function save{T<:GenieModel}(m::T; conflict_strategy = :error)
+function save{T<:AbstractModel}(m::T; conflict_strategy = :error)
   try 
     save!(m, conflict_strategy)
 
@@ -81,7 +76,7 @@ function save{T<:GenieModel}(m::T; conflict_strategy = :error)
   end
 end
 
-function save!{T<:GenieModel}(m::T; conflict_strategy = :error)
+function save!{T<:AbstractModel}(m::T; conflict_strategy = :error)
   sql::UTF8String = to_store_sql(m, conflict_strategy = conflict_strategy)
   query_result_df::DataFrames.DataFrame = query(sql)
   insert_id::Any = query_result_df[1, Symbol(m._id)]
@@ -89,11 +84,30 @@ function save!{T<:GenieModel}(m::T; conflict_strategy = :error)
   find_one_by(typeof(m), Symbol(m._id), insert_id)
 end
 
+function create_or_update_by!{T<:AbstractModel}(m::T, property::Symbol, value::Any)
+  existing = find_one_by(typeof(m), property, value)
+  if ! isnull(existing) 
+    existing = Base.get(existing)
+    
+    for fieldname in fieldnames(typeof(m))
+      ( startswith(string(fieldname), "_") || string(fieldname) == m._id ) && continue
+      setfield!(existing, fieldname, getfield(m, fieldname))
+    end
+    
+    return Model.save!(existing)
+  else 
+    return Model.save!(m)
+  end
+end
+function create_or_update_by!{T<:AbstractModel}(m::T, property::Symbol)
+  create_or_update_by!(m, property, getfield(m, property))
+end
+
 #
 # Object generation 
 # 
 
-function to_models{T<:GenieModel}(m::Type{T}, df::DataFrames.DataFrame)
+function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
   models = Array{T, 1}()
   dfs = df_result_to_models_data(m, df)
 
@@ -129,16 +143,13 @@ function to_models{T<:GenieModel}(m::Type{T}, df::DataFrames.DataFrame)
   return models
 end
 
-function set_relationship_data{T<:GenieModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame)
+function set_relationship_data{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame)
   r.data = Nullable( to_model(related_model, related_model_df) )
-  if is_dev()
-    r.raw_data::Nullable{DataFrames.DataFrame} = Nullable(related_model_df)
-  end
 
   r
 end
 
-function to_model{T<:GenieModel}(m::Type{T}, row::DataFrames.DataFrameRow)
+function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
   _m::T = disposable_instance(m) 
   obj = m()
   sf = settable_fields(_m, row)
@@ -169,7 +180,7 @@ function to_model{T<:GenieModel}(m::Type{T}, row::DataFrames.DataFrameRow)
   obj
 end
 
-function to_model{T<:GenieModel}(m::Type{T}, df::DataFrames.DataFrame)
+function to_model{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
   for row in eachrow(df)
     return to_model(m, row)
   end
@@ -179,7 +190,7 @@ end
 # Query generation
 # 
 
-function to_select_part{T<:GenieModel}(m::Type{T}, c::Array{SQLColumn, 1})
+function to_select_part{T<:AbstractModel}(m::Type{T}, c::Array{SQLColumn, 1})
   _m = disposable_instance(m)
   "SELECT " * if ( length(c) > 0 ) string(c)
               else 
@@ -209,28 +220,28 @@ function to_select_part{T<:GenieModel}(m::Type{T}, c::Array{SQLColumn, 1})
                 join([table_columns ; related_table_columns], ", ")
               end
 end
-function to_select_part{T<:GenieModel}(m::Type{T}, c::SQLColumn)
+function to_select_part{T<:AbstractModel}(m::Type{T}, c::SQLColumn)
   to_select_part(m, [c])
 end
-function to_select_part{T<:GenieModel}(m::Type{T}, c::AbstractString)
+function to_select_part{T<:AbstractModel}(m::Type{T}, c::AbstractString)
   to_select_part(m, SQLColumn(c, raw = c == "*"))
 end
-function to_select_part{T<:GenieModel}(m::Type{T})
+function to_select_part{T<:AbstractModel}(m::Type{T})
   to_select_part(m, Array{SQLColumn, 1}())
 end
 
-function to_from_part{T<:GenieModel}(m::Type{T})
+function to_from_part{T<:AbstractModel}(m::Type{T})
   _m = disposable_instance(m)
   "FROM " * escape_column_name(_m._table_name)
 end
 
-function to_where_part{T<:GenieModel}(m::Type{T}, w::Array{SQLWhere, 1})
+function to_where_part{T<:AbstractModel}(m::Type{T}, w::Array{SQLWhere, 1})
   isempty(w) ? 
     "" :
     "WHERE " * (string(first(w).condition) == "AND" ? "TRUE " : "FALSE ") * join(map(wx -> string(wx, disposable_instance(m)), w), " ")
 end
 
-function to_order_part{T<:GenieModel}(m::Type{T}, o::Array{SQLOrder, 1})
+function to_order_part{T<:AbstractModel}(m::Type{T}, o::Array{SQLOrder, 1})
   isempty(o) ? 
     "" : 
     "ORDER BY " * join(map(x -> to_fully_qualified(m, x.column) * " " * x.direction, o), ", ")
@@ -256,7 +267,7 @@ function to_having_part(h::Array{SQLHaving, 1})
     (string(first(h).condition) == "AND" ? "TRUE " : "FALSE ") * join(map(w -> string(w), h), " ")
 end
 
-function to_join_part{T<:GenieModel}(m::Type{T})
+function to_join_part{T<:AbstractModel}(m::Type{T})
   _m = disposable_instance(m)
   join_part = ""
    
@@ -268,7 +279,7 @@ function to_join_part{T<:GenieModel}(m::Type{T})
   join_part
 end
 
-function relationships{T<:GenieModel}(m::Type{T})
+function relationships{T<:AbstractModel}(m::Type{T})
   _m = disposable_instance(m)
   # indirect_relationships = [:has_one_through, :has_many_through]
 
@@ -288,7 +299,7 @@ function relationships{T<:GenieModel}(m::Type{T})
   rls
 end
 
-function relationship{T<:GenieModel}(m::T, model_name::Symbol, relationship_type::Symbol)
+function relationship{T<:AbstractModel}(m::T, model_name::Symbol, relationship_type::Symbol)
   nullable_defined_rels::Nullable{Dict{Symbol, SQLRelation}} = getfield(m, relationship_type) 
   if ! isnull(nullable_defined_rels) 
     defined_rels::Array{SQLRelation, 1} = Base.get(nullable_defined_rels) |> values |> collect
@@ -303,24 +314,16 @@ function relationship{T<:GenieModel}(m::T, model_name::Symbol, relationship_type
   Nullable{SQLRelation}()
 end
 
-function relationship_data!{T<:GenieModel}(m::T, model_name::Symbol, relationship_type::Symbol)
-  rel = relationship(m, model_name, relationship_type)
-
-  # @bp
-
-  if ! isnull(rel) 
-    rel = Base.get(rel) 
-    if rel.lazy && isnull(rel.data)
-      return get_relationship_data(m, rel, relationship_type) |> Base.get
-    elseif ! isnull(rel.data)
-      return Base.get(rel.data)
-    end
+function relationship_data!{T<:AbstractModel}(m::T, model_name::Symbol, relationship_type::Symbol)
+  rel = relationship(m, model_name, relationship_type) |> Base.get
+  if rel.lazy && isnull(rel.data)
+    return (get_relationship_data(m, rel, relationship_type) |> Base.get)::T
+  elseif ! isnull(rel.data)
+    return Base.get(rel.data)::T
   end
-
-  nothing
 end
 
-function get_relationship_data{T<:GenieModel}(m::T, rel::SQLRelation, relationship_type::Symbol)
+function get_relationship_data{T<:AbstractModel}(m::T, rel::SQLRelation, relationship_type::Symbol)
   conditions =  if ! isnull( rel.condition ) 
                   Base.get(rel.condition)
                 else 
@@ -340,24 +343,24 @@ function get_relationship_data{T<:GenieModel}(m::T, rel::SQLRelation, relationsh
   push!(conditions, SQLWhere(where...))
   data = Model.find( constantize(rel.model_name), SQLQuery( where = conditions, limit = limit ) )
 
-  if isempty(data) return nothing end
+  if isempty(data) return Nullable{AbstractModel}() end
 
   if relationship_type == RELATIONSHIP_HAS_ONE || relationship_type == RELATIONSHIP_BELONGS_TO
-    return Nullable(first(data))
+    return Nullable{AbstractModel}(first(data))
   else 
-    return Nullable(data)
+    return Nullable{AbstractModel}(data)
   end
 
-  nothing
+  Nullable{AbstractModel}()
 end
 
-function df_result_to_models_data{T<:GenieModel}(m::Type{T}, df::DataFrame)
+function df_result_to_models_data{T<:AbstractModel}(m::Type{T}, df::DataFrame)
   _m::T = disposable_instance(m)
   tables_names::Array{AbstractString, 1} = [_m._table_name]
   tables_columns = Dict()
   sub_dfs = Dict()
   
-  function relationships_tables_names{T<:GenieModel}(m::Type{T})
+  function relationships_tables_names{T<:AbstractModel}(m::Type{T})
     for r in relationships(m)
       r, r_type = r
       rmdl = disposable_instance( constantize(r.model_name) )
@@ -394,7 +397,7 @@ function df_result_to_models_data{T<:GenieModel}(m::Type{T}, df::DataFrame)
   split_dfs_by_table()
 end
 
-function relation_to_sql{T<:GenieModel}(m::T, rel::Tuple{SQLRelation, Symbol})
+function relation_to_sql{T<:AbstractModel}(m::T, rel::Tuple{SQLRelation, Symbol})
   rel, rel_type = rel
   j = disposable_instance(rel.model_name)
   join_table_name = j._table_name
@@ -416,14 +419,14 @@ function relation_to_sql{T<:GenieModel}(m::T, rel::Tuple{SQLRelation, Symbol})
   end
 end
 
-function to_fetch_sql{T<:GenieModel}(m::Type{T}, q::SQLQuery)
+function to_fetch_sql{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
   sql::UTF8String = ( "$(to_select_part(m, q.columns)) $(to_from_part(m)) $(to_join_part(m)) $(to_where_part(m, q.where)) " * 
                       "$(to_group_part(q.group)) $(to_order_part(m, q.order)) " * 
                       "$(to_having_part(q.having)) $(to_limit_part(q.limit)) $(to_offset_part(q.offset))") |> strip
   replace(sql, r"\s+", " ")
 end
 
-function to_store_sql{T<:GenieModel}(m::T; conflict_strategy = :error) # upsert strateygy = :none | :error | :ignore | :update
+function to_store_sql{T<:AbstractModel}(m::T; conflict_strategy = :error) # upsert strateygy = :none | :error | :ignore | :update
   uf = persistable_fields(m)
 
   sql = if ! persisted(m) || (persisted(m) && conflict_strategy == :update)
@@ -447,13 +450,13 @@ function to_store_sql{T<:GenieModel}(m::T; conflict_strategy = :error) # upsert 
   return sql * " RETURNING $(m._id)"
 end
 
-function update_query_part{T<:GenieModel}(m::T)
+function update_query_part{T<:AbstractModel}(m::T)
   update_values = join(map(x -> "$(string(SQLColumn(x))) = $( string(prepare_for_db_save(m, Symbol(x), getfield(m, Symbol(x)))) )", 
                             persistable_fields(m)), ", ")
   return " $update_values WHERE $(m._table_name).$(m._id) = '$(Base.get(m.id))'"
 end
 
-function prepare_for_db_save{T<:GenieModel}(m::T, field::Symbol, value)
+function prepare_for_db_save{T<:AbstractModel}(m::T, field::Symbol, value)
   value = try 
             Base.get(m.on_dehydration)(m, field, value)
           catch 
@@ -467,7 +470,7 @@ end
 # delete methods 
 # 
 
-function delete_all{T<:GenieModel}(m::Type{T}; truncate::Bool = true, reset_sequence::Bool = true, cascade::Bool = false)
+function delete_all{T<:AbstractModel}(m::Type{T}; truncate::Bool = true, reset_sequence::Bool = true, cascade::Bool = false)
   _m = disposable_instance(m)
   if truncate 
     sql = "TRUNCATE $(_m._table_name)"
@@ -480,7 +483,7 @@ function delete_all{T<:GenieModel}(m::Type{T}; truncate::Bool = true, reset_sequ
   query(sql)
 end
 
-function delete{T<:GenieModel}(m::T)
+function delete{T<:AbstractModel}(m::T)
   sql = "DELETE FROM $(m._table_name) WHERE $(m._id) = '$(m.id)'"
   query(sql)
   
@@ -502,7 +505,7 @@ end
 # sql utility queries
 # 
 
-function count{T<:GenieModel}(m::Type{T})
+function count{T<:AbstractModel}(m::Type{T})
   _m = disposable_instance(m)
   result::DataFrames.DataFrame = query("SELECT COUNT(*) AS $(_m._table_name)_count FROM $(_m._table_name)")
 
@@ -513,19 +516,22 @@ end
 # ORM utils
 # 
 
-function is_subtype{T<:GenieModel}(m::Type{T}, parent_model = GenieModel)
+function is_subtype{T<:AbstractModel}(m::Type{T}, parent_model = AbstractModel)
   return m <: parent_model
 end
 
-function disposable_instance{T<:GenieModel}(m::Type{T})
+const model_prototypes = Dict{AbstractString, Any}()
+
+function disposable_instance{T<:AbstractModel}(m::Type{T})
+  type_name = string(m)
+  haskey(model_prototypes, type_name) && return model_prototypes[type_name]
+
   if is_subtype(m)
-    return m()
+    model_prototypes[type_name] = m()    
+    return model_prototypes[type_name]
   else 
     error("$m is not a Model")
   end
-end
-function disposable_instance(m::Symbol)
-  "Genie." * ucfirst(string(m)) |> parse |> eval |> disposable_instance
 end
 
 @memoize function columns(m)
@@ -533,18 +539,18 @@ end
   Database.table_columns(_m._table_name)
 end
 
-function persisted{T<:GenieModel}(m::T)
+function persisted{T<:AbstractModel}(m::T)
   ! ( isa(getfield(m, Symbol(m._id)), Nullable) && isnull( getfield(m, Symbol(m._id)) ) )
 end
 
-function persistable_fields{T<:GenieModel}(m::T; fully_qualified::Bool = false)
+function persistable_fields{T<:AbstractModel}(m::T; fully_qualified::Bool = false)
   object_fields = map(x -> string(x), fieldnames(m))
   db_columns = columns(typeof(m))[:column_name]
   pst_fields = intersect(object_fields, db_columns)
   fully_qualified ? to_fully_qualified_sql_column_names(m, pst_fields) : pst_fields
 end
 
-function settable_fields{T<:GenieModel}(m::T, row::DataFrames.DataFrameRow)
+function settable_fields{T<:AbstractModel}(m::T, row::DataFrames.DataFrameRow)
   df_cols::Array{Symbol, 1} = names(row)
   fields = is_fully_qualified(m, df_cols[1]) ? to_sql_column_names(m, fieldnames(m)) : fieldnames(m)
   intersect(fields, df_cols)
@@ -598,19 +604,19 @@ end
 # utility functions 
 # 
 
-function has_field{T<:GenieModel}(m::T, f::Symbol)
+function has_field{T<:AbstractModel}(m::T, f::Symbol)
   in(f, fieldnames(m))
 end
 
-function strip_table_name{T<:GenieModel}(m::T, f::Symbol)
+function strip_table_name{T<:AbstractModel}(m::T, f::Symbol)
   replace(string(f), Regex("^$(m._table_name)_"), "", 1) |> Symbol
 end
 
-function is_fully_qualified{T<:GenieModel}(m::T, f::Symbol)
+function is_fully_qualified{T<:AbstractModel}(m::T, f::Symbol)
   startswith(string(f), m._table_name) && has_field(m, strip_table_name(m, f))
 end
 
-function from_fully_qualified{T<:GenieModel}(m::T, f::Symbol)
+function from_fully_qualified{T<:AbstractModel}(m::T, f::Symbol)
   is_fully_qualified(m, f) ? strip_table_name(m, f) : f
 end
 
@@ -621,36 +627,36 @@ end
 function to_fully_qualified(v::AbstractString, t::AbstractString)
   t * "." * v
 end
-function to_fully_qualified{T<:GenieModel}(m::T, v::AbstractString)
+function to_fully_qualified{T<:AbstractModel}(m::T, v::AbstractString)
   to_fully_qualified(v, m._table_name)
 end
-function to_fully_qualified{T<:GenieModel}(m::T, c::SQLColumn)
+function to_fully_qualified{T<:AbstractModel}(m::T, c::SQLColumn)
   c.raw && return c.value
   to_fully_qualified(c.value, m._table_name)
 end
-function to_fully_qualified{T<:GenieModel}(m::Type{T}, c::SQLColumn)
+function to_fully_qualified{T<:AbstractModel}(m::Type{T}, c::SQLColumn)
   to_fully_qualified(disposable_instance(m), c)
 end
 
-function  to_sql_column_names{T<:GenieModel}(m::T, fields::Array{Symbol, 1})
+function  to_sql_column_names{T<:AbstractModel}(m::T, fields::Array{Symbol, 1})
   map(x -> (to_sql_column_name(m, string(x))) |> Symbol, fields)
 end
 
 function to_sql_column_name(v::AbstractString, t::AbstractString)
   t * "_" * v
 end
-function to_sql_column_name{T<:GenieModel}(m::T, v::AbstractString)
+function to_sql_column_name{T<:AbstractModel}(m::T, v::AbstractString)
   to_sql_column_name(v, m._table_name)
 end
-function to_sql_column_name{T<:GenieModel}(m::T, c::SQLColumn)
+function to_sql_column_name{T<:AbstractModel}(m::T, c::SQLColumn)
   to_sql_column_name(c.value, m._table_name)
 end
 
-function to_fully_qualified_sql_column_names{T<:GenieModel, S<:AbstractString}(m::T, persistable_fields::Array{S, 1}; escape_columns::Bool = false)
+function to_fully_qualified_sql_column_names{T<:AbstractModel, S<:AbstractString}(m::T, persistable_fields::Array{S, 1}; escape_columns::Bool = false)
   map(x -> to_fully_qualified_sql_column_name(m, x, escape_columns = escape_columns), persistable_fields)
 end
 
-function to_fully_qualified_sql_column_name{T<:GenieModel}(m::T, f::AbstractString; escape_columns::Bool = false)
+function to_fully_qualified_sql_column_name{T<:AbstractModel}(m::T, f::AbstractString; escape_columns::Bool = false)
   if escape_columns
     "$(to_fully_qualified(m, f) |> escape_column_name) AS $(to_sql_column_name(m, f) |> escape_column_name)"
   else 
@@ -658,7 +664,7 @@ function to_fully_qualified_sql_column_name{T<:GenieModel}(m::T, f::AbstractStri
   end
 end
 
-function to_dict{T<:GenieModel}(m::T; all_fields::Bool = false, expand_nullables::Bool = false)
+function to_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, expand_nullables::Bool = false)
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
   [string(f) => Util.expand_nullable( getfield(m, Symbol(f)), expand_nullables ) for f in fields]
 end
@@ -666,7 +672,7 @@ function to_dict{T<:GenieType}(m::T)
   Genie.to_dict(m)
 end
 
-function to_string_dict{T<:GenieModel}(m::T; all_fields::Bool = false, all_output::Bool = false) 
+function to_string_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, all_output::Bool = false) 
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
   output_length = all_output ? 100_000_000 : Genie.config.output_length
   # @bp
@@ -687,7 +693,7 @@ function to_string_dict{T<:GenieType}(m::T)
 end
 
 function to_nullable(result)
-  isempty(result) ? Nullable{GenieModel}() : Nullable{GenieModel}(result |> first)
+  isempty(result) ? Nullable{AbstractModel}() : Nullable{AbstractModel}(result |> first)
 end
 
 function escape_type(value)
@@ -720,5 +726,3 @@ function dataframe_to_dict(df::DataFrames.DataFrame)
 end
 
 end
-
-M = Model

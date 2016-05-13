@@ -31,7 +31,7 @@ function new_task(class_name)
     \"\"\"
   end
 
-  function run_task!(_::$class_name, parsed_args = Dict())
+  function run_task!(_::$class_name, parsed_args = Dict{AbstractString, Any}())
     # Build something great
   end
   """

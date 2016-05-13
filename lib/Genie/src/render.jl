@@ -62,6 +62,12 @@ function respond(body, code::Int = 200, headers::Dict{AbstractString, AbstractSt
   (code, headers, body)
 end
 
+function respond(response, headers::Dict{AbstractString, AbstractString} = Dict{AbstractString, AbstractString}("Content-Type" => "text/json"), as::Symbol = :json)
+  respond(response[1], response[2], headers, as)
+end
+
+# =================================================== # 
+
 module JSONAPI
 
 using Render
@@ -107,6 +113,18 @@ end
 
 function elem(;structure...)
   () -> Render.structure_to_dict(structure)
+end
+
+function error(status_code; id = "resource_not_found", code = "4040001", title = "Not found", detail = "The requested resource was not found")
+  Dict{Symbol, Any}(
+    :errors => elem(
+                      id        = id, 
+                      status    = status_code, 
+                      code      = code, 
+                      title     = title, 
+                      detail    = detail
+                    )()
+  ), status_code
 end
 
 function pagination(path::AbstractString, total_items::Int; current_page::Int = 1, page_size::Int = Genie.genie_app.config.pagination_jsonapi_default_items_per_page)

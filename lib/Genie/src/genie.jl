@@ -4,7 +4,7 @@ using App
 using Configuration
 
 export config
-export GenieModel, M, Model, Database
+export AbstractModel, M, Model, Database
 
 const APP_PATH = pwd()
 
@@ -19,5 +19,3 @@ include(abspath("lib/Genie/src/commands.jl"))
 run_app_with_command_line_args(config)
 
 end
-
-G = Genie

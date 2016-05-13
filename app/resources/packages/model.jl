@@ -1,6 +1,6 @@
 export Package
 
-type Package <: Genie.GenieModel
+type Package <: Genie.AbstractModel
   _table_name::AbstractString
   _id::AbstractString
 
