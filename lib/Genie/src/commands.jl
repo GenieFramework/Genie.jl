@@ -7,7 +7,7 @@ end
 function run_app_with_command_line_args(config) 
   parsed_args = parse_commandline_args()::Dict{AbstractString, Any}
 
-  config.app_env = parsed_args["env"]
+  config.app_env = ENV["GENIE_ENV"]
   config.server_port = parse(Int, parsed_args["server:port"])
   config.server_workers_count = parse(Int, parsed_args["server:workers"])
 
@@ -71,14 +71,6 @@ function parse_commandline_args()
         "--server:workers", "-w"
             help = "Number of workers, one per server instance. Additional workers are spawned onto 1 increments of port"
             default = "1"
-
-        # "--monitor", "-m"
-        #     help = "true -> monitor files for changes and reload app"
-        #     default = "false"
-        
-        "--env", "-e"
-            help = "app execution environment [dev|prod|test]"
-            default = "dev"
         
         "--db:init"
             help = "true -> create database and core tables"

@@ -2,7 +2,6 @@ module Router
 
 using App
 using HttpServer
-using Debug
 using URIParser
 using Genie
 using AppServer
@@ -44,7 +43,7 @@ function match_routes(req::Request, res::Response)
     protocol, route, to = route_def
     protocol != req.method && continue
     
-    Genie.config.debug_router ? Genie.log("Router: Checking against " * route) : nothing
+    Genie.config.debug_router && Genie.log("Router: Checking against " * route)
 
     parsed_route, param_names = parse_route(route)
 
@@ -52,7 +51,7 @@ function match_routes(req::Request, res::Response)
     regex_route = Regex("^" * parsed_route * "\$")
     
     (! ismatch(regex_route, uri.path)) && continue
-    Genie.config.debug_router ? Genie.log("Router: Matched route " * uri.path) : nothing
+    Genie.config.debug_router && Genie.log("Router: Matched route " * uri.path)
 
     extract_uri_params(uri, regex_route, param_names)
     extract_extra_params(extra_params)
@@ -60,7 +59,7 @@ function match_routes(req::Request, res::Response)
     return invoke_controller(to, req, res, params)
   end
 
-  Genie.config.debug_router ? Genie.log("Router: No route matched - defaulting 404") : nothing
+  Genie.config.debug_router && Genie.log("Router: No route matched - defaulting 404")
   Response( 404, Dict{AbstractString, AbstractString}(), "not found" )
 end
 
@@ -80,7 +79,7 @@ function parse_route(route::AbstractString)
   "/" * join(parts, "/"), param_names
 end
 
-@debug function extract_uri_params(uri::URI, regex_route::Regex, param_names::Array{AbstractString, 1})
+function extract_uri_params(uri::URI, regex_route::Regex, param_names::Array{AbstractString, 1})
   # in path params
   matches = match(regex_route, uri.path)
   for param_name in param_names 
@@ -115,9 +114,18 @@ function extract_extra_params(extra_params::Dict{Symbol, Dict{Symbol, Any}})
   end
 end
 
-@debug function invoke_controller(to::AbstractString, req::Request, res::Response, params::Dict{Symbol, Any})
+loaded_controllers = UInt64[]
+
+#TODO: add a try catch and return 500 or show exception
+function invoke_controller(to::AbstractString, req::Request, res::Response, params::Dict{Symbol, Any})
   to_parts = split(to, "#")
-  Genie.load_controller(abspath(joinpath(Genie.APP_PATH, "app", "resources", to_parts[1])))
+
+  controller_path = abspath(joinpath(Genie.APP_PATH, "app", "resources", to_parts[1]))
+  controller_path_hash = hash(controller_path)
+  if ! in(controller_path_hash, loaded_controllers) || Configuration.is_dev() 
+    Genie.load_controller(controller_path)
+    ! in(controller_path_hash, loaded_controllers) && push!(loaded_controllers, controller_path_hash)
+  end
 
   controller = Genie.GenieController()
   action_name = string(current_module()) * "." * to_parts[2]
@@ -132,7 +140,7 @@ end
     end
   end
 
-  Genie.config.debug_responses ? AppServer.log_request_response(response) : nothing
+  Genie.config.debug_responses && AppServer.log_request_response(response)
 
   response
 end

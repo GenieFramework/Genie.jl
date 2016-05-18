@@ -61,8 +61,7 @@ function respond(body, code::Int = 200, headers::Dict{AbstractString, AbstractSt
           end
   (code, headers, body)
 end
-
-function respond(response, headers::Dict{AbstractString, AbstractString} = Dict{AbstractString, AbstractString}("Content-Type" => "text/json"), as::Symbol = :json)
+function respond(response::Tuple, headers::Dict{AbstractString, AbstractString} = Dict{AbstractString, AbstractString}("Content-Type" => "text/json"), as::Symbol = :json)
   respond(response[1], response[2], headers, as)
 end
 
@@ -115,7 +114,7 @@ function elem(;structure...)
   () -> Render.structure_to_dict(structure)
 end
 
-function error(status_code; id = "resource_not_found", code = "4040001", title = "Not found", detail = "The requested resource was not found")
+function error(status_code; id = "resource_not_found", code = "404-0001", title = "Not found", detail = "The requested resource was not found")
   Dict{Symbol, Any}(
     :errors => elem(
                       id        = id, 

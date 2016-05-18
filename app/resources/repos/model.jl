@@ -137,7 +137,7 @@ function search(search_term::AbstractString; limit::SQLLimit = SQLLimit(), offse
       SELECT 
         id, 
         readme, 
-        to_tsvector(readme) AS repo_info, 
+        to_tsvector('english', readme) AS repo_info, 
         package_id
       FROM 
         repos
@@ -161,7 +161,7 @@ function count_search_results(search_term::AbstractString)
     FROM
       (
       SELECT
-        to_tsvector(readme) AS repo_info
+        to_tsvector('english', readme) AS repo_info
       FROM
         repos
       ) repos_search,

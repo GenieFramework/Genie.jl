@@ -5,11 +5,12 @@ using Genie
 using Model
 
 function show(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Request, res::Response)
-  try 
-    package = Model.find_one(Genie.Package, params[:package_id]) |> Base.get
+  package = Model.find_one(Genie.Package, params[:package_id])
+  if ! isnull(package) 
+    package = Base.get(package)
     Render.respond(Render.json(:packages, :show, package = package))
-  catch 
-    Render.respond(Render.JSONAPI.error(404))
+  else 
+    Render.respond(Render.JSONAPI.error(404))  
   end
 end
 
@@ -21,13 +22,17 @@ function search(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Reques
   packages =  ! isempty(search_results) ? 
               Model.find(Package, SQLQuery(where = SQLWhere(:id, SQLInput(join( map(x -> string(x), search_results_df[:package_id]), ","), raw = true), "AND", "IN" ))) :
               []
+
+  if ! isempty(packages)
+    sort!(packages, by = (p) -> search_results[p.id |> Util.expand_nullable][:rank], rev = true)
+  end
   
-  respond(Render.json(  :packages, :search, 
-                        packages = packages, 
-                        search_results = search_results, 
-                        current_page = params[:page_number], 
-                        page_size = params[:page_size], 
-                        total_items = results_count))
+  Render.respond(Render.json(  :packages, :search, 
+                                packages = packages, 
+                                search_results = search_results, 
+                                current_page = params[:page_number], 
+                                page_size = params[:page_size], 
+                                total_items = results_count))
 end
 
 end

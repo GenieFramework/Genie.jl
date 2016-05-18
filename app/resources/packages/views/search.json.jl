@@ -6,7 +6,7 @@ JSONAPI.builder(
     attributes    = JSONAPI.elem(
       :package, 
       name          = ()-> package.name, 
-      url           = ()-> package.url, 
+      url           = ()-> package.url
     ), 
     search = JSONAPI.elem(
       :package, 

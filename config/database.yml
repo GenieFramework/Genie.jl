@@ -6,6 +6,14 @@ dev:
   password: adrian
   port: 5432
 
+prod:
+  adapter: PostgreSQL
+  database: pkg_info_dev
+  host: localhost
+  username: adrian
+  password: adrian
+  port: 5432
+
 test:
   adapter: PostgreSQL
   database: pkg_info_test

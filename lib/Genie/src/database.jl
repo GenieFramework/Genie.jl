@@ -17,8 +17,13 @@ end
       return Nullable(env_db_conn_data)
     else 
       error("Database config must define an adapter")
+      Nullable()
     end
+  else 
+    error("DB configuration for $(Genie.config.app_env) not found")
   end
+
+  Nullable()
 end
 
 @memoize function db_connect(skip_db::Bool = false)

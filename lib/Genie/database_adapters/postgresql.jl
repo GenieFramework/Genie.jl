@@ -38,7 +38,7 @@ end
 
 function adapter_query_df(sql::AbstractString, supress_output::Bool, conn, adapter)
   df::DataFrames.DataFrame = adapter.fetchdf(adapter_query(sql, supress_output, conn, adapter, false))
-  Genie.@unless(supress_output, Genie.log(df))
+  Genie.@unless(supress_output || ! Genie.config.debug_db, Genie.log(df))
 
   df
 end
@@ -46,7 +46,7 @@ end
 function adapter_query(sql::AbstractString, supress_output::Bool, conn, adapter, skip_db::Bool)
   stmt = adapter.prepare(conn, sql)
 
-  result = if supress_output
+  result = if supress_output || ! Genie.config.debug_db
     adapter.execute(stmt)
   else 
     Genie.log("SQL QUERY: $(escape_string(sql))")

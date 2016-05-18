@@ -1,13 +1,13 @@
 #!/usr/local/bin/julia --color=yes
 module App
 
-push!(LOAD_PATH, abspath("lib/Genie/src"))
+push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "src")))
 
-export config
+if ! haskey(ENV, "GENIE_ENV") 
+  ENV["GENIE_ENV"] = "dev"
+end
+include(abspath(joinpath("config", "env", ENV["GENIE_ENV"] * ".jl")))
 
-using Configuration
-
-const config = Config(output_length = 100) #, supress_output = true, debug_db = false, debug_requests = false, debug_responses = false)
 using Genie
 
 end

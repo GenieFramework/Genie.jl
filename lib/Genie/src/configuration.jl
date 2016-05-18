@@ -38,7 +38,7 @@ type Config
 
   Config(;  
             server_port = 8000, 
-            app_env = DEV, 
+            app_env = ENV["GENIE_ENV"], 
             loggers = [], 
             running_as_task = false, 
             auto_connect = false, 

@@ -317,9 +317,9 @@ end
 function relationship_data!{T<:AbstractModel}(m::T, model_name::Symbol, relationship_type::Symbol)
   rel = relationship(m, model_name, relationship_type) |> Base.get
   if rel.lazy && isnull(rel.data)
-    return (get_relationship_data(m, rel, relationship_type) |> Base.get)::T
+    return (get_relationship_data(m, rel, relationship_type) |> Base.get)::AbstractModel
   elseif ! isnull(rel.data)
-    return Base.get(rel.data)::T
+    return Base.get(rel.data)::AbstractModel
   end
 end
 

@@ -2,16 +2,18 @@ push!(LOAD_PATH, abspath("lib/Genie/src"))
 
 include(abspath(joinpath("lib", "Genie", "src", "genie_types.jl")))
 
-using Model
+using AppServer
 using Migration
+using Model
 using Tester
 using Toolbox
-using AppServer
 
 using Reexport
+@reexport using Configuration
 @reexport using HttpServer
 @reexport using Render
 @reexport using Render.JSONAPI
+@reexport using Util
 
 if is_dev()
   @reexport using Debug
