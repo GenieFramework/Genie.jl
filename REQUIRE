@@ -1,7 +1,15 @@
 Logging
 Millboard
 HttpServer
-Debug
 Memoize
 YAML
 DataFrames
+JSON
+Mustache
+ArgParse
+
+Debug
+StackTraces
+
+GitHub
+DateParser

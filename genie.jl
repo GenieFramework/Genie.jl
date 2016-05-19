@@ -1,4 +1,4 @@
-#!/usr/local/bin/julia --color=yes
+#!/usr/bin/env julia --color=yes
 module App
 
 push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "src")))

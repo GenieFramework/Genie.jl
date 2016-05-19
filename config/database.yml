@@ -8,7 +8,7 @@ dev:
 
 prod:
   adapter: PostgreSQL
-  database: pkg_info_dev
+  database: pkg_info_prod
   host: localhost
   username: adrian
   password: adrian

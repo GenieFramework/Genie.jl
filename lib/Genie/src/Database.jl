@@ -33,7 +33,7 @@ end
   end
 
   env_db_conn_data = Base.get(env_db_conn_data)
-  joinpath("lib", "genie", "database_adapters", lowercase(conn_data()["adapter"]) * ".jl") |> abspath |> include
+  joinpath("lib", "Genie", "database_adapters", lowercase(conn_data()["adapter"]) * ".jl") |> abspath |> include
   current_module().adapter_connect(env_db_conn_data, skip_db)
 end
 
