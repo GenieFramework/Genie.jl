@@ -48,8 +48,12 @@ end
   conn, adapter
 end
 
+function create_database()
+  error("Not implemented")
+end
+
 function create_migrations_table()
-  query(create_migrations_table_sql())
+  query(current_module().create_migrations_table_sql())
   Genie.log("Created table $(Genie.config.db_migrations_table_name) or table already exists")
 end
 
