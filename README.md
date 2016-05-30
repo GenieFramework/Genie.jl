@@ -1,5 +1,5 @@
 # Genie
-## The high-performance high-productivity Julia web framework. 
+### The high-performance high-productivity Julia web framework. 
 
 Genie is a full-stack MVC web framework that provides a streamlined and efficient workflow for developing modern web apps. It builds on top of Julia's strengths (high-level, high-performance, dynamic, JIT compiled, functional), adding a series of modules, methods and tools for highly productive web development. 
 
