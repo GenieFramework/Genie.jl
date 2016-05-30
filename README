@@ -1,4 +1,0 @@
-A hoping-to-become-professional-grade web framework in Julia - at early stage, a lot more left to do, not ready for prime time yet. 
-
-Done so far: Database low level abstraction layer on top of Postgres, ORM, Migrations, Tasks runner, Tests runner, Logging, Controllers, extended routing based on Mux
-Left to do: the view layer, asset management, refactor router, maybe add support for working directly with HttpServer

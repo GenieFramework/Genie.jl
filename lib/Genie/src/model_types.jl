@@ -7,14 +7,13 @@ import Base.length
 import Base.next
 import Base.==
 
-export DbId, SQLType, AbstractModel, SearchLight
+export DbId, SQLType, AbstractModel
 export SQLInput, SQLColumn, SQLColumns, SQLLogicOperator
 export SQLWhere, SQLLimit, SQLOrder, SQLQuery, SQLRelation
 export QI, QC, QLO, QW, QL, QO, QQ, QR
 
 abstract SQLType <: Genie.GenieType
 abstract AbstractModel <: Genie.GenieType
-typealias SearchLight AbstractModel
 
 typealias DbId Int32
 convert(::Type{Nullable{DbId}}, v::Number) = Nullable{DbId}(DbId(v))
@@ -78,7 +77,7 @@ string(s::SQLColumn) = safe(s).value
 safe(s::SQLColumn) = escape_column_name(s)
 
 convert(::Type{SQLColumn}, s::Symbol) = SQLColumn(string(s))
-convert(::Type{Model.SQLColumn}, s::ASCIIString) = SQLColumn(s)
+convert(::Type{SQLColumn}, s::ASCIIString) = SQLColumn(s)
 convert(::Type{SQLColumn}, v::ASCIIString, e::Bool, r::Bool) = SQLColumn(v, escaped = e, raw = r)
 convert(::Type{SQLColumn}, v::ASCIIString, e::Bool, r::Bool, t::Any) = SQLColumn(v, escaped = e, raw = r, table_name = string(t))
 
@@ -119,8 +118,9 @@ type SQLWhere <: SQLType
     new(column, value, condition, operator)
 end
 SQLWhere(column::Any, value::Any, condition::Any, operator::AbstractString) = SQLWhere(SQLColumn(column), SQLInput(value), SQLLogicOperator(condition), operator)
+SQLWhere(column::SQLColumn, value::SQLInput, operator::AbstractString) = SQLWhere(column, value, SQLLogicOperator("AND"), operator)
 SQLWhere(column::SQLColumn, value::SQLInput, condition::SQLLogicOperator) = SQLWhere(column, value, condition, "=")
-SQLWhere(column::Any, value::Any, condition::Any) = SQLWhere(SQLColumn(column), SQLInput(value), SQLLogicOperator(condition), "=")
+SQLWhere(column::Any, value::Any, operator::Any) = SQLWhere(SQLColumn(column), SQLInput(value), SQLLogicOperator("AND"), operator)
 SQLWhere(column::SQLColumn, value::SQLInput) = SQLWhere(column, value, SQLLogicOperator("AND"))
 SQLWhere(column::Any, value::Any) = SQLWhere(SQLColumn(column), SQLInput(value))
 
@@ -204,11 +204,15 @@ type SQLRelation <: SQLType
   model_name::Symbol
   condition::Nullable{Array{SQLWhere, 1}}
   required::Bool
-  lazy::Bool
+  eagerness::Symbol
   data::Nullable{AbstractModel}
 
-  SQLRelation(model_name; condition = Nullable{Array{SQLWhere, 1}}(), required = true, lazy = false, data = Nullable{AbstractModel}()) = 
-    new(model_name, condition, required, lazy, data)
+  SQLRelation(model_name; condition = Nullable{Array{SQLWhere, 1}}(), required = true, eagerness = :auto, data = Nullable{AbstractModel}()) = 
+    new(model_name, condition, required, eagerness, data)
+end
+function lazy(r::SQLRelation) 
+  r.eagerness == MODEL_RELATIONSHIPS_EAGERNESS_LAZY || 
+  r.eagerness == MODEL_RELATIONSHIPS_EAGERNESS_AUTO && Genie.config.model_relationships_eagerness == MODEL_RELATIONSHIPS_EAGERNESS_LAZY
 end
 
 QR = SQLRelation

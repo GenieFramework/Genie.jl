@@ -7,8 +7,8 @@ JSONAPI.builder(
       package, 
       name          = ()-> package.name, 
       url           = ()-> package.url, 
-      readme        = ()-> Model.relationship_data!(package, :repo, :has_one).readme, 
-      participation = ()-> Model.relationship_data!(package, :repo, :has_one).participation 
+      readme        = ()-> Model.relationship_data!(package, :Repo, :has_one).readme, 
+      participation = ()-> Model.relationship_data!(package, :Repo, :has_one).participation 
     ), 
     links = JSONAPI.elem(
       package, 

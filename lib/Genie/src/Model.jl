@@ -111,35 +111,28 @@ function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
   models = Array{T, 1}()
   dfs = df_result_to_models_data(m, df)
 
-  # @bp
   row_count::Int = 1
   for row in eachrow(df)
     main_model::T = to_model(m, dfs[disposable_instance(m)._table_name][row_count, :])
 
-    # @bp
-    index::Int = 1
     for relationship in relationships(m)
       r::SQLRelation, r_type::Symbol = relationship
 
-      if r.lazy continue end
+      lazy(r) && continue 
 
       related_model = constantize(r.model_name)
       related_model_df::DataFrames.DataFrame = dfs[disposable_instance(related_model)._table_name][row_count, :]
       r = set_relationship_data(r, related_model, related_model_df)
 
       if ! isdefined(:model_rels)
-        model_rels::Array{Model.SQLRelation, 1} = getfield(main_model, r_type) |> Base.get 
+        model_rels::Dict{Symbol, SQLRelation} = getfield(main_model, r_type) |> Base.get
       end
-      model_rels[index] = r
-      index += 1
+      model_rels[Symbol(lowercase(string(r_type) * "_" * string(r.model_name)))] = r
     end
 
-    # @bp
     push!(models, main_model)
-    row_count += 1
   end
 
-  # @bp
   return models
 end
 
@@ -153,7 +146,6 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
   _m::T = disposable_instance(m) 
   obj = m()
   sf = settable_fields(_m, row)
-  # @bp
 
   for field in sf
     unq_field = from_fully_qualified(_m, field)
@@ -173,7 +165,6 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
               row[field]
             end
 
-    # @bp
     setfield!(obj, unq_field, convert(typeof(getfield(_m, unq_field)), value))
   end
 
@@ -190,35 +181,56 @@ end
 # Query generation
 # 
 
-function to_select_part{T<:AbstractModel}(m::Type{T}, c::Array{SQLColumn, 1})
+function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Array{SQLColumn, 1})
   _m = disposable_instance(m)
-  "SELECT " * if ( length(c) > 0 ) string(c)
-              else 
-                joined_tables = [] 
 
-                # @bp
-                if has_relationship(_m, RELATIONSHIP_HAS_ONE)
-                  rels = Base.get(_m.has_one) |> values |> collect
-                  joined_tables = vcat(joined_tables, map(x -> x.lazy ? nothing : disposable_instance(x.model_name), rels))
-                end
+  function _to_select_part()
+    joined_tables = [] 
 
-                if has_relationship(_m, RELATIONSHIP_BELONGS_TO)
-                  rels = Base.get(_m.belongs_to) |> values |> collect
-                  joined_tables = vcat(joined_tables, map(x -> x.lazy ? nothing : disposable_instance(x.model_name), rels))
-                end
+    if has_relationship(_m, RELATIONSHIP_HAS_ONE)
+      rels = Base.get(_m.has_one) |> values |> collect
+      joined_tables = vcat(joined_tables, map(x -> lazy(x) ? nothing : disposable_instance(x.model_name), rels))
+    end
 
-                filter!(x -> x != nothing, joined_tables)
+    if has_relationship(_m, RELATIONSHIP_BELONGS_TO)
+      rels = Base.get(_m.belongs_to) |> values |> collect
+      joined_tables = vcat(joined_tables, map(x -> lazy(x) ? nothing : disposable_instance(x.model_name), rels))
+    end
 
-                # @bp
-                table_columns = join(to_fully_qualified_sql_column_names(_m, persistable_fields(_m), escape_columns = true), ", ")
-                related_table_columns = []
-                for rels in map(x -> to_fully_qualified_sql_column_names(x, persistable_fields(x), escape_columns = true), joined_tables)
-                  for col in rels
-                    push!(related_table_columns, col)
-                  end
-                end
-                join([table_columns ; related_table_columns], ", ")
-              end
+    filter!(x -> x != nothing, joined_tables)
+
+    if ! isempty(cols)
+      table_columns = []
+
+      for column in cols 
+        column_data = from_literal_column_name(column.value)
+        if ! haskey(column_data, :table_name)
+          column_data[:table_name] = _m._table_name
+        end
+        if ! haskey(column_data, :alias) 
+          column_data[:alias] = ""
+        end
+
+        fccn = "$(to_fully_qualified(column_data[:column_name], column_data[:table_name])) AS $( isempty(column_data[:alias]) ? to_sql_column_name(column_data[:column_name], column_data[:table_name]) : column_data[:alias] )"
+        push!(table_columns, fccn)
+      end
+
+      return join(table_columns, ", ")
+    else 
+      table_columns = join(to_fully_qualified_sql_column_names(_m, persistable_fields(_m), escape_columns = true), ", ")
+
+      related_table_columns = []
+      for rels in map(x -> to_fully_qualified_sql_column_names(x, persistable_fields(x), escape_columns = true), joined_tables)
+        for col in rels
+          push!(related_table_columns, col)
+        end
+      end
+
+      return join([table_columns ; related_table_columns], ", ")
+    end
+  end
+
+  "SELECT " * _to_select_part()
 end
 function to_select_part{T<:AbstractModel}(m::Type{T}, c::SQLColumn)
   to_select_part(m, [c])
@@ -272,7 +284,7 @@ function to_join_part{T<:AbstractModel}(m::Type{T})
   join_part = ""
    
   for rel in relationships(m)
-    if ( first(rel).lazy ) continue end
+    if ( first(rel) |> lazy ) continue end
     join_part *= (first(rel).required ? "INNER " : "LEFT ") * "JOIN " * relation_to_sql(_m, rel)
   end
 
@@ -316,7 +328,7 @@ end
 
 function relationship_data!{T<:AbstractModel}(m::T, model_name::Symbol, relationship_type::Symbol)
   rel = relationship(m, model_name, relationship_type) |> Base.get
-  if rel.lazy && isnull(rel.data)
+  if lazy(rel) && isnull(rel.data)
     return (get_relationship_data(m, rel, relationship_type) |> Base.get)::AbstractModel
   elseif ! isnull(rel.data)
     return Base.get(rel.data)::AbstractModel
@@ -378,13 +390,11 @@ function df_result_to_models_data{T<:AbstractModel}(m::Type{T}, df::DataFrame)
       ! contains(sdfc, "_") && continue 
       table_name = split(sdfc, "_")[1]
       ! in(table_name, tables_names) && continue
-      # @bp
       push!(tables_columns[table_name], dfc)
     end
   end
 
   function split_dfs_by_table()
-    # @bp
     for t in tables_names
       sub_dfs[t] = df[:, tables_columns[t]]
     end
@@ -533,6 +543,9 @@ function disposable_instance{T<:AbstractModel}(m::Type{T})
     error("$m is not a Model")
   end
 end
+function disposable_instance(model_name::Symbol)
+  disposable_instance(eval(parse(string(model_name))))
+end
 
 @memoize function columns(m)
   _m = disposable_instance(m)
@@ -656,12 +669,35 @@ function to_fully_qualified_sql_column_names{T<:AbstractModel, S<:AbstractString
   map(x -> to_fully_qualified_sql_column_name(m, x, escape_columns = escape_columns), persistable_fields)
 end
 
-function to_fully_qualified_sql_column_name{T<:AbstractModel}(m::T, f::AbstractString; escape_columns::Bool = false)
+function to_fully_qualified_sql_column_name{T<:AbstractModel}(m::T, f::AbstractString; escape_columns::Bool = false, alias::AbstractString = "")
   if escape_columns
-    "$(to_fully_qualified(m, f) |> escape_column_name) AS $(to_sql_column_name(m, f) |> escape_column_name)"
+    "$(to_fully_qualified(m, f) |> escape_column_name) AS $(isempty(alias) ? (to_sql_column_name(m, f) |> escape_column_name) : alias)"
   else 
-    "$(to_fully_qualified(m, f)) AS $(to_sql_column_name(m, f))"
+    "$(to_fully_qualified(m, f)) AS $(isempty(alias) ? to_sql_column_name(m, f) : alias)"
   end
+end
+
+function from_literal_column_name(c::AbstractString)
+  result = Dict{Symbol, AbstractString}()
+  result[:original_string] = c
+
+  # has alias? 
+  if contains(c, " AS ") 
+    parts = split(c, " AS ")
+    result[:column_name] = parts[1]
+    result[:alias] = parts[2]
+  else 
+    result[:column_name] = c
+  end
+
+  # is fully qualified? 
+  if contains(result[:column_name], ".")
+    parts = split(result[:column_name], ".")
+    result[:table_name] = parts[1]
+    result[:column_name] = parts[2]
+  end
+
+  result
 end
 
 function to_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, expand_nullables::Bool = false)
@@ -675,7 +711,6 @@ end
 function to_string_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, all_output::Bool = false) 
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
   output_length = all_output ? 100_000_000 : Genie.config.output_length
-  # @bp
   response = Dict{AbstractString, AbstractString}()
   for f in fields 
     key = string(f)
@@ -726,3 +761,5 @@ function dataframe_to_dict(df::DataFrames.DataFrame)
 end
 
 end
+
+SearchLight = Model

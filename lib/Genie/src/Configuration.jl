@@ -4,26 +4,34 @@ using App
 using Logging
 
 export is_dev, is_prod, is_test, Config, DEV, PROD, TEST
+export MODEL_RELATIONSHIPS_EAGERNESS_AUTO, MODEL_RELATIONSHIPS_EAGERNESS_LAZY, MODEL_RELATIONSHIPS_EAGERNESS_EAGER
 
-const DEV = "dev"
-const PROD = "prod"
-const TEST = "test"
+const DEV   = "dev"
+const PROD  = "prod"
+const TEST  = "test"
 
-is_dev() = App.config.app_env == DEV
+const MODEL_RELATIONSHIPS_EAGERNESS_AUTO    = :auto
+const MODEL_RELATIONSHIPS_EAGERNESS_LAZY    = :lazy
+const MODEL_RELATIONSHIPS_EAGERNESS_EAGER   = :eager
+
+is_dev()  = App.config.app_env == DEV
 is_prod() = App.config.app_env == PROD
-is_test() = App.config.app_env = TEST
+is_test() = App.config.app_env == TEST
 
 type Config
   server_port::Int
   app_env::AbstractString
+
   loggers::Array{Logging.Logger}
   running_as_task::Bool
   auto_connect::Bool
   supress_output::Bool
+  
   db_migrations_table_name::AbstractString
   db_migrations_folder::AbstractString
   tasks_folder::AbstractString
   test_folder::AbstractString
+
   output_length::Int # where to truncate strings in console
   
   debug_router::Bool
@@ -35,6 +43,8 @@ type Config
   pagination_jsonapi_page_param_name::AbstractString
 
   server_workers_count::Int
+
+  model_relationships_eagerness::Symbol 
 
   Config(;  
             server_port = 8000, 
@@ -59,13 +69,15 @@ type Config
             pagination_jsonapi_default_items_per_page = 20, 
             pagination_jsonapi_page_param_name = "page", 
 
-            server_workers_count = 1
+            server_workers_count = 1, 
+
+            model_relationships_eagerness = MODEL_RELATIONSHIPS_EAGERNESS_LAZY
         ) = 
               new(server_port, app_env, loggers, running_as_task, auto_connect, supress_output, 
                   db_migrations_table_name, db_migrations_folder, task_folder, test_folder, output_length, 
                   debug_router, debug_db, debug_requests, debug_responses, 
                   pagination_jsonapi_default_items_per_page, pagination_jsonapi_page_param_name, 
-                  server_workers_count)
+                  server_workers_count, model_relationships_eagerness)
 end
 
 end

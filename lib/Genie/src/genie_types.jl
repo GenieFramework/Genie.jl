@@ -47,7 +47,7 @@ function to_string_dict(m::Any, fields::Array{Symbol,1}; all_output::Bool = fals
     if length(value) > output_length 
       value = value[1:output_length] * "..."
     end
-    response[key] = value
+    response[key] = string(value)
   end
   
   response

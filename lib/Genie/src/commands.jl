@@ -24,7 +24,7 @@ function run_app_with_command_line_args(config)
   elseif (  called_command(parsed_args, "migration:up") )
     Migration.last_up()
   elseif (  parsed_args["migration:up"] != nothing )
-    Migration.up_by_class_name(parsed_args["db:migration:up"])
+    Migration.up_by_class_name(parsed_args["migration:up"])
 
   elseif (  called_command(parsed_args, "migration:down") )
     Migration.last_down()
