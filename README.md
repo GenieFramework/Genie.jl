@@ -183,13 +183,13 @@ JSONAPI.builder(
       },
       "attributes":{
          "readme":"# Maker\n#### A tool like make for data analysis in Julia\n\n
-... 
+[... output omitted ...]
          The documentation for the development version of this package is \n[here](https://tshort.github.io/Maker.jl/latest/).\n\n",
          "name":"Maker",
          "participation":[
             0,
             0,
-...
+[... output omitted ...]
             0,
             0
          ],
