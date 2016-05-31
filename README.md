@@ -1,5 +1,5 @@
 # Genie
-### The high-performance high-productivity Julia web framework. 
+### High-performance high-productivity Julia web framework. 
 
 Genie is a full-stack MVC web framework that provides a streamlined and efficient workflow for developing modern web apps. It builds on top of Julia's strengths (high-level, high-performance, dynamic, JIT compiled, functional), adding a series of modules, methods and tools for highly productive web development. 
 
@@ -125,6 +125,10 @@ SQL QUERY: SELECT packages.name AS package_name, packages.url AS packages_url, p
 │ 5   │ "AWSEC2"            │ "git://github.com/samoconnor/AWSEC2.jl.git"     │ "2016-04-16 08:47:49.192914" │ "samoconnor/AWSEC2.jl"   │
 ```
 
+Basic persistance functionality is also included - with more convenience methods on the way. 
+
+
+
 ### Relationships
 ... 
 
@@ -153,7 +157,7 @@ Render.respond(Render.json(:packages, :show, package = p))
 ```julia
 JSONAPI.builder(
   data = JSONAPI.elem(
-    package, :package, 
+    package, 
     type_         = "package", 
     id            = ()-> package.id |> Util.expand_nullable, 
     attributes    = JSONAPI.elem(
@@ -230,6 +234,9 @@ Controllers in Genie are just plain julia modules.
 ... 
 
 ## Caching
+...
+
+## Package versioning
 ...
 
 ## Hosting in production

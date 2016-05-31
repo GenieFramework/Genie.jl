@@ -66,7 +66,7 @@ end
 
 function save{T<:AbstractModel}(m::T; conflict_strategy = :error)
   try 
-    save!(m, conflict_strategy)
+    save!(m, conflict_strategy = conflict_strategy)
 
     true
   catch ex

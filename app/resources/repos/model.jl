@@ -31,7 +31,7 @@ type Repo <: AbstractModel
         participation = [],
         updated_at = Nullable{DateTime}(),
 
-        belongs_to = Dict(:belongs_to_package => Model.SQLRelation(:Package, required = false)), 
+        belongs_to = Dict(:belongs_to_package => Model.SQLRelation(:Package)), 
         
         on_dehydration = Repos.dehydrate, 
         on_hydration = Repos.hydrate

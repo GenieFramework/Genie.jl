@@ -207,7 +207,7 @@ type SQLRelation <: SQLType
   eagerness::Symbol
   data::Nullable{AbstractModel}
 
-  SQLRelation(model_name; condition = Nullable{Array{SQLWhere, 1}}(), required = true, eagerness = :auto, data = Nullable{AbstractModel}()) = 
+  SQLRelation(model_name; condition = Nullable{Array{SQLWhere, 1}}(), required = false, eagerness = :auto, data = Nullable{AbstractModel}()) = 
     new(model_name, condition, required, eagerness, data)
 end
 function lazy(r::SQLRelation) 

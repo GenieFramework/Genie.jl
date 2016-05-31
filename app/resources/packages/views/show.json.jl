@@ -1,6 +1,6 @@
 JSONAPI.builder(
   data = JSONAPI.elem(
-    package, :package, 
+    package, 
     type_         = "package", 
     id            = ()-> package.id |> Util.expand_nullable, 
     attributes    = JSONAPI.elem(
