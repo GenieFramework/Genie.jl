@@ -18,6 +18,9 @@ using Millboard
 end
 
 function spawn(port::Int = 8000)
+  Genie.genie_app.server = Nullable{RemoteRef{Channel{Any}}}(_spawn(port))
+end
+function _spawn(port::Int)
   @spawn start(port)
 end
 

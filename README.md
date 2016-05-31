@@ -3,14 +3,19 @@
 # Genie
 ### High-performance high-productivity Julia web framework. 
 
-Genie is a full-stack MVC web framework that provides a streamlined and efficient workflow for developing modern web apps. It builds on top of Julia's strengths (high-level, high-performance, dynamic, JIT compiled, functional), adding a series of modules, methods and tools for highly productive web development. 
+Genie is a full-stack MVC web framework that provides a streamlined and efficient workflow for developing modern web applications. It builds on top of Julia's (julialang.org) strengths (high-level, high-performance, dynamic, JIT compiled, functional programming language), adding a series of modules, methods and tools for promoting productive web development. 
+
+In order to start a Genie interactive session at the Julia REPL, just type 
+```
+$> julia -L genie.jl --color=yes -q
+```
 
 ## MVC
-Genie uses the familiar MVC design pattern. If you have previously used one of the mainstream web frameworks like Rails, Django, Laravel, Phoenix or many others, you'll feel right at home. 
+Genie uses the familiar MVC design pattern. If you have previously used one of the mainstream web frameworks like Rails, Django, Laravel, Phoenix, to name a few, you'll feel right at home. 
 
-Conceptually, it is designed to expose RESTful representations of the data, organizing an app's entities into self contained resources. 
+Conceptually, it is designed to expose RESTful representations of the data, organizing an app's business objects into self contained resources. A resource is an object with a type, associated data, relationships to other resources, and a set of methods that operate on it.
 
-#### app/
+##### app/
 ```
 ├── layouts
 └── resources
@@ -27,43 +32,24 @@ Conceptually, it is designed to expose RESTful representations of the data, orga
         ├── validation.jl
         └── views
 ```
-> Structure of two app entities exposed as resources. 
-> This resource oriented file structure is a partial implementation of the Trailblazer architecture (http://trailblazer.to/) and it's possible Genie will adopt more of it as it will get more features in the View layer. 
+> Structure of two business objects ("packages" and "repos") modeled as resources. 
 
 ## SearchLight ORM (Model)
-Genie provides a powerful ORM named SearchLight, or simply Model. This provides easy, fast and secure access to the underlying database layer. 
+Genie provides a powerful ORM named SearchLight. It offers easy, fast and secure access to the underlying database layer. 
 
-SearchLight builds on top of existing powerful Julia data manipulation libraries, DBI and DataFrames. For now it only supports Postgres but support for other DBI enabled backends (MySQL, SQLite) should be very easy to add. 
+SearchLight uses existing powerful Julia data manipulation libraries, like `DBI` and `DataFrames`. For now it only supports PostgreSQL (through `PostgreSQL.jl`) but support for other DBI compatible backends (MySQL, SQLite) should be very easy to add. 
 
 ### Models
-Genie makes it simple to define powerful logical wrappers around your data by extending the `Genie.AbstractModel` type. By following a few straightforward conventions, your app's models inherit a wealth of features for validating, persisting, accessing and relating models. 
+Genie makes it simple to define powerful logical wrappers around your data by extending the `Genie.AbstractModel` type and by following a few straightforward conventions. This way your app's models will inherit a wealth of features for validating, persisting, accessing and relating models. 
 
-```julia
-type Package <: Genie.AbstractModel
-  _table_name::AbstractString
-  _id::AbstractString
+The conventions that **must** be follwed by your models in order to be SearchLight compatible are: 
 
-  id::Nullable{Model.DbId}
-  name::AbstractString
-  url::AbstractString
-
-  has_one::Nullable{Dict{Symbol, Model.SQLRelation}}
-
-  Package(; 
-            id = Nullable{Model.DbId}(), 
-            name = "", 
-            url = "", 
-            has_one = Dict(:has_one_repo => Model.SQLRelation(:Repo, required = false))
-          ) = new("packages", "id", id, name, url, has_one) 
-end
-```
-
-The conventions that must be follwed by your models to be SearchLight compatible are: 
-
-* must define a concrete type that inherits from `Genie.AbstractModel`
-* must define two properties, `_table_name::AbstractString` and `_id::AbstractString` that will provide information about the underlying database table. `_table_name::AbstractString` is of course the name of the table, while `_id::AbstractString` is the name of the `primary key` column
-* the models' concrete types can not be included in another module, they must be defined at the top level of the corresponding `model.jl` file
+* must be a concrete type that inherits from `Genie.AbstractModel`
+* must define two properties, `_table_name::AbstractString` and `_id::AbstractString` that will provide Genie information about the underlying database table. `_table_name::AbstractString` is of course the name of the table, while `_id::AbstractString` is the name of the `primary key` (`PK`) column
+* the models' concrete types can not be included in another module, they must be defined at the top level of the corresponding `model.jl` file. (This restriction will most likely go away in a future version for better encapsulation and for allowing multiple apps without name clashes - but for now it's a requirement)
 * the models must define a zero arguments default constructor
+
+##### app/resources/packages/model.jl
 
 ```julia
 type Package <: Genie.AbstractModel
@@ -88,7 +74,8 @@ end
 As this is just a Julia concrete type after all, you can add other convenience constructors. 
 
 ##### Recommended code style 
-The model's type name should be a noun used on singular form (`Package`, `Repo`, etc). 
+The model's type name should be a noun used with the singular form (`Package`, `Repo`, etc). 
+
 All the methods operating upon the model's type should be contained in a module named the same as the type but using the plural form (`module Packages`, `module Repos`, etc)
 
 ```julia
@@ -184,10 +171,10 @@ SQL QUERY: SELECT packages.name AS package_name, packages.url AS packages_url, p
 │ 5   │ "AWSEC2"            │ "git://github.com/samoconnor/AWSEC2.jl.git"     │ "2016-04-16 08:47:49.192914" │ "samoconnor/AWSEC2.jl"   │
 ```
 
-Persistance functionality is also included. 
+Persistance functionality is also included, `save` being the basic method. 
 
 ```julia
-ulia> using Genie, Model
+julia> using Genie, Model
 
 julia> p = Package("PkgSearch", "https://github.com/essenciary/pkg_search")
 
@@ -218,20 +205,15 @@ true
 ```
 
 ### Relationships
-SearchLight allows models to define mutual relationships. These are the standard types of relationships from the ORM world: `belongs_to`, `has_one`, `has_many`, `has_one_through`, `has_many_through`. Still debating whether or not `has_and_belongs_to_many` should be also included. 
+SearchLight allows models to define mutual relationships. These are the standard types of relationships from the ORM world: `belongs_to`, `has_one`, `has_many`, `has_one_through`, `has_many_through`. (Still debating whether or not `has_and_belongs_to_many` should be also included). 
 
 ```julia
 type Package <: Genie.AbstractModel
   [ ... code omitted ... ]
-
   has_one::Nullable{Dict{Symbol, Model.SQLRelation}}
-
   Package(; 
-  
 			[ ... code omitted ... ]
-			
-            has_one = Dict(:has_one_repo => Model.SQLRelation(:Repo, eagerness = MODEL_RELATIONSHIPS_EAGERNESS_LAZY))
-            
+            has_one = Dict(:has_one_repo => Model.SQLRelation(:Repo, eagerness = MODEL_RELATIONSHIPS_EAGERNESS_LAZY))  
           ) = new("packages", "id", id, name, url, has_one) 
 end
 ```
@@ -239,20 +221,15 @@ end
 ```julia
 type Repo <: AbstractModel
   [ ... code omitted ... ]
-
   belongs_to::Nullable{Dict{Symbol, Model.SQLRelation}}
-
   Repo(; 
         [ ... code omitted ... ]
-
         belongs_to = Dict(:belongs_to_package => Model.SQLRelation(:Package))
-        
-      ) = 
-    new("repos", "id", github, id, package_id, fullname, readme, participation, updated_at, belongs_to, on_dehydration, on_hydration)
+      ) = new("repos", "id", github, id, package_id, fullname, readme, participation, updated_at, belongs_to, on_dehydration, on_hydration)
 end
 ```
 
-If the relationship is eager, the underlying tables are automatically joined upon the retrieval of any of the models and all the corresponding data is `SELECT`ed and the corresponding types instantiated. If the relationship is lazy, the data is brought from the database on demand, when you try to get the related data for the first time. 
+If the relationship is *eager*, the underlying tables are automatically joined upon the retrieval of any of the models and all the corresponding data is `SELECT`ed and the corresponding types instantiated. If the relationship is *lazy*, the data is brought from the database on demand, when you try to get the related data for the first time. 
 
 ```julia
 julia> p = SearchLight.rand(Package) |> first
@@ -325,31 +302,27 @@ Genie.Repo
 +---------------+------------------------------------------------------------------------------------------------+
 ```
 
-### Hydration / dehydration
-Julia being a strongly typed language, upon data retrieval and model type instantiation, the model's properties must be set using the correct types. Genie delegates this task to Julia, so the standard `convert` methods will be used when available. 
+### Hydration / dehydration hooks
+Julia, being a strongly typed language, upon data retrieval and model type instantiation, the model's properties must be set using the correct types. Genie delegates this task to Julia, so the standard `convert` methods will be used when available. 
 
-However, for more complex logic or specific data structures you can define specialized dehydration (persistance) and hydration (deserialization) methods. If defined, these methods will be automatically used by Genie to convert the data.
+However, for more complex logic or specific data structures, you can define specialized persistance and retrieval methods that will be automatically called by the `on_dehydration` and `on_hydration` hooks. If defined, these methods will be used by Genie to convert the data to and from the database.
 
 These functions take as their arguments a tuple of the following type: `(repo::Genie.Repo, field::Symbol, value::Any)`
 
 ```julia
 type Repo <: AbstractModel
   [ ... code omitted ... ]
-
   on_dehydration::Nullable{Function}
   on_hydration::Nullable{Function}
 
   Repo(; 
         [ ... code omitted ... ]
-        
         on_dehydration = Repos.dehydrate, 
         on_hydration = Repos.hydrate
-      ) = 
-    new("repos", "id", github, id, package_id, fullname, readme, participation, updated_at, belongs_to, on_dehydration, on_hydration)
+      ) = new("repos", "id", github, id, package_id, fullname, readme, participation, updated_at, belongs_to, on_dehydration, on_hydration)
 end
 
 module Repos
-
 using Genie
 
 function dehydrate(repo::Genie.Repo, field::Symbol, value::Any)
@@ -371,22 +344,21 @@ function hydrate(repo::Genie.Repo, field::Symbol, value::Any)
             value
           end
 end
-
 end
 ```
 
-### Validation
+### Validations
 ...
 
 ### Authorization
 ...
 
 ## Views
-Genie's goal for version 1 is to become a strong alternative for building RESTful APIs and backing SPAs. Thus it provides a simple but powerful and flexible JSON builder. 
+Genie's goal for v1.0 is to be a strong alternative for building RESTful APIs and for serving SPA backends. It tries to make it simpler to build complex JSON views by providing a straightforward but powerful and flexible JSON builder. 
 
 Support for rendering HTML views is provided via the `Mustache.jl` package. This is designed mostly to assist with serving simple UIs, like for example the ones that are part of the OAuth process. 
 
-Asset management should be provided by the JavaScript framework employed by the SPA or by a stand-alone JavaScript build tool, such as Brunch (http://brunch.io) or Grunt (http://gruntjs.com). 
+If necessary, asset management should be provided by the JavaScript framework employed by the SPA or by a stand-alone JavaScript build tool, such as Brunch (http://brunch.io) or Grunt (http://gruntjs.com). 
 
 The views rendering functionality is provided by the `Renderer` module. 
 
@@ -394,6 +366,9 @@ The views rendering functionality is provided by the `Renderer` module.
 p = SearchLight.find_one_by(Package, :id, 42) |> Base.get
 Render.respond(Render.json(:packages, :show, package = p))
 ```
+
+##### app/resources/packages/views/show.jl
+
 ```julia
 JSONAPI.builder(
   data = JSONAPI.elem(
@@ -415,7 +390,7 @@ JSONAPI.builder(
 )
 ```
 
-> responding with the following JSONAPI.org structured JSON object: 
+responding with the following JSONAPI.org structured JSON object: 
 
 ```json
 {
@@ -427,13 +402,13 @@ JSONAPI.builder(
       },
       "attributes":{
          "readme":"# Maker\n#### A tool like make for data analysis in Julia\n\n
-[... output omitted ...]
+/* output omitted */
          The documentation for the development version of this package is \n[here](https://tshort.github.io/Maker.jl/latest/).\n\n",
          "name":"Maker",
          "participation":[
             0,
             0,
-[... output omitted ...]
+/* output omitted */
             0,
             0
          ],
@@ -444,7 +419,7 @@ JSONAPI.builder(
 ```
 
 ## Controllers
-Controllers in Genie are just plain julia modules. Their role is to orchestrate the exchange of data between models and the views. 
+Controllers in Genie are just plain Julia modules. Their role is to orchestrate the exchange of data between models and the views. 
 
 The controllers can be nested as needed, in order to define logical hierarchies. 
 
@@ -473,11 +448,35 @@ end
 ## Router
 Genie's router is pretty unsurprising, acting as the proxy between request URLs and controller methods. Once a route is matched, the router includes the corresponding controller file and invokes the designated method, passing as arguments the expected tuple (see above, "Controllers") `(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Request, res::Response)`
 
+A very simple `routes.jl` file can look like: 
+
+```julia
+using Router
+
+route(GET, "/api/v1/packages/search", "packages#API.V1.search", with = Dict{Symbol, Any}(:is_api => true))
+route(GET, "/api/v1/packages/:package_id", "packages#API.V1.show", with = Dict{Symbol, Any}(:is_api => true))
+```
+
+See how you can "dot into" the module hierarchy to define for example API versioning.
+
 ## Channels
 ...
 
 ## App server
-...
+Genie uses `HttpServer.jl` as its internatal web/app server. The methods for starting the app server are available in the `AppServer` module. 
+
+```julia
+julia> AppServer.spawn(8002)
+Listening on 0.0.0.0:8002...
+Nullable(RemoteRef{Channel{Any}}(1,1,1))
+```
+
+The result of the `spawn` function is stored in the `Genie.genie_app.server` in case it's needed later for retrieval and manipulation.
+
+A Genie application can be started in "server mode" using: 
+```
+$ ./genie s
+```
 
 ## Configuration
 ... 
