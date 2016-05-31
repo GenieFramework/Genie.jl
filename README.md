@@ -34,7 +34,7 @@ Genie provides a powerful ORM named SearchLight, or simply Model. This provides 
 SearchLight builds on top of existing powerful Julia data manipulation libraries, DBI and DataFrames. For now it only supports Postgres but support for other DBI enabled backends (MySQL, SQLite) should be very easy to add. 
 
 ### Models
-Genie makes it simple to define powerful logical wrappers around your data by extending the `Genie.AbstractModel` type. By following a few straightforward conventions, your app's models enherit a wealth of features for validating, persisting, accessing and relating models. 
+Genie makes it simple to define powerful logical wrappers around your data by extending the `Genie.AbstractModel` type. By following a few straightforward conventions, your app's models inherit a wealth of features for validating, persisting, accessing and relating models. 
 
 ```julia
 type Package <: Genie.AbstractModel
@@ -125,6 +125,18 @@ SQL QUERY: SELECT packages.name AS package_name, packages.url AS packages_url, p
 │ 5   │ "AWSEC2"            │ "git://github.com/samoconnor/AWSEC2.jl.git"     │ "2016-04-16 08:47:49.192914" │ "samoconnor/AWSEC2.jl"   │
 ```
 
+### Relationships
+... 
+
+### Hydration / dehydration
+... 
+
+### Authentication
+...
+
+### Authorization
+...
+
 ## Views
 Genie's goal for version 1 is to become a strong alternative for building RESTful APIs and backing SPAs. Thus it provides a simple but powerful and flexible JSON builder. 
 
@@ -135,7 +147,7 @@ Asset management should be provided by the JavaScript framework employed by the 
 The views rendering functionality is provided by the `Renderer` module. 
 
 ```julia
-p = SearchLight.find_one_by(Package, :id, 42) |> Base. get
+p = SearchLight.find_one_by(Package, :id, 42) |> Base.get
 Render.respond(Render.json(:packages, :show, package = p))
 ```
 ```julia
@@ -148,8 +160,8 @@ JSONAPI.builder(
       package, 
       name          = ()-> package.name, 
       url           = ()-> package.url, 
-      readme        = ()-> Model.relationship_data!(package, :repo, :has_one).readme, 
-      participation = ()-> Model.relationship_data!(package, :repo, :has_one).participation 
+      readme        = ()-> Model.relationship_data!(package, :Repo, :has_one).readme, 
+      participation = ()-> Model.relationship_data!(package, :Repo, :has_one).participation 
     ), 
     links = JSONAPI.elem(
       package, 
@@ -171,13 +183,13 @@ JSONAPI.builder(
       },
       "attributes":{
          "readme":"# Maker\n#### A tool like make for data analysis in Julia\n\n
-... 
+[... output omitted ...]
          The documentation for the development version of this package is \n[here](https://tshort.github.io/Maker.jl/latest/).\n\n",
          "name":"Maker",
          "participation":[
             0,
             0,
-...
+[... output omitted ...]
             0,
             0
          ],
@@ -188,7 +200,46 @@ JSONAPI.builder(
 ```
 
 ## Controllers
-Controllers in Genie are just plain julia modules. They are minimalist on purpose, as they are simply meant 
+Controllers in Genie are just plain julia modules. 
+
+## Router
+...
+
+## Channels
+...
+
+## App server
+...
+
+## Configuration
+... 
+
+## Database versioning / Migrations
+... 
+
+## Test runner
+... 
+
+## Task runner
+...
+
+## Logging
+... 
+
+## Environments
+... 
+
+## Caching
+...
+
+## Hosting in production
+### Monitoring and restarting Genie apps with Supervisor
+### Serving Genie apps with Nginx 
+### Parallel execution of Genie apps with Nginx load balancing
+### Nginx response caching
 
 ##Roadmap (TODOs)
 - [ ] more generators: new app, resources, etc. 
+- [ ] resourceful routes
+- [ ] channels
+- [ ] caching
