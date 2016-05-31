@@ -86,3 +86,6 @@ end
 load_configurations()
 load_initializers()
 load_models()
+
+const SearchLight = Model
+export SearchLight

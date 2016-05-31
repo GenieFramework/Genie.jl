@@ -14,7 +14,7 @@ type Package <: Genie.AbstractModel
             id = Nullable{Model.DbId}(), 
             name = "", 
             url = "", 
-            has_one = Dict(:has_one_repo => Model.SQLRelation(:Repo, eagerness = MODEL_RELATIONSHIPS_EAGERNESS_EAGER))
+            has_one = Dict(:has_one_repo => Model.SQLRelation(:Repo, eagerness = MODEL_RELATIONSHIPS_EAGERNESS_LAZY))
           ) = new("packages", "id", id, name, url, has_one) 
 end
 function Package(name::AbstractString, url::AbstractString) 

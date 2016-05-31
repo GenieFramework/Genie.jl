@@ -10,7 +10,8 @@ function log(message, level = "info")
   
   for l in Genie.config.loggers
     try 
-      eval( parse( "$level($(l.name), \"\"\" " * "\n" * message * "\n" * " \"\"\")") )
+      println()
+      eval( parse( "$level($(l.name), \"\"\" " * "\n" * message * " \"\"\")") )
     catch 
       log("=== CAN'T LOG MESSAGE, INVALID CHARS ===", level)
     end

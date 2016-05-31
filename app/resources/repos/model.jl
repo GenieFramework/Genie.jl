@@ -48,7 +48,7 @@ using DateParser
 using GitHub
 using JSON
 
-function dehydrate(repo::Genie.Repo, field::Symbol, value)
+function dehydrate(repo::Genie.Repo, field::Symbol, value::Any)
   return  if field == :participation 
             join(value, ",")
           elseif field == :updated_at
@@ -58,7 +58,7 @@ function dehydrate(repo::Genie.Repo, field::Symbol, value)
           end
 end
 
-function hydrate(repo::Genie.Repo, field::Symbol, value)
+function hydrate(repo::Genie.Repo, field::Symbol, value::Any)
   return  if field == :participation 
             map(x -> parse(x), split(value, ",")) 
           elseif field == :updated_at

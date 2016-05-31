@@ -5,7 +5,7 @@ using Genie
 using Model
 
 function show(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Request, res::Response)
-  package = Model.find_one(Genie.Package, params[:package_id])
+  package = SearchLight.find_one(Package, params[:package_id])
   if ! isnull(package) 
     package = Base.get(package)
     Render.respond(Render.json(:packages, :show, package = package))
