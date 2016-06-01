@@ -5,10 +5,19 @@
 
 Genie is a full-stack MVC web framework that provides a streamlined and efficient workflow for developing modern web applications. It builds on top of Julia's (julialang.org) strengths (high-level, high-performance, dynamic, JIT compiled, functional programming language), adding a series of modules, methods and tools for promoting productive web development. 
 
-In order to start a Genie interactive session at the Julia REPL, just type 
+In order to start a Genie interactive session through the Julia REPL, just type: 
 ```
 $> julia -L genie.jl --color=yes -q
 ```
+
+### v0.5
+Genie has recently reached verson 0.5 which means it's somewhere in the middle of it's first release cycle. It is still very much work in progress and be warned, things might change often before reaching v1.0. 
+
+If you want to develop your web application with Genie, that is entirely doable, provided that you're willing to dive into the source code and contribute (my hero! ❤️). Genie already includes most of the features necessary for developing professional grade web applications, backends, APIs and server side scripts. 
+
+But at the moment it also lacks some critical features, which will be added in the upcoming minor versions. Most notably, handling of `POST`ed data, model validations and `has_many`, `has_many_through` and `has_one_through` model relationships. 
+
+If you prefer to wait until it reaches a more stable version, you can stay up to date with the progress by starring and watching the Github repo. 
 
 ## MVC
 Genie uses the familiar MVC design pattern. If you have previously used one of the mainstream web frameworks like Rails, Django, Laravel, Phoenix, to name a few, you'll feel right at home. 
@@ -38,6 +47,37 @@ Conceptually, it is designed to expose RESTful representations of the data, orga
 Genie provides a powerful ORM named SearchLight. It offers easy, fast and secure access to the underlying database layer. 
 
 SearchLight uses existing powerful Julia data manipulation libraries, like `DBI` and `DataFrames`. For now it only supports PostgreSQL (through `PostgreSQL.jl`) but support for other DBI compatible backends (MySQL, SQLite) should be very easy to add. 
+
+### Database configuration
+Genie uses the YAML (http://yaml.org) format to store database connection settings. YAML is a simple, clean and humanly readable and editable format, with strict validation rules and widespread editor support. 
+
+##### config/database.yaml
+
+```yaml
+dev:
+  adapter: PostgreSQL
+  database: pkg_info_dev
+  host: localhost
+  username: genie
+  password: some_pass_here
+  port: 5432
+
+prod:
+  adapter: PostgreSQL
+  database: pkg_info_prod
+  host: localhost
+  username: genie
+  password: some_pass_here
+  port: 5432
+
+test:
+  adapter: PostgreSQL
+  database: pkg_info_test
+  host: localhost
+  username: genie
+  password: some_pass_here
+  port: 5432
+```
 
 ### Models
 Genie makes it simple to define powerful logical wrappers around your data by extending the `Genie.AbstractModel` type and by following a few straightforward conventions. This way your app's models will inherit a wealth of features for validating, persisting, accessing and relating models. 
@@ -89,7 +129,6 @@ function Package(name::AbstractString, url::AbstractString)
 end
 
 module Packages
-
 using Genie
 
 function fullname(p::Package)
@@ -207,6 +246,8 @@ true
 ### Relationships
 SearchLight allows models to define mutual relationships. These are the standard types of relationships from the ORM world: `belongs_to`, `has_one`, `has_many`, `has_one_through`, `has_many_through`. (Still debating whether or not `has_and_belongs_to_many` should be also included). 
 
+##### app/resources/packages/model.jl
+
 ```julia
 type Package <: Genie.AbstractModel
   [ ... code omitted ... ]
@@ -217,6 +258,8 @@ type Package <: Genie.AbstractModel
           ) = new("packages", "id", id, name, url, has_one) 
 end
 ```
+
+##### app/resources/repos/model.jl
 
 ```julia
 type Repo <: AbstractModel
@@ -309,6 +352,8 @@ However, for more complex logic or specific data structures, you can define spec
 
 These functions take as their arguments a tuple of the following type: `(repo::Genie.Repo, field::Symbol, value::Any)`
 
+##### app/resources/repos/model.jl
+
 ```julia
 type Repo <: AbstractModel
   [ ... code omitted ... ]
@@ -392,6 +437,8 @@ JSONAPI.builder(
 
 responding with the following JSONAPI.org structured JSON object: 
 
+##### http://localhost:8000/api/v1/packages/42
+
 ```json
 {
    "data":{
@@ -423,7 +470,9 @@ Controllers in Genie are just plain Julia modules. Their role is to orchestrate 
 
 The controllers can be nested as needed, in order to define logical hierarchies. 
 
-Controller methods must take as argument the following tuple, `(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Request, res::Response)`. `p::Genie.GenieController` is an instance of the designated controller (mainly used for dispatch), `params::Dict{Symbol, Any}` contains any parameters (`GET`, `POST`, etc) sent with the request, while the `req::Request` and `res::Response` are the raw HttpServer Request and Response objects. 
+Controller methods must take as argument the following tuple, `(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Request, res::Response)`. `p::Genie.GenieController` is an instance of the designated controller, `params::Dict{Symbol, Any}` contains any parameters (`GET`, `POST`, etc) sent with the request, while the `req::Request` and `res::Response` are the raw HttpServer Request and Response objects. 
+
+##### app/resources/packages/controller.jl
 
 ```julia
 module API 
@@ -450,6 +499,8 @@ Genie's router is pretty unsurprising, acting as the proxy between request URLs 
 
 A very simple `routes.jl` file can look like: 
 
+##### config/routes.jl
+
 ```julia
 using Router
 
@@ -457,13 +508,13 @@ route(GET, "/api/v1/packages/search", "packages#API.V1.search", with = Dict{Symb
 route(GET, "/api/v1/packages/:package_id", "packages#API.V1.show", with = Dict{Symbol, Any}(:is_api => true))
 ```
 
-See how you can "dot into" the module hierarchy to define for example API versioning.
+See how you can "dot into" the module hierarchy to define, for example, API versioning.
 
-## Channels
+## Web channels (over websocket)
 ...
 
 ## App server
-Genie uses `HttpServer.jl` as its internatal web/app server. The methods for starting the app server are available in the `AppServer` module. 
+Genie uses `HttpServer.jl` as its internal web/app server. The methods for starting the app server (`start()` and `spawn()` are available in the `AppServer` module. 
 
 ```julia
 julia> AppServer.spawn(8002)
@@ -479,7 +530,80 @@ $ ./genie s
 ```
 
 ## Configuration
+Genie apps run off a main configuration file which controls many aspects of their behavior. The core comes with its own configuration settings which contains sensible defaults - however, these can and should be tweaked depending on the needs of your app and how you're running it (especially in regards to development vs production mode). 
+
+The various defaults and utility functions are exposed by the `Configuration` module. 
+
+### Environments
+The concept of environments is deeply rooted in Genie. This allows setting and using optimized configurations depending on whether the app is during development (with emphasis on verbose logging), test, or production (with emphasis on speed). 
+
+Per enviroment configuration files can be found in `config/env/`. This is an example of a production configuration, disabling most logging. 
+
+##### config/env/prod.jl
+
+```julia
+using Configuration
+const config = Config(output_length = 100, 
+                      supress_output = true, 
+                      debug_db = false, 
+                      debug_requests = false, 
+                      debug_responses = false)
+
+export config
+```
+
+#### Setting the active environment
+In order to set the active environment (or change it from the default `dev`) you can pass the `GENIE_ENV` argument in the shell, when starting your Genie app. 
+
+```
+$> GENIE_ENV=prod julia -L genie.jl --color=yes -q
+
+ _____         _
+|   __|___ ___|_|___
+|  |  | -_|   | | -_|
+|_____|___|_|_|_|___|
+
+
+Starting Genie in >> PROD << mode
+```
+
+> Genie will promptly indicate the active environment. 
+
+Or: 
+
+```
+$> GENIE_ENV=prod ./genie.jl s -p 8001
+
+ _____         _
+|   __|___ ___|_|___
+|  |  | -_|   | | -_|
+|_____|___|_|_|_|___|
+
+
+Starting Genie in >> PROD << mode
+```
+
+#### The main `env.jl` file
+Sometimes it's impractical to pass additional parameters to the `genie.jl` startup script, for example in `hashbang` files on different platforms. 
+
+In this case you can provide an `env.jl` file in the root of the app. This is loaded very early in the app's startup process and allows setting up any number of environment variables. However, here you can't configure any app settings, as these are not loaded at this time. For this, use the dedicated configuration files for the corresponding environment. 
+
+##### env.jl
+```julia
+# if the environment is not defined, use this
+if ! haskey(ENV, "GENIE_ENV") 
+  ENV["GENIE_ENV"] = "prod"
+end
+```
+
+### Initializers
 ... 
+
+### Secrets
+...
+
+## Logging
+...
 
 ## Database versioning / migrations
 ... 
@@ -488,12 +612,6 @@ $ ./genie s
 ... 
 
 ## Task runner
-...
-
-## Logging
-... 
-
-## Environments
 ... 
 
 ## Caching

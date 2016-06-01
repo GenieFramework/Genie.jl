@@ -23,16 +23,15 @@ type Config
   app_env::AbstractString
 
   loggers::Array{Logging.Logger}
-  running_as_task::Bool
-  auto_connect::Bool
   supress_output::Bool
   
   db_migrations_table_name::AbstractString
   db_migrations_folder::AbstractString
+
   tasks_folder::AbstractString
   test_folder::AbstractString
 
-  output_length::Int # where to truncate strings in console
+  output_length::Int 
   
   debug_router::Bool
   debug_db::Bool
@@ -47,11 +46,10 @@ type Config
   model_relationships_eagerness::Symbol 
 
   Config(;  
-            server_port = 8000, 
+            server_port = 8000, # default port for binding the web server
             app_env = ENV["GENIE_ENV"], 
+            
             loggers = [], 
-            running_as_task = false, 
-            auto_connect = false, 
             supress_output = false, 
             
             db_migrations_table_name = "schema_migrations", 
@@ -59,7 +57,8 @@ type Config
 
             task_folder = abspath(joinpath("task")), 
             test_folder = abspath(joinpath("test")), 
-            output_length = 10_000, 
+
+            output_length = 10_000, # where to truncate strings in console
 
             debug_router = false, 
             debug_db = true, 
@@ -73,7 +72,7 @@ type Config
 
             model_relationships_eagerness = MODEL_RELATIONSHIPS_EAGERNESS_LAZY
         ) = 
-              new(server_port, app_env, loggers, running_as_task, auto_connect, supress_output, 
+              new(server_port, app_env, loggers, supress_output, 
                   db_migrations_table_name, db_migrations_folder, task_folder, test_folder, output_length, 
                   debug_router, debug_db, debug_requests, debug_responses, 
                   pagination_jsonapi_default_items_per_page, pagination_jsonapi_page_param_name, 
