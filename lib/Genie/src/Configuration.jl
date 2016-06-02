@@ -22,7 +22,7 @@ type Config
   server_port::Int
   app_env::AbstractString
 
-  loggers::Array{Logging.Logger}
+  loggers::Array{Logging.Logger, 1}
   supress_output::Bool
   
   db_migrations_table_name::AbstractString
@@ -44,6 +44,8 @@ type Config
   server_workers_count::Int
 
   model_relationships_eagerness::Symbol 
+
+  tests_force_test_env::Bool
 
   Config(;  
             server_port = 8000, # default port for binding the web server
@@ -70,13 +72,15 @@ type Config
 
             server_workers_count = 1, 
 
-            model_relationships_eagerness = MODEL_RELATIONSHIPS_EAGERNESS_LAZY
+            model_relationships_eagerness = MODEL_RELATIONSHIPS_EAGERNESS_LAZY,
+
+            tests_force_test_env = true
         ) = 
               new(server_port, app_env, loggers, supress_output, 
                   db_migrations_table_name, db_migrations_folder, task_folder, test_folder, output_length, 
                   debug_router, debug_db, debug_requests, debug_responses, 
                   pagination_jsonapi_default_items_per_page, pagination_jsonapi_page_param_name, 
-                  server_workers_count, model_relationships_eagerness)
+                  server_workers_count, model_relationships_eagerness, tests_force_test_env)
 end
 
 end

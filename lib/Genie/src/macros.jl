@@ -1,6 +1,6 @@
-export @run_with_time, @unless
+export @run_with_time, @unless, @psst
 
-if Genie.config.app_env == "dev" 
+if is_dev()
   macro run_with_time(expr)
     quote
         @time $(esc(expr))

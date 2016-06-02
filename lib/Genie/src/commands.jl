@@ -1,4 +1,5 @@
 using ArgParse
+using Database
 
 function called_command(args, key)
     args[key] == "true" || args["s"] == key

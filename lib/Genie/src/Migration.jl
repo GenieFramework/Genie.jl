@@ -20,7 +20,7 @@ function new(cmd_args, config)
   end
 
   f = open(mfn, "w")
-  write(f, FileTemplates.new_database_migration(migration_class_name(cmd_args["db:migration:new"])))
+  write(f, FileTemplates.new_database_migration(migration_class_name(cmd_args["migration:new"])))
   close(f)
 
   Genie.log("New migration created at $mfn")
@@ -32,7 +32,7 @@ function migration_hash()
 end
 
 function migration_file_name(cmd_args, config)
-  return joinpath(config.db_migrations_folder, migration_hash() * "_" * cmd_args["db:migration:new"] * ".jl")
+  return joinpath(config.db_migrations_folder, migration_hash() * "_" * cmd_args["migration:new"] * ".jl")
 end
 
 function migration_class_name(underscored_migration_name)

@@ -1,4 +1,4 @@
-#!/usr/bin/env julia
+#!/usr/bin/env julia --color=yes
 dirname(@__FILE__) |> cd
 
 module App

@@ -1,4 +1,5 @@
-push!(LOAD_PATH, abspath("lib/Genie/src"))
+push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "src")))
+push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "database_adapters")))
 
 include(abspath(joinpath("lib", "Genie", "src", "genie_types.jl")))
 

@@ -4,7 +4,7 @@ using YAML
 using Genie
 using Memoize
 
-function parse_connection_data()
+@memoize function parse_connection_data()
   YAML.load(open(abspath("config/database.yml")))
 end
 
@@ -26,6 +26,10 @@ end
   Nullable()
 end
 
+@memoize function conn_data()
+  Base.get(env_connection_data())
+end
+
 @memoize function db_connect(skip_db::Bool = false)
   env_db_conn_data = env_connection_data()
   if isnull(env_db_conn_data) 
@@ -33,39 +37,32 @@ end
   end
 
   env_db_conn_data = Base.get(env_db_conn_data)
-  joinpath("lib", "Genie", "database_adapters", lowercase(conn_data()["adapter"]) * ".jl") |> abspath |> include
-  current_module().adapter_connect(env_db_conn_data, skip_db)
-end
-
-@memoize function conn_data()
-  Base.get(env_connection_data())
+  require(Symbol(conn_data()["adapter"] * "DatabaseAdapter"))
+  DatabaseAdapter.adapter_connect(env_db_conn_data, skip_db)
 end
 
 @memoize function query_tools(skip_db::Bool = false)
-  conn = db_connect(skip_db)
-  adapter = current_module().db_adapter()
-
-  conn, adapter
+  db_connect(skip_db), DatabaseAdapter.db_adapter()
 end
 
 function create_database()
-  error("Not implemented")
+  Genie.log("Not implemented - please manually create the database first, if it does not already exist", :debug)
 end
 
 function create_migrations_table()
-  query(current_module().create_migrations_table_sql())
+  query(DatabaseAdapter.adapter_create_migrations_table_sql())
   Genie.log("Created table $(Genie.config.db_migrations_table_name) or table already exists")
 end
 
 function query(sql::AbstractString; skip_db::Bool = false, system_query::Bool = false)
   supress_output = system_query || config.supress_output
   conn, adapter = query_tools(skip_db)
-  current_module().adapter_query(sql, supress_output, conn, adapter, skip_db)
+  DatabaseAdapter.adapter_query(sql, supress_output, conn, adapter, skip_db)
 end
 
 @memoize function escape_column_name(c::AbstractString)
   conn, adapter = query_tools()
-  current_module().adapter_escape_column_name(c, conn, adapter)
+  DatabaseAdapter.adapter_escape_column_name(c, conn, adapter)
 end
 
 @memoize function escape_value(v::Union{AbstractString, Real})
@@ -75,13 +72,15 @@ end
 
 @memoize function table_columns(table_name::AbstractString)
   conn, adapter = query_tools()
-  query_df(current_module().adapter_table_columns_sql(table_name), supress_output = true)
+  query_df(DatabaseAdapter.adapter_table_columns_sql(table_name), supress_output = true)
 end
 
 function query_df(sql::AbstractString; supress_output::Bool = false) 
   supress_output = supress_output || config.supress_output
   conn, adapter = query_tools()
-  current_module().adapter_query_df(sql, supress_output, conn, adapter)
+  DatabaseAdapter.adapter_query_df(sql, supress_output, conn, adapter)
 end
+
+db_connect()
 
 end

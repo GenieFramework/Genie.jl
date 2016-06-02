@@ -5,8 +5,6 @@ type CreateTableRepos
 end 
 
 function up(_::CreateTableRepos)
-  # conn, adapter = Database.query_tools()
-
   Database.query("""CREATE SEQUENCE repos__seq_id""")
   Database.query("""
     CREATE TABLE IF NOT EXISTS repos (
@@ -25,7 +23,5 @@ function up(_::CreateTableRepos)
 end
 
 function down(_::CreateTableRepos)
-  # conn, adapter = Database.query_tools()
-
   Database.query("DROP TABLE repos")
 end

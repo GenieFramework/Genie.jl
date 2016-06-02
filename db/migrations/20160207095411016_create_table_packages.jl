@@ -5,7 +5,6 @@ type CreateTablePackages
 end 
 
 function up(_::CreateTablePackages)
-  # conn, adapter = Database.query_tools()
   Database.query("""CREATE SEQUENCE packages__seq_id""")
   Database.query("""
     CREATE TABLE IF NOT EXISTS packages (
@@ -21,6 +20,5 @@ function up(_::CreateTablePackages)
 end
 
 function down(_::CreateTablePackages)
-  # conn, adapter = Database.query_tools()
   Database.query("DROP TABLE packages")
 end

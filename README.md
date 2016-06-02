@@ -13,7 +13,7 @@ $> julia -L genie.jl --color=yes -q
 ### v0.5
 Genie has recently reached verson 0.5 which means it's somewhere in the middle of it's first release cycle. It is still very much work in progress and be warned, things might change often before reaching v1.0. 
 
-If you want to develop your web application with Genie, that is entirely doable, provided that you're willing to dive into the source code and contribute (my hero! ❤️). Genie already includes most of the features necessary for developing professional grade web applications, backends, APIs and server side scripts. 
+If you want to develop your web application with Genie, that is entirely doable, provided that you're willing to dive into the source code and contribute (you're my hero! ❤️). Genie already includes most of the features necessary for developing professional grade web applications, backends, APIs and server side scripts. 
 
 But at the moment it also lacks some critical features, which will be added in the upcoming minor versions. Most notably, handling of `POST`ed data, model validations and `has_many`, `has_many_through` and `has_one_through` model relationships. 
 
@@ -393,10 +393,10 @@ end
 ```
 
 ### Validations
-...
+[TODO]
 
 ### Authorization
-...
+[TODO]
 
 ## Views
 Genie's goal for v1.0 is to be a strong alternative for building RESTful APIs and for serving SPA backends. It tries to make it simpler to build complex JSON views by providing a straightforward but powerful and flexible JSON builder. 
@@ -465,6 +465,8 @@ responding with the following JSONAPI.org structured JSON object:
 }
 ```
 
+Using the `JSONAPI.builder()` is not a requirement - `Render.json()` accepts a Dictionary as it's argument, so your views can simply return that. 
+
 ## Controllers
 Controllers in Genie are just plain Julia modules. Their role is to orchestrate the exchange of data between models and the views. 
 
@@ -510,8 +512,12 @@ route(GET, "/api/v1/packages/:package_id", "packages#API.V1.show", with = Dict{S
 
 See how you can "dot into" the module hierarchy to define, for example, API versioning.
 
-## Web channels (over websocket)
-...
+Additional parameters can be packeged with the route's definition, in the `with` dictionary - they will be passed over to the controller as part of the `params` dict. 
+
+The `route()` function will soon accept additional arguments for matching based on additional filters, such as host, subdomain or protocol. 
+
+## Web channels (over websockets)
+[TODO]
 
 ## App server
 Genie uses `HttpServer.jl` as its internal web/app server. The methods for starting the app server (`start()` and `spawn()` are available in the `AppServer` module. 
@@ -597,37 +603,490 @@ end
 ```
 
 ### Initializers
-... 
+If your application needs certain configurations to be setup or say some of your libraries require dedicated settings to be available before using them, you can drop such config files into the `/config/initializers` folder. These will be automatically included by Genie before the models, controllers or the views will be invoked. 
+
+##### config/initializers/github_auth.jl
+
+```julia
+using GitHub
+const GITHUB_AUTH = GitHub.authenticate(GITHUB_AUTH_KEY)
+```
+> Initializer file for `GitHub.jl`
 
 ### Secrets
-...
+Sensitive information should be placed in the `config/secrets.jl` file. This file is automatically loaded by Genie before the models, views or the controller are invoked - and is already added to the app's `.gitignore` file to avoid accidentally publishing it. 
 
 ## Logging
-...
+Logging is a central part in Genie's architecture, one of its key components. One can hardly find of a more time consuming and daunting task than debugging your backend code without proper logging - and a lot of effort has been put into getting this right. 
+
+Genie uses `Logging.jl` for it's logging needs, and exposes this functionality through the `Genie.log()` function. 
+
+By default, in `development` mode, Genie is **very** verbose. It will log SQL sent to the database, the `DataFrame`s representing the SQL results, `@time` measurments of the queries, server requests and responses, etc. The level of logging can be controlled via the main config file (see above). 
+
+Out of the box, Genie comes with a console and a file logger. The console logger outputs everything in the terminal where the Genie app is running; while the file logger writes to the dedicated log file corresponding to the active environment. 
+
+The log files are found, unsurprisingly, in the `log/` folder. 
+
+```
+julia> p = SearchLight.rand(Package)
+
+01-Jun 22:11:28:INFO:console_logger:
+SQL QUERY: SELECT "packages"."id" AS "packages_id", "packages"."name" AS "packages_name", "packages"."url" AS "packages_url" FROM "packages" ORDER BY random() ASC LIMIT 1
+
+  0.034524 seconds (1.09 k allocations: 43.570 KB)
+
+01-Jun 22:11:29:INFO:console_logger:
+1×3 DataFrames.DataFrame
+│ Row │ packages_id │ packages_name │ packages_url                            │
+├─────┼─────────────┼───────────────┼─────────────────────────────────────────┤
+│ 1   │ 1067        │ "Kalman.jl"   │ "git://github.com/wkearn/Kalman.jl.git" │
+
+1-element Array{Genie.Package,1}:
+
+Genie.Package
++======+=======================================+
+|  key |                                 value |
++======+=======================================+
+|   id |                        Nullable(1067) |
++------+---------------------------------------+
+| name |                             Kalman.jl |
++------+---------------------------------------+
+|  url | git://github.com/wkearn/Kalman.jl.git |
++------+---------------------------------------+
+
+
+julia> Genie.log(p)
+
+01-Jun 22:11:44:INFO:console_logger:
+[
+Genie.Package
++======+=======================================+
+|  key |                                 value |
++======+=======================================+
+|   id |                        Nullable(1067) |
++------+---------------------------------------+
+| name |                             Kalman.jl |
++------+---------------------------------------+
+|  url | git://github.com/wkearn/Kalman.jl.git |
++------+---------------------------------------+
+]
+```
+
+> Example of logging during a Genie REPL session. Genie types know how to display themself in a readable format. 
+
+```
+01-Jun 08:13:07:INFO:console_logger:
+Response(200 OK, 1 headers, 1442 bytes in body)
++==========+=========================================================================================================+
+|      key |                                                                                                   value |
++==========+=========================================================================================================+
+|  cookies |                                                                                                    +==+ |
++----------+---------------------------------------------------------------------------------------------------------+
+|     data | {"data":{"type":"package","id":42,"links":{"self":"/api/v1/packages/42"},"attributes":{"readme":"# M... |
++----------+---------------------------------------------------------------------------------------------------------+
+| finished |                                                                                                   false |
++----------+---------------------------------------------------------------------------------------------------------+
+|          |                                                                            +==============+===========+ |
+|          |                                                                            |          key |     value | |
+|          |                                                                            +==============+===========+ |
+|          |                                                                            | Content-Type | text/json | |
+|  headers |                                                                            +--------------+-----------+ |
++----------+---------------------------------------------------------------------------------------------------------+
+|  history |                                                                                   HttpCommon.Response[] |
++----------+---------------------------------------------------------------------------------------------------------+
+|  request |                                                                          Nullable{HttpCommon.Request}() |
++----------+---------------------------------------------------------------------------------------------------------+
+| requests |                                                                                    HttpCommon.Request[] |
++----------+---------------------------------------------------------------------------------------------------------+
+|   status |                                                                                                     200 |
++----------+---------------------------------------------------------------------------------------------------------+
+```
+
+> Response object logged. 
+
+Additional loggers can be added at any point in the app (for example by using an initializer). Then, you can either `push!` your logger to `Genie.config.loggers` to be hooked into Genie's logging mechanism and have all logging data sent to your logger too; or you can directly send data to your logger wherever you see fit. 
+
+#### `@psst`
+Genie also provides the `@psst` macro which takes an expression as its argument and executes it while disabling all logging. 
+
+```julia
+julia> p = @psst SearchLight.rand(Package)
+1-element Array{Genie.Package,1}:
+
+Genie.Package
++======+=======================================+
+|  key |                                 value |
++======+=======================================+
+|   id |                         Nullable(483) |
++------+---------------------------------------+
+| name |                                 Loess |
++------+---------------------------------------+
+|  url | git://github.com/dcjones/Loess.jl.git |
++------+---------------------------------------+
+```
 
 ## Database versioning / migrations
-... 
+At the moment Genie lacks full migrations support - meaning that it does not yet offer features for database agnostic manipulation of the tables. Instead it uses what can be called *database scripts*, meaning that table manipulation SQL queries need to be written by hand. Full support for migrations is on the roadmap to v1.0. 
+
+Genie provides database versioning functionality, coupled with a migration generator and a migration runner. 
+
+### Database initialization
+Genie takes care of setting up its database versioning support. `up` migrations are stored in a table called `schema_migrations` inside your app's database. In order to create this table, you must execute at the command prompt: 
+
+```
+$> ./genie.jl db:init
+
+01-Jun 23:02:51:INFO:console_logger:
+SQL QUERY: CREATE TABLE schema_migrations (version varchar(30) CONSTRAINT firstkey PRIMARY KEY)
+
+01-Jun 23:02:51:INFO:console_logger:
+Created table schema_migrations or table already exists
+```
+
+### Migrations status
+In order to check what migrations exist and wheter they're `up` or `down`, you need to execute: 
+
+```
+$> ./genie.jl migration:status
+
++===+============================================+
+|   |                       Class name & status  |
+|   |                                 File name  |
++===+============================================+
+|   |                  CreateTablePackages: DOWN |
+| 1 | 20160207095411016_create_table_packages.jl |
++---+--------------------------------------------+
+|   |                     CreateTableRepos: DOWN |
+| 2 |    20160227213638909_create_table_repos.jl |
++---+--------------------------------------------+
+```
+
+### Running migrations 
+Then you can use the migration runner to execute the desired database script: 
+
+```
+./genie.jl --migration:up=CreateTablePackages
+
+02-Jun 08:07:00:INFO:console_logger:
+SQL QUERY: CREATE SEQUENCE packages__seq_id
+
+  0.057904 seconds (42.42 k allocations: 1.673 MB)
+
+02-Jun 08:07:00:INFO:console_logger:
+SQL QUERY:   CREATE TABLE IF NOT EXISTS packages (
+    id            integer CONSTRAINT packages__idx_id PRIMARY KEY DEFAULT NEXTVAL('packages__seq_id'),
+    name          varchar(100) NOT NULL,
+    url           text NOT NULL,
+    updated_at    timestamp DEFAULT current_timestamp,
+    CONSTRAINT packages__idx_name UNIQUE(name)
+    -- CONSTRAINT packages__idx_url UNIQUE(url)
+  )
+
+
+  0.016703 seconds (3 allocations: 128 bytes)
+
+02-Jun 08:07:00:INFO:console_logger:
+SQL QUERY: ALTER SEQUENCE packages__seq_id OWNED BY packages.id;
+
+  0.003619 seconds (3 allocations: 128 bytes)
+
+02-Jun 08:07:00:INFO:console_logger:
+Executed migration CreateTablePackages up
+```
+
+### Generating migrations
+Genie uses certain conventions to seamlessly integrate database versioning through migrations, from file names to types and method names. 
+
+To make it easy, Genie provides a migrations generator. 
+
+```
+./genie.jl --migration:new=create_table_users
+
+02-Jun 08:28:48:INFO:console_logger:
+New migration created at db/migrations/20160602062848129_create_table_users.jl
+```
+
+#### db/migrations/20160602062848129\_create\_table\_users.jl
+
+```julia
+using Genie
+using Database 
+
+type CreateTableUsers
+end 
+
+function up(_::CreateTableUsers)
+  error("Not implemented")
+end
+
+function down(_::CreateTableUsers)
+  error("Not implemented")
+end
+```
+
+A complete database script for creating and droping a table (with PostgreSQL) can look like: 
+
+##### db/migrations/20160227213638909\_create\_table\_repos.jl
+
+```julia
+using Genie
+using Database 
+
+type CreateTableRepos
+end 
+
+function up(_::CreateTableRepos)
+  Database.query("""CREATE SEQUENCE repos__seq_id""")
+  Database.query("""
+    CREATE TABLE IF NOT EXISTS repos (
+      id              integer CONSTRAINT repo__idx_id PRIMARY KEY DEFAULT NEXTVAL('repos__seq_id'), 
+      package_id      integer, 
+      fullname        varchar(100) NOT NULL, 
+      readme          text,
+      participation   text,
+      updated_at      timestamp DEFAULT current_timestamp, 
+      CONSTRAINT repo__idx_fullname UNIQUE(fullname), 
+      CONSTRAINT repo__idx_package_id UNIQUE(package_id)
+    )
+  """)
+  Database.query("""ALTER SEQUENCE repos__seq_id OWNED BY repos.id;""")
+  Database.query("""CREATE INDEX repo__idx_readme ON repos USING gin(to_tsvector('english', readme))""")
+end
+
+function down(_::CreateTableRepos)
+  Database.query("DROP TABLE repos")
+end
+```
+
+Execute `./genie -h` to get a list with all the available options. 
+
+### Migrations interface
+All migration scripts must define: 
+
+* a type, which must be named corresponding to the migration script. Ex: `type FooBarBaz` would correspond to a `*_foo_bar_baz.jl` migration. 
+* the method `up(_::FooBarBaz)` that will be invoked by Genie when migrating `up`
+* the method `down(_::FooBarBaz)` that will be invoked by Genie when migrating `down`
 
 ## Test runner
-... 
+Genie comes with an integrated test runner based on `FactCheck`. When executed with `./genie.jl test:run` it will automatically run all the files included in the `test/` folder that are named `*_test.jl`. The test files can be grouped inside nested folders within `test/`, they will all be picked. 
+
+The location of the test folder is defined in the main config file, and can be overwritten within active env's configuration file. 
+
+Within the `test/` folder you can find `test_config.jl` which is used by the test runner. This is loaded before any tests are run and can be used for bootstrapping up your tests. 
+
+The testing functionality is included in the `Tester` module and amongst other things, it provides a `reset_db()` function which wipes and rebuilds the test database. Be sure not to accidentaly invoke this function in the dev or prod environments!
+
+```julia
+using Faker
+using Model
+
+function setup()
+  Tester.reset_db()
+
+  for i in 1:10 
+    p = Package()
+    p.name = Faker.word() * "_" * Faker.word() * "_" * Faker.word()
+    p.url = Faker.uri() * "?" * string(hash(randn()))
+
+    Model.save!(p)
+  end
+end
+
+function teardown()
+  Model.delete_all(Package)
+end
+
+facts("Model basics") do
+  @psst setup()
+
+  context("Model::all should find 10 packages in the DB") do
+      all_packages = @psst Model.all(Package)
+      @fact length(all_packages) --> 10
+  end
+
+  context("Model::find without args should find 10 packages in the DB") do
+      all_packages = @psst Model.find(Package)
+      @fact length(all_packages) --> 10
+  end
+
+  context("Model::find with limit 5 should find 5 packages in the DB") do
+      all_packages = @psst Model.find(Package, SQLQuery(limit = SQLLimit(5)))
+      @fact length(all_packages) --> 5
+  end
+
+  context("Model::find with limit 5 and order DESC by id should find 5 packages in the DB and sort correctly") do
+      all_packages = @psst Model.find(Package, SQLQuery(limit = SQLLimit(5), order = [SQLOrder(:id, "DESC")]))
+      @fact [10, 9, 8, 7, 6] --> map(x -> Base.get(x.id), all_packages)
+  end
+
+  context("Model::rand_one should return a not null nullable model") do 
+    package = @psst Model.rand_one(Package)
+    @fact typeof(package) --> Nullable{AbstractModel}
+    @fact isnull(package) --> false
+  end
+
+  context("Model::find_one should return a not null nullable package with the same id") do 
+    package = @psst Model.find_one(Package, 1)
+    @fact Base.get(package).id |> Base.get --> 1
+  end
+
+  context("Complex finds") do 
+    @pending Model.find() --> :?
+  end
+
+  context("Find rand") do 
+    @pending Model.rand() --> :?
+  end
+
+  context("Find one") do 
+    @pending Model.find_one() --> :?
+  end
+
+  @psst teardown()
+end
+```
+
+> Some tests for Genie.Model 
 
 ## Task runner
-... 
+Genie comes bundled with a task runner which makes it very easy to write and execute server side scripts, with access to all of Genie's ecosystem. An obvious use case for these are recurring maintainance tasks started by a cron job. 
+
+These `task`s are scripts that can be executed by your Genie app, and have nothing to do with Julia's `Task`s. 
+
+### Creating new Genie tasks
+Similar to the database migration scripts, the tasks must follow certain conventions in regards to naming, location, implemented methods, etc. 
+
+To make it harder to get this wrong, Genie provides a generator. 
+
+```
+$> ./genie.jl --task:new=foo_bar
+
+02-Jun 11:35:00:INFO:console_logger:
+New task created at task/foo_bar_task.jl
+```
+
+##### task/foo\_bar\_task.jl
+
+```julia
+using Genie
+
+type FooBarTask
+end
+
+function description(_::FooBarTask)
+  """
+  Description of the task here
+  """
+end
+
+function run_task!(_::FooBarTask, parsed_args = Dict{AbstractString, Any}())
+  # Build something great
+end
+```
+
+> The empty task file generated by Genie
+
+A very simple task that lints all the files in a given folder can look like this: 
+
+```julia
+using Genie
+using Lint
+
+type LintFilesTask
+end
+
+function description(_::LintFilesTask)
+  """
+  Lints the files in the indicated dir
+  """
+end
+
+function run_task!(_::LintFilesTask, parsed_args = Dict())
+  dir = joinpath("lib", "Genie", "src")
+  for filename in Task(() -> walk_dir(dir))
+    println(filename)
+    lintfile(filename)
+    println()
+  end
+end
+```
+
+### The task runner interface
+All tasks scripts must define: 
+
+* a type, which must be named corresponding to the task script. Ex: `type FooBarBaz` would correspond to a `foo_bar_baz.jl` task file. 
+* the method `description(_::FooBarBaz)` which is used by Genie when listing all available tasks. This should return a string with the human readable description of what the task does. 
+* the method `run_task!(_::FooBarBaz, parsed_args = Dict())` which will be invoked by Genie to actually execute the task - and where you should place your logic. The `parsed_args` Dict will receive all the command line arguments passed upon the invocation of the task. 
+
+### Listing available tasks
+Genie will promply display all the available tasks if you execute `./genie task:list`.
+
+```
+$> ./genie.jl task:list
+
++===+====================================================================================================+
+|   |                                                                                         Task name  |
+|   |                                                                                          Filename  |
+|   |                                                                                       Description  |
++===+====================================================================================================+
+|   |                                                                                      LintFilesTask |
+|   |                                                                                 lint_files_task.jl |
+| 1 |                                                              Lints the files in the indicated dir  |
++---+----------------------------------------------------------------------------------------------------+
+|   |                                                                                 PackagesImportTask |
+|   |                                                                            packages_import_task.jl |
+| 2 |                             Imports list of packages (name, URL) in database, using MetadataTools  |
++---+----------------------------------------------------------------------------------------------------+
+|   |                                                                           PackagesSearchImportTask |
+|   |                                                                     packages_search_import_task.jl |
+| 3 |                                     Searches Github for Julia packages and imports them in the DB  |
++---+----------------------------------------------------------------------------------------------------+
+|   |                                                                                    ReposImportTask |
+|   |                                                                               repos_import_task.jl |
+| 4 | Imports list of repos (name, URL) in database, using local package information and the GitHub pkg  |
++---+----------------------------------------------------------------------------------------------------+
+```
+
+### Running tasks
+In order to run any of the tasks, execute `./genie --task:run=FooBarBazTask
+
+```
+$> ./genie.jl --task:run=LintFilesTask
+
+lib/Genie/src/Migration.jl:100 I372 abspath(joinpath(Genie.config.db_migrations_folder,migration.migration_file_name)): unable to follow non-literal include file
+lib/Genie/src/Model.jl:43 E321 to_nullable: use of undeclared symbol
+lib/Genie/src/Model.jl:82 E521 query_result_df: apparent type DataFrames.DataFrame is not a container type
+lib/Genie/src/Model.jl:350 E321 escape_column_name: use of undeclared symbol
+lib/Genie/src/Model.jl:350 E321 strip_module_name: use of undeclared symbol
+
+[ ... output omitted ... ]
+```
 
 ## Caching
-...
+[TODO]
 
 ## Package versioning
-...
+When running applications in production, it's critical that a `Pkg.update()` does not inadvertently breaks your code by bringing backwards incompatible changes to some of the packages you're using. 
+
+It's recommended that you use `DeclarativePackages.jl` to manage and version your app's dependencies (https://github.com/rened/DeclarativePackages.jl). 
 
 ## Hosting in production
 ### Monitoring and restarting Genie apps with Supervisor
+[DONE - To write]
 ### Serving Genie apps with Nginx 
+[DONE - To write]
 ### Parallel execution of Genie apps with Nginx load balancing
+[TODO]
 ### Nginx response caching
+[DONE - To write]
 
 ##Roadmap (TODOs)
-- [ ] more generators: new app, resources, etc. 
-- [ ] resourceful routes
-- [ ] channels
+- [ ] handling of POST data and routes
+- [ ] model validation
+- [ ] controller authorization
+- [ ] more generators: new app, resources, models, controllers, etc. 
+- [ ] web channels
 - [ ] caching
+- [ ] database agnostic migrations
+- [ ] resourceful routes
+- [ ] admin

@@ -76,7 +76,7 @@ function save{T<:AbstractModel}(m::T; conflict_strategy = :error)
   end
 end
 
-function save!{T<:AbstractModel}(m::T; conflict_strategy = :error, get_inserted = true)
+function save!{T<:AbstractModel}(m::T; conflict_strategy = :error)
   sql::UTF8String = to_store_sql(m, conflict_strategy = conflict_strategy)
   query_result_df::DataFrames.DataFrame = query(sql)
   insert_id::Any = query_result_df[1, Symbol(m._id)]

@@ -127,26 +127,26 @@ function error(status_code; id = "resource_not_found", code = "404-0001", title 
 end
 
 function pagination(path::AbstractString, total_items::Int; current_page::Int = 1, page_size::Int = Genie.genie_app.config.pagination_jsonapi_default_items_per_page)
-  pagination = Dict{Symbol, AbstractString}()
-  pagination[:first] = path
+  pg = Dict{Symbol, AbstractString}()
+  pg[:first] = path
 
-  pagination[:first] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=1&" * 
-                          Genie.genie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
+  pg[:first] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=1&" * 
+                Genie.genie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
 
   if current_page > 1 
-    pagination[:prev] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(current_page - 1) * "&" * 
-                          Genie.genie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
+    pg[:prev] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(current_page - 1) * "&" * 
+                  Genie.genie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
   end
 
   if current_page * page_size < total_items
-    pagination[:next] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(current_page + 1) * "&" * 
-                          Genie.genie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
+    pg[:next] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(current_page + 1) * "&" * 
+                  Genie.genie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
   end
 
-  pagination[:last] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(Int(ceil(total_items / page_size))) * "&" * 
-                          Genie.genie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
+  pg[:last] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(Int(ceil(total_items / page_size))) * "&" * 
+                Genie.genie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
 
-  pagination
+  pg
 end
 
 end # end module Render.JSONAPI

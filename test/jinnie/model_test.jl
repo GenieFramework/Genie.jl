@@ -104,7 +104,7 @@ facts("Join part") do
 end
 
 facts("SQLQuery constructors") do 
-  q = SQLQuery()
+  # q = SQLQuery()
 end
 
 facts("Model basics") do
@@ -115,43 +115,43 @@ facts("Model basics") do
       @fact length(all_packages) --> 10
   end
 
-  context("Model::find without args should find 10 packages in the DB") do
-      all_packages = @psst Model.find(Package)
-      @fact length(all_packages) --> 10
-  end
+  # context("Model::find without args should find 10 packages in the DB") do
+  #     all_packages = @psst Model.find(Package)
+  #     @fact length(all_packages) --> 10
+  # end
 
-  context("Model::find with limit 5 should find 5 packages in the DB") do
-      all_packages = @psst Model.find(Package, SQLQuery(limit = SQLLimit(5)))
-      @fact length(all_packages) --> 5
-  end
+  # context("Model::find with limit 5 should find 5 packages in the DB") do
+  #     all_packages = @psst Model.find(Package, SQLQuery(limit = SQLLimit(5)))
+  #     @fact length(all_packages) --> 5
+  # end
 
-  context("Model::find with limit 5 and order DESC by id should find 5 packages in the DB and sort correctly") do
-      all_packages = @psst Model.find(Package, SQLQuery(limit = SQLLimit(5), order = [SQLOrder(:id, "DESC")]))
-      @fact [10, 9, 8, 7, 6] --> map(x -> Base.get(x.id), all_packages)
-  end
+  # context("Model::find with limit 5 and order DESC by id should find 5 packages in the DB and sort correctly") do
+  #     all_packages = @psst Model.find(Package, SQLQuery(limit = SQLLimit(5), order = [SQLOrder(:id, "DESC")]))
+  #     @fact [10, 9, 8, 7, 6] --> map(x -> Base.get(x.id), all_packages)
+  # end
 
-  context("Model::rand_one should return a not null nullable model") do 
-    package = @psst Model.rand_one(Package)
-    @fact typeof(package) --> Nullable{AbstractModel}
-    @fact isnull(package) --> false
-  end
+  # context("Model::rand_one should return a not null nullable model") do 
+  #   package = @psst Model.rand_one(Package)
+  #   @fact typeof(package) --> Nullable{AbstractModel}
+  #   @fact isnull(package) --> false
+  # end
 
-  context("Model::find_one should return a not null nullable package with the same id") do 
-    package = @psst Model.find_one(Package, 1)
-    @fact Base.get(package).id |> Base.get --> 1
-  end
+  # context("Model::find_one should return a not null nullable package with the same id") do 
+  #   package = @psst Model.find_one(Package, 1)
+  #   @fact Base.get(package).id |> Base.get --> 1
+  # end
 
-  context("Complex finds") do 
-    @pending Model.find() --> :?
-  end
+  # context("Complex finds") do 
+  #   @pending Model.find() --> :?
+  # end
 
-  context("Find rand") do 
-    @pending Model.rand() --> :?
-  end
+  # context("Find rand") do 
+  #   @pending Model.rand() --> :?
+  # end
 
-  context("Find one") do 
-    @pending Model.find_one() --> :?
-  end
+  # context("Find one") do 
+  #   @pending Model.find_one() --> :?
+  # end
 
   @psst teardown()
 end

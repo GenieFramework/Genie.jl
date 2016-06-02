@@ -1,3 +1,5 @@
+module PostgreSQLDatabaseAdapter
+
 using PostgreSQL
 using DataFrames
 using Genie
@@ -24,7 +26,7 @@ function adapter_table_columns_sql(table_name::AbstractString)
   FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '$table_name'"
 end
 
-function create_migrations_table_sql()
+function adapter_create_migrations_table_sql()
   "CREATE TABLE $(config.db_migrations_table_name) (version varchar(30) CONSTRAINT firstkey PRIMARY KEY)"
 end
 
@@ -50,7 +52,7 @@ function adapter_query(sql::AbstractString, supress_output::Bool, conn, adapter,
     adapter.execute(stmt)
   else 
     Genie.log("SQL QUERY: $(escape_string(sql))")
-    Genie.@run_with_time adapter.execute(stmt)
+    @time adapter.execute(stmt)
   end
   adapter.finish(stmt)
 
@@ -64,3 +66,9 @@ end
 function db_adapter()
   PostgreSQL
 end
+
+end
+
+eval(Database, parse("using PostgreSQLDatabaseAdapter"))
+eval(Database, parse("const DatabaseAdapter = PostgreSQLDatabaseAdapter"))
+eval(Database, parse("export DatabaseAdapter"))
