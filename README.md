@@ -1087,4 +1087,12 @@ It's recommended that you use `DeclarativePackages.jl` to manage and version you
 - [ ] caching
 - [ ] database agnostic migrations
 - [ ] resourceful routes
+- [ ] proper API documentation
 - [ ] admin
+
+## Acknowledgements
+* The amazing Genie logo was designed by my friend Alvaro (www.yeahstyledg.com)! You rock! 
+* Genie uses a multitude of packages that have been contributed by so many incredible developers. 
+* I wouldn't have made it so far without the help and the patience of the amazing people at the `julia-users` group. 
+
+Thank you all.
