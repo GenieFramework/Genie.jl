@@ -1004,9 +1004,7 @@ end
 function run_task!(_::LintFilesTask, parsed_args = Dict())
   dir = joinpath("lib", "Genie", "src")
   for filename in Task(() -> walk_dir(dir))
-    println(filename)
     lintfile(filename)
-    println()
   end
 end
 ```
