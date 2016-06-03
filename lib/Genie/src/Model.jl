@@ -6,6 +6,8 @@ using DataFrames
 using Genie
 using Util
 
+using Debug
+
 include(abspath(joinpath("lib", "Genie", "src", "model_types.jl")))
 
 # internals
@@ -107,7 +109,7 @@ end
 # Object generation 
 # 
 
-function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
+@debug function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
   models = Array{T, 1}()
   dfs = df_result_to_models_data(m, df)
 
@@ -131,6 +133,7 @@ function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
     end
 
     push!(models, main_model)
+    row_count += 1
   end
 
   return models
