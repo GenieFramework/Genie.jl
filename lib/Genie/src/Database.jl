@@ -76,7 +76,7 @@ end
 end
 
 function query_df(sql::AbstractString; supress_output::Bool = false) 
-  supress_output = supress_output || config.supress_output
+  supress_output = supress_output || Genie.config.supress_output
   conn, adapter = query_tools()
   DatabaseAdapter.adapter_query_df(sql, supress_output, conn, adapter)
 end
