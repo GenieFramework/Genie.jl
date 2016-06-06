@@ -15,8 +15,6 @@ function show(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Request,
 end
 
 function search(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Request, res::Response)
-  error("OMG")
-
   results_count = Repos.count_search_results(params[:q]) 
   search_results_df = Repos.search(params[:q], limit = SQLLimit(params[:page_size]), offset = (params[:page_number] - 1) * params[:page_size]) 
 
