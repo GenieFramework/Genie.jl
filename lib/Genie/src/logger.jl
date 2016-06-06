@@ -36,7 +36,7 @@ function step_dict(dict::Dict)
 end
 
 function log_dict(dict::Dict, level::Symbol = :info)
-  log(string(Millboard.table(dict)), level)
+  log(string(Genie.config.log_formatted ? Millboard.table(dict) : dict), level)
 end
 
 function truncate_logged_output(output::AbstractString)
@@ -48,10 +48,10 @@ function truncate_logged_output(output::AbstractString)
 end
 
 function setup_loggers()
-  Logging.configure(console_logger, level = DEBUG)
+  Logging.configure(console_logger, level = Genie.config.log_level)
   Logging.configure(console_logger, output = STDOUT)
 
-  Logging.configure(file_logger, level = DEBUG)
+  Logging.configure(file_logger, level = Genie.config.log_level)
   Logging.configure(file_logger, filename = joinpath("log", "$(App.config.app_env).log"))
 
   push!(Genie.config.loggers, console_logger)

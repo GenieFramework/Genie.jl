@@ -5,6 +5,7 @@ using Logging
 
 export is_dev, is_prod, is_test, Config, DEV, PROD, TEST
 export MODEL_RELATIONSHIPS_EAGERNESS_AUTO, MODEL_RELATIONSHIPS_EAGERNESS_LAZY, MODEL_RELATIONSHIPS_EAGERNESS_EAGER
+export LOG_LEVEL_VERBOSITY_VERBOSE, LOG_LEVEL_VERBOSITY_MINIMAL
 
 const DEV   = "dev"
 const PROD  = "prod"
@@ -13,6 +14,9 @@ const TEST  = "test"
 const MODEL_RELATIONSHIPS_EAGERNESS_AUTO    = :auto
 const MODEL_RELATIONSHIPS_EAGERNESS_LAZY    = :lazy
 const MODEL_RELATIONSHIPS_EAGERNESS_EAGER   = :eager
+
+const LOG_LEVEL_VERBOSITY_VERBOSE = :verbose 
+const LOG_LEVEL_VERBOSITY_MINIMAL = :minimal
 
 is_dev()  = App.config.app_env == DEV
 is_prod() = App.config.app_env == PROD
@@ -33,10 +37,10 @@ type Config
 
   output_length::Int 
   
-  debug_router::Bool
-  debug_db::Bool
-  debug_requests::Bool
-  debug_responses::Bool
+  log_router::Bool
+  log_db::Bool
+  log_requests::Bool
+  log_responses::Bool
 
   pagination_jsonapi_default_items_per_page::Int
   pagination_jsonapi_page_param_name::AbstractString
@@ -46,6 +50,10 @@ type Config
   model_relationships_eagerness::Symbol 
 
   tests_force_test_env::Bool
+
+  log_level::Logging.LogLevel
+  log_verbosity::Symbol
+  log_formatted::Bool
 
   Config(;  
             server_port = 8000, # default port for binding the web server
@@ -62,10 +70,10 @@ type Config
 
             output_length = 10_000, # where to truncate strings in console
 
-            debug_router = false, 
-            debug_db = true, 
-            debug_requests = true, 
-            debug_responses = true, 
+            log_router = false, 
+            log_db = true, 
+            log_requests = true, 
+            log_responses = true, 
 
             pagination_jsonapi_default_items_per_page = 20, 
             pagination_jsonapi_page_param_name = "page", 
@@ -74,13 +82,18 @@ type Config
 
             model_relationships_eagerness = MODEL_RELATIONSHIPS_EAGERNESS_LAZY,
 
-            tests_force_test_env = true
+            tests_force_test_env = true, 
+
+            log_level     = Logging.DEBUG, 
+            log_verbosity = LOG_LEVEL_VERBOSITY_VERBOSE, 
+            log_formatted = true
         ) = 
               new(server_port, app_env, loggers, supress_output, 
                   db_migrations_table_name, db_migrations_folder, task_folder, test_folder, output_length, 
-                  debug_router, debug_db, debug_requests, debug_responses, 
+                  log_router, log_db, log_requests, log_responses, 
                   pagination_jsonapi_default_items_per_page, pagination_jsonapi_page_param_name, 
-                  server_workers_count, model_relationships_eagerness, tests_force_test_env)
+                  server_workers_count, model_relationships_eagerness, tests_force_test_env, 
+                  log_level, log_verbosity, log_formatted)
 end
 
 end

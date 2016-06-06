@@ -26,7 +26,7 @@ end
 
 function genietype_to_print{T<:GenieType}(m::T)
   output = "\n" * "$(typeof(m))" * "\n"
-  output *= string(Millboard.table(Genie.Model.to_string_dict(m))) * "\n"
+  output *= string(Genie.config.log_formatted ? Millboard.table(Genie.Model.to_string_dict(m)) : Genie.Model.to_string_dict(m) ) * "\n"
   
   output
 end

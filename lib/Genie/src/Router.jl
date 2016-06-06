@@ -43,7 +43,7 @@ function match_routes(req::Request, res::Response)
     protocol, route, to = route_def
     protocol != req.method && continue
     
-    Genie.config.debug_router && Genie.log("Router: Checking against " * route)
+    Genie.config.log_router && Genie.log("Router: Checking against " * route)
 
     parsed_route, param_names = parse_route(route)
 
@@ -51,7 +51,7 @@ function match_routes(req::Request, res::Response)
     regex_route = Regex("^" * parsed_route * "\$")
     
     (! ismatch(regex_route, uri.path)) && continue
-    Genie.config.debug_router && Genie.log("Router: Matched route " * uri.path)
+    Genie.config.log_router && Genie.log("Router: Matched route " * uri.path)
 
     extract_uri_params(uri, regex_route, param_names)
     extract_extra_params(extra_params)
@@ -59,7 +59,7 @@ function match_routes(req::Request, res::Response)
     return invoke_controller(to, req, res, params)
   end
 
-  Genie.config.debug_router && Genie.log("Router: No route matched - defaulting 404")
+  Genie.config.log_router && Genie.log("Router: No route matched - defaulting 404")
   Response( 404, Dict{AbstractString, AbstractString}(), "not found" )
 end
 
@@ -130,7 +130,13 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
   controller = Genie.GenieController()
   action_name = string(current_module()) * "." * to_parts[2]
 
-  response = invoke( eval(parse(string(current_module()) * "." * action_name)), ( typeof(controller), typeof(params), typeof(req), typeof(res) ), controller, params, req, res )
+  try 
+    response = invoke( eval(parse(string(current_module()) * "." * action_name)), ( typeof(controller), typeof(params), typeof(req), typeof(res) ), controller, params, req, res )
+  catch ex
+    Genie.log("$ex at $(@__FILE__), line $(@__LINE__)", :err)
+    rethrow(ex) # do something better with the error
+    # return Genie.Render.respond(Genie.Render.JSONAPI.error(500))
+  end
 
   if ! isa(response, Response)
     if isa(response, Tuple)
@@ -140,7 +146,7 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
     end
   end
 
-  Genie.config.debug_responses && AppServer.log_request_response(response)
+  Genie.config.log_responses && AppServer.log_request_response(response)
 
   response
 end

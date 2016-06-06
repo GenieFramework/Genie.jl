@@ -65,6 +65,10 @@ function respond(response::Tuple, headers::Dict{AbstractString, AbstractString} 
   respond(response[1], response[2], headers, as)
 end
 
+function error(status_code; id = "resource_not_found", code = "404-0001", title = "Not found", detail = "The requested resource was not found")
+  respond(detail, status_code, Dict{AbstractString, AbstractString}())
+end
+
 # =================================================== # 
 
 module JSONAPI

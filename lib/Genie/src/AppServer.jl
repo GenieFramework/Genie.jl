@@ -3,12 +3,11 @@ module AppServer
 using HttpServer
 using Router
 using Genie
-using Debug
 using Millboard
 
-@debug function start(port::Int = 8000)
+function start(port::Int = 8000)
   http = HttpHandler() do req::Request, res::Response
-    Genie.config.debug_requests ? log_request_response(req) : nothing 
+    Genie.config.log_requests && log_request_response(req)
     
     Router.route_request(req, res)
   end
@@ -24,7 +23,7 @@ function _spawn(port::Int)
   @spawn start(port)
 end
 
-@debug function log_request_response(req_res::Union{Request, Response})
+function log_request_response(req_res::Union{Request, Response})
   req_data = Dict{AbstractString, AbstractString}()
   for f in fieldnames(req_res)
     f = string(f)
@@ -32,20 +31,20 @@ end
 
     req_data[f] = if f == "data" && ! isempty(v)
                     mapreduce(x -> string(Char(Int(x))), *, v) |> Genie.truncate_logged_output
-                  elseif isa(v, Dict) 
+                  elseif isa(v, Dict) && Genie.config.log_formatted
                     Millboard.table(parse_inner_dict(v)) |> string
                   else 
                     string(v) |> Genie.truncate_logged_output
                   end
   end
 
-  Genie.log(string(req_res) * "\n" * string(Millboard.table(req_data)))
+  Genie.log(string(req_res) * "\n" * string(Genie.config.log_formatted ? Millboard.table(req_data) : req_data))
 end
 
 function parse_inner_dict(d::Dict)
   r = Dict()
   for (k, v) in d
-    if k == "Cookie" 
+    if k == "Cookie" && Genie.config.log_verbosity == LOG_LEVEL_VERBOSITY_VERBOSE
       cookie = Dict()
       cookies = split(v, ";")
       for c in cookies
@@ -53,7 +52,7 @@ function parse_inner_dict(d::Dict)
         cookie[cookie_part[1]] = cookie_part[2] |> Genie.truncate_logged_output
       end
 
-      r[k] = Millboard.table(cookie) |> string
+      r[k] = (Genie.config.log_formatted ? Millboard.table(cookie) : cookie) |> string
     else 
       r[k] = Genie.truncate_logged_output(v)
     end

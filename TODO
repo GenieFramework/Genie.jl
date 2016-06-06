@@ -3,14 +3,29 @@ Experiment app:
   provide functionality to search packages by various criteria
   provide a web ui for searching packages
 
+v 0.5.x
++ has_many, has_many_through, has_one_through, has_and_belongs_to_many relationships
++ logging in production: requests & errors, logging level, logging formatting options
++ bug fix: github search overwriting official packages (test app)
++ generators for models, controllers, resources
++ html/mustache layouts, views and rendering
++ brunch integration
++ support for POST - routing, params, etc
++ reverse routing -> ressouce to route
++ authors and tags features (test app)
++ relationships by name (key)
++ add stars, forks, watchers, etc (test app)
+
+v 0.x
++ change from Logging to Lumberjack? 
 
 Important parts: 
-  1. lazy relationships - to skip relationship if lazy
-  1.1. force loading relationship (with relationship!()) if the relationship has not been loaded (cause lazy)
+  √ lazy relationships - to skip relationship if lazy 
+  √ force loading relationship (with relationship!()) if the relationship has not been loaded (cause lazy) 
   2. streaming queries - get the result set (dataframe) but don't convert each row to models - instead iterate row by row as the data is requested
   3. batch query results - convenience method to batch results (behind the scene using limit and offset and an iterator)
   4. propery use show() and print() for types
-  5. updated_at does not work because it's not defined in type
+  √ updated_at does not work because it's not defined in type
 
 For V1
 
@@ -31,8 +46,8 @@ For V1
 + mailers
 + channels (like phoenix) (for sockets)
 
-! complete routing to support "route", :controller, :action [done]
-! code reloading when files are changed (via Autoreload [https://github.com/malmaud/Autoreload.jl] or https://github.com/rened/Watcher.jl) or https://github.com/wavexx/Expect.jl
+√ complete routing to support "route", :controller, :action [done]
+√ code reloading when files are changed (via Autoreload [https://github.com/malmaud/Autoreload.jl] or https://github.com/rened/Watcher.jl) or https://github.com/wavexx/Expect.jl
 ! rendering -> auto-rendering layouts, views and partials (mustache only first or directly to ejl)
 
 . static sites generation (postponed)
@@ -40,7 +55,7 @@ For V1
 . ejl - embedded julia HTML rendering (postponed, maybe cancelled, mustache will do)
 . form renderers 
 
-- trailblazer architecture
+√ trailblazer architecture
 - color the logging output with AnsiColors 
 
 √ logging (via the logging.jl pkg or Lumberjack.jl)
