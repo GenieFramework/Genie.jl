@@ -24,24 +24,5 @@ function run_task!(_::ReposImportTask, parsed_args = Dict())
     catch ex 
       Genie.log(ex, :debug)
     end
-
-    # repo =  if ! isnull( existing_repo )
-    #           Genie.log("REPO EXISTS", :debug)
-
-    #           existing_repo = Base.get(existing_repo)
-
-    #           existing_repo.fullname = new_repo.fullname
-    #           existing_repo.readme = new_repo.readme
-    #           existing_repo.participation = new_repo.participation
-
-    #           existing_repo
-    #         else 
-    #           new_repo
-    #         end
-    # try 
-    #   Genie.Model.save!(repo)
-    # catch ex
-    #   Genie.log(ex, :debug)
-    # end
   end
 end

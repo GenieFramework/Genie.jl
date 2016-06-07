@@ -2,6 +2,8 @@ using Genie
 using Model
 using GitHub
 using JSON
+using Memoize
+using MetadataTools
 
 type PackagesSearchImportTask
 end
@@ -22,9 +24,14 @@ function run_task!(_::PackagesSearchImportTask, parsed_args = Dict{AbstractStrin
 
     for result in items
       items_count += 1
-      package = Genie.Package(name = result["name"], url = result["git_url"])
+      package = Package(name = result["name"], url = result["git_url"])
       try 
-        Model.create_or_update_by!(package, :url)
+        existing_package = SearchLight.find_one_by(Package, :url, result["git_url"])
+        if isnull(existing_package) 
+          SearchLight.save!(package)
+        elseif ! isnull(existing_package) && ! haskey(official_packages(), result["name"])
+          SearchLight.save!(existing_package)
+        end
       catch ex 
         Genie.log(ex, :debug)
       end
@@ -37,7 +44,7 @@ function run_task!(_::PackagesSearchImportTask, parsed_args = Dict{AbstractStrin
 end
 
 function search_packages(page::Int, items_count::Int)
-  const search_url = "https://api.github.com/search/repositories?q=Pkg.+language:julia+in:name,description,readme&sort=stars&order=desc&page=$page"
+  const search_url = "https://api.github.com/search/repositories?q=.jl+language:julia+in:name&sort=stars&order=desc&page=$page"
 
   response = GitHub.gh_get(search_url)
   results = ( mapreduce(x -> string(Char(x)), *, response.data) |> JSON.parse )
@@ -45,4 +52,8 @@ function search_packages(page::Int, items_count::Int)
   total_count = results["total_count"]
 
   return items
+end
+
+@memoize function official_packages()
+  MetadataTools.get_all_pkg()
 end
