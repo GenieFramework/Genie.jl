@@ -1,5 +1,6 @@
 using ArgParse
 using Database
+using Generator
 
 function called_command(args, key)
     args[key] == "true" || args["s"] == key
@@ -16,10 +17,15 @@ function run_app_with_command_line_args(config)
     Database.create_database()
     Database.create_migrations_table()
 
+  elseif ( parsed_args["model:new"] != nothing )
+    Generator.new_model(parsed_args, config)
+
+  elseif ( parsed_args["resource:new"] != nothing )
+    Generator.new_resource(parsed_args, config)
+
   elseif ( called_command(parsed_args, "migration:status") )
     Migration.status()
   elseif ( parsed_args["migration:new"] != nothing )
-    Genie.load_file_templates()
     Migration.new(parsed_args, config)
 
   elseif (  called_command(parsed_args, "migration:up") )
@@ -76,6 +82,12 @@ function parse_commandline_args()
         "--db:init"
             help = "true -> create database and core tables"
             default = "false"
+
+        "--model:new"
+            help = "model_name -> creates a new model, ex: Product"
+
+        "--resource:new"
+            help = "resource_name -> creates a new resource folder with all its files, ex: products"
         
         "--migration:status"
             help = "true -> list migrations and their status"

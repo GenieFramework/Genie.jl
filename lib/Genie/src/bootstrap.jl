@@ -8,6 +8,7 @@ using Migration
 using Model
 using Tester
 using Toolbox
+using Inflector
 
 using Reexport
 @reexport using Configuration
@@ -26,10 +27,6 @@ function load_configurations()
   include(abspath("config/secrets.jl"))
 end
 
-function load_file_templates()
-  include(abspath("lib/Genie/src/filetemplates.jl"))
-end
-
 function load_models(dir = abspath(joinpath(Genie.APP_PATH, "app", "resources")))
   f = readdir(abspath(dir))
   for i in f
@@ -37,7 +34,7 @@ function load_models(dir = abspath(joinpath(Genie.APP_PATH, "app", "resources"))
     if isdir(full_path)
       load_models(full_path)
     else 
-      if ( i == "model.jl" || i == "validation.jl" ) 
+      if ( i == GENIE_MODEL_FILE_NAME || i == GENIE_VALIDATOR_FILE_NAME ) 
         include(full_path)
       end
     end

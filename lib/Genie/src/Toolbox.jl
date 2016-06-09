@@ -1,18 +1,19 @@
 module Toolbox
 
+using Genie
+using Util
+using Millboard
+using FileTemplates
+using Configuration
+
+export Task_Info
+
 type Task_Info
   file_name::AbstractString
   type_name::AbstractString
   instance::Any
   description::AbstractString
 end
-
-using Genie
-using Util
-using Millboard
-using FileTemplates
-
-export Task_Info
 
 function run_task(task_type_name)
   task = all_tasks(filter_type_name = task_type_name)
@@ -54,7 +55,7 @@ function all_tasks(; filter_type_name = nothing)
   return tasks
 end
 
-function new(cmd_args, config)
+function new(cmd_args::Dict{AbstractString,Any}, config::Configuration.Config)
   tfn = task_file_name(cmd_args, config)
   
   if ispath(tfn)

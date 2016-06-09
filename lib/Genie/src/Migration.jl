@@ -5,6 +5,7 @@ using Memoize
 using Database
 using FileTemplates
 using Millboard
+using Configuration
 
 type DbMigration # todo: rename the "migration_" prefix for the fields
   migration_hash::AbstractString
@@ -12,7 +13,7 @@ type DbMigration # todo: rename the "migration_" prefix for the fields
   migration_class_name::AbstractString
 end
 
-function new(cmd_args, config)
+function new(cmd_args::Dict{AbstractString,Any}, config::Configuration.Config)
   mfn = migration_file_name(cmd_args, config)
 
   if ispath(mfn)

@@ -1,6 +1,8 @@
 module FileTemplates
 
-function new_database_migration(class_name)
+using Inflector
+
+function new_database_migration(class_name::AbstractString)
   """
   using Genie
   using Database 
@@ -18,7 +20,7 @@ function new_database_migration(class_name)
   """
 end
 
-function new_task(class_name)
+function new_task(class_name::AbstractString)
   """
   using Genie
 
@@ -35,6 +37,46 @@ function new_task(class_name)
     # Build something great
   end
   """
+end
+
+function new_model(model_name::AbstractString)
+  pluralized_name = Inflector.to_plural(model_name) |> Base.get
+
+  """
+  export $model_name
+
+  type $model_name <: Genie.AbstractModel
+    _table_name::AbstractString
+    _id::AbstractString
+
+    id::Nullable{Model.DbId}
+
+    $model_name(; 
+      id = Nullable{Model.DbId}()
+    ) = new("$(lowercase(pluralized_name))", "id", id) 
+  end
+
+  module $pluralized_name
+  using Genie
+  end
+  """
+end
+
+function new_controller(controller_name::AbstractString)
+  """
+  module $(controller_name)Controller
+  using Genie
+  using SearchLight
+  end
+  """
+end
+
+function new_validator(validator_name::AbstractString)
+  ""
+end
+
+function new_authorizer(authorizer_name::AbstractString)
+  ""
 end
 
 end

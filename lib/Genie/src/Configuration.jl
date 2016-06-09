@@ -55,6 +55,8 @@ type Config
   log_verbosity::Symbol
   log_formatted::Bool
 
+  inflector_irregulars::Array{Tuple{AbstractString, AbstractString}, 1}
+
   Config(;  
             server_port = 8000, # default port for binding the web server
             app_env = ENV["GENIE_ENV"], 
@@ -86,7 +88,9 @@ type Config
 
             log_level     = Logging.DEBUG, 
             log_verbosity = LOG_LEVEL_VERBOSITY_VERBOSE, 
-            log_formatted = true
+            log_formatted = true,
+
+            inflector_irregulars = Array{Tuple{AbstractString, AbstractString}, 1}()
         ) = 
               new(server_port, app_env, loggers, supress_output, 
                   db_migrations_table_name, db_migrations_folder, task_folder, test_folder, output_length, 
