@@ -17,7 +17,7 @@ type Repo <: AbstractModel
   participation::Array{Int}
   updated_at::Nullable{DateTime}
 
-  belongs_to::Nullable{Dict{Symbol, Model.SQLRelation}}
+  belongs_to::Nullable{Array{Model.SQLRelation, 1}}
 
   on_dehydration::Nullable{Function}
   on_hydration::Nullable{Function}
@@ -31,7 +31,7 @@ type Repo <: AbstractModel
         participation = [],
         updated_at = Nullable{DateTime}(),
 
-        belongs_to = Dict(:belongs_to_package => Model.SQLRelation(:Package)), 
+        belongs_to = [Model.SQLRelation(:Package)], 
         
         on_dehydration = Repos.dehydrate, 
         on_hydration = Repos.hydrate

@@ -55,7 +55,7 @@ function create_migrations_table()
 end
 
 function query(sql::AbstractString; skip_db::Bool = false, system_query::Bool = false)
-  supress_output = system_query || config.supress_output
+  supress_output = system_query || Genie.config.supress_output
   conn, adapter = query_tools(skip_db)
   DatabaseAdapter.adapter_query(sql, supress_output, conn, adapter, skip_db)
 end

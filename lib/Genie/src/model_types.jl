@@ -18,6 +18,9 @@ abstract AbstractModel <: Genie.GenieType
 typealias DbId Int32
 convert(::Type{Nullable{DbId}}, v::Number) = Nullable{DbId}(DbId(v))
 
+typealias RelationshipData AbstractModel
+typealias RelationshipDataArray Array{AbstractModel, 1}
+
 #
 # SQLInput
 # 
@@ -48,7 +51,7 @@ convert(::Type{SQLInput}, s::Symbol) = SQLInput(string(s))
 convert(::Type{SQLInput}, i::Nullable{Int32}) = (! isnull(i) ? Base.get(i) : -1) |> SQLInput
 convert(::Type{SQLInput}, d::DateTime) = SQLInput(string(d))
 
-QI = SQLInput
+const QI = SQLInput
 
 #
 # SQLColumn
@@ -86,8 +89,8 @@ show(io::IO, a::Array{SQLColumn}) = print(io, string(a))
 print(io::IO, s::SQLColumn) = print(io, string(s))
 show(io::IO, s::SQLColumn) = print(io, string(s))
 
-SQLColumns = SQLColumn # so we can use both
-QC = SQLColumn
+const SQLColumns = SQLColumn # so we can use both
+const QC = SQLColumn
 
 #
 # SQLLogicOperator
@@ -102,7 +105,7 @@ SQLLogicOperator() = SQLLogicOperator("AND")
 
 string(s::SQLLogicOperator) = s.value
 
-QLO = SQLLogicOperator
+const QLO = SQLLogicOperator
 
 #
 # SQLWhere
@@ -134,8 +137,8 @@ show{T<:SQLWhere}(io::IO, w::T) = print(io, Genie.genietype_to_print(w))
 
 convert(::Type{Array{SQLWhere,1}}, w::SQLWhere) = [w]
 
-SQLHaving = SQLWhere
-QW = SQLWhere
+const SQLHaving = SQLWhere
+const QW = SQLWhere
 
 #
 # SQLLimit
@@ -144,14 +147,14 @@ QW = SQLWhere
 type SQLLimit <: SQLType
   value::Union{Int, AbstractString}
   SQLLimit(v::Int) = new(v)
-  SQLLimit(v::AbstractString) = new("ALL")
+  SQLLimit(v::AbstractString) = v == "ALL" ? new("ALL") : new(parse(Int, v))
 end
 SQLLimit() = SQLLimit("ALL")
 
 string(l::SQLLimit) = string(l.value)
 convert(::Type{Model.SQLLimit}, v::Int) = SQLLimit(v)
 
-QL = SQLLimit
+const QL = SQLLimit
 
 #
 # SQLOrder
@@ -169,7 +172,7 @@ string(o::SQLOrder) = "($(o.column) $(o.direction))"
 
 convert(::Type{Array{SQLOrder, 1}}, o::SQLOrder) = [o]
 
-QO = SQLOrder
+const QO = SQLOrder
 
 #
 # SQLQuery
@@ -194,7 +197,7 @@ function string(_::SQLQuery)
   error("Incorrect string call")
 end
 
-QQ = SQLQuery
+const QQ = SQLQuery
 
 #
 # SQLRelation
@@ -215,4 +218,4 @@ function lazy(r::SQLRelation)
   r.eagerness == MODEL_RELATIONSHIPS_EAGERNESS_AUTO && Genie.config.model_relationships_eagerness == MODEL_RELATIONSHIPS_EAGERNESS_LAZY
 end
 
-QR = SQLRelation
+const QR = SQLRelation

@@ -44,7 +44,6 @@ function run_app_with_command_line_args(config)
     Toolbox.run_task(parsed_args["task:run"])
   elseif ( parsed_args["task:new"] != nothing )
     ! endswith(parsed_args["task:new"], "_task") && (parsed_args["task:new"] *= "_task")
-    Genie.load_file_templates()
     Toolbox.new(parsed_args, config)
 
   elseif (  called_command(parsed_args, "test:run") )

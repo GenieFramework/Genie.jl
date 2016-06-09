@@ -6,8 +6,6 @@ using DataFrames
 using Genie
 using Util
 
-using Debug
-
 include(abspath(joinpath("lib", "Genie", "src", "model_types.jl")))
 
 # internals
@@ -105,11 +103,18 @@ function create_or_update_by!{T<:AbstractModel}(m::T, property::Symbol)
   create_or_update_by!(m, property, getfield(m, property))
 end
 
+function find_one_by_or_create{T<:AbstractModel}(m::T, column_name::Any, value::Any)
+  lookup = find_one_by(typeof(m), SQLColumn(column_name), SQLInput(value))
+  ! isnull( lookup ) && return lookup
+
+  return save!(m)
+end
+
 #
 # Object generation 
 # 
 
-@debug function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
+function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
   models = Array{T, 1}()
   dfs = df_result_to_models_data(m, df)
 
@@ -127,9 +132,11 @@ end
       r = set_relationship_data(r, related_model, related_model_df)
 
       if ! isdefined(:model_rels)
-        model_rels::Dict{Symbol, SQLRelation} = getfield(main_model, r_type) |> Base.get
+        # model_rels::Dict{Symbol, SQLRelation} = getfield(main_model, r_type) |> Base.get
+        model_rels::Array{SQLRelation, 1} = getfield(main_model, r_type) |> Base.get
       end
-      model_rels[Symbol(lowercase(string(r_type) * "_" * string(r.model_name)))] = r
+      # model_rels[Symbol(lowercase(string(r_type) * "_" * string(r.model_name)))] = r
+      push!(model_rels,r)
     end
 
     push!(models, main_model)
@@ -190,13 +197,18 @@ function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Array{SQLColumn, 1})
   function _to_select_part()
     joined_tables = [] 
 
-    if has_relationship(_m, RELATIONSHIP_HAS_ONE)
-      rels = Base.get(_m.has_one) |> values |> collect
+    if has_relationship(_m, RELATIONSHIP_HAS_ONE) 
+      rels = Base.get(_m.has_one) # |> values |> collect
+      joined_tables = vcat(joined_tables, map(x -> lazy(x) ? nothing : disposable_instance(x.model_name), rels))
+    end
+
+    if has_relationship(_m, RELATIONSHIP_HAS_MANY) 
+      rels = Base.get(_m.has_many) # |> values |> collect
       joined_tables = vcat(joined_tables, map(x -> lazy(x) ? nothing : disposable_instance(x.model_name), rels))
     end
 
     if has_relationship(_m, RELATIONSHIP_BELONGS_TO)
-      rels = Base.get(_m.belongs_to) |> values |> collect
+      rels = Base.get(_m.belongs_to) # |> values |> collect
       joined_tables = vcat(joined_tables, map(x -> lazy(x) ? nothing : disposable_instance(x.model_name), rels))
     end
 
@@ -302,7 +314,7 @@ function relationships{T<:AbstractModel}(m::Type{T})
 
   for r in direct_relationships()
     if has_field(_m, r) && ! isnull(getfield(_m, r)) 
-      relationship = Base.get(getfield(_m, r)) |> values |> collect
+      relationship = Base.get(getfield(_m, r)) # |> values |> collect
       if ! isempty(relationship) 
         for rel in relationship 
           push!(rls, (rel, r))
@@ -315,9 +327,10 @@ function relationships{T<:AbstractModel}(m::Type{T})
 end
 
 function relationship{T<:AbstractModel}(m::T, model_name::Symbol, relationship_type::Symbol)
-  nullable_defined_rels::Nullable{Dict{Symbol, SQLRelation}} = getfield(m, relationship_type) 
+  # nullable_defined_rels::Nullable{Dict{Symbol, SQLRelation}} = getfield(m, relationship_type) 
+  nullable_defined_rels::Nullable{Array{SQLRelation, 1}} = getfield(m, relationship_type) 
   if ! isnull(nullable_defined_rels) 
-    defined_rels::Array{SQLRelation, 1} = Base.get(nullable_defined_rels) |> values |> collect
+    defined_rels::Array{SQLRelation, 1} = Base.get(nullable_defined_rels) # |> values |> collect
 
     for rel::SQLRelation in defined_rels
       if rel.model_name == model_name
@@ -332,41 +345,41 @@ end
 function relationship_data!{T<:AbstractModel}(m::T, model_name::Symbol, relationship_type::Symbol)
   rel = relationship(m, model_name, relationship_type) |> Base.get
   if lazy(rel) && isnull(rel.data)
-    return (get_relationship_data(m, rel, relationship_type) |> Base.get)::AbstractModel
+    return (get_relationship_data(m, rel, relationship_type) |> Base.get)::Union{RelationshipData, RelationshipDataArray}
   elseif ! isnull(rel.data)
-    return Base.get(rel.data)::AbstractModel
+    return Base.get(rel.data)::Union{RelationshipData, RelationshipDataArray}
   end
 end
 
-function get_relationship_data{T<:AbstractModel}(m::T, rel::SQLRelation, relationship_type::Symbol)
+@debug function get_relationship_data{T<:AbstractModel}(m::T, rel::SQLRelation, relationship_type::Symbol)
   conditions =  if ! isnull( rel.condition ) 
                   Base.get(rel.condition)
                 else 
                   Array{SQLWhere, 1}()
                 end
-  limit = if relationship_type == RELATIONSHIP_HAS_ONE || relationship_type == RELATIONSHIP_BELONGS_TO
+  limit = if relationship_type == RELATIONSHIP_HAS_ONE || relationship_type == RELATIONSHIP_BELONGS_TO 
             1
           else 
             "ALL"
           end
-  where = if relationship_type == RELATIONSHIP_HAS_ONE 
+  where = if relationship_type == RELATIONSHIP_HAS_ONE || relationship_type == RELATIONSHIP_HAS_MANY
             SQLColumn( ( (lowercase(string(typeof(m))) |> strip_module_name) * "_" * m._id |> escape_column_name), raw = true ), m.id
           elseif relationship_type == RELATIONSHIP_BELONGS_TO
             _r = constantize(rel.model_name)()
             SQLColumn(to_fully_qualified(_r._id, _r._table_name), raw = true), getfield(m, Symbol((lowercase(string(typeof(_r))) |> strip_module_name) * "_" * _r._id)) |> Base.get
           end
   push!(conditions, SQLWhere(where...))
-  data = Model.find( constantize(rel.model_name), SQLQuery( where = conditions, limit = limit ) )
+  data = Model.find( constantize(rel.model_name), SQLQuery( where = conditions, limit = SQLLimit(limit) ) )
 
-  if isempty(data) return Nullable{AbstractModel}() end
+  if isempty(data) return Nullable{RelationshipData}() end
 
   if relationship_type == RELATIONSHIP_HAS_ONE || relationship_type == RELATIONSHIP_BELONGS_TO
-    return Nullable{AbstractModel}(first(data))
+    return Nullable{RelationshipData}(first(data))
   else 
-    return Nullable{AbstractModel}(data)
+    return Nullable{RelationshipDataArray}(data)
   end
 
-  Nullable{AbstractModel}()
+  Nullable{RelationshipData}()
 end
 
 function df_result_to_models_data{T<:AbstractModel}(m::Type{T}, df::DataFrame)

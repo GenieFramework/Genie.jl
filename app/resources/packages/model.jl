@@ -7,15 +7,20 @@ type Package <: Genie.AbstractModel
   id::Nullable{Model.DbId}
   name::AbstractString
   url::AbstractString
+  author_id::Nullable{Model.DbId}
 
-  has_one::Nullable{Dict{Symbol, Model.SQLRelation}}
+  has_one::Nullable{Array{Model.SQLRelation, 1}}
+  belongs_to::Nullable{Array{Model.SQLRelation, 1}}
 
   Package(; 
             id = Nullable{Model.DbId}(), 
             name = "", 
             url = "", 
-            has_one = Dict(:has_one_repo => Model.SQLRelation(:Repo, eagerness = MODEL_RELATIONSHIPS_EAGERNESS_LAZY))
-          ) = new("packages", "id", id, name, url, has_one) 
+            author_id = Nullable{Model.DbId}(), 
+
+            has_one = [Model.SQLRelation(:Repo)], 
+            belongs_to = [Model.SQLRelation(:Author)]
+          ) = new("packages", "id", id, name, url, author_id, has_one, belongs_to) 
 end
 function Package(name::AbstractString, url::AbstractString) 
   p = Package()
@@ -26,7 +31,6 @@ function Package(name::AbstractString, url::AbstractString)
 end
 
 module Packages
-
 using Genie
 
 function fullname(p::Package)
@@ -34,6 +38,11 @@ function fullname(p::Package)
   package_name = replace(url_parts[length(url_parts)], r"\.git$", "")
 
   url_parts[length(url_parts) - 1] * "/" * package_name
+end
+
+function author(p::Package, a::Author)
+  p.author_id = a.id
+  p
 end
 
 end

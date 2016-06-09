@@ -5,10 +5,15 @@ type Author <: Genie.AbstractModel
   _id::AbstractString
 
   id::Nullable{Model.DbId}
+  name::AbstractString
+
+  has_many::Nullable{Array{Model.SQLRelation, 1}}
 
   Author(; 
-    id = Nullable{Model.DbId}()
-  ) = new("authors", "id", id) 
+    id = Nullable{Model.DbId}(), 
+    name = "", 
+    has_many = [Model.SQLRelation(:Package)]
+  ) = new("authors", "id", id, name, has_many) 
 end
 
 module Authors

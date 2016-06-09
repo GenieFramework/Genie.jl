@@ -103,7 +103,7 @@ function run_migration(migration::DbMigration, direction::Symbol)
 
   store_migration_status(migration, direction)
 
-  ! config.supress_output && Genie.log("Executed migration $(migration.migration_class_name) $(direction)")
+  ! Genie.config.supress_output && Genie.log("Executed migration $(migration.migration_class_name) $(direction)")
 end
 
 function store_migration_status(migration::DbMigration, direction::Symbol)

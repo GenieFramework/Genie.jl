@@ -1,3 +1,10 @@
+using Reexport
+
+if is_dev()
+  @reexport using Debug
+  @reexport using StackTraces
+end
+
 push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "src")))
 push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "database_adapters")))
 
@@ -10,17 +17,11 @@ using Tester
 using Toolbox
 using Inflector
 
-using Reexport
 @reexport using Configuration
 @reexport using HttpServer
 @reexport using Render
 @reexport using Render.JSONAPI
 @reexport using Util
-
-if is_dev()
-  @reexport using Debug
-  @reexport using StackTraces
-end
 
 function load_configurations()
   include(abspath("config/loggers.jl"))

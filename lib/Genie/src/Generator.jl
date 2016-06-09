@@ -4,7 +4,6 @@ using Genie
 using FileTemplates
 using Inflector
 using Configuration
-using Debug
 
 function new_model(cmd_args::Dict{AbstractString,Any}, config::Configuration.Config)
   resource_name = ucfirst(cmd_args["model:new"])
