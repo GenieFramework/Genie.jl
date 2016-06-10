@@ -45,7 +45,7 @@ function new_model(model_name::AbstractString)
   """
   export $model_name
 
-  type $model_name <: Genie.AbstractModel
+  type $model_name <: AbstractModel
     _table_name::AbstractString
     _id::AbstractString
 

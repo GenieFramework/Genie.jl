@@ -203,21 +203,37 @@ const QQ = SQLQuery
 # SQLRelation
 # 
 
-type SQLRelation <: SQLType
-  model_name::Symbol
+type SQLRelation{T<:AbstractModel} <: SQLType
+  model_name::Type{T}
   condition::Nullable{Array{SQLWhere, 1}}
   required::Bool
   eagerness::Symbol
   data::Nullable{Union{RelationshipData, RelationshipDataArray}}
 
-  SQLRelation(model_name; condition = Nullable{Array{SQLWhere, 1}}(), required = false, eagerness = :auto, data = Nullable{Union{RelationshipData, RelationshipDataArray}}()) = 
-    new(model_name, condition, required, eagerness, data)
+  SQLRelation(model_name, condition, required, eagerness, data) = new(model_name, condition, required, eagerness, data)
 end
+SQLRelation{T<:AbstractModel}(model_name::Type{T}; 
+                              condition = Nullable{Array{SQLWhere, 1}}(), 
+                              required = false, 
+                              eagerness = MODEL_RELATIONSHIPS_EAGERNESS_AUTO, 
+                              data = Nullable{Union{RelationshipData, RelationshipDataArray}}()) = SQLRelation{T}(model_name, condition, required, eagerness, data)
 function lazy(r::SQLRelation) 
   r.eagerness == MODEL_RELATIONSHIPS_EAGERNESS_LAZY || 
   r.eagerness == MODEL_RELATIONSHIPS_EAGERNESS_AUTO && Genie.config.model_relationships_eagerness == MODEL_RELATIONSHIPS_EAGERNESS_LAZY
 end
 
-convert(::Type{SQLRelation}, s::Symbol) = SQLRelation(s)
+# convert(::Type{SQLRelation}, s::Symbol) = SQLRelation(s)
 
 const QR = SQLRelation
+
+
+
+### 
+
+# type SQLFoo{T<:AbstractModel}
+#   model_name::Type{T}
+#   bar::Bool
+
+#   SQLFoo(model_name, bar) = new(model_name, bar)
+# end
+# SQLFoo{T<:AbstractModel}(model_name::Type{T}; bar::Bool = true) = SQLFoo{T}(model_name, bar)

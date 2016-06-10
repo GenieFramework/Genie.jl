@@ -15,8 +15,8 @@ const PUT     = "PUT"
 const PATCH   = "PATCH"
 const DELETE  = "DELETE"
 
-routes = Array{Any, 1}()
-params = Dict{Symbol, Any}()
+const routes = Array{Any, 1}()
+const params = Dict{Symbol, Any}()
 
 function route_request(req::Request, res::Response)
   empty!(params)

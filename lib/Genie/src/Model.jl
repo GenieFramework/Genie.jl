@@ -8,11 +8,14 @@ using Util
 
 include(abspath(joinpath("lib", "Genie", "src", "model_types.jl")))
 
-# internals
+export RELATIONSHIP_HAS_ONE, RELATIONSHIP_BELONGS_TO, RELATIONSHIP_HAS_MANY
 
 const RELATIONSHIP_HAS_ONE = :has_one
 const RELATIONSHIP_BELONGS_TO = :belongs_to
 const RELATIONSHIP_HAS_MANY = :has_many
+
+# internals
+
 direct_relationships() = [RELATIONSHIP_HAS_ONE, RELATIONSHIP_BELONGS_TO, RELATIONSHIP_HAS_MANY]
 
 #
@@ -131,7 +134,7 @@ function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
 
       lazy(r) && continue 
 
-      related_model = constantize(r.model_name)
+      related_model = r.model_name
       related_model_df::DataFrames.DataFrame = dfs[disposable_instance(related_model)._table_name][row_count, :]
 
       if r_type == RELATIONSHIP_HAS_ONE || r_type == RELATIONSHIP_BELONGS_TO
@@ -351,7 +354,7 @@ function relationships{T<:AbstractModel}(m::Type{T})
   rls
 end
 
-function relationship{T<:AbstractModel}(m::T, model_name::Symbol, relationship_type::Symbol)
+function relationship{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol)
   nullable_defined_rels::Nullable{Array{SQLRelation, 1}} = getfield(m, relationship_type) 
   if ! isnull(nullable_defined_rels) 
     defined_rels::Array{SQLRelation, 1} = Base.get(nullable_defined_rels) 
@@ -359,6 +362,8 @@ function relationship{T<:AbstractModel}(m::T, model_name::Symbol, relationship_t
     for rel::SQLRelation in defined_rels
       if rel.model_name == model_name
         return Nullable{SQLRelation}(rel)
+      else 
+        Genie.log("Must check this: $(rel.model_name) == $(model_name)", :debug)
       end
     end
   end
@@ -366,7 +371,7 @@ function relationship{T<:AbstractModel}(m::T, model_name::Symbol, relationship_t
   Nullable{SQLRelation}()
 end
 
-function relationship_data!{T<:AbstractModel}(m::T, model_name::Symbol, relationship_type::Symbol)
+function relationship_data!{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol)
   rel = relationship(m, model_name, relationship_type) |> Base.get
   if isnull(rel.data)
     rel.data = get_relationship_data(m, rel, relationship_type)
@@ -389,11 +394,11 @@ function get_relationship_data{T<:AbstractModel}(m::T, rel::SQLRelation, relatio
   where = if relationship_type == RELATIONSHIP_HAS_ONE || relationship_type == RELATIONSHIP_HAS_MANY
             SQLColumn( ( (lowercase(string(typeof(m))) |> strip_module_name) * "_" * m._id |> escape_column_name), raw = true ), m.id
           elseif relationship_type == RELATIONSHIP_BELONGS_TO
-            _r = constantize(rel.model_name)()
+            _r = (rel.model_name)()
             SQLColumn(to_fully_qualified(_r._id, _r._table_name), raw = true), getfield(m, Symbol((lowercase(string(typeof(_r))) |> strip_module_name) * "_" * _r._id)) |> Base.get
           end
   push!(conditions, SQLWhere(where...))
-  data = Model.find( constantize(rel.model_name), SQLQuery( where = conditions, limit = SQLLimit(limit) ) )
+  data = Model.find( rel.model_name, SQLQuery( where = conditions, limit = SQLLimit(limit) ) )
 
   if isempty(data) return Nullable{RelationshipData}() end
 
@@ -415,7 +420,7 @@ function df_result_to_models_data{T<:AbstractModel}(m::Type{T}, df::DataFrame)
   function relationships_tables_names{T<:AbstractModel}(m::Type{T})
     for r in relationships(m)
       r, r_type = r
-      rmdl = disposable_instance( constantize(r.model_name) )
+      rmdl = disposable_instance(r.model_name)
       push!(tables_names, rmdl._table_name)
     end
   end
@@ -583,9 +588,9 @@ function disposable_instance{T<:AbstractModel}(m::Type{T})
     error("$m is not a Model")
   end
 end
-function disposable_instance(model_name::Symbol)
-  disposable_instance(eval(parse(string(model_name))))
-end
+# function disposable_instance(model_name::Symbol)
+#   disposable_instance(eval(parse(string(model_name))))
+# end
 
 @memoize function columns(m)
   _m = disposable_instance(m)

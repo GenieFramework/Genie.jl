@@ -1,6 +1,6 @@
 export Package
 
-type Package <: Genie.AbstractModel
+type Package <: AbstractModel
   _table_name::AbstractString
   _id::AbstractString
 
@@ -18,8 +18,8 @@ type Package <: Genie.AbstractModel
             url = "", 
             author_id = Nullable{Model.DbId}(), 
 
-            has_one = [Model.SQLRelation(:Repo)], 
-            belongs_to = [Model.SQLRelation(:Author)]
+            has_one = [Model.SQLRelation(Repo)], 
+            belongs_to = [Model.SQLRelation(Author)]
           ) = new("packages", "id", id, name, url, author_id, has_one, belongs_to) 
 end
 function Package(name::AbstractString, url::AbstractString) 

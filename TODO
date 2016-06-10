@@ -4,20 +4,22 @@ Experiment app:
   provide a web ui for searching packages
 
 v 0.5.x
-+ has_many, has_many_through, has_one_through, has_and_belongs_to_many relationships
-+ logging in production: requests & errors, logging level, logging formatting options
-+ bug fix: github search overwriting official packages (test app)
-+ generators for models, controllers, resources
+√ has_many
+√ logging in production: requests & errors, logging level, logging formatting options
+√ bug fix: github search overwriting official packages (test app)
+√ generators for models, controllers, resources
 + html/mustache layouts, views and rendering
 + brunch integration
 + support for POST - routing, params, etc
-+ reverse routing -> ressouce to route
++ reverse routing -> resource to route
 + authors and tags features (test app)
-+ relationships by name (key)
 + add stars, forks, watchers, etc (test app)
 
 v 0.x
 + change from Logging to Lumberjack? 
++ support for mysql 
++ support for sqlite
+? has_many_through, has_one_through, has_and_belongs_to_many relationships
 
 Important parts: 
   √ lazy relationships - to skip relationship if lazy 

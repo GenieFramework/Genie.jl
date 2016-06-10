@@ -1,6 +1,6 @@
 export Author
 
-type Author <: Genie.AbstractModel
+type Author <: AbstractModel
   _table_name::AbstractString
   _id::AbstractString
 
@@ -12,7 +12,7 @@ type Author <: Genie.AbstractModel
   Author(; 
     id = Nullable{Model.DbId}(), 
     name = "", 
-    has_many = [Model.SQLRelation(:Package)]
+    has_many = [Model.SQLRelation(Package, eagerness = MODEL_RELATIONSHIPS_EAGERNESS_EAGER)]
   ) = new("authors", "id", id, name, has_many) 
 end
 

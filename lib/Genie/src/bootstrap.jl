@@ -7,6 +7,7 @@ end
 
 push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "src")))
 push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "database_adapters")))
+push!(LOAD_PATH, abspath(joinpath("app", "resources")))
 
 include(abspath(joinpath("lib", "Genie", "src", "genie_types.jl")))
 
@@ -86,5 +87,5 @@ load_configurations()
 load_initializers()
 load_models()
 
-const SearchLight = Model
-export SearchLight
+const SearchLight = const M = Model
+export SearchLight, M

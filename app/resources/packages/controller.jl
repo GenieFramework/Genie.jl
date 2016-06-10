@@ -1,8 +1,23 @@
+module PackagesController
+
+# API logic
+
 module API 
 module V1
 
 using Genie
 using Model
+
+function index(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Request, res::Response)
+  total_items = SearchLight.count(Package)
+  packages = SearchLight.find(Package, QQ(limit = QL(params[:page_size]), offset = (params[:page_number] - 1) * params[:page_size], order = QO(:id, :desc)))
+
+  Render.respond(Render.json(  :packages, :index, 
+                                packages = packages, 
+                                current_page = params[:page_number], 
+                                page_size = params[:page_size], 
+                                total_items = total_items))
+end
 
 function show(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Request, res::Response)
   package = SearchLight.find_one(Package, params[:package_id])
@@ -36,4 +51,6 @@ function search(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Reques
 end
 
 end
+end
+
 end
