@@ -12,8 +12,9 @@ v 0.5.x
 + brunch integration
 + support for POST - routing, params, etc
 + reverse routing -> resource to route
-+ authors and tags features (test app)
++ authors  (test app)
 + add stars, forks, watchers, etc (test app)
++ parallel serving
 
 v 0.x
 + change from Logging to Lumberjack? 

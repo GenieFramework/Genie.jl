@@ -6,13 +6,13 @@ function add_quotes(str)
   return "\"$str\""
 end
 
-function expand_nullable(value::Any, expand::Bool = true)
+function expand_nullable(value::Any; expand::Bool = true, default::Any = "NA")
   if ! expand || ! isa(value, Nullable) 
     return value
   end
 
   if isnull(value)
-    nothing
+    default
   else
     Base.get(value) 
   end

@@ -371,13 +371,17 @@ function relationship{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type
   Nullable{SQLRelation}()
 end
 
-function relationship_data!{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol)
+function relationship_data{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol)
   rel = relationship(m, model_name, relationship_type) |> Base.get
   if isnull(rel.data)
     rel.data = get_relationship_data(m, rel, relationship_type)
   end
 
-  Base.get(rel.data)::Union{RelationshipData, RelationshipDataArray}
+  rel.data
+end
+
+function relationship_data!{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol)
+  Base.get( relationship_data(m, model_name, relationship_type) )::Union{RelationshipData, RelationshipDataArray}
 end
 
 function get_relationship_data{T<:AbstractModel}(m::T, rel::SQLRelation, relationship_type::Symbol)
@@ -747,7 +751,7 @@ end
 
 function to_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, expand_nullables::Bool = false)
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
-  [string(f) => Util.expand_nullable( getfield(m, Symbol(f)), expand_nullables ) for f in fields]
+  [string(f) => Util.expand_nullable( getfield(m, Symbol(f)), expand = expand_nullables ) for f in fields]
 end
 function to_dict{T<:GenieType}(m::T) 
   Genie.to_dict(m)

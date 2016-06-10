@@ -9,14 +9,14 @@ using Genie
 using Model
 
 function index(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Request, res::Response)
-  total_items = SearchLight.count(Package)
+  results_count = SearchLight.count(Package)
   packages = SearchLight.find(Package, QQ(limit = QL(params[:page_size]), offset = (params[:page_number] - 1) * params[:page_size], order = QO(:id, :desc)))
 
   Render.respond(Render.json(  :packages, :index, 
                                 packages = packages, 
                                 current_page = params[:page_number], 
                                 page_size = params[:page_size], 
-                                total_items = total_items))
+                                total_items = results_count))
 end
 
 function show(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Request, res::Response)

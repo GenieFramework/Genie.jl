@@ -4,12 +4,12 @@ JSONAPI.builder(
     type_         = "packages", 
     id            = ()-> Util.expand_nullable(package.id), 
     attributes    = JSONAPI.elem(
-      :package, 
-      name          = ()-> package.name, 
-      url           = ()-> package.url
-    ), 
+      name          = ()->  package.name, 
+      url           = ()->  package.url,
+      readme        = ()->  Model.relationship_data!(package, Repo, RELATIONSHIP_HAS_ONE).readme
+      # participation = ()-> Model.relationship_data!(package, Repo, RELATIONSHIP_HAS_ONE).participation 
+    ),  
     links = JSONAPI.elem(
-      :package, 
       self = ()-> "/api/v1/packages/$(package.id |> Util.expand_nullable)"
     )
   ), 

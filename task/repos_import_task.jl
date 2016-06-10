@@ -14,7 +14,7 @@ end
 function run_task!(_::ReposImportTask, parsed_args = Dict())
   # for package in Genie.Model.find(Genie.Package)
   for i in (1:Model.count(Package))
-    package = Model.find(Package, SQLQuery(limit = 1, offset = i-1, order = SQLOrder(:id, :asc))) |> first
+    package = Model.find(Package, SQLQuery(limit = 1, offset = i-1, order = SQLOrder(:id, :desc))) |> first
 
     try 
       repo = Repos.from_package(package)

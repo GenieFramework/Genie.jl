@@ -90,6 +90,7 @@ function extract_uri_params(uri::URI, regex_route::Regex, param_names::Array{Abs
   if ! isempty(uri.query)
     for query_part in split(uri.query, "&")
       qp = split(query_part, "=")
+      (size(qp)[1] == 1) && (push!(qp, ""))
       params[Symbol(qp[1])] = qp[2]
     end
   end
