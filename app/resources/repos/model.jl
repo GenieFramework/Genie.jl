@@ -17,7 +17,7 @@ type Repo <: AbstractModel
   participation::Array{Int}
   updated_at::Nullable{DateTime}
 
-  belongs_to::Nullable{Array{Model.SQLRelation, 1}}
+  belongs_to::Array{Model.SQLRelation, 1}
 
   on_dehydration::Nullable{Function}
   on_hydration::Nullable{Function}

@@ -9,8 +9,8 @@ type Package <: Genie.AbstractModel
   url::AbstractString
   author_id::Nullable{Model.DbId}
 
-  has_one::Nullable{Array{Model.SQLRelation, 1}}
-  belongs_to::Nullable{Array{Model.SQLRelation, 1}}
+  has_one::Array{Model.SQLRelation, 1}
+  belongs_to::Array{Model.SQLRelation, 1}
 
   Package(; 
             id = Nullable{Model.DbId}(), 

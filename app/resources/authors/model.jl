@@ -7,7 +7,7 @@ type Author <: Genie.AbstractModel
   id::Nullable{Model.DbId}
   name::AbstractString
 
-  has_many::Nullable{Array{Model.SQLRelation, 1}}
+  has_many::Array{Model.SQLRelation, 1}
 
   Author(; 
     id = Nullable{Model.DbId}(), 

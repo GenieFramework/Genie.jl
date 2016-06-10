@@ -115,12 +115,16 @@ end
 # 
 
 function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
-  models = Array{T, 1}()
+  models = Dict{DbId, T}()
   dfs = df_result_to_models_data(m, df)
-
+  
   row_count::Int = 1
   for row in eachrow(df)
     main_model::T = to_model(m, dfs[disposable_instance(m)._table_name][row_count, :])
+
+    if haskey(models, getfield(main_model, Symbol(disposable_instance(m)._id)))
+      main_model = models[getfield(main_model, Symbol(disposable_instance(m)._id)) |> Base.get]
+    end
 
     for relationship in relationships(m)
       r::SQLRelation, r_type::Symbol = relationship
@@ -129,25 +133,46 @@ function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
 
       related_model = constantize(r.model_name)
       related_model_df::DataFrames.DataFrame = dfs[disposable_instance(related_model)._table_name][row_count, :]
-      r = set_relationship_data(r, related_model, related_model_df)
+
+      if r_type == RELATIONSHIP_HAS_ONE || r_type == RELATIONSHIP_BELONGS_TO
+        r = set_relationship_data(r, related_model, related_model_df)
+      elseif r_type == RELATIONSHIP_HAS_MANY
+        r = set_relationship_data_array(r, related_model, related_model_df)
+      end
 
       if ! isdefined(:model_rels)
-        # model_rels::Dict{Symbol, SQLRelation} = getfield(main_model, r_type) |> Base.get
-        model_rels::Array{SQLRelation, 1} = getfield(main_model, r_type) |> Base.get
+        model_rels::Array{SQLRelation, 1} = getfield(main_model, r_type)
+        model_rels[1] = r
+      else 
+        push!(model_rels, r)
       end
-      # model_rels[Symbol(lowercase(string(r_type) * "_" * string(r.model_name)))] = r
-      push!(model_rels,r)
+      setfield!(main_model, r_type, Array{SQLRelation, 1}(model_rels))
     end
 
-    push!(models, main_model)
+    if ! haskey(models, getfield(main_model, Symbol(disposable_instance(m)._id)))
+      models[getfield(main_model, Symbol(disposable_instance(m)._id)) |> Base.get] = main_model
+    end
+
     row_count += 1
   end
 
-  return models
+  return models |> values |> collect
 end
 
 function set_relationship_data{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame)
   r.data = Nullable( to_model(related_model, related_model_df) )
+
+  r
+end
+
+function set_relationship_data_array{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame)
+  data =  if isnull(r.data) 
+            RelationshipDataArray()
+          else 
+            Base.get(r.data)
+          end
+  push!(data, to_model(related_model, related_model_df))
+  r.data = data
 
   r
 end
@@ -198,17 +223,17 @@ function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Array{SQLColumn, 1})
     joined_tables = [] 
 
     if has_relationship(_m, RELATIONSHIP_HAS_ONE) 
-      rels = Base.get(_m.has_one) # |> values |> collect
+      rels = _m.has_one
       joined_tables = vcat(joined_tables, map(x -> lazy(x) ? nothing : disposable_instance(x.model_name), rels))
     end
 
     if has_relationship(_m, RELATIONSHIP_HAS_MANY) 
-      rels = Base.get(_m.has_many) # |> values |> collect
+      rels = _m.has_many
       joined_tables = vcat(joined_tables, map(x -> lazy(x) ? nothing : disposable_instance(x.model_name), rels))
     end
 
     if has_relationship(_m, RELATIONSHIP_BELONGS_TO)
-      rels = Base.get(_m.belongs_to) # |> values |> collect
+      rels = _m.belongs_to
       joined_tables = vcat(joined_tables, map(x -> lazy(x) ? nothing : disposable_instance(x.model_name), rels))
     end
 
@@ -313,8 +338,8 @@ function relationships{T<:AbstractModel}(m::Type{T})
   rls = []
 
   for r in direct_relationships()
-    if has_field(_m, r) && ! isnull(getfield(_m, r)) 
-      relationship = Base.get(getfield(_m, r)) # |> values |> collect
+    if has_field(_m, r) 
+      relationship = getfield(_m, r)
       if ! isempty(relationship) 
         for rel in relationship 
           push!(rls, (rel, r))
@@ -327,10 +352,9 @@ function relationships{T<:AbstractModel}(m::Type{T})
 end
 
 function relationship{T<:AbstractModel}(m::T, model_name::Symbol, relationship_type::Symbol)
-  # nullable_defined_rels::Nullable{Dict{Symbol, SQLRelation}} = getfield(m, relationship_type) 
   nullable_defined_rels::Nullable{Array{SQLRelation, 1}} = getfield(m, relationship_type) 
   if ! isnull(nullable_defined_rels) 
-    defined_rels::Array{SQLRelation, 1} = Base.get(nullable_defined_rels) # |> values |> collect
+    defined_rels::Array{SQLRelation, 1} = Base.get(nullable_defined_rels) 
 
     for rel::SQLRelation in defined_rels
       if rel.model_name == model_name
@@ -344,14 +368,14 @@ end
 
 function relationship_data!{T<:AbstractModel}(m::T, model_name::Symbol, relationship_type::Symbol)
   rel = relationship(m, model_name, relationship_type) |> Base.get
-  if lazy(rel) && isnull(rel.data)
-    return (get_relationship_data(m, rel, relationship_type) |> Base.get)::Union{RelationshipData, RelationshipDataArray}
-  elseif ! isnull(rel.data)
-    return Base.get(rel.data)::Union{RelationshipData, RelationshipDataArray}
+  if isnull(rel.data)
+    rel.data = get_relationship_data(m, rel, relationship_type)
   end
+
+  Base.get(rel.data)::Union{RelationshipData, RelationshipDataArray}
 end
 
-@debug function get_relationship_data{T<:AbstractModel}(m::T, rel::SQLRelation, relationship_type::Symbol)
+function get_relationship_data{T<:AbstractModel}(m::T, rel::SQLRelation, relationship_type::Symbol)
   conditions =  if ! isnull( rel.condition ) 
                   Base.get(rel.condition)
                 else 
@@ -764,7 +788,7 @@ function constantize(s::Symbol, m::Module = Genie)
 end
 
 function has_relationship{T<:GenieType}(m::T, relationship_type::Symbol)
-  has_field(m, relationship_type) && ! isnull(getfield(m, relationship_type))
+  has_field(m, relationship_type) # && ! isnull(getfield(m, relationship_type))
 end
 
 function dataframe_to_dict(df::DataFrames.DataFrame)
