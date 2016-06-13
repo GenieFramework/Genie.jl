@@ -6,7 +6,7 @@ export GenieType, GenieController, Controller
 
 abstract GenieType
 string{T<:GenieType}(io::IO, t::T) = genietype_to_string(t)
-print{T<:GenieType}(io::IO, t::T) = print(io, genietype_to_print(t))
+print{T<:GenieType}(io::IO, t::T) = print(io, string(t))
 show{T<:GenieType}(io::IO, t::T) = print(io, genietype_to_print(t))
 
 type GenieController <: GenieType
@@ -16,11 +16,8 @@ typealias Controller GenieController
 
 function genietype_to_string{T<:GenieType}(m::T)
   output = "$(typeof(m)) <: $(super(typeof(m)))" * "\n"
-  for f in fieldnames(m)
-    value = getfield(m, Symbol(f))
-    output = output * "  + $f \t $(value) \n"
-  end
-  
+  output *= string(m)
+
   output
 end
 

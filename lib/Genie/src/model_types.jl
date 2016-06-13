@@ -10,7 +10,8 @@ import Base.==
 export DbId, SQLType, AbstractModel
 export SQLInput, SQLColumn, SQLColumns, SQLLogicOperator
 export SQLWhere, SQLLimit, SQLOrder, SQLQuery, SQLRelation
-export QI, QC, QLO, QW, QL, QO, QQ, QR
+export SQLJoin, SQLOn, SQLJoinType
+export QI, QC, QLO, QW, QL, QO, QQ, QR, QJ, QON, QJT
 
 abstract SQLType <: Genie.GenieType
 abstract AbstractModel <: Genie.GenieType
@@ -135,7 +136,7 @@ end
 print{T<:SQLWhere}(io::IO, w::T) = print(io, Genie.genietype_to_print(w))
 show{T<:SQLWhere}(io::IO, w::T) = print(io, Genie.genietype_to_print(w))
 
-convert(::Type{Array{SQLWhere,1}}, w::SQLWhere) = [w]
+convert(::Type{Array{SQLWhere, 1}}, w::SQLWhere) = [w]
 
 const SQLHaving = SQLWhere
 const QW = SQLWhere
@@ -147,7 +148,19 @@ const QW = SQLWhere
 type SQLLimit <: SQLType
   value::Union{Int, AbstractString}
   SQLLimit(v::Int) = new(v)
-  SQLLimit(v::AbstractString) = v == "ALL" ? new("ALL") : new(parse(Int, v))
+  function SQLLimit(v::AbstractString) 
+    v = strip(uppercase(v))
+    if v == "ALL" 
+      return new("ALL")
+    else
+      i = tryparse(Int, v)
+      if isnull(i) 
+        error("Can't parse SQLLimit value")
+      else 
+        return new(Base.get(i))
+      end
+    end 
+  end
 end
 SQLLimit() = SQLLimit("ALL")
 
@@ -175,6 +188,90 @@ convert(::Type{Array{SQLOrder, 1}}, o::SQLOrder) = [o]
 const QO = SQLOrder
 
 #
+# SQLJoin
+# 
+
+#
+# SQLJoin - SQLOn
+# 
+
+type SQLOn <: SQLType
+  column_1::SQLColumn
+  column_2::SQLColumn
+  conditions::Array{SQLWhere, 1}
+
+  SQLOn(column_1, column_2; conditions = Array{SQLWhere, 1}()) = new(column_1, column_2, conditions)
+end
+function string(o::SQLOn)
+  on = " ON $(o.column_1) = $(o.column_2) "
+  if ! isempty(o.conditions)
+    on *= " AND " * join( map(x -> string(x), o.conditions), " AND " )
+  end
+
+  on
+end
+
+const QON = SQLOn
+
+#
+# SQLJoin - SQLJoinType
+# 
+
+type SQLJoinType <: SQLType
+  join_type::AbstractString
+
+  function SQLJoinType(t::AbstractString) 
+    accepted_values = ["inner", "INNER", "left", "LEFT", "right", "RIGHT", "full", "FULL"]
+    if in(t, accepted_values) 
+      new(uppercase(t))
+    else
+      error("""Invalid join type - accepted options are $(join(accepted_values, ", "))""")
+      new("INNER")
+    end
+  end
+end
+string(jt::SQLJoinType) = jt.join_type
+
+const QJT = SQLJoinType
+
+#
+# SQLJoin
+# 
+
+type SQLJoin{T<:AbstractModel} <: SQLType
+  model_name::Type{T}
+  on::SQLOn
+  join_type::SQLJoinType
+  outer::Bool
+  where::Array{SQLWhere, 1}
+  natural::Bool
+  columns::Array{SQLColumns, 1}
+end
+SQLJoin{T<:AbstractModel}(model_name::Type{T}, 
+                          on::SQLOn; 
+                          join_type = SQLJoinType("INNER"), 
+                          outer = false, 
+                          where = Array{SQLWhere, 1}(), 
+                          natural = false, 
+                          columns = Array{SQLColumns, 1}()
+                          ) = SQLJoin{T}(model_name, on, join_type, outer, where, natural, columns)
+function string(j::SQLJoin)
+  _m = disposable_instance(j.model_name)
+  join = """ $(j.natural ? "NATURAL " : "") $(j.join_type) $(j.outer ? "OUTER " : "") JOIN $(_m._table_name) $(j.on) """
+  join *= if ! isempty(j.where)
+            where *= " WHERE " * join(map(x -> string(x), j.where), " AND ")
+          else 
+            ""
+          end
+
+  join
+end
+
+convert(::Type{Array{SQLJoin, 1}}, j::SQLJoin) = [j]
+
+const QJ = SQLJoin
+
+#
 # SQLQuery
 # 
 
@@ -192,10 +289,6 @@ type SQLQuery <: SQLType
     new(columns, where, limit, offset, order, group, having)
 end
 string{T<:AbstractModel}(q::SQLQuery, m::Type{T}) = to_fetch_sql(m, q)
-function string(_::SQLQuery)
-  Genie.log("Can't generate the SQL Query string without an instance of a model. Please use string(q::SQLQuery, m::Type{AbstractModel}) instead.", :debug) 
-  error("Incorrect string call")
-end
 
 const QQ = SQLQuery
 
@@ -205,7 +298,7 @@ const QQ = SQLQuery
 
 type SQLRelation{T<:AbstractModel} <: SQLType
   model_name::Type{T}
-  condition::Nullable{Array{SQLWhere, 1}}
+  condition::Array{SQLWhere, 1}
   required::Bool
   eagerness::Symbol
   data::Nullable{Union{RelationshipData, RelationshipDataArray}}
@@ -213,7 +306,7 @@ type SQLRelation{T<:AbstractModel} <: SQLType
   SQLRelation(model_name, condition, required, eagerness, data) = new(model_name, condition, required, eagerness, data)
 end
 SQLRelation{T<:AbstractModel}(model_name::Type{T}; 
-                              condition = Nullable{Array{SQLWhere, 1}}(), 
+                              condition = Array{SQLWhere, 1}(), 
                               required = false, 
                               eagerness = MODEL_RELATIONSHIPS_EAGERNESS_AUTO, 
                               data = Nullable{Union{RelationshipData, RelationshipDataArray}}()) = SQLRelation{T}(model_name, condition, required, eagerness, data)
@@ -222,18 +315,4 @@ function lazy(r::SQLRelation)
   r.eagerness == MODEL_RELATIONSHIPS_EAGERNESS_AUTO && Genie.config.model_relationships_eagerness == MODEL_RELATIONSHIPS_EAGERNESS_LAZY
 end
 
-# convert(::Type{SQLRelation}, s::Symbol) = SQLRelation(s)
-
 const QR = SQLRelation
-
-
-
-### 
-
-# type SQLFoo{T<:AbstractModel}
-#   model_name::Type{T}
-#   bar::Bool
-
-#   SQLFoo(model_name, bar) = new(model_name, bar)
-# end
-# SQLFoo{T<:AbstractModel}(model_name::Type{T}; bar::Bool = true) = SQLFoo{T}(model_name, bar)

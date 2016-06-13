@@ -18,9 +18,9 @@ const MODEL_RELATIONSHIPS_EAGERNESS_EAGER   = :eager
 const LOG_LEVEL_VERBOSITY_VERBOSE = :verbose 
 const LOG_LEVEL_VERBOSITY_MINIMAL = :minimal
 
-is_dev()  = App.config.app_env == DEV
-is_prod() = App.config.app_env == PROD
-is_test() = App.config.app_env == TEST
+is_dev()  = (App.config.app_env == DEV)
+is_prod() = (App.config.app_env == PROD)
+is_test() = (App.config.app_env == TEST)
 
 type Config
   server_port::Int

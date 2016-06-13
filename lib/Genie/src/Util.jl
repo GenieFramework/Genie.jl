@@ -3,7 +3,26 @@ module Util
 export expand_nullable
 
 function add_quotes(str)
-  return "\"$str\""
+  if ! startswith(str, "\"") 
+    str = "\"$str"
+  end
+  if ! endswith(str, "\"") 
+    str = "$str\""
+  end
+
+  str
+end
+
+function strip_quotes(str)
+  if is_quoted(str)
+    str[2:end-1]
+  else 
+    str 
+  end
+end
+
+function is_quoted(str)
+  startswith(str, "\"") && endswith(str, "\"") 
 end
 
 function expand_nullable(value::Any; expand::Bool = true, default::Any = "NA")

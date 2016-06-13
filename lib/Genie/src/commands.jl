@@ -47,7 +47,6 @@ function run_app_with_command_line_args(config)
     Toolbox.new(parsed_args, config)
 
   elseif (  called_command(parsed_args, "test:run") )
-    config.app_env = "test"
     Tester.run_all_tests(parsed_args["test:run"], config)
 
   else 

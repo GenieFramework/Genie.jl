@@ -10,6 +10,6 @@ function up(_::AddAuthorIdToPackages)
 end
 
 function down(_::AddAuthorIdToPackages)
-  Database.query("""ALTER TABLE packages DROP INDEX packages__idx_author_id""")
+  Database.query("""DROP INDEX packages__idx_author_id""")
   Database.query("""ALTER TABLE packages DROP author_id""")
 end

@@ -22,11 +22,19 @@ direct_relationships() = [RELATIONSHIP_HAS_ONE, RELATIONSHIP_BELONGS_TO, RELATIO
 # ORM methods
 # 
 
+function find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Array{SQLJoin{N}, 1})
+  sql::UTF8String = to_fetch_sql(m, q, j)
+  query(sql)::DataFrames.DataFrame
+end
 function find_df{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
   sql::UTF8String = to_fetch_sql(m, q)
   query(sql)::DataFrames.DataFrame
 end
 
+function find{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Array{SQLJoin{N}, 1})
+  result::DataFrames.DataFrame = find_df(m, q, j)
+  to_models(m, result)
+end
 function find{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
   result::DataFrames.DataFrame = find_df(m, q)
   to_models(m, result)
@@ -219,8 +227,33 @@ end
 # Query generation
 # 
 
-function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Array{SQLColumn, 1})
+function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Array{SQLColumn, 1}, joins = SQLJoin[])
   _m = disposable_instance(m)
+
+  function columns_from_joins()
+    jcols = []
+    for j in joins 
+      jcols = vcat(jcols, j.columns)
+    end
+
+    jcols
+  end
+
+  function prepare_column_name(column::SQLColumn)
+    if column.raw 
+      column.value
+    else 
+      column_data = from_literal_column_name(column.value)
+      if ! haskey(column_data, :table_name)
+        column_data[:table_name] = _m._table_name
+      end
+      if ! haskey(column_data, :alias) 
+        column_data[:alias] = ""
+      end
+
+      "$(to_fully_qualified(column_data[:column_name], column_data[:table_name])) AS $( isempty(column_data[:alias]) ? to_sql_column_name(column_data[:column_name], column_data[:table_name]) : column_data[:alias] )"
+    end 
+  end
 
   function _to_select_part()
     joined_tables = [] 
@@ -244,23 +277,16 @@ function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Array{SQLColumn, 1})
 
     if ! isempty(cols)
       table_columns = []
+      cols = vcat(cols, columns_from_joins())
 
       for column in cols 
-        column_data = from_literal_column_name(column.value)
-        if ! haskey(column_data, :table_name)
-          column_data[:table_name] = _m._table_name
-        end
-        if ! haskey(column_data, :alias) 
-          column_data[:alias] = ""
-        end
-
-        fccn = "$(to_fully_qualified(column_data[:column_name], column_data[:table_name])) AS $( isempty(column_data[:alias]) ? to_sql_column_name(column_data[:column_name], column_data[:table_name]) : column_data[:alias] )"
-        push!(table_columns, fccn)
+        push!(table_columns, prepare_column_name(column))
       end
 
       return join(table_columns, ", ")
     else 
       table_columns = join(to_fully_qualified_sql_column_names(_m, persistable_fields(_m), escape_columns = true), ", ")
+      table_columns = vcat(table_columns, map(x -> prepare_column_name(x), columns_from_joins()))
 
       related_table_columns = []
       for rels in map(x -> to_fully_qualified_sql_column_names(x, persistable_fields(x), escape_columns = true), joined_tables)
@@ -322,7 +348,7 @@ function to_having_part(h::Array{SQLHaving, 1})
     (string(first(h).condition) == "AND" ? "TRUE " : "FALSE ") * join(map(w -> string(w), h), " ")
 end
 
-function to_join_part{T<:AbstractModel}(m::Type{T})
+function to_join_part{T<:AbstractModel}(m::Type{T}, joins = SQLJoin[])
   _m = disposable_instance(m)
   join_part = ""
    
@@ -331,12 +357,13 @@ function to_join_part{T<:AbstractModel}(m::Type{T})
     join_part *= (first(rel).required ? "INNER " : "LEFT ") * "JOIN " * relation_to_sql(_m, rel)
   end
 
+  join_part *= join( map(x -> string(x), joins), " " )
+
   join_part
 end
 
 function relationships{T<:AbstractModel}(m::Type{T})
   _m = disposable_instance(m)
-  # indirect_relationships = [:has_one_through, :has_many_through]
 
   rls = []
 
@@ -465,7 +492,7 @@ function relation_to_sql{T<:AbstractModel}(m::T, rel::Tuple{SQLRelation, Symbol}
     j, m = m, j
   end
 
-  if isnull(rel.condition) 
+  if isempty(rel.condition) 
     return    (join_table_name |> escape_column_name) * " ON " * 
               (j._table_name |> escape_column_name) * "." * 
                 ( (lowercase(string(typeof(m))) |> strip_module_name) * "_" * m._id |> escape_column_name) * 
@@ -473,11 +500,16 @@ function relation_to_sql{T<:AbstractModel}(m::T, rel::Tuple{SQLRelation, Symbol}
               (m._table_name |> escape_column_name) * "." * 
                 (m._id |> escape_column_name)
   else 
-    conditions = Base.get(rel.condition)
-    return to_where_part(m, conditions)
+    return to_where_part(m, rel.conditions)
   end
 end
 
+function to_fetch_sql{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, joins::Array{SQLJoin{N}, 1})
+  sql::UTF8String = ( "$(to_select_part(m, q.columns, joins)) $(to_from_part(m)) $(to_join_part(m, joins)) $(to_where_part(m, q.where)) " * 
+                      "$(to_group_part(q.group)) $(to_order_part(m, q.order)) " * 
+                      "$(to_having_part(q.having)) $(to_limit_part(q.limit)) $(to_offset_part(q.offset))") |> strip
+  replace(sql, r"\s+", " ")
+end
 function to_fetch_sql{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
   sql::UTF8String = ( "$(to_select_part(m, q.columns)) $(to_from_part(m)) $(to_join_part(m)) $(to_where_part(m, q.where)) " * 
                       "$(to_group_part(q.group)) $(to_order_part(m, q.order)) " * 
@@ -564,11 +596,16 @@ end
 # sql utility queries
 # 
 
-function count{T<:AbstractModel}(m::Type{T})
-  _m = disposable_instance(m)
-  result::DataFrames.DataFrame = query("SELECT COUNT(*) AS $(_m._table_name)_count FROM $(_m._table_name)")
+function count{T<:AbstractModel}(m::Type{T}, q::SQLQuery = SQLQuery())
+  count_column = SQLColumn("COUNT(*) AS __cid", raw = true)
+  if isempty(q.columns)
+    q.columns = [count_column]
+  else 
+    push!(q.columns, count_column)
+  end
+  result::DataFrames.DataFrame = find_df(m, q)
 
-  result[1, Symbol("$(_m._table_name)_count")]
+  result[1, Symbol("__cid")]
 end
 
 # 
@@ -700,12 +737,17 @@ function to_fully_qualified{T<:AbstractModel}(m::Type{T}, c::SQLColumn)
   to_fully_qualified(disposable_instance(m), c)
 end
 
-function  to_sql_column_names{T<:AbstractModel}(m::T, fields::Array{Symbol, 1})
+function to_sql_column_names{T<:AbstractModel}(m::T, fields::Array{Symbol, 1})
   map(x -> (to_sql_column_name(m, string(x))) |> Symbol, fields)
 end
 
 function to_sql_column_name(v::AbstractString, t::AbstractString)
-  t * "_" * v
+  str = Util.strip_quotes(t) * "_" * Util.strip_quotes(v)
+  if Util.is_quoted(t) && Util.is_quoted(v)
+    Util.add_quotes(str)
+  else 
+    str
+  end
 end
 function to_sql_column_name{T<:AbstractModel}(m::T, v::AbstractString)
   to_sql_column_name(v, m._table_name)
