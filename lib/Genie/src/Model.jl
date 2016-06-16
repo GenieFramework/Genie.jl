@@ -22,7 +22,7 @@ direct_relationships() = [RELATIONSHIP_HAS_ONE, RELATIONSHIP_BELONGS_TO, RELATIO
 # ORM methods
 # 
 
-function find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Array{SQLJoin{N}, 1})
+function find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Array{SQLJoin{N},1})
   sql::UTF8String = to_fetch_sql(m, q, j)
   query(sql)::DataFrames.DataFrame
 end
@@ -31,7 +31,7 @@ function find_df{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
   query(sql)::DataFrames.DataFrame
 end
 
-function find{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Array{SQLJoin{N}, 1})
+function find{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Array{SQLJoin{N},1})
   result::DataFrames.DataFrame = find_df(m, q, j)
   to_models(m, result)
 end
@@ -152,12 +152,12 @@ function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
       end
 
       if ! isdefined(:model_rels)
-        model_rels::Array{SQLRelation, 1} = getfield(main_model, r_type)
+        model_rels::Array{SQLRelation,1} = getfield(main_model, r_type)
         model_rels[1] = r
       else 
         push!(model_rels, r)
       end
-      setfield!(main_model, r_type, Array{SQLRelation, 1}(model_rels))
+      setfield!(main_model, r_type, Array{SQLRelation,1}(model_rels))
     end
 
     if ! haskey(models, getfield(main_model, Symbol(disposable_instance(m)._id)))
@@ -227,7 +227,7 @@ end
 # Query generation
 # 
 
-function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Array{SQLColumn, 1}, joins = SQLJoin[])
+function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Array{SQLColumn,1}, joins = SQLJoin[])
   _m = disposable_instance(m)
 
   function columns_from_joins()
@@ -308,7 +308,7 @@ function to_select_part{T<:AbstractModel}(m::Type{T}, c::AbstractString)
   to_select_part(m, SQLColumn(c, raw = c == "*"))
 end
 function to_select_part{T<:AbstractModel}(m::Type{T})
-  to_select_part(m, Array{SQLColumn, 1}())
+  to_select_part(m, Array{SQLColumn,1}())
 end
 
 function to_from_part{T<:AbstractModel}(m::Type{T})
@@ -316,19 +316,19 @@ function to_from_part{T<:AbstractModel}(m::Type{T})
   "FROM " * escape_column_name(_m._table_name)
 end
 
-function to_where_part{T<:AbstractModel}(m::Type{T}, w::Array{SQLWhere, 1})
+function to_where_part{T<:AbstractModel}(m::Type{T}, w::Array{SQLWhere,1})
   isempty(w) ? 
     "" :
     "WHERE " * (string(first(w).condition) == "AND" ? "TRUE " : "FALSE ") * join(map(wx -> string(wx, disposable_instance(m)), w), " ")
 end
 
-function to_order_part{T<:AbstractModel}(m::Type{T}, o::Array{SQLOrder, 1})
+function to_order_part{T<:AbstractModel}(m::Type{T}, o::Array{SQLOrder,1})
   isempty(o) ? 
     "" : 
     "ORDER BY " * join(map(x -> to_fully_qualified(m, x.column) * " " * x.direction, o), ", ")
 end
 
-function to_group_part(g::Array{SQLColumn, 1})
+function to_group_part(g::Array{SQLColumn,1})
   isempty(g) ? 
     "" : 
     " GROUP BY " * join(map(x -> string(x), g), ", ")
@@ -342,7 +342,7 @@ function to_offset_part(o::Int)
   o != 0 ? "OFFSET " * (o |> string) : ""
 end
 
-function to_having_part(h::Array{SQLHaving, 1})
+function to_having_part(h::Array{SQLHaving,1})
   isempty(h) ? 
     "" : 
     (string(first(h).condition) == "AND" ? "TRUE " : "FALSE ") * join(map(w -> string(w), h), " ")
@@ -353,8 +353,13 @@ function to_join_part{T<:AbstractModel}(m::Type{T}, joins = SQLJoin[])
   join_part = ""
    
   for rel in relationships(m)
-    if ( first(rel) |> lazy ) continue end
-    join_part *= (first(rel).required ? "INNER " : "LEFT ") * "JOIN " * relation_to_sql(_m, rel)
+    mr = first(rel)
+    if ( mr |> lazy ) continue end
+    if ! isnull(mr.join)
+      join_part *= mr.join |> Base.get |> string
+    else # default
+      join_part *= (mr.required ? "INNER " : "LEFT ") * "JOIN " * relation_to_sql(_m, rel)
+    end
   end
 
   join_part *= join( map(x -> string(x), joins), " " )
@@ -382,15 +387,15 @@ function relationships{T<:AbstractModel}(m::Type{T})
 end
 
 function relationship{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol)
-  nullable_defined_rels::Nullable{Array{SQLRelation, 1}} = getfield(m, relationship_type) 
+  nullable_defined_rels::Nullable{Array{SQLRelation,1}} = getfield(m, relationship_type) 
   if ! isnull(nullable_defined_rels) 
-    defined_rels::Array{SQLRelation, 1} = Base.get(nullable_defined_rels) 
+    defined_rels::Array{SQLRelation,1} = Base.get(nullable_defined_rels) 
 
     for rel::SQLRelation in defined_rels
-      if rel.model_name == model_name
+      if rel.model_name == model_name || split(string(rel.model_name), ".")[end] == string(model_name)
         return Nullable{SQLRelation}(rel)
       else 
-        Genie.log("Must check this: $(rel.model_name) == $(model_name)", :debug)
+        Genie.log("Must check this: $(rel.model_name) == $(model_name) at $(@__FILE__) $(@__LINE__)", :debug)
       end
     end
   end
@@ -412,11 +417,7 @@ function relationship_data!{T<:AbstractModel, R<:AbstractModel}(m::T, model_name
 end
 
 function get_relationship_data{T<:AbstractModel}(m::T, rel::SQLRelation, relationship_type::Symbol)
-  conditions =  if ! isnull( rel.condition ) 
-                  Base.get(rel.condition)
-                else 
-                  Array{SQLWhere, 1}()
-                end
+  conditions =  Array{SQLWhere,1}()
   limit = if relationship_type == RELATIONSHIP_HAS_ONE || relationship_type == RELATIONSHIP_BELONGS_TO 
             1
           else 
@@ -444,7 +445,7 @@ end
 
 function df_result_to_models_data{T<:AbstractModel}(m::Type{T}, df::DataFrame)
   _m::T = disposable_instance(m)
-  tables_names::Array{AbstractString, 1} = [_m._table_name]
+  tables_names::Array{AbstractString,1} = [_m._table_name]
   tables_columns = Dict()
   sub_dfs = Dict()
   
@@ -458,7 +459,7 @@ function df_result_to_models_data{T<:AbstractModel}(m::Type{T}, df::DataFrame)
 
   function extract_columns_names()
     for t in tables_names
-      tables_columns[t] = Array{Symbol, 1}()
+      tables_columns[t] = Array{Symbol,1}()
     end
 
     for dfc in names(df)
@@ -492,19 +493,15 @@ function relation_to_sql{T<:AbstractModel}(m::T, rel::Tuple{SQLRelation, Symbol}
     j, m = m, j
   end
 
-  if isempty(rel.condition) 
-    return    (join_table_name |> escape_column_name) * " ON " * 
-              (j._table_name |> escape_column_name) * "." * 
-                ( (lowercase(string(typeof(m))) |> strip_module_name) * "_" * m._id |> escape_column_name) * 
-              " = " * 
-              (m._table_name |> escape_column_name) * "." * 
-                (m._id |> escape_column_name)
-  else 
-    return to_where_part(m, rel.conditions)
-  end
+  (join_table_name |> escape_column_name) * " ON " * 
+    (j._table_name |> escape_column_name) * "." * 
+    ( (lowercase(string(typeof(m))) |> strip_module_name) * "_" * m._id |> escape_column_name) * 
+    " = " * 
+    (m._table_name |> escape_column_name) * "." * 
+    (m._id |> escape_column_name)
 end
 
-function to_fetch_sql{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, joins::Array{SQLJoin{N}, 1})
+function to_fetch_sql{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, joins::Array{SQLJoin{N},1})
   sql::UTF8String = ( "$(to_select_part(m, q.columns, joins)) $(to_from_part(m)) $(to_join_part(m, joins)) $(to_where_part(m, q.where)) " * 
                       "$(to_group_part(q.group)) $(to_order_part(m, q.order)) " * 
                       "$(to_having_part(q.having)) $(to_limit_part(q.limit)) $(to_offset_part(q.offset))") |> strip
@@ -650,7 +647,7 @@ function persistable_fields{T<:AbstractModel}(m::T; fully_qualified::Bool = fals
 end
 
 function settable_fields{T<:AbstractModel}(m::T, row::DataFrames.DataFrameRow)
-  df_cols::Array{Symbol, 1} = names(row)
+  df_cols::Array{Symbol,1} = names(row)
   fields = is_fully_qualified(m, df_cols[1]) ? to_sql_column_names(m, fieldnames(m)) : fieldnames(m)
   intersect(fields, df_cols)
 end
@@ -737,7 +734,7 @@ function to_fully_qualified{T<:AbstractModel}(m::Type{T}, c::SQLColumn)
   to_fully_qualified(disposable_instance(m), c)
 end
 
-function to_sql_column_names{T<:AbstractModel}(m::T, fields::Array{Symbol, 1})
+function to_sql_column_names{T<:AbstractModel}(m::T, fields::Array{Symbol,1})
   map(x -> (to_sql_column_name(m, string(x))) |> Symbol, fields)
 end
 
@@ -756,7 +753,7 @@ function to_sql_column_name{T<:AbstractModel}(m::T, c::SQLColumn)
   to_sql_column_name(c.value, m._table_name)
 end
 
-function to_fully_qualified_sql_column_names{T<:AbstractModel, S<:AbstractString}(m::T, persistable_fields::Array{S, 1}; escape_columns::Bool = false)
+function to_fully_qualified_sql_column_names{T<:AbstractModel, S<:AbstractString}(m::T, persistable_fields::Array{S,1}; escape_columns::Bool = false)
   map(x -> to_fully_qualified_sql_column_name(m, x, escape_columns = escape_columns), persistable_fields)
 end
 
@@ -791,9 +788,9 @@ function from_literal_column_name(c::AbstractString)
   result
 end
 
-function to_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, expand_nullables::Bool = false)
+function to_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, expand_nullables::Bool = false, symbolize_keys::Bool = false)
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
-  [string(f) => Util.expand_nullable( getfield(m, Symbol(f)), expand = expand_nullables ) for f in fields]
+  [(symbolize_keys ? Symbol(f) : string(f) ) => Util.expand_nullable( getfield(m, Symbol(f)), expand = expand_nullables ) for f in fields]
 end
 function to_dict{T<:GenieType}(m::T) 
   Genie.to_dict(m)
@@ -843,7 +840,7 @@ function has_relationship{T<:GenieType}(m::T, relationship_type::Symbol)
 end
 
 function dataframe_to_dict(df::DataFrames.DataFrame)
-  result = Array{Dict{Symbol, Any}, 1}()
+  result = Array{Dict{Symbol, Any},1}()
   for r in eachrow(df)
     push!(result, Dict{Symbol, Any}( [k => r[k] for k in DataFrames.names(df)] ) )
   end

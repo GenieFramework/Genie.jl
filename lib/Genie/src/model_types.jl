@@ -20,7 +20,7 @@ typealias DbId Int32
 convert(::Type{Nullable{DbId}}, v::Number) = Nullable{DbId}(DbId(v))
 
 typealias RelationshipData AbstractModel
-typealias RelationshipDataArray Array{AbstractModel, 1}
+typealias RelationshipDataArray Array{AbstractModel,1}
 
 #
 # SQLInput
@@ -136,7 +136,7 @@ end
 print{T<:SQLWhere}(io::IO, w::T) = print(io, Genie.genietype_to_print(w))
 show{T<:SQLWhere}(io::IO, w::T) = print(io, Genie.genietype_to_print(w))
 
-convert(::Type{Array{SQLWhere, 1}}, w::SQLWhere) = [w]
+convert(::Type{Array{SQLWhere,1}}, w::SQLWhere) = [w]
 
 const SQLHaving = SQLWhere
 const QW = SQLWhere
@@ -165,6 +165,7 @@ end
 SQLLimit() = SQLLimit("ALL")
 
 string(l::SQLLimit) = string(l.value)
+
 convert(::Type{Model.SQLLimit}, v::Int) = SQLLimit(v)
 
 const QL = SQLLimit
@@ -181,9 +182,11 @@ type SQLOrder <: SQLType
 end
 SQLOrder(column::Any, direction::Any; raw::Bool = false) = SQLOrder(SQLColumn(column, raw = raw), string(direction))
 SQLOrder(column::Any; raw::Bool = false) = SQLOrder(SQLColumn(column, raw = raw), "ASC")
+
 string(o::SQLOrder) = "($(o.column) $(o.direction))"
 
-convert(::Type{Array{SQLOrder, 1}}, o::SQLOrder) = [o]
+convert(::Type{Array{SQLOrder,1}}, o::SQLOrder) = [o]
+convert(::Type{Array{Model.SQLOrder,1}}, t::Tuple{Symbol,Symbol}) = SQLOrder(t[1], t[2])
 
 const QO = SQLOrder
 
@@ -198,9 +201,9 @@ const QO = SQLOrder
 type SQLOn <: SQLType
   column_1::SQLColumn
   column_2::SQLColumn
-  conditions::Array{SQLWhere, 1}
+  conditions::Array{SQLWhere,1}
 
-  SQLOn(column_1, column_2; conditions = Array{SQLWhere, 1}()) = new(column_1, column_2, conditions)
+  SQLOn(column_1, column_2; conditions = Array{SQLWhere,1}()) = new(column_1, column_2, conditions)
 end
 function string(o::SQLOn)
   on = " ON $(o.column_1) = $(o.column_2) "
@@ -219,7 +222,6 @@ const QON = SQLOn
 
 type SQLJoinType <: SQLType
   join_type::AbstractString
-
   function SQLJoinType(t::AbstractString) 
     accepted_values = ["inner", "INNER", "left", "LEFT", "right", "RIGHT", "full", "FULL"]
     if in(t, accepted_values) 
@@ -230,6 +232,9 @@ type SQLJoinType <: SQLType
     end
   end
 end
+
+convert(::Type{SQLJoinType}, s::ASCIIString) = SQLJoinType(s)
+
 string(jt::SQLJoinType) = jt.join_type
 
 const QJT = SQLJoinType
@@ -243,21 +248,21 @@ type SQLJoin{T<:AbstractModel} <: SQLType
   on::SQLOn
   join_type::SQLJoinType
   outer::Bool
-  where::Array{SQLWhere, 1}
+  where::Array{SQLWhere,1}
   natural::Bool
-  columns::Array{SQLColumns, 1}
+  columns::Array{SQLColumns,1}
 end
 SQLJoin{T<:AbstractModel}(model_name::Type{T}, 
                           on::SQLOn; 
                           join_type = SQLJoinType("INNER"), 
                           outer = false, 
-                          where = Array{SQLWhere, 1}(), 
+                          where = Array{SQLWhere,1}(), 
                           natural = false, 
-                          columns = Array{SQLColumns, 1}()
+                          columns = Array{SQLColumns,1}()
                           ) = SQLJoin{T}(model_name, on, join_type, outer, where, natural, columns)
 function string(j::SQLJoin)
   _m = disposable_instance(j.model_name)
-  join = """ $(j.natural ? "NATURAL " : "") $(j.join_type) $(j.outer ? "OUTER " : "") JOIN $(_m._table_name) $(j.on) """
+  join = """ $(j.natural ? "NATURAL " : "") $(j.join_type) $(j.outer ? "OUTER " : "") JOIN $(Util.add_quotes(_m._table_name)) $(j.on) """
   join *= if ! isempty(j.where)
             where *= " WHERE " * join(map(x -> string(x), j.where), " AND ")
           else 
@@ -267,7 +272,7 @@ function string(j::SQLJoin)
   join
 end
 
-convert(::Type{Array{SQLJoin, 1}}, j::SQLJoin) = [j]
+convert(::Type{Array{SQLJoin,1}}, j::SQLJoin) = [j]
 
 const QJ = SQLJoin
 
@@ -276,18 +281,19 @@ const QJ = SQLJoin
 # 
 
 type SQLQuery <: SQLType
-  columns::Array{SQLColumn, 1} 
-  where::Array{SQLWhere, 1} 
+  columns::Array{SQLColumn,1} 
+  where::Array{SQLWhere,1} 
   limit::SQLLimit  
   offset::Int 
-  order::Array{SQLOrder, 1} 
-  group::Array{SQLColumn, 1} 
-  having::Array{SQLWhere, 1}
+  order::Array{SQLOrder,1} 
+  group::Array{SQLColumn,1} 
+  having::Array{SQLWhere,1}
 
   SQLQuery(;  columns = SQLColumn[], where = SQLWhere[], limit = SQLLimit("ALL"), offset = 0, 
               order = SQLOrder[], group = SQLColumn[], having = SQLWhere[]) = 
     new(columns, where, limit, offset, order, group, having)
 end
+
 string{T<:AbstractModel}(q::SQLQuery, m::Type{T}) = to_fetch_sql(m, q)
 
 const QQ = SQLQuery
@@ -298,18 +304,18 @@ const QQ = SQLQuery
 
 type SQLRelation{T<:AbstractModel} <: SQLType
   model_name::Type{T}
-  condition::Array{SQLWhere, 1}
   required::Bool
   eagerness::Symbol
   data::Nullable{Union{RelationshipData, RelationshipDataArray}}
+  join::Nullable{SQLJoin}
 
-  SQLRelation(model_name, condition, required, eagerness, data) = new(model_name, condition, required, eagerness, data)
+  SQLRelation(model_name, required, eagerness, data, join) = new(model_name, required, eagerness, data, join)
 end
 SQLRelation{T<:AbstractModel}(model_name::Type{T}; 
-                              condition = Array{SQLWhere, 1}(), 
                               required = false, 
                               eagerness = MODEL_RELATIONSHIPS_EAGERNESS_AUTO, 
-                              data = Nullable{Union{RelationshipData, RelationshipDataArray}}()) = SQLRelation{T}(model_name, condition, required, eagerness, data)
+                              data = Nullable{Union{RelationshipData, RelationshipDataArray}}(), 
+                              join = Nullable{SQLJoin}()) = SQLRelation{T}(model_name, required, eagerness, data, join)
 function lazy(r::SQLRelation) 
   r.eagerness == MODEL_RELATIONSHIPS_EAGERNESS_LAZY || 
   r.eagerness == MODEL_RELATIONSHIPS_EAGERNESS_AUTO && Genie.config.model_relationships_eagerness == MODEL_RELATIONSHIPS_EAGERNESS_LAZY

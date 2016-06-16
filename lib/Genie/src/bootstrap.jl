@@ -54,6 +54,11 @@ function load_controller(dir::AbstractString)
   end
 end
 
+function export_controllers(controllers::AbstractString)
+  parts = split(controllers, ".")
+  eval(Genie, parse("export $(parts[1])"))
+end
+
 function load_initializers()
   dir = abspath(joinpath(Genie.APP_PATH, "config", "initializers"))
   f = readdir(dir)

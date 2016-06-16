@@ -15,7 +15,7 @@ const PUT     = "PUT"
 const PATCH   = "PATCH"
 const DELETE  = "DELETE"
 
-const routes = Array{Any, 1}()
+const routes = Array{Any,1}()
 const params = Dict{Symbol, Any}()
 
 function route_request(req::Request, res::Response)
@@ -64,8 +64,8 @@ function match_routes(req::Request, res::Response)
 end
 
 function parse_route(route::AbstractString)
-  parts = Array{AbstractString, 1}()
-  param_names = Array{AbstractString, 1}()
+  parts = Array{AbstractString,1}()
+  param_names = Array{AbstractString,1}()
 
   for rp in split(route, "/", keep = false)
     if startswith(rp, ":")
@@ -79,7 +79,7 @@ function parse_route(route::AbstractString)
   "/" * join(parts, "/"), param_names
 end
 
-function extract_uri_params(uri::URI, regex_route::Regex, param_names::Array{AbstractString, 1})
+function extract_uri_params(uri::URI, regex_route::Regex, param_names::Array{AbstractString,1})
   # in path params
   matches = match(regex_route, uri.path)
   for param_name in param_names 
@@ -125,18 +125,20 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
   controller_path_hash = hash(controller_path)
   if ! in(controller_path_hash, loaded_controllers) || Configuration.is_dev() 
     Genie.load_controller(controller_path)
+    Genie.export_controllers(to_parts[2])
     ! in(controller_path_hash, loaded_controllers) && push!(loaded_controllers, controller_path_hash)
   end
 
   controller = Genie.GenieController()
   action_name = string(current_module()) * "." * to_parts[2]
+  params[:__req] = req
+  params[:__res] = res
 
   try 
-    response = invoke( eval(parse(string(current_module()) * "." * action_name)), ( typeof(controller), typeof(params), typeof(req), typeof(res) ), controller, params, req, res )
+    response = invoke( eval(Genie, parse(string(current_module()) * "." * action_name)), ( typeof(params), ), params )
   catch ex
     Genie.log("$ex at $(@__FILE__), line $(@__LINE__)", :err)
     rethrow(ex) # do something better with the error
-    # return Genie.Render.respond(Genie.Render.JSONAPI.error(500))
   end
 
   if ! isa(response, Response)

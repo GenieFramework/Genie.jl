@@ -52,7 +52,7 @@ end
   Nullable{Tuple{AbstractString, AbstractString}}()
 end
 
-irregular_nouns = Array{Tuple{AbstractString, AbstractString}, 1}([
+irregular_nouns = Array{Tuple{AbstractString, AbstractString},1}([
   ("alumnus", "alumni"), 
   ("cactus", "cacti"), 
   ("focus", "foci"), 

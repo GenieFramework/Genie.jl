@@ -7,12 +7,15 @@ type Author <: AbstractModel
   id::Nullable{Model.DbId}
   name::AbstractString
 
-  has_many::Array{Model.SQLRelation, 1}
+  has_many::Array{Model.SQLRelation,1}
 
   Author(; 
     id = Nullable{Model.DbId}(), 
     name = "", 
-    has_many = [Model.SQLRelation(Package, eagerness = MODEL_RELATIONSHIPS_EAGERNESS_EAGER)]
+    has_many = [
+                  Model.SQLRelation(Package, eagerness = MODEL_RELATIONSHIPS_EAGERNESS_EAGER), 
+                  Model.SQLRelation(Repo, join = SQLJoin(Repo, SQLOn("packages.id", "repos.package_id"), join_type = "LEFT" ), eagerness = MODEL_RELATIONSHIPS_EAGERNESS_EAGER )
+                ], 
   ) = new("authors", "id", id, name, has_many) 
 end
 

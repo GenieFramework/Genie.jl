@@ -1,11 +1,17 @@
 module Render
 
-export respond, json, mustache
+export respond, json, html
 
 using Genie
 using Util
 using JSON
 using Mustache
+
+const CONTENT_TYPES = Dict{Symbol, AbstractString}(
+  :json => "text/json", 
+  :html => "text/html",
+)
+const MUSTACHE_YIELD_VAR_NAME = :yield
 
 function json(resource::Symbol, action::Symbol; vars...)
   const EXT = "json.jl"
@@ -14,11 +20,12 @@ function json(resource::Symbol, action::Symbol; vars...)
     k, v = arg
     spawn_vars(k, v)
   end
+  r = include(abspath(joinpath("app", "resources", string(resource), "views", string(action) * ".$EXT")))
 
-  include(abspath(joinpath("app", "resources", string(resource), "views", string(action) * ".$EXT")))
+  Dict(:json => r)
 end
 
-function mustache(resource::Symbol, action::Symbol; vars...)
+function html(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractString} = :app, render_layout::Bool = true, vars...)
   const EXT = "mustache.jl"
 
   for arg in vars
@@ -30,7 +37,13 @@ function mustache(resource::Symbol, action::Symbol; vars...)
   vals = Dict([k => v for (k, v) in vars])
   r = Mustache.render(template, vals)
 
-  r
+  if render_layout 
+    layout = Mustache.template_from_file(abspath(joinpath("app", "layouts", string(layout) * ".$EXT")))
+    vals[MUSTACHE_YIELD_VAR_NAME] = r
+    r = Mustache.render(layout, vals)
+  end
+
+  Dict(:html => r)
 end
 
 function spawn_vars(key, value)
@@ -53,19 +66,28 @@ function structure_to_dict(structure, resource = nothing)
   data_item
 end
 
-function respond(body, code::Int = 200, headers::Dict{AbstractString, AbstractString} = Dict{AbstractString, AbstractString}("Content-Type" => "text/json"), as::Symbol = :json)
-  body =  if as == :json 
-            JSON.json(body)
-          elseif as == :is 
+function respond(body, code::Int = 200, headers::Dict{AbstractString, AbstractString} = Dict{AbstractString, AbstractString}())
+  body =  if haskey(body, :json)
+            headers["Content-Type"] = CONTENT_TYPES[:json]
+            JSON.json(body[:json])
+          elseif haskey(body, :html)
+            headers["Content-Type"] = CONTENT_TYPES[:html]
+            body[:html]
+          elseif haskey(body, :js)
+            headers["Content-Type"] = CONTENT_TYPES[:js]
+            body[:js]
+          else
+            headers["Content-Type"] = CONTENT_TYPES[:json]
             body
           end
+  
   (code, headers, body)
 end
-function respond(response::Tuple, headers::Dict{AbstractString, AbstractString} = Dict{AbstractString, AbstractString}("Content-Type" => "text/json"), as::Symbol = :json)
-  respond(response[1], response[2], headers, as)
+function respond(response::Tuple, headers::Dict{AbstractString, AbstractString} = Dict{AbstractString, AbstractString}())
+  respond(response[1], response[2], headers)
 end
 
-function error(status_code; id = "resource_not_found", code = "404-0001", title = "Not found", detail = "The requested resource was not found")
+function http_error(status_code; id = "resource_not_found", code = "404-0001", title = "Not found", detail = "The requested resource was not found")
   respond(detail, status_code, Dict{AbstractString, AbstractString}())
 end
 
@@ -87,7 +109,7 @@ function builder(; params...)
                         p[2]
                       end
   end
-
+  
   response
 end
 
@@ -118,7 +140,7 @@ function elem(;structure...)
   () -> Render.structure_to_dict(structure)
 end
 
-function error(status_code; id = "resource_not_found", code = "404-0001", title = "Not found", detail = "The requested resource was not found")
+function http_error(status_code; id = "resource_not_found", code = "404-0001", title = "Not found", detail = "The requested resource was not found")
   Dict{Symbol, Any}(
     :errors => elem(
                       id        = id, 
