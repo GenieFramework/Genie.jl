@@ -1,9 +1,8 @@
 <ul>
 {{#:packages}}
 <li>
-  {{:id}}
   {{:name}} 
-  {{:url}}
+  <a href="{{:url}}">{{:url}}</a>
 </li>
 {{/:packages}}
 </ul>
