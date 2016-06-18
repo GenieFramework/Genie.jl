@@ -1,3 +1,9 @@
+_debug/
+config/secrets.jl
+log/
+genie.sublime-project
+genie.sublime-workspace 
+
 # Numerous always-ignore extensions
 *.diff
 *.err
