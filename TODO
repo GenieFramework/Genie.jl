@@ -1,4 +1,4 @@
-Experiment app:
+Test app:
   use the Pkg, Metadata, Github packages to get extended information about official packages: details, commit history, stars, watchers, etc. 
   provide functionality to search packages by various criteria
   provide a web ui for searching packages
@@ -8,26 +8,53 @@ v 0.5.x
 √ logging in production: requests & errors, logging level, logging formatting options
 √ bug fix: github search overwriting official packages (test app)
 √ generators for models, controllers, resources
-+ html/mustache layouts, views and rendering
-+ brunch integration
-+ support for POST - routing, params, etc
+√ has_many_through, has_one_through, has_and_belongs_to_many relationships <-- sort of, added support for random relationships using SQLOn()
+√ html/mustache layouts, views and rendering
++ assets management && brunch integration 
++ support for POST - routing, params, etc 
 + reverse routing -> resource to route
 + authors  (test app)
 + add stars, forks, watchers, etc (test app)
-+ parallel serving
 
-v 0.x
-+ change from Logging to Lumberjack? 
+v 0.6.x
++ model validations
++ authorization
++ channels
+
+v 0.7.x
++ caching - data caching (redis, memcache)
++ view / partials caching
++ proper error handling (50x, 40x)
+
+v 0.8.x
++ support for plugins
++ admin plugin (test app)
+
+v 0.9.x
++ parallel serving
++ performance enhancements, cleanup
++ doc comments
++ rename methods ending in ! to end in !! and follow julia's guidelines
++ rename methods to not use "_"
++ more tests
+
+v 1.0
++ official API docs
++ official website - blog, walkthroughs, tutorials, etc
+
+v 1.1
 + support for mysql 
 + support for sqlite
-? has_many_through, has_one_through, has_and_belongs_to_many relationships
 
-Important parts: 
+v 1.x 
++ change from Logging to Lumberjack? 
+
+Other parts: 
   √ lazy relationships - to skip relationship if lazy 
   √ force loading relationship (with relationship!()) if the relationship has not been loaded (cause lazy) 
   2. streaming queries - get the result set (dataframe) but don't convert each row to models - instead iterate row by row as the data is requested
   3. batch query results - convenience method to batch results (behind the scene using limit and offset and an iterator)
-  4. propery use show() and print() for types
+  √ propery use show() and print() for types
   √ updated_at does not work because it's not defined in type
 
 For V1
@@ -51,7 +78,7 @@ For V1
 
 √ complete routing to support "route", :controller, :action [done]
 √ code reloading when files are changed (via Autoreload [https://github.com/malmaud/Autoreload.jl] or https://github.com/rened/Watcher.jl) or https://github.com/wavexx/Expect.jl
-! rendering -> auto-rendering layouts, views and partials (mustache only first or directly to ejl)
+√ rendering -> auto-rendering layouts, views and partials (mustache only first or directly to ejl)
 
 . static sites generation (postponed)
 . react output (patchwork or react.js) (postponed)
@@ -70,7 +97,7 @@ For V1
 ======
 
 refactor
-Genie.render - all rendering methods should be DRY and support various rendering engines
+√ Genie.render - all rendering methods should be DRY and support various rendering engines
 
 Other
 https://github.com/JockLawrie/AccessControl.jl <-- 

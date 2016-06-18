@@ -28,15 +28,14 @@ end
 
 module Website
 using Genie
+@in_repl using PackagesController
 
 function index(params)
   results_count, packages = PackagesController.index(params)
 
   html( :packages, :index, 
         packages = map(x -> Model.to_dict(x, expand_nullables = true, symbolize_keys = true), packages), 
-        current_page = params[:page_number], 
-        page_size = params[:page_size], 
-        total_items = results_count) |> respond
+        current_page = params[:page_number], page_size = params[:page_size], total_items = results_count) |> respond
 end
 
 end
@@ -46,15 +45,14 @@ end
 module API 
 module V1
 using Genie, Model
+@in_repl using PackagesController
 
 function index(params)
   results_count, packages = PackagesController.index(params)
 
   json( :packages, :index, 
         packages = packages, 
-        current_page = params[:page_number], 
-        page_size = params[:page_size], 
-        total_items = results_count) |> respond
+        current_page = params[:page_number], page_size = params[:page_size], total_items = results_count) |> respond
 end
 
 function show(params)
@@ -71,11 +69,8 @@ function search(params)
   packages, search_results, results_count = PackagesController.search(params)
   
   Render.respond(Render.json(  :packages, :search, 
-                                packages = packages, 
-                                search_results = search_results, 
-                                current_page = params[:page_number], 
-                                page_size = params[:page_size], 
-                                total_items = results_count) )
+                                packages = packages, search_results = search_results, 
+                                current_page = params[:page_number], page_size = params[:page_size], total_items = results_count) )
 end
 
 end

@@ -8,7 +8,6 @@ using Millboard
 function start(port::Int = 8000)
   http = HttpHandler() do req::Request, res::Response
     Genie.config.log_requests && log_request_response(req)
-    
     Router.route_request(req, res)
   end
 

@@ -1,0 +1,1 @@
+const GITHUB_AUTH_KEY = "ff8eda7c62060b47971691729b548f5babbda22a"

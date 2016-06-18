@@ -6,6 +6,8 @@ using URIParser
 using Genie
 using AppServer
 
+import HttpServer.mimetypes
+
 export route, routes, params
 export GET, POST, PUT, PATCH, DELETE
 
@@ -20,6 +22,10 @@ const params = Dict{Symbol, Any}()
 
 function route_request(req::Request, res::Response)
   empty!(params)
+
+  if Genie.config.server_handle_static_files && is_static_file(req.resource)
+    return serve_static_file(req.resource)
+  end
 
   if isempty(routes) 
     load_routes_from_file()
@@ -157,5 +163,23 @@ end
 function load_routes_from_file()
   include(abspath("config/routes.jl")) 
 end
+
+function is_static_file(resource::AbstractString)
+  isfile(file_path(resource))
+end
+
+function serve_static_file(resource::AbstractString)
+  f = file_path(resource)
+  Response(200, file_headers(f), open(readbytes, f))
+end
+
+function file_path(resource::AbstractString)
+  abspath(joinpath(Genie.config.server_document_root, resource[2:end]))
+end
+file_extension(f) = ormatch(match(r"(?<=\.)[^\.\\/]*$", f), "")
+file_headers(f) = Dict{AbstractString, AbstractString}("Content-Type" => get(mimetypes, file_extension(f), "application/octet-stream"))
+
+ormatch(r::RegexMatch, x) = r.match
+ormatch(r::Void, x) = x
 
 end

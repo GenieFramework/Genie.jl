@@ -1,4 +1,4 @@
-export @run_with_time, @unless, @psst
+export @run_with_time, @unless, @psst, @in_repl
 
 if is_dev()
   macro run_with_time(expr)
@@ -23,6 +23,14 @@ macro unless(test, branch)
   quote
     if ! $(esc(test))
       $(esc(branch))
+    end
+  end
+end
+
+macro in_repl(expr)
+  if isinteractive() || Genie.config.IN_REPL
+    quote 
+      $(esc(expr))
     end
   end
 end

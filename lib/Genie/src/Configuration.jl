@@ -3,7 +3,7 @@ module Configuration
 using App
 using Logging
 
-export is_dev, is_prod, is_test, Config, DEV, PROD, TEST
+export is_dev, is_prod, is_test, Config, DEV, PROD, TEST, IN_REPL
 export MODEL_RELATIONSHIPS_EAGERNESS_AUTO, MODEL_RELATIONSHIPS_EAGERNESS_LAZY, MODEL_RELATIONSHIPS_EAGERNESS_EAGER
 export LOG_LEVEL_VERBOSITY_VERBOSE, LOG_LEVEL_VERBOSITY_MINIMAL
 
@@ -17,6 +17,8 @@ const MODEL_RELATIONSHIPS_EAGERNESS_EAGER   = :eager
 
 const LOG_LEVEL_VERBOSITY_VERBOSE = :verbose 
 const LOG_LEVEL_VERBOSITY_MINIMAL = :minimal
+
+const IN_REPL = false
 
 is_dev()  = (App.config.app_env == DEV)
 is_prod() = (App.config.app_env == PROD)
@@ -46,6 +48,8 @@ type Config
   pagination_jsonapi_page_param_name::AbstractString
 
   server_workers_count::Int
+  server_document_root::AbstractString
+  server_handle_static_files::Bool 
 
   model_relationships_eagerness::Symbol 
 
@@ -81,6 +85,8 @@ type Config
             pagination_jsonapi_page_param_name = "page", 
 
             server_workers_count = 1, 
+            server_document_root = "public",
+            server_handle_static_files = true, 
 
             model_relationships_eagerness = MODEL_RELATIONSHIPS_EAGERNESS_LAZY,
 
@@ -96,7 +102,8 @@ type Config
                   db_migrations_table_name, db_migrations_folder, task_folder, test_folder, output_length, 
                   log_router, log_db, log_requests, log_responses, 
                   pagination_jsonapi_default_items_per_page, pagination_jsonapi_page_param_name, 
-                  server_workers_count, model_relationships_eagerness, tests_force_test_env, 
+                  server_workers_count, server_document_root, server_handle_static_files, 
+                  model_relationships_eagerness, tests_force_test_env, 
                   log_level, log_verbosity, log_formatted)
 end
 
