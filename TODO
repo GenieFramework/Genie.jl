@@ -10,41 +10,45 @@ v 0.5.x
 √ generators for models, controllers, resources
 √ has_many_through, has_one_through, has_and_belongs_to_many relationships <-- sort of, added support for random relationships using SQLOn()
 √ html/mustache layouts, views and rendering
-+ assets management && brunch integration 
-+ support for POST - routing, params, etc 
-+ reverse routing -> resource to route
-+ authors  (test app)
-+ add stars, forks, watchers, etc (test app)
+☐ assets management && brunch integration
+☐ support for POST - routing, params, etc
+☐ reverse routing -> resource to route
+☐ authors  (test app)
+☐ add stars, forks, watchers, etc (test app)
 
 v 0.6.x
-+ model validations
-+ authorization
-+ channels
+☐ model validations
+☐ authorization
+☐ channels
 
 v 0.7.x
-+ caching - data caching (redis, memcache)
-+ view / partials caching
-+ proper error handling (50x, 40x)
+☐ caching - data caching (redis, memcache)
+☐ view / partials caching
+☐ proper error handling (50x, 40x)
 
 v 0.8.x
-+ support for plugins
-+ admin plugin (test app)
+☐ support for plugins
+☐ admin plugin (test app)
+☐ packages versioning (declarative packages)
 
 v 0.9.x
-+ parallel serving
-+ performance enhancements, cleanup
-+ doc comments
-+ rename methods ending in ! to end in !! and follow julia's guidelines
-+ rename methods to not use "_"
-+ more tests
+☐ parallel serving
+☐ performance enhancements, cleanup
+☐ doc comments
+☐ rename methods ending in ! to end in !! and follow julia's guidelines
+☐ rename methods to not use "_"
+☐ more tests
 
 v 1.0
-+ official API docs
-+ official website - blog, walkthroughs, tutorials, etc
+☐ official API docs
+☐ official website - blog, walkthroughs, tutorials, etc
 
 v 1.1
-+ support for mysql 
-+ support for sqlite
+☐ support for mysql
+☐ support for sqlite
+
+v 1.2 
+☐ mailers
 
 v 1.x 
 + change from Logging to Lumberjack? 
@@ -57,36 +61,21 @@ Other parts:
   √ propery use show() and print() for types
   √ updated_at does not work because it's not defined in type
 
-For V1
-
-[
-+ = todo 
-! = reopened
-. = postponed
-- = canceled
-]
 
 + json output <- with json views / renderer & request type matching
 + validators with https://github.com/eraviart/Biryani.jl <- Biryani won't do, need custom validators
-+ code generators (controllers)
+✔ code generators (controllers) @done (16-06-19 00:33)
 + view caching
 + add support for environments with AppConf
 + docs https://github.com/MichaelHatherly/Lexicon.jl https://github.com/MichaelHatherly/Docile.jl
 + DeclarativePackages to go by the gemfile and gemfile.lock pattern - a file with the app's dependencies and one with the locked versions. Should only take into account the explicit versioning when pinning. Should by default store the package sources in the app's file structure. 
-+ mailers
 + channels (like phoenix) (for sockets)
 
 √ complete routing to support "route", :controller, :action [done]
 √ code reloading when files are changed (via Autoreload [https://github.com/malmaud/Autoreload.jl] or https://github.com/rened/Watcher.jl) or https://github.com/wavexx/Expect.jl
 √ rendering -> auto-rendering layouts, views and partials (mustache only first or directly to ejl)
 
-. static sites generation (postponed)
-. react output (patchwork or react.js) (postponed)
-. ejl - embedded julia HTML rendering (postponed, maybe cancelled, mustache will do)
-. form renderers 
-
 √ trailblazer architecture
-- color the logging output with AnsiColors 
 
 √ logging (via the logging.jl pkg or Lumberjack.jl)
 √ parsing of command line args for server, console, websockets (via ArgParse pkg) 
