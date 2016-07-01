@@ -32,11 +32,11 @@ function migration_hash()
   return join(m.captures)
 end
 
-function migration_file_name(cmd_args, config)
+function migration_file_name(cmd_args::Dict{AbstractString,Any}, config::Configuration.Config)
   return joinpath(config.db_migrations_folder, migration_hash() * "_" * cmd_args["migration:new"] * ".jl")
 end
 
-function migration_class_name(underscored_migration_name)
+function migration_class_name(underscored_migration_name::AbstractString)
   mapreduce( x -> ucfirst(x), *, split(replace(underscored_migration_name, ".jl", ""), "_") )
 end
 
@@ -48,7 +48,7 @@ function last_down()
   run_migration(last_migration(), :down)
 end
 
-function up_by_class_name(migration_class_name)
+function up_by_class_name(migration_class_name::AbstractString)
   migration = migration_by_class_name(migration_class_name)
   if migration != nothing 
     run_migration(migration, :up)
@@ -57,7 +57,7 @@ function up_by_class_name(migration_class_name)
   end
 end
 
-function down_by_class_name(migration_class_name)
+function down_by_class_name(migration_class_name::AbstractString)
   migration = migration_by_class_name(migration_class_name)
   if migration != nothing 
     run_migration(migration, :down)
@@ -66,7 +66,7 @@ function down_by_class_name(migration_class_name)
   end
 end
 
-function migration_by_class_name(migration_class_name)
+function migration_by_class_name(migration_class_name::AbstractString)
   ids, migrations = all_migrations()
   for id in ids
     migration = migrations[id]

@@ -128,10 +128,10 @@ SQLWhere(column::Any, value::Any, operator::Any) = SQLWhere(SQLColumn(column), S
 SQLWhere(column::SQLColumn, value::SQLInput) = SQLWhere(column, value, SQLLogicOperator("AND"))
 SQLWhere(column::Any, value::Any) = SQLWhere(SQLColumn(column), SQLInput(value))
 
-string(w::SQLWhere) = "$(w.condition.value) ( $(w.column) $(w.operator) ( $(w.value) ) )"
+string(w::SQLWhere) = "$(w.condition.value) ($(w.column) $(w.operator) $(w.value))"
 function string{T <: AbstractModel}(w::SQLWhere, m::T) 
   w.column = SQLColumn(w.column.value, escaped = w.column.escaped, raw = w.column.raw, table_name = m._table_name)
-  "$(w.condition.value) ( $(w.column) $(w.operator) ( $(w.value) ) )"
+  "$(w.condition.value) ($(w.column) $(w.operator) $(w.value))"
 end
 print{T<:SQLWhere}(io::IO, w::T) = print(io, Genie.genietype_to_print(w))
 show{T<:SQLWhere}(io::IO, w::T) = print(io, Genie.genietype_to_print(w))

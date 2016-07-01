@@ -114,11 +114,14 @@ function create_or_update_by!{T<:AbstractModel}(m::T, property::Symbol)
   create_or_update_by!(m, property, getfield(m, property))
 end
 
-function find_one_by_or_create{T<:AbstractModel}(m::T, column_name::Any, value::Any)
-  lookup = find_one_by(typeof(m), SQLColumn(column_name), SQLInput(value))
+function find_one_by_or_create{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
+  lookup = find_one_by(m, SQLColumn(column_name), SQLInput(value))
   ! isnull( lookup ) && return lookup
 
-  return save!(m)
+  _m = disposable_instance(m)
+  setfield!(_m, Symbol(column_name), value)
+
+  return save!(_m)
 end
 
 #
@@ -284,17 +287,17 @@ function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Array{SQLColumn,1}, 
       end
 
       return join(table_columns, ", ")
-    else 
+    else  
       table_columns = join(to_fully_qualified_sql_column_names(_m, persistable_fields(_m), escape_columns = true), ", ")
-      table_columns = vcat(table_columns, map(x -> prepare_column_name(x), columns_from_joins()))
+      table_columns = isempty(table_columns) ? AbstractString[] : vcat(table_columns, map(x -> prepare_column_name(x), columns_from_joins()))
 
-      related_table_columns = []
+      related_table_columns::Array{AbstractString,1} = []
       for rels in map(x -> to_fully_qualified_sql_column_names(x, persistable_fields(x), escape_columns = true), joined_tables)
         for col in rels
           push!(related_table_columns, col)
         end
       end
-
+      
       return join([table_columns ; related_table_columns], ", ")
     end
   end
@@ -642,6 +645,10 @@ end
 function persistable_fields{T<:AbstractModel}(m::T; fully_qualified::Bool = false)
   object_fields = map(x -> string(x), fieldnames(m))
   db_columns = columns(typeof(m))[:column_name]
+  
+  isempty(db_columns) && Genie.config.log_db && 
+    Genie.log("No columns retrieved for $(typeof(m)) - check if the table exists and the model is properly configured.", :err)
+
   pst_fields = intersect(object_fields, db_columns)
   fully_qualified ? to_fully_qualified_sql_column_names(m, pst_fields) : pst_fields
 end
@@ -688,6 +695,8 @@ end
 end
 
 @memoize function escape_value(i::SQLInput)
+  i.value == "NULL" && return i
+  
   if ! i.escaped && ! i.raw
     i.value = Database.escape_value(i.value)
     i.escaped = true

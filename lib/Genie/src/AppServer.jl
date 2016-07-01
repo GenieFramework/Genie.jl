@@ -17,6 +17,11 @@ end
 
 function spawn(port::Int = 8000)
   Genie.genie_app.server = Nullable{RemoteRef{Channel{Any}}}(_spawn(port))
+  if ! isnull(Genie.genie_app.server)
+    push!(Genie.genie_app.server_workers, Genie.genie_app.server |> Base.get)
+  end
+
+  Genie.genie_app.server
 end
 function _spawn(port::Int)
   @spawn start(port)

@@ -46,7 +46,7 @@ end
 function search_packages(page::Int, items_count::Int)
   const search_url = "https://api.github.com/search/repositories?q=.jl+language:julia+in:name&sort=stars&order=desc&page=$page"
 
-  response = GitHub.gh_get(search_url)
+  response = GitHub.gh_get(search_url, auth = Genie.GITHUB_AUTH)
   results = ( mapreduce(x -> string(Char(x)), *, response.data) |> JSON.parse )
   items = results["items"]
   total_count = results["total_count"]

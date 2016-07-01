@@ -17,6 +17,14 @@ type Repo <: AbstractModel
   participation::Array{Int}
   updated_at::Nullable{DateTime}
 
+  name::AbstractString
+  description::AbstractString
+  subscribers_count::Int
+  forks_count::Int
+  stargazers_count::Int
+  watchers_count::Int
+  open_issues_count::Int
+
   belongs_to::Array{Model.SQLRelation,1}
 
   on_dehydration::Nullable{Function}
@@ -31,12 +39,22 @@ type Repo <: AbstractModel
         participation = [],
         updated_at = Nullable{DateTime}(),
 
+        name = "", 
+        description = "", 
+        subscribers_count = 0, 
+        forks_count = 0, 
+        stargazers_count = 0, 
+        watchers_count = 0, 
+        open_issues_count = 0, 
+
         belongs_to = [Model.SQLRelation(Package)], 
         
         on_dehydration = Repos.dehydrate, 
         on_hydration = Repos.hydrate
       ) = 
-    new("repos", "id", github, id, package_id, fullname, readme, participation, updated_at, belongs_to, on_dehydration, on_hydration)
+    new("repos", "id", github, id, package_id, fullname, readme, participation, updated_at, 
+        name, description, subscribers_count, forks_count, stargazers_count, watchers_count, open_issues_count, 
+        belongs_to, on_dehydration, on_hydration)
 end
 
 module Repos
@@ -118,7 +136,19 @@ end
 
 function from_package(package::Package)
   github_repo = GitHub.Repo(Genie.Packages.fullname(package))
-  repo = Genie.Repo(github = github_repo, package_id = package.id, fullname = Genie.Packages.fullname(package))
+  repo_info = GitHub.repo(Genie.Packages.fullname(package), auth = Genie.GITHUB_AUTH)
+  repo = Genie.Repo(
+                      github = github_repo, 
+                      package_id = package.id, 
+                      fullname = Genie.Packages.fullname(package), 
+                      name = Base.get(repo_info.name), 
+                      description = Base.get(repo_info.description), 
+                      subscribers_count = Base.get(repo_info.subscribers_count),
+                      forks_count = Base.get(repo_info.forks_count),
+                      stargazers_count = Base.get(repo_info.stargazers_count),
+                      watchers_count = Base.get(repo_info.watchers_count),
+                      open_issues_count = Base.get(repo_info.open_issues_count)
+                    )
   readme_from_github!(repo)
   participation_from_github!(repo)
 
