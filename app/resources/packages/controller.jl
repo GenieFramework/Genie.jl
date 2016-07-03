@@ -32,10 +32,29 @@ using Genie
 
 function index(params)
   results_count, packages = PackagesController.index(params)
+  packages_data = Array{Dict{Symbol,Any},1}()
+  
+  const package_item = Dict{Symbol,Any}()
+  for pkg in packages
+    package_item = Dict{Symbol,Any}()
+    repo = Model.relationship_data!(pkg, Genie.Repo, :has_one)
 
-  html( :packages, :index, 
-        packages = map(x -> Model.to_dict(x, expand_nullables = true, symbolize_keys = true), packages), 
-        current_page = params[:page_number], page_size = params[:page_size], total_items = results_count) |> respond
+    package_item[:id] = pkg.id |> Base.get
+    package_item[:name] = pkg.name
+    package_item[:url] = pkg.url
+
+    package_item[:repo_participation] = join(repo.participation, ",")
+    package_item[:repo_description] = (repo.description |> ucfirst) * (endswith(repo.description, ".") ? "" : ".")
+    package_item[:repo_subscribers_count] = repo.subscribers_count
+    package_item[:repo_forks_count] = repo.forks_count
+    package_item[:repo_stargazers_count] = repo.stargazers_count
+    package_item[:repo_watchers_count] = repo.watchers_count
+    package_item[:repo_open_issues_count] = repo.open_issues_count
+
+    push!(packages_data, package_item)
+  end
+
+  html( :packages, :index, packages = packages_data) |> respond
 end
 
 end

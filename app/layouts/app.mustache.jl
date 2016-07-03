@@ -5,18 +5,23 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     
-    <title>Bootstrap 101 Template</title>
+    <title>Julia Packages</title>
     <link href="css/bootstrap.css" rel="stylesheet">
-    <link href="css/bootstrap-theme.css" rel="stylesheet">
+    <link href="css/flat-ui.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/font-awesome.css">
+    <link href="css/app.css" rel="stylesheet">
   </head>
   <body>
-    <h1>Newest Julia packages</h1>
+    <div class="container">
+      {{> app/layouts/main_menu.mustache.jl }}
+      {{{:yield}}}
+      {{> app/layouts/footer.mustache.jl }}
+    </div>
 
-    {{{:yield}}}
-
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <script src="js/bootstrap.min.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <script src="js/raphael-min.js"></script>
+    <script src="js/sparky.js"></script>
+    <script src="js/sparklines.js"></script>
   </body>
 </html>

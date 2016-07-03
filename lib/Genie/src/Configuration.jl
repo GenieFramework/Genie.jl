@@ -33,6 +33,7 @@ type Config
   
   db_migrations_table_name::AbstractString
   db_migrations_folder::AbstractString
+  db_auto_connect::Bool
 
   tasks_folder::AbstractString
   test_folder::AbstractString
@@ -70,6 +71,7 @@ type Config
             
             db_migrations_table_name = "schema_migrations", 
             db_migrations_folder = abspath(joinpath("db", "migrations")), 
+            db_auto_connect = true, 
 
             task_folder = abspath(joinpath("task")), 
             test_folder = abspath(joinpath("test")), 
@@ -99,7 +101,8 @@ type Config
             inflector_irregulars = Array{Tuple{AbstractString, AbstractString},1}()
         ) = 
               new(server_port, app_env, loggers, supress_output, 
-                  db_migrations_table_name, db_migrations_folder, task_folder, test_folder, output_length, 
+                  db_migrations_table_name, db_migrations_folder, db_auto_connect, 
+                  task_folder, test_folder, output_length, 
                   log_router, log_db, log_requests, log_responses, 
                   pagination_jsonapi_default_items_per_page, pagination_jsonapi_page_param_name, 
                   server_workers_count, server_document_root, server_handle_static_files, 

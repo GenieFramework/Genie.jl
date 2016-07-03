@@ -1,0 +1,76 @@
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: "Hoefler Text", "Times New Roman", Georgia, serif;
+    font-size: 18px;
+    line-height: 23px;
+    padding: 2em 3em;
+}
+
+a:link, a:visited {
+    color: inherit;
+    text-decoration: underline;
+}
+
+span.sparkline {
+    display: inline-block;
+    width: 5em;
+    height: 15px;
+    margin: 0 .2em;
+    vertical-align: baseline;
+}
+
+label, var {
+    font-family: "Trebuchet MS", "Arial Rounded MT Bold", sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 80%;
+}
+
+var {
+    color: red;
+}
+
+p {
+    margin: 0 0 1em 0;
+}
+
+p.caption {
+    font-size: 90%;
+    font-style: italic;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-style: italic;
+    font-weight: normal;
+}
+
+h3 {
+    float: left;
+    display: inline;
+    font-size: inherit;
+    line-height: inherit;
+    margin: 0 .75em 0 0;
+}
+
+blockquote {
+    color: #333;
+    font-size: 90%;
+}
+
+blockquote small {
+    text-align: right;
+    display: block;
+}
+
+*.fw {
+    font-variant: small-caps;
+}
+
+.warning {
+    background-color: #ffc;
+    margin: .2em 0;
+}

@@ -12,6 +12,8 @@ type Package <: AbstractModel
   has_one::Array{Model.SQLRelation,1}
   belongs_to::Array{Model.SQLRelation,1}
 
+  repo::AbstractModel
+
   Package(; 
             id = Nullable{Model.DbId}(), 
             name = "", 
@@ -19,8 +21,10 @@ type Package <: AbstractModel
             author_id = Nullable{Model.DbId}(), 
 
             has_one = [Model.SQLRelation(Repo)], 
-            belongs_to = [Model.SQLRelation(Author)]
-          ) = new("packages", "id", id, name, url, author_id, has_one, belongs_to) 
+            belongs_to = [Model.SQLRelation(Author)], 
+
+            repo = Repo()
+          ) = new("packages", "id", id, name, url, author_id, has_one, belongs_to, repo) 
 end
 function Package(name::AbstractString, url::AbstractString) 
   p = Package()

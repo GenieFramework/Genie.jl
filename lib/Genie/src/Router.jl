@@ -5,6 +5,7 @@ using HttpServer
 using URIParser
 using Genie
 using AppServer
+using URIParser
 
 import HttpServer.mimetypes
 
@@ -165,11 +166,11 @@ function load_routes_from_file()
 end
 
 function is_static_file(resource::AbstractString)
-  isfile(file_path(resource))
+  isfile(file_path(URI(resource).path))
 end
 
 function serve_static_file(resource::AbstractString)
-  f = file_path(resource)
+  f = file_path(URI(resource).path)
   Response(200, file_headers(f), open(readbytes, f))
 end
 

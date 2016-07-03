@@ -81,6 +81,6 @@ function query_df(sql::AbstractString; supress_output::Bool = false)
   DatabaseAdapter.adapter_query_df(sql, supress_output, conn, adapter)
 end
 
-db_connect()
+Genie.config.db_auto_connect && db_connect()
 
 end

@@ -28,7 +28,7 @@ macro unless(test, branch)
 end
 
 macro in_repl(expr)
-  if isinteractive() || Genie.config.IN_REPL
+  if isinteractive() || Configuration.IN_REPL
     quote 
       $(esc(expr))
     end
