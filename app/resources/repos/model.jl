@@ -18,12 +18,17 @@ type Repo <: AbstractModel
   updated_at::Nullable{DateTime}
 
   name::AbstractString
-  description::AbstractString
+  description::UTF8String
   subscribers_count::Int
   forks_count::Int
   stargazers_count::Int
   watchers_count::Int
   open_issues_count::Int
+  html_url::AbstractString
+
+  github_pushed_at::DateTime
+  github_created_at::DateTime
+  github_updated_at::DateTime
 
   belongs_to::Array{Model.SQLRelation,1}
 
@@ -46,14 +51,21 @@ type Repo <: AbstractModel
         stargazers_count = 0, 
         watchers_count = 0, 
         open_issues_count = 0, 
+        html_url = "", 
 
-        belongs_to = [Model.SQLRelation(Package)], 
+        github_pushed_at = DateTime(),
+        github_created_at = DateTime(),
+        github_updated_at = DateTime(),
+
+        belongs_to = [Model.SQLRelation(Package), 
+                      Model.SQLRelation(Author, join = SQLJoin(Author, SQLOn("packages.id", "repos.package_id"), join_type = "LEFT" ), eagerness = MODEL_RELATIONSHIPS_EAGERNESS_AUTO)], 
         
         on_dehydration = Repos.dehydrate, 
         on_hydration = Repos.hydrate
       ) = 
     new("repos", "id", github, id, package_id, fullname, readme, participation, updated_at, 
-        name, description, subscribers_count, forks_count, stargazers_count, watchers_count, open_issues_count, 
+        name, description, subscribers_count, forks_count, stargazers_count, watchers_count, open_issues_count, html_url, 
+        github_pushed_at, github_created_at, github_updated_at, 
         belongs_to, on_dehydration, on_hydration)
 end
 
@@ -79,7 +91,7 @@ end
 function hydrate(repo::Genie.Repo, field::Symbol, value::Any)
   return  if field == :participation 
             map(x -> parse(x), split(value, ",")) 
-          elseif field == :updated_at
+          elseif in(field, [:updated_at, :github_pushed_at, :github_created_at, :github_updated_at])
             value = DateParser.parse(DateTime, value)
           else
             value
@@ -147,7 +159,11 @@ function from_package(package::Package)
                       forks_count = Base.get(repo_info.forks_count),
                       stargazers_count = Base.get(repo_info.stargazers_count),
                       watchers_count = Base.get(repo_info.watchers_count),
-                      open_issues_count = Base.get(repo_info.open_issues_count)
+                      open_issues_count = Base.get(repo_info.open_issues_count), 
+                      html_url = Base.get(repo_info.html_url) |> string, 
+                      github_pushed_at = Base.get(repo_info.pushed_at),
+                      github_created_at = Base.get(repo_info.created_at),
+                      github_updated_at = Base.get(repo_info.updated_at),
                     )
   readme_from_github!(repo)
   participation_from_github!(repo)

@@ -28,6 +28,8 @@ function _spawn(port::Int)
 end
 
 function log_request_response(req_res::Union{Request, Response})
+  ! Genie.config.log_resources && in(:resource, fieldnames(req_res)) && return
+
   req_data = Dict{AbstractString, AbstractString}()
   for f in fieldnames(req_res)
     f = string(f)

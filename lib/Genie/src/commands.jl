@@ -23,7 +23,7 @@ function run_app_with_command_line_args(config)
   elseif ( parsed_args["resource:new"] != nothing )
     Generator.new_resource(parsed_args, config)
 
-  elseif ( called_command(parsed_args, "migration:status") )
+  elseif ( called_command(parsed_args, "migration:status") || called_command(parsed_args, "migration:list") )
     Migration.status()
   elseif ( parsed_args["migration:new"] != nothing )
     Migration.new(parsed_args, config)
@@ -89,6 +89,9 @@ function parse_commandline_args()
         
         "--migration:status"
             help = "true -> list migrations and their status"
+            default = "false"
+        "--migration:list"
+            help = "alias for migration:status"
             default = "false"
         "--migration:new"
             help = "migration_name -> create a new migration, ex: create_table_foos"

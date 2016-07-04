@@ -5,6 +5,7 @@ using Database
 using DataFrames
 using Genie
 using Util
+using DataStructures
 
 include(abspath(joinpath("lib", "Genie", "src", "model_types.jl")))
 
@@ -128,8 +129,8 @@ end
 # Object generation 
 # 
 
-function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
-  models = Dict{DbId, T}()
+@debug function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
+  models = OrderedDict{DbId, T}()
   dfs = df_result_to_models_data(m, df)
   
   row_count::Int = 1
@@ -153,14 +154,9 @@ function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
       elseif r_type == RELATIONSHIP_HAS_MANY
         r = set_relationship_data_array(r, related_model, related_model_df)
       end
-
-      if ! isdefined(:model_rels)
-        model_rels::Array{SQLRelation,1} = getfield(main_model, r_type)
-        model_rels[1] = r
-      else 
-        push!(model_rels, r)
-      end
-      setfield!(main_model, r_type, Array{SQLRelation,1}(model_rels))
+      
+      model_rels::Array{SQLRelation,1} = getfield(main_model, r_type)
+      isnull(model_rels[1].data) ? model_rels[1] = r : push!(model_rels, r)
     end
 
     if ! haskey(models, getfield(main_model, Symbol(disposable_instance(m)._id)))
@@ -213,8 +209,13 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
             else 
               row[field]
             end
-
-    setfield!(obj, unq_field, convert(typeof(getfield(_m, unq_field)), value))
+    try 
+      setfield!(obj, unq_field, convert(typeof(getfield(_m, unq_field)), value))
+    catch ex 
+      Genie.log(ex, :err)
+      Genie.log("obj = $(typeof(obj)) -- field = $unq_field -- value = $value -- type = $( typeof(getfield(_m, unq_field)) )")
+      rethrow(ex)
+    end
   end
 
   obj
@@ -328,7 +329,7 @@ end
 function to_order_part{T<:AbstractModel}(m::Type{T}, o::Array{SQLOrder,1})
   isempty(o) ? 
     "" : 
-    "ORDER BY " * join(map(x -> to_fully_qualified(m, x.column) * " " * x.direction, o), ", ")
+    "ORDER BY " * join(map(x -> (! is_fully_qualified(x.column.value) ? to_fully_qualified(m, x.column) : x.column.value) * " " * x.direction, o), ", ")
 end
 
 function to_group_part(g::Array{SQLColumn,1})
@@ -620,15 +621,17 @@ const model_prototypes = Dict{AbstractString, Any}()
 
 function disposable_instance{T<:AbstractModel}(m::Type{T})
   type_name = string(m)
-  haskey(model_prototypes, type_name) && return model_prototypes[type_name]
+  # haskey(model_prototypes, type_name) && return model_prototypes[type_name]
 
   if is_subtype(m)
-    model_prototypes[type_name] = m()    
-    return model_prototypes[type_name]
+    # model_prototypes[type_name] = m()    
+    # return model_prototypes[type_name]
+    return m()
   else 
     error("$m is not a Model")
   end
 end
+
 # function disposable_instance(model_name::Symbol)
 #   disposable_instance(eval(parse(string(model_name))))
 # end
@@ -682,8 +685,8 @@ end
 end
 
 @memoize function escape_column_name(c::SQLColumn)
-  if ! c.escaped && ! c.raw
-    val = c.table_name != "" && ! startswith(c.value, (c.table_name * ".")) ? c.table_name * "." * c.value : c.value
+  if ! c.escaped && ! c.raw 
+    val = c.table_name != "" && ! startswith(c.value, (c.table_name * ".")) && ! is_fully_qualified(c.value) ? c.table_name * "." * c.value : c.value
     c.value = escape_column_name(val)
     c.escaped = true
   end
@@ -695,7 +698,7 @@ end
 end
 
 @memoize function escape_value(i::SQLInput)
-  i.value == "NULL" && return i
+  (i.value == "NULL" || i.value == "NOT NULL") && return i
   
   if ! i.escaped && ! i.raw
     i.value = Database.escape_value(i.value)
@@ -721,8 +724,16 @@ function is_fully_qualified{T<:AbstractModel}(m::T, f::Symbol)
   startswith(string(f), m._table_name) && has_field(m, strip_table_name(m, f))
 end
 
+function is_fully_qualified(s::AbstractString)
+  ! startswith(s, ".") && contains(s, ".")
+end
+
 function from_fully_qualified{T<:AbstractModel}(m::T, f::Symbol)
   is_fully_qualified(m, f) ? strip_table_name(m, f) : f
+end
+function from_fully_qualified(s::AbstractString)
+  arr = split(s, ".")
+  (arr[1], arr[2])
 end
 
 function strip_module_name(s::AbstractString)
@@ -855,6 +866,10 @@ function dataframe_to_dict(df::DataFrames.DataFrame)
   end
 
   result
+end
+
+function enclosure(v::Any, o::Any)
+  in(string(o), ["IN", "in"]) ? "($(string(v)))" : v
 end
 
 end

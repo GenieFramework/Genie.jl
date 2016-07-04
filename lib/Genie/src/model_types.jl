@@ -70,7 +70,12 @@ type SQLColumn <: SQLType
     new(v, escaped, raw, string(table_name))
   end
 end
-SQLColumn(v::Any; escaped = false, raw = false, table_name = "") = SQLColumn(string(v), escaped, raw, table_name)
+function SQLColumn(v::Any; escaped = false, raw = false, table_name = "") 
+  if is_fully_qualified(string(v))
+    table_name, v = from_fully_qualified(string(v))
+  end
+  SQLColumn(string(v), escaped, raw, table_name)
+end
 SQLColumn(a::Array) = map(x -> SQLColumn(string(x)), a)
 SQLColumn(c::SQLColumn) = c
 
@@ -128,10 +133,10 @@ SQLWhere(column::Any, value::Any, operator::Any) = SQLWhere(SQLColumn(column), S
 SQLWhere(column::SQLColumn, value::SQLInput) = SQLWhere(column, value, SQLLogicOperator("AND"))
 SQLWhere(column::Any, value::Any) = SQLWhere(SQLColumn(column), SQLInput(value))
 
-string(w::SQLWhere) = "$(w.condition.value) ($(w.column) $(w.operator) $(w.value))"
+string(w::SQLWhere) = "$(w.condition.value) ($(w.column) $(w.operator) $(enclosure(w.value, w.operator)))"
 function string{T <: AbstractModel}(w::SQLWhere, m::T) 
   w.column = SQLColumn(w.column.value, escaped = w.column.escaped, raw = w.column.raw, table_name = m._table_name)
-  "$(w.condition.value) ($(w.column) $(w.operator) $(w.value))"
+  "$(w.condition.value) ($(w.column) $(w.operator) $(enclosure(w.value, w.operator)))"
 end
 print{T<:SQLWhere}(io::IO, w::T) = print(io, Genie.genietype_to_print(w))
 show{T<:SQLWhere}(io::IO, w::T) = print(io, Genie.genietype_to_print(w))

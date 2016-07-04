@@ -7,3 +7,5 @@ route(GET, "/api/v1/packages/:package_id", "packages#PackagesController.API.V1.s
 
 # web app
 route(GET, "/packages", "packages#PackagesController.Website.index")
+route(GET, "/packages/search", "packages#PackagesController.Website.search")
+route(GET, "/packages/:package_id", "packages#PackagesController.Website.show")

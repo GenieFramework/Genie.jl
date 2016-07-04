@@ -44,6 +44,7 @@ type Config
   log_db::Bool
   log_requests::Bool
   log_responses::Bool
+  log_resources::Bool
 
   pagination_jsonapi_default_items_per_page::Int
   pagination_jsonapi_page_param_name::AbstractString
@@ -82,6 +83,7 @@ type Config
             log_db = true, 
             log_requests = true, 
             log_responses = true, 
+            log_resources = false, 
 
             pagination_jsonapi_default_items_per_page = 20, 
             pagination_jsonapi_page_param_name = "page", 
@@ -103,7 +105,7 @@ type Config
               new(server_port, app_env, loggers, supress_output, 
                   db_migrations_table_name, db_migrations_folder, db_auto_connect, 
                   task_folder, test_folder, output_length, 
-                  log_router, log_db, log_requests, log_responses, 
+                  log_router, log_db, log_requests, log_responses, log_resources, 
                   pagination_jsonapi_default_items_per_page, pagination_jsonapi_page_param_name, 
                   server_workers_count, server_document_root, server_handle_static_files, 
                   model_relationships_eagerness, tests_force_test_env, 

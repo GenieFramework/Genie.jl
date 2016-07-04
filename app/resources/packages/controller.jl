@@ -27,34 +27,36 @@ end
 # Website
 
 module Website
-using Genie
+using Genie, Model, Packages
 @in_repl using PackagesController
 
 function index(params)
-  results_count, packages = PackagesController.index(params)
-  packages_data = Array{Dict{Symbol,Any},1}()
+  packages_count = SearchLight.count(Package)
+  Genie.config.model_relationships_eagerness = MODEL_RELATIONSHIPS_EAGERNESS_EAGER
+
+  top_packages = SearchLight.find(Package, QQ(where = QW("repos.stargazers_count", "NOT NULL", "IS"), limit = 20, order = QO("repos.stargazers_count", :desc)))
+  new_packages = SearchLight.find(Package, QQ(where = QW("repos.github_created_at", "NOT NULL", "IS"), limit = 20, order = QO("repos.github_created_at", :desc)))
+  updated_packages = SearchLight.find(Package, QQ(where = QW("repos.github_pushed_at", "NOT NULL", "IS"), limit = 20, order = QO("repos.github_pushed_at", :desc)))
   
-  const package_item = Dict{Symbol,Any}()
-  for pkg in packages
-    package_item = Dict{Symbol,Any}()
-    repo = Model.relationship_data!(pkg, Genie.Repo, :has_one)
+  html( :packages, :index, 
+        top_packages_data = Packages.prepare_data(top_packages), 
+        new_packages_data = Packages.prepare_data(new_packages), 
+        updated_packages_data = Packages.prepare_data(updated_packages), 
+        packages_count = packages_count
+      ) |> respond
+end
 
-    package_item[:id] = pkg.id |> Base.get
-    package_item[:name] = pkg.name
-    package_item[:url] = pkg.url
+function search(params)
+  Genie.config.model_relationships_eagerness = MODEL_RELATIONSHIPS_EAGERNESS_EAGER
+  params[:page_size] = 100
+  packages, search_results, results_count = PackagesController.search(params)
+  html(:packages, :search, search_term = params[:q], packages = Packages.prepare_data(packages; search_results = search_results)) |> respond
+end
 
-    package_item[:repo_participation] = join(repo.participation, ",")
-    package_item[:repo_description] = (repo.description |> ucfirst) * (endswith(repo.description, ".") ? "" : ".")
-    package_item[:repo_subscribers_count] = repo.subscribers_count
-    package_item[:repo_forks_count] = repo.forks_count
-    package_item[:repo_stargazers_count] = repo.stargazers_count
-    package_item[:repo_watchers_count] = repo.watchers_count
-    package_item[:repo_open_issues_count] = repo.open_issues_count
-
-    push!(packages_data, package_item)
-  end
-
-  html( :packages, :index, packages = packages_data) |> respond
+function show(params)
+  Genie.config.model_relationships_eagerness = MODEL_RELATIONSHIPS_EAGERNESS_EAGER
+  packages = SearchLight.find_by(Package, :id, params[:package_id])
+  html(:packages, :show, packages = Packages.prepare_data(packages; details = true), package_name = packages[1].name) |> respond
 end
 
 end
@@ -68,10 +70,7 @@ using Genie, Model
 
 function index(params)
   results_count, packages = PackagesController.index(params)
-
-  json( :packages, :index, 
-        packages = packages, 
-        current_page = params[:page_number], page_size = params[:page_size], total_items = results_count) |> respond
+  json( :packages, :index, packages = packages, current_page = params[:page_number], page_size = params[:page_size], total_items = results_count) |> respond
 end
 
 function show(params)
