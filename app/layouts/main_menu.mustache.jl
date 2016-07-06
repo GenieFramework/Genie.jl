@@ -16,11 +16,12 @@
       <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
         <ul class="nav navbar-nav">
           <li class="active"><a href="/packages">Home<span class="sr-only">(current)</span></a></li>
-          <li><a href="#">REPL</a></li>
-          <li><a href="#">API</a></li> 
+          <li><a href="https://github.com/essenciary/PkgSearch.jl">REPL</a></li>
+          <!--li><a href="#">API</a></li--> 
         </ul>
         <ul class="nav navbar-nav navbar-right">
-          <li><a href="#">Documentation</a></li>
+          <li><a href="http://docs.julialang.org/en/latest/manual/packages/" target="_blank">Documentation</a></li>
+          <li role="presentation"><a href="http://pkg.julialang.org/" target="_blank">Registered packages</a></li>
         </ul>
       </div><!-- /.navbar-collapse -->
     </div><!-- /.container-fluid -->

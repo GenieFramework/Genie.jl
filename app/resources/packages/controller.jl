@@ -34,9 +34,9 @@ function index(params)
   packages_count = SearchLight.count(Package)
   Genie.config.model_relationships_eagerness = MODEL_RELATIONSHIPS_EAGERNESS_EAGER
 
-  top_packages = SearchLight.find(Package, QQ(where = QW("repos.stargazers_count", "NOT NULL", "IS"), limit = 20, order = QO("repos.stargazers_count", :desc)))
-  new_packages = SearchLight.find(Package, QQ(where = QW("repos.github_created_at", "NOT NULL", "IS"), limit = 20, order = QO("repos.github_created_at", :desc)))
-  updated_packages = SearchLight.find(Package, QQ(where = QW("repos.github_pushed_at", "NOT NULL", "IS"), limit = 20, order = QO("repos.github_pushed_at", :desc)))
+  top_packages = SearchLight.find(Package, QQ(where = QW("repos.stargazers_count", "NOT NULL", "IS"), limit = 15, order = QO("repos.stargazers_count", :desc)))
+  new_packages = SearchLight.find(Package, QQ(where = QW("repos.github_created_at", "NOT NULL", "IS"), limit = 15, order = QO("repos.github_created_at", :desc)))
+  updated_packages = SearchLight.find(Package, QQ(where = QW("repos.github_pushed_at", "NOT NULL", "IS"), limit = 15, order = QO("repos.github_pushed_at", :desc)))
   
   html( :packages, :index, 
         top_packages_data = Packages.prepare_data(top_packages), 
@@ -48,7 +48,7 @@ end
 
 function search(params)
   Genie.config.model_relationships_eagerness = MODEL_RELATIONSHIPS_EAGERNESS_EAGER
-  params[:page_size] = 100
+  params[:page_size] = 50
   packages, search_results, results_count = PackagesController.search(params)
   html(:packages, :search, search_term = params[:q], packages = Packages.prepare_data(packages; search_results = search_results)) |> respond
 end
