@@ -84,7 +84,7 @@ function prepare_data(packages; details = false, search_results = Dict())
 
     if ! isempty(search_results)
       package_item[:search_rank] = search_results[package_item[:id]][:rank]
-      package_item[:search_headline] = search_results[package_item[:id]][:headline]
+      package_item[:search_headline] = search_results[package_item[:id]][:headline] |> Markdown.parse |> Markdown.plain
     end
 
     push!(packages_data, package_item)

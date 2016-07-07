@@ -27,7 +27,7 @@ end
 # Website
 
 module Website
-using Genie, Model, Packages
+using Genie, Model, Genie.Packages
 @in_repl using PackagesController
 
 function index(params)
