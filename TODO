@@ -10,21 +10,21 @@ v 0.5.x
 √ generators for models, controllers, resources
 √ has_many_through, has_one_through, has_and_belongs_to_many relationships <-- sort of, added support for random relationships using SQLOn()
 √ html/mustache layouts, views and rendering
-☐ assets management && brunch integration
+√ assets management && brunch integration
 ☐ support for POST - routing, params, etc
 ☐ reverse routing -> resource to route
-☐ authors  (test app)
-☐ add stars, forks, watchers, etc (test app)
+√ authors  (test app)
+√ add stars, forks, watchers, etc (test app)
 
 v 0.6.x
+☐ caching - data caching (redis, memcache, file system)
+☐ view / partials caching -- and not reloading views in production
+☐ proper error handling (50x, 40x)
+
+v 0.7.x
 ☐ model validations
 ☐ authorization
 ☐ channels
-
-v 0.7.x
-☐ caching - data caching (redis, memcache)
-☐ view / partials caching
-☐ proper error handling (50x, 40x)
 
 v 0.8.x
 ☐ support for plugins
@@ -38,6 +38,7 @@ v 0.9.x
 ☐ rename methods ending in ! to end in !! and follow julia's guidelines
 ☐ rename methods to not use "_"
 ☐ more tests
+☐ REPL utility to setup a new app
 
 v 1.0
 ☐ official API docs

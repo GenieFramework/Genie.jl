@@ -46,6 +46,9 @@ type Config
   log_responses::Bool
   log_resources::Bool
 
+  assets_path::AbstractString
+  assets_serve::Bool
+
   pagination_jsonapi_default_items_per_page::Int
   pagination_jsonapi_page_param_name::AbstractString
 
@@ -70,27 +73,30 @@ type Config
             loggers = [], 
             supress_output = false, 
             
-            db_migrations_table_name = "schema_migrations", 
-            db_migrations_folder = abspath(joinpath("db", "migrations")), 
-            db_auto_connect = true, 
+            db_migrations_table_name  = "schema_migrations", 
+            db_migrations_folder      = abspath(joinpath("db", "migrations")), 
+            db_auto_connect           = true, 
 
             task_folder = abspath(joinpath("task")), 
             test_folder = abspath(joinpath("test")), 
 
             output_length = 10_000, # where to truncate strings in console
 
-            log_router = false, 
-            log_db = true, 
-            log_requests = true, 
+            log_router    = false, 
+            log_db        = true, 
+            log_requests  = true, 
             log_responses = true, 
             log_resources = false, 
+
+            assets_path   = "/", 
+            assets_serve  =  true, 
 
             pagination_jsonapi_default_items_per_page = 20, 
             pagination_jsonapi_page_param_name = "page", 
 
-            server_workers_count = 1, 
-            server_document_root = "public",
-            server_handle_static_files = true, 
+            server_workers_count        = 1, 
+            server_document_root        = "public",
+            server_handle_static_files  = true, 
 
             model_relationships_eagerness = MODEL_RELATIONSHIPS_EAGERNESS_LAZY,
 
@@ -106,6 +112,7 @@ type Config
                   db_migrations_table_name, db_migrations_folder, db_auto_connect, 
                   task_folder, test_folder, output_length, 
                   log_router, log_db, log_requests, log_responses, log_resources, 
+                  assets_path, assets_serve, 
                   pagination_jsonapi_default_items_per_page, pagination_jsonapi_page_param_name, 
                   server_workers_count, server_document_root, server_handle_static_files, 
                   model_relationships_eagerness, tests_force_test_env, 

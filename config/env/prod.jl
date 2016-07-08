@@ -8,6 +8,7 @@ const config = Config(output_length = 0,
                       log_responses = false, 
                       log_formatted = false, 
                       log_level = Logging.ERROR, 
-                      log_verbosity = LOG_LEVEL_VERBOSITY_MINIMAL)
+                      log_verbosity = LOG_LEVEL_VERBOSITY_MINIMAL, 
+                      assets_path = "/")
 
 export config

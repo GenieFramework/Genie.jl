@@ -34,7 +34,7 @@ function html(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractSt
   end
 
   template = Mustache.template_from_file(abspath(joinpath("app", "resources", string(resource), "views", string(action) * ".$EXT")))
-  vals = Dict([k => v for (k, v) in vars])
+  vals = merge(special_vals(), Dict([k => v for (k, v) in vars]))
   r = Mustache.render(template, vals)
 
   if render_layout 
@@ -44,6 +44,12 @@ function html(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractSt
   end
 
   Dict(:html => r)
+end
+
+function special_vals()
+  Dict{Symbol,Any}(
+    :genie_assets_path => Genie.config.assets_path
+  )
 end
 
 function spawn_vars(key, value)

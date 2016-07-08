@@ -18,9 +18,13 @@ function log(message, level = "info")
         show_stacktrace() 
       end
     catch ex
-      log("=== CAN'T LOG MESSAGE, INVALID CHARS ===", level)
-      @show ex
-      show_stacktrace(catch_stacktrace())
+      try 
+        log("=== CAN'T LOG MESSAGE, INVALID CHARS ===", level)
+        @show ex
+        show_stacktrace(catch_stacktrace())
+      catch exx
+        show_stacktrace()
+      end
     end
   end
 end

@@ -1,5 +1,15 @@
-<script src="/js/jquery.js"></script>
-<script src="/js/bootstrap.js"></script>
-<script src="/js/raphael-min.js"></script>
-<script src="/js/sparky.js"></script>
-<script src="/js/app.js"></script>
+<script src="{{{:genie_assets_path}}}js/jquery.js"></script>
+<script src="{{{:genie_assets_path}}}js/bootstrap.js"></script>
+<script src="{{{:genie_assets_path}}}js/raphael-min.js"></script>
+<script src="{{{:genie_assets_path}}}js/sparky.js"></script>
+<script src="{{{:genie_assets_path}}}js/app.js"></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-4730466-3', 'auto');
+  ga('send', 'pageview');
+
+</script>
