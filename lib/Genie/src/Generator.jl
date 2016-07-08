@@ -47,7 +47,7 @@ function setup_resource_path(resource_name::AbstractString)
   resource_path
 end
 
-@debug function write_resource_file(resource_path::AbstractString, file_name::AbstractString, resource_name::AbstractString)
+function write_resource_file(resource_path::AbstractString, file_name::AbstractString, resource_name::AbstractString)
   if isfile(joinpath(resource_path, file_name)) 
     Genie.log("File already exists, $(joinpath(resource_path, file_name)) - skipping", :err) 
     return false

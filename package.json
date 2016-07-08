@@ -1,7 +1,7 @@
 {
-  "name": "your-app",
-  "description": "Description",
-  "author": "Your Name",
+  "name": "Julia Packages",
+  "description": "RESTful API and website for Julia package discovery",
+  "author": "Adrian Salceanu",
   "version": "0.0.1",
   "repository": {
     "type": "git",

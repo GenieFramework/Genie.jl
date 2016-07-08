@@ -12,7 +12,7 @@ function search(params)
   results_count = Repos.count_search_results(params[:q]) 
   search_results_df = Repos.search(params[:q], limit = SQLLimit(params[:page_size]), offset = (params[:page_number] - 1) * params[:page_size]) 
 
-  search_results = Dict{Int, Any}([d[:package_id] => d for d in Model.dataframe_to_dict(search_results_df)])
+  search_results = Dict{Int,Any}([d[:package_id] => d for d in Model.dataframe_to_dict(search_results_df)])
   packages =  ! isempty(search_results) ? 
               Model.find(Package, SQLQuery(where = SQLWhere(:id, SQLInput(join( map(x -> string(x), search_results_df[:package_id]), ","), raw = true), "AND", "IN" ))) :
               []

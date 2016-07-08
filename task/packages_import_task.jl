@@ -23,6 +23,8 @@ function run_task!(_::PackagesImportTask, parsed_args = Dict())
       Genie.log(ex, :debug)
     end
   end
+  
+  Genie.log("Finished running task", :info)
 end
 
 function package_author(pkg::Pair{UTF8String,MetadataTools.PkgMeta})

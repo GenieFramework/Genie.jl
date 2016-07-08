@@ -1,6 +1,7 @@
 using App
 using Logging
 using Millboard
+using StackTraces
 
 const console_logger = Logger("console_logger")
 const file_logger = Logger("file_logger")
@@ -12,8 +13,14 @@ function log(message, level = "info")
     try 
       println()
       eval( parse( "$level($(l.name), \"\"\" " * "\n" * message * " \"\"\")") )
-    catch 
+      if level == "err" 
+        println()
+        show_stacktrace() 
+      end
+    catch ex
       log("=== CAN'T LOG MESSAGE, INVALID CHARS ===", level)
+      @show ex
+      show_stacktrace(catch_stacktrace())
     end
   end
 end

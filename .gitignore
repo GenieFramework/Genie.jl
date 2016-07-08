@@ -1,8 +1,14 @@
 _debug/
+
+# App and project
 config/secrets.jl
 log/
-genie.sublime-project
-genie.sublime-workspace 
+*.sublime-project
+*.sublime-workspace 
+
+# Vagrant
+.vagrant
+Vagrantfile
 
 # Numerous always-ignore extensions
 *.diff

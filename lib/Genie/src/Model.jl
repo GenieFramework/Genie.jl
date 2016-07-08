@@ -129,7 +129,7 @@ end
 # Object generation 
 # 
 
-@debug function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
+function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
   models = OrderedDict{DbId, T}()
   dfs = df_result_to_models_data(m, df)
   
