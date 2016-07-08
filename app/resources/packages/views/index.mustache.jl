@@ -14,7 +14,7 @@
   <div class="col-md-4 section-headers">
     <h4>
       <i class="fa fa-hourglass-start"></i>
-      Newest packages
+      Newest
     </h4>
     {{#:new_packages_data}}
     {{> app/resources/packages/views/package_item.mustache.jl}}
