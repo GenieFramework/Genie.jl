@@ -26,7 +26,7 @@ using Inflector
 
 function load_configurations()
   include(abspath("config/loggers.jl"))
-  include(abspath("config/secrets.jl"))
+  isfile(abspath("config/secrets.jl")) && include(abspath("config/secrets.jl"))
 end
 
 function load_models(dir = abspath(joinpath(Genie.APP_PATH, "app", "resources")))
@@ -35,8 +35,8 @@ function load_models(dir = abspath(joinpath(Genie.APP_PATH, "app", "resources"))
     full_path = joinpath(dir, i)
     if isdir(full_path)
       load_models(full_path)
-    else 
-      if ( i == GENIE_MODEL_FILE_NAME || i == GENIE_VALIDATOR_FILE_NAME ) 
+    else
+      if ( i == GENIE_MODEL_FILE_NAME || i == GENIE_VALIDATOR_FILE_NAME )
         include(full_path)
       end
     end
@@ -48,7 +48,7 @@ function load_controller(dir::AbstractString)
   controller_files = ["controller", "authorization"]
   for cf in controller_files
     file_path = joinpath(dir, cf * ".jl")
-    if isfile(file_path) && isreadable(file_path) 
+    if isfile(file_path) && isreadable(file_path)
       include(file_path)
     end
   end
@@ -70,18 +70,18 @@ end
 function startup(parsed_args::Dict{AbstractString, Any} = Dict(), start_server::Bool = false)
   isempty(parsed_args) && (parsed_args = parse_commandline_args())
 
-  if parsed_args["s"] == "s" || start_server == true 
+  if parsed_args["s"] == "s" || start_server == true
     Genie.genie_app.server = Nullable{RemoteRef{Channel{Any}}}(AppServer.spawn(Genie.config.server_port))
 
-    if config.server_workers_count > 1 
+    if config.server_workers_count > 1
       next_port = Genie.config.server_port + 1
       for w in 0:(config.server_workers_count - 1)
         AppServer.spawn(next_port)
         next_port += 1
       end
-    end 
+    end
 
-    while true 
+    while true
       sleep(1)
     end
   end
