@@ -6,6 +6,7 @@ using URIParser
 using Genie
 using AppServer
 using URIParser
+using Memoize
 
 import HttpServer.mimetypes
 
@@ -19,16 +20,17 @@ const PATCH   = "PATCH"
 const DELETE  = "DELETE"
 
 const routes = Array{Any,1}()
-const params = Dict{Symbol, Any}()
+const params = Dict{Symbol,Any}()
 
 function route_request(req::Request, res::Response)
   empty!(params)
 
-  if Genie.config.server_handle_static_files && is_static_file(req.resource)
-    return serve_static_file(req.resource)
+  if is_static_file(req.resource)
+    Genie.config.server_handle_static_files && return serve_static_file(req.resource)
+    return Response(404)
   end
 
-  if isempty(routes) 
+  if isempty(routes)
     load_routes_from_file()
   elseif App.is_dev()
     empty!(routes)
@@ -49,14 +51,14 @@ function match_routes(req::Request, res::Response)
     route_def, extra_params = r
     protocol, route, to = route_def
     protocol != req.method && continue
-    
+
     Genie.config.log_router && Genie.log("Router: Checking against " * route)
 
     parsed_route, param_names = parse_route(route)
 
     uri = URI(req.resource)
     regex_route = Regex("^" * parsed_route * "\$")
-    
+
     (! ismatch(regex_route, uri.path)) && continue
     Genie.config.log_router && Genie.log("Router: Matched route " * uri.path)
 
@@ -89,7 +91,7 @@ end
 function extract_uri_params(uri::URI, regex_route::Regex, param_names::Array{AbstractString,1})
   # in path params
   matches = match(regex_route, uri.path)
-  for param_name in param_names 
+  for param_name in param_names
     params[Symbol(param_name)] = matches[param_name]
   end
 
@@ -103,9 +105,9 @@ function extract_uri_params(uri::URI, regex_route::Regex, param_names::Array{Abs
   end
 
   # POST params
-  
 
-  # pagination
+
+  # JSON API pagination
   if ! haskey(params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_number"))
     params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_number")] = haskey(params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[number]")) ? parse(Int, params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[number]")]) : 1
   end
@@ -122,15 +124,14 @@ function extract_extra_params(extra_params::Dict{Symbol, Dict{Symbol, Any}})
   end
 end
 
-loaded_controllers = UInt64[]
+const loaded_controllers = UInt64[]
 
-#TODO: add a try catch and return 500 or show exception
 function invoke_controller(to::AbstractString, req::Request, res::Response, params::Dict{Symbol, Any})
   to_parts = split(to, "#")
 
   controller_path = abspath(joinpath(Genie.APP_PATH, "app", "resources", to_parts[1]))
   controller_path_hash = hash(controller_path)
-  if ! in(controller_path_hash, loaded_controllers) || Configuration.is_dev() 
+  if ! in(controller_path_hash, loaded_controllers) || Configuration.is_dev()
     Genie.load_controller(controller_path)
     Genie.export_controllers(to_parts[2])
     ! in(controller_path_hash, loaded_controllers) && push!(loaded_controllers, controller_path_hash)
@@ -141,8 +142,8 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
   params[:__req] = req
   params[:__res] = res
 
-  try 
-    response = invoke( eval(Genie, parse(string(current_module()) * "." * action_name)), ( typeof(params), ), params )
+  try
+    response = invoke(eval(Genie, parse(string(current_module()) * "." * action_name)), (typeof(params),), params)
   catch ex
     Genie.log("$ex at $(@__FILE__), line $(@__LINE__)", :err)
     rethrow(ex) # do something better with the error
@@ -156,16 +157,14 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
     end
   end
 
-  Genie.config.log_responses && AppServer.log_request_response(response)
-
   response
 end
 
 function load_routes_from_file()
-  include(abspath("config/routes.jl")) 
+  include(abspath("config/routes.jl"))
 end
 
-function is_static_file(resource::AbstractString)
+@memoize function is_static_file(resource::AbstractString)
   isfile(file_path(URI(resource).path))
 end
 

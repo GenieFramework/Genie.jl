@@ -3,16 +3,33 @@ module AppServer
 using HttpServer
 using Router
 using Genie
+using Session
 using Millboard
+
+const http_request = Request()
+const http_response = Response()
 
 function start(port::Int = 8000)
   http = HttpHandler() do req::Request, res::Response
-    Genie.config.log_requests && log_request_response(req)
-    Router.route_request(req, res)
+    http_request = req
+    http_response = res
+
+    log_request(req)
+
+    Genie.config.session_auto_start && Session.start(req, res)
+    sign_response!(res)
+
+    app_response::Response = Router.route_request(req, res)
+    app_response.headers = merge(http_response.headers, app_response.headers)
+    app_response.cookies = merge(http_response.cookies, app_response.cookies)
+
+    log_response(req, app_response)
+
+    app_response
   end
 
-  server = Server( http )
-  run( server, port )
+  server = Server(http)
+  run(server, port)
 end
 
 function spawn(port::Int = 8000)
@@ -27,9 +44,28 @@ function _spawn(port::Int)
   @spawn start(port)
 end
 
-function log_request_response(req_res::Union{Request, Response})
-  ! Genie.config.log_resources && in(:resource, fieldnames(req_res)) && return
+function sign_response!(res::Response)
+  res.headers["Server"] = Genie.config.server_signature
+  res
+end
 
+function log_request(req::Request)
+  if Router.is_static_file(req.resource)
+    Genie.config.log_resources && log_request_response(req)
+  elseif Genie.config.log_responses
+    log_request_response(req)
+  end
+end
+
+function log_response(req::Request, res::Response)
+  if Router.is_static_file(req.resource)
+    Genie.config.log_resources && log_request_response(res)
+  elseif Genie.config.log_responses
+    log_request_response(res)
+  end
+end
+
+function log_request_response(req_res::Union{Request, Response})
   req_data = Dict{AbstractString, AbstractString}()
   for f in fieldnames(req_res)
     f = string(f)
@@ -39,7 +75,7 @@ function log_request_response(req_res::Union{Request, Response})
                     mapreduce(x -> string(Char(Int(x))), *, v) |> Genie.truncate_logged_output
                   elseif isa(v, Dict) && Genie.config.log_formatted
                     Millboard.table(parse_inner_dict(v)) |> string
-                  else 
+                  else
                     string(v) |> Genie.truncate_logged_output
                   end
   end
@@ -59,8 +95,8 @@ function parse_inner_dict(d::Dict)
       end
 
       r[k] = (Genie.config.log_formatted ? Millboard.table(cookie) : cookie) |> string
-    else 
-      r[k] = Genie.truncate_logged_output(v)
+    else
+      r[k] = Genie.truncate_logged_output(string(v))
     end
   end
 

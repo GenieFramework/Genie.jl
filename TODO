@@ -1,20 +1,20 @@
 Test app:
-  use the Pkg, Metadata, Github packages to get extended information about official packages: details, commit history, stars, watchers, etc. 
+  use the Pkg, Metadata, Github packages to get extended information about official packages: details, commit history, stars, watchers, etc.
   provide functionality to search packages by various criteria
   provide a web ui for searching packages
 
 v 0.5.x
-√ has_many
-√ logging in production: requests & errors, logging level, logging formatting options
-√ bug fix: github search overwriting official packages (test app)
-√ generators for models, controllers, resources
-√ has_many_through, has_one_through, has_and_belongs_to_many relationships <-- sort of, added support for random relationships using SQLOn()
-√ html/mustache layouts, views and rendering
-√ assets management && brunch integration
+✔ has_many
+✔ logging in production: requests & errors, logging level, logging formatting options
+✔ bug fix: github search overwriting official packages (test app)
+✔ generators for models, controllers, resources
+✔ has_many_through, has_one_through, has_and_belongs_to_many relationships <-- sort of, added support for random relationships using SQLOn()
+✔ html/mustache layouts, views and rendering
+✔ assets management && brunch integration
 ☐ support for POST - routing, params, etc
 ☐ reverse routing -> resource to route
-√ authors  (test app)
-√ add stars, forks, watchers, etc (test app)
+✔ authors  (test app)
+✔ add stars, forks, watchers, etc (test app)
 
 v 0.6.x
 ☐ caching - data caching (redis, memcache, file system)
@@ -24,7 +24,7 @@ v 0.6.x
 v 0.7.x
 ☐ model validations
 ☐ authorization
-☐ channels
+☐ channels (websockets communication)
 
 v 0.8.x
 ☐ support for plugins
@@ -48,49 +48,41 @@ v 1.1
 ☐ support for mysql
 ☐ support for sqlite
 
-v 1.2 
+v 1.2
 ☐ mailers
 
-v 1.x 
-+ change from Logging to Lumberjack? 
+v 1.x
++ change from Logging to Lumberjack?
 
-Other parts: 
-  √ lazy relationships - to skip relationship if lazy 
-  √ force loading relationship (with relationship!()) if the relationship has not been loaded (cause lazy) 
+Other parts:
+  ✔ lazy relationships - to skip relationship if lazy
+  ✔ force loading relationship (with relationship!()) if the relationship has not been loaded (cause lazy)
   2. streaming queries - get the result set (dataframe) but don't convert each row to models - instead iterate row by row as the data is requested
   3. batch query results - convenience method to batch results (behind the scene using limit and offset and an iterator)
-  √ propery use show() and print() for types
-  √ updated_at does not work because it's not defined in type
+  ✔ propery use show() and print() for types
+  ✔ updated_at does not work because it's not defined in type
 
 
-+ json output <- with json views / renderer & request type matching
-+ validators with https://github.com/eraviart/Biryani.jl <- Biryani won't do, need custom validators
+☐ json output <- with json views / renderer & request type matching (.json or .html)
 ✔ code generators (controllers) @done (16-06-19 00:33)
-+ view caching
-+ add support for environments with AppConf
-+ docs https://github.com/MichaelHatherly/Lexicon.jl https://github.com/MichaelHatherly/Docile.jl
-+ DeclarativePackages to go by the gemfile and gemfile.lock pattern - a file with the app's dependencies and one with the locked versions. Should only take into account the explicit versioning when pinning. Should by default store the package sources in the app's file structure. 
-+ channels (like phoenix) (for sockets)
 
-√ complete routing to support "route", :controller, :action [done]
-√ code reloading when files are changed (via Autoreload [https://github.com/malmaud/Autoreload.jl] or https://github.com/rened/Watcher.jl) or https://github.com/wavexx/Expect.jl
-√ rendering -> auto-rendering layouts, views and partials (mustache only first or directly to ejl)
-
-√ trailblazer architecture
-
-√ logging (via the logging.jl pkg or Lumberjack.jl)
-√ parsing of command line args for server, console, websockets (via ArgParse pkg) 
-√ debugger https://github.com/toivoh/Debug.jl or gallium (gallium does not work, let's see in v0.5. using Debug)
-√ add tests with https://github.com/JuliaLang/FactCheck.jl https://github.com/codeneomatrix/Faker.jl https://github.com/burrowsa/Fixtures.jl +++ linting 
-√ models - DataFrames & https://github.com/JuliaStats/DataFramesMeta.jl
+✔ complete routing to support "route", :controller, :action [done]
+✔ code reloading when files are changed (via Autoreload [https://github.com/malmaud/Autoreload.jl] or https://github.com/rened/Watcher.jl) or https://github.com/wavexx/Expect.jl
+✔ rendering -> auto-rendering layouts, views and partials (mustache only first or directly to ejl)
+✔ trailblazer architecture
+✔ logging (via the logging.jl pkg or Lumberjack.jl)
+✔ parsing of command line args for server, console, websockets (via ArgParse pkg)
+✔ debugger https://github.com/toivoh/Debug.jl or gallium (gallium does not work, let's see in v0.5. using Debug)
+✔ add tests with https://github.com/JuliaLang/FactCheck.jl https://github.com/codeneomatrix/Faker.jl https://github.com/burrowsa/Fixtures.jl +++ linting
+✔ models - DataFrames & https://github.com/JuliaStats/DataFramesMeta.jl
 
 ======
 
 refactor
-√ Genie.render - all rendering methods should be DRY and support various rendering engines
+✔ Genie.render - all rendering methods should be DRY and support various rendering engines
 
 Other
-https://github.com/JockLawrie/AccessControl.jl <-- 
+https://github.com/JockLawrie/AccessControl.jl <--
 https://github.com/zachallaun/ValueDispatch.jl
 https://github.com/invenia/DateParser.jl  <-- extended date time parsing
 https://github.com/JuliaWeb/GitHub.jl
@@ -142,5 +134,5 @@ https://github.com/JuliaLang/ZMQ.jl
 
 # DeclarativePackages
 https://github.com/rened/DeclarativePackages.jl
-Pkg.add("DeclarativePackages") 
+Pkg.add("DeclarativePackages")
 symlink(Pkg.dir("DeclarativePackages")*"/bin/jdp",  "$(homedir())/local/bin/jdp")
