@@ -16,10 +16,10 @@ function run_task!(_::ReposImportTask, parsed_args = Dict())
   for i in (1:Model.count(Package))
     package = Model.find(Package, SQLQuery(limit = 1, offset = i-1, order = SQLOrder(:id, :desc))) |> first
 
-    try 
+    try
       repo = Repos.from_package(package)
-      Model.create_or_update_by!(repo, :package_id)
-    catch ex 
+      Model.create_or_update_by!!(repo, :package_id)
+    catch ex
       Genie.log(ex, :debug)
     end
   end

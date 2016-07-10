@@ -8,17 +8,17 @@ const file_logger = Logger("file_logger")
 
 function log(message, level = "info")
   message = replace(string(message), "\$", "\\\$")
-  
+
   for l in Genie.config.loggers
-    try 
+    try
       println()
       eval( parse( "$level($(l.name), \"\"\" " * "\n" * message * " \"\"\")") )
-      if level == "err" 
+      if level == "err"
         println()
-        show_stacktrace() 
+        show_stacktrace()
       end
     catch ex
-      try 
+      try
         log("=== CAN'T LOG MESSAGE, INVALID CHARS ===", level)
         @show ex
         show_stacktrace(catch_stacktrace())
@@ -36,9 +36,9 @@ end
 function step_dict(dict::Dict)
   d = Dict()
   for (k, v) in dict
-    if isa(v, Dict) 
-      log_dict(v) 
-    else 
+    if isa(v, Dict)
+      log_dict(v)
+    else
       d[k] = truncate_logged_output(v)
     end
   end
@@ -51,7 +51,7 @@ function log_dict(dict::Dict, level::Symbol = :info)
 end
 
 function truncate_logged_output(output::AbstractString)
-  if length(output) > Genie.config.output_length 
+  if length(output) > Genie.config.output_length
     output = output[1:Genie.config.output_length] * "..."
   end
 
@@ -63,7 +63,7 @@ function setup_loggers()
   Logging.configure(console_logger, output = STDOUT)
 
   Logging.configure(file_logger, level = Genie.config.log_level)
-  Logging.configure(file_logger, filename = joinpath("log", "$(App.config.app_env).log"))
+  Logging.configure(file_logger, filename = joinpath(Genie.config.log_folder, "$(App.config.app_env).log"))
 
   push!(Genie.config.loggers, console_logger)
   push!(Genie.config.loggers, file_logger)

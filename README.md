@@ -317,7 +317,7 @@ Model.SQLRelation
 +------------+-------------------------------------+
 )
 
-julia> SearchLight.relationship_data!(p, :Repo, :has_one)
+julia> SearchLight.relationship_data!!(p, :Repo, :has_one)
 
 31-May 19:46:47:INFO:console_logger:
 SQL QUERY: SELECT "repos"."id" AS "repos_id", "repos"."package_id" AS "repos_package_id", "repos"."fullname" AS "repos_fullname", "repos"."readme" AS "repos_readme", "repos"."participation" AS "repos_participation", "repos"."updated_at" AS "repos_updated_at" FROM "repos" WHERE TRUE AND ( "package_id" = ( 781 ) ) LIMIT 1
@@ -424,8 +424,8 @@ JSONAPI.builder(
       package, 
       name          = ()-> package.name, 
       url           = ()-> package.url, 
-      readme        = ()-> Model.relationship_data!(package, :Repo, :has_one).readme, 
-      participation = ()-> Model.relationship_data!(package, :Repo, :has_one).participation 
+      readme        = ()-> Model.relationship_data!!(package, :Repo, :has_one).readme, 
+      participation = ()-> Model.relationship_data!!(package, :Repo, :has_one).participation 
     ), 
     links = JSONAPI.elem(
       package, 
@@ -888,7 +888,7 @@ function setup()
     p.name = Faker.word() * "_" * Faker.word() * "_" * Faker.word()
     p.url = Faker.uri() * "?" * string(hash(randn()))
 
-    Model.save!(p)
+    Model.save!!(p)
   end
 end
 

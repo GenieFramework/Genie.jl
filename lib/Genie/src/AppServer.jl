@@ -8,6 +8,7 @@ using Millboard
 
 const http_request = Request()
 const http_response = Response()
+const session_id = ""
 
 function start(port::Int = 8000)
   http = HttpHandler() do req::Request, res::Response

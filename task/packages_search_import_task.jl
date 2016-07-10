@@ -19,26 +19,26 @@ function run_task!(_::PackagesSearchImportTask, parsed_args = Dict{AbstractStrin
   page_count = 1
   items_count = 0
 
-  while items_count < github_max_results_limit 
+  while items_count < github_max_results_limit
     items = search_packages(page_count, items_count)
 
     for result in items
       items_count += 1
       package = Package(name = result["name"], url = result["git_url"])
-      try 
+      try
         existing_package = SearchLight.find_one_by(Package, :url, result["git_url"])
-        if isnull(existing_package) 
-          SearchLight.save!(package)
+        if isnull(existing_package)
+          SearchLight.save!!(package)
         elseif ! isnull(existing_package) && ! haskey(official_packages(), result["name"])
-          SearchLight.save!(existing_package)
+          SearchLight.save!!(existing_package)
         end
-      catch ex 
+      catch ex
         Genie.log(ex, :debug)
       end
     end
     page_count += 1
 
-    sleep(6) #TODO: fix this to use auth requests 
+    sleep(6) #TODO: fix this to use auth requests
   end
 
 end

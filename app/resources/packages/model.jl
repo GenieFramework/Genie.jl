@@ -15,20 +15,20 @@ type Package <: AbstractModel
 
   repo::AbstractModel
 
-  Package(; 
-            id = Nullable{Model.DbId}(), 
-            name = "", 
-            url = "", 
-            author_id = Nullable{Model.DbId}(), 
-            official = false, 
+  Package(;
+            id = Nullable{Model.DbId}(),
+            name = "",
+            url = "",
+            author_id = Nullable{Model.DbId}(),
+            official = false,
 
-            has_one = [Model.SQLRelation(Repo)], 
-            belongs_to = [Model.SQLRelation(Author)], 
+            has_one = [Model.SQLRelation(Repo)],
+            belongs_to = [Model.SQLRelation(Author)],
 
             repo = Repo()
-          ) = new("packages", "id", id, name, url, author_id, official, has_one, belongs_to, repo) 
+          ) = new("packages", "id", id, name, url, author_id, official, has_one, belongs_to, repo)
 end
-function Package(name::AbstractString, url::AbstractString) 
+function Package(name::AbstractString, url::AbstractString)
   p = Package()
   p.name = name
   p.url = url
@@ -56,8 +56,8 @@ function prepare_data(packages; details = false, search_results = Dict())
   const package_item = Dict{Symbol,Any}()
   for pkg in packages
     package_item = Dict{Symbol,Any}()
-    repo = Model.relationship_data!(pkg, Genie.Repo, :has_one)
-    author = Model.relationship_data!(pkg, Genie.Author, :belongs_to)
+    repo = Model.relationship_data!!(pkg, Genie.Repo, :has_one)
+    author = Model.relationship_data!!(pkg, Genie.Author, :belongs_to)
 
     package_item[:id] = pkg.id |> Base.get
     package_item[:name] = pkg.name
@@ -78,7 +78,7 @@ function prepare_data(packages; details = false, search_results = Dict())
     package_item[:author_html_url] = author.html_url
     package_item[:author_followers_count] = author.followers_count
 
-    if details 
+    if details
       package_item[:repo_readme] = repo.readme |> Markdown.parse |> Markdown.html
     end
 

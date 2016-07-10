@@ -43,6 +43,9 @@ type Config
 
   tasks_folder::AbstractString
   test_folder::AbstractString
+  session_folder::AbstractString
+  log_folder::AbstractString
+  cache_folder::AbstractString
 
   loggers::Array{Logging.Logger,1}
   log_router::Bool
@@ -66,6 +69,7 @@ type Config
 
   session_auto_start::Bool
   session_key_name::AbstractString
+  session_storage::Symbol
 
   inflector_irregulars::Array{Tuple{AbstractString, AbstractString},1}
 
@@ -85,8 +89,11 @@ type Config
             db_migrations_folder      = abspath(joinpath("db", "migrations")),
             db_auto_connect           = true,
 
-            task_folder = abspath(joinpath("task")),
-            test_folder = abspath(joinpath("test")),
+            task_folder       = abspath(joinpath("task")),
+            test_folder       = abspath(joinpath("test")),
+            session_folder    = abspath(joinpath("session")),
+            log_folder        = abspath(joinpath("log")),
+            cache_folder      = abspath(joinpath("cache")),
 
             loggers       = [],
             log_router    = false,
@@ -108,8 +115,9 @@ type Config
 
             tests_force_test_env = true,
 
-            session_auto_start = true,
-            session_key_name = "__GENIESID",
+            session_auto_start  = true,
+            session_key_name    = "__GENIESID",
+            session_storage     = :File,
 
             inflector_irregulars = Array{Tuple{AbstractString, AbstractString},1}()
         ) =
@@ -118,13 +126,13 @@ type Config
                   app_env,
                   supress_output, output_length,
                   db_migrations_table_name, db_migrations_folder, db_auto_connect,
-                  task_folder, test_folder,
+                  task_folder, test_folder, session_folder, log_folder, cache_folder,
                   loggers, log_router, log_db, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted,
                   assets_path, assets_serve,
                   pagination_jsonapi_default_items_per_page, pagination_jsonapi_page_param_name,
                   model_relationships_eagerness,
                   tests_force_test_env,
-                  session_auto_start, session_key_name,
+                  session_auto_start, session_key_name, session_storage,
                   inflector_irregulars)
 end
 
