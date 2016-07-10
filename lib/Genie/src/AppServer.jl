@@ -3,28 +3,24 @@ module AppServer
 using HttpServer
 using Router
 using Genie
-using Session
+using Sessions
 using Millboard
-
-const http_request = Request()
-const http_response = Response()
-const session_id = ""
 
 function start(port::Int = 8000)
   http = HttpHandler() do req::Request, res::Response
     http_request = req
     http_response = res
 
+    session = Sessions.start(req, res)
     log_request(req)
-
-    Genie.config.session_auto_start && Session.start(req, res)
     sign_response!(res)
 
-    app_response::Response = Router.route_request(req, res)
+    app_response::Response = Router.route_request(req, res, session)
     app_response.headers = merge(http_response.headers, app_response.headers)
     app_response.cookies = merge(http_response.cookies, app_response.cookies)
 
     log_response(req, app_response)
+    Sessions.persist(session)
 
     app_response
   end

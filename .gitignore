@@ -1,10 +1,10 @@
 _debug/
 
-# App and project
+# App
 config/secrets.jl
 log/
-*.sublime-project
-*.sublime-workspace 
+session/
+cache/
 
 # Vagrant
 .vagrant
@@ -30,6 +30,8 @@ Vagrantfile
 .tmproj
 nbproject
 Thumbs.db
+*.sublime-project
+*.sublime-workspace
 
 # NPM packages folder.
 node_modules/

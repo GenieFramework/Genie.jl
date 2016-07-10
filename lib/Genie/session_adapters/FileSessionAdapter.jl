@@ -1,13 +1,34 @@
 module FileSessionAdapter
 
+using Sessions
 using Genie
-using Session
-using AppServer
+using Memoize
 
-function write()
-  file_name = Session.id(AppServer.http_request, AppServer.http_response)
-  outfile = open(joinpath(Genie.config.session_folder, file_name), "w")
-  serialize(outfile, Session.get())
+function write(session)
+  try
+    open(joinpath(Genie.config.session_folder, session.id), "w") do (io)
+      serialize(io, session)
+    end
+  catch ex
+    Genie.log(ex, :err)
+  end
+
+  session
+end
+
+function read(session_id::AbstractString)
+  try
+    session = open(joinpath(Genie.config.session_folder, session_id), "r") do (io)
+      deserialize(io)
+    end
+    Nullable{Session}(session)
+  catch ex
+    Genie.log(ex, :debug)
+    Nullable{Session}()
+  end
+end
+function read(session)
+  read(session.id)
 end
 
 end

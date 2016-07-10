@@ -15,10 +15,10 @@ type Author <: AbstractModel
 
   has_many::Array{Model.SQLRelation,1}
 
-  Author(; 
-    id = Nullable{Model.DbId}(), 
-    name = "", 
-    fullname = "", 
+  Author(;
+    id = Nullable{Model.DbId}(),
+    name = "",
+    fullname = "",
     company = "",
     location = "",
     html_url = "",
@@ -26,11 +26,11 @@ type Author <: AbstractModel
     followers_count = 0,
 
     has_many = [
-                  Model.SQLRelation(Package, eagerness = MODEL_RELATIONSHIPS_EAGERNESS_AUTO), 
+                  Model.SQLRelation(Package, eagerness = MODEL_RELATIONSHIPS_EAGERNESS_AUTO),
                   Model.SQLRelation(Repo, join = SQLJoin(Repo, SQLOn("packages.id", "repos.package_id"), join_type = "LEFT" ), eagerness = MODEL_RELATIONSHIPS_EAGERNESS_AUTO)
-                ], 
+                ],
 
-  ) = new("authors", "id", id, name, fullname, company, location, html_url, blog_url, followers_count, has_many) 
+  ) = new("authors", "id", id, name, fullname, company, location, html_url, blog_url, followers_count, has_many)
 end
 
 module Authors

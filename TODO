@@ -25,6 +25,8 @@ v 0.7.x
 ☐ model validations
 ☐ authorization
 ☐ channels (websockets communication)
+☐ encrypt sessions and cookies
+☐ add a method to automatically run all DOWN migrations
 
 v 0.8.x
 ☐ support for plugins

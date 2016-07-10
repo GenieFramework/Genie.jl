@@ -7,6 +7,7 @@ using Genie
 using AppServer
 using URIParser
 using Memoize
+using Sessions
 
 import HttpServer.mimetypes
 
@@ -22,7 +23,7 @@ const DELETE  = "DELETE"
 const routes = Array{Any,1}()
 const params = Dict{Symbol,Any}()
 
-function route_request(req::Request, res::Response)
+function route_request(req::Request, res::Response, session::Session)
   empty!(params)
 
   if is_static_file(req.resource)
@@ -38,7 +39,7 @@ function route_request(req::Request, res::Response)
     Genie.load_models()
   end
 
-  match_routes(req, res)
+  match_routes(req, res, session)
 end
 
 function route(params...; with::Dict{Symbol, Any} = Dict{Symbol, Any}())
@@ -46,7 +47,7 @@ function route(params...; with::Dict{Symbol, Any} = Dict{Symbol, Any}())
   push!(routes, (params, extra_params))
 end
 
-function match_routes(req::Request, res::Response)
+function match_routes(req::Request, res::Response, session::Session)
   for r in routes
     route_def, extra_params = r
     protocol, route, to = route_def
@@ -65,7 +66,7 @@ function match_routes(req::Request, res::Response)
     extract_uri_params(uri, regex_route, param_names)
     extract_extra_params(extra_params)
 
-    return invoke_controller(to, req, res, params)
+    return invoke_controller(to, req, res, params, session)
   end
 
   Genie.config.log_router && Genie.log("Router: No route matched - defaulting 404")
@@ -126,7 +127,7 @@ end
 
 const loaded_controllers = UInt64[]
 
-function invoke_controller(to::AbstractString, req::Request, res::Response, params::Dict{Symbol, Any})
+function invoke_controller(to::AbstractString, req::Request, res::Response, params::Dict{Symbol, Any}, session::Session)
   to_parts = split(to, "#")
 
   controller_path = abspath(joinpath(Genie.APP_PATH, "app", "resources", to_parts[1]))
@@ -139,8 +140,10 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
 
   controller = Genie.GenieController()
   action_name = string(current_module()) * "." * to_parts[2]
-  params[:__req] = req
-  params[:__res] = res
+
+  params[:_req]       = req
+  params[:_res]       = res
+  params[:_session]   = session
 
   try
     response = invoke(eval(Genie, parse(string(current_module()) * "." * action_name)), (typeof(params),), params)

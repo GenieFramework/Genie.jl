@@ -17,7 +17,7 @@ function run_task!(_::ImportPackageAuthorsTask, parsed_args = Dict{AbstractStrin
     author = Model.find_one_by_or_create( Author, :name, author_name ) |> Base.get
 
     try
-      github_author = GitHub.owner(author_name, auth = GITHUB_AUTH)
+      github_author = GitHub.owner(author_name, auth = Genie.GITHUB_AUTH)
       author.fullname = isnull(github_author.name) ? "" : Base.get(github_author.name)
       author.company = isnull(github_author.company) ? "" : Base.get(github_author.company)
       author.location = isnull(github_author.location) ? "" : Base.get(github_author.location)

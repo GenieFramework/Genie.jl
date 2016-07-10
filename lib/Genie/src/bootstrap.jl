@@ -7,21 +7,25 @@ end
 
 push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "src")))
 push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "database_adapters")))
+push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "cache_adapters")))
+push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "session_adapters")))
 push!(LOAD_PATH, abspath(joinpath("app", "resources")))
 
 include(abspath(joinpath("lib", "Genie", "src", "genie_types.jl")))
 
 using AppServer
+using Inflector
 using Migration
 using Model
 using Tester
 using Toolbox
-using Inflector
 
 @reexport using Configuration
+@reexport using Cookies
 @reexport using HttpServer
 @reexport using Render
 @reexport using Render.JSONAPI
+@reexport using Sessions
 @reexport using Util
 
 function load_configurations()

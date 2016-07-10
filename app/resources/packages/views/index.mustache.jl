@@ -1,5 +1,7 @@
 {{> app/resources/packages/views/jumbotron.mustache.jl}}
 
+{{:fts}}
+
 <div class="row">
   <div class="col-md-4 section-headers">
     <h4>
