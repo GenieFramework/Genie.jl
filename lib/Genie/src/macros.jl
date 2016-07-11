@@ -6,16 +6,16 @@ if is_dev()
         @time $(esc(expr))
     end
   end
-else 
+else
   macro run_with_time(expr)
     expr
   end
 end
 
 macro psst(expr)
-  Genie.config.supress_output = true
+  Genie.config.suppress_output = true
   evx = eval(expr)
-  Genie.config.supress_output = false
+  Genie.config.suppress_output = false
   evx
 end
 
@@ -29,7 +29,7 @@ end
 
 macro in_repl(expr)
   if isinteractive() || Configuration.IN_REPL
-    quote 
+    quote
       $(esc(expr))
     end
   end

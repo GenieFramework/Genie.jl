@@ -9,7 +9,7 @@ using Configuration
 
 type DbMigration # todo: rename the "migration_" prefix for the fields
   migration_hash::AbstractString
-  migration_file_name::AbstractString 
+  migration_file_name::AbstractString
   migration_class_name::AbstractString
 end
 
@@ -50,18 +50,18 @@ end
 
 function up_by_class_name(migration_class_name::AbstractString)
   migration = migration_by_class_name(migration_class_name)
-  if migration != nothing 
+  if migration != nothing
     run_migration(migration, :up)
-  else 
+  else
     error("Migration $migration_class_name not found")
   end
 end
 
 function down_by_class_name(migration_class_name::AbstractString)
   migration = migration_by_class_name(migration_class_name)
-  if migration != nothing 
+  if migration != nothing
     run_migration(migration, :down)
-  else 
+  else
     error("Migration $migration_class_name not found")
   end
 end
@@ -70,7 +70,7 @@ function migration_by_class_name(migration_class_name::AbstractString)
   ids, migrations = all_migrations()
   for id in ids
     migration = migrations[id]
-    if migration.migration_class_name == migration_class_name 
+    if migration.migration_class_name == migration_class_name
       return migration
     end
   end
@@ -99,17 +99,17 @@ end
 
 function run_migration(migration::DbMigration, direction::Symbol)
   include(abspath(joinpath(Genie.config.db_migrations_folder, migration.migration_file_name)))
-  eval(parse("$(current_module()).$(string(direction))($(current_module()).$(migration.migration_class_name)())")) 
+  eval(parse("$(current_module()).$(string(direction))($(current_module()).$(migration.migration_class_name)())"))
 
   store_migration_status(migration, direction)
 
-  ! Genie.config.supress_output && Genie.log("Executed migration $(migration.migration_class_name) $(direction)")
+  ! Genie.config.suppress_output && Genie.log("Executed migration $(migration.migration_class_name) $(direction)")
 end
 
 function store_migration_status(migration::DbMigration, direction::Symbol)
   if ( direction == :up )
     Database.query("INSERT INTO $(Genie.config.db_migrations_table_name) VALUES ('$(migration.migration_hash)')", system_query = true)
-  else 
+  else
     Database.query("DELETE FROM $(Genie.config.db_migrations_table_name) WHERE version = ('$(migration.migration_hash)')", system_query = true)
   end
 end
@@ -123,7 +123,7 @@ function status()
   migrations, migrations_files = all_migrations()
   up_migrations = upped_migrations()
   arr_output = []
-  
+
   for m in migrations
     sts = ( findfirst(up_migrations, m) > 0 ) ? :up : :down
     push!(arr_output, [migrations_files[m].migration_class_name * ": " * uppercase(string(sts)); migrations_files[m].migration_file_name])
@@ -137,12 +137,12 @@ function all_with_status()
   up_migrations = upped_migrations()
   indexes = []
   result = Dict()
-  
+
   for m in migrations
     status = ( findfirst(up_migrations, m) > 0 ) ? :up : :down
     push!(indexes, migrations_files[m].migration_hash)
     result[migrations_files[m].migration_hash] = Dict(
-      :migration => DbMigration(migrations_files[m].migration_hash, migrations_files[m].migration_file_name, migrations_files[m].migration_class_name), 
+      :migration => DbMigration(migrations_files[m].migration_hash, migrations_files[m].migration_file_name, migrations_files[m].migration_class_name),
       :status => status
     )
   end

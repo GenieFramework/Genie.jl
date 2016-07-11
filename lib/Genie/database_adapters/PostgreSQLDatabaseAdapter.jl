@@ -38,17 +38,17 @@ function adapter_escape_column_name(c::AbstractString, conn, adapter)
   str
 end
 
-function adapter_query_df(sql::AbstractString, supress_output::Bool, conn, adapter)
-  df::DataFrames.DataFrame = adapter.fetchdf(adapter_query(sql, supress_output, conn, adapter, false))
-  (! supress_output && Genie.config.log_db) && Genie.log(df)
+function adapter_query_df(sql::AbstractString, suppress_output::Bool, conn, adapter)
+  df::DataFrames.DataFrame = adapter.fetchdf(adapter_query(sql, suppress_output, conn, adapter, false))
+  (! suppress_output && Genie.config.log_db) && Genie.log(df)
 
   df
 end
 
-function adapter_query(sql::AbstractString, supress_output::Bool, conn, adapter, skip_db::Bool)
+function adapter_query(sql::AbstractString, suppress_output::Bool, conn, adapter, skip_db::Bool)
   stmt = adapter.prepare(conn, sql)
 
-  result = if supress_output || ! Genie.config.log_db
+  result = if suppress_output || ! Genie.config.log_db
     adapter.execute(stmt)
   else
     Genie.log("SQL QUERY: $(escape_string(sql))")

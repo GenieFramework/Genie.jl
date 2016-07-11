@@ -11,15 +11,15 @@ end
 @memoize function env_connection_data()
   db_conn_data = parse_connection_data()
 
-  if ( haskey(db_conn_data, Genie.config.app_env) ) 
+  if ( haskey(db_conn_data, Genie.config.app_env) )
     env_db_conn_data = db_conn_data[Genie.config.app_env]
     if ( haskey(env_db_conn_data, "adapter") )
       return Nullable(env_db_conn_data)
-    else 
+    else
       error("Database config must define an adapter")
       Nullable()
     end
-  else 
+  else
     error("DB configuration for $(Genie.config.app_env) not found")
   end
 
@@ -32,7 +32,7 @@ end
 
 @memoize function db_connect(skip_db::Bool = false)
   env_db_conn_data = env_connection_data()
-  if isnull(env_db_conn_data) 
+  if isnull(env_db_conn_data)
     error("Database connection failed")
   end
 
@@ -55,9 +55,9 @@ function create_migrations_table()
 end
 
 function query(sql::AbstractString; skip_db::Bool = false, system_query::Bool = false)
-  supress_output = system_query || Genie.config.supress_output
+  suppress_output = system_query || Genie.config.suppress_output
   conn, adapter = query_tools(skip_db)
-  DatabaseAdapter.adapter_query(sql, supress_output, conn, adapter, skip_db)
+  DatabaseAdapter.adapter_query(sql, suppress_output, conn, adapter, skip_db)
 end
 
 @memoize function escape_column_name(c::AbstractString)
@@ -72,13 +72,12 @@ end
 
 @memoize function table_columns(table_name::AbstractString)
   conn, adapter = query_tools()
-  query_df(DatabaseAdapter.adapter_table_columns_sql(table_name), supress_output = true)
+  query_df(DatabaseAdapter.adapter_table_columns_sql(table_name), suppress_output = true)
 end
 
-function query_df(sql::AbstractString; supress_output::Bool = false) 
-  supress_output = supress_output || Genie.config.supress_output
+function query_df(sql::AbstractString; suppress_output::Bool = false)
   conn, adapter = query_tools()
-  DatabaseAdapter.adapter_query_df(sql, supress_output, conn, adapter)
+  DatabaseAdapter.adapter_query_df(sql, (suppress_output || Genie.config.suppress_output), conn, adapter)
 end
 
 Genie.config.db_auto_connect && db_connect()

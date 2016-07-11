@@ -34,7 +34,7 @@ type Config
 
   app_env::AbstractString
 
-  supress_output::Bool
+  suppress_output::Bool
   output_length::Int
 
   db_migrations_table_name::AbstractString
@@ -82,7 +82,7 @@ type Config
 
             app_env = ENV["GENIE_ENV"],
 
-            supress_output  = false,
+            suppress_output = false,
             output_length   = 10_000, # where to truncate strings in console
 
             db_migrations_table_name  = "schema_migrations",
@@ -124,7 +124,7 @@ type Config
               new(
                   server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature,
                   app_env,
-                  supress_output, output_length,
+                  suppress_output, output_length,
                   db_migrations_table_name, db_migrations_folder, db_auto_connect,
                   task_folder, test_folder, session_folder, log_folder, cache_folder,
                   loggers, log_router, log_db, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted,
