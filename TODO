@@ -11,15 +11,15 @@ v 0.5.x
 ✔ has_many_through, has_one_through, has_and_belongs_to_many relationships <-- sort of, added support for random relationships using SQLOn()
 ✔ html/mustache layouts, views and rendering
 ✔ assets management && brunch integration
-☐ support for POST - routing, params, etc
-☐ reverse routing -> resource to route
 ✔ authors  (test app)
-✔ add stars, forks, watchers, etc (test app)
+✔ add stars, forks, watchers, etc (test app) @done (16-07-12 22:22)
 
 v 0.6.x
+☐ new test app - blogging platform
+☐ support for POST - routing, params, etc
+☐ reverse routing -> resource to route
 ☐ caching - data caching (redis, memcache, file system)
 ☐ view / partials caching -- and not reloading views in production
-☐ proper error handling (50x, 40x)
 
 v 0.7.x
 ☐ model validations
@@ -32,13 +32,14 @@ v 0.8.x
 ☐ support for plugins
 ☐ admin plugin (test app)
 ☐ packages versioning (declarative packages)
+☐ proper error handling (50x, 40x)
 
 v 0.9.x
 ☐ parallel serving
 ☐ performance enhancements, cleanup
 ☐ doc comments
 ☐ rename methods ending in ! to end in !! and follow julia's guidelines
-☐ rename methods to not use "_"
+✔ rename methods to not use "_" @done (16-07-12 22:23)
 ☐ more tests
 ☐ REPL utility to setup a new app
 

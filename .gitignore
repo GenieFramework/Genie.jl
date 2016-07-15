@@ -32,6 +32,7 @@ nbproject
 Thumbs.db
 *.sublime-project
 *.sublime-workspace
+.vscode
 
 # NPM packages folder.
 node_modules/
