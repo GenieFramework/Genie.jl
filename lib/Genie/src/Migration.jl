@@ -82,7 +82,7 @@ end
   migrations = []
   migrations_files = Dict()
   for (f in readdir(Genie.config.db_migrations_folder))
-    if ( ismatch(r"\d{17}_.*\.jl", f) )
+    if ismatch(r"\d{17}_.*\.jl", f)
       parts = split(f, "_", limit = 2)
       push!(migrations, parts[1])
       migrations_files[parts[1]] = DbMigration(parts[1], f, migration_class_name(parts[2]))

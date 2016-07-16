@@ -1,6 +1,6 @@
 dev:
   adapter: PostgreSQL
-  database: pkg_info_dev
+  database: blogjl_dev
   host: localhost
   username: adrian
   password: adrian
@@ -8,7 +8,7 @@ dev:
 
 prod:
   adapter: PostgreSQL
-  database: pkg_info_prod
+  database: blogjl_prod
   host: localhost
   username: adrian
   password: adrian
@@ -16,7 +16,7 @@ prod:
 
 test:
   adapter: PostgreSQL
-  database: pkg_info_test
+  database: blogjl_test
   host: localhost
   username: adrian
   password: adrian

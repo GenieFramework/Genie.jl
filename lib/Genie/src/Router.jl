@@ -11,6 +11,8 @@ using Sessions
 
 import HttpServer.mimetypes
 
+include(abspath(joinpath("lib", "Genie", "src", "router_converters.jl")))
+
 export route, routes, params
 export GET, POST, PUT, PATCH, DELETE
 
@@ -55,15 +57,16 @@ function match_routes(req::Request, res::Response, session::Session)
 
     Genie.config.log_router && Genie.log("Router: Checking against " * route)
 
-    parsed_route, param_names = parse_route(route)
+    parsed_route, param_names, param_types = parse_route(route)
 
     uri = URI(req.resource)
     regex_route = Regex("^" * parsed_route * "\$")
 
     (! ismatch(regex_route, uri.path)) && continue
     Genie.config.log_router && Genie.log("Router: Matched route " * uri.path)
+    (! extract_uri_params(uri, regex_route, param_names, param_types)) && continue
+    Genie.config.log_router && Genie.log("Router: Matched type of route " * uri.path)
 
-    extract_uri_params(uri, regex_route, param_names)
     extract_extra_params(extra_params)
 
     return invoke_controller(to, req, res, params, session)
@@ -76,24 +79,41 @@ end
 function parse_route(route::AbstractString)
   parts = Array{AbstractString,1}()
   param_names = Array{AbstractString,1}()
+  param_types = Array{Any,1}()
 
   for rp in split(route, "/", keep = false)
     if startswith(rp, ":")
+      param_type =  if contains(rp, "::")
+                      x = split(rp, "::")
+                      rp = x[1]
+                      eval(parse(x[2]))
+                    else
+                      Any
+                    end
       param_name = rp[2:end]
-      rp = """(?P<$param_name>\\w+)"""
+      rp = """(?P<$param_name>[\\w\\-]+)"""
       push!(param_names, param_name)
+      push!(param_types, param_type)
     end
     push!(parts, rp)
   end
 
-  "/" * join(parts, "/"), param_names
+  "/" * join(parts, "/"), param_names, param_types
 end
 
-function extract_uri_params(uri::URI, regex_route::Regex, param_names::Array{AbstractString,1})
+function extract_uri_params(uri::URI, regex_route::Regex, param_names::Array{AbstractString,1}, param_types::Array{Any,1})
   # in path params
   matches = match(regex_route, uri.path)
+  i = 1
   for param_name in param_names
-    params[Symbol(param_name)] = matches[param_name]
+    try
+      params[Symbol(param_name)] = convert(param_types[i], matches[param_name])
+    catch ex
+      Genie.log(ex)
+      return false
+    end
+
+    i += 1
   end
 
   # GET params
@@ -115,6 +135,8 @@ function extract_uri_params(uri::URI, regex_route::Regex, param_names::Array{Abs
   if ! haskey(params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_size"))
     params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_size")] = haskey(params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[size]")) ? parse(Int, params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[size]")]) : Genie.genie_app.config.pagination_jsonapi_default_items_per_page
   end
+
+  true
 end
 
 function extract_extra_params(extra_params::Dict{Symbol, Dict{Symbol, Any}})
