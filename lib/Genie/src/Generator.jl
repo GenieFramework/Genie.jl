@@ -60,9 +60,9 @@ function write_resource_file(resource_path::AbstractString, file_name::AbstractS
   f = open(joinpath(resource_path, file_name), "w")
 
   if file_name == Genie.GENIE_MODEL_FILE_NAME
-    write(f, FileTemplates.new_model( Base.get(Inflector.to_singular(resource_name)) ))
+    write(f, FileTemplates.new_model( Base.get(Inflector.to_singular( Inflector.from_underscores(resource_name) )) ))
   elseif file_name == Genie.GENIE_CONTROLLER_FILE_NAME
-    write(f, FileTemplates.new_controller( Base.get(Inflector.to_plural(resource_name)) ))
+    write(f, FileTemplates.new_controller( Base.get(Inflector.to_plural( Inflector.from_underscores(resource_name) )) ))
   elseif file_name == Genie.GENIE_VALIDATOR_FILE_NAME
     write(f, FileTemplates.new_validator( Base.get(Inflector.to_singular(resource_name)) ))
   elseif file_name == Genie.GENIE_AUTHORIZATOR_FILE_NAME

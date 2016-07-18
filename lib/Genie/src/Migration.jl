@@ -50,8 +50,8 @@ end
 
 function up_by_class_name(migration_class_name::AbstractString)
   migration = migration_by_class_name(migration_class_name)
-  if migration != nothing
-    run_migration(migration, :up)
+  if ! isnull(migration)
+    run_migration(Base.get(migration), :up)
   else
     error("Migration $migration_class_name not found")
   end
@@ -59,8 +59,8 @@ end
 
 function down_by_class_name(migration_class_name::AbstractString)
   migration = migration_by_class_name(migration_class_name)
-  if migration != nothing
-    run_migration(migration, :down)
+  if ! isnull(migration)
+    run_migration(Base.get(migration), :down)
   else
     error("Migration $migration_class_name not found")
   end
@@ -71,18 +71,18 @@ function migration_by_class_name(migration_class_name::AbstractString)
   for id in ids
     migration = migrations[id]
     if migration.migration_class_name == migration_class_name
-      return migration
+      return Nullable(migration)
     end
   end
 
-  return nothing # TODO: use nullables
+  return Nullable()
 end
 
 @memoize function all_migrations()
   migrations = []
   migrations_files = Dict()
   for (f in readdir(Genie.config.db_migrations_folder))
-    if ismatch(r"\d{17}_.*\.jl", f)
+    if ismatch(r"\d{16,17}_.*\.jl", f)
       parts = split(f, "_", limit = 2)
       push!(migrations, parts[1])
       migrations_files[parts[1]] = DbMigration(parts[1], f, migration_class_name(parts[2]))
@@ -97,7 +97,15 @@ end
   return migrations_files[migrations[length(migrations)]]
 end
 
-function run_migration(migration::DbMigration, direction::Symbol)
+function run_migration(migration::DbMigration, direction::Symbol; force = false)
+  if ! force
+    if  ( direction == :up    && in(migration.migration_hash, upped_migrations()) ) ||
+        ( direction == :down  && in(migration.migration_hash, downed_migrations()) )
+      Genie.log("Skipping, migration is already $direction")
+      return
+    end
+  end
+
   include(abspath(joinpath(Genie.config.db_migrations_folder, migration.migration_file_name)))
   eval(parse("$(current_module()).$(string(direction))($(current_module()).$(migration.migration_class_name)())"))
 
@@ -117,6 +125,11 @@ end
 function upped_migrations()
   result = Database.query("SELECT * FROM $(Genie.config.db_migrations_table_name) ORDER BY version DESC", system_query = true)
   return map(x -> x[1], result)
+end
+
+function downed_migrations()
+  upped = upped_migrations()
+  filter(m -> ! in(m, upped), all_migrations()[1])
 end
 
 function status()

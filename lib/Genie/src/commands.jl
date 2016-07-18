@@ -13,57 +13,70 @@ function run_app_with_command_line_args(config)
   config.server_port = parse(Int, parsed_args["server:port"])
   config.server_workers_count = parse(Int, parsed_args["server:workers"])
 
-  if ( called_command(parsed_args, "db:init") )
+  if called_command(parsed_args, "db:init")
     Database.create_database()
     Database.create_migrations_table()
 
-  elseif ( parsed_args["model:new"] != nothing )
+  elseif parsed_args["model:new"] != nothing
     Generator.new_model(parsed_args, config)
 
-  elseif ( parsed_args["resource:new"] != nothing )
+  elseif parsed_args["resource:new"] != nothing
     Generator.new_resource(parsed_args, config)
 
-  elseif ( called_command(parsed_args, "migration:status") || called_command(parsed_args, "migration:list") )
+  elseif called_command(parsed_args, "migration:status") || called_command(parsed_args, "migration:list")
     Migration.status()
-  elseif ( parsed_args["migration:new"] != nothing )
+  elseif parsed_args["migration:new"] != nothing
     Migration.new(parsed_args, config)
 
-  elseif (  called_command(parsed_args, "migration:allup") )
+  elseif called_command(parsed_args, "migration:allup")
     Migration.all_up()
 
-  elseif (  called_command(parsed_args, "migration:up") )
+  elseif called_command(parsed_args, "migration:up")
     Migration.last_up()
-  elseif (  parsed_args["migration:up"] != nothing )
+  elseif parsed_args["migration:up"] != nothing
     Migration.up_by_class_name(parsed_args["migration:up"])
 
-  elseif (  called_command(parsed_args, "migration:alldown") )
+  elseif called_command(parsed_args, "migration:alldown")
     Migration.all_down()
 
-  elseif (  called_command(parsed_args, "migration:down") )
+  elseif called_command(parsed_args, "migration:down")
     Migration.last_down()
-  elseif (  parsed_args["migration:down"] != nothing )
+  elseif parsed_args["migration:down"] != nothing
     Migration.down_by_class_name(parsed_args["db:migration:down"])
 
-  elseif (  called_command(parsed_args, "task:list") )
+  elseif called_command(parsed_args, "task:list")
     Toolbox.print_all_tasks()
-  elseif (  parsed_args["task:run"] != nothing )
+  elseif parsed_args["task:run"] != nothing
     Toolbox.run_task(parsed_args["task:run"])
-  elseif ( parsed_args["task:new"] != nothing )
+  elseif parsed_args["task:new"] != nothing
     ! endswith(parsed_args["task:new"], "_task") && (parsed_args["task:new"] *= "_task")
     Toolbox.new(parsed_args, config)
 
-  elseif (  called_command(parsed_args, "test:run") )
+  elseif called_command(parsed_args, "test:run")
     Tester.run_all_tests(parsed_args["test:run"], config)
 
-  else
+  elseif called_command(parsed_args, "s")
     Genie.genie_app.server = Genie.startup(parsed_args)
+
+  else
+    if isinteractive() || Configuration.IN_REPL
+      Genie.log("Started Genie interactive session", :info)
+      eval(parse("using Genie, Model"))
+    else
+      Genie.log("Unknown options, use -h or --help", :info)
+    end
   end
 end
 
 function parse_commandline_args()
-    s = ArgParseSettings()
+    settings = ArgParseSettings()
 
-    @add_arg_table s begin
+    settings.description = "Genie web framework command line client"
+    settings.epilog = "Visit http://genieframework.com for more info"
+    settings.version = "0.6"
+    settings.add_version = true
+
+    @add_arg_table settings begin
         # "--opt2", "-o"
         #     help = "another option with an argument"
         #     arg_type = Int
@@ -127,5 +140,5 @@ function parse_commandline_args()
             default = "false"
     end
 
-    return parse_args(s)
+    return parse_args(settings)
 end

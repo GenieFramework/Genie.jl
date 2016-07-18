@@ -1,6 +1,6 @@
 module Sessions
 
-export Session
+# export Session
 
 using Genie
 using SHA

@@ -77,9 +77,9 @@ function startup(parsed_args::Dict{AbstractString, Any} = Dict(), start_server::
   if parsed_args["s"] == "s" || start_server == true
     Genie.genie_app.server = Nullable{RemoteRef{Channel{Any}}}(AppServer.spawn(Genie.config.server_port))
 
-    if config.server_workers_count > 1
+    if Genie.config.server_workers_count > 1
       next_port = Genie.config.server_port + 1
-      for w in 0:(config.server_workers_count - 1)
+      for w in 0:(Genie.config.server_workers_count - 1)
         AppServer.spawn(next_port)
         next_port += 1
       end

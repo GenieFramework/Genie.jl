@@ -11,9 +11,9 @@ end
 
 function to_singular_irregular(word::AbstractString)
   irr = irregular(word)
-  if ! isnull(irr) 
+  if ! isnull(irr)
     return Nullable{Base.get(irr)[1]}
-  else 
+  else
     return Nullable{AbstractString}()
   end
 end
@@ -25,11 +25,15 @@ end
 
 function to_plural_irregular(word::AbstractString)
   irr = irregular(word)
-  if ! isnull(irr) 
+  if ! isnull(irr)
     return Nullable{AbstractString}(Base.get(irr)[2])
-  else 
+  else
     return Nullable{AbstractString}()
   end
+end
+
+function from_underscores(word::AbstractString)
+  mapreduce(x -> ucfirst(x), *, split(word, "_"))
 end
 
 function is_singular(word::AbstractString)
@@ -53,13 +57,13 @@ end
 end
 
 irregular_nouns = Array{Tuple{AbstractString, AbstractString},1}([
-  ("alumnus", "alumni"), 
-  ("cactus", "cacti"), 
-  ("focus", "foci"), 
-  ("fungus", "fungi"), 
+  ("alumnus", "alumni"),
+  ("cactus", "cacti"),
+  ("focus", "foci"),
+  ("fungus", "fungi"),
   ("nucleus", "nuclei"),
   ("radius", "radii"),
-  ("stimulus", "stimuli"), 
+  ("stimulus", "stimuli"),
   ("axis", "axes"),
   ("analysis", "analyses"),
   ("basis", "bases"),

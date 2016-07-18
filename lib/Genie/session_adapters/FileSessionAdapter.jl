@@ -21,10 +21,10 @@ function read(session_id::AbstractString)
     session = open(joinpath(Genie.config.session_folder, session_id), "r") do (io)
       deserialize(io)
     end
-    Nullable{Session}(session)
+    Nullable{Sessions.Session}(session)
   catch ex
     Genie.log(ex, :debug)
-    Nullable{Session}()
+    Nullable{Sessions.Session}()
   end
 end
 function read(session)

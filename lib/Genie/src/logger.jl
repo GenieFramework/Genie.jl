@@ -13,7 +13,7 @@ function log(message, level = "info")
     try
       println()
       eval( parse( "$level($(l.name), \"\"\" " * "\n" * message * " \"\"\")") )
-      if level == "err"
+      if level == "err" || level == "critical"
         println()
         show_stacktrace()
       end
