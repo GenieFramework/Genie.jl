@@ -1,7 +1,6 @@
 module Input
 
-using App
-using HttpServer
+using HttpCommon
 using URIParser
 
 export post, files, HttpInput, HttpPostData, HttpFiles, HttpFile
@@ -28,9 +27,9 @@ end
 
 type HttpFormPart
     headers::Dict{UTF8String, Dict{UTF8String, UTF8String}}
-    data::Array{Uint8}
+    data::Array{UInt8}
 
-    HttpFormPart() = new (Dict{UTF8String, Dict{UTF8String, UTF8String}}(), Uint8[])
+    HttpFormPart() = new(Dict{UTF8String, Dict{UTF8String, UTF8String}}(), UInt8[])
 end
 
 ###
@@ -252,7 +251,7 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
                 end
               end
 
-              headerRaw = Uint8[]
+              headerRaw = UInt8[]
 
               hadLineEnding = true
             end
