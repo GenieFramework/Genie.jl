@@ -67,9 +67,12 @@ end
 
 function load_initializers()
   dir = abspath(joinpath(Genie.APP_PATH, "config", "initializers"))
-  f = readdir(dir)
-  for i in f
-    include(joinpath(dir, i))
+
+  if isdir(dir)
+    f = readdir(dir)
+    for i in f
+      include(joinpath(dir, i))
+    end
   end
 end
 
