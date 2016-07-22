@@ -81,7 +81,7 @@ end
 
 function save{T<:AbstractModel}(m::T; conflict_strategy = :error)
   try
-    save!!(m, conflict_strategy = conflict_strategy, get_inserted = true)
+    save!!(m, conflict_strategy = conflict_strategy)
 
     true
   catch ex
@@ -133,7 +133,7 @@ end
 #
 
 function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
-  models = OrderedDict{DbId, T}()
+  models = OrderedDict{DbId,T}()
   dfs = df_result_to_models_data(m, df)
 
   row_count::Int = 1
@@ -620,7 +620,7 @@ function is_subtype{T<:AbstractModel}(m::Type{T}, parent_model = AbstractModel)
   return m <: parent_model
 end
 
-const model_prototypes = Dict{AbstractString, Any}()
+const model_prototypes = Dict{AbstractString,Any}()
 
 function disposable_instance{T<:AbstractModel}(m::Type{T})
   type_name = string(m)
@@ -789,7 +789,7 @@ function to_fully_qualified_sql_column_name{T<:AbstractModel}(m::T, f::AbstractS
 end
 
 function from_literal_column_name(c::AbstractString)
-  result = Dict{Symbol, AbstractString}()
+  result = Dict{Symbol,AbstractString}()
   result[:original_string] = c
 
   # has alias?
@@ -822,7 +822,7 @@ end
 function to_string_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, all_output::Bool = false)
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
   output_length = all_output ? 100_000_000 : Genie.config.output_length
-  response = Dict{AbstractString, AbstractString}()
+  response = Dict{AbstractString,AbstractString}()
   for f in fields
     key = string(f)
     value = string(getfield(m, Symbol(f)))
@@ -863,9 +863,9 @@ function has_relationship{T<:GenieType}(m::T, relationship_type::Symbol)
 end
 
 function dataframe_to_dict(df::DataFrames.DataFrame)
-  result = Array{Dict{Symbol, Any},1}()
+  result = Array{Dict{Symbol,Any},1}()
   for r in eachrow(df)
-    push!(result, Dict{Symbol, Any}( [k => r[k] for k in DataFrames.names(df)] ) )
+    push!(result, Dict{Symbol,Any}( [k => r[k] for k in DataFrames.names(df)] ) )
   end
 
   result

@@ -5,10 +5,10 @@ using Inflector
 function new_database_migration(class_name::AbstractString)
   """
   using Genie
-  using Database 
+  using Database
 
   type $class_name
-  end 
+  end
 
   function up(_::$class_name)
     error("Not implemented")
@@ -51,9 +51,9 @@ function new_model(model_name::AbstractString)
 
     id::Nullable{Model.DbId}
 
-    $model_name(; 
+    $model_name(;
       id = Nullable{Model.DbId}()
-    ) = new("$(lowercase(pluralized_name))", "id", id) 
+    ) = new("$(lowercase(pluralized_name))", "id", id)
   end
 
   module $pluralized_name

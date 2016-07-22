@@ -22,10 +22,12 @@ using Toolbox
 
 @reexport using Configuration
 @reexport using Cookies
+@reexport using DateParser
 @reexport using HttpServer
 @reexport using Render
 @reexport using Render.JSONAPI
 @reexport using Sessions
+@reexport using SHA
 @reexport using Util
 
 function load_configurations()
@@ -84,6 +86,8 @@ function startup(parsed_args::Dict{AbstractString, Any} = Dict(), start_server::
         next_port += 1
       end
     end
+
+    Genie.log("Started Genie server session", :info)
 
     while true
       sleep(1)

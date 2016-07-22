@@ -58,13 +58,8 @@ function run_app_with_command_line_args(config)
   elseif called_command(parsed_args, "s")
     Genie.genie_app.server = Genie.startup(parsed_args)
 
-  else
-    if isinteractive() || Configuration.IN_REPL
-      Genie.log("Started Genie interactive session", :info)
-      eval(parse("using Genie, Model"))
-    else
-      Genie.log("Unknown options, use -h or --help", :info)
-    end
+  elseif isinteractive() || Configuration.IN_REPL
+    Genie.log("Started Genie interactive session", :info)
   end
 end
 
