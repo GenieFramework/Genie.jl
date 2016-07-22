@@ -1,6 +1,6 @@
 module Render
 
-export respond, json, html
+export respond, json, html, redirect_to
 
 using Genie
 using Util
@@ -8,8 +8,10 @@ using JSON
 using Mustache
 
 const CONTENT_TYPES = Dict{Symbol, AbstractString}(
-  :json => "text/json", 
-  :html => "text/html",
+  :json   => "text/json",
+  :html   => "text/html",
+  :js     => "application/javascript",
+  :text   => "text/plain"
 )
 const MUSTACHE_YIELD_VAR_NAME = :yield
 
@@ -37,13 +39,18 @@ function html(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractSt
   vals = merge(special_vals(), Dict([k => v for (k, v) in vars]))
   r = Mustache.render(template, vals)
 
-  if render_layout 
+  if render_layout
     layout = Mustache.template_from_file(abspath(joinpath("app", "layouts", string(layout) * ".$EXT")))
     vals[MUSTACHE_YIELD_VAR_NAME] = r
     r = Mustache.render(layout, vals)
   end
 
   Dict(:html => r)
+end
+
+function redirect_to(location::AbstractString, code::Int = 302, headers::Dict{AbstractString, AbstractString} = Dict{AbstractString, AbstractString}())
+  headers["Location"] = location
+  respond(Dict(:text => ""), code, headers)
 end
 
 function special_vals()
@@ -58,14 +65,14 @@ end
 
 function structure_to_dict(structure, resource = nothing)
   data_item = Dict()
-  for (k, v) in structure 
+  for (k, v) in structure
     k = endswith(string(k), "_") ? Symbol(string(k)[1:end-1]) : k
-    data_item[Symbol(k)] =  if isa(v, Symbol) 
+    data_item[Symbol(k)] =  if isa(v, Symbol)
                               getfield(current_module().eval(resource), v) |> Util.expand_nullable
                             elseif isa(v, Function)
                               v()
                             else
-                              v 
+                              v
                             end
   end
 
@@ -82,11 +89,14 @@ function respond(body, code::Int = 200, headers::Dict{AbstractString, AbstractSt
           elseif haskey(body, :js)
             headers["Content-Type"] = CONTENT_TYPES[:js]
             body[:js]
+          elseif haskey(body, :text)
+            headers["Content-Type"] = CONTENT_TYPES[:text]
+            body[:text]
           else
             headers["Content-Type"] = CONTENT_TYPES[:json]
             body
           end
-  
+
   (code, headers, body)
 end
 function respond(response::Tuple, headers::Dict{AbstractString, AbstractString} = Dict{AbstractString, AbstractString}())
@@ -97,7 +107,7 @@ function http_error(status_code; id = "resource_not_found", code = "404-0001", t
   respond(detail, status_code, Dict{AbstractString, AbstractString}())
 end
 
-# =================================================== # 
+# =================================================== #
 
 module JSONAPI
 
@@ -108,19 +118,19 @@ export builder, elem, pagination
 
 function builder(; params...)
   response = Dict()
-  for p in params 
+  for p in params
     response[p[1]] =  if isa(p[2], Function)
                         p[2]()
-                      else 
+                      else
                         p[2]
                       end
   end
-  
+
   response
 end
 
 function elem(collection, instance_name; structure...)
-  if ! isa(collection, Array)  
+  if ! isa(collection, Array)
     Render.spawn_vars(instance_name, collection)
     return Render.structure_to_dict(structure, collection)
   end
@@ -137,7 +147,7 @@ end
 function elem(instance_var; structure...)
   () -> Render.structure_to_dict(structure,  if isa(instance_var, Symbol)
                                                 current_module().eval(instance_var)
-                                              else 
+                                              else
                                                 instance_var
                                               end)
 end
@@ -149,10 +159,10 @@ end
 function http_error(status_code; id = "resource_not_found", code = "404-0001", title = "Not found", detail = "The requested resource was not found")
   Dict{Symbol, Any}(
     :errors => elem(
-                      id        = id, 
-                      status    = status_code, 
-                      code      = code, 
-                      title     = title, 
+                      id        = id,
+                      status    = status_code,
+                      code      = code,
+                      title     = title,
                       detail    = detail
                     )()
   ), status_code
@@ -162,20 +172,20 @@ function pagination(path::AbstractString, total_items::Int; current_page::Int = 
   pg = Dict{Symbol, AbstractString}()
   pg[:first] = path
 
-  pg[:first] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=1&" * 
+  pg[:first] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=1&" *
                 Genie.genie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
 
-  if current_page > 1 
-    pg[:prev] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(current_page - 1) * "&" * 
+  if current_page > 1
+    pg[:prev] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(current_page - 1) * "&" *
                   Genie.genie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
   end
 
   if current_page * page_size < total_items
-    pg[:next] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(current_page + 1) * "&" * 
+    pg[:next] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(current_page + 1) * "&" *
                   Genie.genie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
   end
 
-  pg[:last] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(Int(ceil(total_items / page_size))) * "&" * 
+  pg[:last] = path * "?" * Genie.genie_app.config.pagination_jsonapi_page_param_name * "[number]=" * string(Int(ceil(total_items / page_size))) * "&" *
                 Genie.genie_app.config.pagination_jsonapi_page_param_name * "[size]=" * string(page_size)
 
   pg

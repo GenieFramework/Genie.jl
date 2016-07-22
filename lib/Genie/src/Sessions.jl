@@ -28,7 +28,7 @@ function id(req::Request, res::Response)
   id()
 end
 
-function start{T<:AbstractString}(session_id::AbstractString, req::Request, res::Response; options = Dict{T,T}())
+function start(session_id::AbstractString, req::Request, res::Response; options = Dict())
   options = merge(Dict("Path" => "/", "HttpOnly" => "", "Expires" => "0"), options)
   Cookies.set!(res, Genie.config.session_key_name, session_id, options)
   load(session_id)

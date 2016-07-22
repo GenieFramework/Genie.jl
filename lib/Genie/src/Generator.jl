@@ -30,7 +30,7 @@ function new_resource(cmd_args::Dict{AbstractString,Any}, config::Configuration.
   Migration.new(cmd_args, config)
 
   resource_path = setup_resource_path(resource_name)
-  for resource_file in [Genie.GENIE_CONTROLLER_FILE_NAME, Genie.GENIE_VALIDATOR_FILE_NAME, Genie.GENIE_AUTHORIZATOR_FILE_NAME]
+  for resource_file in [Genie.GENIE_CONTROLLER_FILE_NAME]
     write_resource_file(resource_path, resource_file, resource_name) &&
       Genie.log("New file created at $(joinpath(resource_path, resource_file))")
   end

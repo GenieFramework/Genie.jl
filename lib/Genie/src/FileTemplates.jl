@@ -4,8 +4,7 @@ using Inflector
 
 function new_database_migration(class_name::AbstractString)
   """
-  using Genie
-  using Database
+  using Genie, Database
 
   type $class_name
   end
@@ -65,8 +64,7 @@ end
 function new_controller(controller_name::AbstractString)
   """
   module $(controller_name)Controller
-  using Genie
-  using SearchLight
+  using Genie, Model
   end
   """
 end

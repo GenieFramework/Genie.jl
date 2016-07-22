@@ -9,8 +9,11 @@ const APP_PATH = pwd()
 
 const GENIE_MODEL_FILE_NAME = "model.jl"
 const GENIE_CONTROLLER_FILE_NAME = "controller.jl"
-const GENIE_VALIDATOR_FILE_NAME = "validation.jl"
-const GENIE_AUTHORIZATOR_FILE_NAME = "authorization.jl"
+
+const PARAMS_REQUEST_KEY    = :_REQUEST
+const PARAMS_RESPONSE_KEY   = :_RESPONSE
+const PARAMS_SESSION_KEY    = :_SESSION
+const PARAMS_FLASH_KEY      = :_FLASH
 
 include(abspath("lib/Genie/src/logger.jl"))
 include(abspath("lib/Genie/src/genie_app.jl"))

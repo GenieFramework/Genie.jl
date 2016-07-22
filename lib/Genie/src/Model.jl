@@ -90,7 +90,12 @@ function save{T<:AbstractModel}(m::T; conflict_strategy = :error)
     false
   end
 end
+function save!{T<:AbstractModel}(m::T; conflict_strategy = :error)
+  _m = save!!(m, conflict_strategy = conflict_strategy)
+  m = _m |> Base.get
 
+  m
+end
 function save!!{T<:AbstractModel}(m::T; conflict_strategy = :error)
   sql::UTF8String = to_store_sql(m, conflict_strategy = conflict_strategy)
   query_result_df::DataFrames.DataFrame = query(sql)
@@ -194,13 +199,24 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
   _m::T = disposable_instance(m)
   obj = m()
   sf = settable_fields(_m, row)
+  set_fields = Symbol[]
 
   for field in sf
     unq_field = from_fully_qualified(_m, field)
 
     isna(row[field]) && continue # if it's NA we just leave the default value of the empty obj
 
-    value = if in(:on_hydration, fieldnames(_m))
+    value = if in(:on_hydration!!, fieldnames(_m))
+              try
+                _m, value = Base.get(_m.on_hydration!!)(_m, unq_field, row[field])
+                value
+              catch ex
+                Genie.log("Failed to hydrate!! field $field", :debug)
+                Genie.log(ex)
+
+                row[field]
+              end
+            elseif in(:on_hydration, fieldnames(_m))
               try
                 Base.get(_m.on_hydration)(_m, unq_field, row[field])
               catch ex
@@ -218,6 +234,14 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
       Genie.log(ex, :err)
       Genie.log("obj = $(typeof(obj)) -- field = $unq_field -- value = $value -- type = $( typeof(getfield(_m, unq_field)) )")
       rethrow(ex)
+    end
+
+    push!(set_fields, unq_field)
+  end
+
+  for field in fieldnames(_m)
+    if ! in(field, set_fields)
+      setfield!(obj, field, getfield(_m, field))
     end
   end
 

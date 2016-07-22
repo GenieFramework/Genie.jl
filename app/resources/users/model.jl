@@ -14,7 +14,7 @@ type User <: AbstractModel
   _password_hash::AbstractString
 
   on_dehydration::Nullable{Function}
-  on_hydration::Nullable{Function}
+  on_hydration!!::Nullable{Function}
 
   User(;
     id = Nullable{Model.DbId}(),
@@ -24,16 +24,18 @@ type User <: AbstractModel
     admin = false,
     updated_at = DateTime(),
 
-    on_dehydration = Users.dehydrate,
-    on_hydration = Users.hydrate
+    _password_hash = "",
 
-  ) = new("users", "id", id, name, email, password, admin, updated_at, on_dehydration, on_hydration)
+    on_dehydration = Users.dehydrate,
+    on_hydration!! = Users.hydrate!!
+
+  ) = new("users", "id", id, name, email, password, admin, updated_at, _password_hash, on_dehydration, on_hydration!!)
 end
 
 module Users
 using Genie, Model
+using Authentication, ControllerHelpers
 using SHA
-using Auth
 using Memoize
 
 export current_user, current_user!!
@@ -74,6 +76,19 @@ function current_user!!(session::Sessions.Session)
   end
 end
 
+function is_authorized(params::Dict{Symbol,Any})
+  Authentication.is_authenticated(session(params)) && current_user!!(session(params)).admin
+end
+
+function with_authorization(f::Function, params::Dict{Symbol,Any})
+  if ! is_authorized(params)
+    flash("Unauthorized access", params)
+    redirect_to("/login")
+  else
+    f()
+  end
+end
+
 function dehydrate(user::Genie.User, field::Symbol, value::Any)
   return  if field == :password
             value != PASSWORD_CLOAK ? sha256(value) : user._password_hash
@@ -84,14 +99,14 @@ function dehydrate(user::Genie.User, field::Symbol, value::Any)
           end
 end
 
-function hydrate(user::Genie.User, field::Symbol, value::Any)
+function hydrate!!(user::Genie.User, field::Symbol, value::Any)
   return  if in(field, [:updated_at])
-            DateParser.parse(DateTime, value)
+            user, DateParser.parse(DateTime, value)
           elseif field == :password
             user._password_hash = value
-            PASSWORD_CLOAK
+            user, PASSWORD_CLOAK
           else
-            value
+            user, value
           end
 end
 

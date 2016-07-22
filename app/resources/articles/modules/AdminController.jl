@@ -3,9 +3,14 @@ module Website
 
 using Genie
 using Model
+using Authentication
+using ControllerHelpers
+using Genie.Users
 
 function articles(params)
-  "admin listing articles"
+  Users.with_authorization(params) do
+    "admin listing articles"
+  end
 end
 
 function edit(params)

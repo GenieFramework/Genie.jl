@@ -163,9 +163,19 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
   controller = Genie.GenieController()
   action_name = string(current_module()) * "." * to_parts[2]
 
-  params[:_req]       = req
-  params[:_res]       = res
-  params[:_session]   = session
+  params[Genie.PARAMS_REQUEST_KEY]   = req
+  params[Genie.PARAMS_RESPONSE_KEY]  = res
+  params[Genie.PARAMS_SESSION_KEY]   = session
+  params[Genie.PARAMS_FLASH_KEY]     = begin
+                                      s = Sessions.get(session, Genie.PARAMS_FLASH_KEY)
+                                      if isnull(s)
+                                        ""::AbstractString
+                                      else
+                                        ss = Base.get(s)
+                                        Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
+                                        ss
+                                      end
+                                    end
 
   try
     response = invoke(eval(Genie, parse(string(current_module()) * "." * action_name)), (typeof(params),), params)

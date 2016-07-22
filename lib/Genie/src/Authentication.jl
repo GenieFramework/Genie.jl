@@ -1,4 +1,4 @@
-module Auth
+module Authentication
 
 using Sessions
 

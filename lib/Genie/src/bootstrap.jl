@@ -42,7 +42,7 @@ function load_models(dir = abspath(joinpath(Genie.APP_PATH, "app", "resources"))
     if isdir(full_path)
       load_models(full_path)
     else
-      if ( i == GENIE_MODEL_FILE_NAME || i == GENIE_VALIDATOR_FILE_NAME )
+      if ( i == GENIE_MODEL_FILE_NAME )
         include(full_path)
       end
     end
@@ -90,6 +90,7 @@ function startup(parsed_args::Dict{AbstractString, Any} = Dict(), start_server::
       end
     end
 
+    println()
     Genie.log("Started Genie server session", :info)
 
     while true
