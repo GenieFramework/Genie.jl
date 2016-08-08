@@ -9,3 +9,4 @@ route(GET, "/admin/articles", "articles#AdminController.Website.articles")
 route(GET, "admin/articles/:article_id::Int", "articles#AdminController.Website.edit")
 
 route(GET, "/login", "user_sessions#UserSessionsController.login")
+route(POST, "/login", "user_sessions#UserSessionsController.create")

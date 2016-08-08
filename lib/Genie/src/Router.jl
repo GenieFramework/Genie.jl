@@ -66,8 +66,9 @@ function match_routes(req::Request, res::Response, session::Sessions.Session)
     Genie.config.log_router && Genie.log("Router: Matched route " * uri.path)
     (! extract_uri_params(uri, regex_route, param_names, param_types)) && continue
     Genie.config.log_router && Genie.log("Router: Matched type of route " * uri.path)
-
+    extract_post_params(req)
     extract_extra_params(extra_params)
+    extract_json_api_pagination_params()
 
     return invoke_controller(to, req, res, params, session)
   end
@@ -125,25 +126,30 @@ function extract_uri_params(uri::URI, regex_route::Regex, param_names::Array{Abs
     end
   end
 
-  # POST params
-
-
-  # JSON API pagination
-  if ! haskey(params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_number"))
-    params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_number")] = haskey(params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[number]")) ? parse(Int, params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[number]")]) : 1
-  end
-  if ! haskey(params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_size"))
-    params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_size")] = haskey(params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[size]")) ? parse(Int, params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[size]")]) : Genie.genie_app.config.pagination_jsonapi_default_items_per_page
-  end
-
   true
 end
 
 function extract_extra_params(extra_params::Dict{Symbol, Dict{Symbol, Any}})
   if ! isempty(extra_params[:with])
     for (k, v) in extra_params[:with]
-      params[k] = v
+      params[Symbol(k)] = v
     end
+  end
+end
+
+function extract_post_params(req::Request)
+  for (k, v) in Input.post(req)
+    params[Symbol(k)] = v
+  end
+end
+
+function extract_json_api_pagination_params()
+  # JSON API pagination
+  if ! haskey(params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_number"))
+    params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_number")] = haskey(params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[number]")) ? parse(Int, params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[number]")]) : 1
+  end
+  if ! haskey(params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_size"))
+    params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_size")] = haskey(params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[size]")) ? parse(Int, params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[size]")]) : Genie.genie_app.config.pagination_jsonapi_default_items_per_page
   end
 end
 
@@ -185,11 +191,16 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
   end
 
   if ! isa(response, Response)
-    if isa(response, Tuple)
-      response = Response(response...)
-    else
-      response = Response(response)
-    end
+    response =  try
+                  if isa(response, Tuple)
+                    Response(response...)
+                  else
+                    Response(response)
+                  end
+                catch ex
+                  Genie.log(ex, :err)
+                  Response("")
+                end
   end
 
   response

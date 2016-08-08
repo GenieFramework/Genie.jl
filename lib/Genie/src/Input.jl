@@ -6,11 +6,11 @@ using URIParser
 export post, files, HttpInput, HttpPostData, HttpFiles, HttpFile
 
 type HttpFile
-    name::UTF8String
-    mime::UTF8String
-    data::Array{UInt8}
+  name::UTF8String
+  mime::UTF8String
+  data::Array{UInt8}
 
-    HttpFile() = new("", "", UInt8[])
+  HttpFile() = new("", "", UInt8[])
 end
 
 typealias HttpPostData Dict{UTF8String, UTF8String}
@@ -26,10 +26,10 @@ end
 ###
 
 type HttpFormPart
-    headers::Dict{UTF8String, Dict{UTF8String, UTF8String}}
-    data::Array{UInt8}
+  headers::Dict{UTF8String, Dict{UTF8String, UTF8String}}
+  data::Array{UInt8}
 
-    HttpFormPart() = new(Dict{UTF8String, Dict{UTF8String, UTF8String}}(), UInt8[])
+  HttpFormPart() = new(Dict{UTF8String, Dict{UTF8String, UTF8String}}(), UInt8[])
 end
 
 ###
@@ -93,8 +93,8 @@ function post_multipart!(request::Request, post_data::HttpPostData, files::HttpF
 
         for (field::UTF8String, values::Dict{UTF8String, UTF8String}) in part.headers
           if (
-              field == "Content-Disposition"
-              && getkey(values, "form-data", null) != null
+            field == "Content-Disposition"
+            && getkey(values, "form-data", null) != null
             )
               # Check to see whether this part is a file upload
               # Otherwise, treat as basic POST data
@@ -108,9 +108,9 @@ function post_multipart!(request::Request, post_data::HttpPostData, files::HttpF
               elseif (getkey(values, "name", null) != null)
                 post_data[values["name"]] = utf8(part.data)
               end
-          elseif (field == "Content-Type")
-            (file.mime, mime) = first(values)
-          end
+            elseif (field == "Content-Type")
+              (file.mime, mime) = first(values)
+            end
         end # for
 
         if (hasFile)
@@ -167,43 +167,43 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
     # Test for boundary.
 
     if (
-        (byte == 0x0d && http_data[byteIndex + 1] == 0x0a && http_data[byteIndex + 2] == '-' && http_data[byteIndex + 3] == '-')
-        || (byte == '-' && http_data[byteIndex + 1] == '-')
-    )
-      foundBoundary = true
+      (byte == 0x0d && http_data[byteIndex + 1] == 0x0a && http_data[byteIndex + 2] == '-' && http_data[byteIndex + 3] == '-')
+      || (byte == '-' && http_data[byteIndex + 1] == '-')
+      )
+    foundBoundary = true
 
-      if (byte == 0x0d)
-          byteIndexOffset = byteIndex + 3
-      else
-          byteIndexOffset = byteIndex + 1
-      end
-
-      byteTestIndex = byteIndexOffset
-
-      testIndex = 1;
-
-      while (testIndex < boundaryLength)
-        byteTestIndex = byteIndexOffset + testIndex
-
-        if (byteTestIndex > bytes || http_data[byteTestIndex] != boundary[testIndex])
-            foundBoundary = false
-            break
-        end
-
-        testIndex = testIndex + 1
-      end
-
-      if (foundBoundary)
-        if (http_data[byteTestIndex + 2] == '-')
-            foundFinalBoundary = true
-            byteIndex = byteTestIndex + 5
-        else
-            byteIndex = byteTestIndex + 3
-        end
-      end
+    if (byte == 0x0d)
+      byteIndexOffset = byteIndex + 3
     else
-      foundBoundary = false
+      byteIndexOffset = byteIndex + 1
     end
+
+    byteTestIndex = byteIndexOffset
+
+    testIndex = 1;
+
+    while (testIndex < boundaryLength)
+      byteTestIndex = byteIndexOffset + testIndex
+
+      if (byteTestIndex > bytes || http_data[byteTestIndex] != boundary[testIndex])
+        foundBoundary = false
+        break
+      end
+
+      testIndex = testIndex + 1
+    end
+
+    if (foundBoundary)
+      if (http_data[byteTestIndex + 2] == '-')
+        foundFinalBoundary = true
+        byteIndex = byteTestIndex + 5
+      else
+        byteIndex = byteTestIndex + 3
+      end
+    end
+  else
+    foundBoundary = false
+  end
 
     ## Otherwise, process data
 
@@ -218,7 +218,7 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
       part = HttpFormPart()
     else
       if (captureAsData)
-          push!(part.data, byte)
+        push!(part.data, byte)
       else
         ## Check for CR
 
@@ -275,63 +275,63 @@ end
 ###
 
 function parse_seicolon_fields(dataString::UTF8String)
-    dataString = dataString * ";"
+  dataString = dataString * ";"
 
-    data = Dict{UTF8String, UTF8String}()
+  data = Dict{UTF8String, UTF8String}()
 
-    prevCharacter::Char = 0x00
-    inSingleQuotes::Bool = false
-    inDoubleQuotes::Bool = false
-    ignore::Bool = false
-    workingString::UTF8String = ""
-    
-    dataStringLength::Int = length(dataString)
-    
-    dataStringLengthLoop::Int = dataStringLength + 1
-    
-    charIndex::Int = 1
-    
-    while charIndex < dataStringLengthLoop
-      character = dataString[charIndex]
+  prevCharacter::Char = 0x00
+  inSingleQuotes::Bool = false
+  inDoubleQuotes::Bool = false
+  ignore::Bool = false
+  workingString::UTF8String = ""
 
-      if (!inSingleQuotes && character == '"' && prevCharacter != '\\')
-        inDoubleQuotes = !inDoubleQuotes
-        ignore = true
-      end
+  dataStringLength::Int = length(dataString)
 
-      if (!inDoubleQuotes && character == '\'' && prevCharacter != '\\')
-        inSingleQuotes = !inSingleQuotes
-        ignore = true
-      end
-      
-      if (charIndex == dataStringLength || (character == ';' && !(inSingleQuotes || inDoubleQuotes)))
-        workingString = strip(workingString)
+  dataStringLengthLoop::Int = dataStringLength + 1
 
-        if (length(workingString) > 0)
-          decoded = parse_quoted_params(workingString)
-      
-          if (decoded != null)
-            (key, value) = decoded
+  charIndex::Int = 1
 
-            data[key] = value
-          else
-            data[workingString] = workingString
-          end
+  while charIndex < dataStringLengthLoop
+    character = dataString[charIndex]
 
-          workingString = ""
-        end
-      elseif (!ignore)
-        workingString = workingString * string(character)
-      end
-      
-      prevCharacter = character
-      
-      charIndex  = charIndex + 1
-
-      ignore = false
+    if (!inSingleQuotes && character == '"' && prevCharacter != '\\')
+      inDoubleQuotes = !inDoubleQuotes
+      ignore = true
     end
 
-    return data
+    if (!inDoubleQuotes && character == '\'' && prevCharacter != '\\')
+      inSingleQuotes = !inSingleQuotes
+      ignore = true
+    end
+
+    if (charIndex == dataStringLength || (character == ';' && !(inSingleQuotes || inDoubleQuotes)))
+      workingString = strip(workingString)
+
+      if (length(workingString) > 0)
+        decoded = parse_quoted_params(workingString)
+
+        if (decoded != null)
+          (key, value) = decoded
+
+          data[key] = value
+        else
+          data[workingString] = workingString
+        end
+
+        workingString = ""
+      end
+    elseif (!ignore)
+      workingString = workingString * string(character)
+    end
+
+    prevCharacter = character
+
+    charIndex  = charIndex + 1
+
+    ignore = false
+  end
+
+  return data
 end
 
 function parse_quoted_params(data::UTF8String)
@@ -340,7 +340,7 @@ function parse_quoted_params(data::UTF8String)
   if (length(tokens) == 2)
     return (tokens[1], tokens[2])
   end
-  
+
   return null
 end
 
