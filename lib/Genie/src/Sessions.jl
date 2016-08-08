@@ -18,9 +18,8 @@ end
 Session(id::AbstractString) = Session(id, Dict{Symbol,Any}())
 
 function id()
-  Genie.SECRET_TOKEN * ":" * sha1(string(Dates.now())) * ":" * string(rand()) * ":" * string(hash(Genie)) |> sha256
+  Genie.SECRET_TOKEN * ":" * bytes2hex(sha1(string(Dates.now()))) * ":" * string(rand()) * ":" * string(hash(Genie)) |> sha256 |> bytes2hex
 end
-
 function id(req::Request, res::Response)
   ! isnull(Cookies.get(res, Genie.config.session_key_name)) && return Base.get(Cookies.get(res, Genie.config.session_key_name))
   ! isnull(Cookies.get(req, Genie.config.session_key_name)) && return Base.get(Cookies.get(req, Genie.config.session_key_name))

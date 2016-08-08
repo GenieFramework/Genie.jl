@@ -43,7 +43,7 @@ export current_user, current_user!!
 const PASSWORD_CLOAK = "******"
 
 function login(email::AbstractString, password::AbstractString, session::Sessions.Session)
-  users = Model.find(User, SQLQuery(where = [SQLWhere(:email, email), SQLWhere(:password, sha256(password))]))
+  users = Model.find(User, SQLQuery(where = [SQLWhere(:email, email), SQLWhere(:password, sha256(password) |> bytes2hex)]))
 
   if isempty(users)
     Genie.log("Can't find user")
@@ -51,15 +51,15 @@ function login(email::AbstractString, password::AbstractString, session::Session
   end
   user = users[1]
 
-  Auth.authenticate(getfield(user, Symbol(user._id)) |> Base.get, session) |> Nullable
+  Authentication.authenticate(getfield(user, Symbol(user._id)) |> Base.get, session) |> Nullable
 end
 
 function logout(session::Sessions.Session)
-  Auth.deauthenticate(session)
+  Authentication.deauthenticate(session)
 end
 
 @memoize function current_user(session::Sessions.Session)
-  auth_state = Auth.get_authentication(session)
+  auth_state = Authentication.get_authentication(session)
   if isnull(auth_state)
     Nullable()
   else
@@ -91,7 +91,7 @@ end
 
 function dehydrate(user::Genie.User, field::Symbol, value::Any)
   return  if field == :password
-            value != PASSWORD_CLOAK ? sha256(value) : user._password_hash
+            value != PASSWORD_CLOAK ? bytes2hex(sha256(value)) : user._password_hash
           elseif field == :updated_at
             Dates.now()
           else

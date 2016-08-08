@@ -68,7 +68,7 @@ function match_routes(req::Request, res::Response, session::Sessions.Session)
     Genie.config.log_router && Genie.log("Router: Matched type of route " * uri.path)
     extract_post_params(req)
     extract_extra_params(extra_params)
-    extract_json_api_pagination_params()
+    Genie.config.app_is_api && extract_json_api_pagination_params()
 
     return invoke_controller(to, req, res, params, session)
   end

@@ -14,7 +14,15 @@ function articles(params)
 end
 
 function edit(params)
-  "editing article"
+  Users.with_authorization(params) do
+    "editing article"
+  end
+end
+
+function dashboard(params)
+  Users.with_authorization(params) do
+    "dashboarding"
+  end
 end
 
 end

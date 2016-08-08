@@ -79,7 +79,7 @@ function structure_to_dict(structure, resource = nothing)
   data_item
 end
 
-function respond(body, code::Int = 200, headers::Dict{AbstractString, AbstractString} = Dict{AbstractString, AbstractString}())
+function respond(body, code::Int = 200, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString, AbstractString}())
   body =  if haskey(body, :json)
             headers["Content-Type"] = CONTENT_TYPES[:json]
             JSON.json(body[:json])
@@ -99,8 +99,11 @@ function respond(body, code::Int = 200, headers::Dict{AbstractString, AbstractSt
 
   (code, headers, body)
 end
-function respond(response::Tuple, headers::Dict{AbstractString, AbstractString} = Dict{AbstractString, AbstractString}())
+function respond(response::Tuple, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString, AbstractString}())
   respond(response[1], response[2], headers)
+end
+function respond(response::Response)
+  return response
 end
 
 function http_error(status_code; id = "resource_not_found", code = "404-0001", title = "Not found", detail = "The requested resource was not found")

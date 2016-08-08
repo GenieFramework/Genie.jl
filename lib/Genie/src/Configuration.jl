@@ -33,6 +33,7 @@ type Config
   server_signature::ASCIIString
 
   app_env::AbstractString
+  app_is_api::Bool
 
   suppress_output::Bool
   output_length::Int
@@ -80,7 +81,8 @@ type Config
             server_handle_static_files  = true,
             server_signature            = "Genie/$GENIE_VERSION/Julia/$VERSION",
 
-            app_env = ENV["GENIE_ENV"],
+            app_env       = ENV["GENIE_ENV"],
+            app_is_api    = true,
 
             suppress_output = false,
             output_length   = 10_000, # where to truncate strings in console
@@ -123,7 +125,7 @@ type Config
         ) =
               new(
                   server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature,
-                  app_env,
+                  app_env, app_is_api,
                   suppress_output, output_length,
                   db_migrations_table_name, db_migrations_folder, db_auto_connect,
                   task_folder, test_folder, session_folder, log_folder, cache_folder,

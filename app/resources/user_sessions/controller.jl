@@ -7,7 +7,7 @@ end
 
 function create(params)
   if ! isnull(Users.login(params[:email], params[:password], session(params)))
-    redirect_to("/admin/dashboard")
+    return redirect_to("/admin/dashboard")
   end
 
   flash("Incorrect login - unknown username and password combination", params)
