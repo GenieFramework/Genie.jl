@@ -6,14 +6,14 @@ using StackTraces
 const console_logger = Logger("console_logger")
 const file_logger = Logger("file_logger")
 
-function log(message, level = "info")
+function log(message, level = "info"; showst::Bool = true)
   message = replace(string(message), "\$", "\\\$")
 
   for l in Genie.config.loggers
     try
       println()
       eval( parse( "$level($(l.name), \"\"\" " * "\n" * message * " \"\"\")") )
-      if level == "err" || level == "critical"
+      if level == "err" || level == "critical" && showst
         println()
         show_stacktrace()
       end

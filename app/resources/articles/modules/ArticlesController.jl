@@ -1,8 +1,6 @@
 module ArticlesController
 module Website
-
-using Genie
-using Model
+using Genie, Model
 
 function show(params)
   "Hello"

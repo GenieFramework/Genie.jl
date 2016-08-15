@@ -196,7 +196,7 @@ function set_relationship_data_array{T<:AbstractModel}(r::SQLRelation, related_m
 end
 
 function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
-  _m::T = disposable_instance(m)
+  _m = disposable_instance(m)
   obj = m()
   sf = settable_fields(_m, row)
   set_fields = Symbol[]
@@ -640,28 +640,11 @@ end
 # ORM utils
 #
 
-function is_subtype{T<:AbstractModel}(m::Type{T}, parent_model = AbstractModel)
-  return m <: parent_model
-end
-
-const model_prototypes = Dict{AbstractString,Any}()
+# const model_prototypes = Dict{AbstractString,Any}()
 
 function disposable_instance{T<:AbstractModel}(m::Type{T})
-  type_name = string(m)
-  # haskey(model_prototypes, type_name) && return model_prototypes[type_name]
-
-  if is_subtype(m)
-    # model_prototypes[type_name] = m()
-    # return model_prototypes[type_name]
-    return m()
-  else
-    error("$m is not a Model")
-  end
+  m()
 end
-
-# function disposable_instance(model_name::Symbol)
-#   disposable_instance(eval(parse(string(model_name))))
-# end
 
 @memoize function columns(m)
   _m = disposable_instance(m)

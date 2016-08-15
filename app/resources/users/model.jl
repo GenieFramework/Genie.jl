@@ -33,10 +33,8 @@ type User <: AbstractModel
 end
 
 module Users
-using Genie, Model
-using Authentication, ControllerHelpers
-using SHA
-using Memoize
+using Genie, Model, Authentication, ControllerHelpers
+using SHA, Memoize
 
 export current_user, current_user!!
 
@@ -58,12 +56,12 @@ function logout(session::Sessions.Session)
   Authentication.deauthenticate(session)
 end
 
-@memoize function current_user(session::Sessions.Session)
+function current_user(session::Sessions.Session)
   auth_state = Authentication.get_authentication(session)
   if isnull(auth_state)
     Nullable()
   else
-    Model.find_one_by(User, Symbol(User()._id), auth_state |> Base.get)
+    Model.find_one_by(User, Symbol(User()._id), Base.get(auth_state))
   end
 end
 
@@ -77,13 +75,13 @@ function current_user!!(session::Sessions.Session)
 end
 
 function is_authorized(params::Dict{Symbol,Any})
-  Authentication.is_authenticated(session(params)) && current_user!!(session(params)).admin
+  Authentication.is_authenticated(session(params)) && expand_nullable(current_user(session(params)), default = User()).admin
 end
 
 function with_authorization(f::Function, params::Dict{Symbol,Any})
   if ! is_authorized(params)
     flash("Unauthorized access", params)
-    redirect_to("/login")
+    return redirect_to("/login")
   else
     f()
   end

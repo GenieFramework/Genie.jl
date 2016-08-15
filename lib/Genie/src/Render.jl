@@ -1,10 +1,11 @@
 module Render
 
-export respond, json, html, redirect_to
+export respond, json, mustache, ejl, redirect_to
 
 using Genie
 using Util
 using JSON
+using Ejl
 using Mustache
 
 const CONTENT_TYPES = Dict{Symbol, AbstractString}(
@@ -14,36 +15,61 @@ const CONTENT_TYPES = Dict{Symbol, AbstractString}(
   :text   => "text/plain"
 )
 const MUSTACHE_YIELD_VAR_NAME = :yield
+const EJL_YIELD_VAR_NAME = :yield
 
 function json(resource::Symbol, action::Symbol; vars...)
-  const EXT = "json.jl"
-
-  for arg in vars
-    k, v = arg
-    spawn_vars(k, v)
-  end
-  r = include(abspath(joinpath("app", "resources", string(resource), "views", string(action) * ".$EXT")))
+  spawn_splatted_vars(vars)
+  r = include(abspath(joinpath("app", "resources", string(resource), "views", string(action) * ".$RENDER_JSON_EXT")))
 
   Dict(:json => r)
 end
 
-function html(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractString} = :app, render_layout::Bool = true, vars...)
-  const EXT = "mustache.jl"
+function ejl(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractString} = :app, render_layout::Bool = true, vars...)
+  spawn_splatted_vars(vars)
 
-  for arg in vars
-    k, v = arg
-    spawn_vars(k, v)
+  template = Ejl.template_from_file(abspath(joinpath(Genie.APP_PATH, "app", "resources", string(resource), "views", string(action) * ".$RENDER_EJL_EXT")))
+  vals = merge(special_vals(), Dict([k => v for (k, v) in vars]))
+  r = Ejl.render_tpl(template)
+
+  if render_layout
+    layout = Ejl.template_from_file(abspath(joinpath(Genie.APP_PATH, "app", "layouts", string(layout) * ".$RENDER_EJL_EXT")))
+    spawn_vars(EJL_YIELD_VAR_NAME, r)
+    r = Ejl.render_tpl(layout)
   end
 
-  template = Mustache.template_from_file(abspath(joinpath("app", "resources", string(resource), "views", string(action) * ".$EXT")))
+  Dict(:html => r)
+end
+function ejl(content::AbstractString, layout::Union{Symbol, AbstractString} = :app, vars...)
+  spawn_splatted_vars(vars)
+  vals = merge(special_vals(), Dict([k => v for (k, v) in vars]))
+  layout = Ejl.template_from_file(abspath(joinpath(Genie.APP_PATH, "app", "layouts", string(layout) * ".$RENDER_EJL_EXT")))
+  spawn_vars(EJL_YIELD_VAR_NAME, content)
+  r = Ejl.render_tpl(layout, vals)
+
+  Dict(:html => r)
+end
+
+function mustache(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractString} = :app, render_layout::Bool = true, vars...)
+  spawn_splatted_vars(vars)
+
+  template = Mustache.template_from_file(abspath(joinpath("app", "resources", string(resource), "views", string(action) * ".$RENDER_MUSTACHE_EXT")))
   vals = merge(special_vals(), Dict([k => v for (k, v) in vars]))
   r = Mustache.render(template, vals)
 
   if render_layout
-    layout = Mustache.template_from_file(abspath(joinpath("app", "layouts", string(layout) * ".$EXT")))
+    layout = Mustache.template_from_file(abspath(joinpath("app", "layouts", string(layout) * ".$RENDER_MUSTACHE_EXT")))
     vals[MUSTACHE_YIELD_VAR_NAME] = r
     r = Mustache.render(layout, vals)
   end
+
+  Dict(:html => r)
+end
+function mustache(content::AbstractString, layout::Union{Symbol, AbstractString} = :app, vars...)
+  spawn_splatted_vars(vars)
+  vals = merge(special_vals(), Dict([k => v for (k, v) in vars]))
+  layout = Mustache.template_from_file(abspath(joinpath("app", "layouts", string(layout) * ".$RENDER_MUSTACHE_EXT")))
+  vals[MUSTACHE_YIELD_VAR_NAME] = content
+  r = Mustache.render(layout, vals)
 
   Dict(:html => r)
 end
@@ -51,6 +77,13 @@ end
 function redirect_to(location::AbstractString, code::Int = 302, headers::Dict{AbstractString, AbstractString} = Dict{AbstractString, AbstractString}())
   headers["Location"] = location
   respond(Dict(:text => ""), code, headers)
+end
+
+function spawn_splatted_vars(vars)
+  for arg in vars
+    k, v = arg
+    spawn_vars(k, v)
+  end
 end
 
 function special_vals()

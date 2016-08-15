@@ -1273,6 +1273,8 @@ $(function () {
 	});
 
 	function setThemeSettings() {
+        return;
+
 		setThemeState()
 		.delay(config.delayTime)
 		.queue(function (next) {

@@ -186,7 +186,9 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
   try
     response = invoke(eval(Genie, parse(string(current_module()) * "." * action_name)), (typeof(params),), params)
   catch ex
-    Genie.log("$ex at $(@__FILE__), line $(@__LINE__)", :err)
+    Genie.log("$ex at $(@__FILE__):$(@__LINE__)", :err, showst = false)
+    Genie.log("While invoking $(string(current_module())).$(action_name) with $(params)", :err, showst = false)
+
     rethrow(ex) # do something better with the error
   end
 

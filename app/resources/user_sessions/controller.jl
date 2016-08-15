@@ -1,8 +1,14 @@
 module UserSessionsController
-using Genie, Model, ControllerHelpers, Genie.Users
+using Genie, Model, ControllerHelpers, Genie.Users, Authentication
 
 function login(params)
-  html(:user_sessions, :login, layout = :login, message = flash(params)) |> respond
+  mustache(:user_sessions, :login, layout = :login, message = flash(params)) |> respond
+end
+
+function logout(params)
+  Authentication.deauthenticate(session(params))
+  flash("You've been successfully logged out", params)
+  redirect_to("/login")
 end
 
 function create(params)
@@ -10,7 +16,7 @@ function create(params)
     return redirect_to("/admin/dashboard")
   end
 
-  flash("Incorrect login - unknown username and password combination", params)
+  flash("Unknown username and password combination", params)
   redirect_to("/login")
 end
 

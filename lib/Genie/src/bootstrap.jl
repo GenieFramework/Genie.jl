@@ -30,6 +30,7 @@ using Toolbox
 @reexport using Sessions
 @reexport using SHA
 @reexport using Util
+@reexport using Ejl
 
 function load_configurations()
   include(abspath("config/loggers.jl"))

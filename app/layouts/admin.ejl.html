@@ -1,0 +1,22 @@
+<!doctype html>
+<html class="no-js" lang="en">
+    %+ app/layouts/head_admin.ejl.html
+    <body>
+        <div class="main-wrapper">
+            <div class="app header-fixed sidebar-fixed" id="app">
+                %+ app/layouts/header_admin.ejl.html
+                %+ app/layouts/sidebar_admin.ejl.html
+                <article class="content dashboard-page">
+                  %= yield
+                </article>
+                <footer class="footer">
+                    <div class="footer-block buttons">
+                    </div>
+                </footer>
+            </div>
+        </div>
+        <script src="/js/admin/vendor.js"></script>
+        <script src="/js/admin/app.js"></script>
+    </body>
+
+</html>
