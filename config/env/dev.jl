@@ -10,7 +10,8 @@ const config = Config(
                       log_router        = false,
                       log_formatted     = true,
                       log_level         = Logging.DEBUG,
-                      assets_path       = "/"
+                      assets_path       = "/",
+                      cache_ejl         = false,
                     )
 
 export config

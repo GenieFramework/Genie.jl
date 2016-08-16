@@ -10,7 +10,8 @@ const config = Config(
                       log_formatted       = false,
                       log_level           = Logging.ERROR,
                       log_verbosity       = LOG_LEVEL_VERBOSITY_MINIMAL,
-                      assets_path         = "/"
+                      assets_path         = "/",
+                      cache_ejl           = true,
                     )
 
 export config

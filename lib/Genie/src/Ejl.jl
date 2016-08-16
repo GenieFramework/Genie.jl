@@ -5,8 +5,8 @@ using Genie
 export @ejl_str, push_template_line!
 
 const THROW_EXCEPTIONS = true
-const CACHE_PATH = joinpath(Genie.APP_PATH, "cache", "ejl")
-const WITH_CACHE = Genie.RENDER_EJL_WITH_CACHE
+const CACHE_PATH = Genie.config.cache_ejl_folder
+const WITH_CACHE = Genie.config.cache_ejl
 
 macro ejl_str(p)
   parse_tpl(p)

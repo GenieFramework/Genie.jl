@@ -16,8 +16,6 @@ const RENDER_MUSTACHE_EXT   = "mustache.jl"
 const RENDER_JSON_EXT       = "json.jl"
 const RENDER_EJL_EXT        = "ejl.html"
 
-const RENDER_EJL_WITH_CACHE = true
-
 const MODEL_RELATIONSHIPS_EAGERNESS_AUTO    = :auto
 const MODEL_RELATIONSHIPS_EAGERNESS_LAZY    = :lazy
 const MODEL_RELATIONSHIPS_EAGERNESS_EAGER   = :eager
@@ -53,7 +51,10 @@ type Config
   test_folder::AbstractString
   session_folder::AbstractString
   log_folder::AbstractString
+
   cache_folder::AbstractString
+  cache_ejl::Bool
+  cache_ejl_folder::AbstractString
 
   loggers::Array{Logging.Logger,1}
   log_router::Bool
@@ -102,7 +103,10 @@ type Config
             test_folder       = abspath(joinpath("test")),
             session_folder    = abspath(joinpath("session")),
             log_folder        = abspath(joinpath("log")),
+
             cache_folder      = abspath(joinpath("cache")),
+            cache_ejl         = true,
+            cache_ejl_folder  = abspath(joinpath("cache", "ejl")),
 
             loggers       = [],
             log_router    = false,
@@ -135,7 +139,8 @@ type Config
                   app_env, app_is_api,
                   suppress_output, output_length,
                   db_migrations_table_name, db_migrations_folder, db_auto_connect,
-                  task_folder, test_folder, session_folder, log_folder, cache_folder,
+                  task_folder, test_folder, session_folder, log_folder,
+                  cache_folder, cache_ejl, cache_ejl_folder,
                   loggers, log_router, log_db, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted,
                   assets_path, assets_serve,
                   pagination_jsonapi_default_items_per_page, pagination_jsonapi_page_param_name,
