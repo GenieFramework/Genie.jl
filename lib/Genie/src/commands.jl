@@ -66,7 +66,7 @@ end
 function parse_commandline_args()
     settings = ArgParseSettings()
 
-    settings.description = "Genie web framework command line client"
+    settings.description = "Genie web framework CLI"
     settings.epilog = "Visit http://genieframework.com for more info"
     settings.version = "0.6"
     settings.add_version = true

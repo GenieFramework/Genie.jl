@@ -266,7 +266,7 @@ function end_markup(s::AbstractString)
   s[prevind(s, length(s)):end]
 end
 
-function render_tpl(exs::Vector{AbstractString})
+function render_tpl(exs::Vector{AbstractString}, vars)
   __helper = """
   ____output = Vector{AbstractString}()
 
@@ -274,6 +274,8 @@ function render_tpl(exs::Vector{AbstractString})
     push!(____output, escape_string(s))
   end
   """
+
+  vals = Dict([k => v for (k, v) in vars])
 
   exs = __helper * join(exs, "\n")
   join(include_string(exs), "\n")

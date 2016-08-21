@@ -4,7 +4,7 @@ using Genie, Model, Authentication, ControllerHelpers, Genie.Users
 
 function articles(params)
   Users.with_authorization(params) do
-    mustache("admin listing articles", :admin) |> respond
+    articles = Model.find(Article)
   end
 end
 
