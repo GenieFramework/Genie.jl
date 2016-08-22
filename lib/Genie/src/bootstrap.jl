@@ -9,7 +9,9 @@ push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "src")))
 push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "database_adapters")))
 push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "cache_adapters")))
 push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "session_adapters")))
+
 push!(LOAD_PATH, abspath(joinpath("app", "resources")))
+push!(LOAD_PATH, abspath(joinpath("app", "helpers")))
 
 include(abspath(joinpath("lib", "Genie", "src", "genie_types.jl")))
 

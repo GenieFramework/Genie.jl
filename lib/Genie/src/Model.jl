@@ -3,9 +3,10 @@ module Model
 using Memoize
 using Database
 using DataFrames
+using DataStructures
+using DateParser
 using Genie
 using Util
-using DataStructures
 
 include(abspath(joinpath("lib", "Genie", "src", "model_types.jl")))
 
@@ -102,6 +103,26 @@ function save!!{T<:AbstractModel}(m::T; conflict_strategy = :error)
   insert_id = query_result_df[1, Symbol(m._id)]
 
   find_one_by(typeof(m), Symbol(m._id), insert_id)
+end
+
+function update_with{T<:AbstractModel}(m::T, w::T)
+  for fieldname in fieldnames(typeof(m))
+    ( startswith(string(fieldname), "_") || string(fieldname) == m._id ) && continue
+    setfield!(m, fieldname, getfield(w, fieldname))
+  end
+
+  m
+end
+function update_with{T<:AbstractModel}(m::T, w::Dict)
+  for fieldname in fieldnames(typeof(m))
+    ( startswith(string(fieldname), "_") || string(fieldname) == m._id ) && continue
+    haskey(w, fieldname) && setfield!(m, fieldname, w[fieldname])
+  end
+
+  m
+end
+function update_with!!{T<:AbstractModel}(m::T, w::Union{T,Dict})
+  Model.save!!(update_with(m, w)) |> _!!
 end
 
 function create_or_update_by!!{T<:AbstractModel}(m::T, property::Symbol, value::Any)
@@ -569,12 +590,6 @@ function to_store_sql{T<:AbstractModel}(m::T; conflict_strategy = :error) # upse
   return sql * " RETURNING $(m._id)"
 end
 
-function update_query_part{T<:AbstractModel}(m::T)
-  update_values = join(map(x -> "$(string(SQLColumn(x))) = $( string(prepare_for_db_save(m, Symbol(x), getfield(m, Symbol(x)))) )",
-                            persistable_fields(m)), ", ")
-  return " $update_values WHERE $(m._table_name).$(m._id) = '$(Base.get(m.id))'"
-end
-
 function prepare_for_db_save{T<:AbstractModel}(m::T, field::Symbol, value)
   value = try
             Base.get(m.on_dehydration)(m, field, value)
@@ -880,6 +895,16 @@ end
 
 function enclosure(v::Any, o::Any)
   in(string(o), ["IN", "in"]) ? "($(string(v)))" : v
+end
+
+function convert(::Type{DateTime}, value::AbstractString)
+  DateParser.parse(DateTime, value)
+end
+
+# moved it here as it confuses sublime's syntax highlighter
+function update_query_part{T<:AbstractModel}(m::T)
+  update_values = join(map(x -> "$(string(SQLColumn(x))) = $( string(prepare_for_db_save(m, Symbol(x), getfield(m, Symbol(x)))) )", persistable_fields(m)), ", ")
+  return " $update_values WHERE $(m._table_name).$(m._id) = '$(Base.get(m.id))'"
 end
 
 end

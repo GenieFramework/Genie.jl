@@ -28,7 +28,6 @@ function ejl(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractStr
   spawn_splatted_vars(vars)
 
   template = Ejl.template_from_file(abspath(joinpath(Genie.APP_PATH, "app", "resources", string(resource), "views", string(action) * ".$RENDER_EJL_EXT")))
-  vals = merge(special_vals(), Dict([k => v for (k, v) in vars]))
   r = Ejl.render_tpl(template)
 
   if render_layout
@@ -41,12 +40,15 @@ function ejl(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractStr
 end
 function ejl(content::AbstractString, layout::Union{Symbol, AbstractString} = :app, vars...)
   spawn_splatted_vars(vars)
-  vals = merge(special_vals(), Dict([k => v for (k, v) in vars]))
   layout = Ejl.template_from_file(abspath(joinpath(Genie.APP_PATH, "app", "layouts", string(layout) * ".$RENDER_EJL_EXT")))
   spawn_vars(EJL_YIELD_VAR_NAME, content)
-  r = Ejl.render_tpl(layout, vals)
+  r = Ejl.render_tpl(layout)
 
   Dict(:html => r)
+end
+function ejl(content::Vector{AbstractString}; vars...)
+  spawn_splatted_vars(vars)
+  Ejl.render_tpl(content)
 end
 
 function mustache(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractString} = :app, render_layout::Bool = true, vars...)
@@ -79,10 +81,10 @@ function redirect_to(location::AbstractString, code::Int = 302, headers::Dict{Ab
   respond(Dict(:text => ""), code, headers)
 end
 
-function spawn_splatted_vars(vars)
+function spawn_splatted_vars(vars, m::Module = current_module())
   for arg in vars
     k, v = arg
-    spawn_vars(k, v)
+    spawn_vars(k, v, m)
   end
 end
 
@@ -92,8 +94,8 @@ function special_vals()
   )
 end
 
-function spawn_vars(key, value)
-  eval(current_module(), :($key = $value))
+function spawn_vars(key, value, m::Module = current_module())
+  eval(m, :($key = $value))
 end
 
 function structure_to_dict(structure, resource = nothing)

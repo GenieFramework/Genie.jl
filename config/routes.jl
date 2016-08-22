@@ -8,7 +8,9 @@ route(GET, "/articles/:article_slug::AbstractString", "articles#ArticlesControll
 route(GET, "/admin/dashboard", "dashboard#DashboardController.index")
 
 route(GET, "/admin/articles", "articles#AdminController.Website.articles")
-route(GET, "admin/articles/:article_id::Int", "articles#AdminController.Website.edit")
+
+route(GET, "admin/articles/:article_id::Int", "articles#AdminController.Website.article_edit")
+route(POST, "admin/articles/:article_id::Int", "articles#AdminController.Website.article_update")
 
 route(GET, "/login", "user_sessions#UserSessionsController.login")
 route(POST, "/login", "user_sessions#UserSessionsController.create")

@@ -5,9 +5,9 @@ type Article <: AbstractModel
   _id::AbstractString
 
   id::Nullable{Model.DbId}
-  title::UTF8String
-  summary::UTF8String
-  content::UTF8String
+  title::AbstractString
+  summary::AbstractString
+  content::AbstractString
   updated_at::DateTime
 
   Article(;
@@ -15,7 +15,7 @@ type Article <: AbstractModel
     title = "",
     summary = "",
     content = "",
-    updated_at = DateTime.now()
+    updated_at = Dates.now()
   ) = new("articles", "id", id, title, summary, content, updated_at)
 end
 

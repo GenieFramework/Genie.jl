@@ -44,7 +44,7 @@ function route_request(req::Request, res::Response, session::Sessions.Session)
   match_routes(req, res, session)
 end
 
-function route(params...; with::Dict{Symbol, Any} = Dict{Symbol, Any}())
+function route(params...; with::Dict = Dict{Any,Any}())
   extra_params = Dict(:with => with)
   push!(routes, (params, extra_params))
 end
@@ -129,7 +129,7 @@ function extract_uri_params(uri::URI, regex_route::Regex, param_names::Array{Abs
   true
 end
 
-function extract_extra_params(extra_params::Dict{Symbol, Dict{Symbol, Any}})
+function extract_extra_params(extra_params::Dict)
   if ! isempty(extra_params[:with])
     for (k, v) in extra_params[:with]
       params[Symbol(k)] = v
@@ -139,7 +139,22 @@ end
 
 function extract_post_params(req::Request)
   for (k, v) in Input.post(req)
+    v = replace(v, "+", " ")
+    nested_keys(k, v)
     params[Symbol(k)] = v
+  end
+end
+
+function nested_keys(k::AbstractString, v)
+  if contains(k, ".")
+    parts = split(k, ".", limit = 2)
+    nested_val_key = Symbol(parts[1])
+    if haskey(params, nested_val_key) && isa(params[nested_val_key], Dict)
+      ! haskey(params[nested_val_key], Symbol(parts[2])) && (params[nested_val_key][Symbol(parts[2])] = v)
+    elseif ! haskey(params, nested_val_key)
+      params[nested_val_key] = Dict()
+      params[nested_val_key][Symbol(parts[2])] = v
+    end
   end
 end
 
@@ -155,7 +170,7 @@ end
 
 const loaded_controllers = UInt64[]
 
-function invoke_controller(to::AbstractString, req::Request, res::Response, params::Dict{Symbol, Any}, session::Sessions.Session)
+function invoke_controller(to::AbstractString, req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session)
   to_parts = split(to, "#")
 
   controller_path = abspath(joinpath(Genie.APP_PATH, "app", "resources", to_parts[1]))
@@ -168,6 +183,11 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
 
   controller = Genie.GenieController()
   action_name = string(current_module()) * "." * to_parts[2]
+
+  action_controller_parts = split(to_parts[2], ".")
+  params[:action_controller] = to_parts[2]
+  params[:action] = action_controller_parts[end]
+  params[:controller] = join(action_controller_parts[1:end-1], ".")
 
   params[Genie.PARAMS_REQUEST_KEY]   = req
   params[Genie.PARAMS_RESPONSE_KEY]  = res

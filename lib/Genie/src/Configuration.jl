@@ -12,9 +12,9 @@ const DEV   = "dev"
 const PROD  = "prod"
 const TEST  = "test"
 
-const RENDER_MUSTACHE_EXT   = "mustache.jl"
-const RENDER_JSON_EXT       = "json.jl"
-const RENDER_EJL_EXT        = "ejl.html"
+const RENDER_MUSTACHE_EXT   = "jl.mustache"
+const RENDER_JSON_EXT       = "jl.json"
+const RENDER_EJL_EXT        = "jl.html"
 
 const MODEL_RELATIONSHIPS_EAGERNESS_AUTO    = :auto
 const MODEL_RELATIONSHIPS_EAGERNESS_LAZY    = :lazy

@@ -54,7 +54,7 @@ function parse_tpl(s::AbstractString)
 
   s = """$s"""
   const code = Array{AbstractString,1}()
-  push!(code, "____output = Vector{AbstractString}()")
+  # push!(code, "____output = Vector{AbstractString}()")
 
   const current_line::Int = 0
   const lines_of_template::Vector{AbstractString} = split(s, "\n")
@@ -67,7 +67,9 @@ function parse_tpl(s::AbstractString)
   const cmd::AbstractString     = ""
 
   function include_partial(tpl_line::AbstractString)
-    open(joinpath(Genie.APP_PATH, strip(strip_start_markup(tpl_line)))) do f
+    file_name = strip(strip_start_markup(tpl_line))
+    file_name = endswith(file_name, "." * RENDER_EJL_EXT) ? file_name : file_name * "." * RENDER_EJL_EXT
+    open(joinpath(Genie.APP_PATH, file_name)) do f
       readall(f) |> Ejl.parse_tpl |> Ejl.render_tpl
     end
   end
@@ -266,7 +268,7 @@ function end_markup(s::AbstractString)
   s[prevind(s, length(s)):end]
 end
 
-function render_tpl(exs::Vector{AbstractString}, vars)
+function render_tpl(exs::Vector{AbstractString})
   __helper = """
   ____output = Vector{AbstractString}()
 
@@ -275,9 +277,7 @@ function render_tpl(exs::Vector{AbstractString}, vars)
   end
   """
 
-  vals = Dict([k => v for (k, v) in vars])
-
-  exs = __helper * join(exs, "\n")
+  exs = __helper * join(exs, "\n") * "\nreturn ____output \n"
   join(include_string(exs), "\n")
 end
 

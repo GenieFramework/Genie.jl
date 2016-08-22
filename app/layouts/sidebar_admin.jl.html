@@ -1,0 +1,39 @@
+<aside class="sidebar">
+    <div class="sidebar-container">
+        <div class="sidebar-header">
+            <div class="brand">
+                <div class="logo">
+                  <span class="l l1"></span>
+                  <span class="l l2"></span>
+                  <span class="l l3"></span>
+                  <span class="l l4"></span>
+                  <span class="l l5"></span>
+                </div>
+                Modular Admin
+            </div>
+        </div>
+        <nav class="menu">
+            <ul class="nav metismenu" id="sidebar-menu">
+                <li class="$(active_menu_class(:dashboard, params))">
+                    <a href="/admin/dashboard">
+                        <i class="fa fa-home"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="$(active_menu_class(:articles, params))">
+                    <a href="/admin/articles">
+                        <i class="fa fa-th-large"></i>
+                        Articles
+                    </a>
+                </li>
+                <li>
+                    <a href=""> <i class="fa fa-bar-chart"></i> Charts <i class="fa arrow"></i> </a>
+                    <ul>
+                        <li> <a href="charts-flot.html">Flot Charts</a> </li>
+                        <li> <a href="charts-morris.html">Morris Charts</a> </li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</aside>
