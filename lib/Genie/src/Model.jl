@@ -102,7 +102,7 @@ function save!!{T<:AbstractModel}(m::T; conflict_strategy = :error)
   query_result_df::DataFrames.DataFrame = query(sql)
   insert_id = query_result_df[1, Symbol(m._id)]
 
-  find_one_by(typeof(m), Symbol(m._id), insert_id)
+  find_one_by(typeof(m), Symbol(m._id), insert_id) |> Base.get
 end
 
 function update_with{T<:AbstractModel}(m::T, w::T)

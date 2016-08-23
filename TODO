@@ -17,16 +17,15 @@ v 0.5.x
 v 0.6.x
 ☐ new test app - blogging platform
 ☐ support for POST - routing, params, etc
-☐ reverse routing -> resource to route
+☐ model validations
+☐ authorization
 ☐ caching - data caching (redis, memcache, file system)
 ☐ view / partials caching -- and not reloading views in production
 
 v 0.7.x
-☐ model validations
-☐ authorization
 ☐ channels (websockets communication)
 ☐ encrypt sessions and cookies
-☐ add a method to automatically run all DOWN migrations
+✔ add a method to automatically run all DOWN migrations
 
 v 0.8.x
 ☐ support for plugins
@@ -50,6 +49,7 @@ v 1.0
 v 1.1
 ☐ support for mysql
 ☐ support for sqlite
+☐ reverse routing -> resource to route
 
 v 1.2
 ☐ mailers

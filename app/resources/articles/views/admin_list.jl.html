@@ -9,10 +9,10 @@
             </h3>
           </div>
           <section class="example">
-            <table class="table table-hover">
+            <table class="table table-hover" id="articles_list">
               <thead>
                 <tr>
-                  <th>Title</th>
+                  <th style="width: 60%;">Title</th>
                   <th>Status</th>
                   <th>Updated at</th>
                   <th>Actions</th>
@@ -21,9 +21,14 @@
               <tbody>
                 <% for a in articles :>
                 <tr>
-                  <td scope="row">$(a.title)</td>
-                  <td>Published</td>
-                  <td>$(a.updated_at)</td>
+                  <td scope="row">
+                    $(a.title)
+                    <p class="admin-article-summary">
+                      $(a.summary)
+                    </p>
+                  </td>
+                  <td><$ Articles.is_removed(a) ? "Removed at $(a.removed_at |> _!!)" : ( Articles.is_published(a) ? "Published at $(a.published_at |> _!!)" : "Not published" ) $></td>
+                  <td><$ Dates.format(a.updated_at, "e, dd u yyyy HH:MM") $></td>
                   <td><a href="/admin/articles/$(a.id |> _!!)">Edit</a>
                    | Publish | Preview</td>
                  </tr>

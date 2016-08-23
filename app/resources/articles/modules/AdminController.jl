@@ -17,6 +17,7 @@ end
 function article_update(params)
   Users.with_authorization(params) do
     article::Article = Model.find_one(Article, params[:article_id]) |> _!!
+    params[:article][:updated_at] = Dates.now()
     Model.update_with!!(article, params[:article])
 
     redirect_to("/admin/articles/$(article.id |> _!!)")

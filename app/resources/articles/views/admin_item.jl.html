@@ -4,7 +4,7 @@
       <div class="card card-block sameheight-item" style="height: 721px;">
         <div class="title-block">
           <h3 class="title">
-            Editing $(article.title)
+            $(article.title)
           </h3>
         </div>
         <form role="form" method="POST" action="/admin/articles/$(article.id |> _!!)">
@@ -18,11 +18,21 @@
           </div>
           <div class="form-group">
             <label class="control-label">Content</label>
-            <textarea rows="3" class="form-control underlined" name="article.content">$(article.content)</textarea>
+            <div id="article_editormd">
+              <textarea rows="3" class="form-control underlined" name="article.content">$(article.content)</textarea>
+            </div>
           </div>
           <div class="form-group"> <button type="submit" class="btn btn-primary">Save</button> </div>
         </form>
       </div>
     </div>
   </div>
+
+  <link rel="stylesheet" href="/css/admin/editormd_style.css" />
+  <link rel="stylesheet" href="/css/admin/editormd.css" />
+  <script src="/js/admin/jquery.min.js"></script>
+  <script src="/js/admin/editormd.js"></script>
+  <script src="/vendor/editormd/languages/en.js"></script>
+  <script src="/js/admin/editormd_integration.js"></script>
+
 </section>

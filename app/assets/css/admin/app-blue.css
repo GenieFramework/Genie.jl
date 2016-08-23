@@ -2330,7 +2330,7 @@ pre {
   right: 0;
   -webkit-transition: left 0.3s ease;
           transition: left 0.3s ease;
-  z-index: 10;
+  /*z-index: 10;*/
   display: -webkit-box;
   display: -webkit-flex;
   display: -ms-flexbox;
@@ -2364,7 +2364,8 @@ pre {
   bottom: 0;
   -webkit-transition: left 0.3s ease;
           transition: left 0.3s ease;
-  z-index: 20; }
+  /*z-index: 20; */
+}
   @media (max-width: 991px) {
     .sidebar {
       position: fixed;

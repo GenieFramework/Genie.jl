@@ -125,8 +125,32 @@ function parse_tpl(s::AbstractString)
     s
   end
 
-  function push_template_line!(s::AbstractString)
-    cmd = "push!(____output, \"$(escape_string(whitespaces!(s)))\")"
+  function escape_julia(s::AbstractString)
+    s = replace(s, "\\\$", "&dollar;")
+
+    s
+  end
+
+  function unescape_embeded_julia(s::AbstractString)
+    ! contains(s, "\$(") && ! contains(s, "<\$") && return s
+
+    matches = matchall(r"\$\(.*?\)|<\$.*?\$>", s)
+    for m in matches
+      s = replace(s, m, unescape_string(m))
+      s = replace(s, "<\$", "\$(")
+      s = replace(s, "\$>", ")")
+    end
+
+    s
+  end
+
+  function push_template_line!(s::AbstractString, escape::Bool = false)
+    s = whitespaces!(s)
+    if escape
+      s = escape_string(s)
+      s = unescape_embeded_julia(s)
+    end
+    cmd = """push!(____output, \"$( s )\")"""
     in_block && push_to_block!(cmd) && return true
     push_to_output!(cmd) && return true
   end
@@ -148,6 +172,8 @@ function parse_tpl(s::AbstractString)
     current_line += 1
 
     try
+      tpl_line = escape_julia(tpl_line)
+
       line_is_comment(tpl_line) && continue
 
       line_is_debug(tpl_line) && (tpl_line = debug_line(tpl_line))
@@ -183,7 +209,7 @@ function parse_tpl(s::AbstractString)
         continue
       end
 
-      push_template_line!(tpl_line)
+      push_template_line!(tpl_line, true)
 
     catch parse_exception
       println("EjlParseException in template at line $current_line: $(lines_of_template[current_line])")

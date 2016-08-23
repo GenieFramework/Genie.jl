@@ -24,7 +24,7 @@ typealias RelationshipDataArray Array{AbstractModel,1}
 
 #
 # SQLInput
-# 
+#
 
 type SQLInput <: AbstractString
   value::Union{AbstractString, Real}
@@ -49,28 +49,34 @@ show(io::IO, s::SQLInput) = print(io, string(s))
 
 convert(::Type{SQLInput}, r::Real) = SQLInput(parse(r))
 convert(::Type{SQLInput}, s::Symbol) = SQLInput(string(s))
-convert(::Type{SQLInput}, i::Nullable{Int32}) = (! isnull(i) ? Base.get(i) : -1) |> SQLInput
 convert(::Type{SQLInput}, d::DateTime) = SQLInput(string(d))
+function convert{T}(::Type{SQLInput}, n::Nullable{T})
+  if isnull(n)
+    SQLInput("NULL", escaped = true, raw = true)
+  else
+    Base.get(n) |> SQLInput
+  end
+end
 
 const QI = SQLInput
 
 #
 # SQLColumn
-# 
+#
 
 type SQLColumn <: SQLType
   value::AbstractString
   escaped::Bool
   raw::Bool
   table_name::Union{AbstractString, Symbol}
-  function SQLColumn(v::AbstractString; escaped = false, raw = false, table_name = "") 
-    if v == "*" 
-      raw = true 
+  function SQLColumn(v::AbstractString; escaped = false, raw = false, table_name = "")
+    if v == "*"
+      raw = true
     end
     new(v, escaped, raw, string(table_name))
   end
 end
-function SQLColumn(v::Any; escaped = false, raw = false, table_name = "") 
+function SQLColumn(v::Any; escaped = false, raw = false, table_name = "")
   if is_fully_qualified(string(v))
     table_name, v = from_fully_qualified(string(v))
   end
@@ -79,7 +85,7 @@ end
 SQLColumn(a::Array) = map(x -> SQLColumn(string(x)), a)
 SQLColumn(c::SQLColumn) = c
 
-==(a::SQLColumn, b::SQLColumn) = a.value == b.value 
+==(a::SQLColumn, b::SQLColumn) = a.value == b.value
 
 string(a::Array{SQLColumn}) = join(map(x -> string(x), a), ", ")
 string(s::SQLColumn) = safe(s).value
@@ -100,7 +106,7 @@ const QC = SQLColumn
 
 #
 # SQLLogicOperator
-# 
+#
 
 type SQLLogicOperator <: SQLType
   value::AbstractString
@@ -115,7 +121,7 @@ const QLO = SQLLogicOperator
 
 #
 # SQLWhere
-# 
+#
 
 type SQLWhere <: SQLType
   column::SQLColumn
@@ -123,7 +129,7 @@ type SQLWhere <: SQLType
   condition::SQLLogicOperator
   operator::AbstractString
 
-  SQLWhere(column::SQLColumn, value::SQLInput, condition::SQLLogicOperator, operator::AbstractString) = 
+  SQLWhere(column::SQLColumn, value::SQLInput, condition::SQLLogicOperator, operator::AbstractString) =
     new(column, value, condition, operator)
 end
 SQLWhere(column::Any, value::Any, condition::Any, operator::AbstractString) = SQLWhere(SQLColumn(column), SQLInput(value), SQLLogicOperator(condition), operator)
@@ -134,7 +140,7 @@ SQLWhere(column::SQLColumn, value::SQLInput) = SQLWhere(column, value, SQLLogicO
 SQLWhere(column::Any, value::Any) = SQLWhere(SQLColumn(column), SQLInput(value))
 
 string(w::SQLWhere) = "$(w.condition.value) ($(w.column) $(w.operator) $(enclosure(w.value, w.operator)))"
-function string{T <: AbstractModel}(w::SQLWhere, m::T) 
+function string{T <: AbstractModel}(w::SQLWhere, m::T)
   w.column = SQLColumn(w.column.value, escaped = w.column.escaped, raw = w.column.raw, table_name = m._table_name)
   "$(w.condition.value) ($(w.column) $(w.operator) $(enclosure(w.value, w.operator)))"
 end
@@ -148,23 +154,23 @@ const QW = SQLWhere
 
 #
 # SQLLimit
-# 
+#
 
 type SQLLimit <: SQLType
   value::Union{Int, AbstractString}
   SQLLimit(v::Int) = new(v)
-  function SQLLimit(v::AbstractString) 
+  function SQLLimit(v::AbstractString)
     v = strip(uppercase(v))
-    if v == "ALL" 
+    if v == "ALL"
       return new("ALL")
     else
       i = tryparse(Int, v)
-      if isnull(i) 
+      if isnull(i)
         error("Can't parse SQLLimit value")
-      else 
+      else
         return new(Base.get(i))
       end
-    end 
+    end
   end
 end
 SQLLimit() = SQLLimit("ALL")
@@ -177,12 +183,12 @@ const QL = SQLLimit
 
 #
 # SQLOrder
-# 
+#
 
 type SQLOrder <: SQLType
   column::SQLColumn
   direction::AbstractString
-  SQLOrder(column::SQLColumn, direction::AbstractString) = 
+  SQLOrder(column::SQLColumn, direction::AbstractString) =
     new(column, uppercase(string(direction)) == "DESC" ? "DESC" : "ASC")
 end
 SQLOrder(column::Any, direction::Any; raw::Bool = false) = SQLOrder(SQLColumn(column, raw = raw), string(direction))
@@ -197,11 +203,11 @@ const QO = SQLOrder
 
 #
 # SQLJoin
-# 
+#
 
 #
 # SQLJoin - SQLOn
-# 
+#
 
 type SQLOn <: SQLType
   column_1::SQLColumn
@@ -223,13 +229,13 @@ const QON = SQLOn
 
 #
 # SQLJoin - SQLJoinType
-# 
+#
 
 type SQLJoinType <: SQLType
   join_type::AbstractString
-  function SQLJoinType(t::AbstractString) 
+  function SQLJoinType(t::AbstractString)
     accepted_values = ["inner", "INNER", "left", "LEFT", "right", "RIGHT", "full", "FULL"]
-    if in(t, accepted_values) 
+    if in(t, accepted_values)
       new(uppercase(t))
     else
       error("""Invalid join type - accepted options are $(join(accepted_values, ", "))""")
@@ -246,7 +252,7 @@ const QJT = SQLJoinType
 
 #
 # SQLJoin
-# 
+#
 
 type SQLJoin{T<:AbstractModel} <: SQLType
   model_name::Type{T}
@@ -257,12 +263,12 @@ type SQLJoin{T<:AbstractModel} <: SQLType
   natural::Bool
   columns::Array{SQLColumns,1}
 end
-SQLJoin{T<:AbstractModel}(model_name::Type{T}, 
-                          on::SQLOn; 
-                          join_type = SQLJoinType("INNER"), 
-                          outer = false, 
-                          where = Array{SQLWhere,1}(), 
-                          natural = false, 
+SQLJoin{T<:AbstractModel}(model_name::Type{T},
+                          on::SQLOn;
+                          join_type = SQLJoinType("INNER"),
+                          outer = false,
+                          where = Array{SQLWhere,1}(),
+                          natural = false,
                           columns = Array{SQLColumns,1}()
                           ) = SQLJoin{T}(model_name, on, join_type, outer, where, natural, columns)
 function string(j::SQLJoin)
@@ -270,7 +276,7 @@ function string(j::SQLJoin)
   join = """ $(j.natural ? "NATURAL " : "") $(j.join_type) $(j.outer ? "OUTER " : "") JOIN $(Util.add_quotes(_m._table_name)) $(j.on) """
   join *= if ! isempty(j.where)
             where *= " WHERE " * join(map(x -> string(x), j.where), " AND ")
-          else 
+          else
             ""
           end
 
@@ -283,19 +289,19 @@ const QJ = SQLJoin
 
 #
 # SQLQuery
-# 
+#
 
 type SQLQuery <: SQLType
-  columns::Array{SQLColumn,1} 
-  where::Array{SQLWhere,1} 
-  limit::SQLLimit  
-  offset::Int 
-  order::Array{SQLOrder,1} 
-  group::Array{SQLColumn,1} 
+  columns::Array{SQLColumn,1}
+  where::Array{SQLWhere,1}
+  limit::SQLLimit
+  offset::Int
+  order::Array{SQLOrder,1}
+  group::Array{SQLColumn,1}
   having::Array{SQLWhere,1}
 
-  SQLQuery(;  columns = SQLColumn[], where = SQLWhere[], limit = SQLLimit("ALL"), offset = 0, 
-              order = SQLOrder[], group = SQLColumn[], having = SQLWhere[]) = 
+  SQLQuery(;  columns = SQLColumn[], where = SQLWhere[], limit = SQLLimit("ALL"), offset = 0,
+              order = SQLOrder[], group = SQLColumn[], having = SQLWhere[]) =
     new(columns, where, limit, offset, order, group, having)
 end
 
@@ -305,7 +311,7 @@ const QQ = SQLQuery
 
 #
 # SQLRelation
-# 
+#
 
 type SQLRelation{T<:AbstractModel} <: SQLType
   model_name::Type{T}
@@ -316,13 +322,13 @@ type SQLRelation{T<:AbstractModel} <: SQLType
 
   SQLRelation(model_name, required, eagerness, data, join) = new(model_name, required, eagerness, data, join)
 end
-SQLRelation{T<:AbstractModel}(model_name::Type{T}; 
-                              required = false, 
-                              eagerness = MODEL_RELATIONSHIPS_EAGERNESS_AUTO, 
-                              data = Nullable{Union{RelationshipData, RelationshipDataArray}}(), 
+SQLRelation{T<:AbstractModel}(model_name::Type{T};
+                              required = false,
+                              eagerness = MODEL_RELATIONSHIPS_EAGERNESS_AUTO,
+                              data = Nullable{Union{RelationshipData, RelationshipDataArray}}(),
                               join = Nullable{SQLJoin}()) = SQLRelation{T}(model_name, required, eagerness, data, join)
-function lazy(r::SQLRelation) 
-  r.eagerness == MODEL_RELATIONSHIPS_EAGERNESS_LAZY || 
+function lazy(r::SQLRelation)
+  r.eagerness == MODEL_RELATIONSHIPS_EAGERNESS_LAZY ||
   r.eagerness == MODEL_RELATIONSHIPS_EAGERNESS_AUTO && Genie.config.model_relationships_eagerness == MODEL_RELATIONSHIPS_EAGERNESS_LAZY
 end
 
