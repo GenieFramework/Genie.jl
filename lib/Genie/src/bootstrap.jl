@@ -21,6 +21,7 @@ using Migration
 using Model
 using Tester
 using Toolbox
+using YAML
 
 @reexport using Configuration
 @reexport using Cookies
@@ -55,12 +56,9 @@ end
 
 function load_controller(dir::AbstractString)
   push!(LOAD_PATH, dir)
-  controller_files = ["controller", "authorization"]
-  for cf in controller_files
-    file_path = joinpath(dir, cf * ".jl")
-    if isfile(file_path) && isreadable(file_path)
-      include(file_path)
-    end
+  file_path = joinpath(dir, "controller.jl")
+  if isfile(file_path) && isreadable(file_path)
+    include(file_path)
   end
 end
 
@@ -77,6 +75,15 @@ function load_initializers()
     for i in f
       include(joinpath(dir, i))
     end
+  end
+end
+
+function load_acl(dir::AbstractString)
+  file_path = joinpath(dir, "authorization.yml")
+  if isfile(file_path) && isreadable(file_path)
+    YAML.load(open(file_path))
+  else
+    Dict{Any,Any}
   end
 end
 

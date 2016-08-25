@@ -16,7 +16,7 @@ function up(_::CreateTableArticles)
       CONSTRAINT articles__idx_name UNIQUE(title)
     )
   """)
-  Database.query("""ALTER SEQUENCE articles__seq_id OWNED BY articles.id;""")
+  Database.query("""ALTER SEQUENCE articles__seq_id OWNED BY articles.id""")
 end
 
 function down(_::CreateTableArticles)

@@ -95,7 +95,7 @@ function special_vals()
 end
 
 function spawn_vars(key, value, m::Module = current_module())
-  eval(m, :($key = $value))
+  eval(m, :(const $key = $value))
 end
 
 function structure_to_dict(structure, resource = nothing)

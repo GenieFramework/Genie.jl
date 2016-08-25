@@ -1,4 +1,4 @@
-module ControllerHelpers
+module Helpers
 
 using Genie
 using Sessions

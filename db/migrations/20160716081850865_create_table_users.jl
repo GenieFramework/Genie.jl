@@ -12,7 +12,6 @@ function up(_::CreateTableUsers)
       name          varchar(100) NOT NULL,
       email         text NOT NULL,
       password      varchar(256) NOT NULL,
-      admin         boolean DEFAULT FALSE,
       updated_at    timestamp DEFAULT current_timestamp,
       CONSTRAINT users__idx_name UNIQUE(email)
     )

@@ -189,6 +189,7 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
   params[:action] = action_controller_parts[end]
   params[:controller] = join(action_controller_parts[1:end-1], ".")
 
+  params[Genie.PARAMS_ACL_KEY]       = Genie.load_acl(controller_path)
   params[Genie.PARAMS_REQUEST_KEY]   = req
   params[Genie.PARAMS_RESPONSE_KEY]  = res
   params[Genie.PARAMS_SESSION_KEY]   = session

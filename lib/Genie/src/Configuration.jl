@@ -24,7 +24,7 @@ const LOG_LEVEL_VERBOSITY_VERBOSE = :verbose
 const LOG_LEVEL_VERBOSITY_MINIMAL = :minimal
 
 const IN_REPL = false
-const GENIE_VERSION = v"0.5"
+const GENIE_VERSION = v"0.6"
 
 is_dev()  = (App.config.app_env == DEV)
 is_prod() = (App.config.app_env == PROD)

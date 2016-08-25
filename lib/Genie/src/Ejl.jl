@@ -54,7 +54,6 @@ function parse_tpl(s::AbstractString)
 
   s = """$s"""
   const code = Array{AbstractString,1}()
-  # push!(code, "____output = Vector{AbstractString}()")
 
   const current_line::Int = 0
   const lines_of_template::Vector{AbstractString} = split(s, "\n")
@@ -296,7 +295,7 @@ end
 
 function render_tpl(exs::Vector{AbstractString})
   __helper = """
-  ____output = Vector{AbstractString}()
+  const ____output = Vector{AbstractString}()
 
   function _push_out!_(s::AbstractString)
     push!(____output, escape_string(s))

@@ -102,7 +102,7 @@ function save!!{T<:AbstractModel}(m::T; conflict_strategy = :error)
   query_result_df::DataFrames.DataFrame = query(sql)
   insert_id = query_result_df[1, Symbol(m._id)]
 
-  find_one_by(typeof(m), Symbol(m._id), insert_id) |> Base.get
+  find_one_by!!(typeof(m), Symbol(m._id), insert_id)
 end
 
 function update_with{T<:AbstractModel}(m::T, w::T)
@@ -229,19 +229,19 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
 
     value = if in(:on_hydration!!, fieldnames(_m))
               try
-                _m, value = Base.get(_m.on_hydration!!)(_m, unq_field, row[field])
+                _m, value = _m.on_hydration!!(_m, unq_field, row[field])
                 value
               catch ex
-                Genie.log("Failed to hydrate!! field $field", :debug)
+                Genie.log("Failed to hydrate!! field $unq_field ($field)", :debug)
                 Genie.log(ex)
 
                 row[field]
               end
             elseif in(:on_hydration, fieldnames(_m))
               try
-                Base.get(_m.on_hydration)(_m, unq_field, row[field])
+                _m.on_hydration(_m, unq_field, row[field])
               catch ex
-                Genie.log("Failed to hydrate field $field", :debug)
+                Genie.log("Failed to hydrate field $unq_field ($field)", :debug)
                 Genie.log(ex)
 
                 row[field]
@@ -591,9 +591,16 @@ function to_store_sql{T<:AbstractModel}(m::T; conflict_strategy = :error) # upse
 end
 
 function prepare_for_db_save{T<:AbstractModel}(m::T, field::Symbol, value)
-  value = try
-            Base.get(m.on_dehydration)(m, field, value)
-          catch
+  value = if in(:on_dehydration, fieldnames(m))
+            try
+              m.on_dehydration(m, field, value)
+            catch ex
+              Genie.log("Failed to dehydrate field $field", :debug)
+              Genie.log(ex)
+
+              value
+            end
+          else
             value
           end
 

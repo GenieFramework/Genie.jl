@@ -1,17 +1,17 @@
 module UserSessionsController
-using Genie, Model, ControllerHelpers, Genie.Users, Authentication
+using Genie, Model, Helpers, Genie.Users, Authentication
 
-function login(params)
+function login(params::Dict{Symbol,Any})
   mustache(:user_sessions, :login, layout = :login, message = flash(params)) |> respond
 end
 
-function logout(params)
+function logout(params::Dict{Symbol,Any})
   Authentication.deauthenticate(session(params))
   flash("You've been successfully logged out", params)
   redirect_to("/login")
 end
 
-function create(params)
+function create(params::Dict{Symbol,Any})
   if ! isnull(Users.login(params[:email], params[:password], session(params)))
     return redirect_to("/admin/dashboard")
   end

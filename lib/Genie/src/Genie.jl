@@ -14,6 +14,7 @@ const PARAMS_REQUEST_KEY    = :_REQUEST
 const PARAMS_RESPONSE_KEY   = :_RESPONSE
 const PARAMS_SESSION_KEY    = :_SESSION
 const PARAMS_FLASH_KEY      = :_FLASH
+const PARAMS_ACL_KEY        = :_ACL
 
 include(abspath("lib/Genie/src/logger.jl"))
 include(abspath("lib/Genie/src/genie_app.jl"))
