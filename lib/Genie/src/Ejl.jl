@@ -163,6 +163,7 @@ function parse_tpl(s::AbstractString)
     @show block_suspended
     @show suspend_block
     @show code
+    @show current_module()
 
     true
   end

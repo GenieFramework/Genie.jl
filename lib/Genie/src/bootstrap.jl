@@ -26,6 +26,8 @@ using YAML
 @reexport using Configuration
 @reexport using Cookies
 @reexport using DateParser
+@reexport using Ejl
+@reexport using Helpers
 @reexport using HttpServer
 @reexport using Input
 @reexport using Render
@@ -33,7 +35,6 @@ using YAML
 @reexport using Sessions
 @reexport using SHA
 @reexport using Util
-@reexport using Ejl
 
 function load_configurations()
   include(abspath("config/loggers.jl"))

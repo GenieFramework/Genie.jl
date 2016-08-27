@@ -60,15 +60,41 @@ function errors{T<:AbstractModel}(m::T)
 end
 
 function validator{T<:AbstractModel}(m::T)
-  m._validator
+  m.validator
 end
 
 function has_errors{T<:AbstractModel}(m::T)
   ! isempty( errors(m) )
 end
 
+function has_errors_for{T<:AbstractModel}(m::T, field::Symbol)
+  ! isempty(errors_for(m, field))
+end
+
 function is_valid{T<:AbstractModel}(m::T)
   ! has_errors(m)
+end
+
+function errors_for{T<:AbstractModel}(m::T, field::Symbol)
+  result::Vector{Tuple{Symbol,Symbol,AbstractString}} = Vector{Tuple{Symbol,Symbol,AbstractString}}()
+  for err in errors(m)
+    err[1] == field && push!(result, err)
+  end
+
+  result
+end
+
+function errors_messages_for{T<:AbstractModel}(m::T, field::Symbol)
+  result::Vector{AbstractString} = Vector{AbstractString}()
+  for err in errors_for(m, field)
+    push!(result, err[3])
+  end
+
+  result
+end
+
+function errors_to_string{T<:AbstractModel}(m::T, field::Symbol, separator = "\n")
+  join(errors_messages_for(m, field), separator)
 end
 
 end

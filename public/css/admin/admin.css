@@ -1,3 +1,8 @@
 #articles_list .admin-article-summary {
   font-size: 11px;
 }
+
+.form-group .error {
+  color: #ff0000;
+  font-size: 12px;
+}

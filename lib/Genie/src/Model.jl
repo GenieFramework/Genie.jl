@@ -103,7 +103,9 @@ function save!{T<:AbstractModel}(m::T; conflict_strategy = :error)
 
   m
 end
-function save!!{T<:AbstractModel}(m::T; conflict_strategy = :error)
+function save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false)
+  ! skip_validation && ! Validation.validate!(m) && error("Model validation error(s) for $(typeof(m)) \n $(join(Validation.errors(m), "\n "))")
+
   sql::UTF8String = to_store_sql(m, conflict_strategy = conflict_strategy)
   query_result_df::DataFrames.DataFrame = query(sql)
   insert_id = query_result_df[1, Symbol(m._id)]
@@ -111,7 +113,7 @@ function save!!{T<:AbstractModel}(m::T; conflict_strategy = :error)
   find_one_by!!(typeof(m), Symbol(m._id), insert_id)
 end
 
-function update_with{T<:AbstractModel}(m::T, w::T)
+function update_with!{T<:AbstractModel}(m::T, w::T)
   for fieldname in fieldnames(typeof(m))
     ( startswith(string(fieldname), "_") || string(fieldname) == m._id ) && continue
     setfield!(m, fieldname, getfield(w, fieldname))
@@ -119,7 +121,7 @@ function update_with{T<:AbstractModel}(m::T, w::T)
 
   m
 end
-function update_with{T<:AbstractModel}(m::T, w::Dict)
+function update_with!{T<:AbstractModel}(m::T, w::Dict)
   for fieldname in fieldnames(typeof(m))
     ( startswith(string(fieldname), "_") || string(fieldname) == m._id ) && continue
     haskey(w, fieldname) && setfield!(m, fieldname, w[fieldname])
@@ -128,7 +130,7 @@ function update_with{T<:AbstractModel}(m::T, w::Dict)
   m
 end
 function update_with!!{T<:AbstractModel}(m::T, w::Union{T,Dict})
-  Model.save!!(update_with(m, w)) |> _!!
+  Model.save!!(update_with!(m, w)) |> _!!
 end
 
 function create_or_update_by!!{T<:AbstractModel}(m::T, property::Symbol, value::Any)
@@ -575,7 +577,7 @@ end
 function to_store_sql{T<:AbstractModel}(m::T; conflict_strategy = :error) # upsert strateygy = :none | :error | :ignore | :update
   uf = persistable_fields(m)
 
-  sql = if ! persisted(m) || (persisted(m) && conflict_strategy == :update)
+  sql = if ! is_persisted(m) || (is_persisted(m) && conflict_strategy == :update)
     pos = findfirst(uf, m._id)
     pos > 0 && splice!(uf, pos)
 
@@ -679,7 +681,7 @@ end
   Database.table_columns(_m._table_name)
 end
 
-function persisted{T<:AbstractModel}(m::T)
+function is_persisted{T<:AbstractModel}(m::T)
   ! ( isa(getfield(m, Symbol(m._id)), Nullable) && isnull( getfield(m, Symbol(m._id)) ) )
 end
 
