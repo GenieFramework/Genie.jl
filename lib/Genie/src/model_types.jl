@@ -7,7 +7,7 @@ import Base.length
 import Base.next
 import Base.==
 
-export DbId, SQLType, AbstractModel
+export DbId, SQLType, AbstractModel, ModelValidator
 export SQLInput, SQLColumn, SQLColumns, SQLLogicOperator
 export SQLWhere, SQLLimit, SQLOrder, SQLQuery, SQLRelation
 export SQLJoin, SQLOn, SQLJoinType
@@ -21,6 +21,17 @@ convert(::Type{Nullable{DbId}}, v::Number) = Nullable{DbId}(DbId(v))
 
 typealias RelationshipData AbstractModel
 typealias RelationshipDataArray Array{AbstractModel,1}
+
+#
+# Model validations
+#
+
+type ModelValidator
+  rules::Vector{Tuple{Symbol,Function,Vararg{Any}}} # [(:title, :not_empty), (:title, :min_length, (20)), (:content, :not_empty_if_published), (:email, :matches, (r"(.*)@(.*)"))]
+  errors::Vector{Tuple{Symbol,Symbol,AbstractString}} # [(:title, :not_empty, "title not empty"), (:title, :min_length, "min length 20"), (:content, :min_length, "min length 200")]
+
+  ModelValidator(rules) = new(rules, Vector{Tuple{Symbol,Symbol,AbstractString}}())
+end
 
 #
 # SQLInput

@@ -7,8 +7,10 @@ export Model, Database
 
 const APP_PATH = pwd()
 
-const GENIE_MODEL_FILE_NAME = "model.jl"
-const GENIE_CONTROLLER_FILE_NAME = "controller.jl"
+const GENIE_MODEL_FILE_NAME             = "model.jl"
+const GENIE_CONTROLLER_FILE_NAME        = "controller.jl"
+const GENIE_VALIDATOR_FILE_NAME         = "validator.jl"
+const GENIE_AUTHORIZATION_FILE_NAME     = "authorization.yml"
 
 const PARAMS_REQUEST_KEY    = :_REQUEST
 const PARAMS_RESPONSE_KEY   = :_RESPONSE

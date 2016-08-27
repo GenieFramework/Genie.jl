@@ -1,4 +1,4 @@
-module ViewHelpers
+module ViewHelper
 
 export active_menu_class
 

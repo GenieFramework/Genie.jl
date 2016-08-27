@@ -1,6 +1,6 @@
 module AdminController
 module Website
-using Genie, Model, Authentication, Authorization, Helpers, Genie.Users, ControllerHelpers
+using Genie, Model, Authentication, Authorization, Helpers, Genie.Users, ControllerHelper, ViewHelper
 
 
 

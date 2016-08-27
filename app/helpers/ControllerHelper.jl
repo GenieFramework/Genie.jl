@@ -1,4 +1,4 @@
-module ControllerHelpers
+module ControllerHelper
 using Genie, Helpers
 
 export unauthorized_access

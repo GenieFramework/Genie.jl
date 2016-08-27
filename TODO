@@ -19,6 +19,7 @@ v 0.6.x
 ☐ support for POST - routing, params, etc
 ☐ hooks: before controller action invoked & model hooks (before save, before dehydration, after hydration, etc)
 ☐ model validations
+☐ internationalization support - ex: config for errors messages
 ☐ authorization
 ☐ caching - data caching (redis, memcache, file system)
 ☐ view / partials caching -- and not reloading views in production

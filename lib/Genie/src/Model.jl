@@ -7,8 +7,11 @@ using DataStructures
 using DateParser
 using Genie
 using Util
+using Reexport
 
 include(abspath(joinpath("lib", "Genie", "src", "model_types.jl")))
+
+@reexport using Validation
 
 export RELATIONSHIP_HAS_ONE, RELATIONSHIP_BELONGS_TO, RELATIONSHIP_HAS_MANY
 
@@ -65,6 +68,9 @@ end
 function find_one{T<:AbstractModel}(m::Type{T}, value::Any)
   _m::T = disposable_instance(m)
   find_one_by(m, SQLColumn(_m._id), SQLInput(value))
+end
+function find_one!!{T<:AbstractModel}(m::Type{T}, value::Any)
+  find_one(m, value) |> Base.get
 end
 
 function rand{T<:AbstractModel}(m::Type{T}; limit = 1)
@@ -743,6 +749,18 @@ end
 #
 # utility functions
 #
+
+function id{T<:AbstractModel}(m::T)
+  m._id
+end
+
+function table_name{T<:AbstractModel}(m::T)
+  m._table_name
+end
+
+function validator{T<:AbstractModel}(m::T)
+  Validation.validator(m)
+end
 
 function has_field{T<:AbstractModel}(m::T, f::Symbol)
   in(f, fieldnames(m))

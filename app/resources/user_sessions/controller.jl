@@ -2,7 +2,7 @@ module UserSessionsController
 using Genie, Model, Helpers, Genie.Users, Authentication
 
 function login(params::Dict{Symbol,Any})
-  mustache(:user_sessions, :login, layout = :login, message = flash(params)) |> respond
+  ejl(:user_sessions, :login, layout = :login, message = flash(params)) |> respond
 end
 
 function logout(params::Dict{Symbol,Any})

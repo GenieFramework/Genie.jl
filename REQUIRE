@@ -9,6 +9,7 @@ Mustache
 ArgParse
 DataStructures
 SHA
+PatternDispatch
 
 Debug
 StackTraces

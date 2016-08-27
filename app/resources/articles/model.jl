@@ -3,6 +3,7 @@ export Article
 type Article <: AbstractModel
   _table_name::AbstractString
   _id::AbstractString
+  _validator::ModelValidator
 
   id::Nullable{Model.DbId}
   title::AbstractString
@@ -13,6 +14,14 @@ type Article <: AbstractModel
   removed_at::Nullable{DateTime}
 
   Article(;
+    _validator = ModelValidator(
+      [
+        (:title,    Validation.not_empty),
+        (:title,    Validation.min_length, (20)),
+        (:content,  Validation.ArticlesValidator.not_empty_if_published),
+        (:summary,  Validation.ArticlesValidator.not_empty_if_long_content, (2000))
+      ]
+    ),
     id = Nullable{Model.DbId}(),
     title = "",
     summary = "",
@@ -20,7 +29,7 @@ type Article <: AbstractModel
     updated_at = Dates.now(),
     published_at = Nullable{DateTime}(),
     removed_at = Nullable{DateTime}()
-  ) = new("articles", "id", id, title, summary, content, updated_at, published_at, removed_at)
+  ) = new("articles", "id", _validator, id, title, summary, content, updated_at, published_at, removed_at)
 end
 
 module Articles

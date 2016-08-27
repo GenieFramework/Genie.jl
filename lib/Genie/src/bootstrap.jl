@@ -41,14 +41,16 @@ function load_configurations()
 end
 
 function load_models(dir = abspath(joinpath(Genie.APP_PATH, "app", "resources")))
-  f = readdir(abspath(dir))
-  for i in f
+  dir_contents = readdir(abspath(dir))
+
+  for i in dir_contents
     full_path = joinpath(dir, i)
     if isdir(full_path)
       load_models(full_path)
     else
-      if ( i == GENIE_MODEL_FILE_NAME )
+      if i == GENIE_MODEL_FILE_NAME
         include(full_path)
+        isfile(joinpath(dir, GENIE_VALIDATOR_FILE_NAME)) && eval(Validation, :(include(joinpath($dir, $GENIE_VALIDATOR_FILE_NAME))))
       end
     end
   end
@@ -56,7 +58,7 @@ end
 
 function load_controller(dir::AbstractString)
   push!(LOAD_PATH, dir)
-  file_path = joinpath(dir, "controller.jl")
+  file_path = joinpath(dir, GENIE_CONTROLLER_FILE_NAME)
   if isfile(file_path) && isreadable(file_path)
     include(file_path)
   end
@@ -79,7 +81,7 @@ function load_initializers()
 end
 
 function load_acl(dir::AbstractString)
-  file_path = joinpath(dir, "authorization.yml")
+  file_path = joinpath(dir, GENIE_AUTHORIZATION_FILE_NAME)
   if isfile(file_path) && isreadable(file_path)
     YAML.load(open(file_path))
   else
@@ -87,7 +89,7 @@ function load_acl(dir::AbstractString)
   end
 end
 
-function startup(parsed_args::Dict{AbstractString, Any} = Dict(), start_server::Bool = false)
+function startup(parsed_args::Dict{AbstractString,Any} = Dict{AbstractString,Any}(), start_server::Bool = false)
   isempty(parsed_args) && (parsed_args = parse_commandline_args())
 
   if parsed_args["s"] == "s" || start_server == true

@@ -34,3 +34,7 @@ macro in_repl(expr)
     end
   end
 end
+
+macro validator(expr)
+
+end
