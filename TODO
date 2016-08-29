@@ -16,27 +16,28 @@ v 0.5.x
 
 v 0.6.x
 ☐ new test app - blogging platform
-☐ support for POST - routing, params, etc
+✔ support for POST - routing, params
 ☐ hooks: before controller action invoked & model hooks (before save, before dehydration, after hydration, etc)
-☐ model validations
-☐ internationalization support - ex: config for errors messages
-☐ authorization
+✔ model validations
+✔ authorization
 ☐ caching - data caching (redis, memcache, file system)
 ☐ view / partials caching -- and not reloading views in production
+✔ reverse routing -> resource to route
 
 v 0.7.x
 ☐ channels (websockets communication)
 ☐ encrypt sessions and cookies
 ✔ add a method to automatically run all DOWN migrations
+☐ internationalization support - ex: config for errors messages
 
 v 0.8.x
+☐ parallel serving
 ☐ support for plugins
 ☐ admin plugin (test app)
 ☐ packages versioning (declarative packages)
 ☐ proper error handling (50x, 40x)
 
 v 0.9.x
-☐ parallel serving
 ☐ performance enhancements, cleanup
 ☐ doc comments
 ☐ rename methods ending in ! to end in !! and follow julia's guidelines
@@ -51,13 +52,13 @@ v 1.0
 v 1.1
 ☐ support for mysql
 ☐ support for sqlite
-☐ reverse routing -> resource to route
 
 v 1.2
 ☐ mailers
 
 v 1.x
-+ change from Logging to Lumberjack?
+☐ change from Logging to Lumberjack?
+☐ refactor Router to use Route types instead of Tuples
 
 Other parts:
   ✔ lazy relationships - to skip relationship if lazy

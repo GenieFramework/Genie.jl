@@ -29,7 +29,7 @@
                   </td>
                   <td><$ Articles.is_removed(a) ? "Removed at $(a.removed_at |> _!!)" : ( Articles.is_published(a) ? "Published at $(a.published_at |> _!!)" : "Not published" ) $></td>
                   <td><$ Dates.format(a.updated_at, "e, dd u yyyy HH:MM") $></td>
-                  <td><a href="/admin/articles/$(a.id |> _!!)">Edit</a>
+                  <td><a href="$( to_link!!(:admin_article_edit, article_id = _!!(a.id) ) )">Edit</a>
                    | Publish | Preview</td>
                  </tr>
                  <: end %>

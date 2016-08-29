@@ -23,7 +23,7 @@ function article_update(params::Dict{Symbol,Any})
 
     if Validation.validate!(article)
       Model.save!!(article)
-      return redirect_to("/admin/articles/$(article.id |> _!!)")
+      return to_link!!(:admin_article_edit, article_id = Base.get(article.id)) |> redirect_to
     else
       flash("Article can't be saved - please check the errors", params)
       return article_edit(params, a = article)
