@@ -22,6 +22,7 @@ using Model
 using Tester
 using Toolbox
 using YAML
+# using Hooks
 
 @reexport using Configuration
 @reexport using Cookies

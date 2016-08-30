@@ -2,6 +2,8 @@ module AdminController
 module Website
 using Genie, Model, Authentication, Authorization, Helpers, Genie.Users, ControllerHelper, ViewHelper
 
+const before_action_hooks = Symbol[:say_hi]
+
 function articles(params::Dict{Symbol,Any})
   with_authorization(:list, unauthorized_access, params) do
     ejl(:articles, :admin_list, layout = :admin, articles = Model.find(Article), params = params) |> respond
@@ -29,6 +31,10 @@ function article_update(params::Dict{Symbol,Any})
       return article_edit(params, a = article)
     end
   end
+end
+
+function say_hi(params)
+  @show "HI!"
 end
 
 end

@@ -17,7 +17,6 @@ v 0.5.x
 v 0.6.x
 ☐ new test app - blogging platform
 ✔ support for POST - routing, params
-☐ hooks: before controller action invoked & model hooks (before save, before dehydration, after hydration, etc)
 ✔ model validations
 ✔ authorization
 ☐ caching - data caching (redis, memcache, file system)
@@ -53,12 +52,11 @@ v 1.1
 ☐ support for mysql
 ☐ support for sqlite
 
-v 1.2
-☐ mailers
-
 v 1.x
 ☐ change from Logging to Lumberjack?
 ☐ refactor Router to use Route types instead of Tuples
+☐ hooks: before controller action invoked & model hooks (before save, before dehydration, after hydration, etc)
+☐ mailers
 
 Other parts:
   ✔ lazy relationships - to skip relationship if lazy

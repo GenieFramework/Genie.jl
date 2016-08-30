@@ -53,14 +53,14 @@ function parse_tpl(s::AbstractString)
   WITH_CACHE && check_cache(s) && return tpl_from_cache(s)
 
   s = """$s"""
-  const code = Array{AbstractString,1}()
+  const code = AbstractString[]
 
   const current_line::Int = 0
   const lines_of_template::Vector{AbstractString} = split(s, "\n")
 
   const in_block                = false
   const end_block               = false
-  const block_content           = Vector{AbstractString}()
+  const block_content           = AbstractString[]
   const block_suspended         = false
   const suspend_block           = false
   const cmd::AbstractString     = ""
@@ -296,7 +296,7 @@ end
 
 function render_tpl(exs::Vector{AbstractString})
   __helper = """
-  const ____output = Vector{AbstractString}()
+  const ____output = AbstractString[]
 
   function _push_out!_(s::AbstractString)
     push!(____output, escape_string(s))

@@ -9,6 +9,7 @@ using URIParser
 using Memoize
 using Sessions
 using Millboard
+# using Hooks
 
 import HttpServer.mimetypes
 
@@ -233,23 +234,7 @@ function extract_json_api_pagination_params()
   end
 end
 
-const loaded_controllers = UInt64[]
-
-function invoke_controller(to::AbstractString, req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session)
-  to_parts = split(to, "#")
-
-  controller_path = abspath(joinpath(Genie.APP_PATH, "app", "resources", to_parts[1]))
-  controller_path_hash = hash(controller_path)
-  if ! in(controller_path_hash, loaded_controllers) || Configuration.is_dev()
-    Genie.load_controller(controller_path)
-    Genie.export_controllers(to_parts[2])
-    ! in(controller_path_hash, loaded_controllers) && push!(loaded_controllers, controller_path_hash)
-  end
-
-  controller = Genie.GenieController()
-  action_name = string(current_module()) * "." * to_parts[2]
-
-  action_controller_parts = split(to_parts[2], ".")
+function setup_params!(params::Dict{Symbol,Any}, to_parts::Vector{AbstractString}, action_controller_parts::Vector{AbstractString}, controller_path::AbstractString, req::Request, res::Response, session::Sessions.Session)
   params[:action_controller] = to_parts[2]
   params[:action] = action_controller_parts[end]
   params[:controller] = join(action_controller_parts[1:end-1], ".")
@@ -269,8 +254,37 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
                                       end
                                     end
 
+  params
+end
+
+const loaded_controllers = UInt64[]
+
+function invoke_controller(to::AbstractString, req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session)
+  to_parts::Vector{AbstractString} = split(to, "#")
+
+  controller_path = abspath(joinpath(Genie.APP_PATH, "app", "resources", to_parts[1]))
+  controller_path_hash = hash(controller_path)
+  if ! in(controller_path_hash, loaded_controllers) || Configuration.is_dev()
+    Genie.load_controller(controller_path)
+    Genie.export_controllers(to_parts[2])
+    ! in(controller_path_hash, loaded_controllers) && push!(loaded_controllers, controller_path_hash)
+  end
+
+  controller = Genie.GenieController()
+  action_name = string(current_module()) * "." * to_parts[2]
+
+  action_controller_parts::Vector{AbstractString} = split(to_parts[2], ".")
+  setup_params!(params, to_parts, action_controller_parts, controller_path, req, res, session)
+
+  # try
+  #   Hooks.invoke_hooks(Hooks.BEFORE_ACTION, eval(parse(join(split(action_name, ".")[1:end-1], "."))), params)
+  # catch ex
+  #   Genie.log("Failed to invoke hooks $(Hooks.BEFORE_ACTION)", :err, showst = false)
+  #   Genie.log(ex, :err, showst = false)
+  # end
+
   try
-    response = invoke(eval(Genie, parse(string(current_module()) * "." * action_name)), (typeof(params),), params)
+    response = eval(Genie, parse(string(current_module()) * "." * action_name))(params)
   catch ex
     Genie.log("$ex at $(@__FILE__):$(@__LINE__)", :err, showst = false)
     Genie.log("While invoking $(string(current_module())).$(action_name) with $(params)", :err, showst = false)
