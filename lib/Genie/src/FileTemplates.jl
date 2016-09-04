@@ -9,11 +9,11 @@ function new_database_migration(class_name::AbstractString)
   type $class_name
   end
 
-  function up(_::$class_name)
+  function up(::$class_name)
     error("Not implemented")
   end
 
-  function down(_::$class_name)
+  function down(::$class_name)
     error("Not implemented")
   end
   """

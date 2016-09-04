@@ -66,7 +66,7 @@ function find_one_by!!{T<:AbstractModel}(m::Type{T}, column_name::Any, value::An
 end
 
 function find_one{T<:AbstractModel}(m::Type{T}, value::Any)
-  _m::T = disposable_instance(m)
+  _m = disposable_instance(m)
   find_one_by(m, SQLColumn(_m._id), SQLInput(value))
 end
 function find_one!!{T<:AbstractModel}(m::Type{T}, value::Any)
@@ -98,8 +98,7 @@ function save{T<:AbstractModel}(m::T; conflict_strategy = :error)
   end
 end
 function save!{T<:AbstractModel}(m::T; conflict_strategy = :error)
-  _m = save!!(m, conflict_strategy = conflict_strategy)
-  m = _m |> Base.get
+  m = save!!(m, conflict_strategy = conflict_strategy)
 
   m
 end
@@ -672,7 +671,7 @@ end
 
 # const model_prototypes = Dict{AbstractString,Any}()
 
-function disposable_instance{T<:AbstractModel}(m::Type{T})
+function disposable_instance(m)
   m()
 end
 
@@ -926,6 +925,10 @@ end
 
 function convert(::Type{DateTime}, value::AbstractString)
   DateParser.parse(DateTime, value)
+end
+
+function convert(::Type{Nullable{DateTime}}, value::AbstractString)
+  DateParser.parse(DateTime, value) |> Nullable
 end
 
 # moved it here as it confuses sublime's syntax highlighter

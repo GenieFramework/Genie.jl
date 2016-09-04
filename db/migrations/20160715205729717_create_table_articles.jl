@@ -4,7 +4,7 @@ using Database
 type CreateTableArticles
 end
 
-function up(_::CreateTableArticles)
+function up(::CreateTableArticles)
   Database.query("""CREATE SEQUENCE articles__seq_id""")
   Database.query("""
     CREATE TABLE IF NOT EXISTS articles (
@@ -19,6 +19,6 @@ function up(_::CreateTableArticles)
   Database.query("""ALTER SEQUENCE articles__seq_id OWNED BY articles.id""")
 end
 
-function down(_::CreateTableArticles)
+function down(::CreateTableArticles)
   Database.query("DROP TABLE articles")
 end

@@ -4,7 +4,7 @@ using Database
 type CreateTableUsers
 end
 
-function up(_::CreateTableUsers)
+function up(::CreateTableUsers)
   Database.query("""CREATE SEQUENCE users__seq_id""")
   Database.query("""
     CREATE TABLE IF NOT EXISTS users (
@@ -19,6 +19,6 @@ function up(_::CreateTableUsers)
   Database.query("""ALTER SEQUENCE users__seq_id OWNED BY users.id""")
 end
 
-function down(_::CreateTableUsers)
+function down(::CreateTableUsers)
   Database.query("DROP TABLE users")
 end

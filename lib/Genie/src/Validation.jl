@@ -93,8 +93,8 @@ function errors_messages_for{T<:AbstractModel}(m::T, field::Symbol)
   result
 end
 
-function errors_to_string{T<:AbstractModel}(m::T, field::Symbol, separator = "\n")
-  join(errors_messages_for(m, field), separator)
+function errors_to_string{T<:AbstractModel}(m::T, field::Symbol, separator = "\n"; upper_case_first = false)
+  join( map(x -> upper_case_first ? ucfirst(x) : x, errors_messages_for(m, field)), separator)
 end
 
 end

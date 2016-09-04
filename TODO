@@ -22,6 +22,10 @@ v 0.6.x
 ☐ caching - data caching (redis, memcache, file system)
 ☐ view / partials caching -- and not reloading views in production
 ✔ reverse routing -> resource to route
+☐ sign up - with login URLs by email
+☐ mailers
+☐ hooks: before controller action invoked & model hooks (before save, before dehydration, after hydration, etc)
+☐ email subscriptions
 
 v 0.7.x
 ☐ channels (websockets communication)
@@ -34,12 +38,13 @@ v 0.8.x
 ☐ support for plugins
 ☐ admin plugin (test app)
 ☐ packages versioning (declarative packages)
-☐ proper error handling (50x, 40x)
+☐ proper error handling (50x, 40x) pages
+☐ add a debug port where you can connect through sockets and run code inside a running app
 
 v 0.9.x
 ☐ performance enhancements, cleanup
 ☐ doc comments
-☐ rename methods ending in ! to end in !! and follow julia's guidelines
+✔ rename methods ending in ! to end in !! and follow julia's guidelines
 ✔ rename methods to not use "_" @done (16-07-12 22:23)
 ☐ more tests
 ☐ REPL utility to setup a new app
@@ -55,8 +60,7 @@ v 1.1
 v 1.x
 ☐ change from Logging to Lumberjack?
 ☐ refactor Router to use Route types instead of Tuples
-☐ hooks: before controller action invoked & model hooks (before save, before dehydration, after hydration, etc)
-☐ mailers
+☐ marketplace for Genie apps (list, search and install apps)
 
 Other parts:
   ✔ lazy relationships - to skip relationship if lazy

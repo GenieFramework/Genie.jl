@@ -3,7 +3,7 @@ using Genie, Database
 type CreateTableRoles
 end
 
-function up(_::CreateTableRoles)
+function up(::CreateTableRoles)
   Database.query("""CREATE SEQUENCE roles__seq_id""")
   Database.query("""
     CREATE TABLE IF NOT EXISTS roles (
@@ -16,7 +16,7 @@ function up(_::CreateTableRoles)
   Database.query("""ALTER SEQUENCE roles__seq_id OWNED BY roles.id""")
 end
 
-function down(_::CreateTableRoles)
+function down(::CreateTableRoles)
   Database.query("""
     DROP TABLE roles
   """)

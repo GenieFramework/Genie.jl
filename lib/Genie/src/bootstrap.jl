@@ -33,8 +33,11 @@ using YAML
 @reexport using Input
 @reexport using Render
 @reexport using Render.JSONAPI
+@reexport using Router
 @reexport using Sessions
+@reexport using StackTraces
 @reexport using SHA
+@reexport using URIParser
 @reexport using Util
 
 function load_configurations()
@@ -88,6 +91,12 @@ function load_acl(dir::AbstractString)
     YAML.load(open(file_path))
   else
     Dict{Any,Any}
+  end
+end
+
+function reload_helpers(in_module = current_module())
+  for n in names(in_module, true)
+    endswith(string(n), "Helper") && typeof(eval(n)) == Module && reload(string(n))
   end
 end
 

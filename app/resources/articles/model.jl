@@ -12,7 +12,6 @@ type Article <: AbstractModel
   content::AbstractString
   updated_at::DateTime
   published_at::Nullable{DateTime}
-  removed_at::Nullable{DateTime}
 
   Article(;
     validator = ModelValidator(
@@ -28,20 +27,27 @@ type Article <: AbstractModel
     summary = "",
     content = "",
     updated_at = Dates.now(),
-    published_at = Nullable{DateTime}(),
-    removed_at = Nullable{DateTime}()
-  ) = new("articles", "id", validator, id, title, summary, content, updated_at, published_at, removed_at)
+    published_at = Nullable{DateTime}()
+  ) = new("articles", "id", validator, id, title, summary, content, updated_at, published_at)
 end
 
 module Articles
 using Genie
 
 function is_published(article::Article)
-  ! is_removed(article) && ! isnull(article.published_at) && article.published_at |> _!! <= Dates.now()
+  ! isnull(article.published_at) && article.published_at |> _!! <= Dates.now()
 end
 
-function is_removed(article::Article)
-  ! isnull(article.removed_at) && article.removed_at |> _!! <= Dates.now()
+function is_draft(article::Article)
+  ! is_published(article)
+end
+
+function status(article::Article)
+  if is_published(article)
+    :published
+  else
+    :draft
+  end
 end
 
 end

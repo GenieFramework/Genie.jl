@@ -12,6 +12,7 @@ const config = Config(
                       log_level         = Logging.DEBUG,
                       assets_path       = "/",
                       cache_ejl         = false,
+                      pagination_default_items_per_page = 25
                     )
 
 export config

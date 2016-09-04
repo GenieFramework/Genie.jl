@@ -1,6 +1,6 @@
 module Util
 
-export expand_nullable, _!!
+export expand_nullable, _!!, _!_
 
 function add_quotes(str)
   if ! startswith(str, "\"")
@@ -38,6 +38,13 @@ function expand_nullable(value::Any; expand::Bool = true, default::Any = "NA")
 end
 
 function _!!(value::Any)
+  ret = expand_nullable(value)
+  ret == "NA" && error("Value $value is NULL")
+
+  ret
+end
+
+function _!_(value::Any)
   expand_nullable(value)
 end
 

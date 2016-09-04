@@ -19,7 +19,7 @@ $(function() {
     sequenceDiagram : false,
     imageUpload : false,
     imageFormats : ["jpg", "jpeg", "gif", "png", "bmp", "webp"],
-    // imageUploadURL : "./php/upload.php",
+    placeholder : "Write something nice",
     tabSize : 2,
     indentUnit : 2,
     onload : function() {

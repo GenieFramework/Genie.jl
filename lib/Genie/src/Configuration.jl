@@ -69,8 +69,8 @@ type Config
   assets_path::AbstractString
   assets_serve::Bool
 
-  pagination_jsonapi_default_items_per_page::Int
-  pagination_jsonapi_page_param_name::AbstractString
+  pagination_default_items_per_page::Int
+  pagination_page_param_name::AbstractString
 
   model_relationships_eagerness::Symbol
 
@@ -121,8 +121,8 @@ type Config
             assets_path   = "/",
             assets_serve  =  true,
 
-            pagination_jsonapi_default_items_per_page = 20,
-            pagination_jsonapi_page_param_name = "page",
+            pagination_default_items_per_page = 20,
+            pagination_page_param_name = "page",
 
             model_relationships_eagerness = MODEL_RELATIONSHIPS_EAGERNESS_LAZY,
 
@@ -143,7 +143,7 @@ type Config
                   cache_folder, cache_ejl, cache_ejl_folder,
                   loggers, log_router, log_db, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted,
                   assets_path, assets_serve,
-                  pagination_jsonapi_default_items_per_page, pagination_jsonapi_page_param_name,
+                  pagination_default_items_per_page, pagination_page_param_name,
                   model_relationships_eagerness,
                   tests_force_test_env,
                   session_auto_start, session_key_name, session_storage,

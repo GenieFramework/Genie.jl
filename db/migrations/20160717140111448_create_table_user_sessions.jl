@@ -4,7 +4,7 @@ using Database
 type CreateTableUserSessions
 end
 
-function up(_::CreateTableUserSessions)
+function up(::CreateTableUserSessions)
   Database.query("""
     CREATE TABLE IF NOT EXISTS user_sessions (
       user_id       integer,
@@ -14,6 +14,6 @@ function up(_::CreateTableUserSessions)
   """)
 end
 
-function down(_::CreateTableUserSessions)
+function down(::CreateTableUserSessions)
   Database.query("DROP TABLE user_sessions")
 end

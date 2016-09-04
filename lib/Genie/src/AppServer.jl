@@ -8,21 +8,26 @@ using Millboard
 
 function start(port::Int = 8000)
   http = HttpHandler() do req::Request, res::Response
-    http_request = req
-    http_response = res
+    try
+      http_request = req
+      http_response = res
 
-    session = Sessions.start(req, res)
-    log_request(req)
-    sign_response!(res)
+      session = Sessions.start(req, res)
+      log_request(req)
+      sign_response!(res)
 
-    app_response::Response = Router.route_request(req, res, session)
-    app_response.headers = merge(http_response.headers, app_response.headers)
-    app_response.cookies = merge(http_response.cookies, app_response.cookies)
+      app_response::Response = Router.route_request(req, res, session)
+      app_response.headers = merge(http_response.headers, app_response.headers)
+      app_response.cookies = merge(http_response.cookies, app_response.cookies)
 
-    log_response(req, app_response)
-    Sessions.persist(session)
+      log_response(req, app_response)
+      Sessions.persist(session)
 
-    app_response
+      app_response
+    catch ex
+      Genie.log("Genie error " * string(ex), :critical, showst = false)
+      Router.serve_error_file(500, string(ex))
+    end
   end
 
   server = Server(http)
@@ -64,9 +69,13 @@ end
 
 function log_request_response(req_res::Union{Request, Response})
   req_data = Dict{AbstractString, AbstractString}()
+  response_is_error = false
+
   for f in fieldnames(req_res)
     f = string(f)
     v = getfield(req_res, Symbol(f))
+
+    f == "status" && (req_res.status == 404 || req_res.status == 500) && (response_is_error = true)
 
     req_data[f] = if f == "data" && ! isempty(v)
                     mapreduce(x -> string(Char(Int(x))), *, v) |> Genie.truncate_logged_output
@@ -77,7 +86,7 @@ function log_request_response(req_res::Union{Request, Response})
                   end
   end
 
-  Genie.log(string(req_res) * "\n" * string(Genie.config.log_formatted ? Millboard.table(req_data) : req_data))
+  Genie.log(string(req_res) * "\n" * string(Genie.config.log_formatted ? Millboard.table(req_data) : req_data), response_is_error ? :err : :debug, showst = false)
 end
 
 function parse_inner_dict(d::Dict)

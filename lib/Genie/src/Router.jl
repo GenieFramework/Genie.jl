@@ -5,7 +5,6 @@ using HttpServer
 using URIParser
 using Genie
 using AppServer
-using URIParser
 using Memoize
 using Sessions
 using Millboard
@@ -17,7 +16,7 @@ include(abspath(joinpath("lib", "Genie", "src", "router_converters.jl")))
 
 export route, routes, params
 export GET, POST, PUT, PATCH, DELETE
-export to_link!!
+export to_link!!, to_link
 
 const GET     = "GET"
 const POST    = "POST"
@@ -33,12 +32,13 @@ function route_request(req::Request, res::Response, session::Sessions.Session)
 
   if is_static_file(req.resource)
     Genie.config.server_handle_static_files && return serve_static_file(req.resource)
-    return Response(404)
+    return serve_error_file(404, "File not found: $(req.resource)")
   end
 
   if App.is_dev()
     load_routes()
     Genie.load_models()
+    # Genie.reload_helpers()
   end
 
   match_routes(req, res, session)
@@ -106,6 +106,14 @@ function to_link!!{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Sy
 
   join(result, "/")
 end
+function to_link{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Symbol,T}())
+  try
+    to_link!!(route_name, route_params)
+  catch ex
+    Genie.log(ex, :err, showst = false)
+    ""
+  end
+end
 function to_link!!(route_name::Symbol; route_params...)
   d = Dict{Symbol,Any}()
   for (k,v) in route_params
@@ -113,6 +121,19 @@ function to_link!!(route_name::Symbol; route_params...)
   end
 
   to_link!!(route_name, d)
+end
+function to_link(route_name::Symbol; route_params...)
+  d = Dict{Symbol,Any}()
+  for (k,v) in route_params
+    d[k] = v
+  end
+
+  try
+    to_link!!(route_name, d)
+  catch ex
+    Genie.log(ex, :err, showst = false)
+    ""
+  end
 end
 
 function match_routes(req::Request, res::Response, session::Sessions.Session)
@@ -134,13 +155,13 @@ function match_routes(req::Request, res::Response, session::Sessions.Session)
     Genie.config.log_router && Genie.log("Router: Matched type of route " * uri.path)
     extract_post_params(req)
     extract_extra_params(extra_params)
-    Genie.config.app_is_api && extract_json_api_pagination_params()
+    extract_pagination_params()
 
     return invoke_controller(to, req, res, _params, session)
   end
 
-  Genie.config.log_router && Genie.log("Router: No route matched - defaulting 404")
-  Response( 404, Dict{AbstractString, AbstractString}(), "not found" )
+  Genie.config.log_router && Genie.log("Router: No route matched - defaulting 404", :err)
+  serve_error_file(404, "Not found")
 end
 
 function parse_route(route::AbstractString)
@@ -224,22 +245,21 @@ function nested_keys(k::AbstractString, v)
   end
 end
 
-function extract_json_api_pagination_params()
-  # JSON API pagination
-  if ! haskey(_params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_number"))
-    _params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_number")] = haskey(_params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[number]")) ? parse(Int, params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[number]")]) : 1
+function extract_pagination_params()
+  if ! haskey(_params, :page_number)
+    _params[:page_number] = haskey(_params, Symbol("page[number]")) ? parse(Int, _params[Symbol("page[number]")]) : 1
   end
-  if ! haskey(_params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_size"))
-    _params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)_size")] = haskey(_params, Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[size]")) ? parse(Int, params[Symbol("$(Genie.genie_app.config.pagination_jsonapi_page_param_name)[size]")]) : Genie.genie_app.config.pagination_jsonapi_default_items_per_page
+  if ! haskey(_params, :page_size)
+    _params[:page_size] = haskey(_params, Symbol("page[size]")) ? parse(Int, _params[Symbol("page[size]")]) : Genie.genie_app.config.pagination_default_items_per_page
   end
 end
 
-function setup_params!(params::Dict{Symbol,Any}, to_parts::Vector{AbstractString}, action_controller_parts::Vector{AbstractString}, controller_path::AbstractString, req::Request, res::Response, session::Sessions.Session)
+function setup_params!( params::Dict{Symbol,Any}, to_parts::Vector{AbstractString}, action_controller_parts::Vector{AbstractString},
+                        controller_path::AbstractString, req::Request, res::Response, session::Sessions.Session, action_name::AbstractString)
   params[:action_controller] = to_parts[2]
   params[:action] = action_controller_parts[end]
   params[:controller] = join(action_controller_parts[1:end-1], ".")
 
-  params[Genie.PARAMS_ACL_KEY]       = Genie.load_acl(controller_path)
   params[Genie.PARAMS_REQUEST_KEY]   = req
   params[Genie.PARAMS_RESPONSE_KEY]  = res
   params[Genie.PARAMS_SESSION_KEY]   = session
@@ -253,6 +273,8 @@ function setup_params!(params::Dict{Symbol,Any}, to_parts::Vector{AbstractString
                                         ss
                                       end
                                     end
+
+  Genie.config.log_requests && Genie.log("Invoking $action_name name with params: \n" * string(Millboard.table(params)), :debug)
 
   params
 end
@@ -274,7 +296,8 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
   action_name = string(current_module()) * "." * to_parts[2]
 
   action_controller_parts::Vector{AbstractString} = split(to_parts[2], ".")
-  setup_params!(params, to_parts, action_controller_parts, controller_path, req, res, session)
+  setup_params!(params, to_parts, action_controller_parts, controller_path, req, res, session, action_name)
+  params[Genie.PARAMS_ACL_KEY] = Genie.load_acl(controller_path)
 
   # try
   #   Hooks.invoke_hooks(Hooks.BEFORE_ACTION, eval(parse(join(split(action_name, ".")[1:end-1], "."))), params)
@@ -286,10 +309,12 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
   try
     response = eval(Genie, parse(string(current_module()) * "." * action_name))(params)
   catch ex
-    Genie.log("$ex at $(@__FILE__):$(@__LINE__)", :err, showst = false)
-    Genie.log("While invoking $(string(current_module())).$(action_name) with $(params)", :err, showst = false)
+    Genie.log("$ex at $(@__FILE__):$(@__LINE__)", :critical, showst = false)
+    Genie.log("While invoking $(string(current_module())).$(action_name) with $(params)", :critical, showst = false)
+    show_stacktrace(catch_stacktrace())
 
-    rethrow(ex) # do something better with the error
+    # rethrow(ex) # do something better with the error
+    return serve_error_file(500, string(ex) * "<br/><br/>" * join(catch_stacktrace(), "<br/>"))
   end
 
   if ! isa(response, Response)
@@ -322,6 +347,19 @@ end
 function serve_static_file(resource::AbstractString)
   f = file_path(URI(resource).path)
   Response(200, file_headers(f), open(readbytes, f))
+end
+
+function serve_error_file(error_code::Int, error_message::AbstractString = "")
+  if is_dev()
+    error_page =  open(Genie.DOC_ROOT_PATH * "/error-$(error_code).html") do f
+                    readall(f)
+                  end
+    error_page = replace(error_page, "<error_message/>", error_message)
+    Response(error_code, Dict{AbstractString,AbstractString}(), error_page)
+  else
+    f = file_path(URI("/error-$(error_code).html").path)
+    Response(error_code, file_headers(f), open(readbytes, f))
+  end
 end
 
 function file_path(resource::AbstractString)
