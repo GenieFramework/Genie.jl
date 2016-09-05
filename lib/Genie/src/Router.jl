@@ -8,7 +8,6 @@ using AppServer
 using Memoize
 using Sessions
 using Millboard
-# using Hooks
 
 import HttpServer.mimetypes
 
@@ -23,6 +22,8 @@ const POST    = "POST"
 const PUT     = "PUT"
 const PATCH   = "PATCH"
 const DELETE  = "DELETE"
+
+const BEFORE_ACTION_HOOKS = :before_action
 
 const _routes = Dict{Symbol,Any}()
 const _params = Dict{Symbol,Any}()
@@ -274,7 +275,7 @@ function setup_params!( params::Dict{Symbol,Any}, to_parts::Vector{AbstractStrin
                                       end
                                     end
 
-  Genie.config.log_requests && Genie.log("Invoking $action_name name with params: \n" * string(Millboard.table(params)), :debug)
+  Genie.config.log_requests && Genie.log("Invoking $action_name with params: \n" * string(Millboard.table(params)), :debug)
 
   params
 end
@@ -299,38 +300,61 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
   setup_params!(params, to_parts, action_controller_parts, controller_path, req, res, session, action_name)
   params[Genie.PARAMS_ACL_KEY] = Genie.load_acl(controller_path)
 
-  # try
-  #   Hooks.invoke_hooks(Hooks.BEFORE_ACTION, eval(parse(join(split(action_name, ".")[1:end-1], "."))), params)
-  # catch ex
-  #   Genie.log("Failed to invoke hooks $(Hooks.BEFORE_ACTION)", :err, showst = false)
-  #   Genie.log(ex, :err, showst = false)
-  # end
-
   try
-    response = eval(Genie, parse(string(current_module()) * "." * action_name))(params)
+    hook_result = run_hooks(BEFORE_ACTION_HOOKS, eval(Genie, parse(join(split(action_name, ".")[1:end-1], "."))), params)
+    hook_stop(hook_result) && return to_response(hook_result[2])
   catch ex
-    Genie.log("$ex at $(@__FILE__):$(@__LINE__)", :critical, showst = false)
-    Genie.log("While invoking $(string(current_module())).$(action_name) with $(params)", :critical, showst = false)
+    Genie.log("Failed to invoke hooks $(BEFORE_ACTION_HOOKS)", :err, showst = false)
+    Genie.log(ex, :err, showst = false)
     show_stacktrace(catch_stacktrace())
 
-    # rethrow(ex) # do something better with the error
     return serve_error_file(500, string(ex) * "<br/><br/>" * join(catch_stacktrace(), "<br/>"))
   end
 
-  if ! isa(response, Response)
-    response =  try
-                  if isa(response, Tuple)
-                    Response(response...)
-                  else
-                    Response(response)
-                  end
-                catch ex
-                  Genie.log(ex, :err)
-                  Response("")
-                end
-  end
 
-  response
+  action_result = try
+                    eval(Genie, parse(string(current_module()) * "." * action_name))(params)
+                  catch ex
+                    Genie.log("$ex at $(@__FILE__):$(@__LINE__)", :critical, showst = false)
+                    Genie.log("While invoking $(string(current_module())).$(action_name) with $(params)", :critical, showst = false)
+                    show_stacktrace(catch_stacktrace())
+
+                    serve_error_file(500, string(ex) * "<br/><br/>" * join(catch_stacktrace(), "<br/>"))
+                  end
+
+  to_response(action_result)
+end
+
+function to_response(action_result)
+  if ! isa(action_result, Response)
+    try
+      if isa(action_result, Tuple)
+        Response(action_result...)
+      else
+        Response(action_result)
+      end
+    catch ex
+      Genie.log("Can't convert $action_result to HttpServer Response", :err)
+      Genie.log(ex, :err)
+      Response("")
+    end
+  else
+    action_result
+  end
+end
+
+function hook_stop(hook_result)
+  isa(hook_result, Tuple) && ! hook_result[1]
+end
+
+function run_hooks(hook_type::Symbol, m::Module, params::Dict{Symbol,Any})
+  if in(hook_type, names(m, true))
+    hooks::Vector{Symbol} = getfield(m, hook_type)
+    for hook in hooks
+      r = eval(Genie, parse(string(hook)))(params)
+      hook_stop(r) && return r
+    end
+  end
 end
 
 function load_routes()

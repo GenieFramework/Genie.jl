@@ -60,6 +60,7 @@ v 1.1
 v 1.x
 ☐ change from Logging to Lumberjack?
 ☐ refactor Router to use Route types instead of Tuples
+☐ refactor params to use a Params type (no any Dict{Symbol,Any})
 ☐ marketplace for Genie apps (list, search and install apps)
 
 Other parts:

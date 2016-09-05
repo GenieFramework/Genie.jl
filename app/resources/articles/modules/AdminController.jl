@@ -2,6 +2,12 @@ module AdminController
 module Website
 using Genie, Model, Authentication, Authorization, Genie.Users
 
+const before_action::Vector{Symbol} = [Symbol("AdminController.Website.require_authentication")]
+
+function require_authentication(params::Dict{Symbol,Any})
+  ! Authentication.is_authenticated(params) && return (false, unauthorized_access(params))
+end
+
 function articles(params::Dict{Symbol,Any})
   with_authorization(:list, unauthorized_access, params) do
     params[:pagination_total] = Model.count(Article)
