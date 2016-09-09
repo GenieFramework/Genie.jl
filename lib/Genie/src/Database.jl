@@ -4,6 +4,10 @@ using YAML
 using Genie
 using Memoize
 
+eval(:(using $(Genie.config.db_adapter)))
+eval(:(const DatabaseAdapter = $(Genie.config.db_adapter)))
+eval(:(export DatabaseAdapter))
+
 @memoize function parse_connection_data()
   YAML.load(open(abspath("config/database.yml")))
 end

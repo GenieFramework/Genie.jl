@@ -1,6 +1,5 @@
 module Router
 
-using App
 using HttpServer
 using URIParser
 using Genie
@@ -36,7 +35,7 @@ function route_request(req::Request, res::Response, session::Sessions.Session)
     return serve_error_file(404, "File not found: $(req.resource)")
   end
 
-  if App.is_dev()
+  if is_dev()
     load_routes()
     Genie.load_models()
     # Genie.reload_helpers()
@@ -251,7 +250,7 @@ function extract_pagination_params()
     _params[:page_number] = haskey(_params, Symbol("page[number]")) ? parse(Int, _params[Symbol("page[number]")]) : 1
   end
   if ! haskey(_params, :page_size)
-    _params[:page_size] = haskey(_params, Symbol("page[size]")) ? parse(Int, _params[Symbol("page[size]")]) : Genie.genie_app.config.pagination_default_items_per_page
+    _params[:page_size] = haskey(_params, Symbol("page[size]")) ? parse(Int, _params[Symbol("page[size]")]) : Genie.config.pagination_default_items_per_page
   end
 end
 

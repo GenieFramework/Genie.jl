@@ -56,7 +56,7 @@ function run_app_with_command_line_args(config)
     Tester.run_all_tests(parsed_args["test:run"], config)
 
   elseif called_command(parsed_args, "s")
-    Genie.genie_app.server = Genie.startup(parsed_args)
+    Genie.startup(parsed_args)
 
   elseif isinteractive() || Configuration.IN_REPL
     Genie.log("Started Genie interactive session", :info)

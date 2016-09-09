@@ -1,11 +1,11 @@
 module Model
 
+using Genie
 using Memoize
 using Database
 using DataFrames
 using DataStructures
 using DateParser
-using Genie
 using Util
 using Reexport
 

@@ -1,7 +1,6 @@
 module Configuration
 
-using App
-using Logging
+using Logging, Genie
 
 export is_dev, is_prod, is_test, Config, DEV, PROD, TEST, IN_REPL
 export RENDER_MUSTACHE_EXT, RENDER_EJL_EXT, RENDER_JSON_EXT, RENDER_EJL_WITH_CACHE
@@ -26,9 +25,9 @@ const LOG_LEVEL_VERBOSITY_MINIMAL = :minimal
 const IN_REPL = false
 const GENIE_VERSION = v"0.6"
 
-is_dev()  = (App.config.app_env == DEV)
-is_prod() = (App.config.app_env == PROD)
-is_test() = (App.config.app_env == TEST)
+is_dev()  = (Genie.config.app_env == DEV)
+is_prod() = (Genie.config.app_env == PROD)
+is_test() = (Genie.config.app_env == TEST)
 
 type Config
   server_port::Int
@@ -46,6 +45,7 @@ type Config
   db_migrations_table_name::AbstractString
   db_migrations_folder::AbstractString
   db_auto_connect::Bool
+  db_adapter::Symbol
 
   tasks_folder::AbstractString
   test_folder::AbstractString
@@ -99,6 +99,7 @@ type Config
             db_migrations_table_name  = "schema_migrations",
             db_migrations_folder      = abspath(joinpath("db", "migrations")),
             db_auto_connect           = true,
+            db_adapter                = :PostgreSQLDatabaseAdapter,
 
             task_folder       = abspath(joinpath("task")),
             test_folder       = abspath(joinpath("test")),
@@ -140,7 +141,7 @@ type Config
                   server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature,
                   app_env, app_is_api,
                   suppress_output, output_length,
-                  db_migrations_table_name, db_migrations_folder, db_auto_connect,
+                  db_migrations_table_name, db_migrations_folder, db_auto_connect, db_adapter,
                   task_folder, test_folder, session_folder, log_folder,
                   cache_folder, cache_adapter, cache_duration,
                   loggers, log_router, log_db, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted, log_cache,

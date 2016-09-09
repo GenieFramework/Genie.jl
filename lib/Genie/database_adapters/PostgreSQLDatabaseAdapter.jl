@@ -68,7 +68,3 @@ function db_adapter()
 end
 
 end
-
-eval(Database, parse("using PostgreSQLDatabaseAdapter"))
-eval(Database, parse("const DatabaseAdapter = PostgreSQLDatabaseAdapter"))
-eval(Database, parse("export DatabaseAdapter"))

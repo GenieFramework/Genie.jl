@@ -1,6 +1,4 @@
 module Genie
-
-using App
 using Configuration
 
 export Model, Database
@@ -19,10 +17,10 @@ const PARAMS_SESSION_KEY    = :SESSION
 const PARAMS_FLASH_KEY      = :FLASH
 const PARAMS_ACL_KEY        = :ACL
 
-include(abspath("lib/Genie/src/logger.jl"))
-include(abspath("lib/Genie/src/genie_app.jl"))
-const genie_app = Genie_App(App.config)
+include(abspath(joinpath("config", "env", ENV["GENIE_ENV"] * ".jl")))
+include(abspath(joinpath("config", "app.jl")))
 
+include(abspath("lib/Genie/src/logger.jl"))
 include(abspath("lib/Genie/src/macros.jl"))
 include(abspath("lib/Genie/src/bootstrap.jl"))
 include(abspath("lib/Genie/src/commands.jl"))

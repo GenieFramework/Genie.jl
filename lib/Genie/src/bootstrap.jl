@@ -1,10 +1,5 @@
 using Reexport
 
-if is_dev()
-  @reexport using Debug
-  @reexport using StackTraces
-end
-
 push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "src")))
 push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "database_adapters")))
 push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "cache_adapters")))
@@ -25,6 +20,7 @@ using YAML
 # using Hooks
 
 @reexport using Configuration
+@reexport using Cache
 @reexport using Cookies
 @reexport using DateParser
 @reexport using Ejl
@@ -38,6 +34,11 @@ using YAML
 @reexport using SHA
 @reexport using URIParser
 @reexport using Util
+
+if is_dev()
+  @reexport using Debug
+  @reexport using StackTraces
+end
 
 function load_configurations()
   include(abspath("config/loggers.jl"))
@@ -102,16 +103,10 @@ end
 function startup(parsed_args::Dict{AbstractString,Any} = Dict{AbstractString,Any}(), start_server::Bool = false)
   isempty(parsed_args) && (parsed_args = parse_commandline_args())
 
-  if parsed_args["s"] == "s" || start_server == true
-    Genie.genie_app.server = Nullable{RemoteRef{Channel{Any}}}(AppServer.spawn(Genie.config.server_port))
+  server_workers = Vector{RemoteRef{Channel{Any}}}()
 
-    if Genie.config.server_workers_count > 1
-      next_port = Genie.config.server_port + 1
-      for w in 0:(Genie.config.server_workers_count - 1)
-        AppServer.spawn(next_port)
-        next_port += 1
-      end
-    end
+  if parsed_args["s"] == "s" || start_server == true
+    server_workers = AppServer.spawn!(server_workers, Genie.config.server_port)
 
     println()
     Genie.log("Started Genie server session", :info)
@@ -121,7 +116,11 @@ function startup(parsed_args::Dict{AbstractString,Any} = Dict{AbstractString,Any
     end
   end
 
-  Genie.genie_app.server = Nullable{RemoteRef{Channel{Any}}}()
+  server_workers
+end
+
+function cache_enabled()
+  Genie.config.cache_duration > 0
 end
 
 load_configurations()

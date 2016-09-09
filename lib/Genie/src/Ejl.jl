@@ -1,6 +1,6 @@
 module Ejl
 using SHA
-using Genie, Cache
+using Genie
 
 export @ejl_str, push_template_line!
 
@@ -12,7 +12,15 @@ end
 
 function template_from_file(file_path::AbstractString)
   open(file_path) do f
-    parse_tpl(readall(f))
+    parse_tpl(readall(f), Genie.cache_enabled())
+  end
+end
+
+function parse_tpl(s::AbstractString, cache_enabled::Bool)
+  ! cache_enabled && return parse_tpl(s)
+
+  with_cache(cache_key(s)) do
+    parse_tpl(s)
   end
 end
 

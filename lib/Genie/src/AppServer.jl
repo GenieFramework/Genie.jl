@@ -34,16 +34,14 @@ function start(port::Int = 8000)
   run(server, port)
 end
 
-function spawn(port::Int = 8000)
-  Genie.genie_app.server = Nullable{RemoteRef{Channel{Any}}}(_spawn(port))
-  if ! isnull(Genie.genie_app.server)
-    push!(Genie.genie_app.server_workers, Genie.genie_app.server |> Base.get)
+function spawn!(server_workers, port::Int = 8000)
+  port_increment = 0
+  for w in workers()
+    push!(server_workers, @spawn start(port + port_increment))
+    port_increment += 1
   end
 
-  Genie.genie_app.server
-end
-function _spawn(port::Int)
-  @spawn start(port)
+  server_workers
 end
 
 function sign_response!(res::Response)

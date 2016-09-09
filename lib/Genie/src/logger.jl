@@ -1,4 +1,3 @@
-using App
 using Logging
 using Millboard
 using StackTraces
@@ -63,7 +62,7 @@ function setup_loggers()
   Logging.configure(console_logger, output = STDOUT)
 
   Logging.configure(file_logger, level = Genie.config.log_level)
-  Logging.configure(file_logger, filename = joinpath(Genie.config.log_folder, "$(App.config.app_env).log"))
+  Logging.configure(file_logger, filename = joinpath(Genie.config.log_folder, "$(config.app_env).log"))
 
   push!(Genie.config.loggers, console_logger)
   push!(Genie.config.loggers, file_logger)

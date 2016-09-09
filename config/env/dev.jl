@@ -1,5 +1,6 @@
-using Configuration
-using Logging
+using Configuration, Logging
+
+export config
 
 const config = Config(
                       output_length     = 100,
@@ -12,8 +13,6 @@ const config = Config(
                       log_level         = Logging.DEBUG,
                       log_cache         = true,
                       assets_path       = "/",
-                      cache_duration    = 0,
+                      cache_duration    = 60,
                       pagination_default_items_per_page = 25
                     )
-
-export config
