@@ -53,8 +53,8 @@ type Config
   log_folder::AbstractString
 
   cache_folder::AbstractString
-  cache_ejl::Bool
-  cache_ejl_folder::AbstractString
+  cache_adapter::Symbol
+  cache_duration::Int
 
   loggers::Array{Logging.Logger,1}
   log_router::Bool
@@ -65,6 +65,7 @@ type Config
   log_level::Logging.LogLevel
   log_verbosity::Symbol
   log_formatted::Bool
+  log_cache::Bool
 
   assets_path::AbstractString
   assets_serve::Bool
@@ -105,8 +106,8 @@ type Config
             log_folder        = abspath(joinpath("log")),
 
             cache_folder      = abspath(joinpath("cache")),
-            cache_ejl         = true,
-            cache_ejl_folder  = abspath(joinpath("cache", "ejl")),
+            cache_adapter     = :FileCacheAdapter,
+            cache_duration    = 31536000,
 
             loggers       = [],
             log_router    = false,
@@ -117,6 +118,7 @@ type Config
             log_level     = Logging.DEBUG,
             log_verbosity = LOG_LEVEL_VERBOSITY_VERBOSE,
             log_formatted = true,
+            log_cache     = true,
 
             assets_path   = "/",
             assets_serve  =  true,
@@ -140,8 +142,8 @@ type Config
                   suppress_output, output_length,
                   db_migrations_table_name, db_migrations_folder, db_auto_connect,
                   task_folder, test_folder, session_folder, log_folder,
-                  cache_folder, cache_ejl, cache_ejl_folder,
-                  loggers, log_router, log_db, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted,
+                  cache_folder, cache_adapter, cache_duration,
+                  loggers, log_router, log_db, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted, log_cache,
                   assets_path, assets_serve,
                   pagination_default_items_per_page, pagination_page_param_name,
                   model_relationships_eagerness,

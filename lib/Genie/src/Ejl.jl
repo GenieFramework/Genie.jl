@@ -1,46 +1,13 @@
 module Ejl
 using SHA
-using Genie
+using Genie, Cache
 
 export @ejl_str, push_template_line!
 
 const THROW_EXCEPTIONS = true
-const CACHE_PATH = Genie.config.cache_ejl_folder
-const WITH_CACHE = Genie.config.cache_ejl
 
 macro ejl_str(p)
   parse_tpl(p)
-end
-
-function cache!(status::Bool)
-  WITH_CACHE = status
-end
-
-function clear_cache()
-  for cache_file in readdir(CACHE_PATH)
-    rm(joinpath(CACHE_PATH, cache_file))
-  end
-end
-
-function cache_path(s::AbstractString)
-  cache_name = bytes2hex(sha1(s))
-  joinpath(CACHE_PATH, cache_name)
-end
-
-function check_cache(s::AbstractString)
-  isfile(cache_path(s))
-end
-
-function tpl_from_cache(s::AbstractString)
-  cache = open(cache_path(s), "r") do (io)
-    deserialize(io)
-  end
-end
-
-function tpl_to_cache(s::AbstractString)
-  open(cache_path(s), "w") do (io)
-    serialize(io, s)
-  end
 end
 
 function template_from_file(file_path::AbstractString)
@@ -50,8 +17,6 @@ function template_from_file(file_path::AbstractString)
 end
 
 function parse_tpl(s::AbstractString)
-  WITH_CACHE && check_cache(s) && return tpl_from_cache(s)
-
   s = """$s"""
   const code = AbstractString[]
 
@@ -243,8 +208,6 @@ function parse_tpl(s::AbstractString)
       THROW_EXCEPTIONS && rethrow(parse_exception)
     end
   end
-
-  WITH_CACHE && tpl_to_cache(join(code, "\n"))
 
   code
 end

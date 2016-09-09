@@ -10,8 +10,9 @@ const config = Config(
                       log_router        = false,
                       log_formatted     = true,
                       log_level         = Logging.DEBUG,
+                      log_cache         = true,
                       assets_path       = "/",
-                      cache_ejl         = false,
+                      cache_duration    = 0,
                       pagination_default_items_per_page = 25
                     )
 

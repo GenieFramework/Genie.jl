@@ -1,6 +1,6 @@
 module AdminController
 module Website
-using Genie, Model, Authentication, Authorization, Genie.Users, Helpers
+using Genie, Model, Authentication, Authorization, Genie.Users, Helpers, Cache
 
 const before_action = [Symbol("AdminController.Website.require_authentication")]
 
@@ -10,8 +10,10 @@ end
 
 function articles(params::Dict{Symbol,Any})
   with_authorization(:list, unauthorized_access, params) do
-    params[:pagination_total] = Model.count(Article)
-    ejl(:articles, :admin_list, layout = :admin, articles = Model.find(Article, SQLQuery(order = SQLOrder(:updated_at, :desc), limit = params[:page_size], offset = (params[:page_number] - 1) * params[:page_size])), params = params) |> respond
+    with_cache(cache_key(params[:action_controller], params[:page_number])) do
+      params[:pagination_total] = Model.count(Article)
+      ejl(:articles, :admin_list, layout = :admin, articles = Model.find(Article, SQLQuery(order = SQLOrder(:updated_at, :desc), limit = params[:page_size], offset = (params[:page_number] - 1) * params[:page_size])), params = params) |> respond
+    end
   end
 end
 
