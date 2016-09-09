@@ -15,7 +15,7 @@ v 0.5.x
 ✔ add stars, forks, watchers, etc (test app) @done (16-07-12 22:22)
 
 v 0.6.x
-☐ new test app - blogging platform
+☐ new test app - blogging platform (articles, comments, tags, versions, users)
 ✔ support for POST - routing, params
 ✔ model validations
 ✔ authorization
@@ -25,7 +25,6 @@ v 0.6.x
 ☐ sign up - with login URLs by email
 ☐ mailers
 ☐ hooks: before controller action invoked & model hooks (before save, before dehydration, after hydration, etc)
-☐ email subscriptions
 
 v 0.7.x
 ☐ channels (websockets communication)

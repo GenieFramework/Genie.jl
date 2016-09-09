@@ -58,11 +58,12 @@ function parse_tpl(s::AbstractString)
   const current_line::Int = 0
   const lines_of_template::Vector{AbstractString} = split(s, "\n")
 
-  const in_block                = false
-  const end_block               = false
-  const block_content           = AbstractString[]
-  const block_suspended         = false
-  const suspend_block           = false
+  block_depth                   = 0
+  const in_block                = Dict{Int,Bool}(0 => false)
+  const end_block               = Dict{Int,Bool}(0 => false)
+  const block_content           = Dict{Int,Vector{AbstractString}}()
+  const block_suspended         = Dict{Int,Bool}(0 => false)
+  const suspend_block           = Dict{Int,Bool}(0 => false)
   const cmd::AbstractString     = ""
 
   function include_partial(tpl_line::AbstractString)
@@ -79,24 +80,30 @@ function parse_tpl(s::AbstractString)
   end
 
   function start_block!()
-    in_block = true
-    block_content = Vector{AbstractString}()
+    block_depth += 1
+    in_block[block_depth] = true
+    end_block[block_depth] = false
+    block_content[block_depth] = Vector{AbstractString}()
+    block_suspended[block_depth] = false
+    suspend_block[block_depth] = false
+
     true
   end
 
   function end_block!()
-    end_block = true
+    end_block[block_depth] = true
     true
   end
 
   function enter_block!()
-    block_suspended = false
-    suspend_block = false
+    block_suspended[block_depth] = false
+    suspend_block[block_depth] = false
+
     true
   end
 
   function exit_block!()
-    suspend_block = true
+    suspend_block[block_depth] = true
     true
   end
 
@@ -105,16 +112,18 @@ function parse_tpl(s::AbstractString)
     true
   end
 
-  function push_to_block!(s::AbstractString)
-    push!(block_content, s)
+  function push_to_block!(s::AbstractString, depth::Int = 0)
+    push!(block_content[depth > 0 ? depth : block_depth], s)
     true
   end
 
   function reset_block!()
-    block_content = Vector{AbstractString}()
-    in_block = false
-    end_block = false
-    block_suspended = false
+    block_content[block_depth] = Vector{AbstractString}()
+    in_block[block_depth] = false
+    end_block[block_depth] = false
+    block_suspended[block_depth] = false
+    block_depth -= 1
+
     true
   end
 
@@ -150,13 +159,14 @@ function parse_tpl(s::AbstractString)
       s = unescape_embeded_julia(s)
     end
     cmd = """push!(____output, \"$( s )\")"""
-    in_block && push_to_block!(cmd) && return true
+    in_block[block_depth] && push_to_block!(cmd) && return true
     push_to_output!(cmd) && return true
   end
 
   function debug_tpl(tpl_line::AbstractString)
     @show current_line
     @show tpl_line
+    @show block_depth
     @show block_content
     @show in_block
     @show end_block
@@ -170,6 +180,7 @@ function parse_tpl(s::AbstractString)
 
   for tpl_line in lines_of_template
     current_line += 1
+    # @bp
 
     try
       tpl_line = escape_julia(tpl_line)
@@ -201,10 +212,19 @@ function parse_tpl(s::AbstractString)
         continue
       end
 
-      if in_block && ! block_suspended
+      if in_block[block_depth] && ! block_suspended[block_depth]
         push_to_block!(tpl_line)
-        suspend_block && (block_suspended = true)
-        end_block && join(block_content, "\n") |> push_to_output! && reset_block!()
+        suspend_block[block_depth] && (block_suspended[block_depth] = true)
+        if end_block[block_depth]
+          blk_cnt = join(block_content[block_depth], "\n")
+          if block_depth == 1
+            blk_cnt |> push_to_output!
+          else
+            push_to_block!(blk_cnt, block_depth - 1)
+          end
+
+          reset_block!()
+        end
 
         continue
       end

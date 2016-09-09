@@ -31,6 +31,11 @@
                     <a href="$( to_link(:admin_article_edit, article_id = _!!(a.id) ) )" class="btn btn-primary btn-sm">Edit</a>
                     <$ Articles.is_published(a) ? "" : """<a href="$( to_link(:admin_article_publish, article_id = _!!(a.id) ) )" class="btn btn-success btn-sm">Publish</a>""" $>
                     <a href="$( to_link(:admin_article_preview, article_id = _!!(a.id) ) )" target="_blank" class="btn btn-info btn-sm">Preview</a>
+                    <% if randn() > 1 :>
+                      Great
+                    <: else :>
+                      Meh
+                    <: end %>
                   </td>
                 </tr>
                 <: end %>

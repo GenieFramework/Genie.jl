@@ -1,8 +1,8 @@
 module AdminController
 module Website
-using Genie, Model, Authentication, Authorization, Genie.Users
+using Genie, Model, Authentication, Authorization, Genie.Users, Helpers
 
-const before_action::Vector{Symbol} = [Symbol("AdminController.Website.require_authentication")]
+const before_action = [Symbol("AdminController.Website.require_authentication")]
 
 function require_authentication(params::Dict{Symbol,Any})
   ! Authentication.is_authenticated(params) && return (false, unauthorized_access(params))
