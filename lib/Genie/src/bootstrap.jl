@@ -1,6 +1,5 @@
 using Reexport
 
-push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "src")))
 push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "database_adapters")))
 push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "cache_adapters")))
 push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "session_adapters")))
@@ -17,7 +16,6 @@ using Model
 using Tester
 using Toolbox
 using YAML
-# using Hooks
 
 @reexport using Configuration
 @reexport using Cache
@@ -100,7 +98,7 @@ function reload_helpers(in_module = current_module())
   end
 end
 
-function startup(parsed_args::Dict{AbstractString,Any} = Dict{AbstractString,Any}(), start_server::Bool = false)
+function startup(parsed_args = Dict{AbstractString,Any}(), start_server = false)
   isempty(parsed_args) && (parsed_args = parse_commandline_args())
 
   server_workers = Vector{RemoteRef{Channel{Any}}}()
@@ -112,7 +110,7 @@ function startup(parsed_args::Dict{AbstractString,Any} = Dict{AbstractString,Any
     Genie.log("Started Genie server session", :info)
 
     while true
-      sleep(1)
+      sleep(1_000_000_000)
     end
   end
 

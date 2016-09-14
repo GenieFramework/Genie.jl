@@ -13,6 +13,7 @@ const config = Config(
                       log_level         = Logging.DEBUG,
                       log_cache         = true,
                       assets_path       = "/",
-                      cache_duration    = 60,
-                      pagination_default_items_per_page = 25
+                      cache_duration    = 0,
+                      pagination_default_items_per_page = 25,
+                      server_handlers_count             = 4
                     )

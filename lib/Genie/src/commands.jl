@@ -1,3 +1,5 @@
+import ArgParse
+
 using ArgParse
 using Database
 using Generator
@@ -11,7 +13,7 @@ function run_app_with_command_line_args(config)
 
   config.app_env = ENV["GENIE_ENV"]
   config.server_port = parse(Int, parsed_args["server:port"])
-  config.server_workers_count = parse(Int, parsed_args["server:workers"])
+  config.server_workers_count = (sw = parse(Int, parsed_args["server:workers"])) > 0 ? sw : config.server_workers_count
 
   if called_command(parsed_args, "db:init")
     Database.create_database()
@@ -88,8 +90,8 @@ function parse_commandline_args()
             help = "HTTP server port"
             default = "8000"
         "--server:workers", "-w"
-            help = "Number of workers, one per server instance. Additional workers are spawned onto 1 increments of port"
-            default = "1"
+            help = "Number of workers used by the app -- use any value greater than 0 to overwrite the config"
+            default = "0"
 
         "--db:init"
             help = "true -> create database and core tables"

@@ -35,6 +35,7 @@ type Config
   server_document_root::AbstractString
   server_handle_static_files::Bool
   server_signature::ASCIIString
+  server_handlers_count::Int
 
   app_env::AbstractString
   app_is_api::Bool
@@ -89,6 +90,7 @@ type Config
             server_document_root        = "public",
             server_handle_static_files  = true,
             server_signature            = "Genie/$GENIE_VERSION/Julia/$VERSION",
+            server_handlers_count       = 1,
 
             app_env       = ENV["GENIE_ENV"],
             app_is_api    = true,
@@ -108,7 +110,7 @@ type Config
 
             cache_folder      = abspath(joinpath("cache")),
             cache_adapter     = :FileCacheAdapter,
-            cache_duration    = 31536000,
+            cache_duration    = 0,
 
             loggers       = [],
             log_router    = false,
@@ -138,7 +140,7 @@ type Config
             inflector_irregulars = Array{Tuple{AbstractString, AbstractString},1}()
         ) =
               new(
-                  server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature,
+                  server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature, server_handlers_count,
                   app_env, app_is_api,
                   suppress_output, output_length,
                   db_migrations_table_name, db_migrations_folder, db_auto_connect, db_adapter,

@@ -3,27 +3,19 @@ module AppServer
 using HttpServer
 using Router
 using Genie
-using Sessions
 using Millboard
 
+# function start_handlers()
+#   nworkers() < Genie.config.server_handlers_count && addprocs(Genie.config.server_handlers_count - nworkers())
+# end
+
 function start(port::Int = 8000)
+  # start_handlers()
+
   http = HttpHandler() do req::Request, res::Response
     try
-      http_request = req
-      http_response = res
-
-      session = Sessions.start(req, res)
-      log_request(req)
-      sign_response!(res)
-
-      app_response::Response = Router.route_request(req, res, session)
-      app_response.headers = merge(http_response.headers, app_response.headers)
-      app_response.cookies = merge(http_response.cookies, app_response.cookies)
-
-      log_response(req, app_response)
-      Sessions.persist(session)
-
-      app_response
+      # @fetch Response(string(Dates.now()) * "-" * string(myid())) # handle_request(req, res)
+      handle_request(req, res)
     catch ex
       Genie.log("Genie error " * string(ex), :critical, showst = false)
       Router.serve_error_file(500, string(ex))
@@ -34,12 +26,28 @@ function start(port::Int = 8000)
   run(server, port)
 end
 
+function handle_request(req::HttpServer.Request, res::HttpServer.Response)
+  session = Sessions.start(req, res)
+  AppServer.log_request(req) # <== here crashes in parallel
+  AppServer.sign_response!(res)
+
+  app_response::Response = Router.route_request(req, res, session)
+  app_response.headers = merge(res.headers, app_response.headers)
+  app_response.cookies = merge(res.cookies, app_response.cookies)
+
+  AppServer.log_response(req, app_response)
+  Sessions.persist(session)
+
+  app_response
+end
+
 function spawn!(server_workers, port::Int = 8000)
   port_increment = 0
-  for w in workers()
-    push!(server_workers, @spawn start(port + port_increment))
-    port_increment += 1
-  end
+
+  # for w in 1:Genie.config.server_workers_count
+  push!(server_workers, start(port + port_increment))
+  port_increment += 1
+  # end
 
   server_workers
 end

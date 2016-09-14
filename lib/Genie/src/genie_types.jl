@@ -24,28 +24,28 @@ end
 function genietype_to_print{T<:GenieType}(m::T)
   output = "\n" * "$(typeof(m))" * "\n"
   output *= string(Genie.config.log_formatted ? Millboard.table(Genie.Model.to_string_dict(m)) : Genie.Model.to_string_dict(m) ) * "\n"
-  
+
   output
 end
 
-function to_dict(m::Any) 
+function to_dict(m::Any)
   [string(f) => getfield(m, Symbol(f)) for f in fieldnames(m)]
 end
 
-function to_string_dict(m::Any; all_output::Bool = false) 
+function to_string_dict(m::Any; all_output::Bool = false)
   to_string_dict(m, fieldnames(m), all_output = all_output)
 end
 function to_string_dict(m::Any, fields::Array{Symbol,1}; all_output::Bool = false)
   output_length = all_output ? 100_000_000 : Genie.config.output_length
   response = Dict{AbstractString, AbstractString}()
-  for f in fields 
+  for f in fields
     key = string(f)
     value = string(getfield(m, Symbol(f)))
-    if length(value) > output_length 
+    if length(value) > output_length
       value = value[1:output_length] * "..."
     end
     response[key] = string(value)
   end
-  
+
   response
 end
