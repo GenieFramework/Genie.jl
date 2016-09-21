@@ -8,6 +8,8 @@ using DataStructures
 using DateParser
 using Util
 using Reexport
+using Configuration
+using Logger
 
 include(abspath(joinpath("lib", "Genie", "src", "model_types.jl")))
 
@@ -92,7 +94,7 @@ function save{T<:AbstractModel}(m::T; conflict_strategy = :error)
 
     true
   catch ex
-    Genie.log(ex)
+    Logger.log(ex)
 
     false
   end
@@ -239,8 +241,8 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
                 _m, value = _m.on_hydration!!(_m, unq_field, row[field])
                 value
               catch ex
-                Genie.log("Failed to hydrate!! field $unq_field ($field)", :debug)
-                Genie.log(ex)
+                Logger.log("Failed to hydrate!! field $unq_field ($field)", :debug)
+                Logger.log(ex)
 
                 row[field]
               end
@@ -248,8 +250,8 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
               try
                 _m.on_hydration(_m, unq_field, row[field])
               catch ex
-                Genie.log("Failed to hydrate field $unq_field ($field)", :debug)
-                Genie.log(ex)
+                Logger.log("Failed to hydrate field $unq_field ($field)", :debug)
+                Logger.log(ex)
 
                 row[field]
               end
@@ -259,8 +261,8 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
     try
       setfield!(obj, unq_field, convert(typeof(getfield(_m, unq_field)), value))
     catch ex
-      Genie.log(ex, :err)
-      Genie.log("obj = $(typeof(obj)) -- field = $unq_field -- value = $value -- type = $( typeof(getfield(_m, unq_field)) )")
+      Logger.log(ex, :err)
+      Logger.log("obj = $(typeof(obj)) -- field = $unq_field -- value = $value -- type = $( typeof(getfield(_m, unq_field)) )")
       rethrow(ex)
     end
 
@@ -454,7 +456,7 @@ function relationship{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type
       if rel.model_name == model_name || split(string(rel.model_name), ".")[end] == string(model_name)
         return Nullable{SQLRelation}(rel)
       else
-        Genie.log("Must check this: $(rel.model_name) == $(model_name) at $(@__FILE__) $(@__LINE__)", :debug)
+        Logger.log("Must check this: $(rel.model_name) == $(model_name) at $(@__FILE__) $(@__LINE__)", :debug)
       end
     end
   end
@@ -602,8 +604,8 @@ function prepare_for_db_save{T<:AbstractModel}(m::T, field::Symbol, value)
             try
               m.on_dehydration(m, field, value)
             catch ex
-              Genie.log("Failed to dehydrate field $field", :debug)
-              Genie.log(ex)
+              Logger.log("Failed to dehydrate field $field", :debug)
+              Logger.log(ex)
 
               value
             end
@@ -689,7 +691,7 @@ function persistable_fields{T<:AbstractModel}(m::T; fully_qualified::Bool = fals
   db_columns = columns(typeof(m))[:column_name]
 
   isempty(db_columns) && Genie.config.log_db &&
-    Genie.log("No columns retrieved for $(typeof(m)) - check if the table exists and the model is properly configured.", :err)
+    Logger.log("No columns retrieved for $(typeof(m)) - check if the table exists and the model is properly configured.", :err)
 
   pst_fields = intersect(object_fields, db_columns)
   fully_qualified ? to_fully_qualified_sql_column_names(m, pst_fields) : pst_fields
@@ -938,3 +940,6 @@ function update_query_part{T<:AbstractModel}(m::T)
 end
 
 end
+
+const SearchLight = Model
+export SearchLight

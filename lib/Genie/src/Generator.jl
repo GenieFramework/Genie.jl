@@ -14,7 +14,7 @@ function new_model(cmd_args::Dict{AbstractString,Any}, config::Configuration.Con
 
   resource_path = setup_resource_path(resource_name)
   write_resource_file(resource_path, Genie.GENIE_MODEL_FILE_NAME, resource_name) &&
-    Genie.log("New model created at $(joinpath(resource_path, Genie.GENIE_MODEL_FILE_NAME))")
+    Logger.log("New model created at $(joinpath(resource_path, Genie.GENIE_MODEL_FILE_NAME))")
 end
 
 function new_resource(cmd_args::Dict{AbstractString,Any}, config::Configuration.Config)
@@ -32,7 +32,7 @@ function new_resource(cmd_args::Dict{AbstractString,Any}, config::Configuration.
   resource_path = setup_resource_path(resource_name)
   for resource_file in [Genie.GENIE_CONTROLLER_FILE_NAME]
     write_resource_file(resource_path, resource_file, resource_name) &&
-      Genie.log("New file created at $(joinpath(resource_path, resource_file))")
+      Logger.log("New file created at $(joinpath(resource_path, resource_file))")
   end
 
   if ! isdir(joinpath(resource_path, "views"))
@@ -53,7 +53,7 @@ end
 
 function write_resource_file(resource_path::AbstractString, file_name::AbstractString, resource_name::AbstractString)
   if isfile(joinpath(resource_path, file_name))
-    Genie.log("File already exists, $(joinpath(resource_path, file_name)) - skipping", :err)
+    Logger.log("File already exists, $(joinpath(resource_path, file_name)) - skipping", :err)
     return false
   end
 

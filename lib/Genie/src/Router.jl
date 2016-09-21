@@ -7,6 +7,11 @@ using AppServer
 using Memoize
 using Sessions
 using Millboard
+using Configuration
+using App
+using Input
+using Logger
+using StackTraces
 
 import HttpServer.mimetypes
 
@@ -27,7 +32,7 @@ const BEFORE_ACTION_HOOKS = :before_action
 const _routes = Dict{Symbol,Any}()
 const _params = Dict{Symbol,Any}()
 
-function route_request(req::Request, res::Response, session::Sessions.Session)
+function route_request(req::Request, res::Response)
   empty!(_params)
 
   if is_static_file(req.resource)
@@ -37,18 +42,21 @@ function route_request(req::Request, res::Response, session::Sessions.Session)
 
   if is_dev()
     load_routes()
-    Genie.load_models()
-    # Genie.reload_helpers()
+    App.load_models()
   end
 
-  match_routes(req, res, session)
+  session = Sessions.start(req, res)
+  r = match_routes(req, res, session)
+  Sessions.persist(session)
+
+  r
 end
 
 function route(params...; with::Dict = Dict{Any,Any}(), named::Symbol = :__anonymous_route)
   extra_params = Dict(:with => with)
   named = named == :__anonymous_route ? route_name(params) : named
   if haskey(_routes, named)
-    Genie.log(
+    Logger.log(
       "Conflicting routes names - multiple routes are sharing the same name. Use the 'named' option to assign them different identifiers.\n" *
       string(_routes[named]) * "\n" *
       string((params, extra_params))
@@ -110,7 +118,7 @@ function to_link{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Symb
   try
     to_link!!(route_name, route_params)
   catch ex
-    Genie.log(ex, :err, showst = false)
+    Logger.log(ex, :err, showst = false)
     ""
   end
 end
@@ -131,7 +139,7 @@ function to_link(route_name::Symbol; route_params...)
   try
     to_link!!(route_name, d)
   catch ex
-    Genie.log(ex, :err, showst = false)
+    Logger.log(ex, :err, showst = false)
     ""
   end
 end
@@ -142,7 +150,7 @@ function match_routes(req::Request, res::Response, session::Sessions.Session)
     protocol, route, to = route_def
     protocol != req.method && continue
 
-    Genie.config.log_router && Genie.log("Router: Checking against " * route)
+    Genie.config.log_router && Logger.log("Router: Checking against " * route)
 
     parsed_route, param_names, param_types = parse_route(route)
 
@@ -150,9 +158,9 @@ function match_routes(req::Request, res::Response, session::Sessions.Session)
     regex_route = Regex("^" * parsed_route * "\$")
 
     (! ismatch(regex_route, uri.path)) && continue
-    Genie.config.log_router && Genie.log("Router: Matched route " * uri.path)
+    Genie.config.log_router && Logger.log("Router: Matched route " * uri.path)
     (! extract_uri_params(uri, regex_route, param_names, param_types)) && continue
-    Genie.config.log_router && Genie.log("Router: Matched type of route " * uri.path)
+    Genie.config.log_router && Logger.log("Router: Matched type of route " * uri.path)
     extract_post_params(req)
     extract_extra_params(extra_params)
     extract_pagination_params()
@@ -160,7 +168,7 @@ function match_routes(req::Request, res::Response, session::Sessions.Session)
     return invoke_controller(to, req, res, _params, session)
   end
 
-  Genie.config.log_router && Genie.log("Router: No route matched - defaulting 404", :err)
+  Genie.config.log_router && Logger.log("Router: No route matched - defaulting 404", :err)
   serve_error_file(404, "Not found")
 end
 
@@ -197,7 +205,7 @@ function extract_uri_params(uri::URI, regex_route::Regex, param_names::Array{Abs
     try
       _params[Symbol(param_name)] = convert(param_types[i], matches[param_name])
     catch ex
-      Genie.log(ex)
+      Logger.log(ex)
       return false
     end
 
@@ -274,7 +282,7 @@ function setup_params!( params::Dict{Symbol,Any}, to_parts::Vector{AbstractStrin
                                       end
                                     end
 
-  Genie.config.log_requests && Genie.log("Invoking $action_name with params: \n" * string(Millboard.table(params)), :debug)
+  Genie.config.log_requests && Logger.log("Invoking $action_name with params: \n" * string(Millboard.table(params)), :debug)
 
   params
 end
@@ -287,59 +295,55 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
   controller_path = abspath(joinpath(Genie.APP_PATH, "app", "resources", to_parts[1]))
   controller_path_hash = hash(controller_path)
   if ! in(controller_path_hash, loaded_controllers) || Configuration.is_dev()
-    Genie.load_controller(controller_path)
-    Genie.export_controllers(to_parts[2])
+    App.load_controller(controller_path)
+    App.export_controllers(to_parts[2])
     ! in(controller_path_hash, loaded_controllers) && push!(loaded_controllers, controller_path_hash)
   end
 
   controller = Genie.GenieController()
-  action_name = string(current_module()) * "." * to_parts[2]
+  action_name = to_parts[2]
 
   action_controller_parts::Vector{AbstractString} = split(to_parts[2], ".")
   setup_params!(params, to_parts, action_controller_parts, controller_path, req, res, session, action_name)
-  params[Genie.PARAMS_ACL_KEY] = Genie.load_acl(controller_path)
+  params[Genie.PARAMS_ACL_KEY] = App.load_acl(controller_path)
 
   try
-    hook_result = run_hooks(BEFORE_ACTION_HOOKS, eval(Genie, parse(join(split(action_name, ".")[1:end-1], "."))), params)
+    hook_result = run_hooks(BEFORE_ACTION_HOOKS, eval(App, parse(join(split(action_name, ".")[1:end-1], "."))), params)
     hook_stop(hook_result) && return to_response(hook_result[2])
   catch ex
-    Genie.log("Failed to invoke hooks $(BEFORE_ACTION_HOOKS)", :err, showst = false)
-    Genie.log(ex, :err, showst = false)
+    Logger.log("Failed to invoke hooks $(BEFORE_ACTION_HOOKS)", :err, showst = false)
+    Logger.log(ex, :err, showst = false)
     show_stacktrace(catch_stacktrace())
 
     return serve_error_file(500, string(ex) * "<br/><br/>" * join(catch_stacktrace(), "<br/>"))
   end
 
+  return  try
+            eval(parse("App." * action_name))(params) |> to_response
+          catch ex
+            Logger.log("$ex at $(@__FILE__):$(@__LINE__)", :critical, showst = false)
+            Logger.log("While invoking $(action_name) with $(params)", :critical, showst = false)
+            show_stacktrace(catch_stacktrace())
 
-  action_result = try
-                    eval(Genie, parse(string(current_module()) * "." * action_name))(params)
-                  catch ex
-                    Genie.log("$ex at $(@__FILE__):$(@__LINE__)", :critical, showst = false)
-                    Genie.log("While invoking $(string(current_module())).$(action_name) with $(params)", :critical, showst = false)
-                    show_stacktrace(catch_stacktrace())
-
-                    serve_error_file(500, string(ex) * "<br/><br/>" * join(catch_stacktrace(), "<br/>"))
-                  end
-
-  to_response(action_result)
+            serve_error_file(500, string(ex) * "<br/><br/>" * join(catch_stacktrace(), "<br/>"))
+          end
 end
 
 function to_response(action_result)
-  if ! isa(action_result, Response)
-    try
-      if isa(action_result, Tuple)
-        Response(action_result...)
-      else
-        Response(action_result)
-      end
-    catch ex
-      Genie.log("Can't convert $action_result to HttpServer Response", :err)
-      Genie.log(ex, :err)
-      Response("")
-    end
-  else
-    action_result
-  end
+  isa(action_result, Response) && return action_result
+
+  return  try
+            if isa(action_result, Tuple)
+              Response(action_result...)
+            else
+              Response(action_result)
+            end
+          catch ex
+            Logger.log("Can't convert $action_result to HttpServer Response", :err)
+            Logger.log(ex, :err)
+
+            serve_error_file(500, string(ex) * "<br/><br/>" * join(catch_stacktrace(), "<br/>"))
+          end
 end
 
 function hook_stop(hook_result)
@@ -373,7 +377,7 @@ function serve_static_file(resource::AbstractString)
 end
 
 function serve_error_file(error_code::Int, error_message::AbstractString = "")
-  if is_dev()
+  if Configuration.is_dev()
     error_page =  open(Genie.DOC_ROOT_PATH * "/error-$(error_code).html") do f
                     readall(f)
                   end

@@ -1,30 +1,47 @@
 module Genie
-using Configuration
 
-export Model, Database
-
-const APP_PATH = pwd()
-const DOC_ROOT_PATH = APP_PATH * "/public"
-
-const GENIE_MODEL_FILE_NAME             = "model.jl"
-const GENIE_CONTROLLER_FILE_NAME        = "controller.jl"
-const GENIE_VALIDATOR_FILE_NAME         = "validator.jl"
-const GENIE_AUTHORIZATION_FILE_NAME     = "authorization.yml"
-
-const PARAMS_REQUEST_KEY    = :REQUEST
-const PARAMS_RESPONSE_KEY   = :RESPONSE
-const PARAMS_SESSION_KEY    = :SESSION
-const PARAMS_FLASH_KEY      = :FLASH
-const PARAMS_ACL_KEY        = :ACL
+include(abspath(joinpath("lib/Genie/src/constants.jl")))
 
 include(abspath(joinpath("config", "env", ENV["GENIE_ENV"] * ".jl")))
 include(abspath(joinpath("config", "app.jl")))
-
-include(abspath("lib/Genie/src/logger.jl"))
 include(abspath("lib/Genie/src/macros.jl"))
-include(abspath("lib/Genie/src/bootstrap.jl"))
-include(abspath("lib/Genie/src/commands.jl"))
 
-run_app_with_command_line_args(Configuration.config)
+push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "database_adapters")))
+push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "cache_adapters")))
+push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "session_adapters")))
+
+push!(LOAD_PATH, abspath(joinpath("app", "resources")))
+push!(LOAD_PATH, abspath(joinpath("app", "helpers")))
+
+include(abspath(joinpath("lib", "Genie", "src", "genie_types.jl")))
+
+const state = State()
+export state
+
+function startup(parsed_args = Dict{AbstractString,Any}(), start_server = false)
+  isempty(parsed_args) && (parsed_args = Commands.parse_commandline_args())
+
+  if parsed_args["s"] == "s" || start_server == true
+    state.server_workers = AppServer.start(Genie.config.server_port)
+
+    println()
+    Logger.log("Started Genie server session", :info)
+
+    while true
+      sleep(1_000_000_000)
+    end
+  end
+
+  false
+end
+
+function cache_enabled()
+  config.cache_duration > 0
+end
+
+using Configuration, Logger, AppServer, Commands, App
+
+include(abspath("lib/Genie/src/commands.jl"))
+Commands.execute(Configuration.config)
 
 end

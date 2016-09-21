@@ -9,7 +9,7 @@ function session(params::Dict{Symbol,Any})
     return params[Genie.PARAMS_SESSION_KEY]
   else
     msg = "Invalid params Dict -- must have $(Genie.PARAMS_SESSION_KEY) key"
-    Genie.log(msg, :err)
+    Logger.log(msg, :err)
     error(msg)
   end
 end
@@ -19,7 +19,7 @@ function request(params::Dict{Symbol,Any})
     return params[Genie.PARAMS_REQUEST_KEY]
   else
     msg = "Invalid params Dict -- must have $(Genie.PARAMS_REQUEST_KEY) key"
-    Genie.log(msg, :err)
+    Logger.log(msg, :err)
     error(msg)
   end
 end
@@ -29,7 +29,7 @@ function response(params::Dict{Symbol,Any})
     return params[Genie.PARAMS_RESPONSE_KEY]
   else
     msg = "Invalid params Dict -- must have $(Genie.PARAMS_RESPONSE_KEY) key"
-    Genie.log(msg, :err)
+    Logger.log(msg, :err)
     error(msg)
   end
 end
@@ -39,7 +39,7 @@ function flash(params::Dict{Symbol,Any})
     return params[Genie.PARAMS_FLASH_KEY]
   else
     msg = "Invalid params Dict -- must have $(Genie.PARAMS_FLASH_KEY) key"
-    Genie.log(msg, :err)
+    Logger.log(msg, :err)
     error(msg)
   end
 end

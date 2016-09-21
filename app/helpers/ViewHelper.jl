@@ -1,5 +1,5 @@
 module ViewHelper
-using Genie, Validation
+using Genie, Validation, Helpers, App
 
 export active_menu_class, output_errors, output_flash, article_status_label, input_checked, pagination_navigation
 
@@ -35,7 +35,7 @@ function article_status_label(status::Symbol)
 end
 
 function input_checked(article)
-  Genie.Articles.is_published(article) ? "checked" : ""
+  App.Articles.is_published(article) ? "checked" : ""
 end
 
 function pagination_navigation(params)

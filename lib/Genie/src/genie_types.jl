@@ -9,6 +9,14 @@ string{T<:GenieType}(io::IO, t::T) = genietype_to_string(t)
 print{T<:GenieType}(io::IO, t::T) = print(io, string(t))
 show{T<:GenieType}(io::IO, t::T) = print(io, genietype_to_print(t))
 
+type State <: GenieType
+  server_workers::Vector{RemoteRef{Channel{Any}}}
+
+  State(;
+    server_workers = Vector{RemoteRef{Channel{Any}}}()
+  ) = new(server_workers)
+end
+
 type GenieController <: GenieType
 end
 

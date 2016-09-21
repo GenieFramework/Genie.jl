@@ -1,14 +1,12 @@
 module Sessions
 
-# export Session
-
 using Genie
 using SHA
 using HttpServer
 using Cookies
 
 const session_adapter_name = string(Genie.config.session_storage) * "SessionAdapter"
-eval(parse("using " * session_adapter_name))
+eval(parse("using $session_adapter_name"))
 const SessionAdapter = eval(parse(session_adapter_name))
 
 type Session

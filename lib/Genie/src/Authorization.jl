@@ -1,5 +1,5 @@
 module Authorization
-using Genie, Model, Authentication, Helpers
+using Genie, Model, Authentication, Helpers, App, Util
 export is_authorized, with_authorization
 
 function is_authorized(ability::Symbol, params::Dict{Symbol,Any})

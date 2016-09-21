@@ -56,7 +56,7 @@ function new_model(model_name::AbstractString)
   end
 
   module $pluralized_name
-  using Genie
+  using App
   end
   """
 end

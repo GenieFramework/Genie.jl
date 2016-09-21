@@ -19,7 +19,7 @@ type Role <: AbstractModel
 end
 
 module Roles
-using Genie
+using App
 
 function dehydrate(r::Role, field::Symbol, value::Any)
   return  if field == :name

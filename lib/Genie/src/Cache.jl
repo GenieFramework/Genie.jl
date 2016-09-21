@@ -1,5 +1,5 @@
 module Cache
-using Genie
+using Genie, SHA, Logger
 eval(parse("using $(Genie.config.cache_adapter)"))
 
 export cache_key, with_cache
@@ -10,7 +10,7 @@ function with_cache(f::Function, key::ASCIIString, expiration::Int = Genie.confi
   ca = cache_adapter()
   cached_data = ca.from_cache(key, expiration)
   if isnull(cached_data)
-    Genie.config.log_cache && Genie.log("Missed cache for $key", :warn)
+    Genie.config.log_cache && Logger.log("Missed cache for $key", :warn)
 
     output = f()
     ca.to_cache(key, output)
@@ -18,7 +18,7 @@ function with_cache(f::Function, key::ASCIIString, expiration::Int = Genie.confi
     return output
   end
 
-  Genie.config.log_cache && Genie.log("Hit cache for $key", :debug)
+  Genie.config.log_cache && Logger.log("Hit cache for $key", :debug)
   Base.get(cached_data)
 end
 

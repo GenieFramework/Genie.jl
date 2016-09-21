@@ -1,5 +1,5 @@
 module Authentication
-using Genie, Sessions
+using Sessions, Model, App
 
 export current_user, current_user!!
 
@@ -63,7 +63,7 @@ function current_user!!(session::Sessions.Session)
   try
     current_user(session) |> Base.get
   catch ex
-    Genie.log("The current user is not authenticated", :err)
+    Logger.log("The current user is not authenticated", :err)
     rethrow(ex)
   end
 end

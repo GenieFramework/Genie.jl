@@ -1,6 +1,6 @@
 export @run_with_time, @unless, @psst, @in_repl
 
-if is_dev()
+if Configuration.is_dev()
   macro run_with_time(expr)
     quote
         @time $(esc(expr))
@@ -19,22 +19,10 @@ macro psst(expr)
   evx
 end
 
-macro unless(test, branch)
-  quote
-    if ! $(esc(test))
-      $(esc(branch))
-    end
-  end
-end
-
 macro in_repl(expr)
   if isinteractive() || Configuration.IN_REPL
     quote
       $(esc(expr))
     end
   end
-end
-
-macro validator(expr)
-
 end

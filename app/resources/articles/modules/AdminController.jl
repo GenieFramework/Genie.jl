@@ -1,6 +1,7 @@
 module AdminController
 module Website
-using Genie, Model, Authentication, Authorization, Genie.Users, Helpers
+using App, Authentication, Authorization
+@dependencies
 
 const before_action = [Symbol("AdminController.Website.require_authentication")]
 

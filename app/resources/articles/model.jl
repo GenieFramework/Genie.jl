@@ -32,7 +32,7 @@ type Article <: AbstractModel
 end
 
 module Articles
-using Genie
+using App, Util
 
 function is_published(article::Article)
   ! isnull(article.published_at) && article.published_at |> _!! <= Dates.now()

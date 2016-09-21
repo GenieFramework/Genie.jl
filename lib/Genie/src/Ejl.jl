@@ -1,8 +1,7 @@
 module Ejl
-using SHA
-using Genie
+using Genie, Configuration, SHA, Cache
 
-export @ejl_str, push_template_line!
+export @ejl_str, push_template_line!, @ejl
 
 const THROW_EXCEPTIONS = true
 
@@ -286,16 +285,46 @@ function end_markup(s::AbstractString)
 end
 
 function render_tpl(exs::Vector{AbstractString})
-  __helper = """
+  join(include_string(_render_tpl(exs)), "\n")
+end
+
+function _render_tpl(exs::Vector{AbstractString})
+  """
   const ____output = AbstractString[]
 
   function _push_out!_(s::AbstractString)
     push!(____output, escape_string(s))
   end
-  """
 
-  exs = __helper * join(exs, "\n") * "\nreturn ____output \n"
-  join(include_string(exs), "\n")
+  using ViewHelper, Util, Model
+
+  function __tpl_render__()
+    $(join(exs, "\n"))
+    return ____output
+  end
+
+  __tpl_render__()
+  """
+end
+
+macro template_from_file(file_path::Expr)
+  quote
+    @parse_tpl open($file_path) do f
+      readall(f)
+    end
+  end
+end
+
+macro parse_tpl(s::Expr)
+  :(parse_tpl($s, $(Genie.cache_enabled())))
+end
+
+macro render_tpl(exs::Expr)
+  :(join(include_string(_render_tpl($exs)), "\n"))
+end
+
+macro ejl(path::Expr)
+  :( @render_tpl(@template_from_file($path)) )
 end
 
 end

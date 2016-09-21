@@ -22,14 +22,14 @@
                       $(a.summary)
                     </div>
                     <div>
-                      <span class="label label-$(article_status_label(Articles.status(a)))">
-                        <$ ( Articles.is_published(a) ? "Published at $( Dates.format(_!!(a.published_at), "e, dd u yyyy HH:MM"))" : "Draft" ) $>
+                      <span class="label label-$(article_status_label(App.Articles.status(a)))">
+                        <$ ( App.Articles.is_published(a) ? "Published at $( Dates.format(_!!(a.published_at), "e, dd u yyyy HH:MM"))" : "Draft" ) $>
                       </span>
                     </div>
                   </td>
                   <td class="actions-cell text-right pull-right">
                     <a href="$( to_link(:admin_article_edit, article_id = _!!(a.id) ) )" class="btn btn-primary btn-sm">Edit</a>
-                    <$ Articles.is_published(a) ? "" : """<a href="$( to_link(:admin_article_publish, article_id = _!!(a.id) ) )" class="btn btn-success btn-sm">Publish</a>""" $>
+                    <$ App.Articles.is_published(a) ? "" : """<a href="$( to_link(:admin_article_publish, article_id = _!!(a.id) ) )" class="btn btn-success btn-sm">Publish</a>""" $>
                     <a href="$( to_link(:admin_article_preview, article_id = _!!(a.id) ) )" target="_blank" class="btn btn-info btn-sm">Preview</a>
                   </td>
                 </tr>

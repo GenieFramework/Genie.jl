@@ -1,12 +1,7 @@
-module Render
-
+module Renderer
 export respond, json, mustache, ejl, redirect_to
-
-using Genie
-using Util
-using JSON
-using Ejl
-using Mustache
+using Genie, Util, JSON, Ejl, Mustache, Configuration, HttpServer, App
+@devtools()
 
 const CONTENT_TYPES = Dict{Symbol, AbstractString}(
   :json   => "text/json",
@@ -27,20 +22,20 @@ end
 function ejl(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractString} = :app, render_layout::Bool = true, vars...)
   spawn_splatted_vars(vars)
 
-  template = Ejl.template_from_file(abspath(joinpath(Genie.APP_PATH, "app", "resources", string(resource), "views", string(action) * ".$RENDER_EJL_EXT")))
-  r = Ejl.render_tpl(template)
+  path = abspath(joinpath(Genie.APP_PATH, "app", "resources", string(resource), "views", string(action) * "." * Configuration.RENDER_EJL_EXT))
+  r = @ejl(:($path))
 
   if render_layout
-    layout = Ejl.template_from_file(abspath(joinpath(Genie.APP_PATH, "app", "layouts", string(layout) * ".$RENDER_EJL_EXT")))
     spawn_vars(EJL_YIELD_VAR_NAME, r)
-    r = Ejl.render_tpl(layout)
+    path = abspath(joinpath(Genie.APP_PATH, "app", "layouts", string(layout) * "." * Configuration.RENDER_EJL_EXT))
+    r = @ejl(:($path))
   end
 
   Dict(:html => r)
 end
 function ejl(content::AbstractString, layout::Union{Symbol, AbstractString} = :app, vars...)
   spawn_splatted_vars(vars)
-  layout = Ejl.template_from_file(abspath(joinpath(Genie.APP_PATH, "app", "layouts", string(layout) * ".$RENDER_EJL_EXT")))
+  layout = Ejl.template_from_file(abspath(joinpath(Genie.APP_PATH, "app", "layouts", string(layout) * "." * Configuration.RENDER_EJL_EXT)))
   spawn_vars(EJL_YIELD_VAR_NAME, content)
   r = Ejl.render_tpl(layout)
 
@@ -156,7 +151,7 @@ end
 
 module JSONAPI
 
-using Render
+using Renderer
 using Genie
 
 export builder, elem, pagination
@@ -176,21 +171,21 @@ end
 
 function elem(collection, instance_name; structure...)
   if ! isa(collection, Array)
-    Render.spawn_vars(instance_name, collection)
-    return Render.structure_to_dict(structure, collection)
+    Renderer.spawn_vars(instance_name, collection)
+    return Renderer.structure_to_dict(structure, collection)
   end
 
   data_items = []
   for resource in collection
-    Render.spawn_vars(instance_name, resource)
-    push!(data_items, Render.structure_to_dict(structure, resource))
+    Renderer.spawn_vars(instance_name, resource)
+    push!(data_items, Renderer.structure_to_dict(structure, resource))
   end
 
   data_items
 end
 
 function elem(instance_var; structure...)
-  () -> Render.structure_to_dict(structure,  if isa(instance_var, Symbol)
+  () -> Renderer.structure_to_dict(structure,  if isa(instance_var, Symbol)
                                                 current_module().eval(instance_var)
                                               else
                                                 instance_var
@@ -198,7 +193,7 @@ function elem(instance_var; structure...)
 end
 
 function elem(;structure...)
-  () -> Render.structure_to_dict(structure)
+  () -> Renderer.structure_to_dict(structure)
 end
 
 function http_error(status_code; id = "resource_not_found", code = "404-0001", title = "Not found", detail = "The requested resource was not found")
@@ -232,5 +227,5 @@ function pagination(path::AbstractString, total_items::Int; current_page::Int = 
   pg
 end
 
-end # end module Render.JSONAPI
+end # end module Renderer.JSONAPI
 end # end module Render

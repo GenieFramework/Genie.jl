@@ -409,7 +409,7 @@ The views rendering functionality is provided by the `Renderer` module.
 
 ```julia
 p = SearchLight.find_one_by(Package, :id, 42) |> Base.get
-Render.respond(Render.json(:packages, :show, package = p))
+Renderer.respond(Renderer.json(:packages, :show, package = p))
 ```
 
 ##### app/resources/packages/views/show.jl
@@ -465,7 +465,7 @@ responding with the following JSONAPI.org structured JSON object:
 }
 ```
 
-Using the `JSONAPI.builder()` is not a requirement - `Render.json()` accepts a Dictionary as it's argument, so your views can simply return that. 
+Using the `JSONAPI.builder()` is not a requirement - `Renderer.json()` accepts a Dictionary as it's argument, so your views can simply return that. 
 
 ## Controllers
 Controllers in Genie are just plain Julia modules. Their role is to orchestrate the exchange of data between models and the views. 
@@ -487,9 +487,9 @@ function show(p::Genie.GenieController, params::Dict{Symbol, Any}, req::Request,
   package = SearchLight.find_one(Package, params[:package_id])
   if ! isnull(package) 
     package = Base.get(package)
-    Render.respond(Render.json(:packages, :show, package = package))
+    Renderer.respond(Renderer.json(:packages, :show, package = package))
   else 
-    Render.respond(Render.JSONAPI.error(404))  
+    Renderer.respond(Renderer.JSONAPI.error(404))  
   end
 end
 
@@ -619,7 +619,7 @@ Sensitive information should be placed in the `config/secrets.jl` file. This fil
 ## Logging
 Logging is a central part in Genie's architecture, one of its key components. One can hardly find of a more time consuming and daunting task than debugging your backend code without proper logging - and a lot of effort has been put into getting this right. 
 
-Genie uses `Logging.jl` for it's logging needs, and exposes this functionality through the `Genie.log()` function. 
+Genie uses `Logging.jl` for it's logging needs, and exposes this functionality through the `Logger.log()` function. 
 
 By default, in `development` mode, Genie is **very** verbose. It will log SQL sent to the database, the `DataFrame`s representing the SQL results, `@time` measurments of the queries, server requests and responses, etc. The level of logging can be controlled via the main config file (see above). 
 
@@ -655,7 +655,7 @@ Genie.Package
 +------+---------------------------------------+
 
 
-julia> Genie.log(p)
+julia> Logger.log(p)
 
 01-Jun 22:11:44:INFO:console_logger:
 [

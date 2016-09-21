@@ -1,5 +1,6 @@
 using Faker
 using Model
+using Tester
 
 function setup()
   Tester.reset_db()

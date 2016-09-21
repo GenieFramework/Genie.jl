@@ -1,5 +1,6 @@
 module UserSessionsController
-using Genie, Model, Helpers, Genie.Users, Authentication
+using App, Authentication, App.Users
+@dependencies
 
 function login(params::Dict{Symbol,Any})
   ejl(:user_sessions, :login, layout = :login, message = flash(params)) |> respond

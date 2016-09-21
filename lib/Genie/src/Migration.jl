@@ -6,6 +6,7 @@ using Database
 using FileTemplates
 using Millboard
 using Configuration
+using Logger
 
 type DbMigration # todo: rename the "migration_" prefix for the fields
   migration_hash::AbstractString
@@ -24,7 +25,7 @@ function new(cmd_args::Dict{AbstractString,Any}, config::Configuration.Config)
   write(f, FileTemplates.new_database_migration(migration_class_name(cmd_args["migration:new"])))
   close(f)
 
-  Genie.log("New migration created at $mfn")
+  Logger.log("New migration created at $mfn")
 end
 
 function migration_hash()
@@ -101,7 +102,7 @@ function run_migration(migration::DbMigration, direction::Symbol; force = false)
   if ! force
     if  ( direction == :up    && in(migration.migration_hash, upped_migrations()) ) ||
         ( direction == :down  && in(migration.migration_hash, downed_migrations()) )
-      Genie.log("Skipping, migration is already $direction")
+      Logger.log("Skipping, migration is already $direction")
       return
     end
   end
@@ -111,7 +112,7 @@ function run_migration(migration::DbMigration, direction::Symbol; force = false)
 
   store_migration_status(migration, direction)
 
-  ! Genie.config.suppress_output && Genie.log("Executed migration $(migration.migration_class_name) $(direction)")
+  ! Genie.config.suppress_output && Logger.log("Executed migration $(migration.migration_class_name) $(direction)")
 end
 
 function store_migration_status(migration::DbMigration, direction::Symbol)

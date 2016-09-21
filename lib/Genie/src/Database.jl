@@ -50,12 +50,12 @@ end
 end
 
 function create_database()
-  Genie.log("Not implemented - please manually create the database first, if it does not already exist", :debug)
+  Logger.log("Not implemented - please manually create the database first, if it does not already exist", :debug)
 end
 
 function create_migrations_table()
   query(DatabaseAdapter.adapter_create_migrations_table_sql())
-  Genie.log("Created table $(Genie.config.db_migrations_table_name) or table already exists")
+  Logger.log("Created table $(Genie.config.db_migrations_table_name) or table already exists")
 end
 
 function query(sql::AbstractString; skip_db::Bool = false, system_query::Bool = false)

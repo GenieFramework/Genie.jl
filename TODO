@@ -16,15 +16,18 @@ v 0.5.x
 
 v 0.6.x
 ☐ new test app - blogging platform (articles, comments, tags, versions, users)
+☐ sign up - with login URLs by email
+☐ mailers
+
 ✔ support for POST - routing, params
 ✔ model validations
 ✔ authorization
-☐ caching - data caching (redis, memcache, file system)
-☐ view / partials caching -- and not reloading views in production
+✔ caching - data caching (redis, memcache, file system)
+✔ view / partials caching -- and not reloading views in production
 ✔ reverse routing -> resource to route
-☐ sign up - with login URLs by email
-☐ mailers
 ☐ hooks: before controller action invoked & model hooks (before save, before dehydration, after hydration, etc)
+✔ parallel serving
+✔ proper error handling (50x, 40x) pages
 
 v 0.7.x
 ☐ channels (websockets communication)
@@ -33,11 +36,10 @@ v 0.7.x
 ☐ internationalization support - ex: config for errors messages
 
 v 0.8.x
-☐ parallel serving
 ☐ support for plugins
 ☐ admin plugin (test app)
 ☐ packages versioning (declarative packages)
-☐ proper error handling (50x, 40x) pages
+☐ beautify error handling (50x, 40x) pages
 ☐ add a debug port where you can connect through sockets and run code inside a running app
 
 v 0.9.x
@@ -57,7 +59,7 @@ v 1.1
 ☐ support for sqlite
 
 v 1.x
-☐ change from Logging to Lumberjack?
+✔ change from Logging to Lumberjack
 ☐ refactor Router to use Route types instead of Tuples
 ☐ refactor params to use a Params type (no any Dict{Symbol,Any})
 ☐ marketplace for Genie apps (list, search and install apps)

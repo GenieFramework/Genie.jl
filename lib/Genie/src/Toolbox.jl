@@ -38,14 +38,14 @@ function all_tasks(; filter_type_name = nothing)
   tasks_folder = abspath(Genie.config.tasks_folder)
   f = readdir(tasks_folder)
   for i in f
-    if ( endswith(i, "_task.jl") ) 
+    if ( endswith(i, "_task.jl") )
       include_path = joinpath(tasks_folder, i)
       include(include_path)
-      
+
       type_name = Util.file_name_to_type_name(i)
       task_instance = eval(parse(string(current_module()) * "." * type_name * "()"))
       ti = Task_Info(i, type_name, task_instance, current_module().description(task_instance))
-      
+
       if ( filter_type_name == nothing ) push!(tasks, ti)
       elseif ( filter_type_name == type_name ) return ti
       end
@@ -57,7 +57,7 @@ end
 
 function new(cmd_args::Dict{AbstractString,Any}, config::Configuration.Config)
   tfn = task_file_name(cmd_args, config)
-  
+
   if ispath(tfn)
     error("Task file already exists")
   end
@@ -66,7 +66,7 @@ function new(cmd_args::Dict{AbstractString,Any}, config::Configuration.Config)
   write(f, FileTemplates.new_task(task_class_name(cmd_args["task:new"])))
   close(f)
 
-  Genie.log("New task created at $tfn")
+  Logger.log("New task created at $tfn")
 end
 
 function task_file_name(cmd_args, config)

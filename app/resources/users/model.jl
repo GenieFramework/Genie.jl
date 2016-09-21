@@ -32,14 +32,14 @@ type User <: AbstractModel
 end
 
 module Users
-using Genie, Model, Authentication, Helpers
-using SHA, Memoize
+using App, Model, Authentication, Helpers, Sessions, DateParser
+using SHA
 
 function login(email::AbstractString, password::AbstractString, session::Sessions.Session)
   users = Model.find(User, SQLQuery(where = [SQLWhere(:email, email), SQLWhere(:password, sha256(password) |> bytes2hex)]))
 
   if isempty(users)
-    Genie.log("Failed login: Can't find user")
+    Logger.log("Failed login: Can't find user")
     return Nullable()
   end
   user = users[1]
@@ -51,20 +51,12 @@ function logout(session::Sessions.Session)
   Authentication.logout(session)
 end
 
-function dehydrate(user::Genie.User, field::Symbol, value::Any)
-  return  if field == :updated_at
-            Dates.now()
-          else
-            value
-          end
+function dehydrate(user::User, field::Symbol, value::Any)
+  field == :updated_at ? Dates.now() : value
 end
 
-function hydrate!!(user::Genie.User, field::Symbol, value::Any)
-  return  if in(field, [:updated_at])
-            user, DateParser.parse(DateTime, value)
-          else
-            user, value
-          end
+function hydrate!!(user::User, field::Symbol, value::Any)
+  in(field, [:updated_at]) ? (user, DateParser.parse(DateTime, value)) : (user, value)
 end
 
 end

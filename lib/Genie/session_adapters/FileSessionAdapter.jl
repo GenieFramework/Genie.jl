@@ -3,6 +3,7 @@ module FileSessionAdapter
 using Sessions
 using Genie
 using Memoize
+using Logger
 
 function write(session)
   try
@@ -10,7 +11,8 @@ function write(session)
       serialize(io, session)
     end
   catch ex
-    Genie.log(ex, :err)
+    Logger.log("Error when serializing session $session in $__FILE__, $__LINE__")
+    Logger.log(ex, :err)
   end
 
   session
@@ -23,7 +25,7 @@ function read(session_id::AbstractString)
     end
     Nullable{Sessions.Session}(session)
   catch ex
-    Genie.log(ex, :debug)
+    Logger.log(ex, :debug)
     Nullable{Sessions.Session}()
   end
 end

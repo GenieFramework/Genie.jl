@@ -1,5 +1,5 @@
 module ControllerHelper
-using Genie, Helpers
+using Helpers, Renderer
 
 export unauthorized_access
 
