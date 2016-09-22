@@ -28,20 +28,20 @@ typealias RelationshipDataArray Array{AbstractModel,1}
 
 type ModelValidator
   rules::Vector{Tuple{Symbol,Function,Vararg{Any}}} # [(:title, :not_empty), (:title, :min_length, (20)), (:content, :not_empty_if_published), (:email, :matches, (r"(.*)@(.*)"))]
-  errors::Vector{Tuple{Symbol,Symbol,AbstractString}} # [(:title, :not_empty, "title not empty"), (:title, :min_length, "min length 20"), (:content, :min_length, "min length 200")]
+  errors::Vector{Tuple{Symbol,Symbol,String}} # [(:title, :not_empty, "title not empty"), (:title, :min_length, "min length 20"), (:content, :min_length, "min length 200")]
 
-  ModelValidator(rules) = new(rules, Vector{Tuple{Symbol,Symbol,AbstractString}}())
+  ModelValidator(rules) = new(rules, Vector{Tuple{Symbol,Symbol,String}}())
 end
 
 #
 # SQLInput
 #
 
-type SQLInput <: AbstractString
-  value::Union{AbstractString, Real}
+type SQLInput
+  value::Union{String,Real}
   escaped::Bool
   raw::Bool
-  SQLInput(v::Union{AbstractString, Real}; escaped = false, raw = false) = new(v, escaped, raw)
+  SQLInput(v::Union{String, Real}; escaped = false, raw = false) = new(v, escaped, raw)
 end
 SQLInput(a::Array{Any}) = map(x -> SQLInput(x), a)
 SQLInput(i::SQLInput) = i
@@ -76,11 +76,11 @@ const QI = SQLInput
 #
 
 type SQLColumn <: SQLType
-  value::AbstractString
+  value::String
   escaped::Bool
   raw::Bool
-  table_name::Union{AbstractString, Symbol}
-  function SQLColumn(v::AbstractString; escaped = false, raw = false, table_name = "")
+  table_name::Union{String, Symbol}
+  function SQLColumn(v::String; escaped = false, raw = false, table_name = "")
     if v == "*"
       raw = true
     end
@@ -120,8 +120,8 @@ const QC = SQLColumn
 #
 
 type SQLLogicOperator <: SQLType
-  value::AbstractString
-  SQLLogicOperator(v::AbstractString) = new( v == "OR" ? "OR" : "AND" )
+  value::String
+  SQLLogicOperator(v::String) = new( v == "OR" ? "OR" : "AND" )
 end
 SQLLogicOperator(v::Any) = SQLLogicOperator(string(v))
 SQLLogicOperator() = SQLLogicOperator("AND")
@@ -138,13 +138,13 @@ type SQLWhere <: SQLType
   column::SQLColumn
   value::SQLInput
   condition::SQLLogicOperator
-  operator::AbstractString
+  operator::String
 
-  SQLWhere(column::SQLColumn, value::SQLInput, condition::SQLLogicOperator, operator::AbstractString) =
+  SQLWhere(column::SQLColumn, value::SQLInput, condition::SQLLogicOperator, operator::String) =
     new(column, value, condition, operator)
 end
-SQLWhere(column::Any, value::Any, condition::Any, operator::AbstractString) = SQLWhere(SQLColumn(column), SQLInput(value), SQLLogicOperator(condition), operator)
-SQLWhere(column::SQLColumn, value::SQLInput, operator::AbstractString) = SQLWhere(column, value, SQLLogicOperator("AND"), operator)
+SQLWhere(column::Any, value::Any, condition::Any, operator::String) = SQLWhere(SQLColumn(column), SQLInput(value), SQLLogicOperator(condition), operator)
+SQLWhere(column::SQLColumn, value::SQLInput, operator::String) = SQLWhere(column, value, SQLLogicOperator("AND"), operator)
 SQLWhere(column::SQLColumn, value::SQLInput, condition::SQLLogicOperator) = SQLWhere(column, value, condition, "=")
 SQLWhere(column::Any, value::Any, operator::Any) = SQLWhere(SQLColumn(column), SQLInput(value), SQLLogicOperator("AND"), operator)
 SQLWhere(column::SQLColumn, value::SQLInput) = SQLWhere(column, value, SQLLogicOperator("AND"))
@@ -168,9 +168,9 @@ const QW = SQLWhere
 #
 
 type SQLLimit <: SQLType
-  value::Union{Int, AbstractString}
+  value::Union{Int, String}
   SQLLimit(v::Int) = new(v)
-  function SQLLimit(v::AbstractString)
+  function SQLLimit(v::String)
     v = strip(uppercase(v))
     if v == "ALL"
       return new("ALL")
@@ -198,8 +198,8 @@ const QL = SQLLimit
 
 type SQLOrder <: SQLType
   column::SQLColumn
-  direction::AbstractString
-  SQLOrder(column::SQLColumn, direction::AbstractString) =
+  direction::String
+  SQLOrder(column::SQLColumn, direction::String) =
     new(column, uppercase(string(direction)) == "DESC" ? "DESC" : "ASC")
 end
 SQLOrder(column::Any, direction::Any; raw::Bool = false) = SQLOrder(SQLColumn(column, raw = raw), string(direction))
@@ -243,8 +243,8 @@ const QON = SQLOn
 #
 
 type SQLJoinType <: SQLType
-  join_type::AbstractString
-  function SQLJoinType(t::AbstractString)
+  join_type::String
+  function SQLJoinType(t::String)
     accepted_values = ["inner", "INNER", "left", "LEFT", "right", "RIGHT", "full", "FULL"]
     if in(t, accepted_values)
       new(uppercase(t))

@@ -1,14 +1,14 @@
 export UserSession
 
 type UserSession <: AbstractModel
-  _table_name::AbstractString
-  _id::AbstractString
+  _table_name::String
+  _id::String
 
   id::Nullable{Model.DbId}
 
-  UserSession(; 
+  UserSession(;
     id = Nullable{Model.DbId}()
-  ) = new("usersessions", "id", id) 
+  ) = new("usersessions", "id", id)
 end
 
 module UserSessions

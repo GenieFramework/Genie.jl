@@ -1,15 +1,15 @@
-export Article
+export Article, Articles
 
 type Article <: AbstractModel
-  _table_name::AbstractString
-  _id::AbstractString
+  _table_name::String
+  _id::String
 
   validator::ModelValidator
 
   id::Nullable{Model.DbId}
-  title::AbstractString
-  summary::AbstractString
-  content::AbstractString
+  title::String
+  summary::String
+  content::String
   updated_at::DateTime
   published_at::Nullable{DateTime}
 

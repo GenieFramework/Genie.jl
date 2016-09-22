@@ -42,7 +42,7 @@ function new_model(model_name::AbstractString)
   pluralized_name = Inflector.to_plural(model_name) |> Base.get
 
   """
-  export $model_name
+  export $model_name, $pluralized_name
 
   type $model_name <: AbstractModel
     _table_name::AbstractString

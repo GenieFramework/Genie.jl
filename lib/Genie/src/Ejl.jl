@@ -296,7 +296,7 @@ function _render_tpl(exs::Vector{AbstractString})
     push!(____output, escape_string(s))
   end
 
-  using ViewHelper, Util, Model
+  using ViewHelper, Util, Model, App
 
   function __tpl_render__()
     $(join(exs, "\n"))

@@ -1,13 +1,13 @@
 export User
 
 type User <: AbstractModel
-  _table_name::AbstractString
-  _id::AbstractString
+  _table_name::String
+  _id::String
 
   id::Nullable{Model.DbId}
-  name::AbstractString
-  email::AbstractString
-  password::AbstractString
+  name::String
+  email::String
+  password::String
   role_id::Nullable{Model.DbId}
   updated_at::DateTime
 
@@ -35,7 +35,7 @@ module Users
 using App, Model, Authentication, Helpers, Sessions, DateParser
 using SHA
 
-function login(email::AbstractString, password::AbstractString, session::Sessions.Session)
+function login(email::String, password::String, session::Sessions.Session)
   users = Model.find(User, SQLQuery(where = [SQLWhere(:email, email), SQLWhere(:password, sha256(password) |> bytes2hex)]))
 
   if isempty(users)

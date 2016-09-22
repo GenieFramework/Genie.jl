@@ -2,6 +2,7 @@ using Router
 
 route(GET, "/articles", "articles#ArticlesController.Website.index", named = :articles_list)
 route(GET, "/articles/search", "articles#ArticlesController.Website.search")
+
 route(GET, "/articles/:article_id::Int", "articles#ArticlesController.Website.show", named = :article_show)
 route(GET, "/articles/:article_slug::AbstractString", "articles#ArticlesController.Website.show", named = :article_show_by_name)
 

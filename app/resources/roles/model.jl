@@ -1,8 +1,8 @@
 export Role
 
 type Role <: AbstractModel
-  _table_name::AbstractString
-  _id::AbstractString
+  _table_name::String
+  _id::String
 
   id::Nullable{Model.DbId}
   name::Symbol

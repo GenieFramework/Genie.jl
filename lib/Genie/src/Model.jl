@@ -340,7 +340,7 @@ function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Array{SQLColumn,1}, 
       table_columns = join(to_fully_qualified_sql_column_names(_m, persistable_fields(_m), escape_columns = true), ", ")
       table_columns = isempty(table_columns) ? AbstractString[] : vcat(table_columns, map(x -> prepare_column_name(x), columns_from_joins()))
 
-      related_table_columns::Array{AbstractString,1} = []
+      related_table_columns = String[]
       for rels in map(x -> to_fully_qualified_sql_column_names(x, persistable_fields(x), escape_columns = true), joined_tables)
         for col in rels
           push!(related_table_columns, col)
@@ -356,7 +356,7 @@ end
 function to_select_part{T<:AbstractModel}(m::Type{T}, c::SQLColumn)
   to_select_part(m, [c])
 end
-function to_select_part{T<:AbstractModel}(m::Type{T}, c::AbstractString)
+function to_select_part{T<:AbstractModel}(m::Type{T}, c::String)
   to_select_part(m, SQLColumn(c, raw = c == "*"))
 end
 function to_select_part{T<:AbstractModel}(m::Type{T})
@@ -497,7 +497,7 @@ end
 
 function df_result_to_models_data{T<:AbstractModel}(m::Type{T}, df::DataFrame)
   _m::T = disposable_instance(m)
-  tables_names::Array{AbstractString,1} = [_m._table_name]
+  tables_names = String[_m._table_name]
   tables_columns = Dict()
   sub_dfs = Dict()
 
@@ -637,7 +637,7 @@ end
 # query execution
 #
 
-function query(sql::AbstractString)
+function query(sql::String)
   df::DataFrames.DataFrame = Database.query_df(sql)
   df
 end
@@ -661,8 +661,6 @@ end
 #
 # ORM utils
 #
-
-# const model_prototypes = Dict{AbstractString,Any}()
 
 function disposable_instance(m)
   m()
@@ -698,7 +696,7 @@ end
 # Data sanitization
 #
 
-function to_sql(sql::AbstractString, params::Tuple)
+function to_sql(sql::String, params::Tuple)
   i = 0
   function splat_params(_)
     i += 1
@@ -707,7 +705,7 @@ function to_sql(sql::AbstractString, params::Tuple)
 
   sql = replace(sql, '?', splat_params)
 end
-function to_sql(sql::AbstractString, params::Dict)
+function to_sql(sql::String, params::Dict)
   function dict_params(key)
     key = Symbol(replace(key, r"^:", ""))
     Database.escape_value(params[key])
@@ -725,7 +723,7 @@ function escape_column_name(c::SQLColumn)
 
   c
 end
-function escape_column_name(s::AbstractString)
+function escape_column_name(s::String)
   join(map(x -> Database.escape_column_name(string(x)), split(s, ".")), ".")
 end
 
@@ -768,26 +766,26 @@ function is_fully_qualified{T<:AbstractModel}(m::T, f::Symbol)
   startswith(string(f), m._table_name) && has_field(m, strip_table_name(m, f))
 end
 
-function is_fully_qualified(s::AbstractString)
+function is_fully_qualified(s::String)
   ! startswith(s, ".") && contains(s, ".")
 end
 
 function from_fully_qualified{T<:AbstractModel}(m::T, f::Symbol)
   is_fully_qualified(m, f) ? strip_table_name(m, f) : f
 end
-function from_fully_qualified(s::AbstractString)
+function from_fully_qualified(s::String)
   arr = split(s, ".")
   (arr[1], arr[2])
 end
 
-function strip_module_name(s::AbstractString)
+function strip_module_name(s::String)
   split(s, ".") |> last
 end
 
-function to_fully_qualified(v::AbstractString, t::AbstractString)
+function to_fully_qualified(v::String, t::String)
   t * "." * v
 end
-function to_fully_qualified{T<:AbstractModel}(m::T, v::AbstractString)
+function to_fully_qualified{T<:AbstractModel}(m::T, v::String)
   to_fully_qualified(v, m._table_name)
 end
 function to_fully_qualified{T<:AbstractModel}(m::T, c::SQLColumn)
@@ -802,7 +800,7 @@ function to_sql_column_names{T<:AbstractModel}(m::T, fields::Array{Symbol,1})
   map(x -> (to_sql_column_name(m, string(x))) |> Symbol, fields)
 end
 
-function to_sql_column_name(v::AbstractString, t::AbstractString)
+function to_sql_column_name(v::String, t::String)
   str = Util.strip_quotes(t) * "_" * Util.strip_quotes(v)
   if Util.is_quoted(t) && Util.is_quoted(v)
     Util.add_quotes(str)
@@ -810,18 +808,18 @@ function to_sql_column_name(v::AbstractString, t::AbstractString)
     str
   end
 end
-function to_sql_column_name{T<:AbstractModel}(m::T, v::AbstractString)
+function to_sql_column_name{T<:AbstractModel}(m::T, v::String)
   to_sql_column_name(v, m._table_name)
 end
 function to_sql_column_name{T<:AbstractModel}(m::T, c::SQLColumn)
   to_sql_column_name(c.value, m._table_name)
 end
 
-function to_fully_qualified_sql_column_names{T<:AbstractModel, S<:AbstractString}(m::T, persistable_fields::Array{S,1}; escape_columns::Bool = false)
+function to_fully_qualified_sql_column_names{T<:AbstractModel}(m::T, persistable_fields::Vector{String}; escape_columns::Bool = false)
   map(x -> to_fully_qualified_sql_column_name(m, x, escape_columns = escape_columns), persistable_fields)
 end
 
-function to_fully_qualified_sql_column_name{T<:AbstractModel}(m::T, f::AbstractString; escape_columns::Bool = false, alias::AbstractString = "")
+function to_fully_qualified_sql_column_name{T<:AbstractModel}(m::T, f::String; escape_columns::Bool = false, alias::String = "")
   if escape_columns
     "$(to_fully_qualified(m, f) |> escape_column_name) AS $(isempty(alias) ? (to_sql_column_name(m, f) |> escape_column_name) : alias)"
   else
@@ -829,8 +827,8 @@ function to_fully_qualified_sql_column_name{T<:AbstractModel}(m::T, f::AbstractS
   end
 end
 
-function from_literal_column_name(c::AbstractString)
-  result = Dict{Symbol,AbstractString}()
+function from_literal_column_name(c::String)
+  result = Dict{Symbol,String}()
   result[:original_string] = c
 
   # has alias?
@@ -863,7 +861,7 @@ end
 function to_string_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, all_output::Bool = false)
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
   output_length = all_output ? 100_000_000 : Genie.config.output_length
-  response = Dict{AbstractString,AbstractString}()
+  response = Dict{String,String}()
   for f in fields
     key = string(f)
     value = string(getfield(m, Symbol(f)))
@@ -884,7 +882,7 @@ function to_nullable(result)
 end
 
 function escape_type(value)
-  return if isa(value, AbstractString)
+  return if isa(value, String)
     value = replace(value, "\$", "\\\$")
     value = replace(value, "\@", "\\\@")
     "\"$value\""
@@ -916,11 +914,11 @@ function enclosure(v::Any, o::Any)
   in(string(o), ["IN", "in"]) ? "($(string(v)))" : v
 end
 
-function convert(::Type{DateTime}, value::AbstractString)
+function convert(::Type{DateTime}, value::String)
   DateParser.parse(DateTime, value)
 end
 
-function convert(::Type{Nullable{DateTime}}, value::AbstractString)
+function convert(::Type{Nullable{DateTime}}, value::String)
   DateParser.parse(DateTime, value) |> Nullable
 end
 

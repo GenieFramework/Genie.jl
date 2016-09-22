@@ -3,5 +3,5 @@ if ! haskey(ENV, "GENIE_ENV")
   ENV["GENIE_ENV"] = "dev"
 end
 if ! haskey(ENV, "NWORKERS") && in("s", ARGS)
-  ENV["NWORKERS"] = 4
+  ENV["NWORKERS"] = 2
 end
