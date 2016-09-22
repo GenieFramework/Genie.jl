@@ -1,4 +1,4 @@
-export User
+export User, Users
 
 type User <: AbstractModel
   _table_name::String
@@ -32,10 +32,9 @@ type User <: AbstractModel
 end
 
 module Users
-using App, Model, Authentication, Helpers, Sessions, DateParser
-using SHA
+using App, Model, Sessions, Authentication, Helpers, DateParser, SHA
 
-function login(email::String, password::String, session::Sessions.Session)
+function login(email::String, password::String, session)
   users = Model.find(User, SQLQuery(where = [SQLWhere(:email, email), SQLWhere(:password, sha256(password) |> bytes2hex)]))
 
   if isempty(users)
@@ -47,7 +46,7 @@ function login(email::String, password::String, session::Sessions.Session)
   Authentication.login(user, session)
 end
 
-function logout(session::Sessions.Session)
+function logout(session)
   Authentication.logout(session)
 end
 

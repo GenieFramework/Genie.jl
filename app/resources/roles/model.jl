@@ -1,4 +1,4 @@
-export Role
+export Role, Roles
 
 type Role <: AbstractModel
   _table_name::String

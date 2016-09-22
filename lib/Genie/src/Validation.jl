@@ -1,5 +1,5 @@
 module Validation
-using Genie, Model
+using Genie, Model, App
 
 #
 # validation rules

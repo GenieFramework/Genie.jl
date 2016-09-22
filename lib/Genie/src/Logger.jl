@@ -19,7 +19,7 @@ function log(message, level = "info"; showst::Bool = true)
     show_stacktrace()
   end
 end
-function log(message::AbstractString, level::Symbol)
+function log(message::String, level::Symbol)
   log(message, level == :err ? "error" : string(level))
 end
 

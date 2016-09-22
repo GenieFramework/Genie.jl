@@ -1,20 +1,16 @@
-<% for a in articles :>
-<tr>
-  <td scope="row" style="width: 80%">
-    $(a.title)
-    <div class="admin-article-summary">
-      $(a.summary)
+<div class="home-page-posts animated fadeIn ">
+  <% for a in articles :>
+  <article class="post">
+    <div class="post-preview col-xs-10  no-gutter">
+      <h2><a href="post.html">$(a.title)</a></h2>
+      <p>$(a.summary)</p>
+      <p class="meta">
+        <a href="author.html">James Reddy</a> in <a href="category.html">Storytime</a> <i class="link-spacer"></i> <i class="fa fa-bookmark"></i> 23 minute read
+      </p>
     </div>
-    <div>
-      <span class="label label-$(article_status_label(App.Articles.status(a)))">
-        <$ ( App.Articles.is_published(a) ? "Published at $( Dates.format(_!!(a.published_at), "e, dd u yyyy HH:MM"))" : "Draft" ) $>
-      </span>
+    <div class=" col-xs-2  no-gutter">
+      <img src="/img/theme/profile-1.jpg" class="user-icon" alt="user-image">
     </div>
-  </td>
-  <td class="actions-cell text-right pull-right">
-    <a href="$( to_link(:admin_article_edit, article_id = _!!(a.id) ) )" class="btn btn-primary btn-sm">Edit</a>
-    <$ App.Articles.is_published(a) ? "" : """<a href="$( to_link(:admin_article_publish, article_id = _!!(a.id) ) )" class="btn btn-success btn-sm">Publish</a>""" $>
-    <a href="$( to_link(:admin_article_preview, article_id = _!!(a.id) ) )" target="_blank" class="btn btn-info btn-sm">Preview</a>
-  </td>
-</tr>
-<: end %>
+  </article>
+  <: end %>
+</div>

@@ -1,4 +1,4 @@
-export UserSession
+export UserSession, UserSessions
 
 type UserSession <: AbstractModel
   _table_name::String

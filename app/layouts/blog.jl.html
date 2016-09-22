@@ -1,1 +1,39 @@
-%= yield
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Writer Theme | Home</title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width">
+
+  <link rel="stylesheet" href="/css/front/bootstrap.min.css">
+  <link rel="stylesheet" href="/css/front/font-awesome.min.css">
+  <link rel="stylesheet" href="/css/front/main.css">
+
+  <script src="/vendor/modernizr.custom.32229-2.8-respondjs-1-4-2.js"></script>
+</head>
+<body>
+  <main class="container left-container">
+    <div class="row">
+
+      %+ app/layouts/main_menu_front
+      %+ app/layouts/sidebar_front
+
+      <section class="col-md-7 col-sm-12 col-md-offset-5 main-content">
+
+        %+ app/layouts/entities_menu_front
+
+        %= yield
+
+        %+ app/layouts/categories_front
+        %+ app/layouts/footer_front
+
+      </section><!-- main content -->
+    </div> <!--/row -->
+  </main> <!-- /container -->
+
+  %+ app/layouts/scripts_front
+
+</body>
+</html>
