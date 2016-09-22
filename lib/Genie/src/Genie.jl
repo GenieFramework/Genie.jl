@@ -15,9 +15,6 @@ push!(LOAD_PATH, abspath(joinpath("app", "helpers")))
 
 include(abspath(joinpath("lib", "Genie", "src", "genie_types.jl")))
 
-# const state = State()
-# export state
-
 macro devtools()
   if ENV["GENIE_ENV"] == "dev"
     :(using Gallium)
@@ -31,7 +28,6 @@ function startup(parsed_args = Dict{AbstractString,Any}(), start_server = false)
   isempty(parsed_args) && (parsed_args = Commands.parse_commandline_args())
 
   if parsed_args["s"] == "s" || start_server == true
-    # state.server_workers =
     AppServer.startup(Genie.config.server_port)
 
     println()
