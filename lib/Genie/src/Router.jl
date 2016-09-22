@@ -1,18 +1,5 @@
 module Router
-
-using HttpServer
-using URIParser
-using Genie
-using AppServer
-using Memoize
-using Sessions
-using Millboard
-using Configuration
-using App
-using Input
-using Logger
-using StackTraces
-
+using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions, Millboard, Configuration, App, Input, Logger
 import HttpServer.mimetypes
 
 include(abspath(joinpath("lib", "Genie", "src", "router_converters.jl")))
@@ -313,7 +300,7 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
   catch ex
     Logger.log("Failed to invoke hooks $(BEFORE_ACTION_HOOKS)", :err, showst = false)
     Logger.log(ex, :err, showst = false)
-    show_stacktrace(catch_stacktrace())
+    # show_stacktrace(catch_stacktrace())
 
     return serve_error_file(500, string(ex) * "<br/><br/>" * join(catch_stacktrace(), "<br/>"))
   end
@@ -323,7 +310,7 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
           catch ex
             Logger.log("$ex at $(@__FILE__):$(@__LINE__)", :critical, showst = false)
             Logger.log("While invoking $(action_name) with $(params)", :critical, showst = false)
-            show_stacktrace(catch_stacktrace())
+            # show_stacktrace(catch_stacktrace())
 
             serve_error_file(500, string(ex) * "<br/><br/>" * join(catch_stacktrace(), "<br/>"))
           end
@@ -367,25 +354,25 @@ function load_routes()
   true
 end
 
-@memoize function is_static_file(resource::AbstractString)
+function is_static_file(resource::AbstractString)
   isfile(file_path(URI(resource).path))
 end
 
 function serve_static_file(resource::AbstractString)
   f = file_path(URI(resource).path)
-  Response(200, file_headers(f), open(readbytes, f))
+  Response(200, file_headers(f), open(read, f))
 end
 
 function serve_error_file(error_code::Int, error_message::AbstractString = "")
   if Configuration.is_dev()
     error_page =  open(Genie.DOC_ROOT_PATH * "/error-$(error_code).html") do f
-                    readall(f)
+                    readstring(f)
                   end
     error_page = replace(error_page, "<error_message/>", error_message)
     Response(error_code, Dict{AbstractString,AbstractString}(), error_page)
   else
     f = file_path(URI("/error-$(error_code).html").path)
-    Response(error_code, file_headers(f), open(readbytes, f))
+    Response(error_code, file_headers(f), open(read, f))
   end
 end
 

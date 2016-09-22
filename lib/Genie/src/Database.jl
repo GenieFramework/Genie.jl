@@ -41,7 +41,6 @@ end
   end
 
   env_db_conn_data = Base.get(env_db_conn_data)
-  require(Symbol(conn_data()["adapter"] * "DatabaseAdapter"))
   DatabaseAdapter.adapter_connect(env_db_conn_data, skip_db)
 end
 

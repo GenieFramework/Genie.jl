@@ -58,7 +58,7 @@ function article_update(params::Dict{Symbol,Any})
   with_authorization(:edit, unauthorized_access, params) do
     article = Model.find_one!!(Article, params[:article_id])
     params[:article][:updated_at] = Dates.now()
-    haskey(params[:article], :is_published) && Genie.Articles.is_draft(article) && (article.published_at = Nullable{DateTime}(Dates.now()))
+    haskey(params[:article], :is_published) && App.Articles.is_draft(article) && (article.published_at = Nullable{DateTime}(Dates.now()))
     Model.update_with!(article, params[:article])
 
     if Validation.validate!(article)

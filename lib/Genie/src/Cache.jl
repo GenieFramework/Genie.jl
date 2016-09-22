@@ -4,7 +4,7 @@ eval(parse("using $(Genie.config.cache_adapter)"))
 
 export cache_key, with_cache
 
-function with_cache(f::Function, key::ASCIIString, expiration::Int = Genie.config.cache_duration)
+function with_cache(f::Function, key::String, expiration::Int = Genie.config.cache_duration)
   expiration == 0 && return f()
 
   ca = cache_adapter()

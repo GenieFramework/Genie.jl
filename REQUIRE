@@ -1,4 +1,4 @@
-Logging
+Lumberjack
 Millboard
 HttpServer
 Memoize
@@ -10,11 +10,10 @@ ArgParse
 DataStructures
 SHA
 PatternDispatch
-
-Debug
-StackTraces
-
-GitHub
+PostgreSQL
+Gallium
 DateParser
 Lint
-MetadataTools
+
+https://github.com/JuliaDB/DBI.jl
+https://github.com/JuliaDB/PostgreSQL.jl

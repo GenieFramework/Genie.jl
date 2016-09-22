@@ -1,14 +1,6 @@
 module Commands
 
-using ArgParse
-using Configuration
-using Genie
-using Database
-using Generator
-using Migration
-using Tester
-using Toolbox
-using App
+using ArgParse, Configuration, Genie, Database, Generator, Migration, Tester, Toolbox, App
 
 function called_command(args, key)
     args[key] == "true" || args["s"] == key
@@ -76,7 +68,7 @@ function parse_commandline_args()
 
     settings.description = "Genie web framework CLI"
     settings.epilog = "Visit http://genieframework.com for more info"
-    settings.version = "0.6"
+    settings.version = "0.6.1"
     settings.add_version = true
 
     @add_arg_table settings begin

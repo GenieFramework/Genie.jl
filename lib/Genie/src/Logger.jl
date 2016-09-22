@@ -1,13 +1,17 @@
 module Logger
 
-using Lumberjack
+# using Lumberjack
 using Millboard
-using StackTraces
 using Genie
+
+const colors = Dict{String,Symbol}("info" => :gray, "warn" => :yellow, "debug" => :green, "err" => :red, "error" => :red, "critical" => :magenta)
 
 function log(message, level = "info"; showst::Bool = true)
   println()
-  Lumberjack.log(string(level), string(message))
+  # Lumberjack.log(string(level), string(message))
+  print_with_color(colors[string(level)], (string(level), " ", string(Dates.now()), "\n")...)
+  print_with_color(colors[string(level)], message)
+  println()
 
   if level == "err" || level == "critical" && showst
     println()
@@ -51,6 +55,6 @@ function setup_loggers()
   true
 end
 
-setup_loggers()
+# setup_loggers()
 
 end

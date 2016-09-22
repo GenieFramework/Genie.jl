@@ -50,7 +50,7 @@ function mustache(resource::Symbol, action::Symbol; layout::Union{Symbol, Abstra
   spawn_splatted_vars(vars)
 
   template = Mustache.template_from_file(abspath(joinpath("app", "resources", string(resource), "views", string(action) * ".$RENDER_MUSTACHE_EXT")))
-  vals = merge(special_vals(), Dict([k => v for (k, v) in vars]))
+  vals = merge(special_vals(), Dict(k => v for (k, v) in vars))
   r = Mustache.render(template, vals)
 
   if render_layout
@@ -63,7 +63,7 @@ function mustache(resource::Symbol, action::Symbol; layout::Union{Symbol, Abstra
 end
 function mustache(content::AbstractString, layout::Union{Symbol, AbstractString} = :app, vars...)
   spawn_splatted_vars(vars)
-  vals = merge(special_vals(), Dict([k => v for (k, v) in vars]))
+  vals = merge(special_vals(), Dict(k => v for (k, v) in vars))
   layout = Mustache.template_from_file(abspath(joinpath("app", "layouts", string(layout) * ".$RENDER_MUSTACHE_EXT")))
   vals[MUSTACHE_YIELD_VAR_NAME] = content
   r = Mustache.render(layout, vals)
@@ -142,7 +142,7 @@ end
 
 function error_404()
   error_page =  open(DOC_ROOT_PATH * "/error-404.html") do f
-                  readall(f)
+                  readstring(f)
                 end
   (404, Dict{AbstractString,AbstractString}(), error_page)
 end

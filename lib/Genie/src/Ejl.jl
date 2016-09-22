@@ -42,7 +42,7 @@ function parse_tpl(s::AbstractString)
     file_name = strip(strip_start_markup(tpl_line))
     file_name = endswith(file_name, "." * RENDER_EJL_EXT) ? file_name : file_name * "." * RENDER_EJL_EXT
     open(joinpath(Genie.APP_PATH, file_name)) do f
-      readall(f) |> Ejl.parse_tpl |> Ejl.render_tpl
+      readstring(f) |> Ejl.parse_tpl |> Ejl.render_tpl
     end
   end
 
@@ -310,7 +310,7 @@ end
 macro template_from_file(file_path::Expr)
   quote
     @parse_tpl open($file_path) do f
-      readall(f)
+      readstring(f)
     end
   end
 end

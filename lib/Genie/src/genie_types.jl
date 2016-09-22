@@ -9,13 +9,13 @@ string{T<:GenieType}(io::IO, t::T) = genietype_to_string(t)
 print{T<:GenieType}(io::IO, t::T) = print(io, string(t))
 show{T<:GenieType}(io::IO, t::T) = print(io, genietype_to_print(t))
 
-type State <: GenieType
-  server_workers::Vector{RemoteRef{Channel{Any}}}
+# type State <: GenieType
+#   server_workers::Vector{RemoteRef{Channel{Any}}}
 
-  State(;
-    server_workers = Vector{RemoteRef{Channel{Any}}}()
-  ) = new(server_workers)
-end
+#   State(;
+#     server_workers = Vector{RemoteRef{Channel{Any}}}()
+#   ) = new(server_workers)
+# end
 
 type GenieController <: GenieType
 end
@@ -31,13 +31,13 @@ end
 
 function genietype_to_print{T<:GenieType}(m::T)
   output = "\n" * "$(typeof(m))" * "\n"
-  output *= string(Genie.config.log_formatted ? Millboard.table(Genie.Model.to_string_dict(m)) : Genie.Model.to_string_dict(m) ) * "\n"
+  output *= string(Genie.config.log_formatted ? Millboard.table(Genie.Model.to_string_dict(m)) : Model.to_string_dict(m) ) * "\n"
 
   output
 end
 
 function to_dict(m::Any)
-  [string(f) => getfield(m, Symbol(f)) for f in fieldnames(m)]
+  Dict(string(f) => getfield(m, Symbol(f)) for f in fieldnames(m))
 end
 
 function to_string_dict(m::Any; all_output::Bool = false)

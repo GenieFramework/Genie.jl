@@ -2,7 +2,7 @@ module AppServer
 
 using HttpServer, Router, Genie, Millboard, Logger, Sessions, Configuration
 
-function start(port::Int = 8000)
+function startup(port::Int = 8000)
   http = HttpHandler() do req::Request, res::Response
     try
       nworkers() == 1 ? handle_request(req, res) : @fetch handle_request(req, res)

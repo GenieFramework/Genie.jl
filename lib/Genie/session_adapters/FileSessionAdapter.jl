@@ -1,9 +1,5 @@
 module FileSessionAdapter
-
-using Sessions
-using Genie
-using Memoize
-using Logger
+using Sessions, Genie, Logger
 
 function write(session)
   try

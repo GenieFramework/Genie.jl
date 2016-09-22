@@ -1,12 +1,5 @@
 module Migration
-
-using Genie
-using Memoize
-using Database
-using FileTemplates
-using Millboard
-using Configuration
-using Logger
+using Genie, Database, FileTemplates, Millboard, Configuration, Logger
 
 type DbMigration # todo: rename the "migration_" prefix for the fields
   migration_hash::AbstractString
@@ -79,10 +72,10 @@ function migration_by_class_name(migration_class_name::AbstractString)
   return Nullable()
 end
 
-@memoize function all_migrations()
+function all_migrations()
   migrations = []
   migrations_files = Dict()
-  for (f in readdir(Genie.config.db_migrations_folder))
+  for f in readdir(Genie.config.db_migrations_folder)
     if ismatch(r"\d{16,17}_.*\.jl", f)
       parts = split(f, "_", limit = 2)
       push!(migrations, parts[1])
@@ -93,7 +86,7 @@ end
   return sort!(migrations), migrations_files
 end
 
-@memoize function last_migration()
+function last_migration()
   migrations, migrations_files = all_migrations()
   return migrations_files[migrations[length(migrations)]]
 end

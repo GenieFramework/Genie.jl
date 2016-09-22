@@ -3,12 +3,8 @@ dirname(@__FILE__) |> cd
 include(abspath(joinpath("lib", "Genie", "src", "branding.jl")))
 
 isfile("env.jl") && include("env.jl")
-if ! haskey(ENV, "GENIE_ENV")
-  ENV["GENIE_ENV"] = "dev"
-end
-if ! haskey(ENV, "NWORKERS")
-  ENV["NWORKERS"] = 4
-end
+! haskey(ENV, "GENIE_ENV") && (ENV["GENIE_ENV"] = "dev")
+in("s", ARGS) && ! haskey(ENV, "NWORKERS") ? ENV["NWORKERS"] = 4 : ( haskey(ENV, "NWORKERS") ? ENV["NWORKERS"] : ENV["NWORKERS"] = 1 )
 print_with_color(:green, "\nStarting Genie in >> $(ENV["GENIE_ENV"] |> uppercase) << mode using $(ENV["NWORKERS"]) worker(s) \n\n")
 
 nworkers() < parse(Int, ENV["NWORKERS"]) && addprocs(parse(Int, ENV["NWORKERS"]) - nworkers())
@@ -18,7 +14,7 @@ nworkers() < parse(Int, ENV["NWORKERS"]) && addprocs(parse(Int, ENV["NWORKERS"])
 using Genie
 
 try
-  eval(Main, :(using Genie, Model))
+  eval(Main, :(using Genie, Model, App))
 catch ex
   print_with_color(:red, "Can't load modules Genie and Model into Main")
 end

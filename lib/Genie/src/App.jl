@@ -20,9 +20,7 @@ end
 function load_controller(dir::AbstractString)
   push!(LOAD_PATH, dir)
   file_path = joinpath(dir, Genie.GENIE_CONTROLLER_FILE_NAME)
-  if isfile(file_path) && isreadable(file_path)
-    eval(App, parse("""include("$file_path")"""))
-  end
+  isfile(file_path) && eval(App, parse("""include("$file_path")"""))
 end
 
 function export_controllers(controllers::AbstractString)
@@ -32,11 +30,7 @@ end
 
 function load_acl(dir::AbstractString)
   file_path = joinpath(dir, Genie.GENIE_AUTHORIZATION_FILE_NAME)
-  if isfile(file_path) && isreadable(file_path)
-    YAML.load(open(file_path))
-  else
-    Dict{Any,Any}
-  end
+  isfile(file_path) ? YAML.load(open(file_path)) : Dict{Any,Any}
 end
 
 function load_configurations()

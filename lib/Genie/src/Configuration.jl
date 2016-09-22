@@ -34,7 +34,7 @@ type Config
   server_workers_count::Int
   server_document_root::AbstractString
   server_handle_static_files::Bool
-  server_signature::ASCIIString
+  server_signature::String
 
   app_env::AbstractString
   app_is_api::Bool

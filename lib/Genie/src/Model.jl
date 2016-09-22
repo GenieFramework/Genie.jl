@@ -1,15 +1,6 @@
 module Model
 
-using Genie
-using Memoize
-using Database
-using DataFrames
-using DataStructures
-using DateParser
-using Util
-using Reexport
-using Configuration
-using Logger
+using Genie, Database, DataFrames, DataStructures, DateParser, Util, Reexport, Configuration, Logger
 
 include(abspath(joinpath("lib", "Genie", "src", "model_types.jl")))
 
@@ -30,11 +21,11 @@ direct_relationships() = [RELATIONSHIP_HAS_ONE, RELATIONSHIP_BELONGS_TO, RELATIO
 #
 
 function find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Array{SQLJoin{N},1})
-  sql::UTF8String = to_fetch_sql(m, q, j)
+  sql::String = to_fetch_sql(m, q, j)
   query(sql)::DataFrames.DataFrame
 end
 function find_df{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
-  sql::UTF8String = to_fetch_sql(m, q)
+  sql::String = to_fetch_sql(m, q)
   query(sql)::DataFrames.DataFrame
 end
 
@@ -107,7 +98,7 @@ end
 function save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false)
   ! skip_validation && ! Validation.validate!(m) && error("Model validation error(s) for $(typeof(m)) \n $(join(Validation.errors(m), "\n "))")
 
-  sql::UTF8String = to_store_sql(m, conflict_strategy = conflict_strategy)
+  sql::String = to_store_sql(m, conflict_strategy = conflict_strategy)
   query_result_df::DataFrames.DataFrame = query(sql)
   insert_id = query_result_df[1, Symbol(m._id)]
 
@@ -563,13 +554,13 @@ function relation_to_sql{T<:AbstractModel}(m::T, rel::Tuple{SQLRelation, Symbol}
 end
 
 function to_fetch_sql{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, joins::Array{SQLJoin{N},1})
-  sql::UTF8String = ( "$(to_select_part(m, q.columns, joins)) $(to_from_part(m)) $(to_join_part(m, joins)) $(to_where_part(m, q.where)) " *
+  sql::String = ( "$(to_select_part(m, q.columns, joins)) $(to_from_part(m)) $(to_join_part(m, joins)) $(to_where_part(m, q.where)) " *
                       "$(to_group_part(q.group)) $(to_order_part(m, q.order)) " *
                       "$(to_having_part(q.having)) $(to_limit_part(q.limit)) $(to_offset_part(q.offset))") |> strip
   replace(sql, r"\s+", " ")
 end
 function to_fetch_sql{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
-  sql::UTF8String = ( "$(to_select_part(m, q.columns)) $(to_from_part(m)) $(to_join_part(m)) $(to_where_part(m, q.where)) " *
+  sql::String = ( "$(to_select_part(m, q.columns)) $(to_from_part(m)) $(to_join_part(m)) $(to_where_part(m, q.where)) " *
                       "$(to_group_part(q.group)) $(to_order_part(m, q.order)) " *
                       "$(to_having_part(q.having)) $(to_limit_part(q.limit)) $(to_offset_part(q.offset))") |> strip
   replace(sql, r"\s+", " ")
@@ -677,7 +668,7 @@ function disposable_instance(m)
   m()
 end
 
-@memoize function columns(m)
+function columns(m)
   _m = disposable_instance(m)
   Database.table_columns(_m._table_name)
 end
@@ -707,7 +698,7 @@ end
 # Data sanitization
 #
 
-@memoize function to_sql(sql::AbstractString, params::Tuple)
+function to_sql(sql::AbstractString, params::Tuple)
   i = 0
   function splat_params(_)
     i += 1
@@ -716,7 +707,7 @@ end
 
   sql = replace(sql, '?', splat_params)
 end
-@memoize function to_sql(sql::AbstractString, params::Dict)
+function to_sql(sql::AbstractString, params::Dict)
   function dict_params(key)
     key = Symbol(replace(key, r"^:", ""))
     Database.escape_value(params[key])
@@ -725,7 +716,7 @@ end
   replace(sql, r":([a-zA-Z0-9]*)", dict_params)
 end
 
-@memoize function escape_column_name(c::SQLColumn)
+function escape_column_name(c::SQLColumn)
   if ! c.escaped && ! c.raw
     val = c.table_name != "" && ! startswith(c.value, (c.table_name * ".")) && ! is_fully_qualified(c.value) ? c.table_name * "." * c.value : c.value
     c.value = escape_column_name(val)
@@ -734,11 +725,11 @@ end
 
   c
 end
-@memoize function escape_column_name(s::AbstractString)
+function escape_column_name(s::AbstractString)
   join(map(x -> Database.escape_column_name(string(x)), split(s, ".")), ".")
 end
 
-@memoize function escape_value(i::SQLInput)
+function escape_value(i::SQLInput)
   (i.value == "NULL" || i.value == "NOT NULL") && return i
 
   if ! i.escaped && ! i.raw
@@ -863,7 +854,7 @@ end
 
 function to_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, expand_nullables::Bool = false, symbolize_keys::Bool = false)
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
-  [(symbolize_keys ? Symbol(f) : string(f) ) => Util.expand_nullable( getfield(m, Symbol(f)), expand = expand_nullables ) for f in fields]
+  Dict( (symbolize_keys ? Symbol(f) : string(f) ) => Util.expand_nullable( getfield(m, Symbol(f)), expand = expand_nullables ) for f in fields )
 end
 function to_dict{T<:GenieType}(m::T)
   Genie.to_dict(m)

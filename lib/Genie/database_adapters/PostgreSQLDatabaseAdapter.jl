@@ -33,7 +33,7 @@ end
 
 function adapter_escape_column_name(c::AbstractString, conn, adapter)
   strptr = adapter.PQescapeIdentifier(conn.ptr, c, sizeof(c))
-  str = bytestring(strptr)
+  str = unsafe_string(strptr)
   adapter.PQfreemem(strptr)
 
   str

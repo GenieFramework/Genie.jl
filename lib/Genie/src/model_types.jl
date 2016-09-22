@@ -91,7 +91,7 @@ function SQLColumn(v::Any; escaped = false, raw = false, table_name = "")
   if is_fully_qualified(string(v))
     table_name, v = from_fully_qualified(string(v))
   end
-  SQLColumn(string(v), escaped, raw, table_name)
+  SQLColumn(string(v), escaped = escaped, raw = raw, table_name = table_name)
 end
 SQLColumn(a::Array) = map(x -> SQLColumn(string(x)), a)
 SQLColumn(c::SQLColumn) = c
@@ -103,9 +103,9 @@ string(s::SQLColumn) = safe(s).value
 safe(s::SQLColumn) = escape_column_name(s)
 
 convert(::Type{SQLColumn}, s::Symbol) = SQLColumn(string(s))
-convert(::Type{SQLColumn}, s::ASCIIString) = SQLColumn(s)
-convert(::Type{SQLColumn}, v::ASCIIString, e::Bool, r::Bool) = SQLColumn(v, escaped = e, raw = r)
-convert(::Type{SQLColumn}, v::ASCIIString, e::Bool, r::Bool, t::Any) = SQLColumn(v, escaped = e, raw = r, table_name = string(t))
+convert(::Type{SQLColumn}, s::String) = SQLColumn(s)
+convert(::Type{SQLColumn}, v::String, e::Bool, r::Bool) = SQLColumn(v, escaped = e, raw = r)
+convert(::Type{SQLColumn}, v::String, e::Bool, r::Bool, t::Any) = SQLColumn(v, escaped = e, raw = r, table_name = string(t))
 
 print(io::IO, a::Array{SQLColumn}) = print(io, string(a))
 show(io::IO, a::Array{SQLColumn}) = print(io, string(a))
@@ -255,7 +255,7 @@ type SQLJoinType <: SQLType
   end
 end
 
-convert(::Type{SQLJoinType}, s::ASCIIString) = SQLJoinType(s)
+convert(::Type{SQLJoinType}, s::String) = SQLJoinType(s)
 
 string(jt::SQLJoinType) = jt.join_type
 

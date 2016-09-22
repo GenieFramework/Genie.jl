@@ -1,6 +1,4 @@
 module Inflector
-
-using Memoize
 using Genie
 
 function to_singular(word::AbstractString; is_irregular::Bool = false)
@@ -44,11 +42,11 @@ function is_plural(word::AbstractString)
   endswith(word, "s") || ! isnull(irregular(word))
 end
 
-@memoize function irregulars()
+function irregulars()
   vcat(irregular_nouns, Genie.config.inflector_irregulars)
 end
 
-@memoize function irregular(word::AbstractString)
+function irregular(word::AbstractString)
   for (k, v) in irregular_nouns
     if word == k || word == v return Nullable{Tuple{AbstractString, AbstractString}}(k, v) end
   end

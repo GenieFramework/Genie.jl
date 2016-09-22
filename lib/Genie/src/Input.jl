@@ -6,15 +6,15 @@ using URIParser
 export post, files, HttpInput, HttpPostData, HttpFiles, HttpFile
 
 type HttpFile
-  name::UTF8String
-  mime::UTF8String
+  name::String
+  mime::String
   data::Array{UInt8}
 
   HttpFile() = new("", "", UInt8[])
 end
 
-typealias HttpPostData Dict{UTF8String, UTF8String}
-typealias HttpFiles Dict{UTF8String, HttpFile}
+typealias HttpPostData Dict{String, String}
+typealias HttpFiles Dict{String, HttpFile}
 
 type HttpInput
   post::HttpPostData
@@ -26,10 +26,10 @@ end
 ###
 
 type HttpFormPart
-  headers::Dict{UTF8String, Dict{UTF8String, UTF8String}}
+  headers::Dict{String, Dict{String, String}}
   data::Array{UInt8}
 
-  HttpFormPart() = new(Dict{UTF8String, Dict{UTF8String, UTF8String}}(), UInt8[])
+  HttpFormPart() = new(Dict{String, Dict{String, String}}(), UInt8[])
 end
 
 ###
@@ -65,15 +65,15 @@ function post_from_request!(request::Request, input::HttpInput)
 end
 
 function post_url_encoded!(http_data::Array{UInt8, 1}, post_data::HttpPostData)
-  params::Dict{UTF8String, UTF8String} = query_params(utf8(http_data))
+  params::Dict{String, String} = query_params(String(http_data))
 
-  for (key::UTF8String, value::UTF8String) in params
+  for (key::String, value::String) in params
     post_data[key] = value
   end
 end
 
 function post_multipart!(request::Request, post_data::HttpPostData, files::HttpFiles)
-  boundary::UTF8String = request.headers["Content-Type"][(searchindex(request.headers["Content-Type"], "boundary=") + 9):end]
+  boundary::String = request.headers["Content-Type"][(searchindex(request.headers["Content-Type"], "boundary=") + 9):end]
 
   boundary_length::Int = length(boundary)
 
@@ -89,9 +89,9 @@ function post_multipart!(request::Request, post_data::HttpPostData, files::HttpF
       for part::HttpFormPart in form_parts
         hasFile::Bool = false
         file::HttpFile = HttpFile()
-        fileFieldName::UTF8String = ""
+        fileFieldName::String = ""
 
-        for (field::UTF8String, values::Dict{UTF8String, UTF8String}) in part.headers
+        for (field::String, values::Dict{String, String}) in part.headers
           if (
             field == "Content-Disposition"
             && getkey(values, "form-data", null) != null
@@ -106,7 +106,7 @@ function post_multipart!(request::Request, post_data::HttpPostData, files::HttpF
                   hasFile = true
                 end
               elseif (getkey(values, "name", null) != null)
-                post_data[values["name"]] = utf8(part.data)
+                post_data[values["name"]] = String(part.data)
               end
             elseif (field == "Content-Type")
               (file.mime, mime) = first(values)
@@ -239,12 +239,12 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
             else
               ## End of single-line header
 
-              header::UTF8String = utf8(headerRaw)
+              header::String = String(headerRaw)
 
               if (length(header) > 0)
                 headerParts = split(header, ": ", 2)
 
-                valueDecoded = parse_seicolon_fields(utf8(headerParts[2]));
+                valueDecoded = parse_seicolon_fields(String(headerParts[2]));
 
                 if (length(valueDecoded) > 0)
                   part.headers[headerParts[1]] = valueDecoded
@@ -274,16 +274,16 @@ end
 
 ###
 
-function parse_seicolon_fields(dataString::UTF8String)
+function parse_seicolon_fields(dataString::String)
   dataString = dataString * ";"
 
-  data = Dict{UTF8String, UTF8String}()
+  data = Dict{String, String}()
 
   prevCharacter::Char = 0x00
   inSingleQuotes::Bool = false
   inDoubleQuotes::Bool = false
   ignore::Bool = false
-  workingString::UTF8String = ""
+  workingString::String = ""
 
   dataStringLength::Int = length(dataString)
 
@@ -334,7 +334,7 @@ function parse_seicolon_fields(dataString::UTF8String)
   return data
 end
 
-function parse_quoted_params(data::UTF8String)
+function parse_quoted_params(data::String)
   tokens = split(data, "=", 2)
 
   if (length(tokens) == 2)

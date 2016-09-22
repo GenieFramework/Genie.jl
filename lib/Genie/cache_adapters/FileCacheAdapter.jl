@@ -10,15 +10,15 @@ function write(s::AbstractString)
   end
 end
 
-function to_cache(key::ASCIIString, content)
+function to_cache(key::String, content)
   open(cache_path(key), "w") do io
     serialize(io, content)
   end
 end
 
-function from_cache(key::ASCIIString, expiration::Int)
+function from_cache(key::String, expiration::Int)
   file_path = cache_path(key)
-  ( ! isfile(file_path) || ! isreadable(file_path) || stat(file_path).ctime + expiration < time() ) && return Nullable()
+  ( ! isfile(file_path) || stat(file_path).ctime + expiration < time() ) && return Nullable()
 
   output = open(file_path) do io
     deserialize(io)
@@ -27,7 +27,7 @@ function from_cache(key::ASCIIString, expiration::Int)
   Nullable(output)
 end
 
-function purge(key::ASCIIString)
+function purge(key::String)
   rm(cache_path(key))
 end
 
@@ -35,7 +35,7 @@ function purge_all()
   rm(cache_path(""), recursive = true)
 end
 
-function cache_path(key::ASCIIString)
+function cache_path(key::String)
   joinpath(Genie.config.cache_folder, key)
 end
 
