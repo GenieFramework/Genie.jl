@@ -1,7 +1,7 @@
 module ViewHelper
-using Genie, Validation, Helpers, App
+using Genie, Validation, Helpers, App, URIParser
 
-export active_menu_class, output_errors, output_flash, article_status_label, input_checked, pagination_navigation
+export active_menu_class, output_errors, output_flash, article_status_label, input_checked, pagination_navigation, article_uri
 
 function current_menu(params)
   params[:action_controller] == "AdminController.Website.articles" && return :articles
@@ -46,6 +46,10 @@ function pagination_navigation(params)
     output *= """<li><a href="$(paginated_uri(params, pg))">$pg</a></li>"""
   end
   output *= "</ul></nav>"
+end
+
+function article_uri(article)
+  "/articles/" * URIParser.escape(article.title) * "-$(article.id |> Base.get)"
 end
 
 end

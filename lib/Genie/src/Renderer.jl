@@ -83,6 +83,11 @@ function spawn_splatted_vars(vars, m::Module = current_module())
   end
 end
 
+function rendered_spawn_splatted_vars{T}(vars::Dict{Symbol,T}, m::Module = current_module())
+  spawn_splatted_vars(vars, m)
+  ""
+end
+
 function special_vals()
   Dict{Symbol,Any}(
     :genie_assets_path => Genie.config.assets_path

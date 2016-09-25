@@ -1,5 +1,5 @@
 module Ejl
-using Genie, Configuration, SHA, Cache
+using Genie, Configuration, SHA, Cache, Renderer
 
 export @ejl_str, push_template_line!, @ejl
 
@@ -39,10 +39,16 @@ function parse_tpl(s::AbstractString)
   const cmd::AbstractString     = ""
 
   function include_partial(tpl_line::AbstractString)
-    file_name = strip(strip_start_markup(tpl_line))
-    file_name = endswith(file_name, "." * RENDER_EJL_EXT) ? file_name : file_name * "." * RENDER_EJL_EXT
+    command = strip(strip_start_markup(tpl_line))
+
+    command_parts = split(command, "->")
+
+    file_name = strip(command_parts[1])
+    file_name = endswith(file_name, "." * Configuration.RENDER_EJL_EXT) ? file_name : file_name * "." * Configuration.RENDER_EJL_EXT
     open(joinpath(Genie.APP_PATH, file_name)) do f
-      readstring(f) |> Ejl.parse_tpl |> Ejl.render_tpl
+      ( length(command_parts) == 2 ?
+        """\$( Renderer.rendered_spawn_splatted_vars( Dict( $(strip(command_parts[2])) ) ) )\n""" :
+        "" ) * " " * readstring(f)
     end
   end
 

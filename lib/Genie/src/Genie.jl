@@ -45,7 +45,7 @@ function cache_enabled()
   config.cache_duration > 0
 end
 
-using Configuration, Logger, AppServer, Commands, App, Millboard, Model
+using Configuration, Logger, AppServer, Commands, App, Millboard, Model, Renderer
 
 include(abspath("lib/Genie/src/commands.jl"))
 Commands.execute(Configuration.config)

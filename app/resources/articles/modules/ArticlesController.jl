@@ -1,6 +1,6 @@
 module ArticlesController
 module Website
-using Genie, Model, App
+using Genie, Model, App, ViewHelper, Util
 @dependencies
 
 function index(params)

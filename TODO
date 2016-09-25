@@ -18,14 +18,13 @@ v 0.6.x
 ☐ new test app - blogging platform (articles, comments, tags, versions, users)
 ☐ sign up - with login URLs by email
 ☐ mailers
-
+☐ Gallium debugging
 ✔ support for POST - routing, params
 ✔ model validations
 ✔ authorization
 ✔ caching - data caching (redis, memcache, file system)
 ✔ view / partials caching -- and not reloading views in production
 ✔ reverse routing -> resource to route
-☐ hooks: before controller action invoked & model hooks (before save, before dehydration, after hydration, etc)
 ✔ parallel serving
 ✔ proper error handling (50x, 40x) pages
 
@@ -33,16 +32,10 @@ v 0.7.x
 ☐ channels (websockets communication)
 ☐ encrypt sessions and cookies
 ✔ add a method to automatically run all DOWN migrations
-☐ internationalization support - ex: config for errors messages
-
-v 0.8.x
-☐ support for plugins
-☐ admin plugin (test app)
 ☐ packages versioning (declarative packages)
 ☐ beautify error handling (50x, 40x) pages
-☐ add a debug port where you can connect through sockets and run code inside a running app
 
-v 0.9.x
+v 0.8.x
 ☐ performance enhancements, cleanup
 ☐ doc comments
 ✔ rename methods ending in ! to end in !! and follow julia's guidelines
@@ -50,9 +43,15 @@ v 0.9.x
 ☐ more tests
 ☐ REPL utility to setup a new app
 
-v 1.0
+v 0.9
 ☐ official API docs
 ☐ official website - blog, walkthroughs, tutorials, etc
+
+v 1.0
+☐ support for plugins
+☐ admin plugin (test app)
+☐ add a debug port where you can connect through sockets and run code inside a running app
+☐ internationalization support - ex: config for errors messages
 
 v 1.1
 ☐ support for mysql
@@ -63,6 +62,7 @@ v 1.x
 ☐ refactor Router to use Route types instead of Tuples
 ☐ refactor params to use a Params type (no any Dict{Symbol,Any})
 ☐ marketplace for Genie apps (list, search and install apps)
+☐ hooks: before controller action invoked & model hooks (before save, before dehydration, after hydration, etc)
 
 Other parts:
   ✔ lazy relationships - to skip relationship if lazy
