@@ -24,6 +24,7 @@ function ejl(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractStr
 
   path = abspath(joinpath(Genie.APP_PATH, "app", "resources", string(resource), "views", string(action) * "." * Configuration.RENDER_EJL_EXT))
   r = @ejl(:($path))
+  # r = Ejl.render_ejl(path)
 
   if render_layout
     spawn_vars(EJL_YIELD_VAR_NAME, r)

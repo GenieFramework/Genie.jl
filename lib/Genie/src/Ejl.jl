@@ -45,10 +45,17 @@ function parse_tpl(s::AbstractString)
 
     file_name = strip(command_parts[1])
     file_name = endswith(file_name, "." * Configuration.RENDER_EJL_EXT) ? file_name : file_name * "." * Configuration.RENDER_EJL_EXT
+
     open(joinpath(Genie.APP_PATH, file_name)) do f
+      lines = String[]
+      for line in split(readstring(f), "\n")
+        line_is_include(line) && (line = include_partial(line))
+        push!(lines, line)
+      end
+
       ( length(command_parts) == 2 ?
         """\$( Renderer.rendered_spawn_splatted_vars( Dict( $(strip(command_parts[2])) ) ) )\n""" :
-        "" ) * " " * readstring(f)
+        "" ) * " " * join(lines, "\n")
     end
   end
 
@@ -158,7 +165,6 @@ function parse_tpl(s::AbstractString)
 
   for tpl_line in lines_of_template
     current_line += 1
-    # @bp
 
     try
       tpl_line = escape_julia(tpl_line)
@@ -327,10 +333,15 @@ end
 
 macro render_tpl(exs::Expr)
   :(join(include_string(_render_tpl($exs)), "\n"))
+  # esc(:(____output = _render_tpl($exs)))
 end
 
 macro ejl(path::Expr)
   :( @render_tpl(@template_from_file($path)) )
+end
+
+function render_ejl(path::AbstractString)
+  @render_tpl(@template_from_file(:($path))) |> include_string
 end
 
 end
