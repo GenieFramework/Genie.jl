@@ -160,9 +160,9 @@ function match_routes(req::Request, res::Response, session::Sessions.Session)
 end
 
 function parse_route(route::AbstractString)
-  parts = Array{AbstractString,1}()
-  param_names = Array{AbstractString,1}()
-  param_types = Array{Any,1}()
+  parts = AbstractString[]
+  param_names = AbstractString[]
+  param_types = Any[]
 
   for rp in split(route, "/", keep = false)
     if startswith(rp, ":")
@@ -184,8 +184,7 @@ function parse_route(route::AbstractString)
   "/" * join(parts, "/"), param_names, param_types
 end
 
-function extract_uri_params(uri::URI, regex_route::Regex, param_names::Array{AbstractString,1}, param_types::Array{Any,1})
-  # in path params
+function extract_uri_params(uri::URI, regex_route::Regex, param_names::Vector{AbstractString}, param_types::Vector{Any})
   matches = match(regex_route, uri.path)
   i = 1
   for param_name in param_names
@@ -261,7 +260,7 @@ function setup_params!( params::Dict{Symbol,Any}, to_parts::Vector{AbstractStrin
   params[Genie.PARAMS_FLASH_KEY]     = begin
                                       s = Sessions.get(session, Genie.PARAMS_FLASH_KEY)
                                       if isnull(s)
-                                        ""::AbstractString
+                                        ""::String
                                       else
                                         ss = Base.get(s)
                                         Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
@@ -300,7 +299,7 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
   catch ex
     Logger.log("Failed to invoke hooks $(BEFORE_ACTION_HOOKS)", :err, showst = false)
     Logger.log(ex, :err, showst = false)
-    # show_stacktrace(catch_stacktrace())
+    # Base.stacktrace(Base.catch_stacktrace())
 
     return serve_error_file(500, string(ex) * "<br/><br/>" * join(catch_stacktrace(), "<br/>"))
   end
@@ -310,9 +309,9 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
           catch ex
             Logger.log("$ex at $(@__FILE__):$(@__LINE__)", :critical, showst = false)
             Logger.log("While invoking $(action_name) with $(params)", :critical, showst = false)
-            # show_stacktrace(catch_stacktrace())
+            # Base.stacktrace(Base.catch_stacktrace())
 
-            serve_error_file(500, string(ex) * "<br/><br/>" * join(catch_stacktrace(), "<br/>"))
+            serve_error_file(500, string(ex) * "<br/><br/>" * join(Base.catch_stacktrace(), "<br/>"))
           end
 end
 

@@ -1,18 +1,16 @@
 module Logger
 
-# using Lumberjack
+using Lumberjack
 using Millboard
 using Genie
 
 const colors = Dict{String,Symbol}("info" => :gray, "warn" => :yellow, "debug" => :green, "err" => :red, "error" => :red, "critical" => :magenta)
 
 function log(message, level = "info"; showst::Bool = true)
-
-  # Lumberjack.log(string(level), string(message))
   println()
-  print_with_color(colors[string(level)], (string(level), " ", string(Dates.now()), "\n")...)
-  print_with_color(colors[string(level)], string(message))
+  Lumberjack.log(string(level), string(message))
   println()
+  # self_log()
 
   if level == "err" || level == "critical" && showst
     println()
@@ -21,6 +19,13 @@ function log(message, level = "info"; showst::Bool = true)
 end
 function log(message::String, level::Symbol)
   log(message, level == :err ? "error" : string(level))
+end
+
+function self_log(level, message)
+  println()
+  print_with_color(colors[string(level)], (string(level), " ", string(Dates.now()), "\n")...)
+  print_with_color(colors[string(level)], string(message))
+  println()
 end
 
 function step_dict(dict::Dict)
@@ -56,6 +61,6 @@ function setup_loggers()
   true
 end
 
-# setup_loggers()
+setup_loggers()
 
 end

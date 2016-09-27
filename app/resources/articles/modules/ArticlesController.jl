@@ -6,7 +6,7 @@ using Genie, Model, App, ViewHelper, Util
 function index(params)
   ejl(:articles,
       :index,
-      layout = :blog,
+      layout = :home,
       articles = Model.find(Article, SQLQuery(order = SQLOrder(:updated_at, :desc),
                                               limit = params[:page_size],
                                               offset = (params[:page_number] - 1) * params[:page_size],
@@ -15,7 +15,10 @@ function index(params)
 end
 
 function show(params)
-  "Hello"
+  article = Model.find_one_by(Article, :slug, params[:article_slug])
+
+  isnull(article) && respond(404)
+  ejl(:articles, :show, layout = :post, article = (article |> _!!), params = params) |> respond
 end
 
 end

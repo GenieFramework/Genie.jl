@@ -14,6 +14,8 @@ PostgreSQL
 Gallium
 DateParser
 Lint
+URIParser
+Gallium
 
 https://github.com/JuliaDB/DBI.jl
 https://github.com/JuliaDB/PostgreSQL.jl

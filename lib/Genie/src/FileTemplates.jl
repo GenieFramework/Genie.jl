@@ -10,10 +10,12 @@ function new_database_migration(class_name::AbstractString)
   end
 
   function up(::$class_name)
+    # Database.query("")
     error("Not implemented")
   end
 
   function down(::$class_name)
+    # Database.query("")
     error("Not implemented")
   end
   """

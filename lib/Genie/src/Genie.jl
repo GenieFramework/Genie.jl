@@ -22,7 +22,6 @@ macro devtools()
 end
 
 export @devtools
-@devtools()
 
 function startup(parsed_args = Dict{AbstractString,Any}(), start_server = false)
   isempty(parsed_args) && (parsed_args = Commands.parse_commandline_args())

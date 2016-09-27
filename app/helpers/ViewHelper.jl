@@ -48,8 +48,4 @@ function pagination_navigation(params)
   output *= "</ul></nav>"
 end
 
-function article_uri(article)
-  "/articles/" * URIParser.escape(article.title) * "-$(article.id |> Base.get)"
-end
-
 end

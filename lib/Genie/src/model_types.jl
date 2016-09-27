@@ -41,10 +41,11 @@ type SQLInput
   value::Union{String,Real}
   escaped::Bool
   raw::Bool
-  SQLInput(v::Union{String, Real}; escaped = false, raw = false) = new(v, escaped, raw)
+  SQLInput(v::Union{String,Real}; escaped = false, raw = false) = new(v, escaped, raw)
 end
 SQLInput(a::Array{Any}) = map(x -> SQLInput(x), a)
 SQLInput(i::SQLInput) = i
+SQLInput{T}(s::SubString{T}) = SQLInput(String(s))
 
 ==(a::SQLInput, b::SQLInput) = a.value == b.value
 

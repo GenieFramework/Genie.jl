@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html class="no-js">
+%+ app/layouts/front/head
+<body>
+<header class="hero-image" role="banner" style="background-image: url(/img/theme/default-single-hero-with-sidebar.jpg);">
+  %+ app/layouts/front/burger_menu
+  %+ app/layouts/front/main_menu
+</header>
+<main class="container">
+  <div class="row">
+    <div class="col-xs-12 col-md-8 single-content-sidebar">
+      %= yield
+    </div>
+    %+ app/resources/articles/views/post_sidebar
+  </div>
+</main>
+%+ app/resources/articles/views/post_footer
+%+ app/layouts/front/scripts
+</body>
+</html>

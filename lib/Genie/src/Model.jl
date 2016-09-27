@@ -98,11 +98,17 @@ end
 function save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false)
   ! skip_validation && ! Validation.validate!(m) && error("Model validation error(s) for $(typeof(m)) \n $(join(Validation.errors(m), "\n "))")
 
+  invoke_callback(m, :before_save)
+
   sql::String = to_store_sql(m, conflict_strategy = conflict_strategy)
   query_result_df::DataFrames.DataFrame = query(sql)
   insert_id = query_result_df[1, Symbol(m._id)]
 
   find_one_by!!(typeof(m), Symbol(m._id), insert_id)
+end
+
+function invoke_callback{T<:AbstractModel}(m::T, callback::Symbol)
+  in(callback, fieldnames(m)) && getfield(m, callback)(m)
 end
 
 function update_with!{T<:AbstractModel}(m::T, w::T)

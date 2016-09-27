@@ -11,6 +11,11 @@
             %= output_errors(article, :title)
           </div>
           <div class="form-group">
+            <label class="control-label">Slug</label>
+            <input type="text" class="form-control underlined" value="$(article.slug)" name="article.slug">
+            %= output_errors(article, :slug)
+          </div>
+          <div class="form-group">
             <label class="control-label">Summary</label>
             <textarea rows="3" class="form-control underlined" name="article.summary">$(article.summary)</textarea>
             %= output_errors(article, :summary)

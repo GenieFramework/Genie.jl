@@ -1,4 +1,4 @@
-#!/usr/bin/env julia --color=yes
+#!/usr/bin/env julia --color=yes --depwarn=no
 dirname(@__FILE__) |> cd
 include(abspath(joinpath("lib", "Genie", "src", "branding.jl")))
 
@@ -14,7 +14,5 @@ nworkers() < parse(Int, ENV["NWORKERS"]) && addprocs(parse(Int, ENV["NWORKERS"])
 using Genie
 
 try
-  eval(Main, :(using Genie, Model, App))
-catch ex
-  print_with_color(:red, "Can't load modules Genie and Model into Main")
+  eval(Main, :(using Genie, Model, App, OhMyREPL))
 end
