@@ -6,7 +6,7 @@ using Genie, Model, App, ViewHelper, Util
 function index(params)
   ejl(:articles,
       :index,
-      layout = :home,
+      layout = :posts,
       articles = Model.find(Article, SQLQuery(order = SQLOrder(:updated_at, :desc),
                                               limit = params[:page_size],
                                               offset = (params[:page_number] - 1) * params[:page_size],

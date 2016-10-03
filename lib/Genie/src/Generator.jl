@@ -1,10 +1,6 @@
 module Generator
 
-using Genie
-using FileTemplates
-using Inflector
-using Configuration
-using Migration
+using Genie, Logger, FileTemplates, Inflector, Configuration, Migration
 
 function new_model(cmd_args::Dict{AbstractString,Any}, config::Configuration.Config)
   resource_name = ucfirst(cmd_args["model:new"])
@@ -18,7 +14,8 @@ function new_model(cmd_args::Dict{AbstractString,Any}, config::Configuration.Con
 end
 
 function new_resource(cmd_args::Dict{AbstractString,Any}, config::Configuration.Config)
-  cmd_args["model:new"] = ucfirst(Inflector.to_singular(cmd_args["resource:new"]) |> Base.get)
+  sf = Inflector.to_singular(cmd_args["resource:new"])
+  cmd_args["model:new"] = (isnull(sf) ? cmd_args["resource:new"] : Base.get(sf)) |> ucfirst
   new_model(cmd_args, config)
 
   resource_name = ucfirst(cmd_args["resource:new"])
@@ -30,9 +27,9 @@ function new_resource(cmd_args::Dict{AbstractString,Any}, config::Configuration.
   Migration.new(cmd_args, config)
 
   resource_path = setup_resource_path(resource_name)
-  for resource_file in [Genie.GENIE_CONTROLLER_FILE_NAME]
+  for resource_file in [Genie.GENIE_CONTROLLER_FILE_NAME, Genie.GENIE_AUTHORIZATOR_FILE_NAME, Genie.GENIE_VALIDATOR_FILE_NAME]
     write_resource_file(resource_path, resource_file, resource_name) &&
-      Logger.log("New file created at $(joinpath(resource_path, resource_file))")
+      Logger.log("New $resource_file created at $(joinpath(resource_path, resource_file))")
   end
 
   if ! isdir(joinpath(resource_path, "views"))
@@ -66,7 +63,7 @@ function write_resource_file(resource_path::AbstractString, file_name::AbstractS
   elseif file_name == Genie.GENIE_VALIDATOR_FILE_NAME
     write(f, FileTemplates.new_validator( Base.get(Inflector.to_singular(resource_name)) ))
   elseif file_name == Genie.GENIE_AUTHORIZATOR_FILE_NAME
-    write(f, FileTemplates.new_authorizer( Base.get(Inflector.to_singular(resource_name)) ))
+    write(f, FileTemplates.new_authorizer())
   else
     error("Not supported, $file_name")
   end

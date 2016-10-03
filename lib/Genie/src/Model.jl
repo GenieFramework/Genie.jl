@@ -21,21 +21,17 @@ direct_relationships() = [RELATIONSHIP_HAS_ONE, RELATIONSHIP_BELONGS_TO, RELATIO
 #
 
 function find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Array{SQLJoin{N},1})
-  sql::String = to_fetch_sql(m, q, j)
-  query(sql)::DataFrames.DataFrame
+  query(to_fetch_sql(m, q, j))::DataFrames.DataFrame
 end
 function find_df{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
-  sql::String = to_fetch_sql(m, q)
-  query(sql)::DataFrames.DataFrame
+  query(to_fetch_sql(m, q))::DataFrames.DataFrame
 end
 
 function find{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Array{SQLJoin{N},1})
-  result::DataFrames.DataFrame = find_df(m, q, j)
-  to_models(m, result)
+  to_models(m, find_df(m, q, j))
 end
 function find{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
-  result::DataFrames.DataFrame = find_df(m, q)
-  to_models(m, result)
+  to_models(m, find_df(m, q))
 end
 function find{T<:AbstractModel}(m::Type{T})
   find(m, SQLQuery())
@@ -49,7 +45,7 @@ function find_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
 end
 
 function find_one_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput)
-  find_by(m, column_name, value) |> to_nullable
+  to_nullable(find_by(m, column_name, value))
 end
 function find_one_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
   find_one_by(m, SQLColumn(column_name), SQLInput(value))
@@ -59,8 +55,7 @@ function find_one_by!!{T<:AbstractModel}(m::Type{T}, column_name::Any, value::An
 end
 
 function find_one{T<:AbstractModel}(m::Type{T}, value::Any)
-  _m = disposable_instance(m)
-  find_one_by(m, SQLColumn(_m._id), SQLInput(value))
+  find_one_by(m, SQLColumn(disposable_instance(m)._id), SQLInput(value))
 end
 function find_one!!{T<:AbstractModel}(m::Type{T}, value::Any)
   find_one(m, value) |> Base.get
@@ -71,8 +66,7 @@ function rand{T<:AbstractModel}(m::Type{T}; limit = 1)
 end
 
 function rand_one{T<:AbstractModel}(m::Type{T})
-  result = rand(m, limit = 1)
-  df ? result : to_nullable(result)
+  to_nullable(rand(m, limit = 1))
 end
 
 function all{T<:AbstractModel}(m::Type{T})
@@ -91,20 +85,14 @@ function save{T<:AbstractModel}(m::T; conflict_strategy = :error)
   end
 end
 function save!{T<:AbstractModel}(m::T; conflict_strategy = :error)
-  m = save!!(m, conflict_strategy = conflict_strategy)
-
-  m
+  save!!(m, conflict_strategy = conflict_strategy)
 end
 function save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false)
   ! skip_validation && ! Validation.validate!(m) && error("Model validation error(s) for $(typeof(m)) \n $(join(Validation.errors(m), "\n "))")
 
   invoke_callback(m, :before_save)
 
-  sql::String = to_store_sql(m, conflict_strategy = conflict_strategy)
-  query_result_df::DataFrames.DataFrame = query(sql)
-  insert_id = query_result_df[1, Symbol(m._id)]
-
-  find_one_by!!(typeof(m), Symbol(m._id), insert_id)
+  find_one_by!!(typeof(m), Symbol(m._id), query(to_store_sql(m, conflict_strategy = conflict_strategy))[1, Symbol(m._id)])
 end
 
 function invoke_callback{T<:AbstractModel}(m::T, callback::Symbol)
@@ -128,7 +116,7 @@ function update_with!{T<:AbstractModel}(m::T, w::Dict)
   m
 end
 function update_with!!{T<:AbstractModel}(m::T, w::Union{T,Dict})
-  Model.save!!(update_with!(m, w)) |> _!!
+  Model.save!!(update_with!(m, w)) |> Base.get
 end
 
 function create_or_update_by!!{T<:AbstractModel}(m::T, property::Symbol, value::Any)
@@ -190,7 +178,7 @@ function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
         r = set_relationship_data_array(r, related_model, related_model_df)
       end
 
-      model_rels::Array{SQLRelation,1} = getfield(main_model, r_type)
+      model_rels::Vector{SQLRelation} = getfield(main_model, r_type)
       isnull(model_rels[1].data) ? model_rels[1] = r : push!(model_rels, r)
     end
 
@@ -201,7 +189,7 @@ function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
     row_count += 1
   end
 
-  return models |> values |> collect
+  models |> values |> collect
 end
 
 function set_relationship_data{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame)
@@ -233,12 +221,12 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
 
     isna(row[field]) && continue # if it's NA we just leave the default value of the empty obj
 
-    value = if in(:on_hydration!!, fieldnames(_m))
+    value = if in(:on_hydration!, fieldnames(_m))
               try
-                _m, value = _m.on_hydration!!(_m, unq_field, row[field])
+                _m, value = _m.on_hydration!(_m, unq_field, row[field])
                 value
               catch ex
-                Logger.log("Failed to hydrate!! field $unq_field ($field)", :debug)
+                Logger.log("Failed to hydrate! field $unq_field ($field)", :debug)
                 Logger.log(ex)
 
                 row[field]
@@ -366,12 +354,11 @@ function to_select_part{T<:AbstractModel}(m::Type{T}, c::String)
   to_select_part(m, SQLColumn(c, raw = c == "*"))
 end
 function to_select_part{T<:AbstractModel}(m::Type{T})
-  to_select_part(m, Array{SQLColumn,1}())
+  to_select_part(m, SQLColumn[])
 end
 
 function to_from_part{T<:AbstractModel}(m::Type{T})
-  _m = disposable_instance(m)
-  "FROM " * escape_column_name(_m._table_name)
+  "FROM " * escape_column_name(disposable_instance(m)._table_name)
 end
 
 function to_where_part{T<:AbstractModel}(m::Type{T}, w::Array{SQLWhere,1})
@@ -420,9 +407,7 @@ function to_join_part{T<:AbstractModel}(m::Type{T}, joins = SQLJoin[])
     end
   end
 
-  join_part *= join( map(x -> string(x), joins), " " )
-
-  join_part
+  join_part * join( map(x -> string(x), joins), " " )
 end
 
 function relationships{T<:AbstractModel}(m::Type{T})
@@ -445,9 +430,9 @@ function relationships{T<:AbstractModel}(m::Type{T})
 end
 
 function relationship{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol)
-  nullable_defined_rels::Nullable{Array{SQLRelation,1}} = getfield(m, relationship_type)
+  nullable_defined_rels::Nullable{Vector{SQLRelation}} = getfield(m, relationship_type)
   if ! isnull(nullable_defined_rels)
-    defined_rels::Array{SQLRelation,1} = Base.get(nullable_defined_rels)
+    defined_rels::Vector{SQLRelation} = Base.get(nullable_defined_rels)
 
     for rel::SQLRelation in defined_rels
       if rel.model_name == model_name || split(string(rel.model_name), ".")[end] == string(model_name)
@@ -475,7 +460,7 @@ function relationship_data!!{T<:AbstractModel, R<:AbstractModel}(m::T, model_nam
 end
 
 function get_relationship_data{T<:AbstractModel}(m::T, rel::SQLRelation, relationship_type::Symbol)
-  conditions =  Array{SQLWhere,1}()
+  conditions =  SQLWhere[]
   limit = if relationship_type == RELATIONSHIP_HAS_ONE || relationship_type == RELATIONSHIP_BELONGS_TO
             1
           else
@@ -490,7 +475,7 @@ function get_relationship_data{T<:AbstractModel}(m::T, rel::SQLRelation, relatio
   push!(conditions, SQLWhere(where...))
   data = Model.find( rel.model_name, SQLQuery( where = conditions, limit = SQLLimit(limit) ) )
 
-  if isempty(data) return Nullable{RelationshipData}() end
+  isempty(data) && return Nullable{RelationshipData}()
 
   if relationship_type == RELATIONSHIP_HAS_ONE || relationship_type == RELATIONSHIP_BELONGS_TO
     return Nullable{RelationshipData}(first(data))
@@ -517,7 +502,7 @@ function df_result_to_models_data{T<:AbstractModel}(m::Type{T}, df::DataFrame)
 
   function extract_columns_names()
     for t in tables_names
-      tables_columns[t] = Array{Symbol,1}()
+      tables_columns[t] = Symbol[]
     end
 
     for dfc in names(df)
@@ -559,7 +544,7 @@ function relation_to_sql{T<:AbstractModel}(m::T, rel::Tuple{SQLRelation, Symbol}
     (m._id |> escape_column_name)
 end
 
-function to_fetch_sql{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, joins::Array{SQLJoin{N},1})
+function to_fetch_sql{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, joins::Vector{SQLJoin{N}})
   sql::String = ( "$(to_select_part(m, q.columns, joins)) $(to_from_part(m)) $(to_join_part(m, joins)) $(to_where_part(m, q.where)) " *
                       "$(to_group_part(q.group)) $(to_order_part(m, q.order)) " *
                       "$(to_having_part(q.having)) $(to_limit_part(q.limit)) $(to_offset_part(q.offset))") |> strip
@@ -636,7 +621,8 @@ function delete{T<:AbstractModel}(m::T)
 
   tmp = typeof(m)()
   m.id = tmp.id
-  return m
+
+  m
 end
 
 #
@@ -644,8 +630,7 @@ end
 #
 
 function query(sql::String)
-  df::DataFrames.DataFrame = Database.query_df(sql)
-  df
+  Database.query_df(sql)
 end
 
 #
@@ -659,9 +644,8 @@ function count{T<:AbstractModel}(m::Type{T}, q::SQLQuery = SQLQuery())
   else
     push!(q.columns, count_column)
   end
-  result::DataFrames.DataFrame = find_df(m, q)
 
-  result[1, Symbol("__cid")]
+  find_df(m, q)[1, Symbol("__cid")]
 end
 
 #
@@ -673,8 +657,7 @@ function disposable_instance(m)
 end
 
 function columns(m)
-  _m = disposable_instance(m)
-  Database.table_columns(_m._table_name)
+  Database.table_columns(disposable_instance(m)._table_name)
 end
 
 function is_persisted{T<:AbstractModel}(m::T)

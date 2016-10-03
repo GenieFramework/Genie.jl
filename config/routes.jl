@@ -1,6 +1,6 @@
 using Router
 
-route(GET, "/", "articles#ArticlesController.Website.index", named = :home)
+route(GET, "/", "home#HomeController.index", named = :home)
 
 route(GET, "/blog", "articles#ArticlesController.Website.index", named = :articles_list)
 route(GET, "/blog/search", "articles#ArticlesController.Website.search")

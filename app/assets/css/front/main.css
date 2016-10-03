@@ -656,25 +656,26 @@ ol li {
 .label-primary,
 .progress-bar-primary {
   background: #4761e2;
-  border-color: #314edf;
+  border-color: #0bb8e3;
 }
 /* line 7, ../sass/partials/_bootstrap-components.sass */
 .btn-primary:hover,
 .label-primary:hover,
 .progress-bar-primary:hover {
-  background: #2140d5;
-  border-color: #213ed0;
+  background: #333337;
+  border-color: #333337;
 }
 
 /* line 11, ../sass/partials/_bootstrap-components.sass */
 .btn-primary {
-  background: #4761e2;
-  color: #fff;
+  background: #fff;
+  color: #0bb8e3;
   font-family: "Source Sans Pro", Helvetica, Arial, sans-serif;
 }
 /* line 16, ../sass/partials/_bootstrap-components.sass */
 .btn-primary:hover {
-  background-color: #2F49CA;
+  background-color: #0bb8e3;
+  border-color: #0bb8e3;
   color: #fff;
 }
 /* line 20, ../sass/partials/_bootstrap-components.sass */
@@ -855,7 +856,7 @@ ol li {
 
 /* line 12, ../sass/partials/_menu.sass */
 #jPanelMenu-menu {
-  background-color: #333337;
+  background-color: ##333337;
   overflow: hidden;
   overflow-y: hidden !important;
 }
@@ -881,10 +882,12 @@ ol li {
 #jPanelMenu-menu li a {
   color: #DADADA;
   font-family: "Source Sans Pro", Helvetica, Arial, sans-serif;
-  font-weight: 700;
+  font-weight: 100;
   border-bottom: 0 transparent;
   font-size: 12px;
-  font-size: 1.2rem;
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 /* line 37, ../sass/partials/_menu.sass */
 #jPanelMenu-menu li a:hover {
@@ -906,7 +909,6 @@ ol li {
   display: block;
   height: 40px;
   width: 40px;
-  background: #333;
   padding-top: 8px;
   cursor: pointer;
 }
@@ -917,7 +919,7 @@ ol li {
   float: left;
   display: block;
   margin: 0 6px 5px;
-  background: #fff;
+  background: #0bb8e3;
 }
 
 /* line 1, ../sass/partials/_sidebar.sass */

@@ -28,13 +28,13 @@ function new_task(class_name::AbstractString)
   type $class_name
   end
 
-  function description(_::$class_name)
+  function description(::$class_name)
     \"\"\"
     Description of the task here
     \"\"\"
   end
 
-  function run_task!(_::$class_name, parsed_args = Dict{AbstractString, Any}())
+  function run_task!(::$class_name, parsed_args = Dict{AbstractString, Any}())
     # Build something great
   end
   """
@@ -66,17 +66,41 @@ end
 function new_controller(controller_name::AbstractString)
   """
   module $(controller_name)Controller
-  using Genie, Model
+  using Genie, Model, App
   end
   """
 end
 
 function new_validator(validator_name::AbstractString)
-  ""
+  """
+  module $(validator_name)Validator
+  using App, Model, Validation
+
+  function not_empty{T<:AbstractModel}(::Symbol, m::T, args::Vararg{Any})::Bool
+    isempty(m.some_property) && return false
+    true
+  end
+
+  end
+  """
 end
 
-function new_authorizer(authorizer_name::AbstractString)
-  ""
+function new_authorizer()
+  """
+  admin:
+    create: all
+    edit: all
+    delete: all
+    list: all
+  editor:
+    edit: all
+    list: all
+  writer:
+    create: all
+    edit: own
+    delete: own
+    list: own
+  """
 end
 
 end

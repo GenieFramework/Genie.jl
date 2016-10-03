@@ -160,7 +160,7 @@ module JSONAPI
 using Renderer
 using Genie
 
-export builder, elem, pagination
+export builder, elem, pagination, @attr, attr
 
 function builder(; params...)
   response = Dict()
@@ -198,8 +198,12 @@ function elem(instance_var; structure...)
                                               end)
 end
 
-function elem(;structure...)
+function elem(; structure...)
   () -> Renderer.structure_to_dict(structure)
+end
+
+function attr(expr)
+  () -> expr
 end
 
 function http_error(status_code; id = "resource_not_found", code = "404-0001", title = "Not found", detail = "The requested resource was not found")

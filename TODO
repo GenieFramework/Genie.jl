@@ -37,6 +37,8 @@ v 0.7.x
 ☐ move postgres specific code into the adapter
 ☐ add utility functions for migrations (add column, add index, etc)
 ☐ form input helpers
+☐ simplify migrations to skip type and use modules
+☐ simplify tasks to skip type and use modules
 
 v 0.8.x
 ☐ performance enhancements, cleanup

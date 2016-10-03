@@ -29,7 +29,7 @@ function export_controllers(controllers::AbstractString)
 end
 
 function load_acl(dir::AbstractString)
-  file_path = joinpath(dir, Genie.GENIE_AUTHORIZATION_FILE_NAME)
+  file_path = joinpath(dir, Genie.GENIE_AUTHORIZATOR_FILE_NAME)
   isfile(file_path) ? YAML.load(open(file_path)) : Dict{Any,Any}
 end
 

@@ -2,17 +2,20 @@
 <html class="no-js">
 %+ app/layouts/front/head
 <body>
-  <main class="container left-container">
-    <div class="row">
-      %+ app/layouts/front/main_menu
-      %+ app/layouts/front/sidebar
-      <section class="col-md-7 col-sm-12 col-md-offset-5 main-content">
-        %+ app/layouts/front/entities_menu
-        %= yield
-        %+ app/layouts/front/footer
-      </section>
+<header class="hero-image" role="banner" style="background-image: url(/img//genie_main_logo.png);
+                                                background-color: #f0f0f0; border-top: 0.5rem solid #0bb8e3;">
+  %+ app/layouts/front/burger_menu
+  %+ app/layouts/front/main_menu
+</header>
+%+ app/resources/home/views/download
+<main class="container-fluid">
+  <div class="row">
+    <div class="col-xs-12 single-content">
+      %= yield
     </div>
-  </main>
-  %+ app/layouts/front/scripts
+  </div>
+</main>
+%+ app/resources/articles/views/post_footer
+%+ app/layouts/front/scripts
 </body>
 </html>
