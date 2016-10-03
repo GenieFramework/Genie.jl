@@ -10,8 +10,10 @@ import Base.==
 export DbId, SQLType, AbstractModel, ModelValidator
 export SQLInput, SQLColumn, SQLColumns, SQLLogicOperator
 export SQLWhere, SQLLimit, SQLOrder, SQLQuery, SQLRelation
-export SQLJoin, SQLOn, SQLJoinType
+export SQLJoin, SQLOn, SQLJoinType, SQLHaving
 export QI, QC, QLO, QW, QL, QO, QQ, QR, QJ, QON, QJT
+
+export is_lazy
 
 abstract SQLType <: Genie.GenieType
 abstract AbstractModel <: Genie.GenieType
@@ -342,6 +344,9 @@ SQLRelation{T<:AbstractModel}(model_name::Type{T};
 function lazy(r::SQLRelation)
   r.eagerness == MODEL_RELATIONSHIPS_EAGERNESS_LAZY ||
   r.eagerness == MODEL_RELATIONSHIPS_EAGERNESS_AUTO && Genie.config.model_relationships_eagerness == MODEL_RELATIONSHIPS_EAGERNESS_LAZY
+end
+function is_lazy(r::SQLRelation)
+  lazy(r)
 end
 
 const QR = SQLRelation
