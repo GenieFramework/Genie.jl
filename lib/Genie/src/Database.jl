@@ -5,44 +5,12 @@ eval(:(using $(Genie.config.db_adapter)))
 eval(:(const DatabaseAdapter = $(Genie.config.db_adapter)))
 eval(:(export DatabaseAdapter))
 
-@memoize function parse_connection_data()
-  YAML.load(open(abspath("config/database.yml")))
-end
-
-@memoize function env_connection_data()
-  db_conn_data = parse_connection_data()
-
-  if ( haskey(db_conn_data, Genie.config.app_env) )
-    env_db_conn_data = db_conn_data[Genie.config.app_env]
-    if ( haskey(env_db_conn_data, "adapter") )
-      return Nullable(env_db_conn_data)
-    else
-      error("Database config must define an adapter")
-      Nullable()
-    end
-  else
-    error("DB configuration for $(Genie.config.app_env) not found")
-  end
-
-  Nullable()
-end
-
-@memoize function conn_data()
-  Base.get(env_connection_data())
-end
-
-@memoize function db_connect(skip_db::Bool = false)
-  env_db_conn_data = env_connection_data()
-  if isnull(env_db_conn_data)
-    error("Database connection failed")
-  end
-
-  env_db_conn_data = Base.get(env_db_conn_data)
-  DatabaseAdapter.adapter_connect(env_db_conn_data, skip_db)
+@memoize function db_connect()
+  DatabaseAdapter.adapter_connect(Genie.config.db_config_settings)
 end
 
 @memoize function query_tools(skip_db::Bool = false)
-  db_connect(skip_db), DatabaseAdapter.db_adapter()
+  db_connect(), DatabaseAdapter.db_adapter()
 end
 
 function create_database()
@@ -146,7 +114,5 @@ end
 function to_join_part{T<:AbstractModel}(m::Type{T}, joins = SQLJoin[])
   DatabaseAdapter.to_join_part(m, joins)
 end
-
-Genie.config.db_auto_connect && db_connect()
 
 end

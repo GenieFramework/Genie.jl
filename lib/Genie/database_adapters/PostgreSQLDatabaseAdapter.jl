@@ -6,13 +6,18 @@ export adapter_query_df, adapter_query
 
 const DEFAULT_PORT = 5432
 
-function adapter_connect(conn_data::Dict, skip_db::Bool = false)
-  connect(Postgres,
-          conn_data["host"] == nothing ? "localhost" : conn_data["host"],
-          conn_data["username"],
-          conn_data["password"] == nothing ? "" : conn_data["password"],
-          conn_data["database"] == nothing || skip_db ? "" : conn_data["database"],
-          conn_data["port"] == nothing ? DEFAULT_PORT : conn_data["port"])
+function adapter_connect(conn_data::Dict{String,Any})
+  try
+    connect(Postgres,
+            conn_data["host"],
+            conn_data["username"],
+            conn_data["password"],
+            conn_data["database"],
+            conn_data["port"])
+  catch ex
+    Logger.log("Invalid DB connection settings", :err)
+    Logger.log(ex, :err)
+  end
 end
 
 function adapter_table_columns_sql(table_name::AbstractString)
@@ -140,7 +145,7 @@ function delete{T<:AbstractModel}(m::T)
   m
 end
 
-function count{T<:AbstractModel}(m::Type{T}, q::SQLQuery = SQLQuery())
+function count{T<:AbstractModel}(m::Type{T}, q::SQLQuery = SQLQuery())::Int
   count_column = SQLColumn("COUNT(*) AS __cid", raw = true)
   if isempty(q.columns)
     q.columns = [count_column]

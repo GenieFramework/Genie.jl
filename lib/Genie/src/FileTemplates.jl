@@ -23,19 +23,19 @@ end
 
 function new_task(class_name::AbstractString)
   """
+  module $class_name
   using Genie
 
-  type $class_name
-  end
-
-  function description(::$class_name)
+  function description()
     \"\"\"
     Description of the task here
     \"\"\"
   end
 
-  function run_task!(::$class_name, parsed_args = Dict{AbstractString, Any}())
+  function run_task!()
     # Build something great
+  end
+
   end
   """
 end

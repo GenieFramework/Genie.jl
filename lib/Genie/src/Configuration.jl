@@ -32,27 +32,27 @@ is_test() = (Genie.config.app_env == TEST)
 type Config
   server_port::Int
   server_workers_count::Int
-  server_document_root::AbstractString
+  server_document_root::String
   server_handle_static_files::Bool
   server_signature::String
 
-  app_env::AbstractString
+  app_env::String
   app_is_api::Bool
 
   suppress_output::Bool
   output_length::Int
 
-  db_migrations_table_name::AbstractString
-  db_migrations_folder::AbstractString
-  db_auto_connect::Bool
+  db_migrations_table_name::String
+  db_migrations_folder::String
+  db_config_settings::Dict{String,Any}
   db_adapter::Symbol
 
-  tasks_folder::AbstractString
-  test_folder::AbstractString
-  session_folder::AbstractString
-  log_folder::AbstractString
+  tasks_folder::String
+  test_folder::String
+  session_folder::String
+  log_folder::String
 
-  cache_folder::AbstractString
+  cache_folder::String
   cache_adapter::Symbol
   cache_duration::Int
 
@@ -61,26 +61,26 @@ type Config
   log_requests::Bool
   log_responses::Bool
   log_resources::Bool
-  log_level::AbstractString
+  log_level::String
   log_verbosity::Symbol
   log_formatted::Bool
   log_cache::Bool
 
-  assets_path::AbstractString
+  assets_path::String
   assets_serve::Bool
 
   pagination_default_items_per_page::Int
-  pagination_page_param_name::AbstractString
+  pagination_page_param_name::String
 
   model_relationships_eagerness::Symbol
 
   tests_force_test_env::Bool
 
   session_auto_start::Bool
-  session_key_name::AbstractString
+  session_key_name::String
   session_storage::Symbol
 
-  inflector_irregulars::Array{Tuple{AbstractString, AbstractString},1}
+  inflector_irregulars::Vector{Tuple{String,String}}
 
   Config(;
             server_port                 = 8000, # default port for binding the web server
@@ -97,7 +97,7 @@ type Config
 
             db_migrations_table_name  = "schema_migrations",
             db_migrations_folder      = abspath(joinpath("db", "migrations")),
-            db_auto_connect           = true,
+            db_config_settings        = Dict{String,Any}(),
             db_adapter                = :PostgreSQLDatabaseAdapter,
 
             task_folder       = abspath(joinpath("task")),
@@ -133,13 +133,13 @@ type Config
             session_key_name    = "__GENIESID",
             session_storage     = :File,
 
-            inflector_irregulars = Array{Tuple{AbstractString, AbstractString},1}()
+            inflector_irregulars = Tuple{AbstractString, AbstractString}[]
         ) =
               new(
                   server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature,
                   app_env, app_is_api,
                   suppress_output, output_length,
-                  db_migrations_table_name, db_migrations_folder, db_auto_connect, db_adapter,
+                  db_migrations_table_name, db_migrations_folder, db_config_settings, db_adapter,
                   task_folder, test_folder, session_folder, log_folder,
                   cache_folder, cache_adapter, cache_duration,
                   log_router, log_db, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted, log_cache,

@@ -41,10 +41,22 @@ function startup(parsed_args = Dict{AbstractString,Any}(), start_server = false)
 end
 
 function cache_enabled()
-  config.cache_duration > 0
+  Genie.config.cache_duration > 0
 end
 
-using Configuration, Logger, AppServer, Commands, App, Millboard, Model, Renderer
+using Configuration, Logger, AppServer, Commands, App, Millboard, Model, Renderer, YAML
+
+function env_connection_data(db_settings_file::String)
+  db_conn_data = YAML.load(open(db_settings_file))
+  ( haskey(db_conn_data, Genie.config.app_env) ) ? db_conn_data[Genie.config.app_env] : error("DB configuration for $(Genie.config.app_env) not found")
+end
+
+function load_db_connection()
+  db_settings_file = joinpath(Genie.CONFIG_PATH, Genie.GENIE_DB_CONFIG_FILE_NAME)
+  isfile(abspath(db_settings_file)) && (Genie.config.db_config_settings = env_connection_data(db_settings_file))
+end
+
+load_db_connection()
 
 include(abspath("lib/Genie/src/commands.jl"))
 Commands.execute(Configuration.config)

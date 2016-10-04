@@ -34,7 +34,7 @@ v 0.7.x
 ✔ add a method to automatically run all DOWN migrations
 ☐ packages versioning (declarative packages)
 ☐ beautify error handling (50x, 40x) pages
-☐ move postgres specific code into the adapter
+✔ move postgres specific code into the adapter
 ☐ add utility functions for migrations (add column, add index, etc)
 ☐ form input helpers
 ☐ simplify migrations to skip type and use modules

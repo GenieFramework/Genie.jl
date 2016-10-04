@@ -1,24 +1,17 @@
 module Toolbox
+using Genie, Util, Millboard, FileTemplates, Configuration, Logger
 
-using Genie
-using Util
-using Millboard
-using FileTemplates
-using Configuration
-
-export Task_Info
-
-type Task_Info
-  file_name::AbstractString
-  type_name::AbstractString
-  instance::Any
-  description::AbstractString
+type TaskInfo
+  file_name::String
+  module_name::Symbol
+  description::String
 end
 
 function run_task(task_type_name)
-  task = all_tasks(filter_type_name = task_type_name)
-  if isa(task, Array) error("Task not found") end
-  current_module().run_task!(task.instance)
+  tasks = all_tasks(filter_type_name = Symbol(task_type_name))
+
+  isempty(tasks) && (Logger.log("Task not found", :err) & return)
+  eval(tasks[1].module_name).run_task!()
 end
 
 function print_all_tasks()
@@ -32,22 +25,21 @@ function print_all_tasks()
   Millboard.table(arr_output, :colnames => ["Task name \nFilename \nDescription "], :rownames => []) |> println
 end
 
-function all_tasks(; filter_type_name = nothing)
-  tasks = []
+function all_tasks(; filter_type_name = Symbol())
+  tasks = TaskInfo[]
 
   tasks_folder = abspath(Genie.config.tasks_folder)
   f = readdir(tasks_folder)
   for i in f
-    if ( endswith(i, "_task.jl") )
-      include_path = joinpath(tasks_folder, i)
-      include(include_path)
+    if ( endswith(i, "Task.jl") )
+      push!(LOAD_PATH, tasks_folder)
 
-      type_name = Util.file_name_to_type_name(i)
-      task_instance = eval(parse(string(current_module()) * "." * type_name * "()"))
-      ti = Task_Info(i, type_name, task_instance, current_module().description(task_instance))
+      module_name = Util.file_name_without_extension(i) |> Symbol
+      eval(:(using $(module_name)))
+      ti = TaskInfo(i, module_name, eval(module_name).description())
 
-      if ( filter_type_name == nothing ) push!(tasks, ti)
-      elseif ( filter_type_name == type_name ) return ti
+      if ( filter_type_name == Symbol() ) push!(tasks, ti)
+      elseif ( filter_type_name == module_name ) return TaskInfo[ti]
       end
     end
   end

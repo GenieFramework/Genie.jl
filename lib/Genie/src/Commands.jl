@@ -7,7 +7,7 @@ function called_command(args, key)
 end
 
 function execute(config::Config)
-  parsed_args = parse_commandline_args()::Dict{AbstractString, Any}
+  parsed_args = parse_commandline_args()::Dict{AbstractString,Any}
 
   config.app_env = ENV["GENIE_ENV"]
   config.server_port = parse(Int, parsed_args["server:port"])
@@ -47,10 +47,9 @@ function execute(config::Config)
   elseif called_command(parsed_args, "task:list")
     Toolbox.print_all_tasks()
   elseif parsed_args["task:run"] != nothing
-    Toolbox.run_task(parsed_args["task:run"])
+    Toolbox.run_task(check_valid_task!(parsed_args)["task:run"])
   elseif parsed_args["task:new"] != nothing
-    ! endswith(parsed_args["task:new"], "_task") && (parsed_args["task:new"] *= "_task")
-    Toolbox.new(parsed_args, config)
+    Toolbox.new(parsed_args |> check_valid_task!, config)
 
   elseif called_command(parsed_args, "test:run")
     Tester.run_all_tests(parsed_args["test:run"], config)
@@ -61,6 +60,12 @@ function execute(config::Config)
   elseif isinteractive() || Configuration.IN_REPL
     Logger.log("Started Genie interactive session", :info)
   end
+end
+
+function check_valid_task!(parsed_args::Dict{AbstractString,Any})
+  haskey(parsed_args, "task:new") && isa(parsed_args["task:new"], String) && ! endswith(parsed_args["task:new"], "Task") && (parsed_args["task:new"] *= "Task")
+  haskey(parsed_args, "task:run") && isa(parsed_args["task:run"], String) &&! endswith(parsed_args["task:run"], "Task") && (parsed_args["task:run"] *= "Task")
+  parsed_args
 end
 
 function parse_commandline_args()
@@ -116,7 +121,7 @@ function parse_commandline_args()
             help = "true -> list tasks"
             default = "false"
         "--task:new"
-            help = "task_name -> create a new task, ex: sync_files_task"
+            help = "task_name -> create a new task, ex: SyncFiles"
         "--task:run"
             help = "task_name -> run task"
 

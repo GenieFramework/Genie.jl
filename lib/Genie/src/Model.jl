@@ -24,6 +24,11 @@ direct_relationships() = [RELATIONSHIP_HAS_ONE, RELATIONSHIP_BELONGS_TO, RELATIO
 # ORM methods
 #
 
+"""
+    find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery[, j::Vector{SQLJoin{N}}])
+
+Executes a SQL `SELECT` query against the database and returns the resultset as a `DataFrame`.
+"""
 function find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Vector{SQLJoin{N}})
   query(to_fetch_sql(m, q, j))::DataFrames.DataFrame
 end
@@ -31,6 +36,11 @@ function find_df{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
   query(to_fetch_sql(m, q))::DataFrames.DataFrame
 end
 
+"""
+    find{T<:AbstractModel, N<:AbstractModel}(m::Type{T}[, q::SQLQuery[, j::Vector{SQLJoin{N}}]])
+
+Executes a SQL `SELECT` query against the database and returns the resultset as a `Vector{T<:AbstractModel}`.
+"""
 function find{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Vector{SQLJoin{N}})
   to_models(m, find_df(m, q, j))
 end
@@ -41,6 +51,13 @@ function find{T<:AbstractModel}(m::Type{T})
   find(m, SQLQuery())
 end
 
+"""
+    find_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput)
+    find_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
+
+Executes a SQL `SELECT` query against the database, applying a `WHERE` filter using the `column_name` and the `value`.
+Returns the resultset as a `Vector{T<:AbstractModel}`.
+"""
 function find_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput)
   find(m, SQLQuery(where = [SQLWhere(column_name, value)]))
 end
@@ -48,46 +65,99 @@ function find_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
   find_by(m, SQLColumn(column_name), SQLInput(value))
 end
 
+"""
+    find_one_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput)
+    find_one_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
+
+Executes a SQL `SELECT` query against the database, applying a `WHERE` filter using the `column_name` and the `value`.
+Returns the first result as a `Nullable{T<:AbstractModel}`.
+"""
 function find_one_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput)
   to_nullable(find_by(m, column_name, value))
 end
 function find_one_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
   find_one_by(m, SQLColumn(column_name), SQLInput(value))
 end
+
+"""
+    find_one_by!!{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
+
+Similar to `find_one_by` but also attempts to get the value inside the `Nullable`.
+Returns the value if is not `NULL`. Throws a `NullException` otherwise.
+"""
 function find_one_by!!{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
   find_one_by(m, column_name, value) |> Base.get
 end
 
+"""
+    find_one{T<:AbstractModel}(m::Type{T}, value::Any)
+
+Executes a SQL `SELECT` query against the database, applying a `WHERE` filter using the `Model`s `_id` column and the `value`.
+Returns the result as a `Nullable{T<:AbstractModel}`.
+"""
 function find_one{T<:AbstractModel}(m::Type{T}, value::Any)
   find_one_by(m, SQLColumn(disposable_instance(m)._id), SQLInput(value))
 end
+
+"""
+    find_one!!{T<:AbstractModel}(m::Type{T}, value::Any)
+
+Similar to `find_one` but also attempts to get the value inside the `Nullable`.
+Returns the value if is not `NULL`. Throws a `NullException` otherwise.
+"""
 function find_one!!{T<:AbstractModel}(m::Type{T}, value::Any)
   find_one(m, value) |> Base.get
 end
 
+"""
+    rand{T<:AbstractModel}(m::Type{T}; limit = 1)
+
+Executes a SQL `SELECT` query against the database, `SORT`ing the results randomly and applying a `LIMIT` of `limit`.
+Returns the resultset as a `Vector{T<:AbstractModel}`.
+"""
 function rand{T<:AbstractModel}(m::Type{T}; limit = 1)
   find(m, SQLQuery(limit = SQLLimit(limit), order = [SQLOrder("random()", raw = true)]))
 end
 
+"""
+    rand_one{T<:AbstractModel}(m::Type{T})
+
+Similar to `Model.rand` but it only returns one instance of {T<:AbstractModel}, wrapped into a Nullable.
+"""
 function rand_one{T<:AbstractModel}(m::Type{T})
   to_nullable(rand(m, limit = 1))
 end
 
+"""
+    all{T<:AbstractModel}(m::Type{T})
+
+Executes a SQL `SELECT` query against the database and return all the results.
+Returns the resultset as a `Vector{T<:AbstractModel}`.
+"""
 function all{T<:AbstractModel}(m::Type{T})
   find(m)
 end
 
+"""
+    save{T<:AbstractModel}(m::T; conflict_strategy = :error)
+
+Attempts to persist the model's data to the database. Returns `true` if successful, `false` otherwise.
+"""
 function save{T<:AbstractModel}(m::T; conflict_strategy = :error)
   try
     save!!(m, conflict_strategy = conflict_strategy)
-
     true
   catch ex
     Logger.log(ex)
-
     false
   end
 end
+
+"""
+   save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false)
+
+Similar to `save` but it returns the model reloaded from the database, applying all callbacks. Throws an exception if the model can't be persisted.
+"""
 function save!{T<:AbstractModel}(m::T; conflict_strategy = :error)
   save!!(m, conflict_strategy = conflict_strategy)
 end
@@ -103,6 +173,12 @@ function invoke_callback{T<:AbstractModel}(m::T, callback::Symbol)
   in(callback, fieldnames(m)) && getfield(m, callback)(m)
 end
 
+"""
+    update_with!{T<:AbstractModel}(m::T, w::T)
+    update_with!{T<:AbstractModel}(m::T, w::Dict)
+
+Copies the data from `w` into the corresponding properties in `m`. Returns `m`
+"""
 function update_with!{T<:AbstractModel}(m::T, w::T)
   for fieldname in fieldnames(typeof(m))
     ( startswith(string(fieldname), "_") || string(fieldname) == m._id ) && continue
@@ -119,10 +195,22 @@ function update_with!{T<:AbstractModel}(m::T, w::Dict)
 
   m
 end
+
+"""
+    update_with!!{T<:AbstractModel}(m::T, w::Union{T,Dict})
+
+Similar to `update_with` but also calls `save!!` on `m`.
+"""
 function update_with!!{T<:AbstractModel}(m::T, w::Union{T,Dict})
   Model.save!!(update_with!(m, w)) |> Base.get
 end
 
+"""
+    create_or_update_by!!{T<:AbstractModel}(m::T, property::Symbol[, value::Any])
+
+Tries to find `m` by `property` and `value`. If value is not provided, it uses the corresponding value of `m`.
+If `m` was already persisted, it is updated. If not, it is persisted as a new row.
+"""
 function create_or_update_by!!{T<:AbstractModel}(m::T, property::Symbol, value::Any)
   existing = find_one_by(typeof(m), property, value)
   if ! isnull(existing)
@@ -142,23 +230,33 @@ function create_or_update_by!!{T<:AbstractModel}(m::T, property::Symbol)
   create_or_update_by!!(m, property, getfield(m, property))
 end
 
-function find_one_by_or_create{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
-  lookup = find_one_by(m, SQLColumn(column_name), SQLInput(value))
+"""
+    find_one_by_or_create{T<:AbstractModel}(m::Type{T}, property::Any, value::Any)
+
+Tries to find `m` by `property` and `value`. If it exists, it is returned. If not, a new instance is created, `property` is set to `value` and the instance is returned.
+"""
+function find_one_by_or_create{T<:AbstractModel}(m::Type{T}, property::Any, value::Any)
+  lookup = find_one_by(m, SQLColumn(property), SQLInput(value))
   ! isnull( lookup ) && return lookup
 
   _m = disposable_instance(m)
-  setfield!(_m, Symbol(column_name), value)
+  setfield!(_m, Symbol(property), value)
 
-  return save!!(_m)
+  _m
 end
 
 #
 # Object generation
 #
 
+"""
+   to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
+
+Converts `df` to a Vector{T}
+"""
 function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
   models = OrderedDict{DbId,T}()
-  dfs = df_result_to_models_data(m, df)
+  dfs = df_result_to_models_data(m, df)::Dict{String,DataFrame}
 
   row_count::Int = 1
   for row in eachrow(df)
@@ -341,7 +439,7 @@ function relationships{T<:AbstractModel}(m::Type{T})
   rls
 end
 
-function relationship{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol)
+function relationship{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol)::Nullable{SQLRelation}
   nullable_defined_rels::Nullable{Vector{SQLRelation}} = getfield(m, relationship_type)
   if ! isnull(nullable_defined_rels)
     defined_rels::Vector{SQLRelation} = Base.get(nullable_defined_rels)
@@ -398,11 +496,11 @@ function get_relationship_data{T<:AbstractModel}(m::T, rel::SQLRelation, relatio
   Nullable{RelationshipData}()
 end
 
-function df_result_to_models_data{T<:AbstractModel}(m::Type{T}, df::DataFrame)
+function df_result_to_models_data{T<:AbstractModel}(m::Type{T}, df::DataFrame)::Dict{String,DataFrame}
   _m::T = disposable_instance(m)
   tables_names = String[_m._table_name]
   tables_columns = Dict()
-  sub_dfs = Dict()
+  sub_dfs = Dict{String,DataFrame}()
 
   function relationships_tables_names{T<:AbstractModel}(m::Type{T})
     for r in relationships(m)
@@ -436,7 +534,7 @@ function df_result_to_models_data{T<:AbstractModel}(m::Type{T}, df::DataFrame)
 
   relationships_tables_names(m)
   extract_columns_names()
-  split_dfs_by_table()
+  split_dfs_by_table()::Dict{String,DataFrame}
 end
 
 function relation_to_sql{T<:AbstractModel}(m::T, rel::Tuple{SQLRelation,Symbol})
@@ -495,7 +593,7 @@ end
 # sql utility queries
 #
 
-function count{T<:AbstractModel}(m::Type{T}, q::SQLQuery = SQLQuery())
+function count{T<:AbstractModel}(m::Type{T}, q::SQLQuery = SQLQuery())::Int
   Database.count(m, q)
 end
 
@@ -717,8 +815,8 @@ function to_string_dict{T<:GenieType}(m::T)
   Genie.to_string_dict(m)
 end
 
-function to_nullable(result)
-  isempty(result) ? Nullable{AbstractModel}() : Nullable{AbstractModel}(result |> first)
+function to_nullable{T<:AbstractModel}(result::Vector{T})
+  isempty(result) ? Nullable{T}() : Nullable{T}(result |> first)
 end
 
 function escape_type(value)

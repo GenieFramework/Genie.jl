@@ -1,8 +1,5 @@
 module Logger
-
-using Lumberjack
-using Millboard
-using Genie
+using Lumberjack, Millboard, Genie
 
 const colors = Dict{String,Symbol}("info" => :gray, "warn" => :yellow, "debug" => :green, "err" => :red, "error" => :red, "critical" => :magenta)
 
