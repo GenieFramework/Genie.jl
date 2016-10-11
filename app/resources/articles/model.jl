@@ -4,7 +4,7 @@ type Article <: AbstractModel
   _table_name::String
   _id::String
 
-  validator::SearchLightValidator
+  validator::ModelValidator
 
   id::Nullable{SearchLight.DbId}
   title::String
@@ -17,14 +17,12 @@ type Article <: AbstractModel
   before_save::Function
 
   Article(;
-    validator = SearchLightValidator(
-      [
-        (:title,    Validation.not_empty),
-        (:title,    Validation.min_length, (20)),
-        (:content,  Validation.ArticlesValidator.not_empty_if_published),
-        (:summary,  Validation.ArticlesValidator.not_empty_if_long_content, (2000))
-      ]
-    ),
+    validator = ModelValidator([
+      (:title,    Validation.not_empty),
+      (:title,    Validation.min_length, (20)),
+      (:content,  Validation.ArticlesValidator.not_empty_if_published),
+      (:summary,  Validation.ArticlesValidator.not_empty_if_long_content, (2000))
+    ]),
 
     id = Nullable{SearchLight.DbId}(),
     title = "",

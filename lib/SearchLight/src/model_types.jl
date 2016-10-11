@@ -7,7 +7,7 @@ import Base.length
 import Base.next
 import Base.==
 
-export DbId, SQLType, AbstractModel, SearchLightValidator
+export DbId, SQLType, AbstractModel, ModelValidator
 export SQLInput, SQLColumn, SQLColumns, SQLLogicOperator
 export SQLWhere, SQLLimit, SQLOrder, SQLQuery, SQLRelation
 export SQLJoin, SQLOn, SQLJoinType, SQLHaving
@@ -28,11 +28,11 @@ typealias RelationshipDataArray Array{AbstractModel,1}
 # SearchLight validations
 #
 
-type SearchLightValidator
+type ModelValidator
   rules::Vector{Tuple{Symbol,Function,Vararg{Any}}} # [(:title, :not_empty), (:title, :min_length, (20)), (:content, :not_empty_if_published), (:email, :matches, (r"(.*)@(.*)"))]
   errors::Vector{Tuple{Symbol,Symbol,String}} # [(:title, :not_empty, "title not empty"), (:title, :min_length, "min length 20"), (:content, :min_length, "min length 200")]
 
-  SearchLightValidator(rules) = new(rules, Vector{Tuple{Symbol,Symbol,String}}())
+  ModelValidator(rules) = new(rules, Vector{Tuple{Symbol,Symbol,String}}())
 end
 
 #

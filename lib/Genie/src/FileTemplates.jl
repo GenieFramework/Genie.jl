@@ -47,14 +47,31 @@ function new_model(model_name::AbstractString)
   export $model_name, $pluralized_name
 
   type $model_name <: AbstractModel
-    _table_name::AbstractString
-    _id::AbstractString
+    _table_name::String
+    _id::String
 
     id::Nullable{SearchLight.DbId}
+    validator::ModelValidator
+
+    belongs_to::Vector{SearchLight.SQLRelation}
+
+    before_save::Function
+    on_dehydration::Function
+    on_hydration::Function
 
     $model_name(;
-      id = Nullable{SearchLight.DbId}()
-    ) = new("$(lowercase(pluralized_name))", "id", id)
+      id = Nullable{SearchLight.DbId}(),
+
+      validator = ModelValidator([
+        (:title, Validation.$(model_name)Validator.not_empty)
+      ]),
+
+      belongs_to = [],
+
+      before_save = () -> warn("Not implemented"),
+      on_dehydration = () -> warn("Not implemented"),
+      on_hydration = () -> warn("Not implemented")
+    ) = new("$(lowercase(pluralized_name))", "id", id, validator, belongs_to, before_save, on_dehydration, on_hydration)
   end
 
   module $pluralized_name
