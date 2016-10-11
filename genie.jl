@@ -8,11 +8,14 @@ in("s", ARGS) && ! haskey(ENV, "NWORKERS") ? ENV["NWORKERS"] = 4 : ( haskey(ENV,
 print_with_color(:green, "\nStarting Genie in >> $(ENV["GENIE_ENV"] |> uppercase) << mode using $(ENV["NWORKERS"]) worker(s) \n\n")
 
 nworkers() < parse(Int, ENV["NWORKERS"]) && addprocs(parse(Int, ENV["NWORKERS"]) - nworkers())
-@everywhere push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "src")), abspath(pwd()))
+@everywhere push!(LOAD_PATH,  abspath(joinpath("lib", "Genie",       "src")),
+                              abspath(joinpath("lib", "SearchLight", "src")),
+                              abspath(joinpath("lib", "Ejl",         "src")),
+                              abspath(pwd()))
 
 @everywhere import Genie
 using Genie
 
 try
-  eval(Main, :(using Genie, Model, App, OhMyREPL))
+  eval(Main, :(using Genie, SearchLight, App, OhMyREPL))
 end

@@ -1,10 +1,7 @@
-using Genie
+module CreateTableUsers
 using Database
 
-type CreateTableUsers
-end
-
-function up(::CreateTableUsers)
+function up()
   Database.query("""CREATE SEQUENCE users__seq_id""")
   Database.query("""
     CREATE TABLE IF NOT EXISTS users (
@@ -19,6 +16,8 @@ function up(::CreateTableUsers)
   Database.query("""ALTER SEQUENCE users__seq_id OWNED BY users.id""")
 end
 
-function down(::CreateTableUsers)
+function down()
   Database.query("DROP TABLE users")
+end
+
 end

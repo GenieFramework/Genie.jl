@@ -1,8 +1,8 @@
-module Model
+module SearchLight
 
 using Genie
 
-include(abspath(joinpath("lib", "Genie", "src", "model_types.jl")))
+include("model_types.jl")
 
 using Database, DataFrames, DataStructures, DateParser, Util, Reexport, Configuration, Logger
 
@@ -92,7 +92,7 @@ end
 """
     find_one{T<:AbstractModel}(m::Type{T}, value::Any)
 
-Executes a SQL `SELECT` query against the database, applying a `WHERE` filter using the `Model`s `_id` column and the `value`.
+Executes a SQL `SELECT` query against the database, applying a `WHERE` filter using the `SearchLight`s `_id` column and the `value`.
 Returns the result as a `Nullable{T<:AbstractModel}`.
 """
 function find_one{T<:AbstractModel}(m::Type{T}, value::Any)
@@ -122,7 +122,7 @@ end
 """
     rand_one{T<:AbstractModel}(m::Type{T})
 
-Similar to `Model.rand` but it only returns one instance of {T<:AbstractModel}, wrapped into a Nullable.
+Similar to `SearchLight.rand` but it only returns one instance of {T<:AbstractModel}, wrapped into a Nullable.
 """
 function rand_one{T<:AbstractModel}(m::Type{T})
   to_nullable(rand(m, limit = 1))
@@ -162,7 +162,7 @@ function save!{T<:AbstractModel}(m::T; conflict_strategy = :error)
   save!!(m, conflict_strategy = conflict_strategy)
 end
 function save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false)
-  ! skip_validation && ! Validation.validate!(m) && error("Model validation error(s) for $(typeof(m)) \n $(join(Validation.errors(m), "\n "))")
+  ! skip_validation && ! Validation.validate!(m) && error("SearchLight validation error(s) for $(typeof(m)) \n $(join(Validation.errors(m), "\n "))")
 
   invoke_callback(m, :before_save)
 
@@ -202,7 +202,7 @@ end
 Similar to `update_with` but also calls `save!!` on `m`.
 """
 function update_with!!{T<:AbstractModel}(m::T, w::Union{T,Dict})
-  Model.save!!(update_with!(m, w)) |> Base.get
+  SearchLight.save!!(update_with!(m, w)) |> Base.get
 end
 
 """
@@ -221,9 +221,9 @@ function create_or_update_by!!{T<:AbstractModel}(m::T, property::Symbol, value::
       setfield!(existing, fieldname, getfield(m, fieldname))
     end
 
-    return Model.save!!(existing)
+    return SearchLight.save!!(existing)
   else
-    return Model.save!!(m)
+    return SearchLight.save!!(m)
   end
 end
 function create_or_update_by!!{T<:AbstractModel}(m::T, property::Symbol)
@@ -294,12 +294,21 @@ function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
   models |> values |> collect
 end
 
+"""
+    set_relationship_data{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame)
+
+Extracts related model data and sets it into the relationship
+"""
 function set_relationship_data{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame)
   r.data = Nullable( to_model(related_model, related_model_df) )
-
   r
 end
 
+"""
+    set_relationship_data_array{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame)
+
+Sets relationship data for one to many relationships
+"""
 function set_relationship_data_array{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame)
   data =  if isnull(r.data)
             RelationshipDataArray()
@@ -312,6 +321,11 @@ function set_relationship_data_array{T<:AbstractModel}(r::SQLRelation, related_m
   r
 end
 
+"""
+    to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
+
+Converts a DataFrame row to a SearchLight model instance
+"""
 function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
   _m = disposable_instance(m)
   obj = m()
@@ -365,6 +379,11 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
   obj
 end
 
+"""
+    to_model{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
+
+Converts a DataFrame to a SearchLight model instance
+"""
 function to_model{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
   for row in eachrow(df)
     return to_model(m, row)
@@ -375,7 +394,15 @@ end
 # Query generation
 #
 
-function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Array{SQLColumn,1}, joins = SQLJoin[])
+"""
+    to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}[, joins = SQLJoin[] ])
+    to_select_part{T<:AbstractModel}(m::Type{T}, c::SQLColumn)
+    to_select_part{T<:AbstractModel}(m::Type{T}, c::String)
+    to_select_part{T<:AbstractModel}(m::Type{T})
+
+Generates the SELECT part of the query
+"""
+function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}, joins = SQLJoin[])
   Database.to_select_part(m, cols, joins)
 end
 function to_select_part{T<:AbstractModel}(m::Type{T}, c::SQLColumn)
@@ -388,38 +415,84 @@ function to_select_part{T<:AbstractModel}(m::Type{T})
   to_select_part(m, SQLColumn[])
 end
 
+"""
+    to_from_part{T<:AbstractModel}(m::Type{T})
+
+Generates the FROM part of the query
+"""
 function to_from_part{T<:AbstractModel}(m::Type{T})
   Database.to_from_part(m)
 end
 
+"""
+    to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhere})
+
+Generates the WHERE part of the query
+"""
 function to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhere})
   Database.to_where_part(m, w)
 end
 
+"""
+    to_order_part{T<:AbstractModel}(m::Type{T}, o::Vector{SQLOrder})
+
+Generates the ORDER part of the query
+"""
 function to_order_part{T<:AbstractModel}(m::Type{T}, o::Vector{SQLOrder})
   Database.to_order_part(m, o)
 end
 
+"""
+    to_group_part(g::Vector{SQLColumn})
+
+Generates the GROUP part of the query
+"""
 function to_group_part(g::Vector{SQLColumn})
   Database.to_group_part(g)
 end
 
+"""
+    to_limit_part(l::SQLLimit)
+
+Generates the LIMIT part of the query
+"""
 function to_limit_part(l::SQLLimit)
   Database.to_limit_part(l)
 end
 
+"""
+    to_offset_part(o::Int)
+
+Generates the OFFSET part of the query
+"""
 function to_offset_part(o::Int)
   Database.to_offset_part(o)
 end
 
+"""
+    to_having_part(h::Vector{SQLHaving})
+
+Generates the HAVING part of the query
+"""
 function to_having_part(h::Vector{SQLHaving})
   Database.to_having_part(h)
 end
 
+
+"""
+    to_join_part{T<:AbstractModel}(m::Type{T}[, joins = SQLJoin[] ])
+
+Generates the JOIN part of the query
+"""
 function to_join_part{T<:AbstractModel}(m::Type{T}, joins = SQLJoin[])
   Database.to_join_part(m, joins)
 end
 
+"""
+    relationships{T<:AbstractModel}(m::Type{T})
+
+Returns the vector of relationships for the given model type
+"""
 function relationships{T<:AbstractModel}(m::Type{T})
   _m = disposable_instance(m)
 
@@ -439,6 +512,11 @@ function relationships{T<:AbstractModel}(m::Type{T})
   rls
 end
 
+"""
+    relationship{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol)::Nullable{SQLRelation}
+
+Gets the relationship instance of `relationship_type` for the model instance `m` and `model_name`
+"""
 function relationship{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol)::Nullable{SQLRelation}
   nullable_defined_rels::Nullable{Vector{SQLRelation}} = getfield(m, relationship_type)
   if ! isnull(nullable_defined_rels)
@@ -483,7 +561,7 @@ function get_relationship_data{T<:AbstractModel}(m::T, rel::SQLRelation, relatio
             SQLColumn(to_fully_qualified(_r._id, _r._table_name), raw = true), getfield(m, Symbol((lowercase(string(typeof(_r))) |> strip_module_name) * "_" * _r._id)) |> Base.get
           end
   push!(conditions, SQLWhere(where...))
-  data = Model.find( rel.model_name, SQLQuery( where = conditions, limit = SQLLimit(limit) ) )
+  data = SearchLight.find( rel.model_name, SQLQuery( where = conditions, limit = SQLLimit(limit) ) )
 
   isempty(data) && return Nullable{RelationshipData}()
 
@@ -866,5 +944,8 @@ end
 
 end
 
-const SearchLight = Model
-export SearchLight
+const Model = SearchLight
+export Model
+
+const SL = SearchLight
+export SL

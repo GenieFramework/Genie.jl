@@ -1,5 +1,5 @@
 module Authentication
-using Model, App, Genie, Sessions
+using SearchLight, App, Genie, Sessions
 
 export current_user, current_user!!
 
@@ -52,7 +52,7 @@ function current_user(session)
   if isnull(auth_state)
     Nullable()
   else
-    Model.find_one_by(User, Symbol(User()._id), Base.get(auth_state))
+    SearchLight.find_one_by(User, Symbol(User()._id), Base.get(auth_state))
   end
 end
 function current_user(params::Dict{Symbol,Any})

@@ -4,27 +4,27 @@ type User <: AbstractModel
   _table_name::String
   _id::String
 
-  id::Nullable{Model.DbId}
+  id::Nullable{SearchLight.DbId}
   name::String
   email::String
   password::String
-  role_id::Nullable{Model.DbId}
+  role_id::Nullable{SearchLight.DbId}
   updated_at::DateTime
 
-  belongs_to::Vector{Model.SQLRelation}
+  belongs_to::Vector{SearchLight.SQLRelation}
 
   on_dehydration::Function
   on_hydration!::Function
 
   User(;
-    id = Nullable{Model.DbId}(),
+    id = Nullable{SearchLight.DbId}(),
     name = "",
     email = "",
     password = "",
-    role_id = Nullable{Model.DbId}(),
+    role_id = Nullable{SearchLight.DbId}(),
     updated_at = DateTime(),
 
-    belongs_to = [Model.SQLRelation(Role)],
+    belongs_to = [SearchLight.SQLRelation(Role)],
 
     on_dehydration = Users.dehydrate,
     on_hydration! = Users.hydrate!
@@ -32,10 +32,10 @@ type User <: AbstractModel
 end
 
 module Users
-using App, Model, Sessions, Authentication, Helpers, DateParser, SHA, Logger
+using App, SearchLight, Sessions, Authentication, Helpers, DateParser, SHA, Logger
 
 function login(email::String, password::String, session)
-  users = Model.find(User, SQLQuery(where = [SQLWhere(:email, email), SQLWhere(:password, sha256(password) |> bytes2hex)]))
+  users = SearchLight.find(User, SQLQuery(where = [SQLWhere(:email, email), SQLWhere(:password, sha256(password) |> bytes2hex)]))
 
   if isempty(users)
     Logger.log("Failed login: Can't find user")

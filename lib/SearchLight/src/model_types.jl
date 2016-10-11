@@ -7,7 +7,7 @@ import Base.length
 import Base.next
 import Base.==
 
-export DbId, SQLType, AbstractModel, ModelValidator
+export DbId, SQLType, AbstractModel, SearchLightValidator
 export SQLInput, SQLColumn, SQLColumns, SQLLogicOperator
 export SQLWhere, SQLLimit, SQLOrder, SQLQuery, SQLRelation
 export SQLJoin, SQLOn, SQLJoinType, SQLHaving
@@ -25,14 +25,14 @@ typealias RelationshipData AbstractModel
 typealias RelationshipDataArray Array{AbstractModel,1}
 
 #
-# Model validations
+# SearchLight validations
 #
 
-type ModelValidator
+type SearchLightValidator
   rules::Vector{Tuple{Symbol,Function,Vararg{Any}}} # [(:title, :not_empty), (:title, :min_length, (20)), (:content, :not_empty_if_published), (:email, :matches, (r"(.*)@(.*)"))]
   errors::Vector{Tuple{Symbol,Symbol,String}} # [(:title, :not_empty, "title not empty"), (:title, :min_length, "min length 20"), (:content, :min_length, "min length 200")]
 
-  ModelValidator(rules) = new(rules, Vector{Tuple{Symbol,Symbol,String}}())
+  SearchLightValidator(rules) = new(rules, Vector{Tuple{Symbol,Symbol,String}}())
 end
 
 #
@@ -191,7 +191,7 @@ SQLLimit() = SQLLimit("ALL")
 
 string(l::SQLLimit) = string(l.value)
 
-convert(::Type{Model.SQLLimit}, v::Int) = SQLLimit(v)
+convert(::Type{SearchLight.SQLLimit}, v::Int) = SQLLimit(v)
 
 const QL = SQLLimit
 
@@ -211,7 +211,7 @@ SQLOrder(column::Any; raw::Bool = false) = SQLOrder(SQLColumn(column, raw = raw)
 string(o::SQLOrder) = "($(o.column) $(o.direction))"
 
 convert(::Type{Array{SQLOrder,1}}, o::SQLOrder) = [o]
-convert(::Type{Array{Model.SQLOrder,1}}, t::Tuple{Symbol,Symbol}) = SQLOrder(t[1], t[2])
+convert(::Type{Array{SearchLight.SQLOrder,1}}, t::Tuple{Symbol,Symbol}) = SQLOrder(t[1], t[2])
 
 const QO = SQLOrder
 

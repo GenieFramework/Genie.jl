@@ -5,13 +5,13 @@ include(abspath(joinpath("lib/Genie/src/constants.jl")))
 include(abspath(joinpath("config", "env", ENV["GENIE_ENV"] * ".jl")))
 include(abspath(joinpath("config", "app.jl")))
 include(abspath("lib/Genie/src/macros.jl"))
+include(abspath(joinpath("config", "plugins.jl")))
 
-push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "database_adapters")))
-push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "cache_adapters")))
-push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "session_adapters")))
-
-push!(LOAD_PATH, abspath(joinpath("app", "resources")))
-push!(LOAD_PATH, abspath(joinpath("app", "helpers")))
+push!(LOAD_PATH,  abspath(joinpath("lib", "Genie",       "src", "cache_adapters")),
+                  abspath(joinpath("lib", "Genie",       "src", "session_adapters")),
+                  abspath(joinpath("lib", "SearchLight", "src", "database_adapters")),
+                  abspath(joinpath("app", "resources")),
+                  abspath(joinpath("app", "helpers")))
 
 include(abspath(joinpath("lib", "Genie", "src", "genie_types.jl")))
 
@@ -44,7 +44,7 @@ function cache_enabled()
   Genie.config.cache_duration > 0
 end
 
-using Configuration, Logger, AppServer, Commands, App, Millboard, Model, Renderer, YAML
+using Configuration, Logger, AppServer, Commands, App, Millboard, SearchLight, Renderer, YAML
 
 function env_connection_data(db_settings_file::String)
   db_conn_data = YAML.load(open(db_settings_file))

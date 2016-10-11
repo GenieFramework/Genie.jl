@@ -100,12 +100,16 @@ function run_migration(migration::DbMigration, direction::Symbol; force = false)
     end
   end
 
-  include(abspath(joinpath(Genie.config.db_migrations_folder, migration.migration_file_name)))
-  eval(parse("$(current_module()).$(string(direction))($(current_module()).$(migration.migration_class_name)())"))
+  try
+    m = include(abspath(joinpath(Genie.config.db_migrations_folder, migration.migration_file_name)))
+    getfield(m, direction)()
 
-  store_migration_status(migration, direction)
+    store_migration_status(migration, direction)
 
-  ! Genie.config.suppress_output && Logger.log("Executed migration $(migration.migration_class_name) $(direction)")
+    ! Genie.config.suppress_output && Logger.log("Executed migration $(migration.migration_class_name) $(direction)")
+  catch ex
+    Logger.log(ex, :err)
+  end
 end
 
 function store_migration_status(migration::DbMigration, direction::Symbol)

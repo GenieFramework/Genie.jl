@@ -4,16 +4,16 @@ type Role <: AbstractModel
   _table_name::String
   _id::String
 
-  id::Nullable{Model.DbId}
+  id::Nullable{SearchLight.DbId}
   name::Symbol
 
-  has_one::Vector{Model.SQLRelation}
+  has_one::Vector{SearchLight.SQLRelation}
   on_dehydration::Function
 
   Role(;
-    id = Nullable{Model.DbId}(),
+    id = Nullable{SearchLight.DbId}(),
     name = :user,
-    has_one = [Model.SQLRelation(User)],
+    has_one = [SearchLight.SQLRelation(User)],
     on_dehydration = Roles.dehydrate
   ) = new("roles", "id", id, name, has_one, on_dehydration)
 end

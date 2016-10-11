@@ -1,5 +1,5 @@
 module Validation
-using Genie, Model, App
+using Genie, SearchLight, App
 
 #
 # validation rules

@@ -1,0 +1,13 @@
+admin:
+  create: all
+  edit: all
+  delete: all
+  list: all
+editor:
+  edit: all
+  list: all
+writer:
+  create: all
+  edit: own
+  delete: own
+  list: own

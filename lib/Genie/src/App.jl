@@ -1,5 +1,5 @@
 module App
-using Genie, Model, Validation, YAML
+using Genie, SearchLight, Validation, YAML
 
 function load_models(dir = abspath(joinpath(Genie.APP_PATH, "app", "resources")))
   dir_contents = readdir(abspath(dir))

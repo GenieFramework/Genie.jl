@@ -1,10 +1,7 @@
-using Genie
+module CreateTableUserSessions
 using Database
 
-type CreateTableUserSessions
-end
-
-function up(::CreateTableUserSessions)
+function up()
   Database.query("""
     CREATE TABLE IF NOT EXISTS user_sessions (
       user_id       integer,
@@ -14,6 +11,8 @@ function up(::CreateTableUserSessions)
   """)
 end
 
-function down(::CreateTableUserSessions)
+function down()
   Database.query("DROP TABLE user_sessions")
+end
+
 end

@@ -1,5 +1,5 @@
 module ArticlesValidator
-using App, Model, App.Articles, Validation
+using App, SearchLight, App.Articles, Validation
 
 function not_empty_if_published{T<:AbstractModel}(::Symbol, m::T, args::Vararg{Any})
   App.Articles.is_published(m) && isempty(m.content) && Validation.push_error!(m, :content, :not_empty_if_published, "Content can't be empty if the article is published") && return false

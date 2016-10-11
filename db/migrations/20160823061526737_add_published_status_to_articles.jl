@@ -1,9 +1,7 @@
-using Genie, Database
+module AddPublishedStatusToArticles
+using Database
 
-type AddPublishedStatusToArticles
-end
-
-function up(::AddPublishedStatusToArticles)
+function up()
   Database.query("""
     ALTER TABLE articles
       ADD COLUMN published_at timestamp DEFAULT NULL
@@ -11,7 +9,9 @@ function up(::AddPublishedStatusToArticles)
   Database.query("""CREATE INDEX articles__idx_published_at ON articles (published_at)""")
 end
 
-function down(::AddPublishedStatusToArticles)
+function down()
   Database.query("""DROP INDEX articles__idx_published_at""")
   Database.query("""ALTER TABLE articles DROP COLUMN published_at""")
+end
+
 end

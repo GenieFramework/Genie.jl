@@ -4,9 +4,9 @@ type Article <: AbstractModel
   _table_name::String
   _id::String
 
-  validator::ModelValidator
+  validator::SearchLightValidator
 
-  id::Nullable{Model.DbId}
+  id::Nullable{SearchLight.DbId}
   title::String
   summary::String
   content::String
@@ -17,7 +17,7 @@ type Article <: AbstractModel
   before_save::Function
 
   Article(;
-    validator = ModelValidator(
+    validator = SearchLightValidator(
       [
         (:title,    Validation.not_empty),
         (:title,    Validation.min_length, (20)),
@@ -26,7 +26,7 @@ type Article <: AbstractModel
       ]
     ),
 
-    id = Nullable{Model.DbId}(),
+    id = Nullable{SearchLight.DbId}(),
     title = "",
     summary = "",
     content = "",

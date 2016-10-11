@@ -1,10 +1,10 @@
 module Authorization
-using Genie, Model, Authentication, Helpers, App, Util
+using Genie, SearchLight, Authentication, Helpers, App, Util
 export is_authorized, with_authorization
 
 function is_authorized(ability::Symbol, params::Dict{Symbol,Any})
   Authentication.is_authenticated(session(params)) || return false
-  user_role = Model.relationship_data!!(expand_nullable(current_user(session(params)), default = User()), Role, RELATIONSHIP_BELONGS_TO).name
+  user_role = SearchLight.relationship_data!!(expand_nullable(current_user(session(params)), default = User()), Role, RELATIONSHIP_BELONGS_TO).name
   role_has_ability(user_role, ability, params)
 end
 

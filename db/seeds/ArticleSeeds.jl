@@ -1,5 +1,5 @@
 module ArticleSeeds
-using App, Model
+using App, SearchLight
 using Faker
 
 function create_random(no_of_articles::Int = 10)
@@ -14,7 +14,7 @@ function create_random(no_of_articles::Int = 10)
     article.summary = join(Faker.sentences(), "\n")
     article.content = join(Faker.paragraphs(), "\n")
 
-    Model.save!!(article)
+    SearchLight.save!!(article)
   end
 end
 

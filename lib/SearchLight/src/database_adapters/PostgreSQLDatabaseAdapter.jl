@@ -1,5 +1,5 @@
 module PostgreSQLDatabaseAdapter
-using PostgreSQL, DataFrames, Genie, Database, Logger, Model
+using PostgreSQL, DataFrames, Genie, Database, Logger, SearchLight
 
 export adapter_connect, db_adapter, adapter_table_columns_sql, create_migrations_table_sql, adapter_escape_column_name
 export adapter_query_df, adapter_query
@@ -40,13 +40,13 @@ function adapter_escape_column_name(c::AbstractString, conn, adapter)
 end
 
 function adapter_query_df(sql::AbstractString, suppress_output::Bool, conn, adapter)
-  df::DataFrames.DataFrame = adapter.fetchdf(adapter_query(sql, suppress_output, conn, adapter, false))
+  df::DataFrames.DataFrame = adapter.fetchdf(adapter_query(sql, suppress_output, conn, adapter))
   (! suppress_output && Genie.config.log_db) && Logger.log(df)
 
   df
 end
 
-function adapter_query(sql::AbstractString, suppress_output::Bool, conn, adapter, skip_db::Bool)
+function adapter_query(sql::AbstractString, suppress_output::Bool, conn, adapter)
   stmt = adapter.prepare(conn, sql)
 
   result = if suppress_output || ! Genie.config.log_db

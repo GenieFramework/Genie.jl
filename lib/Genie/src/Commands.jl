@@ -1,6 +1,5 @@
 module Commands
-
-using ArgParse, Configuration, Genie, Database, Generator, Migration, Tester, Toolbox, App
+using ArgParse, Configuration, Genie, Database, Generator, Tester, Toolbox, App, Migration
 
 function called_command(args, key)
     args[key] == "true" || args["s"] == key
@@ -62,7 +61,7 @@ function execute(config::Config)
   end
 end
 
-function check_valid_task!(parsed_args::Dict{AbstractString,Any})
+function check_valid_task!(parsed_args::Dict{String,Any})
   haskey(parsed_args, "task:new") && isa(parsed_args["task:new"], String) && ! endswith(parsed_args["task:new"], "Task") && (parsed_args["task:new"] *= "Task")
   haskey(parsed_args, "task:run") && isa(parsed_args["task:run"], String) &&! endswith(parsed_args["task:run"], "Task") && (parsed_args["task:run"] *= "Task")
   parsed_args
@@ -83,8 +82,8 @@ function parse_commandline_args()
             help = "HTTP server port"
             default = "8000"
         "--server:workers", "-w"
-            help = "Number of workers used by the app -- use any value greater than 0 to overwrite the config"
-            default = "0"
+            help = "Number of workers used by the app -- use any value greater than 1 to overwrite the config"
+            default = "1"
 
         "--db:init"
             help = "true -> create database and core tables"
@@ -97,8 +96,8 @@ function parse_commandline_args()
             help = "resource_name -> creates a new resource folder with all its files, ex: products"
 
         "--migration:status"
-            help = "true -> list migrations and their status"
-            default = "false"
+              help = "true -> list migrations and their status"
+              default = "false"
         "--migration:list"
             help = "alias for migration:status"
             default = "false"
@@ -130,7 +129,7 @@ function parse_commandline_args()
             default = "false"
     end
 
-    return parse_args(settings)
+    parse_args(settings)
 end
 
 end

@@ -1,9 +1,7 @@
-using Genie, Database
+module CreateTableRoles
+using Database
 
-type CreateTableRoles
-end
-
-function up(::CreateTableRoles)
+function up()
   Database.query("""CREATE SEQUENCE roles__seq_id""")
   Database.query("""
     CREATE TABLE IF NOT EXISTS roles (
@@ -16,8 +14,10 @@ function up(::CreateTableRoles)
   Database.query("""ALTER SEQUENCE roles__seq_id OWNED BY roles.id""")
 end
 
-function down(::CreateTableRoles)
+function down()
   Database.query("""
     DROP TABLE roles
   """)
+end
+
 end

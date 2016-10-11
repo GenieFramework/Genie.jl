@@ -4,19 +4,19 @@ using Inflector
 
 function new_database_migration(class_name::AbstractString)
   """
+  module $class_name
   using Genie, Database
 
-  type $class_name
-  end
-
-  function up(::$class_name)
+  function up()
     # Database.query("")
     error("Not implemented")
   end
 
-  function down(::$class_name)
+  function down()
     # Database.query("")
     error("Not implemented")
+  end
+
   end
   """
 end
@@ -50,10 +50,10 @@ function new_model(model_name::AbstractString)
     _table_name::AbstractString
     _id::AbstractString
 
-    id::Nullable{Model.DbId}
+    id::Nullable{SearchLight.DbId}
 
     $model_name(;
-      id = Nullable{Model.DbId}()
+      id = Nullable{SearchLight.DbId}()
     ) = new("$(lowercase(pluralized_name))", "id", id)
   end
 
@@ -66,7 +66,7 @@ end
 function new_controller(controller_name::AbstractString)
   """
   module $(controller_name)Controller
-  using Genie, Model, App
+  using Genie, SearchLight, App
   end
   """
 end
@@ -74,7 +74,7 @@ end
 function new_validator(validator_name::AbstractString)
   """
   module $(validator_name)Validator
-  using App, Model, Validation
+  using App, SearchLight, Validation
 
   function not_empty{T<:AbstractModel}(::Symbol, m::T, args::Vararg{Any})::Bool
     isempty(m.some_property) && return false

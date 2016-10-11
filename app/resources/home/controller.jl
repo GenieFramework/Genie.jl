@@ -1,6 +1,5 @@
 module HomeController
-using Genie, Model, App, ViewHelper, Util
-using Faker
+using Genie, SearchLight, App, ViewHelper, Util
 @dependencies
 
 function index(params)

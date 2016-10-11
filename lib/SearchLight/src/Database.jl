@@ -1,5 +1,5 @@
 module Database
-using YAML, Genie, Memoize, Model
+using YAML, Genie, Memoize, SearchLight
 
 eval(:(using $(Genie.config.db_adapter)))
 eval(:(const DatabaseAdapter = $(Genie.config.db_adapter)))
@@ -9,7 +9,7 @@ eval(:(export DatabaseAdapter))
   DatabaseAdapter.adapter_connect(Genie.config.db_config_settings)
 end
 
-@memoize function query_tools(skip_db::Bool = false)
+@memoize function query_tools()
   db_connect(), DatabaseAdapter.db_adapter()
 end
 
@@ -22,10 +22,10 @@ function create_migrations_table()
   Logger.log("Created table $(Genie.config.db_migrations_table_name) or table already exists")
 end
 
-function query(sql::AbstractString; skip_db::Bool = false, system_query::Bool = false)
+function query(sql::AbstractString; system_query::Bool = false)
   suppress_output = system_query || Genie.config.suppress_output
-  conn, adapter = query_tools(skip_db)
-  DatabaseAdapter.adapter_query(sql, suppress_output, conn, adapter, skip_db)
+  conn, adapter = query_tools()
+  DatabaseAdapter.adapter_query(sql, suppress_output, conn, adapter)
 end
 
 @memoize function escape_column_name(c::AbstractString)

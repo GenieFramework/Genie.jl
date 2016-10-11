@@ -2,7 +2,7 @@
   <div class="row sameheight-container">
     <div class="col-md-12">
       <div class="card card-block sameheight-item" style="height: 721px;">
-        <form role="form" method="POST" action="$( Model.is_persisted(article) ? to_link(:admin_article_update, article_id = _!!(article.id) ) : to_link(:admin_article_create ) )">
+        <form role="form" method="POST" action="$( SearchLight.is_persisted(article) ? to_link(:admin_article_update, article_id = _!!(article.id) ) : to_link(:admin_article_create ) )">
           %= output_flash(params)
           %= output_errors(article, :unknown)
           <div class="form-group">
