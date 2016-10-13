@@ -306,13 +306,13 @@ const QJ = SQLJoin
 #
 
 type SQLQuery <: SQLType
-  columns::Array{SQLColumn,1}
-  where::Array{SQLWhere,1}
+  columns::Vector{SQLColumn}
+  where::Vector{SQLWhere}
   limit::SQLLimit
   offset::Int
-  order::Array{SQLOrder,1}
-  group::Array{SQLColumn,1}
-  having::Array{SQLWhere,1}
+  order::Vector{SQLOrder}
+  group::Vector{SQLColumn}
+  having::Vector{SQLWhere}
 
   SQLQuery(;  columns = SQLColumn[], where = SQLWhere[], limit = SQLLimit("ALL"), offset = 0,
               order = SQLOrder[], group = SQLColumn[], having = SQLWhere[]) =
@@ -339,11 +339,12 @@ end
 SQLRelation{T<:AbstractModel}(model_name::Type{T};
                               required = false,
                               eagerness = MODEL_RELATIONSHIPS_EAGERNESS_AUTO,
-                              data = Nullable{Union{RelationshipData, RelationshipDataArray}}(),
+                              data = Nullable{Union{RelationshipData,RelationshipDataArray}}(),
                               join = Nullable{SQLJoin}()) = SQLRelation{T}(model_name, required, eagerness, data, join)
+
 function lazy(r::SQLRelation)
-  r.eagerness == MODEL_RELATIONSHIPS_EAGERNESS_LAZY ||
-  r.eagerness == MODEL_RELATIONSHIPS_EAGERNESS_AUTO && Genie.config.model_relationships_eagerness == MODEL_RELATIONSHIPS_EAGERNESS_LAZY
+  r.eagerness == Configuration.MODEL_RELATIONSHIPS_EAGERNESS_LAZY ||
+  r.eagerness == Configuration.MODEL_RELATIONSHIPS_EAGERNESS_AUTO && Genie.config.model_relationships_eagerness == Configuration.MODEL_RELATIONSHIPS_EAGERNESS_LAZY
 end
 function is_lazy(r::SQLRelation)
   lazy(r)

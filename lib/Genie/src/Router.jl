@@ -1,5 +1,5 @@
 module Router
-using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions, Millboard, Configuration, App, Input, Logger
+using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions, Millboard, Configuration, App, Input, Logger, Util
 import HttpServer.mimetypes
 
 include(abspath(joinpath("lib", "Genie", "src", "router_converters.jl")))
@@ -86,8 +86,9 @@ function print_routes()
   Millboard.table(routes())
 end
 
-function to_link!!{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Symbol,T}())
-  route = get_route!!(route_name)
+function to_link!!{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Symbol,T}(); with_error = true)
+  route = (with_error ? get_route!! : get_route)(route_name) |> Util.expand_nullable
+
   result = AbstractString[]
   for part in split(route[1][2], "/")
     if startswith(part, ":")
@@ -103,7 +104,7 @@ function to_link!!{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Sy
 end
 function to_link{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Symbol,T}())
   try
-    to_link!!(route_name, route_params)
+    to_link!!(route_name, route_params, with_error = false)
   catch ex
     Logger.log(ex, :err, showst = false)
     ""
@@ -124,7 +125,7 @@ function to_link(route_name::Symbol; route_params...)
   end
 
   try
-    to_link!!(route_name, d)
+    to_link!!(route_name, d, with_error = false)
   catch ex
     Logger.log(ex, :err, showst = false)
     ""

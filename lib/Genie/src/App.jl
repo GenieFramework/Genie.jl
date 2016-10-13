@@ -34,7 +34,7 @@ function load_acl(dir::AbstractString)
 end
 
 function load_configurations()
-  include(abspath("config/loggers.jl"))
+  isfile(abspath("config/loggers.jl")) && include(abspath("config/loggers.jl"))
   isfile(abspath("config/secrets.jl")) && include(abspath("config/secrets.jl"))
 end
 

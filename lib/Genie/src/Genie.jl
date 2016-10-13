@@ -1,17 +1,16 @@
 module Genie
 
-include(abspath(joinpath("lib/Genie/src/constants.jl")))
+include(abspath(joinpath("lib", "Genie", "src", "constants.jl")))
 
-include(abspath(joinpath("config", "env", ENV["GENIE_ENV"] * ".jl")))
-include(abspath(joinpath("config", "app.jl")))
-include(abspath("lib/Genie/src/macros.jl"))
-include(abspath(joinpath("config", "plugins.jl")))
+include(abspath(joinpath(ENV_PATH, ENV["GENIE_ENV"] * ".jl")))
+include(abspath(joinpath(CONFIG_PATH, "app.jl")))
+include(abspath(joinpath(LIB_PATH, "Genie", "src", "macros.jl")))
+include(abspath(joinpath(CONFIG_PATH, "plugins.jl")))
 
-push!(LOAD_PATH,  abspath(joinpath("lib", "Genie",       "src", "cache_adapters")),
-                  abspath(joinpath("lib", "Genie",       "src", "session_adapters")),
-                  abspath(joinpath("lib", "SearchLight", "src", "database_adapters")),
-                  abspath(joinpath("app", "resources")),
-                  abspath(joinpath("app", "helpers")))
+push!(LOAD_PATH,  abspath(joinpath(LIB_PATH, "Genie", "src", "cache_adapters")),
+                  abspath(joinpath(LIB_PATH, "Genie", "src", "session_adapters")),
+                  abspath(joinpath(LIB_PATH, "SearchLight", "src", "database_adapters")),
+                  RESOURCE_PATH, HELPERS_PATH)
 
 include(abspath(joinpath("lib", "Genie", "src", "genie_types.jl")))
 
@@ -21,20 +20,22 @@ macro devtools()
   end
 end
 
-export @devtools
+macro ifdevtools(expr::Expr)
+  if ENV["GENIE_ENV"] == "dev"
+    quote
+      using Gallium
+      $(esc(expr))
+    end
+  end
+end
+
+export @devtools, @ifdevtools
 
 function startup(parsed_args = Dict{AbstractString,Any}(), start_server = false)
   isempty(parsed_args) && (parsed_args = Commands.parse_commandline_args())
 
   if parsed_args["s"] == "s" || start_server == true
     AppServer.startup(Genie.config.server_port)
-
-    println()
-    Logger.log("Started Genie server session", :info)
-
-    while true
-      sleep(1_000_000_000)
-    end
   end
 
   false

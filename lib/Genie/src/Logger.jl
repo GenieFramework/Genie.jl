@@ -7,7 +7,6 @@ function log(message, level = "info"; showst::Bool = true)
   println()
   Lumberjack.log(string(level), string(message))
   println()
-  # self_log()
 
   if level == "err" || level == "critical" && showst
     println()
@@ -53,7 +52,7 @@ end
 function setup_loggers()
   configure(; modes=["debug", "info", "notice", "warn", "err", "critical", "alert", "emerg"])
   add_truck(LumberjackTruck(STDOUT, nothing, Dict{Any,Any}(:is_colorized => true)), "console")
-  add_truck(LumberjackTruck("$(Genie.config.app_env).log", nothing, Dict{Any,Any}(:is_colorized => true)), "file-logger")
+  add_truck(LumberjackTruck("$(joinpath(Genie.LOG_PATH, Genie.config.app_env)).log", nothing, Dict{Any,Any}(:is_colorized => true)), "file-logger")
 
   true
 end

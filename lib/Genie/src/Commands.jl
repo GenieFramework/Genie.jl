@@ -1,5 +1,5 @@
 module Commands
-using ArgParse, Configuration, Genie, Database, Generator, Tester, Toolbox, App, Migration
+using ArgParse, Configuration, Genie, Database, Generator, Tester, Toolbox, App, Migration, Logger
 
 function called_command(args, key)
     args[key] == "true" || args["s"] == key
@@ -56,8 +56,6 @@ function execute(config::Config)
   elseif called_command(parsed_args, "s")
     Genie.startup(parsed_args)
 
-  elseif isinteractive() || Configuration.IN_REPL
-    Logger.log("Started Genie interactive session", :info)
   end
 end
 

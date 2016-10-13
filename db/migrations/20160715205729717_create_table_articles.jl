@@ -10,7 +10,7 @@ function up()
       summary       text NOT NULL,
       content       text NOT NULL,
       updated_at    timestamp DEFAULT current_timestamp,
-      CONSTRAINT articles__idx_name UNIQUE(title)
+      CONSTRAINT articles__idx_title UNIQUE(title)
     )
   """)
   Database.query("""ALTER SEQUENCE articles__seq_id OWNED BY articles.id""")

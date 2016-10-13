@@ -14,17 +14,22 @@ route(GET, "/docs/:article_slug::AbstractString", "docs#DocsController.Website.s
 
 # admin
 
-route(GET, "/admin/dashboard", "dashboard#DashboardController.index")
+route(GET, "/admin/dashboard", "dashboard#DashboardController.index", named = :admin_dashboard)
 
-route(GET, "/admin/articles", "articles#AdminController.Website.articles", named = :admin_article_list)
-route(GET, "/admin/articles/new", "articles#AdminController.Website.article_new", named = :admin_article_new)
-route(POST, "/admin/articles/create", "articles#AdminController.Website.article_create", named = :admin_article_create)
+route(GET, "/admin/articles", "admin#AdminController.Articles.articles", named = :admin_article_list)
+route(GET, "/admin/articles/new", "admin#AdminController.Articles.article_new", named = :admin_article_new)
+route(POST, "/admin/articles/create", "admin#AdminController.Articles.article_create", named = :admin_article_create)
+route(GET, "/admin/articles/:article_id::Int", "admin#AdminController.Articles.article_edit", named = :admin_article_edit)
+route(POST, "/admin/articles/:article_id::Int", "admin#AdminController.Articles.article_update", named = :admin_article_update)
 
-route(GET, "/admin/articles/:article_id::Int", "articles#AdminController.Website.article_edit", named = :admin_article_edit)
-route(POST, "/admin/articles/:article_id::Int", "articles#AdminController.Website.article_update", named = :admin_article_update)
+route(GET, "/admin/articles/:article_id::Int/publish", "admin#AdminController.Articles.article_publish", named = :admin_article_publish)
+route(GET, "/admin/articles/:article_id::Int/preview", "admin#AdminController.Articles.article_preview", named = :admin_article_preview)
 
-route(GET, "/admin/articles/:article_id::Int/publish", "articles#AdminController.Website.article_publish", named = :admin_article_publish)
-route(GET, "/admin/articles/:article_id::Int/preview", "articles#AdminController.Website.article_preview", named = :admin_article_preview)
+route(GET, "/admin/categories", "admin#AdminController.Categories.categories", named = :admin_categories_list)
+route(GET, "/admin/categories/new", "admin#AdminController.Categories.category_new", named = :admin_category_new)
+route(POST, "/admin/categories/create", "admin#AdminController.Categories.category_create", named = :admin_category_create)
+route(GET, "/admin/categories/:category_id::Int", "admin#AdminController.Categories.category_edit", named = :admin_category_edit)
+route(POST, "/admin/categories/:category_id::Int", "admin#AdminController.Categories.category_update", named = :admin_category_update)
 
 # login
 

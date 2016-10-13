@@ -1,32 +1,36 @@
 module Inflector
 using Genie
 
+const vowels = ["a", "e", "i", "o", "u"]
+
 function to_singular(word::AbstractString; is_irregular::Bool = false)
   ( is_irregular || ! endswith(word, "s") ) && return to_singular_irregular(word)
-  endswith(word, "s") && return Nullable{AbstractString}(word[1:end-1])
-  Nullable{AbstractString}()
+  endswith(word, "ies") && ! in(word[end-3], vowels) && return Nullable{String}(word[1:end-3] * "y")
+  endswith(word, "s") && return Nullable{String}(word[1:end-1])
+  Nullable{String}()
 end
 
 function to_singular_irregular(word::AbstractString)
   irr = irregular(word)
   if ! isnull(irr)
-    return Nullable{Base.get(irr)[1]}
+    Nullable{Base.get(irr)[1]}
   else
-    return Nullable{AbstractString}()
+    Nullable{String}()
   end
 end
 
 function to_plural(word::AbstractString; is_irregular::Bool = false)
   is_irregular && return to_plural_irregular(word)
-  return is_singular(word) ? Nullable{AbstractString}(word * "s") : Nullable{AbstractString}(word)
+  endswith(word, "y") && ! in(word[end-1], vowels) && return Nullable{String}(word[1:end-1] * "ies") # category -> categories // story -> stories
+  is_singular(word) ? Nullable{String}(word * "s") : Nullable{String}(word)
 end
 
 function to_plural_irregular(word::AbstractString)
   irr = irregular(word)
   if ! isnull(irr)
-    return Nullable{AbstractString}(Base.get(irr)[2])
+    Nullable{String}(Base.get(irr)[2])
   else
-    return Nullable{AbstractString}()
+    Nullable{String}()
   end
 end
 
@@ -48,13 +52,13 @@ end
 
 function irregular(word::AbstractString)
   for (k, v) in irregular_nouns
-    if word == k || word == v return Nullable{Tuple{AbstractString, AbstractString}}(k, v) end
+    (word == k || word == v) && return Nullable{Tuple{String,String}}(k, v)
   end
 
-  Nullable{Tuple{AbstractString, AbstractString}}()
+  Nullable{Tuple{String,String}}()
 end
 
-irregular_nouns = Array{Tuple{AbstractString, AbstractString},1}([
+irregular_nouns = Vector{Tuple{String,String}}([
   ("alumnus", "alumni"),
   ("cactus", "cacti"),
   ("focus", "foci"),

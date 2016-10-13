@@ -4,8 +4,9 @@ using Genie, Validation, Helpers, App, URIParser
 export active_menu_class, output_errors, output_flash, article_status_label, input_checked, pagination_navigation, article_uri
 
 function current_menu(params)
-  params[:action_controller] == "AdminController.Website.articles" && return :articles
   params[:action_controller] == "DashboardController.index" && return :dashboard
+  params[:action_controller] == "AdminController.Website.articles" && return :articles
+  params[:action_controller] == "AdminController.Website.categories" && return :categories
 end
 
 function is_active_menu(section::Symbol, params)

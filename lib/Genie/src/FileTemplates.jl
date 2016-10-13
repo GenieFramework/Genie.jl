@@ -53,6 +53,8 @@ function new_model(model_name::AbstractString)
 
     ### fields
     id::Nullable{SearchLight.DbId}
+
+    ### validator
     validator::ModelValidator
 
     ### relationships
@@ -77,9 +79,9 @@ function new_model(model_name::AbstractString)
       has_one = [],
       has_many = [],
 
-      before_save = () -> warn("Not implemented"),
-      on_dehydration = () -> warn("Not implemented"),
-      on_hydration = () -> warn("Not implemented")
+      before_save = (m::$model_name) -> warn("Not implemented"),
+      on_dehydration = (m::$model_name) -> warn("Not implemented"),
+      on_hydration = (m::$model_name) -> warn("Not implemented")
     ) = new("$(lowercase(pluralized_name))", "id",
             id, validator,
             belongs_to, has_one, has_many,

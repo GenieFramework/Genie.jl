@@ -1,26 +1,19 @@
-module AdminController
-module Website
-using App, Authentication, Authorization
+module Articles
+using App, Authentication, Authorization, SearchLight
 @dependencies
-
-const before_action = [Symbol("AdminController.Website.require_authentication")]
-
-function require_authentication(params::Dict{Symbol,Any})
-  ! Authentication.is_authenticated(params) && return (false, unauthorized_access(params))
-end
 
 function articles(params::Dict{Symbol,Any})
   with_authorization(:list, unauthorized_access, params) do
     with_cache(cache_key(params[:action_controller], params[:page_number])) do
       params[:pagination_total] = SearchLight.count(Article)
-      ejl(:articles, :admin_list, layout = :admin, articles = SearchLight.find(Article, SQLQuery(order = SQLOrder(:updated_at, :desc), limit = params[:page_size], offset = (params[:page_number] - 1) * params[:page_size])), params = params) |> respond
+      ejl(:admin, :articles, layout = :admin, articles = SearchLight.find(Article, SQLQuery(order = SQLOrder(:updated_at, :desc), limit = params[:page_size], offset = (params[:page_number] - 1) * params[:page_size])), params = params) |> respond
     end
   end
 end
 
 function article_new(params::Dict{Symbol,Any}; a::Article = Article())
   with_authorization(:create, unauthorized_access, params) do
-    ejl(:articles, :admin_item, layout = :admin, article = a, params = params) |> respond
+    ejl(:admin, :article, layout = :admin, article = a, params = params) |> respond
   end
 end
 
@@ -50,7 +43,7 @@ end
 function article_edit(params::Dict{Symbol,Any}; a::Article = Article())
   with_authorization(:edit, unauthorized_access, params) do
     article = SearchLight.is_persisted(a) ? a : SearchLight.find_one!!(Article, params[:article_id])
-    ejl(:articles, :admin_item, layout = :admin, article = article, params = params) |> respond
+    ejl(:admin, :article, layout = :admin, article = article, params = params) |> respond
   end
 end
 
@@ -85,5 +78,4 @@ function article_publish(params::Dict{Symbol,Any})
   end
 end
 
-end
 end

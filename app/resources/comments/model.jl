@@ -27,9 +27,7 @@ type Comment <: AbstractModel
       (:title, Validation.CommentValidator.not_empty)
     ]),
 
-    belongs_to = [],
-    has_one = [],
-    has_many = [],
+    belongs_to = [SQLRelation(Article), SQLRelation(User)],
 
     before_save = () -> warn("Not implemented"),
     on_dehydration = () -> warn("Not implemented"),
