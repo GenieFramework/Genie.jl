@@ -278,7 +278,7 @@ const loaded_controllers = UInt64[]
 function invoke_controller(to::AbstractString, req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session)
   to_parts::Vector{AbstractString} = split(to, "#")
 
-  controller_path = abspath(joinpath(Genie.APP_PATH, "app", "resources", to_parts[1]))
+  controller_path = abspath(joinpath(Genie.RESOURCE_PATH, to_parts[1]))
   controller_path_hash = hash(controller_path)
   if ! in(controller_path_hash, loaded_controllers) || Configuration.is_dev()
     App.load_controller(controller_path)

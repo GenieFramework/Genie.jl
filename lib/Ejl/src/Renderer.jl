@@ -14,7 +14,7 @@ const EJL_YIELD_VAR_NAME = :yield
 
 function json(resource::Symbol, action::Symbol; vars...)
   spawn_splatted_vars(vars)
-  r = include(abspath(joinpath("app", "resources", string(resource), "views", string(action) * ".$RENDER_JSON_EXT")))
+  r = include(abspath(joinpath(Genie.RESOURCE_PATH, string(resource), "views", string(action) * ".$RENDER_JSON_EXT")))
 
   Dict(:json => r)
 end
@@ -22,13 +22,13 @@ end
 function ejl(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractString} = :app, render_layout::Bool = true, vars...)
   spawn_splatted_vars(vars)
 
-  path = abspath(joinpath(Genie.APP_PATH, "app", "resources", string(resource), "views", string(action) * "." * Configuration.RENDER_EJL_EXT))
+  path = abspath(joinpath(Genie.RESOURCE_PATH, string(resource), "views", string(action) * "." * Configuration.RENDER_EJL_EXT))
   r = @ejl(:($path))
   # r = Ejl.render_ejl(path)
 
   if render_layout
     spawn_vars(EJL_YIELD_VAR_NAME, r)
-    path = abspath(joinpath(Genie.APP_PATH, "app", "layouts", string(layout) * "." * Configuration.RENDER_EJL_EXT))
+    path = abspath(joinpath(Genie.APP_PATH, "layouts", string(layout) * "." * Configuration.RENDER_EJL_EXT))
     r = @ejl(:($path))
   end
 
@@ -36,7 +36,7 @@ function ejl(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractStr
 end
 function ejl(content::AbstractString, layout::Union{Symbol, AbstractString} = :app, vars...)
   spawn_splatted_vars(vars)
-  layout = Ejl.template_from_file(abspath(joinpath(Genie.APP_PATH, "app", "layouts", string(layout) * "." * Configuration.RENDER_EJL_EXT)))
+  layout = Ejl.template_from_file(abspath(joinpath(Genie.APP_PATH, "layouts", string(layout) * "." * Configuration.RENDER_EJL_EXT)))
   spawn_vars(EJL_YIELD_VAR_NAME, content)
   r = Ejl.render_tpl(layout)
 
@@ -50,12 +50,12 @@ end
 function mustache(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractString} = :app, render_layout::Bool = true, vars...)
   spawn_splatted_vars(vars)
 
-  template = Mustache.template_from_file(abspath(joinpath("app", "resources", string(resource), "views", string(action) * ".$RENDER_MUSTACHE_EXT")))
+  template = Mustache.template_from_file(abspath(joinpath(Genie.RESOURCE_PATH, string(resource), "views", string(action) * ".$RENDER_MUSTACHE_EXT")))
   vals = merge(special_vals(), Dict(k => v for (k, v) in vars))
   r = Mustache.render(template, vals)
 
   if render_layout
-    layout = Mustache.template_from_file(abspath(joinpath("app", "layouts", string(layout) * ".$RENDER_MUSTACHE_EXT")))
+    layout = Mustache.template_from_file(abspath(joinpath(Genie.APP_PATH, "layouts", string(layout) * ".$RENDER_MUSTACHE_EXT")))
     vals[MUSTACHE_YIELD_VAR_NAME] = r
     r = Mustache.render(layout, vals)
   end
@@ -65,7 +65,7 @@ end
 function mustache(content::AbstractString, layout::Union{Symbol, AbstractString} = :app, vars...)
   spawn_splatted_vars(vars)
   vals = merge(special_vals(), Dict(k => v for (k, v) in vars))
-  layout = Mustache.template_from_file(abspath(joinpath("app", "layouts", string(layout) * ".$RENDER_MUSTACHE_EXT")))
+  layout = Mustache.template_from_file(abspath(joinpath(Genie.APP_PATH, "layouts", string(layout) * ".$RENDER_MUSTACHE_EXT")))
   vals[MUSTACHE_YIELD_VAR_NAME] = content
   r = Mustache.render(layout, vals)
 

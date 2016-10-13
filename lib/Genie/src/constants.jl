@@ -1,6 +1,10 @@
-const APP_PATH = pwd()
-const DOC_ROOT_PATH = APP_PATH * "/public"
-const CONFIG_PATH = APP_PATH * "/config"
+const ROOT_PATH       = pwd()
+const DOC_ROOT_PATH   = ROOT_PATH * "/public"
+const CONFIG_PATH     = ROOT_PATH * "/config"
+const APP_PATH        = ROOT_PATH * "/app"
+const RESOURCE_PATH   = APP_PATH * "/resources"
+const TEST_PATH       = ROOT_PATH * "/test"
+const TEST_PATH_UNIT  = TEST_PATH * "/unit"
 
 const GENIE_MODEL_FILE_NAME             = "model.jl"
 const GENIE_CONTROLLER_FILE_NAME        = "controller.jl"
@@ -13,3 +17,5 @@ const PARAMS_RESPONSE_KEY   = :RESPONSE
 const PARAMS_SESSION_KEY    = :SESSION
 const PARAMS_FLASH_KEY      = :FLASH
 const PARAMS_ACL_KEY        = :ACL
+
+const TEST_FILE_IDENTIFIER = "_test.jl"

@@ -32,13 +32,17 @@ function new_resource(cmd_args::Dict{AbstractString,Any}, config::Configuration.
       Logger.log("New $resource_file created at $(joinpath(resource_path, resource_file))")
   end
 
-  if ! isdir(joinpath(resource_path, "views"))
-    mkpath(joinpath(resource_path, "views"))
-  end
+  views_path = joinpath(resource_path, "views")
+  ! isdir(views_path) && mkpath(views_path)
+
+  ! isdir(Genie.TEST_PATH_UNIT) && mkpath(Genie.TEST_PATH_UNIT)
+  test_file = resource_name * Genie.TEST_FILE_IDENTIFIER |> lowercase
+  write_resource_file(Genie.TEST_PATH_UNIT, test_file, resource_name) &&
+    Logger.log("New $test_file created at $(joinpath(Genie.TEST_PATH_UNIT, test_file))")
 end
 
 function setup_resource_path(resource_name::AbstractString)
-  resources_dir = abspath(joinpath("app", "resources"))
+  resources_dir = Genie.RESOURCE_PATH
   resource_path = joinpath(resources_dir, lowercase(resource_name))
 
   if ! isdir(resource_path)
@@ -64,6 +68,8 @@ function write_resource_file(resource_path::AbstractString, file_name::AbstractS
     write(f, FileTemplates.new_validator( Base.get(Inflector.to_singular(resource_name)) ))
   elseif file_name == Genie.GENIE_AUTHORIZATOR_FILE_NAME
     write(f, FileTemplates.new_authorizer())
+  elseif endswith(file_name, Genie.TEST_FILE_IDENTIFIER)
+    write(f, FileTemplates.new_test(Base.get(Inflector.to_plural( Inflector.from_underscores(resource_name) )), Base.get(Inflector.to_singular( Inflector.from_underscores(resource_name) )) ))
   else
     error("Not supported, $file_name")
   end

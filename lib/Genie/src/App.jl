@@ -1,7 +1,7 @@
 module App
 using Genie, SearchLight, Validation, YAML
 
-function load_models(dir = abspath(joinpath(Genie.APP_PATH, "app", "resources")))
+function load_models(dir = Genie.RESOURCE_PATH)
   dir_contents = readdir(abspath(dir))
 
   for i in dir_contents
@@ -39,7 +39,7 @@ function load_configurations()
 end
 
 function load_initializers()
-  dir = abspath(joinpath(Genie.APP_PATH, "config", "initializers"))
+  dir = abspath(joinpath(Genie.CONFIG_PATH, "initializers"))
 
   if isdir(dir)
     f = readdir(dir)

@@ -1,9 +1,5 @@
 module Tester
-
-using Genie
-using Util
-using Migration
-using Configuration
+using Genie, App, Util, Migration, Configuration, Logger
 
 function bootstrap_tests(cmd_args::AbstractString, config::Genie.Config)
   set_test_env()

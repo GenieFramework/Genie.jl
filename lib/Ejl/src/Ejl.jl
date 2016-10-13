@@ -46,7 +46,7 @@ function parse_tpl(s::AbstractString)
     file_name = strip(command_parts[1])
     file_name = endswith(file_name, "." * Configuration.RENDER_EJL_EXT) ? file_name : file_name * "." * Configuration.RENDER_EJL_EXT
 
-    open(joinpath(Genie.APP_PATH, file_name)) do f
+    open(joinpath(Genie.ROOT_PATH, file_name)) do f
       lines = String[]
       for line in split(readstring(f), "\n")
         line_is_include(line) && (line = include_partial(line))

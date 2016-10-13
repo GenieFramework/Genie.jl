@@ -47,18 +47,25 @@ function new_model(model_name::AbstractString)
   export $model_name, $pluralized_name
 
   type $model_name <: AbstractModel
+    ### internals
     _table_name::String
     _id::String
 
+    ### fields
     id::Nullable{SearchLight.DbId}
     validator::ModelValidator
 
+    ### relationships
     belongs_to::Vector{SearchLight.SQLRelation}
+    has_one::Vector{SearchLight.SQLRelation}
+    has_many::Vector{SearchLight.SQLRelation}
 
+    ### callbacks
     before_save::Function
     on_dehydration::Function
     on_hydration::Function
 
+    ### constructor
     $model_name(;
       id = Nullable{SearchLight.DbId}(),
 
@@ -67,11 +74,17 @@ function new_model(model_name::AbstractString)
       ]),
 
       belongs_to = [],
+      has_one = [],
+      has_many = [],
 
       before_save = () -> warn("Not implemented"),
       on_dehydration = () -> warn("Not implemented"),
       on_hydration = () -> warn("Not implemented")
-    ) = new("$(lowercase(pluralized_name))", "id", id, validator, belongs_to, before_save, on_dehydration, on_hydration)
+    ) = new("$(lowercase(pluralized_name))", "id",
+            id, validator,
+            belongs_to, has_one, has_many,
+            before_save, on_dehydration, on_hydration
+            )
   end
 
   module $pluralized_name
@@ -117,6 +130,15 @@ function new_authorizer()
     edit: own
     delete: own
     list: own
+  """
+end
+
+function new_test(plural_name::AbstractString, singular_name::AbstractString)
+  """
+  using Genie, App, App.$(plural_name)
+
+  ### Your tests here
+  @test 1 == 1
   """
 end
 

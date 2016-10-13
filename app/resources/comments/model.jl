@@ -1,18 +1,25 @@
 export Comment, Comments
 
 type Comment <: AbstractModel
+  ### internals
   _table_name::String
   _id::String
 
+  ### fields
   id::Nullable{SearchLight.DbId}
   validator::ModelValidator
 
+  ### relationships
   belongs_to::Vector{SearchLight.SQLRelation}
+  has_one::Vector{SearchLight.SQLRelation}
+  has_many::Vector{SearchLight.SQLRelation}
 
+  ### callbacks
   before_save::Function
   on_dehydration::Function
   on_hydration::Function
 
+  ### constructor
   Comment(;
     id = Nullable{SearchLight.DbId}(),
 
@@ -21,11 +28,17 @@ type Comment <: AbstractModel
     ]),
 
     belongs_to = [],
+    has_one = [],
+    has_many = [],
 
     before_save = () -> warn("Not implemented"),
     on_dehydration = () -> warn("Not implemented"),
     on_hydration = () -> warn("Not implemented")
-  ) = new("comments", "id", id, validator, belongs_to, before_save, on_dehydration, on_hydration)
+  ) = new("comments", "id",
+          id, validator,
+          belongs_to, has_one, has_many,
+          before_save, on_dehydration, on_hydration
+          )
 end
 
 module Comments
