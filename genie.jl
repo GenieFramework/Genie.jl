@@ -15,4 +15,8 @@ nworkers() < parse(Int, ENV["NWORKERS"]) && addprocs(parse(Int, ENV["NWORKERS"])
                               abspath(pwd()))
 
 @everywhere import Genie
-using Genie
+using Genie, App, SearchLight
+
+try
+  using OhMyREPL
+end

@@ -574,45 +574,64 @@ function get_relationship_data{T<:AbstractModel}(m::T, rel::SQLRelation, relatio
   Nullable{RelationshipData}()
 end
 
-function df_result_to_models_data{T<:AbstractModel}(m::Type{T}, df::DataFrame)::Dict{String,DataFrame}
-  _m::T = disposable_instance(m)
-  tables_names = String[_m._table_name]
+function relationships_tables_names{T<:AbstractModel}(m::Type{T})
+  tables_names = String[]
+  for r in relationships(m)
+    r, r_type = r
+    rmdl = disposable_instance(r.model_name)
+    push!(tables_names, rmdl._table_name)
+  end
+
+  tables_names
+end
+
+function extract_columns_names(tables_names::Vector{String}, df::DataFrame)
   tables_columns = Dict()
+
+  for t in tables_names
+    tables_columns[t] = Symbol[]
+  end
+
+  for dfc in names(df)
+    table_name = ""
+    sdfc = string(dfc)
+
+    ! contains(sdfc, "_") && continue
+
+    for t in tables_names
+      if ismatch(Regex("^$t"), sdfc)
+        table_name = t
+        break
+      end
+    end
+
+    # table_name = split(sdfc, "_")[1]
+
+    ! in(table_name, tables_names) && continue
+
+    push!(tables_columns[table_name], dfc)
+  end
+
+  tables_columns
+end
+
+function split_dfs_by_table(tables_names::Vector{String}, tables_columns::Dict, df::DataFrame)
   sub_dfs = Dict{String,DataFrame}()
 
-  function relationships_tables_names{T<:AbstractModel}(m::Type{T})
-    for r in relationships(m)
-      r, r_type = r
-      rmdl = disposable_instance(r.model_name)
-      push!(tables_names, rmdl._table_name)
-    end
+  for t in tables_names
+    sub_dfs[t] = df[:, tables_columns[t]]
   end
 
-  function extract_columns_names()
-    for t in tables_names
-      tables_columns[t] = Symbol[]
-    end
+  sub_dfs
+end
 
-    for dfc in names(df)
-      sdfc = string(dfc)
-      ! contains(sdfc, "_") && continue
-      table_name = split(sdfc, "_")[1]
-      ! in(table_name, tables_names) && continue
-      push!(tables_columns[table_name], dfc)
-    end
-  end
+function df_result_to_models_data{T<:AbstractModel}(m::Type{T}, df::DataFrame)::Dict{String,DataFrame}
+  _m::T = disposable_instance(m)
+  tables_names = vcat(String[_m._table_name], relationships_tables_names(m))
 
-  function split_dfs_by_table()
-    for t in tables_names
-      sub_dfs[t] = df[:, tables_columns[t]]
-    end
-
-    sub_dfs
-  end
-
-  relationships_tables_names(m)
-  extract_columns_names()
-  split_dfs_by_table()::Dict{String,DataFrame}
+  split_dfs_by_table( tables_names,
+                      extract_columns_names(tables_names, df),
+                      df)::Dict{String,DataFrame}
 end
 
 function relation_to_sql{T<:AbstractModel}(m::T, rel::Tuple{SQLRelation,Symbol})

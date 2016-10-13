@@ -8,11 +8,11 @@ type Category <: AbstractModel
   ### fields
   id::Nullable{SearchLight.DbId}
   name::String
+
+  # validator
   validator::ModelValidator
 
   ### relationships
-  belongs_to::Vector{SearchLight.SQLRelation}
-  has_one::Vector{SearchLight.SQLRelation}
   has_many::Vector{SearchLight.SQLRelation}
 
   ### constructor
@@ -24,13 +24,12 @@ type Category <: AbstractModel
       (:name, Validation.CategoryValidator.not_empty)
     ]),
 
-    belongs_to = [],
-    has_one = [],
-    has_many = []
+    has_many = [SQLRelation(ArticleCategory)]
 
   ) = new("categories", "id",
-          id, name, validator,
-          belongs_to, has_one, has_many
+          id, name,
+          validator,
+          has_many
           )
 end
 

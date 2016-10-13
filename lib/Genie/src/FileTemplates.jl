@@ -40,8 +40,9 @@ function new_task(class_name::AbstractString)
   """
 end
 
-function new_model(model_name::AbstractString)
+function new_model(model_name::AbstractString, resource_name::AbstractString = model_name)
   pluralized_name = Inflector.to_plural(model_name) |> Base.get
+  table_name = Inflector.to_plural(resource_name) |> Base.get |> lowercase
 
   """
   export $model_name, $pluralized_name
@@ -58,34 +59,36 @@ function new_model(model_name::AbstractString)
     validator::ModelValidator
 
     ### relationships
-    belongs_to::Vector{SearchLight.SQLRelation}
-    has_one::Vector{SearchLight.SQLRelation}
-    has_many::Vector{SearchLight.SQLRelation}
+    # belongs_to::Vector{SearchLight.SQLRelation}
+    # has_one::Vector{SearchLight.SQLRelation}
+    # has_many::Vector{SearchLight.SQLRelation}
 
     ### callbacks
-    before_save::Function
-    on_dehydration::Function
-    on_hydration::Function
+    # before_save::Function
+    # on_dehydration::Function
+    # on_hydration::Function
 
     ### constructor
     $model_name(;
       id = Nullable{SearchLight.DbId}(),
 
       validator = ModelValidator([
-        (:title, Validation.$(model_name)Validator.not_empty)
+        # (:title, Validation.$(model_name)Validator.not_empty)
       ]),
 
-      belongs_to = [],
-      has_one = [],
-      has_many = [],
+      # belongs_to = [],
+      # has_one = [],
+      # has_many = [],
 
-      before_save = (m::$model_name) -> warn("Not implemented"),
-      on_dehydration = (m::$model_name) -> warn("Not implemented"),
-      on_hydration = (m::$model_name) -> warn("Not implemented")
-    ) = new("$(lowercase(pluralized_name))", "id",
-            id, validator,
-            belongs_to, has_one, has_many,
-            before_save, on_dehydration, on_hydration
+      # before_save = (m::$model_name) -> warn("Not implemented"),
+      # on_dehydration = (m::$model_name) -> warn("Not implemented"),
+      # on_hydration = (m::$model_name) -> warn("Not implemented")
+
+    ) = new("$table_name", "id",
+            id,
+            validator
+            # belongs_to, has_one, has_many,
+            # before_save, on_dehydration, on_hydration
             )
   end
 

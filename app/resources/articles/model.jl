@@ -6,6 +6,8 @@ type Article <: AbstractModel
 
   validator::ModelValidator
 
+  has_many::Vector{SearchLight.SQLRelation}
+
   id::Nullable{SearchLight.DbId}
   title::String
   summary::String
@@ -24,6 +26,8 @@ type Article <: AbstractModel
       (:summary,  Validation.ArticlesValidator.not_empty_if_long_content, (2000))
     ]),
 
+    has_many = [SQLRelation(ArticleCategory)],
+
     id = Nullable{SearchLight.DbId}(),
     title = "",
     summary = "",
@@ -33,7 +37,7 @@ type Article <: AbstractModel
     slug = "",
 
     before_save = Articles.before_save
-  ) = new("articles", "id", validator, id, title, summary, content, updated_at, published_at, slug, before_save)
+  ) = new("articles", "id", validator, has_many, id, title, summary, content, updated_at, published_at, slug, before_save)
 end
 
 module Articles
