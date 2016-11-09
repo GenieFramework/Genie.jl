@@ -5,29 +5,14 @@ import Base.show
 export GenieType, GenieController, Controller
 
 abstract GenieType
-string{T<:GenieType}(io::IO, t::T) = genietype_to_string(t)
-print{T<:GenieType}(io::IO, t::T) = print(io, string(t))
+string{T<:GenieType}(io::IO, t::T) = "$(typeof(t)) <: $(super(typeof(t)))"
+print{T<:GenieType}(io::IO, t::T) = print(io, "$(typeof(t)) <: $(super(typeof(t)))")
 show{T<:GenieType}(io::IO, t::T) = print(io, genietype_to_print(t))
-
-# type State <: GenieType
-#   server_workers::Vector{RemoteRef{Channel{Any}}}
-
-#   State(;
-#     server_workers = Vector{RemoteRef{Channel{Any}}}()
-#   ) = new(server_workers)
-# end
 
 type GenieController <: GenieType
 end
 
 typealias Controller GenieController
-
-function genietype_to_string{T<:GenieType}(m::T)
-  output = "$(typeof(m)) <: $(super(typeof(m)))" * "\n"
-  output *= string(m)
-
-  output
-end
 
 function genietype_to_print{T<:GenieType}(m::T)
   output = "\n" * "$(typeof(m))" * "\n"

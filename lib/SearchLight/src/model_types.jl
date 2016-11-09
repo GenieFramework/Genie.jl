@@ -9,9 +9,8 @@ import Base.==
 
 export DbId, SQLType, AbstractModel, ModelValidator
 export SQLInput, SQLColumn, SQLColumns, SQLLogicOperator
-export SQLWhere, SQLLimit, SQLOrder, SQLQuery, SQLRelation
-export SQLJoin, SQLOn, SQLJoinType, SQLHaving
-export QI, QC, QLO, QW, QL, QO, QQ, QR, QJ, QON, QJT
+export SQLWhere, SQLWhereExpression, SQLWhereEntity, SQLLimit, SQLOrder, SQLQuery, SQLRelation
+export SQLJoin, SQLOn, SQLJoinType, SQLHaving, SQLScope
 
 export is_lazy
 
@@ -22,7 +21,7 @@ typealias DbId Int32
 convert(::Type{Nullable{DbId}}, v::Number) = Nullable{DbId}(DbId(v))
 
 typealias RelationshipData AbstractModel
-typealias RelationshipDataArray Array{AbstractModel,1}
+typealias RelationshipDataArray Vector{AbstractModel}
 
 #
 # SearchLight validations
@@ -45,14 +44,14 @@ type SQLInput
   raw::Bool
   SQLInput(v::Union{String,Real}; escaped = false, raw = false) = new(v, escaped, raw)
 end
-SQLInput(a::Array{Any}) = map(x -> SQLInput(x), a)
+SQLInput{T}(a::Vector{T}) = map(x -> SQLInput(x), a)
 SQLInput(i::SQLInput) = i
-SQLInput{T}(s::SubString{T}) = SQLInput(String(s))
+SQLInput{T}(s::SubString{T}) = SQLInput(convert(String, s))
 
 ==(a::SQLInput, b::SQLInput) = a.value == b.value
 
 string(s::SQLInput) = safe(s).value
-string(a::Array{SQLInput}) = join(map(x -> string(x), a), ",")
+string(a::Vector{SQLInput}) = join(map(x -> string(x), a), ",")
 endof(s::SQLInput) = endof(s.value)
 length(s::SQLInput) = length(s.value)
 next(s::SQLInput, i::Int) = next(s.value, i)
@@ -71,8 +70,6 @@ function convert{T}(::Type{SQLInput}, n::Nullable{T})
     Base.get(n) |> SQLInput
   end
 end
-
-const QI = SQLInput
 
 #
 # SQLColumn
@@ -101,7 +98,7 @@ SQLColumn(c::SQLColumn) = c
 
 ==(a::SQLColumn, b::SQLColumn) = a.value == b.value
 
-string(a::Array{SQLColumn}) = join(map(x -> string(x), a), ", ")
+string(a::Vector{SQLColumn}) = join(map(x -> string(x), a), ", ")
 string(s::SQLColumn) = safe(s).value
 safe(s::SQLColumn) = escape_column_name(s)
 
@@ -110,13 +107,12 @@ convert(::Type{SQLColumn}, s::String) = SQLColumn(s)
 convert(::Type{SQLColumn}, v::String, e::Bool, r::Bool) = SQLColumn(v, escaped = e, raw = r)
 convert(::Type{SQLColumn}, v::String, e::Bool, r::Bool, t::Any) = SQLColumn(v, escaped = e, raw = r, table_name = string(t))
 
-print(io::IO, a::Array{SQLColumn}) = print(io, string(a))
-show(io::IO, a::Array{SQLColumn}) = print(io, string(a))
+print(io::IO, a::Vector{SQLColumn}) = print(io, string(a))
+show(io::IO, a::Vector{SQLColumn}) = print(io, string(a))
 print(io::IO, s::SQLColumn) = print(io, string(s))
 show(io::IO, s::SQLColumn) = print(io, string(s))
 
 const SQLColumns = SQLColumn # so we can use both
-const QC = SQLColumn
 
 #
 # SQLLogicOperator
@@ -130,8 +126,6 @@ SQLLogicOperator(v::Any) = SQLLogicOperator(string(v))
 SQLLogicOperator() = SQLLogicOperator("AND")
 
 string(s::SQLLogicOperator) = s.value
-
-const QLO = SQLLogicOperator
 
 #
 # SQLWhere
@@ -161,10 +155,45 @@ end
 print{T<:SQLWhere}(io::IO, w::T) = print(io, Genie.genietype_to_print(w))
 show{T<:SQLWhere}(io::IO, w::T) = print(io, Genie.genietype_to_print(w))
 
-convert(::Type{Array{SQLWhere,1}}, w::SQLWhere) = [w]
+convert(::Type{Vector{SQLWhere}}, w::SQLWhere) = [w]
 
 const SQLHaving = SQLWhere
-const QW = SQLWhere
+
+#
+# SQLWhereExpression
+#
+
+type SQLWhereExpression <: SQLType
+  sql_expression::String
+  values::Vector{SQLInput}
+  condition::String
+
+  function SQLWhereExpression(sql_expression::String, values::Vector{SQLInput})
+    condition = "AND"
+    parts = split(sql_expression, " ")
+    if in(parts[1], ["AND", "OR", "and", "or"])
+      condition = parts |> first |> uppercase
+      sql_expression = parts[2:end] |> strip
+    end
+
+    new(sql_expression, values, condition)
+  end
+end
+SQLWhereExpression(sql_expression::String) = SQLWhereExpression(sql_expression, SQLInput[])
+SQLWhereExpression{T}(sql_expression::String, values::Vector{T}) = SQLWhereExpression(sql_expression, SQLInput(values))
+
+function string(we::SQLWhereExpression)
+  counter = 0
+  string_value = we.sql_expression
+  while search(string_value, '?') > 0
+    counter += 1
+    string_value = replace(string_value, '?', string(we.values[counter]), 1)
+  end
+
+  we.condition * " " * string_value
+end
+
+typealias SQLWhereEntity Union{SQLWhere,SQLWhereExpression}
 
 #
 # SQLLimit
@@ -193,8 +222,6 @@ string(l::SQLLimit) = string(l.value)
 
 convert(::Type{SearchLight.SQLLimit}, v::Int) = SQLLimit(v)
 
-const QL = SQLLimit
-
 #
 # SQLOrder
 #
@@ -210,10 +237,8 @@ SQLOrder(column::Any; raw::Bool = false) = SQLOrder(SQLColumn(column, raw = raw)
 
 string(o::SQLOrder) = "($(o.column) $(o.direction))"
 
-convert(::Type{Array{SQLOrder,1}}, o::SQLOrder) = [o]
-convert(::Type{Array{SearchLight.SQLOrder,1}}, t::Tuple{Symbol,Symbol}) = SQLOrder(t[1], t[2])
-
-const QO = SQLOrder
+convert(::Type{Vector{SQLOrder}}, o::SQLOrder) = [o]
+convert(::Type{Vector{SearchLight.SQLOrder}}, t::Tuple{Symbol,Symbol}) = SQLOrder(t[1], t[2])
 
 #
 # SQLJoin
@@ -226,9 +251,9 @@ const QO = SQLOrder
 type SQLOn <: SQLType
   column_1::SQLColumn
   column_2::SQLColumn
-  conditions::Array{SQLWhere,1}
+  conditions::Vector{SQLWhereEntity}
 
-  SQLOn(column_1, column_2; conditions = Array{SQLWhere,1}()) = new(column_1, column_2, conditions)
+  SQLOn(column_1, column_2; conditions = SQLWhereEntity[]) = new(column_1, column_2, conditions)
 end
 function string(o::SQLOn)
   on = " ON $(o.column_1) = $(o.column_2) "
@@ -238,8 +263,6 @@ function string(o::SQLOn)
 
   on
 end
-
-const QON = SQLOn
 
 #
 # SQLJoin - SQLJoinType
@@ -262,8 +285,6 @@ convert(::Type{SQLJoinType}, s::String) = SQLJoinType(s)
 
 string(jt::SQLJoinType) = jt.join_type
 
-const QJT = SQLJoinType
-
 #
 # SQLJoin
 #
@@ -273,23 +294,23 @@ type SQLJoin{T<:AbstractModel} <: SQLType
   on::SQLOn
   join_type::SQLJoinType
   outer::Bool
-  where::Array{SQLWhere,1}
+  where::Vector{SQLWhereEntity}
   natural::Bool
-  columns::Array{SQLColumns,1}
+  columns::Vector{SQLColumns}
 end
 SQLJoin{T<:AbstractModel}(model_name::Type{T},
                           on::SQLOn;
                           join_type = SQLJoinType("INNER"),
                           outer = false,
-                          where = Array{SQLWhere,1}(),
+                          where = SQLWhereEntity[],
                           natural = false,
-                          columns = Array{SQLColumns,1}()
+                          columns = SQLColumns[]
                           ) = SQLJoin{T}(model_name, on, join_type, outer, where, natural, columns)
 function string(j::SQLJoin)
   _m = disposable_instance(j.model_name)
   join = """ $(j.natural ? "NATURAL " : "") $(j.join_type) $(j.outer ? "OUTER " : "") JOIN $(Util.add_quotes(_m._table_name)) $(j.on) """
   join *= if ! isempty(j.where)
-            where *= " WHERE " * join(map(x -> string(x), j.where), " AND ")
+            j.where *= " WHERE " * join(map(x -> string(x), j.where), " AND ")
           else
             ""
           end
@@ -297,9 +318,7 @@ function string(j::SQLJoin)
   join
 end
 
-convert(::Type{Array{SQLJoin,1}}, j::SQLJoin) = [j]
-
-const QJ = SQLJoin
+convert(::Type{Vector{SQLJoin}}, j::SQLJoin) = [j]
 
 #
 # SQLQuery
@@ -307,21 +326,19 @@ const QJ = SQLJoin
 
 type SQLQuery <: SQLType
   columns::Vector{SQLColumn}
-  where::Vector{SQLWhere}
+  where::Vector{SQLWhereEntity}
   limit::SQLLimit
   offset::Int
   order::Vector{SQLOrder}
   group::Vector{SQLColumn}
-  having::Vector{SQLWhere}
+  having::Vector{SQLWhereEntity}
 
-  SQLQuery(;  columns = SQLColumn[], where = SQLWhere[], limit = SQLLimit("ALL"), offset = 0,
-              order = SQLOrder[], group = SQLColumn[], having = SQLWhere[]) =
+  SQLQuery(;  columns = SQLColumn[], where = SQLWhereEntity[], limit = SQLLimit("ALL"), offset = 0,
+              order = SQLOrder[], group = SQLColumn[], having = SQLWhereEntity[]) =
     new(columns, where, limit, offset, order, group, having)
 end
 
 string{T<:AbstractModel}(q::SQLQuery, m::Type{T}) = to_fetch_sql(m, q)
-
-const QQ = SQLQuery
 
 #
 # SQLRelation
@@ -331,7 +348,7 @@ type SQLRelation{T<:AbstractModel} <: SQLType
   model_name::Type{T}
   required::Bool
   eagerness::Symbol
-  data::Nullable{Union{RelationshipData, RelationshipDataArray}}
+  data::Nullable{Union{RelationshipData,RelationshipDataArray}}
   join::Nullable{SQLJoin}
 
   SQLRelation(model_name, required, eagerness, data, join) = new(model_name, required, eagerness, data, join)
@@ -349,5 +366,3 @@ end
 function is_lazy(r::SQLRelation)
   lazy(r)
 end
-
-const QR = SQLRelation

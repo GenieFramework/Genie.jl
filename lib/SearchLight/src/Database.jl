@@ -87,8 +87,16 @@ function to_from_part{T<:AbstractModel}(m::Type{T})
   DatabaseAdapter.to_from_part(m)
 end
 
-function to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhere})
+function to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity})
   DatabaseAdapter.to_where_part(m, w)
+end
+
+function required_scopes{T<:AbstractModel}(m::Type{T})
+  DatabaseAdapter.required_scopes(m)
+end
+
+function scopes{T<:AbstractModel}(m::Type{T})
+  DatabaseAdapter.scopes(m)
 end
 
 function to_order_part{T<:AbstractModel}(m::Type{T}, o::Vector{SQLOrder})

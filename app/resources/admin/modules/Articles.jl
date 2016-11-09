@@ -1,5 +1,5 @@
 module Articles
-using App, Authentication, Authorization, SearchLight
+using App, Authentication, Authorization, SearchLight, Validation
 @dependencies
 
 function articles(params::Dict{Symbol,Any})

@@ -240,10 +240,18 @@ function to_from_part{T<:AbstractModel}(m::Type{T})
   "FROM " * escape_column_name(disposable_instance(m)._table_name)
 end
 
-function to_where_part{T<:AbstractModel}(m::Type{T}, w::Array{SQLWhere,1})
+function to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity})
   isempty(w) ?
     "" :
-    "WHERE " * (string(first(w).condition) == "AND" ? "TRUE " : "FALSE ") * join(map(wx -> string(wx, disposable_instance(m)), w), " ")
+    "WHERE " * (string(first(w).condition) == "AND" ? "TRUE " : "FALSE ") * join(map(wx -> string(wx), w), " ")
+end
+
+function required_scopes{T<:AbstractModel}(m::Type{T})
+  throw("To implement")
+end
+
+function scopes{T<:AbstractModel}(m::Type{T})
+  in(:scopes, fieldnames(m)) ? getfield(m(), :scopes)::Vector{SQLWhereEntity} : SQLWhereEntity[]
 end
 
 function to_order_part{T<:AbstractModel}(m::Type{T}, o::Vector{SQLOrder})
@@ -266,7 +274,7 @@ function to_offset_part(o::Int)
   o != 0 ? "OFFSET " * (o |> string) : ""
 end
 
-function to_having_part(h::Vector{SQLHaving})
+function to_having_part(h::Vector{SQLWhereEntity})
   isempty(h) ?
     "" :
     (string(first(h).condition) == "AND" ? "TRUE " : "FALSE ") * join(map(w -> string(w), h), " ")

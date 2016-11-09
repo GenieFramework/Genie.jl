@@ -64,6 +64,10 @@ end
 function find_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
   find_by(m, SQLColumn(column_name), SQLInput(value))
 end
+function find_by{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression)
+  find(m, SQLQuery(where = [sql_expression]))
+end
+
 
 """
     find_one_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput)
@@ -372,7 +376,12 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
 
   for field in fieldnames(_m)
     if ! in(field, set_fields)
-      setfield!(obj, field, getfield(_m, field))
+      try
+        setfield!(obj, field, getfield(_m, field))
+      catch ex
+        Logger.log(ex)
+        Logger.log(field)
+      end
     end
   end
 
@@ -425,12 +434,20 @@ function to_from_part{T<:AbstractModel}(m::Type{T})
 end
 
 """
-    to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhere})
+    to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity})
 
 Generates the WHERE part of the query
 """
-function to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhere})
+function to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity})
   Database.to_where_part(m, w)
+end
+
+function required_scopes{T<:AbstractModel}(m::Type{T})
+  Database.required_scopes(m)
+end
+
+function scopes{T<:AbstractModel}(m::Type{T})
+  Database.scopes(m)
 end
 
 """
@@ -599,13 +616,11 @@ function extract_columns_names(tables_names::Vector{String}, df::DataFrame)
     ! contains(sdfc, "_") && continue
 
     for t in tables_names
-      if ismatch(Regex("^$t"), sdfc)
+      if startswith(sdfc, t)
         table_name = t
         break
       end
     end
-
-    # table_name = split(sdfc, "_")[1]
 
     ! in(table_name, tables_names) && continue
 

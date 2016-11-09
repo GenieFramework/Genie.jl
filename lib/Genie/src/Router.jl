@@ -4,7 +4,7 @@ import HttpServer.mimetypes
 
 include(abspath(joinpath("lib", "Genie", "src", "router_converters.jl")))
 
-export route, routes, params
+export route, routes
 export GET, POST, PUT, PATCH, DELETE
 export to_link!!, to_link
 
@@ -18,6 +18,10 @@ const BEFORE_ACTION_HOOKS = :before_action
 
 const _routes = Dict{Symbol,Any}()
 const _params = Dict{Symbol,Any}()
+
+function params()
+  _params
+end
 
 function route_request(req::Request, res::Response)
   empty!(_params)
@@ -300,9 +304,8 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
   catch ex
     Logger.log("Failed to invoke hooks $(BEFORE_ACTION_HOOKS)", :err, showst = false)
     Logger.log(ex, :err, showst = false)
-    # Base.stacktrace(Base.catch_stacktrace())
 
-    return serve_error_file(500, string(ex) * "<br/><br/>" * join(catch_stacktrace(), "<br/>"))
+    return serve_error_file_500(ex)
   end
 
   return  try
@@ -312,7 +315,7 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
             Logger.log("While invoking $(action_name) with $(params)", :critical, showst = false)
             # Base.stacktrace(Base.catch_stacktrace())
 
-            serve_error_file(500, string(ex) * "<br/><br/>" * join(Base.catch_stacktrace(), "<br/>"))
+            serve_error_file_500(ex)
           end
 end
 
@@ -329,8 +332,18 @@ function to_response(action_result)
             Logger.log("Can't convert $action_result to HttpServer Response", :err)
             Logger.log(ex, :err)
 
-            serve_error_file(500, string(ex) * "<br/><br/>" * join(catch_stacktrace(), "<br/>"))
+            serve_error_file_500(ex)
           end
+end
+
+function serve_error_file_500(ex::Exception)
+  serve_error_file( 500,
+                    string(ex) *
+                    "<br/><br/>" *
+                    join(catch_stacktrace(), "<br/>") *
+                    "<hr/>" *
+                    string(params())
+                  )
 end
 
 function hook_stop(hook_result)

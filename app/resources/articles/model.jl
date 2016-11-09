@@ -1,4 +1,5 @@
 export Article, Articles
+using Authentication
 
 type Article <: AbstractModel
   _table_name::String
@@ -18,6 +19,8 @@ type Article <: AbstractModel
 
   before_save::Function
 
+  scopes::Dict{Symbol,Vector{SearchLight.SQLWhereEntity}}
+
   Article(;
     validator = ModelValidator([
       (:title,    Validation.not_empty),
@@ -36,8 +39,11 @@ type Article <: AbstractModel
     published_at = Nullable{DateTime}(),
     slug = "",
 
-    before_save = Articles.before_save
-  ) = new("articles", "id", validator, has_many, id, title, summary, content, updated_at, published_at, slug, before_save)
+    before_save = Articles.before_save,
+
+    scopes = Dict(:own => [SQLWhere("user_id", 1)])
+
+  ) = new("articles", "id", validator, has_many, id, title, summary, content, updated_at, published_at, slug, before_save, scopes)
 end
 
 module Articles
