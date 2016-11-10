@@ -1,12 +1,12 @@
 module Articles
-using App, Authentication, Authorization, SearchLight, Validation
+using App, Authentication, Authorization, SearchLight, Validation, App.Article
 @dependencies
 
 function articles(params::Dict{Symbol,Any})
-  with_authorization(:list, unauthorized_access, params) do
+  with_authorization(:list_articles, unauthorized_access, params) do auth_scopes
     with_cache(cache_key(params[:action_controller], params[:page_number])) do
-      params[:pagination_total] = SearchLight.count(Article)
-      ejl(:admin, :articles, layout = :admin, articles = SearchLight.find(Article, SQLQuery(order = SQLOrder(:updated_at, :desc), limit = params[:page_size], offset = (params[:page_number] - 1) * params[:page_size])), params = params) |> respond
+      params[:pagination_total] = SearchLight.count(Article, SQLQuery(scopes = auth_scopes))
+      ejl(:admin, :articles, layout = :admin, articles = SearchLight.find(Article, SQLQuery(order = SQLOrder(:updated_at, :desc), limit = params[:page_size], offset = (params[:page_number] - 1) * params[:page_size], scopes = auth_scopes)), params = params) |> respond
     end
   end
 end

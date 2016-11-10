@@ -385,6 +385,10 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
     end
   end
 
+  if in(:after_hydration, fieldnames(_m))
+    obj = _m.after_hydration(obj)
+  end
+
   obj
 end
 

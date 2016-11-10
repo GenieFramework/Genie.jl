@@ -4,7 +4,7 @@ export is_authorized, with_authorization
 
 function is_authorized(ability::Symbol, params::Dict{Symbol,Any})
   Authentication.is_authenticated(session(params)) || return false
-  user_role = SearchLight.relationship_data!!(expand_nullable(current_user(session(params)), default = User()), App.Role, SearchLight.RELATIONSHIP_BELONGS_TO).name
+  user_role = expand_nullable(expand_nullable(current_user(session(params)), default = User()).role, default = "")
   role_has_ability(user_role, ability, params)
 end
 
@@ -12,7 +12,8 @@ function with_authorization(f::Function, ability::Symbol, fallback::Function, pa
   if ! is_authorized(ability, params)
     fallback(params)
   else
-    f()
+    user_role = expand_nullable(expand_nullable(current_user(session(params)), default = User()).role, default = "")
+    f(scopes_of_role_ability(user_role, ability, params))
   end
 end
 
@@ -25,6 +26,14 @@ function role_has_ability(role::Symbol, ability::Symbol, params::Dict{Symbol,Any
     Logger.log(ex, :err)
     return false
   end
+end
+
+function scopes_of_role_ability(role::Symbol, ability::Symbol, params::Dict{Symbol,Any})
+  haskey(params[Genie.PARAMS_ACL_KEY], string(role)) &&
+    haskey(params[Genie.PARAMS_ACL_KEY][string(role)], string(ability)) &&
+    params[Genie.PARAMS_ACL_KEY][string(role)][string(ability)] != nothing ?
+      map(scope -> Symbol(scope), params[Genie.PARAMS_ACL_KEY][string(role)][string(ability)]) :
+      Symbol[]
 end
 
 end

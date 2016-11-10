@@ -86,13 +86,13 @@ function relation_to_sql{T<:AbstractModel}(m::T, rel::Tuple{SQLRelation,Symbol})
 end
 
 function to_fetch_sql{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, joins::Vector{SQLJoin{N}})
-  sql::String = ( "$(to_select_part(m, q.columns, joins)) $(to_from_part(m)) $(to_join_part(m, joins)) $(to_where_part(m, q.where)) " *
+  sql::String = ( "$(to_select_part(m, q.columns, joins)) $(to_from_part(m)) $(to_join_part(m, joins)) $(to_where_part(m, q.where, q.scopes)) " *
                       "$(to_group_part(q.group)) $(to_order_part(m, q.order)) " *
                       "$(to_having_part(q.having)) $(to_limit_part(q.limit)) $(to_offset_part(q.offset))") |> strip
   replace(sql, r"\s+", " ")
 end
 function to_fetch_sql{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
-  sql::String = ( "$(to_select_part(m, q.columns)) $(to_from_part(m)) $(to_join_part(m)) $(to_where_part(m, q.where)) " *
+  sql::String = ( "$(to_select_part(m, q.columns)) $(to_from_part(m)) $(to_join_part(m)) $(to_where_part(m, q.where, q.scopes)) " *
                       "$(to_group_part(q.group)) $(to_order_part(m, q.order)) " *
                       "$(to_having_part(q.having)) $(to_limit_part(q.limit)) $(to_offset_part(q.offset))") |> strip
   replace(sql, r"\s+", " ")
@@ -240,18 +240,24 @@ function to_from_part{T<:AbstractModel}(m::Type{T})
   "FROM " * escape_column_name(disposable_instance(m)._table_name)
 end
 
-function to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity})
+function to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity}, scopes::Vector{Symbol})
+  w = vcat(w, required_scopes(m)) # automatically include required scopes
+  for scope in scopes
+    w = vcat(w, m().scopes[scope])
+  end
+
   isempty(w) ?
     "" :
     "WHERE " * (string(first(w).condition) == "AND" ? "TRUE " : "FALSE ") * join(map(wx -> string(wx), w), " ")
 end
 
 function required_scopes{T<:AbstractModel}(m::Type{T})
-  throw("To implement")
+  s = scopes(m)
+  haskey(s, :required) ? s[:required] : []
 end
 
 function scopes{T<:AbstractModel}(m::Type{T})
-  in(:scopes, fieldnames(m)) ? getfield(m(), :scopes)::Vector{SQLWhereEntity} : SQLWhereEntity[]
+  in(:scopes, fieldnames(m)) ? getfield(m(), :scopes) : Dict()
 end
 
 function to_order_part{T<:AbstractModel}(m::Type{T}, o::Vector{SQLOrder})

@@ -185,10 +185,14 @@ SQLWhereExpression{T}(sql_expression::String, values::Vector{T}) = SQLWhereExpre
 function string(we::SQLWhereExpression)
   counter = 0
   string_value = we.sql_expression
+  string_value = replace(string_value, "\\?", "\\§\\")
   while search(string_value, '?') > 0
     counter += 1
+    counter > size(we.values, 1) && throw("Not enough replacement values")
+
     string_value = replace(string_value, '?', string(we.values[counter]), 1)
   end
+  string_value = replace(string_value, "\\§\\", '?')
 
   we.condition * " " * string_value
 end
@@ -332,10 +336,11 @@ type SQLQuery <: SQLType
   order::Vector{SQLOrder}
   group::Vector{SQLColumn}
   having::Vector{SQLWhereEntity}
+  scopes::Vector{Symbol}
 
   SQLQuery(;  columns = SQLColumn[], where = SQLWhereEntity[], limit = SQLLimit("ALL"), offset = 0,
-              order = SQLOrder[], group = SQLColumn[], having = SQLWhereEntity[]) =
-    new(columns, where, limit, offset, order, group, having)
+              order = SQLOrder[], group = SQLColumn[], having = SQLWhereEntity[], scopes = Symbol[]) =
+    new(columns, where, limit, offset, order, group, having, scopes)
 end
 
 string{T<:AbstractModel}(q::SQLQuery, m::Type{T}) = to_fetch_sql(m, q)

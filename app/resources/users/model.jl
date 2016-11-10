@@ -15,6 +15,9 @@ type User <: AbstractModel
 
   on_dehydration::Function
   on_hydration!::Function
+  after_hydration::Function
+
+  role::Nullable{Symbol}
 
   User(;
     id = Nullable{SearchLight.DbId}(),
@@ -27,12 +30,15 @@ type User <: AbstractModel
     belongs_to = [SearchLight.SQLRelation(Role)],
 
     on_dehydration = Users.dehydrate,
-    on_hydration! = Users.hydrate!
-  ) = new("users", "id", id, name, email, password, role_id, updated_at, belongs_to, on_dehydration, on_hydration!)
+    on_hydration! = Users.hydrate!,
+    after_hydration = Users.after_hydration,
+
+    role = Nullable{Symbol}()
+  ) = new("users", "id", id, name, email, password, role_id, updated_at, belongs_to, on_dehydration, on_hydration!, after_hydration, role)
 end
 
 module Users
-using App, SearchLight, Sessions, Authentication, Helpers, DateParser, SHA, Logger
+using App, SearchLight, Sessions, Authentication, Helpers, DateParser, SHA, Logger, Router
 
 function login(email::String, password::String, session)
   users = SearchLight.find(User, SQLQuery(where = [SQLWhere(:email, email), SQLWhere(:password, sha256(password) |> bytes2hex)]))
@@ -56,6 +62,12 @@ end
 
 function hydrate!(user::User, field::Symbol, value::Any)
   in(field, [:updated_at]) ? (user, DateParser.parse(DateTime, value)) : (user, value)
+end
+
+function after_hydration(user::User)
+  user.role = SearchLight.relationship_data!!(user, App.Role, SearchLight.RELATIONSHIP_BELONGS_TO).name
+
+  user
 end
 
 end

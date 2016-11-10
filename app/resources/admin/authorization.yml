@@ -1,13 +1,14 @@
 writer:
-  create: all
+  create:
   edit: own
   delete: own
   list: own
 editor:
-  edit: all
-  list: all
+  edit:
+  list:
 admin:
-  create: all
-  edit: all
-  delete: all
-  list: all
+  create:
+  edit:
+  delete:
+  list_articles:
+    - top_two
