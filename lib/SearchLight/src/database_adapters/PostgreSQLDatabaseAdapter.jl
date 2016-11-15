@@ -49,7 +49,7 @@ end
 function adapter_query(sql::AbstractString, suppress_output::Bool, conn, adapter)
   stmt = adapter.prepare(conn, sql)
 
-  result = if suppress_output || ! Genie.config.log_db
+  result = if suppress_output || ( ! Genie.config.log_db && ! Genie.config.log_queries )
     adapter.execute(stmt)
   else
     Logger.log("SQL QUERY: $(escape_string(sql))")

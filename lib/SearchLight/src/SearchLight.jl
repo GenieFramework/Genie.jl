@@ -25,15 +25,48 @@ direct_relationships() = [RELATIONSHIP_HAS_ONE, RELATIONSHIP_BELONGS_TO, RELATIO
 #
 
 """
-    find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery[, j::Vector{SQLJoin{N}}])
+    find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}[, q::SQLQuery[, j::Vector{SQLJoin{N}}]])::DataFrames.DataFrame
 
 Executes a SQL `SELECT` query against the database and returns the resultset as a `DataFrame`.
+
+# Examples
+```julia
+julia> SearchLight.find_df(Article);
+
+2016-11-15T23:16:19.152 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\"
+
+0.003031 seconds (16 allocations: 576 bytes)
+
+32×7 DataFrames.DataFrame
+│ Row │ articles_id │ articles_title                                     │ articles_summary                                                                                                                │
+├─────┼─────────────┼────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1   │ 4           │ "Possimus sit cum nesciunt doloribus dignissimos." │ "Similique.\nUt debitis qui perferendis.\nVoluptatem qui recusandae ut itaque voluptas.\nSunt."                                       │
+│ 2   │ 5           │ "Voluptas ea incidunt et provident."               │ "Animi ducimus in.\nVoluptatem ipsum doloribus perspiciatis consequatur a.\nVel quibusdam quas veritatis laboriosam.\nEum quibusdam." │
+...
+
+julia> SearchLight.find_df(Article, SQLQuery(limit = 5))
+
+2016-11-15T23:12:10.513 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" LIMIT 5
+
+0.000846 seconds (16 allocations: 576 bytes)
+
+5×7 DataFrames.DataFrame
+│ Row │ articles_id │ articles_title                                     │ articles_summary                                                                                                                │
+├─────┼─────────────┼────────────────────────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1   │ 4           │ "Possimus sit cum nesciunt doloribus dignissimos." │ "Similique.\nUt debitis qui perferendis.\nVoluptatem qui recusandae ut itaque voluptas.\nSunt."                                       │
+│ 2   │ 5           │ "Voluptas ea incidunt et provident."               │ "Animi ducimus in.\nVoluptatem ipsum doloribus perspiciatis consequatur a.\nVel quibusdam quas veritatis laboriosam.\nEum quibusdam." │
+...
+```
 """
-function find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Vector{SQLJoin{N}})
+
+function find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Vector{SQLJoin{N}})::DataFrames.DataFrame
   query(to_fetch_sql(m, q, j))::DataFrames.DataFrame
 end
-function find_df{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
+function find_df{T<:AbstractModel}(m::Type{T}, q::SQLQuery)::DataFrames.DataFrame
   query(to_fetch_sql(m, q))::DataFrames.DataFrame
+end
+function find_df{T<:AbstractModel}(m::Type{T})::DataFrames.DataFrame
+  find_df(m, SQLQuery())
 end
 
 """

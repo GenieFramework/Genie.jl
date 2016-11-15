@@ -58,6 +58,7 @@ type Config
 
   log_router::Bool
   log_db::Bool
+  log_queries::Bool
   log_requests::Bool
   log_responses::Bool
   log_resources::Bool
@@ -111,6 +112,7 @@ type Config
 
             log_router    = false,
             log_db        = true,
+            log_queries   = true,
             log_requests  = true,
             log_responses = true,
             log_resources = false,
@@ -142,7 +144,7 @@ type Config
                   db_migrations_table_name, db_migrations_folder, db_config_settings, db_adapter,
                   task_folder, test_folder, session_folder, log_folder,
                   cache_folder, cache_adapter, cache_duration,
-                  log_router, log_db, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted, log_cache,
+                  log_router, log_db, log_queries, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted, log_cache,
                   assets_path, assets_serve,
                   pagination_default_items_per_page, pagination_page_param_name,
                   model_relationships_eagerness,
