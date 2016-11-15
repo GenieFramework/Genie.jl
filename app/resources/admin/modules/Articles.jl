@@ -41,7 +41,7 @@ function article_create(params::Dict{Symbol,Any})
 end
 
 function article_edit(params::Dict{Symbol,Any}; a::Article = Article())
-  with_authorization(:edit, unauthorized_access, params) do
+  with_authorization(:edit, unauthorized_access, params) do auth_scopes
     article = SearchLight.is_persisted(a) ? a : SearchLight.find_one!!(Article, params[:article_id])
     ejl(:admin, :article, layout = :admin, article = article, params = params) |> respond
   end

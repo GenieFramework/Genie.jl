@@ -16,9 +16,9 @@ v 0.5.x
 
 v 0.6.x
 ☐ new test app - blogging platform (articles, comments, tags, versions, users)
-☐ sign up - with login URLs by email
 ☐ mailers
-☐ Gallium debugging
+☐ sign up - with login URLs by email
+✔ Gallium debugging
 ✔ support for POST - routing, params
 ✔ model validations
 ✔ authorization
@@ -27,30 +27,31 @@ v 0.6.x
 ✔ reverse routing -> resource to route
 ✔ parallel serving
 ✔ proper error handling (50x, 40x) pages
+✔ simplify migrations to skip type and use modules
+✔ simplify tasks to skip type and use modules
+✔ add a method to automatically run all DOWN migrations
+✔ move postgres specific code into the adapter
+✔ rename methods ending in ! to end in !! and follow julia's guidelines
+✔ rename methods to not use "_" @done (16-07-12 22:23)
 
 v 0.7.x
 ☐ channels (websockets communication)
 ☐ encrypt sessions and cookies
-✔ add a method to automatically run all DOWN migrations
-☐ packages versioning (declarative packages)
-☐ beautify error handling (50x, 40x) pages
-✔ move postgres specific code into the adapter
-☐ add utility functions for migrations (add column, add index, etc)
-☐ form input helpers
-☐ simplify migrations to skip type and use modules
-☐ simplify tasks to skip type and use modules
-
-v 0.8.x
-☐ performance enhancements, cleanup
-☐ doc comments
-✔ rename methods ending in ! to end in !! and follow julia's guidelines
-✔ rename methods to not use "_" @done (16-07-12 22:23)
-☐ more tests
-☐ REPL utility to setup a new app
-
-v 0.9
 ☐ official API docs
 ☐ official website - blog, walkthroughs, tutorials, etc
+☐ performance enhancements, cleanup
+☐ beautify error handling (50x, 40x) pages
+☐ doc comments
+☐ more tests
+☐ REPL utility to setup a new app
+☐ packages versioning (declarative packages)
+
+v 0.8.x
+☐ add utility functions for migrations (add column, add index, etc)
+☐ form input helpers
+
+v 0.9
+
 
 v 1.0
 ☐ support for plugins

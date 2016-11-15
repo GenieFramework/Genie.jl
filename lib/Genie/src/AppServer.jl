@@ -16,7 +16,7 @@ function startup(port::Int = 8000)
   run(server, port)
 end
 
-function handle_request(req::HttpServer.Request, res::HttpServer.Response)
+function handle_request(req::Request, res::Response)
   log_request(req)
   sign_response!(res)
 
@@ -50,8 +50,8 @@ function log_response(req::Request, res::Response)
   end
 end
 
-function log_request_response(req_res::Union{Request, Response})
-  req_data = Dict{AbstractString, AbstractString}()
+function log_request_response(req_res::Union{Request,Response})
+  req_data = Dict{String,String}()
   response_is_error = false
 
   for f in fieldnames(req_res)

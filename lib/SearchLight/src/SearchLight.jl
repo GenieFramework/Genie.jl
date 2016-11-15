@@ -149,7 +149,7 @@ Attempts to persist the model's data to the database. Returns `true` if successf
 """
 function save{T<:AbstractModel}(m::T; conflict_strategy = :error)
   try
-    save!!(m, conflict_strategy = conflict_strategy)
+    _save!!(m, conflict_strategy = conflict_strategy)
     true
   catch ex
     Logger.log(ex)
@@ -160,21 +160,28 @@ end
 """
    save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false)
 
-Similar to `save` but it returns the model reloaded from the database, applying all callbacks. Throws an exception if the model can't be persisted.
+Similar to `save` but it returns the model reloaded from the database, applying callbacks. Throws an exception if the model can't be persisted.
 """
 function save!{T<:AbstractModel}(m::T; conflict_strategy = :error)
   save!!(m, conflict_strategy = conflict_strategy)
 end
 function save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false)
+  find_one_by!!(typeof(m), Symbol(m._id), (_save!!(m, conflict_strategy = conflict_strategy, skip_validation = skip_validation))[1, Symbol(m._id)])
+end
+function _save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false)
   ! skip_validation && ! Validation.validate!(m) && error("SearchLight validation error(s) for $(typeof(m)) \n $(join(Validation.errors(m), "\n "))")
 
   invoke_callback(m, :before_save)
 
-  find_one_by!!(typeof(m), Symbol(m._id), query(to_store_sql(m, conflict_strategy = conflict_strategy))[1, Symbol(m._id)])
+  result = query(to_store_sql(m, conflict_strategy = conflict_strategy))
+
+  invoke_callback(m, :after_save)
+
+  result
 end
 
 function invoke_callback{T<:AbstractModel}(m::T, callback::Symbol)
-  in(callback, fieldnames(m)) && getfield(m, callback)(m)
+  in(callback, fieldnames(m)) ? (true, getfield(m, callback)(m), m) : (false, nothing, m)
 end
 
 """
@@ -260,7 +267,7 @@ Converts `df` to a Vector{T}
 """
 function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
   models = OrderedDict{DbId,T}()
-  dfs = df_result_to_models_data(m, df)::Dict{String,DataFrame}
+  dfs = df_result_to_models_data(m, df)::Dict{String,DataFrame} # this splits the result data frame into multiple dataframes, one for each table contained in the result
 
   row_count::Int = 1
   for row in eachrow(df)
@@ -385,9 +392,8 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
     end
   end
 
-  if in(:after_hydration, fieldnames(_m))
-    obj = _m.after_hydration(obj)
-  end
+  status = invoke_callback(obj, :after_hydration)
+  status[1] && (obj = status[2])
 
   obj
 end

@@ -31,7 +31,7 @@ end
 
 export @devtools, @ifdevtools
 
-function startup(parsed_args = Dict{AbstractString,Any}(), start_server = false)
+function startup(parsed_args = Dict{AbstractString,Any}(); start_server = false)
   isempty(parsed_args) && (parsed_args = Commands.parse_commandline_args())
 
   if parsed_args["s"] == "s" || start_server == true

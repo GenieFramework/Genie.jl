@@ -2,9 +2,12 @@
 dirname(@__FILE__) |> cd
 include(abspath(joinpath("lib", "Genie", "src", "branding.jl")))
 
+const DEFAULT_NWORKERS_REPL = 1
+const DEFAULT_NWORKERS_SERVER = 4
+
 isfile("env.jl") && include("env.jl")
 ! haskey(ENV, "GENIE_ENV") && (ENV["GENIE_ENV"] = "dev")
-in("s", ARGS) && ! haskey(ENV, "NWORKERS") ? ENV["NWORKERS"] = 4 : ( haskey(ENV, "NWORKERS") ? ENV["NWORKERS"] : ENV["NWORKERS"] = 1 )
+in("s", ARGS) && ! haskey(ENV, "NWORKERS") ? ENV["NWORKERS"] = DEFAULT_NWORKERS_SERVER : ( haskey(ENV, "NWORKERS") ? ENV["NWORKERS"] : ENV["NWORKERS"] = DEFAULT_NWORKERS_REPL )
 print_with_color(:green, "\nStarting Genie in >> $(ENV["GENIE_ENV"] |> uppercase) << mode using $(ENV["NWORKERS"]) worker(s) \n\n")
 
 nworkers() < parse(Int, ENV["NWORKERS"]) && addprocs(parse(Int, ENV["NWORKERS"]) - nworkers())

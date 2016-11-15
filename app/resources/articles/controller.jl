@@ -11,7 +11,7 @@ function index(params)
                                               order = SQLOrder(:updated_at, :desc),
                                               limit = params[:page_size],
                                               offset = (params[:page_number] - 1) * params[:page_size],
-                                              where = [SQLWhere(:published_at, SQLInput("now()", raw = true), "<"), SQLWhere(:published_at, SQLInput("NULL", raw = true), "IS NOT")],
+                                              where = [SQLWhereExpression("published_at < NOW()"), SQLWhereExpression("published_at IS NOT NULL")],
                                               scopes = [:top_two])),
       params = params) |> respond
 end

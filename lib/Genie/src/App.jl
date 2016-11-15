@@ -1,5 +1,6 @@
 module App
-using Genie, SearchLight, Validation, YAML
+using Genie, SearchLight, YAML
+using Validation
 
 function load_models(dir = Genie.RESOURCE_PATH)
   dir_contents = readdir(abspath(dir))
@@ -34,8 +35,8 @@ function load_acl(dir::AbstractString)
 end
 
 function load_configurations()
-  isfile(abspath("config/loggers.jl")) && include(abspath("config/loggers.jl"))
-  isfile(abspath("config/secrets.jl")) && include(abspath("config/secrets.jl"))
+  isfile(abspath("$(Genie.CONFIG_PATH)/loggers.jl")) && include(abspath("$(Genie.CONFIG_PATH)/loggers.jl"))
+  isfile(abspath("$(Genie.CONFIG_PATH)/secrets.jl")) && include(abspath("$(Genie.CONFIG_PATH)/secrets.jl"))
 end
 
 function load_initializers()
