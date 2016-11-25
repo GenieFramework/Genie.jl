@@ -163,6 +163,55 @@ const SQLHaving = SQLWhere
 # SQLWhereExpression
 #
 
+"""
+    SQLWhereExpression(sql_expression::String, values::T)
+    SQLWhereExpression(sql_expression::String[, values::Vector{T}])
+
+Constructs an instance of SQLWhereExpression, replacing the `?` placeholders inside `sql_expression` with
+properly quoted values.
+
+# Examples:
+```julia
+julia> SQLWhereExpression("slug LIKE ?", "%julia%")
+
+SearchLight.SQLWhereExpression
++================+=============+
+|            key |       value |
++================+=============+
+|      condition |         AND |
++----------------+-------------+
+| sql_expression | slug LIKE ? |
++----------------+-------------+
+|         values |   '%julia%' |
++----------------+-------------+
+
+julia> SQLWhereExpression("id BETWEEN ? AND ?", [10, 20])
+
+SearchLight.SQLWhereExpression
++================+====================+
+|            key |              value |
++================+====================+
+|      condition |                AND |
++----------------+--------------------+
+| sql_expression | id BETWEEN ? AND ? |
++----------------+--------------------+
+|         values |              10,20 |
++----------------+--------------------+
+
+julia> SQLWhereExpression("question LIKE 'what is the question\\?'")
+
+SearchLight.SQLWhereExpression
++================+========================================+
+|            key |                                  value |
++================+========================================+
+|      condition |                                    AND |
++----------------+----------------------------------------+
+| sql_expression | question LIKE 'what is the question\?' |
++----------------+----------------------------------------+
+|         values |                                        |
++----------------+----------------------------------------+
+```
+"""
 type SQLWhereExpression <: SQLType
   sql_expression::String
   values::Vector{SQLInput}
@@ -181,6 +230,7 @@ type SQLWhereExpression <: SQLType
 end
 SQLWhereExpression(sql_expression::String) = SQLWhereExpression(sql_expression, SQLInput[])
 SQLWhereExpression{T}(sql_expression::String, values::Vector{T}) = SQLWhereExpression(sql_expression, SQLInput(values))
+SQLWhereExpression{T}(sql_expression::String, values::T) = SQLWhereExpression(sql_expression, [SQLInput(values)])
 
 function string(we::SQLWhereExpression)
   counter = 0
@@ -199,9 +249,11 @@ end
 
 typealias SQLWhereEntity Union{SQLWhere,SQLWhereExpression}
 
+
 #
 # SQLLimit
 #
+
 
 type SQLLimit <: SQLType
   value::Union{Int, String}
@@ -224,7 +276,7 @@ SQLLimit() = SQLLimit("ALL")
 
 string(l::SQLLimit) = string(l.value)
 
-convert(::Type{SearchLight.SQLLimit}, v::Int) = SQLLimit(v)
+convert(::Type{SQLLimit}, v::Int) = SQLLimit(v)
 
 #
 # SQLOrder
@@ -241,8 +293,11 @@ SQLOrder(column::Any; raw::Bool = false) = SQLOrder(SQLColumn(column, raw = raw)
 
 string(o::SQLOrder) = "($(o.column) $(o.direction))"
 
+convert(::Type{SQLOrder}, s::Symbol) = SQLOrder(s)
+
 convert(::Type{Vector{SQLOrder}}, o::SQLOrder) = [o]
-convert(::Type{Vector{SearchLight.SQLOrder}}, t::Tuple{Symbol,Symbol}) = SQLOrder(t[1], t[2])
+convert(::Type{Vector{SQLOrder}}, s::Symbol) = [SQLOrder(s)]
+convert(::Type{Vector{SQLOrder}}, t::Tuple{Symbol,Symbol}) = [SQLOrder(t[1], t[2])]
 
 #
 # SQLJoin
@@ -328,6 +383,50 @@ convert(::Type{Vector{SQLJoin}}, j::SQLJoin) = [j]
 # SQLQuery
 #
 
+"""
+    SQLQuery( columns = SQLColumn[],
+              where   = SQLWhereEntity[],
+              limit   = SQLLimit("ALL"),
+              offset  = 0,
+              order   = SQLOrder[],
+              group   = SQLColumn[],
+              having  = SQLWhereEntity[],
+              scopes  = Symbol[] )
+
+Returns a new instance of SQLQuery.
+
+# Examples
+```julia
+julia> SQLQuery(where = [SQLWhereExpression("id BETWEEN ? AND ?", [10, 20])], offset = 5, limit = 5, order = :title)
+
+SearchLight.SQLQuery
++=========+==============================================================+
+|     key |                                                        value |
++=========+==============================================================+
+| columns |                                                              |
++---------+--------------------------------------------------------------+
+|   group |                                                              |
++---------+--------------------------------------------------------------+
+|  having | Union{SearchLight.SQLWhere,SearchLight.SQLWhereExpression}[] |
++---------+--------------------------------------------------------------+
+|   limit |                                                            5 |
++---------+--------------------------------------------------------------+
+|  offset |                                                            5 |
++---------+--------------------------------------------------------------+
+|         |                                        SearchLight.SQLOrder[ |
+|         |                                         SearchLight.SQLOrder |
+|         |                                      +===========+=========+ |
+|         |                                      |       key |   value | |
+|   order |                                                 +========... |
++---------+--------------------------------------------------------------+
+|  scopes |                                                     Symbol[] |
++---------+--------------------------------------------------------------+
+|         |  Union{SearchLight.SQLWhere,SearchLight.SQLWhereExpression}[ |
+|         |                               SearchLight.SQLWhereExpression |
+|   where |                                                 +========... |
++---------+--------------------------------------------------------------+
+```
+"""
 type SQLQuery <: SQLType
   columns::Vector{SQLColumn}
   where::Vector{SQLWhereEntity}

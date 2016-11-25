@@ -10,7 +10,6 @@ ArgParse
 DataStructures
 SHA
 PatternDispatch
-PostgreSQL
 Gallium
 DateParser
 Lint

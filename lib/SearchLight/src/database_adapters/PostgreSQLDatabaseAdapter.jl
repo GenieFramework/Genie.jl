@@ -246,9 +246,11 @@ function to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity}, 
     w = vcat(w, m().scopes[scope])
   end
 
-  isempty(w) ?
-    "" :
-    "WHERE " * (string(first(w).condition) == "AND" ? "TRUE " : "FALSE ") * join(map(wx -> string(wx), w), " ")
+  where = isempty(w) ?
+          "" :
+          "WHERE " * (string(first(w).condition) == "AND" ? "TRUE " : "FALSE ") * join(map(wx -> string(wx), w), " ")
+
+  replace(where, r"WHERE TRUE AND "i, "WHERE ")
 end
 
 function required_scopes{T<:AbstractModel}(m::Type{T})

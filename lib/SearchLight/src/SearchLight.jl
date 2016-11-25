@@ -20,9 +20,11 @@ const RELATIONSHIP_HAS_MANY = :has_many
 
 direct_relationships() = [RELATIONSHIP_HAS_ONE, RELATIONSHIP_BELONGS_TO, RELATIONSHIP_HAS_MANY]
 
+
 #
 # ORM methods
 #
+
 
 """
     find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}[, q::SQLQuery[, j::Vector{SQLJoin{N}}]])::DataFrames.DataFrame
@@ -58,72 +60,239 @@ julia> SearchLight.find_df(Article, SQLQuery(limit = 5))
 ...
 ```
 """
-
-function find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Vector{SQLJoin{N}})::DataFrames.DataFrame
-  query(to_fetch_sql(m, q, j))::DataFrames.DataFrame
+function find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Vector{SQLJoin{N}}) :: DataFrames.DataFrame
+  query(to_fetch_sql(m, q, j)) :: DataFrames.DataFrame
 end
-function find_df{T<:AbstractModel}(m::Type{T}, q::SQLQuery)::DataFrames.DataFrame
-  query(to_fetch_sql(m, q))::DataFrames.DataFrame
+function find_df{T<:AbstractModel}(m::Type{T}, q::SQLQuery) :: DataFrames.DataFrame
+  query(to_fetch_sql(m, q)) :: DataFrames.DataFrame
 end
-function find_df{T<:AbstractModel}(m::Type{T})::DataFrames.DataFrame
+function find_df{T<:AbstractModel}(m::Type{T}) :: DataFrames.DataFrame
   find_df(m, SQLQuery())
 end
+
 
 """
     find{T<:AbstractModel, N<:AbstractModel}(m::Type{T}[, q::SQLQuery[, j::Vector{SQLJoin{N}}]])
 
 Executes a SQL `SELECT` query against the database and returns the resultset as a `Vector{T<:AbstractModel}`.
+
+# Examples:
+```julia
+julia> SearchLight.find(Article, SQLQuery(where = [SQLWhereExpression("id BETWEEN ? AND ?", [10, 20])], offset = 5, limit = 5, order = :title))
+
+2016-11-25T22:38:24.003 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE TRUE AND id BETWEEN 10 AND 20 ORDER BY articles.title ASC LIMIT 5 OFFSET 5
+
+0.001486 seconds (16 allocations: 576 bytes)
+
+5-element Array{App.Article,1}:
+...
+
+julia> SearchLight.find(Article)
+
+2016-11-25T22:40:56.083 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\"
+
+0.011748 seconds (16 allocations: 576 bytes)
+
+38-element Array{App.Article,1}:
+...
+```
 """
-function find{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Vector{SQLJoin{N}})
+function find{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Vector{SQLJoin{N}}) :: Vector{T}
   to_models(m, find_df(m, q, j))
 end
-function find{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
+function find{T<:AbstractModel}(m::Type{T}, q::SQLQuery) :: Vector{T}
   to_models(m, find_df(m, q))
 end
-function find{T<:AbstractModel}(m::Type{T})
+function find{T<:AbstractModel}(m::Type{T}) :: Vector{T}
   find(m, SQLQuery())
 end
 
+
 """
-    find_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput)
-    find_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
+    find_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput) :: Vector{T}
+    find_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any) :: Vector{T}
+    find_by{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression) :: Vector{T}
 
 Executes a SQL `SELECT` query against the database, applying a `WHERE` filter using the `column_name` and the `value`.
 Returns the resultset as a `Vector{T<:AbstractModel}`.
+
+# Examples:
+```julia
+julia> SearchLight.find_by(Article, :slug, "cupiditate-velit-repellat-dolorem-nobis")
+
+2016-11-25T22:45:19.157 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE TRUE AND (\"slug\" = 'cupiditate-velit-repellat-dolorem-nobis')
+
+0.000802 seconds (16 allocations: 576 bytes)
+
+1-element Array{App.Article,1}:
+
+App.Article
++==============+=========================================================+
+|          key |                                                   value |
++==============+=========================================================+
+|              |         Occaecati numquam tenetur et amet. Quas vitae.. |
+|      content | Voluptatibus eaque fugiat voluptatem. Non ad et non.... |
++--------------+---------------------------------------------------------+
+|           id |                                     Nullable{Int32}(36) |
++--------------+---------------------------------------------------------+
+| published_at |             Nullable{DateTime}(2016-09-27T07:58:36.153) |
++--------------+---------------------------------------------------------+
+|         slug |                 cupiditate-velit-repellat-dolorem-nobis |
++--------------+---------------------------------------------------------+
+|              |                                  Et adipisci aut omnis. |
+|              |                               Perspiciatis et velit ut. |
+|              |                                             Ut impedit. |
+|      summary |                         Tempora quibusdam et sunt iure. |
++--------------+---------------------------------------------------------+
+|        title |                Cupiditate velit repellat dolorem nobis. |
++--------------+---------------------------------------------------------+
+|   updated_at |                                 2016-09-27T07:50:00.033 |
++--------------+---------------------------------------------------------+
+
+julia> SearchLight.find_by(Article, SQLWhereExpression("slug LIKE ?", "%dolorem%"))
+
+2016-11-25T23:15:52.5730000000000001 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE TRUE AND slug LIKE '%dolorem%'
+
+0.000782 seconds (16 allocations: 576 bytes)
+
+1-element Array{App.Article,1}:
+
+App.Article
++==============+=========================================================+
+|          key |                                                   value |
++==============+=========================================================+
+|              |         Occaecati numquam tenetur et amet. Quas vitae.. |
+|      content | Voluptatibus eaque fugiat voluptatem. Non ad et non.... |
++--------------+---------------------------------------------------------+
+|           id |                                     Nullable{Int32}(36) |
++--------------+---------------------------------------------------------+
+| published_at |             Nullable{DateTime}(2016-09-27T07:58:36.153) |
++--------------+---------------------------------------------------------+
+|         slug |                 cupiditate-velit-repellat-dolorem-nobis |
++--------------+---------------------------------------------------------+
+|              |                                  Et adipisci aut omnis. |
+|              |                               Perspiciatis et velit ut. |
+|              |                                             Ut impedit. |
+|      summary |                         Tempora quibusdam et sunt iure. |
++--------------+---------------------------------------------------------+
+|        title |                Cupiditate velit repellat dolorem nobis. |
++--------------+---------------------------------------------------------+
+|   updated_at |                                 2016-09-27T07:50:00.033 |
++--------------+---------------------------------------------------------+
+```
 """
-function find_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput)
+function find_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput) :: Vector{T}
   find(m, SQLQuery(where = [SQLWhere(column_name, value)]))
 end
-function find_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
+function find_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any) :: Vector{T}
   find_by(m, SQLColumn(column_name), SQLInput(value))
 end
-function find_by{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression)
+function find_by{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression) :: Vector{T}
   find(m, SQLQuery(where = [sql_expression]))
 end
 
 
 """
-    find_one_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput)
-    find_one_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
+    find_one_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput) :: Nullable{T}
+    find_one_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any) :: Nullable{T}
+    find_one_by{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression) :: Nullable{T}
 
-Executes a SQL `SELECT` query against the database, applying a `WHERE` filter using the `column_name` and the `value`.
+Executes a SQL `SELECT` query against the database, applying a `WHERE` filter using the `column_name` and the `value`
+or the `sql_expression`.
 Returns the first result as a `Nullable{T<:AbstractModel}`.
+
+# Examples:
+```julia
+julia> SearchLight.find_one_by(Article, :title, "Cupiditate velit repellat dolorem nobis.")
+
+2016-11-25T23:43:13.969 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"title\" = 'Cupiditate velit repellat dolorem nobis.')
+
+0.002319 seconds (1.23 k allocations: 52.688 KB)
+
+Nullable{App.Article}(
+App.Article
++==============+=========================================================+
+|          key |                                                   value |
++==============+=========================================================+
+|              |         Occaecati numquam tenetur et amet. Quas vitae.. |
+|      content | Voluptatibus eaque fugiat voluptatem. Non ad et non.... |
++--------------+---------------------------------------------------------+
+|           id |                                     Nullable{Int32}(36) |
++--------------+---------------------------------------------------------+
+| published_at |             Nullable{DateTime}(2016-09-27T07:58:36.153) |
++--------------+---------------------------------------------------------+
+|         slug |                 cupiditate-velit-repellat-dolorem-nobis |
++--------------+---------------------------------------------------------+
+|              |                                  Et adipisci aut omnis. |
+|              |                               Perspiciatis et velit ut. |
+|              |                                             Ut impedit. |
+|      summary |                         Tempora quibusdam et sunt iure. |
++--------------+---------------------------------------------------------+
+|        title |                Cupiditate velit repellat dolorem nobis. |
++--------------+---------------------------------------------------------+
+|   updated_at |                                 2016-09-27T07:50:00.033 |
++--------------+---------------------------------------------------------+
+
+julia> SearchLight.find_one_by(Article, SQLWhereExpression("slug LIKE ?", "%nobis"))
+
+2016-11-25T23:51:40.934 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE slug LIKE '%nobis'
+
+0.001152 seconds (16 allocations: 576 bytes)
+
+Nullable{App.Article}(
+App.Article
++==============+=========================================================+
+|          key |                                                   value |
++==============+=========================================================+
+|              |         Occaecati numquam tenetur et amet. Quas vitae.. |
+|      content | Voluptatibus eaque fugiat voluptatem. Non ad et non.... |
++--------------+---------------------------------------------------------+
+|           id |                                     Nullable{Int32}(36) |
++--------------+---------------------------------------------------------+
+| published_at |             Nullable{DateTime}(2016-09-27T07:58:36.153) |
++--------------+---------------------------------------------------------+
+|         slug |                 cupiditate-velit-repellat-dolorem-nobis |
++--------------+---------------------------------------------------------+
+|              |                                  Et adipisci aut omnis. |
+|              |                               Perspiciatis et velit ut. |
+|              |                                             Ut impedit. |
+|      summary |                         Tempora quibusdam et sunt iure. |
++--------------+---------------------------------------------------------+
+|        title |                Cupiditate velit repellat dolorem nobis. |
++--------------+---------------------------------------------------------+
+|   updated_at |                                 2016-09-27T07:50:00.033 |
++--------------+---------------------------------------------------------+
+)
+```
 """
-function find_one_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput)
+function find_one_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput) :: Nullable{T}
   to_nullable(find_by(m, column_name, value))
 end
-function find_one_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
+function find_one_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any) :: Nullable{T}
   find_one_by(m, SQLColumn(column_name), SQLInput(value))
 end
+function find_one_by{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression) :: Nullable{T}
+  to_nullable(find_by(m, sql_expression))
+end
+
 
 """
-    find_one_by!!{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
+    find_one_by!!{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any) :: T
+    find_one_by!!{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression) :: T
 
-Similar to `find_one_by` but also attempts to get the value inside the `Nullable`.
+Similar to `find_one_by` but also attempts to `get` the value inside the `Nullable` by means of `Base.get`.
 Returns the value if is not `NULL`. Throws a `NullException` otherwise.
+
+# Examples:
+```julia
+
+```
 """
-function find_one_by!!{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any)
+function find_one_by!!{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any) :: T
   find_one_by(m, column_name, value) |> Base.get
+end
+function find_one_by!!{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression) :: T
+  find_by(m, sql_expression) |> Base.get
 end
 
 """
@@ -945,7 +1114,7 @@ end
 
 function to_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, expand_nullables::Bool = false, symbolize_keys::Bool = false)
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
-  Dict( (symbolize_keys ? Symbol(f) : string(f) ) => Util.expand_nullable( getfield(m, Symbol(f)), expand = expand_nullables ) for f in fields )
+  Dict( ( symbolize_keys ? Symbol(f) : string(f) ) => Util.expand_nullable( getfield(m, Symbol(f)), expand = expand_nullables ) for f in fields )
 end
 function to_dict{T<:GenieType}(m::T)
   Genie.to_dict(m)
