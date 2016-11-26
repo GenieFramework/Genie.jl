@@ -145,7 +145,7 @@ function delete{T<:AbstractModel}(m::T)
   m
 end
 
-function count{T<:AbstractModel}(m::Type{T}, q::SQLQuery = SQLQuery())::Int
+function count{T<:AbstractModel}(m::Type{T}, q::SQLQuery = SQLQuery()) :: Int
   count_column = SQLColumn("COUNT(*) AS __cid", raw = true)
   if isempty(q.columns)
     q.columns = [count_column]
@@ -162,7 +162,7 @@ function update_query_part{T<:AbstractModel}(m::T)
 end
 
 function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}, joins = SQLJoin[])
-  _m = disposable_instance(m)
+  _m = m()
 
   function columns_from_joins()
     jcols = []
@@ -194,17 +194,17 @@ function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}, j
 
     if has_relationship(_m, RELATIONSHIP_HAS_ONE)
       rels = _m.has_one
-      joined_tables = vcat(joined_tables, map(x -> is_lazy(x) ? nothing : disposable_instance(x.model_name), rels))
+      joined_tables = vcat(joined_tables, map(x -> is_lazy(x) ? nothing : (x.model_name)(), rels))
     end
 
     if has_relationship(_m, RELATIONSHIP_HAS_MANY)
       rels = _m.has_many
-      joined_tables = vcat(joined_tables, map(x -> is_lazy(x) ? nothing : disposable_instance(x.model_name), rels))
+      joined_tables = vcat(joined_tables, map(x -> is_lazy(x) ? nothing : (x.model_name)(), rels))
     end
 
     if has_relationship(_m, RELATIONSHIP_BELONGS_TO)
       rels = _m.belongs_to
-      joined_tables = vcat(joined_tables, map(x -> is_lazy(x) ? nothing : disposable_instance(x.model_name), rels))
+      joined_tables = vcat(joined_tables, map(x -> is_lazy(x) ? nothing : (x.model_name)(), rels))
     end
 
     filter!(x -> x != nothing, joined_tables)

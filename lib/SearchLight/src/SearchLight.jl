@@ -130,23 +130,11 @@ App.Article
 +==============+=========================================================+
 |          key |                                                   value |
 +==============+=========================================================+
-|              |         Occaecati numquam tenetur et amet. Quas vitae.. |
-|      content | Voluptatibus eaque fugiat voluptatem. Non ad et non.... |
-+--------------+---------------------------------------------------------+
 |           id |                                     Nullable{Int32}(36) |
 +--------------+---------------------------------------------------------+
-| published_at |             Nullable{DateTime}(2016-09-27T07:58:36.153) |
+...
 +--------------+---------------------------------------------------------+
 |         slug |                 cupiditate-velit-repellat-dolorem-nobis |
-+--------------+---------------------------------------------------------+
-|              |                                  Et adipisci aut omnis. |
-|              |                               Perspiciatis et velit ut. |
-|              |                                             Ut impedit. |
-|      summary |                         Tempora quibusdam et sunt iure. |
-+--------------+---------------------------------------------------------+
-|        title |                Cupiditate velit repellat dolorem nobis. |
-+--------------+---------------------------------------------------------+
-|   updated_at |                                 2016-09-27T07:50:00.033 |
 +--------------+---------------------------------------------------------+
 
 julia> SearchLight.find_by(Article, SQLWhereExpression("slug LIKE ?", "%dolorem%"))
@@ -161,23 +149,11 @@ App.Article
 +==============+=========================================================+
 |          key |                                                   value |
 +==============+=========================================================+
-|              |         Occaecati numquam tenetur et amet. Quas vitae.. |
-|      content | Voluptatibus eaque fugiat voluptatem. Non ad et non.... |
-+--------------+---------------------------------------------------------+
 |           id |                                     Nullable{Int32}(36) |
 +--------------+---------------------------------------------------------+
-| published_at |             Nullable{DateTime}(2016-09-27T07:58:36.153) |
+...
 +--------------+---------------------------------------------------------+
 |         slug |                 cupiditate-velit-repellat-dolorem-nobis |
-+--------------+---------------------------------------------------------+
-|              |                                  Et adipisci aut omnis. |
-|              |                               Perspiciatis et velit ut. |
-|              |                                             Ut impedit. |
-|      summary |                         Tempora quibusdam et sunt iure. |
-+--------------+---------------------------------------------------------+
-|        title |                Cupiditate velit repellat dolorem nobis. |
-+--------------+---------------------------------------------------------+
-|   updated_at |                                 2016-09-27T07:50:00.033 |
 +--------------+---------------------------------------------------------+
 ```
 """
@@ -193,9 +169,9 @@ end
 
 
 """
-    find_one_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput) :: Nullable{T}
-    find_one_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any) :: Nullable{T}
-    find_one_by{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression) :: Nullable{T}
+    find_one_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput; order = SQLOrder(m()._id)) :: Nullable{T}
+    find_one_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any; order = SQLOrder(m()._id)) :: Nullable{T}
+    find_one_by{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression; order = SQLOrder(m()._id)) :: Nullable{T}
 
 Executes a SQL `SELECT` query against the database, applying a `WHERE` filter using the `column_name` and the `value`
 or the `sql_expression`.
@@ -214,23 +190,11 @@ App.Article
 +==============+=========================================================+
 |          key |                                                   value |
 +==============+=========================================================+
-|              |         Occaecati numquam tenetur et amet. Quas vitae.. |
-|      content | Voluptatibus eaque fugiat voluptatem. Non ad et non.... |
-+--------------+---------------------------------------------------------+
 |           id |                                     Nullable{Int32}(36) |
 +--------------+---------------------------------------------------------+
-| published_at |             Nullable{DateTime}(2016-09-27T07:58:36.153) |
-+--------------+---------------------------------------------------------+
-|         slug |                 cupiditate-velit-repellat-dolorem-nobis |
-+--------------+---------------------------------------------------------+
-|              |                                  Et adipisci aut omnis. |
-|              |                               Perspiciatis et velit ut. |
-|              |                                             Ut impedit. |
-|      summary |                         Tempora quibusdam et sunt iure. |
+...
 +--------------+---------------------------------------------------------+
 |        title |                Cupiditate velit repellat dolorem nobis. |
-+--------------+---------------------------------------------------------+
-|   updated_at |                                 2016-09-27T07:50:00.033 |
 +--------------+---------------------------------------------------------+
 
 julia> SearchLight.find_one_by(Article, SQLWhereExpression("slug LIKE ?", "%nobis"))
@@ -244,35 +208,55 @@ App.Article
 +==============+=========================================================+
 |          key |                                                   value |
 +==============+=========================================================+
-|              |         Occaecati numquam tenetur et amet. Quas vitae.. |
-|      content | Voluptatibus eaque fugiat voluptatem. Non ad et non.... |
-+--------------+---------------------------------------------------------+
 |           id |                                     Nullable{Int32}(36) |
 +--------------+---------------------------------------------------------+
-| published_at |             Nullable{DateTime}(2016-09-27T07:58:36.153) |
+...
 +--------------+---------------------------------------------------------+
 |         slug |                 cupiditate-velit-repellat-dolorem-nobis |
 +--------------+---------------------------------------------------------+
-|              |                                  Et adipisci aut omnis. |
-|              |                               Perspiciatis et velit ut. |
-|              |                                             Ut impedit. |
-|      summary |                         Tempora quibusdam et sunt iure. |
-+--------------+---------------------------------------------------------+
-|        title |                Cupiditate velit repellat dolorem nobis. |
-+--------------+---------------------------------------------------------+
-|   updated_at |                                 2016-09-27T07:50:00.033 |
-+--------------+---------------------------------------------------------+
+)
+
+julia> SearchLight.find_one_by(Article, SQLWhereExpression("title LIKE ?", "%u%"), order = SQLOrder(:updated_at, :desc))
+
+2016-11-26T23:00:15.638 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE title LIKE '%u%' ORDER BY articles.updated_at DESC LIMIT 1
+
+0.000891 seconds (16 allocations: 576 bytes)
+
+Nullable{App.Article}(
+App.Article
++==============+================================================================================+
+|          key |                                                                          value |
++==============+================================================================================+
+|           id |                                                            Nullable{Int32}(19) |
++--------------+--------------------------------------------------------------------------------+
+...
+)
+
+julia> SearchLight.find_one_by(Article, :title, "Id soluta officia quis quis incidunt.", order = SQLOrder(:updated_at, :desc))
+
+2016-11-26T23:03:12.311 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"title\" = 'Id soluta officia quis quis incidunt.') ORDER BY articles.updated_at DESC LIMIT 1
+
+0.003903 seconds (1.23 k allocations: 52.688 KB)
+
+Nullable{App.Article}(
+App.Article
++==============+================================================================================+
+|          key |                                                                          value |
++==============+================================================================================+
+|           id |                                                            Nullable{Int32}(19) |
++--------------+--------------------------------------------------------------------------------+
+...
 )
 ```
 """
-function find_one_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput) :: Nullable{T}
-  to_nullable(find_by(m, column_name, value))
+function find_one_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput; order = SQLOrder(m()._id)) :: Nullable{T}
+  find(m, SQLQuery(where = [SQLWhere(column_name, value)], order = order, limit = 1)) |> to_nullable
 end
-function find_one_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any) :: Nullable{T}
-  find_one_by(m, SQLColumn(column_name), SQLInput(value))
+function find_one_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any; order = SQLOrder(m()._id)) :: Nullable{T}
+  find_one_by(m, SQLColumn(column_name), SQLInput(value), order = order)
 end
-function find_one_by{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression) :: Nullable{T}
-  to_nullable(find_by(m, sql_expression))
+function find_one_by{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression; order = SQLOrder(m()._id)) :: Nullable{T}
+  find(m, SQLQuery(where = [sql_expression], order = order, limit = 1)) |> to_nullable
 end
 
 
@@ -285,71 +269,239 @@ Returns the value if is not `NULL`. Throws a `NullException` otherwise.
 
 # Examples:
 ```julia
+julia> SearchLight.find_one_by!!(Article, :id, 1)
 
+2016-11-26T22:20:32.788 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"id\" = 1) ORDER BY articles.id ASC LIMIT 1
+
+0.001170 seconds (16 allocations: 576 bytes)
+
+App.Article
++==============+===============================================================================+
+|          key |                                                                         value |
++==============+===============================================================================+
+|           id |                                                            Nullable{Int32}(1) |
++--------------+-------------------------------------------------------------------------------+
+...
+
+julia> SearchLight.find_one_by!!(Article, SQLWhereExpression("title LIKE ?", "%n%"))
+
+2016-11-26T21:58:47.15 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE title LIKE '%n%' ORDER BY articles.id ASC LIMIT 1
+
+0.000939 seconds (16 allocations: 576 bytes)
+
+App.Article
++==============+===============================================================================+
+|          key |                                                                         value |
++==============+===============================================================================+
+|           id |                                                            Nullable{Int32}(1) |
++--------------+-------------------------------------------------------------------------------+
+...
++--------------+-------------------------------------------------------------------------------+
+|        title |                              Nobis provident dolor sit voluptatibus pariatur. |
++--------------+-------------------------------------------------------------------------------+
+
+julia> SearchLight.find_one_by!!(Article, SQLWhereExpression("title LIKE ?", "foo bar baz"))
+
+2016-11-26T21:59:39.651 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE title LIKE 'foo bar baz' ORDER BY articles.id ASC LIMIT 1
+
+0.000764 seconds (16 allocations: 576 bytes)
+
+------ NullException ------------------- Stacktrace (most recent call last)
+
+ [1] — find_one_by!!(::Type{App.Article}, ::SearchLight.SQLWhereExpression) at SearchLight.jl:295
+
+ [2] — |>(::Nullable{App.Article}, ::Base.#get) at operators.jl:350
+
+ [3] — get at nullable.jl:62 [inlined]
+
+NullException()
 ```
 """
-function find_one_by!!{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any) :: T
-  find_one_by(m, column_name, value) |> Base.get
+function find_one_by!!{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any; order = SQLOrder(m()._id)) :: T
+  find_one_by(m, column_name, value, order = order) |> Base.get
 end
-function find_one_by!!{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression) :: T
-  find_by(m, sql_expression) |> Base.get
+function find_one_by!!{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression; order = SQLOrder(m()._id)) :: T
+  find_one_by(m, sql_expression, order = order) |> Base.get
 end
+
 
 """
-    find_one{T<:AbstractModel}(m::Type{T}, value::Any)
+    find_one{T<:AbstractModel}(m::Type{T}, value::Any) :: Nullable{T}
 
-Executes a SQL `SELECT` query against the database, applying a `WHERE` filter using the `SearchLight`s `_id` column and the `value`.
+Executes a SQL `SELECT` query against the database, applying a `WHERE` filter using
+`SearchLight`s `_id` column and the `value`.
 Returns the result as a `Nullable{T<:AbstractModel}`.
+
+# Examples
+```julia
+julia> SearchLight.find_one(Article, 1)
+
+2016-11-26T22:29:11.443 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"id\" = 1) ORDER BY articles.id ASC LIMIT 1
+
+0.000754 seconds (16 allocations: 576 bytes)
+
+Nullable{App.Article}(
+App.Article
++==============+===============================================================================+
+|          key |                                                                         value |
++==============+===============================================================================+
+|           id |                                                            Nullable{Int32}(1) |
++--------------+-------------------------------------------------------------------------------+
+...
+)
+```
 """
-function find_one{T<:AbstractModel}(m::Type{T}, value::Any)
-  find_one_by(m, SQLColumn(disposable_instance(m)._id), SQLInput(value))
+function find_one{T<:AbstractModel}(m::Type{T}, value::Any) :: Nullable{T}
+  find_one_by(m, SQLColumn(m()._id), SQLInput(value))
 end
 
+
 """
-    find_one!!{T<:AbstractModel}(m::Type{T}, value::Any)
+    find_one!!{T<:AbstractModel}(m::Type{T}, value::Any) :: T
 
 Similar to `find_one` but also attempts to get the value inside the `Nullable`.
 Returns the value if is not `NULL`. Throws a `NullException` otherwise.
+
+# Examples
+```julia
+julia> SearchLight.find_one!!(Article, 36)
+
+2016-11-26T22:35:46.166 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"id\" = 36) ORDER BY articles.id ASC LIMIT 1
+
+0.000742 seconds (16 allocations: 576 bytes)
+
+App.Article
++==============+=========================================================+
+|          key |                                                   value |
++==============+=========================================================+
+|           id |                                     Nullable{Int32}(36) |
++--------------+---------------------------------------------------------+
+...
+
+julia> SearchLight.find_one!!(Article, 387)
+
+2016-11-26T22:36:22.492 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"id\" = 387) ORDER BY articles.id ASC LIMIT 1
+
+0.000915 seconds (16 allocations: 576 bytes)
+
+------ NullException ------------------- Stacktrace (most recent call last)
+
+ [1] — find_one!!(::Type{App.Article}, ::Int64) at SearchLight.jl:333
+
+ [2] — |>(::Nullable{App.Article}, ::Base.#get) at operators.jl:350
+
+ [3] — get at nullable.jl:62 [inlined]
+
+NullException()
+```
 """
-function find_one!!{T<:AbstractModel}(m::Type{T}, value::Any)
+function find_one!!{T<:AbstractModel}(m::Type{T}, value::Any) :: T
   find_one(m, value) |> Base.get
 end
 
+
 """
-    rand{T<:AbstractModel}(m::Type{T}; limit = 1)
+    rand{T<:AbstractModel}(m::Type{T}; limit = 1) :: Vector{T}
 
 Executes a SQL `SELECT` query against the database, `SORT`ing the results randomly and applying a `LIMIT` of `limit`.
 Returns the resultset as a `Vector{T<:AbstractModel}`.
+
+# Examples
+```julia
+julia> SearchLight.rand(Article)
+
+2016-11-26T22:39:58.545 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" ORDER BY random() ASC LIMIT 1
+
+0.007991 seconds (16 allocations: 576 bytes)
+
+1-element Array{App.Article,1}:
+
+App.Article
++==============+==========================================================================================+
+|          key |                                                                                    value |
++==============+==========================================================================================+
+|           id |                                                                      Nullable{Int32}(16) |
++--------------+------------------------------------------------------------------------------------------+
+...
+
+julia> SearchLight.rand(Article, limit = 3)
+
+2016-11-26T22:40:58.156 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" ORDER BY random() ASC LIMIT 3
+
+0.000809 seconds (16 allocations: 576 bytes)
+
+3-element Array{App.Article,1}:
+...
+```
 """
-function rand{T<:AbstractModel}(m::Type{T}; limit = 1)
+function rand{T<:AbstractModel}(m::Type{T}; limit = 1) :: Vector{T}
   find(m, SQLQuery(limit = SQLLimit(limit), order = [SQLOrder("random()", raw = true)]))
 end
 
-"""
-    rand_one{T<:AbstractModel}(m::Type{T})
 
-Similar to `SearchLight.rand` but it only returns one instance of {T<:AbstractModel}, wrapped into a Nullable.
 """
-function rand_one{T<:AbstractModel}(m::Type{T})
+    rand_one{T<:AbstractModel}(m::Type{T}) :: Nullable{T}
+
+Similar to `SearchLight.rand` -- returns one random instance of {T<:AbstractModel}, wrapped into a Nullable{T}.
+
+# Examples
+```julia
+julia> SearchLight.rand_one(Article)
+
+2016-11-26T22:46:11.47100000000000003 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" ORDER BY random() ASC LIMIT 1
+
+0.001087 seconds (16 allocations: 576 bytes)
+
+Nullable{App.Article}(
+App.Article
++==============+=======================================================================================+
+|          key |                                                                                 value |
++==============+=======================================================================================+
+|           id |                                                                   Nullable{Int32}(37) |
++--------------+---------------------------------------------------------------------------------------+
+...
+)
+```
+"""
+function rand_one{T<:AbstractModel}(m::Type{T}) :: Nullable{T}
   to_nullable(rand(m, limit = 1))
 end
 
-"""
-    all{T<:AbstractModel}(m::Type{T})
 
-Executes a SQL `SELECT` query against the database and return all the results.
-Returns the resultset as a `Vector{T<:AbstractModel}`.
 """
-function all{T<:AbstractModel}(m::Type{T})
+    all{T<:AbstractModel}(m::Type{T}) :: Vector{T}
+
+Executes a SQL `SELECT` query against the database and return all the results. Alias for `find(m)`
+Returns the resultset as a `Vector{T<:AbstractModel}`.
+
+# Examples
+```julia
+julia> SearchLight.all(Article)
+
+2016-11-26T23:09:57.976 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\"
+
+0.003656 seconds (16 allocations: 576 bytes)
+
+38-element Array{App.Article,1}:
+...
+```
+"""
+function all{T<:AbstractModel}(m::Type{T}) :: Vector{T}
   find(m)
 end
+
 
 """
     save{T<:AbstractModel}(m::T; conflict_strategy = :error)
 
-Attempts to persist the model's data to the database. Returns `true` if successful, `false` otherwise.
+Attempts to persist the model's data to the database. Returns boolean `true` if successful, `false` otherwise.
+
+# Examples
+```julia
+
+```
 """
-function save{T<:AbstractModel}(m::T; conflict_strategy = :error)
+function save{T<:AbstractModel}(m::T; conflict_strategy = :error) :: Bool
   try
     _save!!(m, conflict_strategy = conflict_strategy)
     true
@@ -359,10 +511,16 @@ function save{T<:AbstractModel}(m::T; conflict_strategy = :error)
   end
 end
 
+
 """
    save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false)
 
 Similar to `save` but it returns the model reloaded from the database, applying callbacks. Throws an exception if the model can't be persisted.
+
+# Examples
+```julia
+
+```
 """
 function save!{T<:AbstractModel}(m::T; conflict_strategy = :error)
   save!!(m, conflict_strategy = conflict_strategy)

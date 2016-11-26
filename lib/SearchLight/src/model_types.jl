@@ -27,7 +27,7 @@ typealias RelationshipDataArray Vector{AbstractModel}
 # SearchLight validations
 #
 
-type ModelValidator
+immutable ModelValidator
   rules::Vector{Tuple{Symbol,Function,Vararg{Any}}} # [(:title, :not_empty), (:title, :min_length, (20)), (:content, :not_empty_if_published), (:email, :matches, (r"(.*)@(.*)"))]
   errors::Vector{Tuple{Symbol,Symbol,String}} # [(:title, :not_empty, "title not empty"), (:title, :min_length, "min length 20"), (:content, :min_length, "min length 200")]
 
@@ -118,7 +118,7 @@ const SQLColumns = SQLColumn # so we can use both
 # SQLLogicOperator
 #
 
-type SQLLogicOperator <: SQLType
+immutable SQLLogicOperator <: SQLType
   value::String
   SQLLogicOperator(v::String) = new( v == "OR" ? "OR" : "AND" )
 end
@@ -131,7 +131,7 @@ string(s::SQLLogicOperator) = s.value
 # SQLWhere
 #
 
-type SQLWhere <: SQLType
+immutable SQLWhere <: SQLType
   column::SQLColumn
   value::SQLInput
   condition::SQLLogicOperator
@@ -212,7 +212,7 @@ SearchLight.SQLWhereExpression
 +----------------+----------------------------------------+
 ```
 """
-type SQLWhereExpression <: SQLType
+immutable SQLWhereExpression <: SQLType
   sql_expression::String
   values::Vector{SQLInput}
   condition::String
@@ -255,7 +255,7 @@ typealias SQLWhereEntity Union{SQLWhere,SQLWhereExpression}
 #
 
 
-type SQLLimit <: SQLType
+immutable SQLLimit <: SQLType
   value::Union{Int, String}
   SQLLimit(v::Int) = new(v)
   function SQLLimit(v::String)
@@ -282,7 +282,7 @@ convert(::Type{SQLLimit}, v::Int) = SQLLimit(v)
 # SQLOrder
 #
 
-type SQLOrder <: SQLType
+immutable SQLOrder <: SQLType
   column::SQLColumn
   direction::String
   SQLOrder(column::SQLColumn, direction::String) =
@@ -307,7 +307,7 @@ convert(::Type{Vector{SQLOrder}}, t::Tuple{Symbol,Symbol}) = [SQLOrder(t[1], t[2
 # SQLJoin - SQLOn
 #
 
-type SQLOn <: SQLType
+immutable SQLOn <: SQLType
   column_1::SQLColumn
   column_2::SQLColumn
   conditions::Vector{SQLWhereEntity}
@@ -327,7 +327,7 @@ end
 # SQLJoin - SQLJoinType
 #
 
-type SQLJoinType <: SQLType
+immutable SQLJoinType <: SQLType
   join_type::String
   function SQLJoinType(t::String)
     accepted_values = ["inner", "INNER", "left", "LEFT", "right", "RIGHT", "full", "FULL"]
@@ -348,7 +348,7 @@ string(jt::SQLJoinType) = jt.join_type
 # SQLJoin
 #
 
-type SQLJoin{T<:AbstractModel} <: SQLType
+immutable SQLJoin{T<:AbstractModel} <: SQLType
   model_name::Type{T}
   on::SQLOn
   join_type::SQLJoinType
@@ -427,7 +427,7 @@ SearchLight.SQLQuery
 +---------+--------------------------------------------------------------+
 ```
 """
-type SQLQuery <: SQLType
+immutable SQLQuery <: SQLType
   columns::Vector{SQLColumn}
   where::Vector{SQLWhereEntity}
   limit::SQLLimit
@@ -448,7 +448,7 @@ string{T<:AbstractModel}(q::SQLQuery, m::Type{T}) = to_fetch_sql(m, q)
 # SQLRelation
 #
 
-type SQLRelation{T<:AbstractModel} <: SQLType
+immutable SQLRelation{T<:AbstractModel} <: SQLType
   model_name::Type{T}
   required::Bool
   eagerness::Symbol
