@@ -15,6 +15,7 @@ DateParser
 Lint
 URIParser
 Gallium
+Faker
 
 https://github.com/JuliaDB/DBI.jl
 https://github.com/JuliaDB/PostgreSQL.jl

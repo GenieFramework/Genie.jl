@@ -27,7 +27,7 @@ direct_relationships() = [RELATIONSHIP_HAS_ONE, RELATIONSHIP_BELONGS_TO, RELATIO
 
 
 """
-    find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}[, q::SQLQuery[, j::Vector{SQLJoin{N}}]])::DataFrames.DataFrame
+    find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}[, q::SQLQuery[, j::Vector{SQLJoin{N}}]]) :: DataFrame
 
 Executes a SQL `SELECT` query against the database and returns the resultset as a `DataFrame`.
 
@@ -60,13 +60,13 @@ julia> SearchLight.find_df(Article, SQLQuery(limit = 5))
 ...
 ```
 """
-function find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Vector{SQLJoin{N}}) :: DataFrames.DataFrame
-  query(to_fetch_sql(m, q, j)) :: DataFrames.DataFrame
+function find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, j::Vector{SQLJoin{N}}) :: DataFrame
+  query(to_fetch_sql(m, q, j)) :: DataFrame
 end
-function find_df{T<:AbstractModel}(m::Type{T}, q::SQLQuery) :: DataFrames.DataFrame
-  query(to_fetch_sql(m, q)) :: DataFrames.DataFrame
+function find_df{T<:AbstractModel}(m::Type{T}, q::SQLQuery) :: DataFrame
+  query(to_fetch_sql(m, q)) :: DataFrame
 end
-function find_df{T<:AbstractModel}(m::Type{T}) :: DataFrames.DataFrame
+function find_df{T<:AbstractModel}(m::Type{T}) :: DataFrame
   find_df(m, SQLQuery())
 end
 
@@ -492,18 +492,62 @@ end
 
 
 """
-    save{T<:AbstractModel}(m::T; conflict_strategy = :error)
+    save{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false, skip_callbacks = Vector{Symbol}()) :: Bool
 
 Attempts to persist the model's data to the database. Returns boolean `true` if successful, `false` otherwise.
+Invokes validations and callbacks.
 
 # Examples
 ```julia
+julia> a = Article()
 
+App.Article
++==============+=========================+
+|          key |                   value |
++==============+=========================+
+|      content |                         |
++--------------+-------------------------+
+|           id |       Nullable{Int32}() |
++--------------+-------------------------+
+| published_at |    Nullable{DateTime}() |
++--------------+-------------------------+
+|         slug |                         |
++--------------+-------------------------+
+|      summary |                         |
++--------------+-------------------------+
+|        title |                         |
++--------------+-------------------------+
+|   updated_at | 2016-11-27T21:53:13.375 |
++--------------+-------------------------+
+
+julia> a.content = join(Faker.words(), " ") |> ucfirst
+"Eaque nostrum nam"
+
+julia> a.slug = join(Faker.words(), "-")
+"quidem-sit-quas"
+
+julia> a.title = join(Faker.words(), " ") |> ucfirst
+"Sed vel qui"
+
+julia> SearchLight.save(a)
+
+2016-11-27T21:55:46.897 - info: ErrorException("SearchLight validation error(s) for App.Article \n (:title,:min_length,\"title should be at least 20 chars long and it's only 11\")")
+
+julia> a.title = a.title ^ 3
+"Sed vel quiSed vel quiSed vel qui"
+
+julia> SearchLight.save(a)
+
+2016-11-27T21:58:34.99 - info: SQL QUERY: INSERT INTO articles ( \"title\", \"summary\", \"content\", \"updated_at\", \"published_at\", \"slug\" ) VALUES ( 'Sed vel quiSed vel quiSed vel qui', '', 'Eaque nostrum nam', '2016-11-27T21:53:13.375', NULL, 'quidem-sit-quas' ) RETURNING id
+
+0.019713 seconds (12 allocations: 416 bytes)
+
+true
 ```
 """
-function save{T<:AbstractModel}(m::T; conflict_strategy = :error) :: Bool
+function save{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false, skip_callbacks = Vector{Symbol}()) :: Bool
   try
-    _save!!(m, conflict_strategy = conflict_strategy)
+    _save!!(m, conflict_strategy = conflict_strategy, skip_validation = skip_validation, skip_callbacks = skip_callbacks)
     true
   catch ex
     Logger.log(ex)
@@ -513,44 +557,293 @@ end
 
 
 """
-   save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false)
+    save!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false, skip_callbacks = Vector{Symbol}()) :: T
+    save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false, skip_callbacks = Vector{Symbol}()) :: T
 
 Similar to `save` but it returns the model reloaded from the database, applying callbacks. Throws an exception if the model can't be persisted.
 
 # Examples
 ```julia
+julia> a = Article()
 
+App.Article
++==============+========================+
+|          key |                  value |
++==============+========================+
+|      content |                        |
++--------------+------------------------+
+|           id |      Nullable{Int32}() |
++--------------+------------------------+
+| published_at |   Nullable{DateTime}() |
++--------------+------------------------+
+|         slug |                        |
++--------------+------------------------+
+|      summary |                        |
++--------------+------------------------+
+|        title |                        |
++--------------+------------------------+
+|   updated_at | 2016-11-27T22:10:23.12 |
++--------------+------------------------+
+
+julia> a.content = join(Faker.paragraphs(), " ")
+"Facere dolorum eum ut velit. Reiciendis at facere voluptatum neque. Est.. Et nihil et delectus veniam. Ipsum sint voluptatem voluptates. Aut necessitatibus necessitatibus.. Doloremque aspernatur maiores. Numquam facere tenetur quae. Aliquam.."
+
+julia> a.slug = join(Faker.words(), "-")
+"nulla-odit-est"
+
+julia> a.title = Faker.paragraph()
+"Sed. Consectetur. Neque tenetur sit eos.."
+
+julia> a.title = Faker.paragraph() ^ 2
+"Perspiciatis facilis perspiciatis modi. Quae natus voluptatem. Et dolor..Perspiciatis facilis perspiciatis modi. Quae natus voluptatem. Et dolor.."
+
+julia> SearchLight.save!(a)
+
+2016-11-27T22:12:23.295 - info: SQL QUERY: INSERT INTO articles ( \"title\", \"summary\", \"content\", \"updated_at\", \"published_at\", \"slug\" ) VALUES ( 'Perspiciatis facilis perspiciatis modi. Quae natus voluptatem. Et dolor..Perspiciatis facilis perspiciatis modi. Quae natus voluptatem. Et dolor..', '', 'Facere dolorum eum ut velit. Reiciendis at facere voluptatum neque. Est.. Et nihil et delectus veniam. Ipsum sint voluptatem voluptates. Aut necessitatibus necessitatibus.. Doloremque aspernatur maiores. Numquam facere tenetur quae. Aliquam..', '2016-11-27T22:10:23.12', NULL, 'nulla-odit-est' ) RETURNING id
+
+0.007109 seconds (12 allocations: 416 bytes)
+
+2016-11-27T22:12:24.503 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"id\" = 43) ORDER BY articles.id ASC LIMIT 1
+
+0.009514 seconds (1.23 k allocations: 52.688 KB)
+
+App.Article
++==============+=========================================================================================================+
+|          key |                                                                                                   value |
++==============+=========================================================================================================+
+|      content | Facere dolorum eum ut velit. Reiciendis at facere voluptatum neque. Est.. Et nihil et delectus venia... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|           id |                                                                                     Nullable{Int32}(43) |
++--------------+---------------------------------------------------------------------------------------------------------+
+| published_at |                                                                                    Nullable{DateTime}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+|         slug |                                                                                          nulla-odit-est |
++--------------+---------------------------------------------------------------------------------------------------------+
+|      summary |                                                                                                         |
++--------------+---------------------------------------------------------------------------------------------------------+
+|        title | Perspiciatis facilis perspiciatis modi. Quae natus voluptatem. Et dolor..Perspiciatis facilis perspi... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|   updated_at |                                                                                  2016-11-27T22:10:23.12 |
++--------------+---------------------------------------------------------------------------------------------------------+
 ```
 """
-function save!{T<:AbstractModel}(m::T; conflict_strategy = :error)
-  save!!(m, conflict_strategy = conflict_strategy)
+function save!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false, skip_callbacks = Vector{Symbol}()) :: T
+  save!!(m, conflict_strategy = conflict_strategy, skip_validation = skip_validation, skip_callbacks = skip_callbacks)
 end
-function save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false)
-  find_one_by!!(typeof(m), Symbol(m._id), (_save!!(m, conflict_strategy = conflict_strategy, skip_validation = skip_validation))[1, Symbol(m._id)])
+function save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false, skip_callbacks = Vector{Symbol}()) :: T
+  find_one_by!!(typeof(m), Symbol(m._id), (_save!!(m, conflict_strategy = conflict_strategy, skip_validation = skip_validation, skip_callbacks = skip_callbacks))[1, Symbol(m._id)])
 end
-function _save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false)
+
+function _save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false, skip_callbacks = Vector{Symbol}()) :: DataFrame
   ! skip_validation && ! Validation.validate!(m) && error("SearchLight validation error(s) for $(typeof(m)) \n $(join(Validation.errors(m), "\n "))")
 
-  invoke_callback(m, :before_save)
+  ! in(:before_save, skip_callbacks) && invoke_callback(m, :before_save)
 
   result = query(to_store_sql(m, conflict_strategy = conflict_strategy))
 
-  invoke_callback(m, :after_save)
+  ! in(:after_save, skip_callbacks) && invoke_callback(m, :after_save)
 
   result
 end
 
-function invoke_callback{T<:AbstractModel}(m::T, callback::Symbol)
-  in(callback, fieldnames(m)) ? (true, getfield(m, callback)(m), m) : (false, nothing, m)
+
+"""
+    invoke_callback{T<:AbstractModel}(m::T, callback::Symbol) :: Tuple{Bool,T}
+
+Checks if the `callback` method is defined on `m` - if yes, it invokes it and returns `(true, m)`.
+If not, it return `(false, m)`.
+
+# Examples
+```julia
+julia> a = Articles.random()
+
+App.Article
++==============+=========================================================================================================+
+|          key |                                                                                                   value |
++==============+=========================================================================================================+
+|           id |                                                                                       Nullable{Int32}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+...
+
+julia> SearchLight.invoke_callback(a, :before_save)
+(true,
+App.Article
++==============+=========================================================================================================+
+|          key |                                                                                                   value |
++==============+=========================================================================================================+
+|           id |                                                                                       Nullable{Int32}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+...
+)
+
+julia> SearchLight.invoke_callback(a, :after_save)
+(false,
+App.Article
++==============+=========================================================================================================+
+|          key |                                                                                                   value |
++==============+=========================================================================================================+
+|           id |                                                                                       Nullable{Int32}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+...
+)
+```
+"""
+function invoke_callback{T<:AbstractModel}(m::T, callback::Symbol) :: Tuple{Bool,T}
+  if in(callback, fieldnames(m))
+    getfield(m, callback)(m)
+    (true, m)
+  else
+    (false, m)
+  end
 end
 
-"""
-    update_with!{T<:AbstractModel}(m::T, w::T)
-    update_with!{T<:AbstractModel}(m::T, w::Dict)
 
-Copies the data from `w` into the corresponding properties in `m`. Returns `m`
 """
-function update_with!{T<:AbstractModel}(m::T, w::T)
+    update_with!{T<:AbstractModel}(m::T, w::T) :: T
+    update_with!{T<:AbstractModel}(m::T, w::Dict) :: T
+
+Copies the data from `w` into the corresponding properties in `m`. Returns `m`.
+
+# Examples
+```julia
+julia> a = Articles.random()
+
+App.Article
++==============+=========================================================================================================+
+|          key |                                                                                                   value |
++==============+=========================================================================================================+
+|      content | Iusto et vel aut minima molestias. Debitis maiores magnam repellat. Eos totam blanditiis..Iusto et v... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|           id |                                                                                       Nullable{Int32}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+| published_at |                                                                                    Nullable{DateTime}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+|         slug |    at-omnis-maxime-corrupti-omnis-dignissimos-ducimusat-omnis-maxime-corrupti-omnis-dignissimos-ducimus |
++--------------+---------------------------------------------------------------------------------------------------------+
+|      summary |    Iusto et vel aut minima molestias. Debitis maiores magnam repellat. Eos totam blanditiis..Iusto et v |
++--------------+---------------------------------------------------------------------------------------------------------+
+|        title | At omnis maxime. Corrupti omnis dignissimos ducimus..At omnis maxime. Corrupti omnis dignissimos duc... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|   updated_at |                                                                    2016-11-27T23:11:27.7010000000000001 |
++--------------+---------------------------------------------------------------------------------------------------------+
+
+julia> b = Article()
+
+App.Article
++==============+=========================+
+|          key |                   value |
++==============+=========================+
+|      content |                         |
++--------------+-------------------------+
+|           id |       Nullable{Int32}() |
++--------------+-------------------------+
+| published_at |    Nullable{DateTime}() |
++--------------+-------------------------+
+|         slug |                         |
++--------------+-------------------------+
+|      summary |                         |
++--------------+-------------------------+
+|        title |                         |
++--------------+-------------------------+
+|   updated_at | 2016-11-27T23:11:35.628 |
++--------------+-------------------------+
+
+julia> SearchLight.update_with!(b, a)
+
+App.Article
++==============+=========================================================================================================+
+|          key |                                                                                                   value |
++==============+=========================================================================================================+
+|      content | Iusto et vel aut minima molestias. Debitis maiores magnam repellat. Eos totam blanditiis..Iusto et v... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|           id |                                                                                       Nullable{Int32}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+| published_at |                                                                                    Nullable{DateTime}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+|         slug |    at-omnis-maxime-corrupti-omnis-dignissimos-ducimusat-omnis-maxime-corrupti-omnis-dignissimos-ducimus |
++--------------+---------------------------------------------------------------------------------------------------------+
+|      summary |    Iusto et vel aut minima molestias. Debitis maiores magnam repellat. Eos totam blanditiis..Iusto et v |
++--------------+---------------------------------------------------------------------------------------------------------+
+|        title | At omnis maxime. Corrupti omnis dignissimos ducimus..At omnis maxime. Corrupti omnis dignissimos duc... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|   updated_at |                                                                    2016-11-27T23:11:27.7010000000000001 |
++--------------+---------------------------------------------------------------------------------------------------------+
+
+julia> b
+
+App.Article
++==============+=========================================================================================================+
+|          key |                                                                                                   value |
++==============+=========================================================================================================+
+|      content | Iusto et vel aut minima molestias. Debitis maiores magnam repellat. Eos totam blanditiis..Iusto et v... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|           id |                                                                                       Nullable{Int32}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+| published_at |                                                                                    Nullable{DateTime}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+|         slug |    at-omnis-maxime-corrupti-omnis-dignissimos-ducimusat-omnis-maxime-corrupti-omnis-dignissimos-ducimus |
++--------------+---------------------------------------------------------------------------------------------------------+
+|      summary |    Iusto et vel aut minima molestias. Debitis maiores magnam repellat. Eos totam blanditiis..Iusto et v |
++--------------+---------------------------------------------------------------------------------------------------------+
+|        title | At omnis maxime. Corrupti omnis dignissimos ducimus..At omnis maxime. Corrupti omnis dignissimos duc... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|   updated_at |                                                                    2016-11-27T23:11:27.7010000000000001 |
++--------------+---------------------------------------------------------------------------------------------------------+
+
+julia> d = Articles.random() |> SearchLight.to_dict
+Dict{String,Any} with 7 entries:
+  "summary"      => "Culpa quam quod. Iusto..Culpa quam quod. Iusto..Culpa quam quod. Iusto..Culpa quam quod. Iusto..Culp"
+  "content"      => "Culpa quam quod. Iusto..Culpa quam quod. Iusto..Culpa quam quod. Iusto..Culpa quam quod. Iusto..Culpa quam quod. Iusto..Culpa quam quod. Iusto..Culpa quam quod. Iusto..Culpa quam quod. Iusto..Culpa quam quod. Iusto..…
+  "id"           => #NULL
+  "title"        => "Minima. Eius. Velit. Sunt ducimus cumque eveniet..Minima. Eius. Velit. Sunt ducimus cumque eveniet.."
+  "updated_at"   => 2016-11-27T23:17:55.379
+  "slug"         => "minima-eius-velit-sunt-ducimus-cumque-evenietminima-eius-velit-sunt-ducimus-cumque-eveniet"
+  "published_at" => #NULL
+
+julia> a = Article()
+
+App.Article
++==============+=========================+
+|          key |                   value |
++==============+=========================+
+|      content |                         |
++--------------+-------------------------+
+|           id |       Nullable{Int32}() |
++--------------+-------------------------+
+| published_at |    Nullable{DateTime}() |
++--------------+-------------------------+
+|         slug |                         |
++--------------+-------------------------+
+|      summary |                         |
++--------------+-------------------------+
+|        title |                         |
++--------------+-------------------------+
+|   updated_at | 2016-11-27T23:18:06.438 |
++--------------+-------------------------+
+
+julia> SearchLight.update_with!(a, d)
+
+App.Article
++==============+=========================================================================================================+
+|          key |                                                                                                   value |
++==============+=========================================================================================================+
+|      content | Culpa quam quod. Iusto..Culpa quam quod. Iusto..Culpa quam quod. Iusto..Culpa quam quod. Iusto..Culp... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|           id |                                                                                       Nullable{Int32}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+| published_at |                                                                                    Nullable{DateTime}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+|         slug |              minima-eius-velit-sunt-ducimus-cumque-evenietminima-eius-velit-sunt-ducimus-cumque-eveniet |
++--------------+---------------------------------------------------------------------------------------------------------+
+|      summary |    Culpa quam quod. Iusto..Culpa quam quod. Iusto..Culpa quam quod. Iusto..Culpa quam quod. Iusto..Culp |
++--------------+---------------------------------------------------------------------------------------------------------+
+|        title |    Minima. Eius. Velit. Sunt ducimus cumque eveniet..Minima. Eius. Velit. Sunt ducimus cumque eveniet.. |
++--------------+---------------------------------------------------------------------------------------------------------+
+|   updated_at |                                                                                 2016-11-27T23:17:55.379 |
++--------------+---------------------------------------------------------------------------------------------------------+
+```
+"""
+function update_with!{T<:AbstractModel}(m::T, w::T) :: T
   for fieldname in fieldnames(typeof(m))
     ( startswith(string(fieldname), "_") || string(fieldname) == m._id ) && continue
     setfield!(m, fieldname, getfield(w, fieldname))
@@ -558,23 +851,93 @@ function update_with!{T<:AbstractModel}(m::T, w::T)
 
   m
 end
-function update_with!{T<:AbstractModel}(m::T, w::Dict)
+function update_with!{T<:AbstractModel}(m::T, w::Dict) :: T
   for fieldname in fieldnames(typeof(m))
     ( startswith(string(fieldname), "_") || string(fieldname) == m._id ) && continue
-    haskey(w, fieldname) && setfield!(m, fieldname, w[fieldname])
+
+    if haskey(w, fieldname)
+      setfield!(m, fieldname, w[fieldname])
+    elseif haskey(w, string(fieldname))
+      setfield!(m, fieldname, w[string(fieldname)])
+    end
   end
 
   m
 end
 
+
 """
     update_with!!{T<:AbstractModel}(m::T, w::Union{T,Dict})
 
 Similar to `update_with` but also calls `save!!` on `m`.
+
+# Examples
+```julia
+julia> d = Articles.random() |> SearchLight.to_dict
+Dict{String,Any} with 7 entries:
+  "summary"      => "Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae"
+  "content"      => "Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excep…
+  "id"           => #NULL
+  "title"        => "Impedit ut nulla sed. Sint sed dolorum quas beatae aspernatur..Impedit ut nulla sed. Sint sed dolorum quas beatae aspernatur.."
+  "updated_at"   => 2016-11-27T23:24:20.062
+  "slug"         => "impedit-ut-nulla-sed-sint-sed-dolorum-quas-beatae-aspernaturimpedit-ut-nulla-sed-sint-sed-dolorum-quas-beatae-aspernatur"
+  "published_at" => #NULL
+
+julia> a = Article()
+
+App.Article
++==============+=========================+
+|          key |                   value |
++==============+=========================+
+|      content |                         |
++--------------+-------------------------+
+|           id |       Nullable{Int32}() |
++--------------+-------------------------+
+| published_at |    Nullable{DateTime}() |
++--------------+-------------------------+
+|         slug |                         |
++--------------+-------------------------+
+|      summary |                         |
++--------------+-------------------------+
+|        title |                         |
++--------------+-------------------------+
+|   updated_at | 2016-11-27T23:24:25.494 |
++--------------+-------------------------+
+
+julia> SearchLight.update_with!!(a, d)
+
+2016-11-27T23:24:31.105 - info: SQL QUERY: INSERT INTO articles ( \"title\", \"summary\", \"content\", \"updated_at\", \"published_at\", \"slug\" ) VALUES ( 'Impedit ut nulla sed. Sint sed dolorum quas beatae aspernatur..Impedit ut nulla sed. Sint sed dolorum quas beatae aspernatur..', 'Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae', 'Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..', '2016-11-27T23:24:20.062', NULL, 'impedit-ut-nulla-sed-sint-sed-dolorum-quas-beatae-aspernaturimpedit-ut-nulla-sed-sint-sed-dolorum-quas-beatae-aspernatur' ) RETURNING id
+
+0.008251 seconds (12 allocations: 416 bytes)
+
+2016-11-27T23:24:32.274 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"id\" = 60) ORDER BY articles.id ASC LIMIT 1
+
+0.003159 seconds (1.23 k allocations: 52.688 KB)
+
+App.Article
++==============+=========================================================================================================+
+|          key |                                                                                                   value |
++==============+=========================================================================================================+
+|      content | Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|           id |                                                                                     Nullable{Int32}(60) |
++--------------+---------------------------------------------------------------------------------------------------------+
+| published_at |                                                                                    Nullable{DateTime}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+|         slug | impedit-ut-nulla-sed-sint-sed-dolorum-quas-beatae-aspernaturimpedit-ut-nulla-sed-sint-sed-dolorum-qu... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|      summary |    Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae |
++--------------+---------------------------------------------------------------------------------------------------------+
+|        title | Impedit ut nulla sed. Sint sed dolorum quas beatae aspernatur..Impedit ut nulla sed. Sint sed doloru... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|   updated_at |                                                                                 2016-11-27T23:24:20.062 |
++--------------+---------------------------------------------------------------------------------------------------------+
+```
 """
-function update_with!!{T<:AbstractModel}(m::T, w::Union{T,Dict})
-  SearchLight.save!!(update_with!(m, w)) |> Base.get
+function update_with!!{T<:AbstractModel}(m::T, w::Union{T,Dict}) :: T
+  SearchLight.save!!(update_with!(m, w))
 end
+
 
 """
     create_or_update_by!!{T<:AbstractModel}(m::T, property::Symbol[, value::Any])

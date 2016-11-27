@@ -48,7 +48,7 @@ type Article <: AbstractModel
 end
 
 module Articles
-using App, Util, URIParser
+using App, Util, URIParser, Faker
 
 function is_published(article::Article)
   ! isnull(article.published_at) && article.published_at |> _!! <= Dates.now()
@@ -73,6 +73,17 @@ end
 function before_save(article::Article)
   article.slug == "" && (article.slug = slugify(article))
   article
+end
+
+function random()
+  a = Article()
+  a.title = (Faker.paragraph() ^ 2)
+  (length(a.title) > 150) && (a.title = a.title[1:150])
+  a.slug = replace(replace(a.title, " ", "-"), ".", "") |> lowercase
+  a.content = Faker.paragraph() ^ 10
+  a.summary = a.content[1:100]
+
+  a
 end
 
 end
