@@ -294,9 +294,11 @@ SQLOrder(column::Any; raw::Bool = false) = SQLOrder(SQLColumn(column, raw = raw)
 string(o::SQLOrder) = "($(o.column) $(o.direction))"
 
 convert(::Type{SQLOrder}, s::Symbol) = SQLOrder(s)
+convert(::Type{SQLOrder}, s::String) = SQLOrder(s)
 
 convert(::Type{Vector{SQLOrder}}, o::SQLOrder) = [o]
 convert(::Type{Vector{SQLOrder}}, s::Symbol) = [SQLOrder(s)]
+convert(::Type{Vector{SQLOrder}}, s::String) = [SQLOrder(s)]
 convert(::Type{Vector{SQLOrder}}, t::Tuple{Symbol,Symbol}) = [SQLOrder(t[1], t[2])]
 
 #

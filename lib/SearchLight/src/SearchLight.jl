@@ -28,6 +28,7 @@ direct_relationships() = [RELATIONSHIP_HAS_ONE, RELATIONSHIP_BELONGS_TO, RELATIO
 
 """
     find_df{T<:AbstractModel, N<:AbstractModel}(m::Type{T}[, q::SQLQuery[, j::Vector{SQLJoin{N}}]]) :: DataFrame
+    find_df{T<:AbstractModel}(m::Type{T}; order = SQLOrder(m()._id)) :: DataFrame
 
 Executes a SQL `SELECT` query against the database and returns the resultset as a `DataFrame`.
 
@@ -37,7 +38,7 @@ julia> SearchLight.find_df(Article);
 
 2016-11-15T23:16:19.152 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\"
 
-0.003031 seconds (16 allocations: 576 bytes)
+  0.003031 seconds (16 allocations: 576 bytes)
 
 32×7 DataFrames.DataFrame
 │ Row │ articles_id │ articles_title                                     │ articles_summary                                                                                                                │
@@ -50,7 +51,7 @@ julia> SearchLight.find_df(Article, SQLQuery(limit = 5))
 
 2016-11-15T23:12:10.513 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" LIMIT 5
 
-0.000846 seconds (16 allocations: 576 bytes)
+  0.000846 seconds (16 allocations: 576 bytes)
 
 5×7 DataFrames.DataFrame
 │ Row │ articles_id │ articles_title                                     │ articles_summary                                                                                                                │
@@ -66,13 +67,49 @@ end
 function find_df{T<:AbstractModel}(m::Type{T}, q::SQLQuery) :: DataFrame
   query(to_fetch_sql(m, q)) :: DataFrame
 end
-function find_df{T<:AbstractModel}(m::Type{T}) :: DataFrame
-  find_df(m, SQLQuery())
+function find_df{T<:AbstractModel}(m::Type{T}; order = SQLOrder(m()._id)) :: DataFrame
+  find_df(m, SQLQuery(order = order))
 end
 
 
 """
-    find{T<:AbstractModel, N<:AbstractModel}(m::Type{T}[, q::SQLQuery[, j::Vector{SQLJoin{N}}]])
+    find_df{T<:AbstractModel}(m::Type{T}, w::SQLWhereEntity; order = SQLOrder(m()._id)) :: DataFrame
+    find_df{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity}; order = SQLOrder(m()._id)) :: DataFrame
+
+Executes a SQL `SELECT` query against the database and returns the resultset as a `DataFrame`.
+
+# Examples
+```julia
+julia> SearchLight.find_df(Article, SQLWhereExpression("id BETWEEN ? AND ?", [1, 10]))
+
+2016-11-28T23:16:02.526 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE id BETWEEN 1 AND 10
+
+  0.001516 seconds (16 allocations: 576 bytes)
+
+10×7 DataFrames.DataFrame
+...
+
+julia> SearchLight.find_df(Article, SQLWhereEntity[SQLWhereExpression("id BETWEEN ? AND ?", [1, 10]), SQLWhereExpression("id >= 5")])
+
+2016-11-28T23:14:43.496 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE id BETWEEN 1 AND 10 AND id >= 5
+
+  0.001202 seconds (16 allocations: 576 bytes)
+
+6×7 DataFrames.DataFrame
+...
+```
+"""
+function find_df{T<:AbstractModel}(m::Type{T}, w::SQLWhereEntity; order = SQLOrder(m()._id)) :: DataFrame
+  find_df(m, SQLQuery(where = [w], order = order))
+end
+function find_df{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity}; order = SQLOrder(m()._id)) :: DataFrame
+  find_df(m, SQLQuery(where = w, order = order))
+end
+
+
+"""
+    find{T<:AbstractModel, N<:AbstractModel}(m::Type{T}[, q::SQLQuery[, j::Vector{SQLJoin{N}}]]) :: Vector{T}
+    find{T<:AbstractModel}(m::Type{T}; order = SQLOrder(m()._id)) :: Vector{T}
 
 Executes a SQL `SELECT` query against the database and returns the resultset as a `Vector{T<:AbstractModel}`.
 
@@ -82,7 +119,7 @@ julia> SearchLight.find(Article, SQLQuery(where = [SQLWhereExpression("id BETWEE
 
 2016-11-25T22:38:24.003 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE TRUE AND id BETWEEN 10 AND 20 ORDER BY articles.title ASC LIMIT 5 OFFSET 5
 
-0.001486 seconds (16 allocations: 576 bytes)
+  0.001486 seconds (16 allocations: 576 bytes)
 
 5-element Array{App.Article,1}:
 ...
@@ -91,7 +128,7 @@ julia> SearchLight.find(Article)
 
 2016-11-25T22:40:56.083 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\"
 
-0.011748 seconds (16 allocations: 576 bytes)
+  0.011748 seconds (16 allocations: 576 bytes)
 
 38-element Array{App.Article,1}:
 ...
@@ -103,15 +140,50 @@ end
 function find{T<:AbstractModel}(m::Type{T}, q::SQLQuery) :: Vector{T}
   to_models(m, find_df(m, q))
 end
-function find{T<:AbstractModel}(m::Type{T}) :: Vector{T}
-  find(m, SQLQuery())
+function find{T<:AbstractModel}(m::Type{T}; order = SQLOrder(m()._id)) :: Vector{T}
+  find(m, SQLQuery(order = order))
 end
 
 
 """
-    find_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput) :: Vector{T}
-    find_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any) :: Vector{T}
-    find_by{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression) :: Vector{T}
+    find{T<:AbstractModel}(m::Type{T}, w::SQLWhereEntity; order = SQLOrder(m()._id)) :: Vector{T}
+    find{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity}; order = SQLOrder(m()._id)) :: Vector{T}
+
+Executes a SQL `SELECT` query against the database and returns the resultset as a `Vector{T<:AbstractModel}`.
+
+# Examples
+```julia
+julia> SearchLight.find(Article, SQLWhereExpression("id BETWEEN ? AND ?", [1, 10]))
+
+2016-11-28T22:56:01.6880000000000001 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE id BETWEEN 1 AND 10
+
+  0.001705 seconds (16 allocations: 576 bytes)
+
+10-element Array{App.Article,1}:
+...
+
+julia> SearchLight.find(Article, SQLWhereEntity[SQLWhereExpression("id BETWEEN ? AND ?", [1, 10]), SQLWhereExpression("id >= 5")])
+
+2016-11-28T23:03:33.88 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE id BETWEEN 1 AND 10 AND id >= 5
+
+  0.003400 seconds (1.23 k allocations: 52.688 KB)
+
+6-element Array{App.Article,1}:
+...
+```
+"""
+function find{T<:AbstractModel}(m::Type{T}, w::SQLWhereEntity; order = SQLOrder(m()._id)) :: Vector{T}
+  find(m, SQLQuery(where = [w], order = order))
+end
+function find{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity}; order = SQLOrder(m()._id)) :: Vector{T}
+  find(m, SQLQuery(where = w, order = order))
+end
+
+
+"""
+    find_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput; order = SQLOrder(m()._id)) :: Vector{T}
+    find_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any; order = SQLOrder(m()._id)) :: Vector{T}
+    find_by{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression; order = SQLOrder(m()._id)) :: Vector{T}
 
 Executes a SQL `SELECT` query against the database, applying a `WHERE` filter using the `column_name` and the `value`.
 Returns the resultset as a `Vector{T<:AbstractModel}`.
@@ -122,7 +194,7 @@ julia> SearchLight.find_by(Article, :slug, "cupiditate-velit-repellat-dolorem-no
 
 2016-11-25T22:45:19.157 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE TRUE AND (\"slug\" = 'cupiditate-velit-repellat-dolorem-nobis')
 
-0.000802 seconds (16 allocations: 576 bytes)
+  0.000802 seconds (16 allocations: 576 bytes)
 
 1-element Array{App.Article,1}:
 
@@ -141,7 +213,7 @@ julia> SearchLight.find_by(Article, SQLWhereExpression("slug LIKE ?", "%dolorem%
 
 2016-11-25T23:15:52.5730000000000001 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE TRUE AND slug LIKE '%dolorem%'
 
-0.000782 seconds (16 allocations: 576 bytes)
+  0.000782 seconds (16 allocations: 576 bytes)
 
 1-element Array{App.Article,1}:
 
@@ -157,14 +229,14 @@ App.Article
 +--------------+---------------------------------------------------------+
 ```
 """
-function find_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput) :: Vector{T}
-  find(m, SQLQuery(where = [SQLWhere(column_name, value)]))
+function find_by{T<:AbstractModel}(m::Type{T}, column_name::SQLColumn, value::SQLInput; order = SQLOrder(m()._id)) :: Vector{T}
+  find(m, SQLQuery(where = [SQLWhere(column_name, value)], order = order))
 end
-function find_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any) :: Vector{T}
-  find_by(m, SQLColumn(column_name), SQLInput(value))
+function find_by{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any; order = SQLOrder(m()._id)) :: Vector{T}
+  find_by(m, SQLColumn(column_name), SQLInput(value), order = order)
 end
-function find_by{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression) :: Vector{T}
-  find(m, SQLQuery(where = [sql_expression]))
+function find_by{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression; order = SQLOrder(m()._id)) :: Vector{T}
+  find(m, SQLQuery(where = [sql_expression], order = order))
 end
 
 
@@ -183,7 +255,7 @@ julia> SearchLight.find_one_by(Article, :title, "Cupiditate velit repellat dolor
 
 2016-11-25T23:43:13.969 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"title\" = 'Cupiditate velit repellat dolorem nobis.')
 
-0.002319 seconds (1.23 k allocations: 52.688 KB)
+  0.002319 seconds (1.23 k allocations: 52.688 KB)
 
 Nullable{App.Article}(
 App.Article
@@ -201,7 +273,7 @@ julia> SearchLight.find_one_by(Article, SQLWhereExpression("slug LIKE ?", "%nobi
 
 2016-11-25T23:51:40.934 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE slug LIKE '%nobis'
 
-0.001152 seconds (16 allocations: 576 bytes)
+  0.001152 seconds (16 allocations: 576 bytes)
 
 Nullable{App.Article}(
 App.Article
@@ -220,7 +292,7 @@ julia> SearchLight.find_one_by(Article, SQLWhereExpression("title LIKE ?", "%u%"
 
 2016-11-26T23:00:15.638 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE title LIKE '%u%' ORDER BY articles.updated_at DESC LIMIT 1
 
-0.000891 seconds (16 allocations: 576 bytes)
+  0.000891 seconds (16 allocations: 576 bytes)
 
 Nullable{App.Article}(
 App.Article
@@ -236,7 +308,7 @@ julia> SearchLight.find_one_by(Article, :title, "Id soluta officia quis quis inc
 
 2016-11-26T23:03:12.311 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"title\" = 'Id soluta officia quis quis incidunt.') ORDER BY articles.updated_at DESC LIMIT 1
 
-0.003903 seconds (1.23 k allocations: 52.688 KB)
+  0.003903 seconds (1.23 k allocations: 52.688 KB)
 
 Nullable{App.Article}(
 App.Article
@@ -261,8 +333,8 @@ end
 
 
 """
-    find_one_by!!{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any) :: T
-    find_one_by!!{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression) :: T
+    find_one_by!!{T<:AbstractModel}(m::Type{T}, column_name::Any, value::Any; order = SQLOrder(m()._id)) :: T
+    find_one_by!!{T<:AbstractModel}(m::Type{T}, sql_expression::SQLWhereExpression; order = SQLOrder(m()._id)) :: T
 
 Similar to `find_one_by` but also attempts to `get` the value inside the `Nullable` by means of `Base.get`.
 Returns the value if is not `NULL`. Throws a `NullException` otherwise.
@@ -273,7 +345,7 @@ julia> SearchLight.find_one_by!!(Article, :id, 1)
 
 2016-11-26T22:20:32.788 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"id\" = 1) ORDER BY articles.id ASC LIMIT 1
 
-0.001170 seconds (16 allocations: 576 bytes)
+  0.001170 seconds (16 allocations: 576 bytes)
 
 App.Article
 +==============+===============================================================================+
@@ -287,7 +359,7 @@ julia> SearchLight.find_one_by!!(Article, SQLWhereExpression("title LIKE ?", "%n
 
 2016-11-26T21:58:47.15 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE title LIKE '%n%' ORDER BY articles.id ASC LIMIT 1
 
-0.000939 seconds (16 allocations: 576 bytes)
+  0.000939 seconds (16 allocations: 576 bytes)
 
 App.Article
 +==============+===============================================================================+
@@ -304,7 +376,7 @@ julia> SearchLight.find_one_by!!(Article, SQLWhereExpression("title LIKE ?", "fo
 
 2016-11-26T21:59:39.651 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE title LIKE 'foo bar baz' ORDER BY articles.id ASC LIMIT 1
 
-0.000764 seconds (16 allocations: 576 bytes)
+  0.000764 seconds (16 allocations: 576 bytes)
 
 ------ NullException ------------------- Stacktrace (most recent call last)
 
@@ -338,7 +410,7 @@ julia> SearchLight.find_one(Article, 1)
 
 2016-11-26T22:29:11.443 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"id\" = 1) ORDER BY articles.id ASC LIMIT 1
 
-0.000754 seconds (16 allocations: 576 bytes)
+  0.000754 seconds (16 allocations: 576 bytes)
 
 Nullable{App.Article}(
 App.Article
@@ -368,7 +440,7 @@ julia> SearchLight.find_one!!(Article, 36)
 
 2016-11-26T22:35:46.166 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"id\" = 36) ORDER BY articles.id ASC LIMIT 1
 
-0.000742 seconds (16 allocations: 576 bytes)
+  0.000742 seconds (16 allocations: 576 bytes)
 
 App.Article
 +==============+=========================================================+
@@ -382,7 +454,7 @@ julia> SearchLight.find_one!!(Article, 387)
 
 2016-11-26T22:36:22.492 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"id\" = 387) ORDER BY articles.id ASC LIMIT 1
 
-0.000915 seconds (16 allocations: 576 bytes)
+  0.000915 seconds (16 allocations: 576 bytes)
 
 ------ NullException ------------------- Stacktrace (most recent call last)
 
@@ -412,7 +484,7 @@ julia> SearchLight.rand(Article)
 
 2016-11-26T22:39:58.545 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" ORDER BY random() ASC LIMIT 1
 
-0.007991 seconds (16 allocations: 576 bytes)
+  0.007991 seconds (16 allocations: 576 bytes)
 
 1-element Array{App.Article,1}:
 
@@ -428,7 +500,7 @@ julia> SearchLight.rand(Article, limit = 3)
 
 2016-11-26T22:40:58.156 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" ORDER BY random() ASC LIMIT 3
 
-0.000809 seconds (16 allocations: 576 bytes)
+  0.000809 seconds (16 allocations: 576 bytes)
 
 3-element Array{App.Article,1}:
 ...
@@ -450,7 +522,7 @@ julia> SearchLight.rand_one(Article)
 
 2016-11-26T22:46:11.47100000000000003 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" ORDER BY random() ASC LIMIT 1
 
-0.001087 seconds (16 allocations: 576 bytes)
+  0.001087 seconds (16 allocations: 576 bytes)
 
 Nullable{App.Article}(
 App.Article
@@ -480,7 +552,7 @@ julia> SearchLight.all(Article)
 
 2016-11-26T23:09:57.976 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\"
 
-0.003656 seconds (16 allocations: 576 bytes)
+  0.003656 seconds (16 allocations: 576 bytes)
 
 38-element Array{App.Article,1}:
 ...
@@ -540,7 +612,7 @@ julia> SearchLight.save(a)
 
 2016-11-27T21:58:34.99 - info: SQL QUERY: INSERT INTO articles ( \"title\", \"summary\", \"content\", \"updated_at\", \"published_at\", \"slug\" ) VALUES ( 'Sed vel quiSed vel quiSed vel qui', '', 'Eaque nostrum nam', '2016-11-27T21:53:13.375', NULL, 'quidem-sit-quas' ) RETURNING id
 
-0.019713 seconds (12 allocations: 416 bytes)
+  0.019713 seconds (12 allocations: 416 bytes)
 
 true
 ```
@@ -601,11 +673,11 @@ julia> SearchLight.save!(a)
 
 2016-11-27T22:12:23.295 - info: SQL QUERY: INSERT INTO articles ( \"title\", \"summary\", \"content\", \"updated_at\", \"published_at\", \"slug\" ) VALUES ( 'Perspiciatis facilis perspiciatis modi. Quae natus voluptatem. Et dolor..Perspiciatis facilis perspiciatis modi. Quae natus voluptatem. Et dolor..', '', 'Facere dolorum eum ut velit. Reiciendis at facere voluptatum neque. Est.. Et nihil et delectus veniam. Ipsum sint voluptatem voluptates. Aut necessitatibus necessitatibus.. Doloremque aspernatur maiores. Numquam facere tenetur quae. Aliquam..', '2016-11-27T22:10:23.12', NULL, 'nulla-odit-est' ) RETURNING id
 
-0.007109 seconds (12 allocations: 416 bytes)
+  0.007109 seconds (12 allocations: 416 bytes)
 
 2016-11-27T22:12:24.503 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"id\" = 43) ORDER BY articles.id ASC LIMIT 1
 
-0.009514 seconds (1.23 k allocations: 52.688 KB)
+  0.009514 seconds (1.23 k allocations: 52.688 KB)
 
 App.Article
 +==============+=========================================================================================================+
@@ -867,7 +939,7 @@ end
 
 
 """
-    update_with!!{T<:AbstractModel}(m::T, w::Union{T,Dict})
+    update_with!!{T<:AbstractModel}(m::T, w::Union{T,Dict}) :: T
 
 Similar to `update_with` but also calls `save!!` on `m`.
 
@@ -908,11 +980,11 @@ julia> SearchLight.update_with!!(a, d)
 
 2016-11-27T23:24:31.105 - info: SQL QUERY: INSERT INTO articles ( \"title\", \"summary\", \"content\", \"updated_at\", \"published_at\", \"slug\" ) VALUES ( 'Impedit ut nulla sed. Sint sed dolorum quas beatae aspernatur..Impedit ut nulla sed. Sint sed dolorum quas beatae aspernatur..', 'Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae', 'Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..Suscipit beatae vitae. Eum accusamus ad. Nostrum nam excepturi rerum suscipit..', '2016-11-27T23:24:20.062', NULL, 'impedit-ut-nulla-sed-sint-sed-dolorum-quas-beatae-aspernaturimpedit-ut-nulla-sed-sint-sed-dolorum-quas-beatae-aspernatur' ) RETURNING id
 
-0.008251 seconds (12 allocations: 416 bytes)
+  0.008251 seconds (12 allocations: 416 bytes)
 
 2016-11-27T23:24:32.274 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"id\" = 60) ORDER BY articles.id ASC LIMIT 1
 
-0.003159 seconds (1.23 k allocations: 52.688 KB)
+  0.003159 seconds (1.23 k allocations: 52.688 KB)
 
 App.Article
 +==============+=========================================================================================================+
@@ -940,12 +1012,106 @@ end
 
 
 """
-    create_or_update_by!!{T<:AbstractModel}(m::T, property::Symbol[, value::Any])
+    update_by_or_create!!{T<:AbstractModel}(m::T, property::Symbol[, value::Any]) :: T
 
-Tries to find `m` by `property` and `value`. If value is not provided, it uses the corresponding value of `m`.
-If `m` was already persisted, it is updated. If not, it is persisted as a new row.
+Looks up `m` by `property` and `value`. If value is not provided, it uses the corresponding value of `m`.
+If `m` is already persisted, it gets updated. If not, it is persisted as a new row.
+
+# Examples
+```julia
+julia> a = Articles.random()
+
+App.Article
++==============+=========================================================================================================+
+|          key |                                                                                                   value |
++==============+=========================================================================================================+
+|      content | Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam no... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|           id |                                                                                       Nullable{Int32}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+| published_at |                                                                                    Nullable{DateTime}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+|         slug | neque-repudiandae-sit-vel-laudantium-laboriosam-in-esse-modi-autem-ut-asperioresneque-repudiandae-si... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|      summary |    Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam no |
++--------------+---------------------------------------------------------------------------------------------------------+
+|        title | Neque repudiandae sit vel. Laudantium laboriosam in. Esse modi autem ut asperiores..Neque repudianda... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|   updated_at |                                                                                 2016-11-28T22:18:48.723 |
++--------------+---------------------------------------------------------------------------------------------------------+
+
+
+julia> SearchLight.update_by_or_create!!(a, :slug)
+
+2016-11-28T22:19:39.094 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"slug\" = 'neque-repudiandae-sit-vel-laudantium-laboriosam-in-esse-modi-autem-ut-asperioresneque-repudiandae-sit-vel-laudantium-laboriosam-in-esse-modi-aut') ORDER BY articles.id ASC LIMIT 1
+
+  0.019534 seconds (1.23 k allocations: 52.688 KB)
+
+2016-11-28T22:19:40.056 - info: SQL QUERY: INSERT INTO articles ( \"title\", \"summary\", \"content\", \"updated_at\", \"published_at\", \"slug\" ) VALUES ( 'Neque repudiandae sit vel. Laudantium laboriosam in. Esse modi autem ut asperiores..Neque repudiandae sit vel. Laudantium laboriosam in. Esse modi aut', 'Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam no', 'Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..', '2016-11-28T22:18:48.723', NULL, 'neque-repudiandae-sit-vel-laudantium-laboriosam-in-esse-modi-autem-ut-asperioresneque-repudiandae-sit-vel-laudantium-laboriosam-in-esse-modi-aut' ) RETURNING id
+
+  0.008992 seconds (12 allocations: 416 bytes)
+
+2016-11-28T22:19:40.158 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"id\" = 61) ORDER BY articles.id ASC LIMIT 1
+
+  0.000747 seconds (16 allocations: 576 bytes)
+
+App.Article
++==============+=========================================================================================================+
+|          key |                                                                                                   value |
++==============+=========================================================================================================+
+|      content | Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam no... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|           id |                                                                                     Nullable{Int32}(61) |
++--------------+---------------------------------------------------------------------------------------------------------+
+| published_at |                                                                                    Nullable{DateTime}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+|         slug | neque-repudiandae-sit-vel-laudantium-laboriosam-in-esse-modi-autem-ut-asperioresneque-repudiandae-si... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|      summary |    Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam no |
++--------------+---------------------------------------------------------------------------------------------------------+
+|        title | Neque repudiandae sit vel. Laudantium laboriosam in. Esse modi autem ut asperiores..Neque repudianda... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|   updated_at |                                                                                 2016-11-28T22:18:48.723 |
++--------------+---------------------------------------------------------------------------------------------------------+
+
+julia> a.summary = Faker.paragraph() ^ 2
+"Similique sunt. Cupiditate eligendi..Similique sunt. Cupiditate eligendi.."
+
+julia> SearchLight.update_by_or_create!!(a, :slug)
+
+2016-11-28T22:22:22.488 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"slug\" = 'neque-repudiandae-sit-vel-laudantium-laboriosam-in-esse-modi-autem-ut-asperioresneque-repudiandae-sit-vel-laudantium-laboriosam-in-esse-modi-aut') ORDER BY articles.id ASC LIMIT 1
+
+  0.000949 seconds (16 allocations: 576 bytes)
+
+2016-11-28T22:22:22.556 - info: SQL QUERY: UPDATE articles SET  \"id\" = 61, \"title\" = 'Neque repudiandae sit vel. Laudantium laboriosam in. Esse modi autem ut asperiores..Neque repudiandae sit vel. Laudantium laboriosam in. Esse modi aut', \"summary\" = 'Similique sunt. Cupiditate eligendi..Similique sunt. Cupiditate eligendi..', \"content\" = 'Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..', \"updated_at\" = '2016-11-28T22:18:48.723', \"published_at\" = NULL, \"slug\" = 'neque-repudiandae-sit-vel-laudantium-laboriosam-in-esse-modi-autem-ut-asperioresneque-repudiandae-sit-vel-laudantium-laboriosam-in-esse-modi-aut' WHERE articles.id = '61' RETURNING id
+
+  0.009145 seconds (12 allocations: 416 bytes)
+
+2016-11-28T22:22:22.5670000000000001 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"id\" = 61) ORDER BY articles.id ASC LIMIT 1
+
+  0.000741 seconds (16 allocations: 576 bytes)
+
+App.Article
++==============+=========================================================================================================+
+|          key |                                                                                                   value |
++==============+=========================================================================================================+
+|      content | Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam no... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|           id |                                                                                     Nullable{Int32}(61) |
++--------------+---------------------------------------------------------------------------------------------------------+
+| published_at |                                                                                    Nullable{DateTime}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+|         slug | neque-repudiandae-sit-vel-laudantium-laboriosam-in-esse-modi-autem-ut-asperioresneque-repudiandae-si... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|      summary |                              Similique sunt. Cupiditate eligendi..Similique sunt. Cupiditate eligendi.. |
++--------------+---------------------------------------------------------------------------------------------------------+
+|        title | Neque repudiandae sit vel. Laudantium laboriosam in. Esse modi autem ut asperiores..Neque repudianda... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|   updated_at |                                                                                 2016-11-28T22:18:48.723 |
++--------------+---------------------------------------------------------------------------------------------------------+
+```
 """
-function create_or_update_by!!{T<:AbstractModel}(m::T, property::Symbol, value::Any)
+function update_by_or_create!!{T<:AbstractModel}(m::T, property::Symbol, value::Any) :: T
   existing = find_one_by(typeof(m), property, value)
   if ! isnull(existing)
     existing = Base.get(existing)
@@ -960,44 +1126,111 @@ function create_or_update_by!!{T<:AbstractModel}(m::T, property::Symbol, value::
     return SearchLight.save!!(m)
   end
 end
-function create_or_update_by!!{T<:AbstractModel}(m::T, property::Symbol)
-  create_or_update_by!!(m, property, getfield(m, property))
+function update_by_or_create!!{T<:AbstractModel}(m::T, property::Symbol) :: T
+  update_by_or_create!!(m, property, getfield(m, property))
 end
 
-"""
-    find_one_by_or_create{T<:AbstractModel}(m::Type{T}, property::Any, value::Any)
 
-Tries to find `m` by `property` and `value`. If it exists, it is returned. If not, a new instance is created, `property` is set to `value` and the instance is returned.
 """
-function find_one_by_or_create{T<:AbstractModel}(m::Type{T}, property::Any, value::Any)
+    find_one_by_or_create{T<:AbstractModel}(m::Type{T}, property::Any, value::Any) :: T
+
+Looks up `m` by `property` and `value`. If it exists, it is returned.
+If not, a new instance is created, `property` is set to `value` and the instance is returned.
+
+# Examples
+```julia
+julia> SearchLight.find_one_by_or_create(Article, :slug, SearchLight.find_one!!(Article, 61).slug)
+
+2016-11-28T22:31:56.768 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"id\" = 61) ORDER BY articles.id ASC LIMIT 1
+
+  0.003430 seconds (1.23 k allocations: 52.688 KB)
+
+2016-11-28T22:31:59.897 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"slug\" = 'neque-repudiandae-sit-vel-laudantium-laboriosam-in-esse-modi-autem-ut-asperioresneque-repudiandae-sit-vel-laudantium-laboriosam-in-esse-modi-aut') ORDER BY articles.id ASC LIMIT 1
+
+  0.001069 seconds (16 allocations: 576 bytes)
+
+App.Article
++==============+=========================================================================================================+
+|          key |                                                                                                   value |
++==============+=========================================================================================================+
+|      content | Pariatur maiores. Amet numquam ullam nostrum est. Excepturi..Pariatur maiores. Amet numquam ullam no... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|           id |                                                                                     Nullable{Int32}(61) |
++--------------+---------------------------------------------------------------------------------------------------------+
+| published_at |                                                                                    Nullable{DateTime}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+|         slug | neque-repudiandae-sit-vel-laudantium-laboriosam-in-esse-modi-autem-ut-asperioresneque-repudiandae-si... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|      summary |                              Similique sunt. Cupiditate eligendi..Similique sunt. Cupiditate eligendi.. |
++--------------+---------------------------------------------------------------------------------------------------------+
+|        title | Neque repudiandae sit vel. Laudantium laboriosam in. Esse modi autem ut asperiores..Neque repudianda... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|   updated_at |                                                                                 2016-11-28T22:18:48.723 |
++--------------+---------------------------------------------------------------------------------------------------------+
+
+
+julia> SearchLight.find_one_by_or_create(Article, :slug, "foo-bar")
+
+2016-11-28T22:32:19.514 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE (\"slug\" = 'foo-bar') ORDER BY articles.id ASC LIMIT 1
+
+  0.000909 seconds (16 allocations: 576 bytes)
+
+App.Article
++==============+=========================+
+|          key |                   value |
++==============+=========================+
+|      content |                         |
++--------------+-------------------------+
+|           id |       Nullable{Int32}() |
++--------------+-------------------------+
+| published_at |    Nullable{DateTime}() |
++--------------+-------------------------+
+|         slug |                 foo-bar |
++--------------+-------------------------+
+|      summary |                         |
++--------------+-------------------------+
+|        title |                         |
++--------------+-------------------------+
+|   updated_at | 2016-11-28T22:32:19.518 |
++--------------+-------------------------+
+```
+"""
+function find_one_by_or_create{T<:AbstractModel}(m::Type{T}, property::Any, value::Any) :: T
   lookup = find_one_by(m, SQLColumn(property), SQLInput(value))
-  ! isnull( lookup ) && return lookup
+  ! isnull( lookup ) && return Base.get(lookup)
 
-  _m = disposable_instance(m)
+  _m = m()
   setfield!(_m, Symbol(property), value)
 
   _m
 end
+
 
 #
 # Object generation
 #
 
 """
-   to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
+   to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame) :: Vector{T}
 
-Converts `df` to a Vector{T}
+Converts a DataFrame `df` to a Vector{T}
+
+# Examples
+```julia
+
+```
 """
-function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
+function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrame) :: Vector{T}
   models = OrderedDict{DbId,T}()
-  dfs = df_result_to_models_data(m, df)::Dict{String,DataFrame} # this splits the result data frame into multiple dataframes, one for each table contained in the result
+  dfs = df_result_to_models_data(m, df) :: Dict{String,DataFrame} # this splits the result data frame into multiple dataframes, one for each table contained in the result
 
   row_count::Int = 1
+  __m = m()
   for row in eachrow(df)
-    main_model::T = to_model(m, dfs[disposable_instance(m)._table_name][row_count, :])
+    main_model::T = to_model(m, dfs[ __m._table_name ][row_count, :])
 
-    if haskey(models, getfield(main_model, Symbol(disposable_instance(m)._id)))
-      main_model = models[getfield(main_model, Symbol(disposable_instance(m)._id)) |> Base.get]
+    if haskey(models, getfield(main_model, Symbol(__m._id)))
+      main_model = models[ getfield(main_model, Symbol(__m._id)) |> Base.get ]
     end
 
     for relationship in relationships(m)
@@ -1006,7 +1239,7 @@ function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
       is_lazy(r) && continue
 
       related_model = r.model_name
-      related_model_df::DataFrames.DataFrame = dfs[disposable_instance(related_model)._table_name][row_count, :]
+      related_model_df::DataFrame = dfs[ related_model()._table_name ][row_count, :]
 
       if r_type == RELATIONSHIP_HAS_ONE || r_type == RELATIONSHIP_BELONGS_TO
         r = set_relationship_data(r, related_model, related_model_df)
@@ -1018,8 +1251,8 @@ function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
       isnull(model_rels[1].data) ? model_rels[1] = r : push!(model_rels, r)
     end
 
-    if ! haskey(models, getfield(main_model, Symbol(disposable_instance(m)._id)))
-      models[getfield(main_model, Symbol(disposable_instance(m)._id)) |> Base.get] = main_model
+    if ! haskey(models, getfield(main_model, Symbol(__m._id)))
+      models[ getfield(main_model, Symbol(__m._id)) |> Base.get ] = main_model
     end
 
     row_count += 1
