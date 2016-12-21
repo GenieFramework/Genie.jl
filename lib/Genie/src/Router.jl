@@ -313,7 +313,7 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
           catch ex
             Logger.log("$ex at $(@__FILE__):$(@__LINE__)", :critical, showst = false)
             Logger.log("While invoking $(action_name) with $(params)", :critical, showst = false)
-            # Base.stacktrace(Base.catch_stacktrace())
+            stacktrace()
 
             serve_error_file_500(ex)
           end

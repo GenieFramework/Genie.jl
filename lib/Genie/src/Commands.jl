@@ -1,16 +1,19 @@
 module Commands
-using ArgParse, Configuration, Genie, Database, Generator, Tester, Toolbox, App, Migration, Logger
+using ArgParse, Configuration, Genie, Database, Generator, Tester, Toolbox, App, Migration, Logger, AppServer
 
-function called_command(args, key)
-    args[key] == "true" || args["s"] == key
-end
 
-function execute(config::Config)
+"""
+    execute(config::Config) :: Void
+
+Runs the requested Genie app command, based on the `args` passed to the script.
+"""
+function execute(config::Settings) :: Void
   parsed_args = parse_commandline_args()::Dict{AbstractString,Any}
 
-  config.app_env = ENV["GENIE_ENV"]
-  config.server_port = parse(Int, parsed_args["server:port"])
-  config.server_workers_count = (sw = parse(Int, parsed_args["server:workers"])) > 0 ? sw : config.server_workers_count
+  Genie.config.app_env = ENV["GENIE_ENV"]
+  Genie.config.server_port = parse(Int, parsed_args["server:port"])
+  Genie.config.server_workers_count = (sw = parse(Int, parsed_args["server:workers"])) > 0 ? sw : config.server_workers_count
+  Genie.config.websocket_port = parse(Int, parsed_args["websocket:port"])
 
   if called_command(parsed_args, "db:init")
     Database.create_database()
@@ -53,28 +56,36 @@ function execute(config::Config)
   elseif called_command(parsed_args, "test:run")
     Tester.run_all_tests(parsed_args["test:run"], config)
 
-  elseif called_command(parsed_args, "s")
-    Genie.startup(parsed_args)
+  elseif called_command(parsed_args, "websocket:start")
+    error("Not implemented!")
+
+  elseif called_command(parsed_args, "s") || called_command(parsed_args, "server:start")
+    AppServer.startup(Genie.config.server_port)
 
   end
+
+  nothing
 end
 
-function check_valid_task!(parsed_args::Dict{String,Any})
-  haskey(parsed_args, "task:new") && isa(parsed_args["task:new"], String) && ! endswith(parsed_args["task:new"], "Task") && (parsed_args["task:new"] *= "Task")
-  haskey(parsed_args, "task:run") && isa(parsed_args["task:run"], String) &&! endswith(parsed_args["task:run"], "Task") && (parsed_args["task:run"] *= "Task")
-  parsed_args
-end
 
-function parse_commandline_args()
+"""
+    parse_commandline_args() :: Dict{AbstractString,Any}
+
+Extracts the command line args passed into the app and returns them as a `Dict`, possibly setting up defaults.
+Also, it is used by the ArgParse module to populate the command line help for the app `-h`.
+"""
+function parse_commandline_args() :: Dict{AbstractString,Any}
     settings = ArgParseSettings()
 
     settings.description = "Genie web framework CLI"
     settings.epilog = "Visit http://genieframework.com for more info"
-    settings.version = "0.6.1"
+    settings.version = string(Configuration.GENIE_VERSION)
     settings.add_version = true
 
     @add_arg_table settings begin
         "s"
+            help = "starts HTTP server"
+        "--server:start"
             help = "starts HTTP server"
         "--server:port", "-p"
             help = "HTTP server port"
@@ -82,6 +93,12 @@ function parse_commandline_args()
         "--server:workers", "-w"
             help = "Number of workers used by the app -- use any value greater than 1 to overwrite the config"
             default = "1"
+
+        "--websocket:start"
+            help = "starts web sockets server"
+        "--websocket:port"
+            help = "web sockets server port"
+            default = "8008"
 
         "--db:init"
             help = "true -> create database and core tables"
@@ -128,6 +145,30 @@ function parse_commandline_args()
     end
 
     parse_args(settings)
+end
+
+
+"""
+    check_valid_task!(parsed_args::Dict{AbstractString,Any}) :: Dict{AbstractString,Any}
+
+Checks if the name of the task passed as the command line arg is valid task identifier -- if not, attempts to address it, by appending the "Task" suffix.
+Returns the potentially modified `parsed_args` `Dict`.
+"""
+function check_valid_task!(parsed_args::Dict{AbstractString,Any}) :: Dict{AbstractString,Any}
+  haskey(parsed_args, "task:new") && isa(parsed_args["task:new"], String) && ! endswith(parsed_args["task:new"], "Task") && (parsed_args["task:new"] *= "Task")
+  haskey(parsed_args, "task:run") && isa(parsed_args["task:run"], String) &&! endswith(parsed_args["task:run"], "Task") && (parsed_args["task:run"] *= "Task")
+
+  parsed_args
+end
+
+
+"""
+    called_command(args::Dict, key::String) :: Bool
+
+Checks whether or not a certain command was invoked by looking at the command line args.
+"""
+function called_command(args::Dict{AbstractString,Any}, key::String) :: Bool
+    args[key] == "true" || args["s"] == key
 end
 
 end

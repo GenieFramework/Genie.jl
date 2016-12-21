@@ -2,7 +2,21 @@ module AppServer
 
 using HttpServer, Router, Genie, Millboard, Logger, Sessions, Configuration
 
-function startup(port::Int = 8000)
+"""
+    startup(port::Int = 8000) :: Void
+
+Starts the web server on the configurated port.
+Automatically invoked when Genie is started with the `s` or the `server:start` command line params.
+Can be manually invoked from the REPL as well, when starting Genie without the above params -- ideally `async` to allow reusing the REPL session.
+
+# Examples
+```julia
+julia> @spawn AppServer.startup()
+Listening on 0.0.0.0:8000...
+Future(1,1,1,Nullable{Any}())
+```
+"""
+function startup(port::Int = 8000) :: Void
   http = HttpHandler() do req::Request, res::Response
     try
       nworkers() == 1 ? handle_request(req, res) : @fetch handle_request(req, res)
@@ -14,6 +28,8 @@ function startup(port::Int = 8000)
 
   server = Server(http)
   run(server, port)
+
+  nothing
 end
 
 function handle_request(req::Request, res::Response)

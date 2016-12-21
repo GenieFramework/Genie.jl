@@ -45,6 +45,9 @@ v 0.7.x
 ☐ more tests
 ☐ REPL utility to setup a new app
 ☐ packages versioning (declarative packages)
+☐ support for mysql
+☐ "Hello world" app
+☐ "ToDo-Backend MVC" app
 
 v 0.8.x
 ☐ add utility functions for migrations (add column, add index, etc)
@@ -60,8 +63,8 @@ v 1.0
 ☐ internationalization support - ex: config for errors messages
 
 v 1.1
-☐ support for mysql
 ☐ support for sqlite
+☐ support for mongodb
 
 v 1.x
 ✔ change from Logging to Lumberjack

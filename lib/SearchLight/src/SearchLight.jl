@@ -34,7 +34,7 @@ Executes a SQL `SELECT` query against the database and returns the resultset as 
 
 # Examples
 ```julia
-julia> SearchLight.find_df(Article);
+julia> SearchLight.find_df(Article)
 
 2016-11-15T23:16:19.152 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\"
 

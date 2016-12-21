@@ -7,7 +7,7 @@ function write(session)
       serialize(io, session)
     end
   catch ex
-    Logger.log("Error when serializing session $session in $__FILE__, $__LINE__")
+    Logger.log("Error when serializing session $session in $(@__FILE__):$(@__LINE__)")
     Logger.log(ex, :err)
   end
 
@@ -19,9 +19,12 @@ function read(session_id::AbstractString)
     session = open(joinpath(Genie.config.session_folder, session_id), "r") do (io)
       deserialize(io)
     end
+
     Nullable{Sessions.Session}(session)
   catch ex
-    Logger.log(ex, :debug)
+    Logger.log(ex, :err)
+    Logger.@location
+
     Nullable{Sessions.Session}()
   end
 end

@@ -7,7 +7,7 @@ type DbMigration # todo: rename the "migration_" prefix for the fields
   migration_class_name::AbstractString
 end
 
-function new(cmd_args::Dict{AbstractString,Any}, config::Configuration.Config)
+function new(cmd_args::Dict{AbstractString,Any}, config::Configuration.Settings)
   mfn = migration_file_name(cmd_args, config)
 
   if ispath(mfn)
@@ -26,7 +26,7 @@ function migration_hash()
   return join(m.captures)
 end
 
-function migration_file_name(cmd_args::Dict{AbstractString,Any}, config::Configuration.Config)
+function migration_file_name(cmd_args::Dict{AbstractString,Any}, config::Configuration.Settings)
   return joinpath(config.db_migrations_folder, migration_hash() * "_" * cmd_args["migration:new"] * ".jl")
 end
 

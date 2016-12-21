@@ -2,7 +2,7 @@ module Generator
 
 using Genie, Logger, FileTemplates, Inflector, Configuration, Migration
 
-function new_model(cmd_args::Dict{AbstractString,Any}, config::Configuration.Config)
+function new_model(cmd_args::Dict{AbstractString,Any}, config::Settings)
   resource_name = ucfirst(cmd_args["model:new"])
   if Inflector.is_singular(resource_name)
     resource_name = Inflector.to_plural(resource_name) |> Base.get
@@ -13,7 +13,7 @@ function new_model(cmd_args::Dict{AbstractString,Any}, config::Configuration.Con
     Logger.log("New model created at $(joinpath(resource_path, Genie.GENIE_MODEL_FILE_NAME))")
 end
 
-function new_resource(cmd_args::Dict{AbstractString,Any}, config::Configuration.Config)
+function new_resource(cmd_args::Dict{AbstractString,Any}, config::Settings)
   sf = Inflector.to_singular(cmd_args["resource:new"])
   cmd_args["model:new"] = (isnull(sf) ? cmd_args["resource:new"] : Base.get(sf)) |> ucfirst
   new_model(cmd_args, config)

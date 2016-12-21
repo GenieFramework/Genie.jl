@@ -23,3 +23,7 @@ const PARAMS_FLASH_KEY      = :FLASH
 const PARAMS_ACL_KEY        = :ACL
 
 const TEST_FILE_IDENTIFIER = "_test.jl"
+
+# Used to store log info during app bootstrap, when the logger itself is not available.
+# The queue is automatically emptied by the logger upon load. 
+const GENIE_LOG_QUEUE = Vector{Tuple{String,Symbol}}()

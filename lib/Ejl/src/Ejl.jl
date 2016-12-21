@@ -11,7 +11,7 @@ end
 
 function template_from_file(file_path::AbstractString)
   open(file_path) do f
-    parse_tpl(readall(f), Genie.cache_enabled())
+    parse_tpl(readall(f), Configuration.cache_enabled())
   end
 end
 
@@ -328,7 +328,7 @@ macro template_from_file(file_path::Expr)
 end
 
 macro parse_tpl(s::Expr)
-  :(parse_tpl($s, $(Genie.cache_enabled())))
+  :(parse_tpl($s, $(Configuration.cache_enabled())))
 end
 
 macro render_tpl(exs::Expr)

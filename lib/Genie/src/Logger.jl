@@ -1,29 +1,94 @@
 module Logger
+
 using Lumberjack, Millboard, Genie
 
 const colors = Dict{String,Symbol}("info" => :gray, "warn" => :yellow, "debug" => :green, "err" => :red, "error" => :red, "critical" => :magenta)
 
-function log(message, level = "info"; showst::Bool = true)
+"""
+    log(message, level = "info"; showst::Bool = true) :: Void
+    log(message::String, level::Symbol) :: Void
+
+Logs `message` to all configured logs (STDOUT, FILE, etc) by delegating to `Lumberjack`.
+Supported values for `level` are "info", "warn", "debug", "err" / "error", "critical".
+If `level` is `error` or `critical` it will also dump the stacktrace onto STDOUT.
+
+# Examples
+```julia
+julia> Logger.log("hello")
+
+2016-12-21T18:38:09.105 - info: hello
+
+
+julia> Logger.log("hello", "warn")
+
+2016-12-21T18:38:22.461 - warn: hello
+
+
+julia> Logger.log("hello", "debug")
+
+2016-12-21T18:38:32.292 - debug: hello
+
+
+julia> Logger.log("hello", "err")
+
+2016-12-21T18:38:38.403 - err: hello
+```
+"""
+function log(message, level::String = "info"; showst::Bool = true) :: Void
+  level == "err" && (level = "error")
+
   println()
   Lumberjack.log(string(level), string(message))
   println()
 
-  if level == "err" || level == "critical" && showst
+  if (level == "critical" || level == "error") && showst
     println()
-    show_stacktrace()
+    stacktrace()
   end
+
+  nothing
 end
-function log(message::String, level::Symbol)
+function log(message::String, level::Symbol) :: Void
   log(message, level == :err ? "error" : string(level))
 end
 
-function self_log(level, message)
+
+"""
+    self_log(message, level::Union{String,Symbol}) :: Void
+
+Basic logging function that does not rely on external logging modules (such as `Lumberjack`).
+
+# Examples
+```julia
+julia> Logger.self_log("hello", :err)
+
+err 2016-12-21T18:49:00.286
+hello
+
+julia> Logger.self_log("hello", :info)
+
+info 2016-12-21T18:49:05.068
+hello
+
+julia> Logger.self_log("hello", :debug)
+
+debug 2016-12-21T18:49:11.123
+hello
+```
+"""
+function self_log(message, level::Union{String,Symbol}) :: Void
   println()
   print_with_color(colors[string(level)], (string(level), " ", string(Dates.now()), "\n")...)
   print_with_color(colors[string(level)], string(message))
   println()
+
+  nothing
 end
 
+
+"""
+
+"""
 function step_dict(dict::Dict)
   d = Dict()
   for (k, v) in dict
@@ -57,6 +122,19 @@ function setup_loggers()
   true
 end
 
+function empty_log_queue() :: Vector{Tuple{String,Symbol}}
+  for log_message in Genie.GENIE_LOG_QUEUE
+    log(log_message...)
+  end
+
+  empty!(Genie.GENIE_LOG_QUEUE)
+end
+
+macro location()
+  :(Logger.log(" in $(@__FILE__):$(@__LINE__)", :err))
+end
+
 setup_loggers()
+empty_log_queue()
 
 end

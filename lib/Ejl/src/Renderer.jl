@@ -1,6 +1,6 @@
 module Renderer
 export respond, json, mustache, ejl, redirect_to
-using Genie, Util, JSON, Ejl, Mustache, Configuration, HttpServer, App
+using Genie, Util, Macros, JSON, Ejl, Mustache, Configuration, HttpServer, App
 @devtools()
 
 const CONTENT_TYPES = Dict{Symbol, AbstractString}(
@@ -19,7 +19,7 @@ function json(resource::Symbol, action::Symbol; vars...)
   Dict(:json => r)
 end
 
-function ejl(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractString} = :app, render_layout::Bool = true, vars...)
+function ejl(resource::Symbol, action::Symbol; layout::Union{Symbol,AbstractString} = :app, render_layout::Bool = true, vars...)
   spawn_splatted_vars(vars)
 
   path = abspath(joinpath(Genie.RESOURCE_PATH, string(resource), "views", string(action) * "." * Configuration.RENDER_EJL_EXT))
@@ -34,7 +34,7 @@ function ejl(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractStr
 
   Dict(:html => r)
 end
-function ejl(content::AbstractString, layout::Union{Symbol, AbstractString} = :app, vars...)
+function ejl(content::AbstractString, layout::Union{Symbol,AbstractString} = :app, vars...)
   spawn_splatted_vars(vars)
   layout = Ejl.template_from_file(abspath(joinpath(Genie.APP_PATH, "layouts", string(layout) * "." * Configuration.RENDER_EJL_EXT)))
   spawn_vars(EJL_YIELD_VAR_NAME, content)
@@ -47,7 +47,7 @@ function ejl(content::Vector{AbstractString}; vars...)
   Ejl.render_tpl(content)
 end
 
-function mustache(resource::Symbol, action::Symbol; layout::Union{Symbol, AbstractString} = :app, render_layout::Bool = true, vars...)
+function mustache(resource::Symbol, action::Symbol; layout::Union{Symbol,AbstractString} = :app, render_layout::Bool = true, vars...)
   spawn_splatted_vars(vars)
 
   template = Mustache.template_from_file(abspath(joinpath(Genie.RESOURCE_PATH, string(resource), "views", string(action) * ".$RENDER_MUSTACHE_EXT")))
@@ -62,7 +62,7 @@ function mustache(resource::Symbol, action::Symbol; layout::Union{Symbol, Abstra
 
   Dict(:html => r)
 end
-function mustache(content::AbstractString, layout::Union{Symbol, AbstractString} = :app, vars...)
+function mustache(content::AbstractString, layout::Union{Symbol,AbstractString} = :app, vars...)
   spawn_splatted_vars(vars)
   vals = merge(special_vals(), Dict(k => v for (k, v) in vars))
   layout = Mustache.template_from_file(abspath(joinpath(Genie.APP_PATH, "layouts", string(layout) * ".$RENDER_MUSTACHE_EXT")))
@@ -72,7 +72,7 @@ function mustache(content::AbstractString, layout::Union{Symbol, AbstractString}
   Dict(:html => r)
 end
 
-function redirect_to(location::AbstractString, code::Int = 302, headers::Dict{AbstractString, AbstractString} = Dict{AbstractString, AbstractString}())
+function redirect_to(location::AbstractString, code::UInt8 = 302, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}())
   headers["Location"] = location
   respond(Dict(:text => ""), code, headers)
 end
@@ -115,7 +115,7 @@ function structure_to_dict(structure, resource = nothing)
   data_item
 end
 
-function respond(body, code::Int = 200, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString, AbstractString}())
+function respond(body, code::Int = 200, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}())
   body =  if haskey(body, :json)
             headers["Content-Type"] = CONTENT_TYPES[:json]
             JSON.json(body[:json])
@@ -135,7 +135,7 @@ function respond(body, code::Int = 200, headers::Dict{AbstractString,AbstractStr
 
   (code, headers, body)
 end
-function respond(response::Tuple, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString, AbstractString}())
+function respond(response::Tuple, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}())
   respond(response[1], response[2], headers)
 end
 function respond(response::Response)
@@ -143,7 +143,7 @@ function respond(response::Response)
 end
 
 function http_error(status_code; id = "resource_not_found", code = "404-0001", title = "Not found", detail = "The requested resource was not found")
-  respond(detail, status_code, Dict{AbstractString, AbstractString}())
+  respond(detail, status_code, Dict{AbstractString,AbstractString}())
 end
 
 function error_404()

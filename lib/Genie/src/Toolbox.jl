@@ -47,7 +47,7 @@ function all_tasks(; filter_type_name = Symbol())
   return tasks
 end
 
-function new(cmd_args::Dict{AbstractString,Any}, config::Configuration.Config)
+function new(cmd_args::Dict{AbstractString,Any}, config::Settings)
   tfn = task_file_name(cmd_args, config)
 
   if ispath(tfn)

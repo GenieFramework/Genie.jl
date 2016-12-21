@@ -11,7 +11,7 @@ function load_models(dir = Genie.RESOURCE_PATH)
       load_models(full_path)
     else
       if i == Genie.GENIE_MODEL_FILE_NAME
-        eval(App, parse("""include("$full_path")"""))
+        eval(App, :(include($full_path)))
         isfile(joinpath(dir, Genie.GENIE_VALIDATOR_FILE_NAME)) && eval(Validation, :(include(joinpath($dir, $(Genie.GENIE_VALIDATOR_FILE_NAME)))))
       end
     end
