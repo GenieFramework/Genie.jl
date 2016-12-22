@@ -1,0 +1,99 @@
+module Macros
+
+using Genie, Configuration
+
+export @devtools, @ifdevtools
+export @run_with_time, @unless, @psst, @in_repl
+
+"""
+    devtools()
+
+Injects modules to be used in development mode, such as the `Gallium` debugger.
+To be used as a concise one liner to include all the dev tools.
+
+# Examples
+```julia
+julia> @devtools()
+```
+"""
+macro devtools()
+  if Configuration.is_dev()
+    :(using Gallium)
+  end
+end
+
+
+"""
+    ifdevtools(expr::Expr)
+
+Conditionally injects `expr::Expr` if the app runs in development mode.
+The `Gallium` debugger is automatically also included.
+
+# Examples
+```julia
+julia> @ifdevtools :(println("dev mode")) |> eval
+dev mode
+```
+"""
+macro ifdevtools(expr::Expr)
+  if Configuration.is_dev()
+    quote
+      using Gallium
+      $(esc(expr))
+    end
+  end
+end
+
+
+"""
+    runwithtime(expr::Expr)
+
+Prepends `@time` to `expr` if the app runs in development mode and evals - otherwise it simply evals `expr`.
+To be used to automatically disable timed execution outside `dev` mode.
+
+# Examples
+```julia
+julia> Genie.config.app_env
+"dev"
+
+julia> @run_with_time rand(2,2)
+  0.059437 seconds (39.18 k allocations: 1.586 MB)
+2×2 Array{Float64,2}:
+ 0.294566  0.653612
+ 0.264837  0.337146
+```
+"""
+macro runwithtime(expr::Expr)
+  if Configuration.is_dev()
+    quote
+      @time $(esc(expr))
+    end
+  else
+    expr
+  end
+end
+
+
+"""
+    psst(expr::Expr)
+
+Evals `expr` while supressing all debugging output for the duration of the evaluation.
+To be used, for example, to hide internals of various functions while in `dev` mode.
+
+# Examples
+
+```julia
+julia> @psst SearchLight.rand(Article)
+```
+"""
+macro psst(expr::Expr)
+  Genie.config.suppress_output = true
+  evx = quote
+          @eval $(esc(expr))
+        end
+  Genie.config.suppress_output = false
+
+  evx
+end
+
+end
