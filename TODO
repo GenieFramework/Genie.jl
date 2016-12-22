@@ -40,6 +40,7 @@ v 0.7.x
 ☐ official API docs
 ☐ official website - blog, walkthroughs, tutorials, etc
 ☐ performance enhancements, cleanup
+☐ custom Genie sysimg: include(joinpath(dirname(JULIA_HOME),"share","julia","build_sysimg.jl")); build_sysimg(force=true)
 ☐ beautify error handling (50x, 40x) pages
 ☐ doc comments
 ☐ more tests
