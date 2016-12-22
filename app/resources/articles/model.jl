@@ -41,8 +41,9 @@ type Article <: AbstractModel
 
     before_save = Articles.before_save,
 
-    scopes = Dict(:own      => [SQLWhere("user_id", 1)],
-                  :top_two  => [SQLWhereExpression("id BETWEEN ? AND ?", [1, 2])])
+    scopes = Dict(:own        => [SQLWhere("user_id", 1)],
+                  :required   => [SQLWhereExpression("id BETWEEN ? AND ?", [1, 2])]
+                  )
 
   ) = new("articles", "id", validator, has_many, id, title, summary, content, updated_at, published_at, slug, before_save, scopes)
 end

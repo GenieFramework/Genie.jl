@@ -177,7 +177,7 @@ function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}, j
     if column.raw
       column.value
     else
-      column_data = from_literal_column_name(column.value)
+      column_data = SearchLight.from_literal_column_name(column.value)
       if ! haskey(column_data, :table_name)
         column_data[:table_name] = _m._table_name
       end
@@ -185,7 +185,7 @@ function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}, j
         column_data[:alias] = ""
       end
 
-      "$(to_fully_qualified(column_data[:column_name], column_data[:table_name])) AS $( isempty(column_data[:alias]) ? to_sql_column_name(column_data[:column_name], column_data[:table_name]) : column_data[:alias] )"
+      "$(to_fully_qualified(column_data[:column_name], column_data[:table_name])) AS $( isempty(column_data[:alias]) ? SearchLight.to_sql_column_name(column_data[:column_name], column_data[:table_name]) : column_data[:alias] )"
     end
   end
 
@@ -240,12 +240,16 @@ function to_from_part{T<:AbstractModel}(m::Type{T})
   "FROM " * escape_column_name(disposable_instance(m)._table_name)
 end
 
-function to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity}, scopes::Vector{Symbol})
+function to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity}, scopes::Vector{Symbol}) :: String
   w = vcat(w, required_scopes(m)) # automatically include required scopes
+
   for scope in scopes
     w = vcat(w, m().scopes[scope])
   end
 
+  to_where_part(w)
+end
+function to_where_part(w::Vector{SQLWhereEntity}) :: String
   where = isempty(w) ?
           "" :
           "WHERE " * (string(first(w).condition) == "AND" ? "TRUE " : "FALSE ") * join(map(wx -> string(wx), w), " ")
@@ -253,43 +257,45 @@ function to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity}, 
   replace(where, r"WHERE TRUE AND "i, "WHERE ")
 end
 
-function required_scopes{T<:AbstractModel}(m::Type{T})
+function required_scopes{T<:AbstractModel}(m::Type{T}) :: Vector{SQLWhereEntity}
   s = scopes(m)
-  haskey(s, :required) ? s[:required] : []
+  haskey(s, :required) ? s[:required] : SQLWhereEntity[]
 end
 
 function scopes{T<:AbstractModel}(m::Type{T})
   in(:scopes, fieldnames(m)) ? getfield(m(), :scopes) : Dict()
 end
 
-function to_order_part{T<:AbstractModel}(m::Type{T}, o::Vector{SQLOrder})
+function to_order_part{T<:AbstractModel}(m::Type{T}, o::Vector{SQLOrder}) :: String
   isempty(o) ?
     "" :
     "ORDER BY " * join(map(x -> (! is_fully_qualified(x.column.value) ? to_fully_qualified(m, x.column) : x.column.value) * " " * x.direction, o), ", ")
 end
 
-function to_group_part(g::Vector{SQLColumn})
+function to_group_part(g::Vector{SQLColumn}) :: String
   isempty(g) ?
     "" :
     " GROUP BY " * join(map(x -> string(x), g), ", ")
 end
 
-function to_limit_part(l::SQLLimit)
+function to_limit_part(l::SQLLimit) :: String
   l.value != "ALL" ? "LIMIT " * (l |> string) : ""
 end
 
-function to_offset_part(o::Int)
+function to_offset_part(o::Int) :: String
   o != 0 ? "OFFSET " * (o |> string) : ""
 end
 
-function to_having_part(h::Vector{SQLWhereEntity})
-  isempty(h) ?
-    "" :
-    (string(first(h).condition) == "AND" ? "TRUE " : "FALSE ") * join(map(w -> string(w), h), " ")
+function to_having_part(h::Vector{SQLWhereEntity}) :: String
+  having =  isempty(h) ?
+            "" :
+            "HAVING " * (string(first(h).condition) == "AND" ? "TRUE " : "FALSE ") * join(map(w -> string(w), h), " ")
+
+  replace(having, r"HAVING TRUE AND "i, "HAVING ")
 end
 
-function to_join_part{T<:AbstractModel}(m::Type{T}, joins = SQLJoin[])
-  _m = disposable_instance(m)
+function to_join_part{T<:AbstractModel}(m::Type{T}, joins = SQLJoin[]) :: String
+  _m = m()
   join_part = ""
 
   for rel in relationships(m)

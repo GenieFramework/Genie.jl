@@ -36,11 +36,16 @@ v 0.6.x
 
 v 0.7.x
 ☐ channels (websockets communication)
+☐ add the concept of State to sync app state between client (Vue.js data) and server (Genie state)
+☐ refactor the views to use data from State and generate the reactive Vue.js code on the client
+☐ server side reactivity from State (using Reactive.jl)
 ☐ encrypt sessions and cookies
 ☐ official API docs
 ☐ official website - blog, walkthroughs, tutorials, etc
 ☐ performance enhancements, cleanup
 ☐ custom Genie sysimg: include(joinpath(dirname(JULIA_HOME),"share","julia","build_sysimg.jl")); build_sysimg(force=true)
+☐ use macros to completely remove function invocations that produce no effect based on settings (if they are disabled from settings)
+☐ should work without a DB
 ☐ beautify error handling (50x, 40x) pages
 ☐ doc comments
 ☐ more tests
@@ -49,6 +54,8 @@ v 0.7.x
 ☐ support for mysql
 ☐ "Hello world" app
 ☐ "ToDo-Backend MVC" app
+
+☐ all instances of m() must be type hinted
 
 v 0.8.x
 ☐ add utility functions for migrations (add column, add index, etc)

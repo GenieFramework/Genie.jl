@@ -32,7 +32,13 @@ function startup(port::Int = 8000) :: Void
   nothing
 end
 
-function handle_request(req::Request, res::Response)
+
+"""
+    handle_request(req::Request, res::Response) :: Response
+
+HttpServer handler function - invoked when the server gets a request.
+"""
+function handle_request(req::Request, res::Response) :: Response
   log_request(req)
   sign_response!(res)
 
@@ -45,28 +51,60 @@ function handle_request(req::Request, res::Response)
   app_response
 end
 
-function sign_response!(res::Response)
-  res.headers["Server"] = Genie.config.server_signature
+
+"""
+    sign_response!(res::Response) :: Response
+
+Adds a signature header to the response using the value in `Genie.config.server_signature`.
+If `Genie.config.server_signature` is empty, the header is not added.
+"""
+function sign_response!(res::Response) :: Response
+  if ! isempty(Genie.config.server_signature)
+    res.headers["Server"] = Genie.config.server_signature
+  end
+
   res
 end
 
-function log_request(req::Request)
+
+"""
+    log_request(req::Request) :: Void
+
+Logs information about the request.
+"""
+function log_request(req::Request) :: Void
   if Router.is_static_file(req.resource)
     Genie.config.log_resources && log_request_response(req)
   elseif Genie.config.log_responses
     log_request_response(req)
   end
+
+  nothing
 end
 
-function log_response(req::Request, res::Response)
+
+"""
+    log_response(req::Request, res::Response) :: Void
+
+Logs information about the response.
+"""
+function log_response(req::Request, res::Response) :: Void
   if Router.is_static_file(req.resource)
     Genie.config.log_resources && log_request_response(res)
   elseif Genie.config.log_responses
     log_request_response(res)
   end
+
+  nothing
 end
 
-function log_request_response(req_res::Union{Request,Response})
+
+"""
+    log_request_response(req_res::Union{Request,Response}) :: Void
+
+Helper function that logs `Request` or `Response` objects.
+"""
+function log_request_response(req_res::Union{Request,Response}) :: Void
   req_data = Dict{String,String}()
   response_is_error = false
 
@@ -86,13 +124,22 @@ function log_request_response(req_res::Union{Request,Response})
   end
 
   Logger.log(string(req_res) * "\n" * string(Genie.config.log_formatted ? Millboard.table(req_data) : req_data), response_is_error ? :err : :debug, showst = false)
+
+  nothing
 end
 
-function parse_inner_dict(d::Dict)
-  r = Dict()
+
+"""
+    parse_inner_dict{K,V}(d::Dict{K,V}) :: Dict{String,String}
+
+Helper function that knows how to parse a `Dict` containing `Request` or `Response` data and prepare it for being logged.
+"""
+function parse_inner_dict{K,V}(d::Dict{K,V}) :: Dict{String,String}
+  r = Dict{String,String}()
   for (k, v) in d
+    k = string(k)
     if k == "Cookie" && Genie.config.log_verbosity == Configuration.LOG_LEVEL_VERBOSITY_VERBOSE
-      cookie = Dict()
+      cookie = Dict{String,String}()
       cookies = split(v, ";")
       for c in cookies
         cookie_part = split(c, "=")

@@ -49,8 +49,8 @@ function log(message, level::String = "info"; showst::Bool = true) :: Void
 
   nothing
 end
-function log(message::String, level::Symbol) :: Void
-  log(message, level == :err ? "error" : string(level))
+function log(message::String, level::Symbol; showst::Bool = false) :: Void
+  log(message, level == :err ? "error" : string(level), showst = showst)
 end
 
 
@@ -88,26 +88,23 @@ end
 
 
 """
+    truncate_logged_output(output::AbstractString) :: String
 
+Truncates (shortens) output based on `output_length` settings and appends "..." -- to be used for limiting the output length when logging.
+
+# Examples
+```julia
+julia> Genie.config.output_length
+100
+
+julia> Genie.config.output_length = 10
+10
+
+julia> Logger.truncate_logged_output("abc " ^ 10)
+"abc abc ab..."
+```
 """
-function step_dict(dict::Dict)
-  d = Dict()
-  for (k, v) in dict
-    if isa(v, Dict)
-      log_dict(v)
-    else
-      d[k] = truncate_logged_output(v)
-    end
-  end
-
-  d
-end
-
-function log_dict(dict::Dict, level::Symbol = :info)
-  log(string(Genie.config.log_formatted ? Millboard.table(dict) : dict), level)
-end
-
-function truncate_logged_output(output::AbstractString)
+function truncate_logged_output(output::AbstractString) :: String
   if length(output) > Genie.config.output_length
     output = output[1:Genie.config.output_length] * "..."
   end
@@ -115,7 +112,14 @@ function truncate_logged_output(output::AbstractString)
   output
 end
 
-function setup_loggers()
+
+"""
+    setup_loggers() :: Bool
+
+Sets up default app loggers (STDOUT and per env file loggers) defferring to the `Lumberjack` module.
+Automatically invoked.
+"""
+function setup_loggers() :: Bool
   configure(; modes=["debug", "info", "notice", "warn", "err", "critical", "alert", "emerg"])
   add_truck(LumberjackTruck(STDOUT, nothing, Dict{Any,Any}(:is_colorized => true)), "console")
   add_truck(LumberjackTruck("$(joinpath(Genie.LOG_PATH, Genie.config.app_env)).log", nothing, Dict{Any,Any}(:is_colorized => true)), "file-logger")
@@ -123,6 +127,15 @@ function setup_loggers()
   true
 end
 
+
+"""
+    empty_log_queue() :: Vector{Tuple{String,Symbol}}
+
+The Genie log queue is used to push log messages in the early phases of framework bootstrap,
+when the logger itself is not available. Once the logger is ready, the queue is emptied and the
+messages are logged.
+Automatically invoked.
+"""
 function empty_log_queue() :: Vector{Tuple{String,Symbol}}
   for log_message in Genie.GENIE_LOG_QUEUE
     log(log_message...)
@@ -131,6 +144,12 @@ function empty_log_queue() :: Vector{Tuple{String,Symbol}}
   empty!(Genie.GENIE_LOG_QUEUE)
 end
 
+
+"""
+    macro location()
+
+Provides a macro that injects the FILE and the LINE where the logger was invoked.
+"""
 macro location()
   :(Logger.log(" in $(@__FILE__):$(@__LINE__)", :err))
 end

@@ -1210,6 +1210,7 @@ end
 # Object generation
 #
 
+
 """
    to_models{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame) :: Vector{T}
 
@@ -1217,7 +1218,52 @@ Converts a DataFrame `df` to a Vector{T}
 
 # Examples
 ```julia
+julia> sql = SearchLight.to_fetch_sql(Article, SQLQuery(limit = 1))
+"SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" LIMIT 1"
 
+julia> df = SearchLight.query(sql)
+
+2016-12-22T12:18:53.091 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" LIMIT 1
+
+  0.000637 seconds (16 allocations: 576 bytes)
+1×7 DataFrames.DataFrame
+│ Row │ articles_id │ articles_title                                     │ articles_summary                                                                          │
+├─────┼─────────────┼────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1   │ 4           │ "Possimus sit cum nesciunt doloribus dignissimos." │ "Similique.\nUt debitis qui perferendis.\nVoluptatem qui recusandae ut itaque voluptas.\nSunt." │
+
+│ Row │ articles_content                                                                                                                                                                                                                            │ articles_updated_at       │ articles_published_at │
+├─────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────┼───────────────────────┤
+│ 1   │ "Hic. Est aut officia perspiciatis. Et non est dolor autem..\nAliquid dolores quo aut. Aperiam explicabo..\nItaque molestias facere. Aliquam quam est commodi quod ut. Recusandae consequatur voluptatem. Dolorem qui consectetur dicta modi.." │ "2016-09-27 07:49:59.098" │ NA                    │
+
+│ Row │ articles_slug                                     │
+├─────┼───────────────────────────────────────────────────┤
+│ 1   │ "possimus-sit-cum-nesciunt-doloribus-dignissimos" │
+
+julia> objects = SearchLight.to_models(Article, df)
+1-element Array{App.Article,1}:
+
+App.Article
++==============+=============================================================+
+|          key |                                                       value |
++==============+=============================================================+
+|              | Hic. Est aut officia perspiciatis. Et non est dolor autem.. |
+|      content |                 Aliquid dolores quo aut. Aperiam explica... |
++--------------+-------------------------------------------------------------+
+|           id |                                          Nullable{Int32}(4) |
++--------------+-------------------------------------------------------------+
+| published_at |                                        Nullable{DateTime}() |
++--------------+-------------------------------------------------------------+
+|         slug |             possimus-sit-cum-nesciunt-doloribus-dignissimos |
++--------------+-------------------------------------------------------------+
+|              |                                                  Similique. |
+|              |                                 Ut debitis qui perferendis. |
+|              |               Voluptatem qui recusandae ut itaque voluptas. |
+|      summary |                                                       Sunt. |
++--------------+-------------------------------------------------------------+
+|        title |            Possimus sit cum nesciunt doloribus dignissimos. |
++--------------+-------------------------------------------------------------+
+|   updated_at |                                     2016-09-27T07:49:59.098 |
++--------------+-------------------------------------------------------------+
 ```
 """
 function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrame) :: Vector{T}
@@ -1227,7 +1273,7 @@ function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrame) :: Vector{T}
   row_count::Int = 1
   __m = m()
   for row in eachrow(df)
-    main_model::T = to_model(m, dfs[ __m._table_name ][row_count, :])
+    main_model::T = to_model!!(m, dfs[ __m._table_name ][row_count, :])
 
     if haskey(models, getfield(main_model, Symbol(__m._id)))
       main_model = models[ getfield(main_model, Symbol(__m._id)) |> Base.get ]
@@ -1261,22 +1307,25 @@ function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrame) :: Vector{T}
   models |> values |> collect
 end
 
-"""
-    set_relationship_data{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame)
 
-Extracts related model data and sets it into the relationship
 """
-function set_relationship_data{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame)
+    set_relationship_data{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame) :: SQLRelation
+
+Sets model's relationship data (one to one). Automatically invoked if the relationship is eager.
+"""
+function set_relationship_data{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame) :: SQLRelation
   r.data = Nullable( to_model(related_model, related_model_df) )
+
   r
 end
 
-"""
-    set_relationship_data_array{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame)
 
-Sets relationship data for one to many relationships
 """
-function set_relationship_data_array{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame)
+    set_relationship_data_array{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame) :: SQLRelation
+
+Sets relationship data for one to many relationships.
+"""
+function set_relationship_data_array{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame) :: SQLRelation
   data =  if isnull(r.data)
             RelationshipDataArray()
           else
@@ -1288,12 +1337,78 @@ function set_relationship_data_array{T<:AbstractModel}(r::SQLRelation, related_m
   r
 end
 
+
 """
     to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
 
-Converts a DataFrame row to a SearchLight model instance
+Converts a DataFrame row to a SearchLight model instance.
+
+# Examples
+```julia
+julia> sql = SearchLight.to_find_sql(Article, SQLQuery(limit = 1))
+"SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" LIMIT 1"
+
+julia> df = SearchLight.query(sql)
+
+2016-12-22T13:25:47.34 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" LIMIT 1
+
+  0.002099 seconds (1.23 k allocations: 52.688 KB)
+1×7 DataFrames.DataFrame
+│ Row │ articles_id │ articles_title                                     │ articles_summary                                                                          │
+├─────┼─────────────┼────────────────────────────────────────────────────┼───────────────────────────────────────────────────────────────────────────────────────────┤
+│ 1   │ 4           │ "Possimus sit cum nesciunt doloribus dignissimos." │ "Similique.\nUt debitis qui perferendis.\nVoluptatem qui recusandae ut itaque voluptas.\nSunt." │
+
+│ Row │ articles_content                                                                                                                                                                                                                            │ articles_updated_at       │ articles_published_at │
+├─────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼───────────────────────────┼───────────────────────┤
+│ 1   │ "Hic. Est aut officia perspiciatis. Et non est dolor autem..\nAliquid dolores quo aut. Aperiam explicabo..\nItaque molestias facere. Aliquam quam est commodi quod ut. Recusandae consequatur voluptatem. Dolorem qui consectetur dicta modi.." │ "2016-09-27 07:49:59.098" │ NA                    │
+
+│ Row │ articles_slug                                     │
+├─────┼───────────────────────────────────────────────────┤
+│ 1   │ "possimus-sit-cum-nesciunt-doloribus-dignissimos" │
+
+julia> dfr = DataFrames.DataFrameRow(df, 1)
+DataFrameRow (row 1)
+articles_id            4
+articles_title         Possimus sit cum nesciunt doloribus dignissimos.
+articles_summary       Similique.
+Ut debitis qui perferendis.
+Voluptatem qui recusandae ut itaque voluptas.
+Sunt.
+articles_content       Hic. Est aut officia perspiciatis. Et non est dolor autem..
+Aliquid dolores quo aut. Aperiam explicabo..
+Itaque molestias facere. Aliquam quam est commodi quod ut. Recusandae consequatur voluptatem. Dolorem qui consectetur dicta modi..
+articles_updated_at    2016-09-27 07:49:59.098
+articles_published_at  NA
+articles_slug          possimus-sit-cum-nesciunt-doloribus-dignissimos
+
+
+julia> SearchLight.to_model(Article, dfr)
+
+App.Article
++==============+=============================================================+
+|          key |                                                       value |
++==============+=============================================================+
+|              | Hic. Est aut officia perspiciatis. Et non est dolor autem.. |
+|      content |                 Aliquid dolores quo aut. Aperiam explica... |
++--------------+-------------------------------------------------------------+
+|           id |                                          Nullable{Int32}(4) |
++--------------+-------------------------------------------------------------+
+| published_at |                                        Nullable{DateTime}() |
++--------------+-------------------------------------------------------------+
+|         slug |             possimus-sit-cum-nesciunt-doloribus-dignissimos |
++--------------+-------------------------------------------------------------+
+|              |                                                  Similique. |
+|              |                                 Ut debitis qui perferendis. |
+|              |               Voluptatem qui recusandae ut itaque voluptas. |
+|      summary |                                                       Sunt. |
++--------------+-------------------------------------------------------------+
+|        title |            Possimus sit cum nesciunt doloribus dignissimos. |
++--------------+-------------------------------------------------------------+
+|   updated_at |                                     2016-09-27T07:49:59.098 |
++--------------+-------------------------------------------------------------+
+```
 """
-function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
+function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow) :: T
   _m = disposable_instance(m)
   obj = m()
   sf = settable_fields(_m, row)
@@ -1310,6 +1425,7 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
                 value
               catch ex
                 Logger.log("Failed to hydrate! field $unq_field ($field)", :debug)
+                Logger.@location()
                 Logger.log(ex)
 
                 row[field]
@@ -1319,6 +1435,7 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
                 _m.on_hydration(_m, unq_field, row[field])
               catch ex
                 Logger.log("Failed to hydrate field $unq_field ($field)", :debug)
+                Logger.@location()
                 Logger.log(ex)
 
                 row[field]
@@ -1331,6 +1448,7 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
     catch ex
       Logger.log(ex, :err)
       Logger.log("obj = $(typeof(obj)) -- field = $unq_field -- value = $value -- type = $( typeof(getfield(_m, unq_field)) )")
+      Logger.@location()
       rethrow(ex)
     end
 
@@ -1354,132 +1472,485 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow)
   obj
 end
 
-"""
-    to_model{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
 
-Converts a DataFrame to a SearchLight model instance
 """
-function to_model{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame)
-  for row in eachrow(df)
-    return to_model(m, row)
+    to_model!!{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame; row_index = 1) :: T
+
+Gets the DataFrameRow instance at `row_index` and converts it into an instance of model `T`.
+
+# Examples
+```julia
+julia> df = SearchLight.query(SearchLight.to_find_sql(Article, SQLQuery(where = [SQLWhereExpression("id = 11")])))
+
+2016-12-22T13:47:06.929 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE id = 11
+
+  0.000649 seconds (16 allocations: 576 bytes)
+
+1×7 DataFrames.DataFrame
+...
+
+julia> SearchLight.to_model!!(Article, df)
+
+App.Article
++==============+=========================================================================================================+
+|          key |                                                                                                   value |
++==============+=========================================================================================================+
+|      content | Porro est eaque impedit sint quos. Provident neque numquam dignissimos. Et aliquid natus libero ut. ... |
++--------------+---------------------------------------------------------------------------------------------------------+
+|           id |                                                                                     Nullable{Int32}(11) |
++--------------+---------------------------------------------------------------------------------------------------------+
+| published_at |                                                                                    Nullable{DateTime}() |
++--------------+---------------------------------------------------------------------------------------------------------+
+|         slug |                                                                                 facere-hic-ut-libero-et |
++--------------+---------------------------------------------------------------------------------------------------------+
+|              |                                                                              Optio quam necessitatibus. |
+|              |                                                                      Praesentium dolorem et cupiditate. |
+|              |                                                                                              Omnis vel. |
+|      summary |                                                                                             Voluptatem. |
++--------------+---------------------------------------------------------------------------------------------------------+
+|        title |                                                                                Facere hic ut libero et. |
++--------------+---------------------------------------------------------------------------------------------------------+
+|   updated_at |                                                                                 2016-09-27T07:49:59.323 |
++--------------+---------------------------------------------------------------------------------------------------------+
+
+julia> df = SearchLight.query(SearchLight.to_find_sql(Article, SQLQuery(where = [SQLWhereExpression("title = '--- this article does not exist --'")])))
+
+2016-12-22T13:48:56.781 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE title = '--- this article does not exist --'
+
+  0.000724 seconds (16 allocations: 576 bytes)
+
+0×7 DataFrames.DataFrame
+
+julia> SearchLight.to_model!!(Article, df)
+------ BoundsError ---------------------
+...
+BoundsError: attempt to access 0-element BitArray{1} at index [1]
+```
+"""
+function to_model!!{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame; row_index = 1) :: T
+  dfr = DataFrames.DataFrameRow(df, row_index)
+
+  to_model(m, dfr)
+end
+
+
+"""
+    to_model{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame; row_index = 1) :: Nullable{T}
+
+Attempts to extract row at `row_index` from `df` and convert it to an instance of `T`.
+
+# Examples
+```julia
+julia> df = SearchLight.query(SearchLight.to_find_sql(Article, SQLQuery(where = [SQLWhereExpression("title LIKE ?", "%a%")], limit = 1)))
+
+2016-12-22T14:00:34.063 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE title LIKE '%a%' LIMIT 1
+
+  0.000846 seconds (16 allocations: 576 bytes)
+
+1×7 DataFrames.DataFrame
+...
+
+julia> SearchLight.to_model(Article, df)
+Nullable{App.Article}(
+App.Article
++==============+======================================================================================+
+|          key |                                                                                value |
++==============+======================================================================================+
+|              | Ducimus fuga sit magni. Non labore facilis dolore. Nisi dignissimos. Voluptas quis.. |
+|      content |                                                                   Ullam sequi dol... |
++--------------+--------------------------------------------------------------------------------------+
+|           id |                                                                   Nullable{Int32}(5) |
++--------------+--------------------------------------------------------------------------------------+
+| published_at |                                                                 Nullable{DateTime}() |
++--------------+--------------------------------------------------------------------------------------+
+|         slug |                                                    voluptas-ea-incidunt-et-provident |
++--------------+--------------------------------------------------------------------------------------+
+|              |                                                                    Animi ducimus in. |
+|              |                               Voluptatem ipsum doloribus perspiciatis consequatur a. |
+|      summary |                                                       Vel quibusdam quas veritati... |
++--------------+--------------------------------------------------------------------------------------+
+|        title |                                                   Voluptas ea incidunt et provident. |
++--------------+--------------------------------------------------------------------------------------+
+|   updated_at |                                                              2016-09-27T07:49:59.129 |
++--------------+--------------------------------------------------------------------------------------+
+)
+
+julia> df = SearchLight.query(SearchLight.to_find_sql(Article, SQLQuery(where = [SQLWhereExpression("title LIKE ?", "%agggzgguuyyyo79%")], limit = 1)))
+
+2016-12-22T14:02:01.938 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" WHERE title LIKE '%agggzgguuyyyo79%' LIMIT 1
+
+  0.000648 seconds (16 allocations: 576 bytes)
+
+0×7 DataFrames.DataFrame
+
+julia> SearchLight.to_model(Article, df)
+Nullable{App.Article}()
+```
+"""
+function to_model{T<:AbstractModel}(m::Type{T}, df::DataFrames.DataFrame; row_index = 1) :: Nullable{T}
+  nrows, _ = size(df)
+  if nrows >= row_index
+    Nullable{T}(to_model!!(m, df, row_index = row_index))
+  else
+    Nullable{T}()
   end
 end
+
 
 #
 # Query generation
 #
 
-"""
-    to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}[, joins = SQLJoin[] ])
-    to_select_part{T<:AbstractModel}(m::Type{T}, c::SQLColumn)
-    to_select_part{T<:AbstractModel}(m::Type{T}, c::String)
-    to_select_part{T<:AbstractModel}(m::Type{T})
 
-Generates the SELECT part of the query
 """
-function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}, joins = SQLJoin[])
+    to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}[, joins = SQLJoin[] ]) :: String
+    to_select_part{T<:AbstractModel}(m::Type{T}, c::SQLColumn) :: String
+    to_select_part{T<:AbstractModel}(m::Type{T}, c::String) :: String
+    to_select_part{T<:AbstractModel}(m::Type{T}) :: String
+
+Generates the SELECT part of the SQL query.
+
+# Examples
+```julia
+julia> SearchLight.to_select_part(Article)
+"SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\""
+
+julia> SearchLight.to_select_part(Article, "id")
+"SELECT articles.id AS articles_id"
+
+julia> SearchLight.to_select_part(Article, SQLColumn(:slug))
+"SELECT articles.slug AS articles_slug"
+
+julia> SearchLight.to_select_part(Article, SQLColumn[:id, :slug, :title])
+"SELECT articles.id AS articles_id, articles.slug AS articles_slug, articles.title AS articles_title"
+```
+"""
+function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}, joins = SQLJoin[]) :: String
   Database.to_select_part(m, cols, joins)
 end
-function to_select_part{T<:AbstractModel}(m::Type{T}, c::SQLColumn)
+function to_select_part{T<:AbstractModel}(m::Type{T}, c::SQLColumn) :: String
   to_select_part(m, [c])
 end
-function to_select_part{T<:AbstractModel}(m::Type{T}, c::String)
+function to_select_part{T<:AbstractModel}(m::Type{T}, c::String) :: String
   to_select_part(m, SQLColumn(c, raw = c == "*"))
 end
-function to_select_part{T<:AbstractModel}(m::Type{T})
+function to_select_part{T<:AbstractModel}(m::Type{T}) :: String
   to_select_part(m, SQLColumn[])
 end
+
 
 """
     to_from_part{T<:AbstractModel}(m::Type{T})
 
-Generates the FROM part of the query
+Generates the FROM part of the SQL query.
+
+# Examples
+```julia
+julia> SearchLight.to_from_part(Article)
+"FROM \"articles\""
+```
 """
-function to_from_part{T<:AbstractModel}(m::Type{T})
+function to_from_part{T<:AbstractModel}(m::Type{T}) :: String
   Database.to_from_part(m)
 end
 
-"""
-    to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity})
 
-Generates the WHERE part of the query
 """
-function to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity})
-  Database.to_where_part(m, w)
+    to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity}) :: String
+    to_where_part(w::Vector{SQLWhereEntity}) :: String
+
+Generates the WHERE part of the SQL query.
+
+# Examples
+```julia
+julia> SearchLight.required_scopes(Article)
+1-element Array{Union{SearchLight.SQLWhere,SearchLight.SQLWhereExpression},1}:
+
+SearchLight.SQLWhereExpression
++================+====================+
+|            key |              value |
++================+====================+
+|      condition |                AND |
++----------------+--------------------+
+| sql_expression | id BETWEEN ? AND ? |
++----------------+--------------------+
+|         values |                1,2 |
++----------------+--------------------+
+
+julia> SearchLight.to_where_part(Article)
+"WHERE id BETWEEN 1 AND 2" # required scope automatically applied
+
+julia> SearchLight.to_where_part(Article, SQLWhereEntity[SQLWhere(:id, 2)])
+"WHERE (\"id\" = 2) AND id BETWEEN 1 AND 2"
+
+julia> SearchLight.scopes(Article)
+Dict{Symbol,Array{Union{SearchLight.SQLWhere,SearchLight.SQLWhereExpression},1}} with 2 entries:
+  :own      => Union{SearchLight.SQLWhere,SearchLight.SQLWhereExpression}[…
+  :required => Union{SearchLight.SQLWhere,SearchLight.SQLWhereExpression}[…
+
+julia> SearchLight.to_where_part(Article, SQLWhereEntity[SQLWhere(:id, 2)], [:own])
+"WHERE (\"id\" = 2) AND id BETWEEN 1 AND 2 AND (\"user_id\" = 1)"
+```
+"""
+function to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity} = Vector{SQLWhereEntity}(), scopes::Vector{Symbol} = Vector{Symbol}()) :: String
+  Database.to_where_part(m, w, scopes)
+end
+function to_where_part(w::Vector{SQLWhereEntity}) :: String
+  Database.to_where_part(w)
 end
 
-function required_scopes{T<:AbstractModel}(m::Type{T})
+
+"""
+    required_scopes{T<:AbstractModel}(m::Type{T}) :: Vector{SQLWhereEntity}
+
+Returns the Vector containing the required scopes defined on the model `m`.
+The required scopes are defined under the `:required` key and are automatically applied to all the SQL queries.
+
+# Examples
+```julia
+julia> SearchLight.required_scopes(Article)
+1-element Array{Union{SearchLight.SQLWhere,SearchLight.SQLWhereExpression},1}:
+
+SearchLight.SQLWhereExpression
++================+====================+
+|            key |              value |
++================+====================+
+|      condition |                AND |
++----------------+--------------------+
+| sql_expression | id BETWEEN ? AND ? |
++----------------+--------------------+
+|         values |                1,2 |
++----------------+--------------------+
+```
+"""
+function required_scopes{T<:AbstractModel}(m::Type{T}) :: Vector{SQLWhereEntity}
   Database.required_scopes(m)
 end
 
-function scopes{T<:AbstractModel}(m::Type{T})
+
+"""
+    scopes{T<:AbstractModel}(m::Type{T}) :: Dict{Symbol,Vector{SQLWhereEntity}}
+
+Returns a `Dict` containing the names of all the scopes defined on the model `m` as keys, and the corresponding `Vectors` of `SQLWhereEntity` that make up the actual scopes.
+Includes the `:required` scope if defined.
+
+# Examples
+```julia
+julia> SearchLight.scopes(Article)
+Dict{Symbol,Array{Union{SearchLight.SQLWhere,SearchLight.SQLWhereExpression},1}} with 2 entries:
+  :own      => Union{SearchLight.SQLWhere,SearchLight.SQLWhereExpression}[…
+  :required => Union{SearchLight.SQLWhere,SearchLight.SQLWhereExpression}[…
+
+julia> SearchLight.scopes(Article)[:required]
+1-element Array{Union{SearchLight.SQLWhere,SearchLight.SQLWhereExpression},1}:
+
+SearchLight.SQLWhereExpression
++================+====================+
+|            key |              value |
++================+====================+
+|      condition |                AND |
++----------------+--------------------+
+| sql_expression | id BETWEEN ? AND ? |
++----------------+--------------------+
+|         values |                1,2 |
++----------------+--------------------+
+```
+"""
+function scopes{T<:AbstractModel}(m::Type{T}) :: Dict{Symbol,Vector{SQLWhereEntity}}
   Database.scopes(m)
 end
 
-"""
-    to_order_part{T<:AbstractModel}(m::Type{T}, o::Vector{SQLOrder})
 
-Generates the ORDER part of the query
 """
-function to_order_part{T<:AbstractModel}(m::Type{T}, o::Vector{SQLOrder})
+    scopes_names{T<:AbstractModel}(m::Type{T}) :: Vector{Symbol}
+
+Returns the names of all the scopes defined on the model `m`, as a `Vector` of `Symbol`.
+Includes the `:required` scope if defined.
+
+# Examples
+```julia
+julia> SearchLight.scopes_names(Article)
+2-element Array{Symbol,1}:
+ :own
+ :required
+```
+"""
+function scopes_names{T<:AbstractModel}(m::Type{T}) :: Vector{Symbol}
+  scopes(m) |> keys |> collect
+end
+
+
+"""
+    to_order_part{T<:AbstractModel}(m::Type{T}, o::Vector{SQLOrder}) :: String
+
+Generates the ORDER part of the SQL query.
+
+# Examples
+```julia
+julia> SearchLight.to_order_part(Article, SQLOrder[:id, :title])
+"ORDER BY articles.id ASC, articles.title ASC"
+```
+"""
+function to_order_part{T<:AbstractModel}(m::Type{T}, o::Vector{SQLOrder}) :: String
   Database.to_order_part(m, o)
 end
 
-"""
-    to_group_part(g::Vector{SQLColumn})
 
-Generates the GROUP part of the query
 """
-function to_group_part(g::Vector{SQLColumn})
+    to_group_part(g::Vector{SQLColumn}) :: String
+
+Generates the GROUP part of the SQL query.
+
+# Examples
+```julia
+julia> SearchLight.to_group_part(SQLColumn[:id, :title])
+" GROUP BY \"id\", \"title\""
+```
+"""
+function to_group_part(g::Vector{SQLColumn}) :: String
   Database.to_group_part(g)
 end
 
-"""
-    to_limit_part(l::SQLLimit)
 
-Generates the LIMIT part of the query
 """
-function to_limit_part(l::SQLLimit)
+    to_limit_part(l::SQLLimit) :: String
+    to_limit_part(l::Int) :: String
+
+Generates the LIMIT part of the SQL query.
+
+# Examples
+```julia
+julia> SearchLight.to_limit_part(SQLLimit(1))
+"LIMIT 1"
+
+julia> SearchLight.to_limit_part(1)
+"LIMIT 1"
+```
+"""
+function to_limit_part(l::SQLLimit) :: String
   Database.to_limit_part(l)
 end
+function to_limit_part(l::Int) :: String
+  to_limit_part(SQLLimit(l))
+end
+
 
 """
-    to_offset_part(o::Int)
+    to_offset_part(o::Int) :: String
 
-Generates the OFFSET part of the query
+Generates the OFFSET part of the SQL query.
+
+# Examples
+```julia
+julia> SearchLight.to_offset_part(10)
+"OFFSET 10"
+```
 """
-function to_offset_part(o::Int)
+function to_offset_part(o::Int) :: String
   Database.to_offset_part(o)
 end
 
-"""
-    to_having_part(h::Vector{SQLHaving})
 
-Generates the HAVING part of the query
 """
-function to_having_part(h::Vector{SQLHaving})
+    to_having_part(h::Vector{SQLHaving}) :: String
+
+Generates the HAVING part of the SQL query.
+
+# Examples
+```julia
+julia> SearchLight.to_having_part(SQLHaving[SQLWhere(:aggregated_amount, 200, ">=")])
+"HAVING (\"aggregated_amount\" >= 200)"
+```
+"""
+function to_having_part(h::Vector{SQLWhereEntity}) :: String
   Database.to_having_part(h)
 end
 
 
 """
-    to_join_part{T<:AbstractModel}(m::Type{T}[, joins = SQLJoin[] ])
+    to_join_part{T<:AbstractModel}(m::Type{T}[, joins = SQLJoin[] ]) :: String
 
-Generates the JOIN part of the query
+Generates the JOIN part of the SQL query.
+
+# Examples
+```julia
+julia> on = SQLOn( SQLColumn("users.role_id"), SQLColumn("roles.id") )
+
+SearchLight.SQLOn
++============+==============================================================+
+|        key |                                                        value |
++============+==============================================================+
+|   column_1 |                                            "users"."role_id" |
++------------+--------------------------------------------------------------+
+|   column_2 |                                                 "roles"."id" |
++------------+--------------------------------------------------------------+
+| conditions | Union{SearchLight.SQLWhere,SearchLight.SQLWhereExpression}[] |
++------------+--------------------------------------------------------------+
+
+
+julia> j = SQLJoin(Role, on, where = SQLWhereEntity[SQLWhereExpression("role_id > 10")])
+
+SearchLight.SQLJoin{App.Role}
++============+=============================================================+
+|        key |                                                       value |
++============+=============================================================+
+|    columns |                                                             |
++------------+-------------------------------------------------------------+
+|  join_type |                                                       INNER |
++------------+-------------------------------------------------------------+
+| model_name |                                                    App.Role |
++------------+-------------------------------------------------------------+
+|    natural |                                                       false |
++------------+-------------------------------------------------------------+
+|         on |                        ON "users"."role_id" = "roles"."id"  |
++------------+-------------------------------------------------------------+
+|      outer |                                                       false |
++------------+-------------------------------------------------------------+
+|            | Union{SearchLight.SQLWhere,SearchLight.SQLWhereExpression}[ |
+|            |                              SearchLight.SQLWhereExpression |
+|      where |                                                +========... |
++------------+-------------------------------------------------------------+
+
+julia> SearchLight.to_join_part(User, [j])
+"  INNER  JOIN \"roles\"  ON \"users\".\"role_id\" = \"roles\".\"id\"  WHERE role_id > 10"
+```
 """
-function to_join_part{T<:AbstractModel}(m::Type{T}, joins = SQLJoin[])
+function to_join_part{T<:AbstractModel}(m::Type{T}, joins = SQLJoin[]) :: String
   Database.to_join_part(m, joins)
 end
 
-"""
-    relationships{T<:AbstractModel}(m::Type{T})
 
-Returns the vector of relationships for the given model type
 """
-function relationships{T<:AbstractModel}(m::Type{T})
-  _m = disposable_instance(m)
+    relationships{T<:AbstractModel}(m::Type{T}) :: Vector{Tuple{SQLRelation,Symbol}}
 
-  rls = []
+Returns the vector of relationships for the given model type.
+
+# Examples
+```julia
+julia> SearchLight.relationships(User)
+1-element Array{Tuple{SearchLight.SQLRelation,Symbol},1}:
+ (
+SearchLight.SQLRelation{App.Role}
++============+=================================================================================+
+|        key |                                                                           value |
++============+=================================================================================+
+|       data | Nullable{Union{Array{SearchLight.AbstractModel,1},SearchLight.AbstractModel}}() |
++------------+---------------------------------------------------------------------------------+
+|  eagerness |                                                                            auto |
++------------+---------------------------------------------------------------------------------+
+|       join |                   Nullable{SearchLight.SQLJoin{T<:SearchLight.AbstractModel}}() |
++------------+---------------------------------------------------------------------------------+
+| model_name |                                                                        App.Role |
++------------+---------------------------------------------------------------------------------+
+|   required |                                                                           false |
++------------+---------------------------------------------------------------------------------+
+,:belongs_to)
+```
+"""
+function relationships{T<:AbstractModel}(m::Type{T}) :: Vector{Tuple{SQLRelation,Symbol}}
+  _m = m() :: T
+
+  rls = Tuple{SQLRelation,Symbol}[]
 
   for r in direct_relationships()
     if has_field(_m, r)
@@ -1495,21 +1966,93 @@ function relationships{T<:AbstractModel}(m::Type{T})
   rls
 end
 
-"""
-    relationship{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol)::Nullable{SQLRelation}
 
-Gets the relationship instance of `relationship_type` for the model instance `m` and `model_name`
 """
-function relationship{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol)::Nullable{SQLRelation}
+    relationship{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol) :: Nullable{SQLRelation}
+
+Gets the relationship instance of `relationship_type` for the model instance `m` and `model_name`.
+
+# Examples
+```julia
+julia> SearchLight.relationships(User)
+1-element Array{Tuple{SearchLight.SQLRelation,Symbol},1}:
+ (
+SearchLight.SQLRelation{App.Role}
++============+=================================================================================+
+|        key |                                                                           value |
++============+=================================================================================+
+|       data | Nullable{Union{Array{SearchLight.AbstractModel,1},SearchLight.AbstractModel}}() |
++------------+---------------------------------------------------------------------------------+
+|  eagerness |                                                                            auto |
++------------+---------------------------------------------------------------------------------+
+|       join |                   Nullable{SearchLight.SQLJoin{T<:SearchLight.AbstractModel}}() |
++------------+---------------------------------------------------------------------------------+
+| model_name |                                                                        App.Role |
++------------+---------------------------------------------------------------------------------+
+|   required |                                                                           false |
++------------+---------------------------------------------------------------------------------+
+,:belongs_to)
+
+julia> u = SearchLight.find_one!!(User, 1)
+
+2016-12-22T18:39:59.475 - info: SQL QUERY: SELECT \"users\".\"id\" AS \"users_id\", \"users\".\"name\" AS \"users_name\", \"users\".\"email\" AS \"users_email\", \"users\".\"password\" AS \"users_password\", \"users\".\"role_id\" AS \"users_role_id\", \"users\".\"updated_at\" AS \"users_updated_at\" FROM \"users\" WHERE (\"id\" = 1) ORDER BY users.id ASC LIMIT 1
+
+  0.002203 seconds (1.23 k allocations: 52.641 KB)
+
+2016-12-22T18:40:03.266 - info: SQL QUERY: SELECT \"roles\".\"id\" AS \"roles_id\", \"roles\".\"name\" AS \"roles_name\" FROM \"roles\" WHERE (roles.id = 2) LIMIT 1
+
+  0.000708 seconds (13 allocations: 432 bytes)
+
+App.User
++============+==================================================================+
+|        key |                                                            value |
++============+==================================================================+
+|      email |                                                genie@example.com |
++------------+------------------------------------------------------------------+
+|         id |                                               Nullable{Int32}(1) |
++------------+------------------------------------------------------------------+
+|       name |                                                  Adrian Salceanu |
++------------+------------------------------------------------------------------+
+|   password | 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08 |
++------------+------------------------------------------------------------------+
+|    role_id |                                               Nullable{Int32}(2) |
++------------+------------------------------------------------------------------+
+| updated_at |                                              2016-08-25T20:05:24 |
++------------+------------------------------------------------------------------+
+
+
+julia> SearchLight.relationship(u, Role, :belongs_to)
+Nullable{SearchLight.SQLRelation{T<:SearchLight.AbstractModel}}(
+SearchLight.SQLRelation{App.Role}
++============+================================================================================+
+|        key |                                                                          value |
++============+================================================================================+
+|            | Nullable{Union{Array{SearchLight.AbstractModel,1},SearchLight.AbstractModel}}( |
+|            |                                                                       App.Role |
+|       data |                                                                +======+====... |
++------------+--------------------------------------------------------------------------------+
+|  eagerness |                                                                           auto |
++------------+--------------------------------------------------------------------------------+
+|       join |                  Nullable{SearchLight.SQLJoin{T<:SearchLight.AbstractModel}}() |
++------------+--------------------------------------------------------------------------------+
+| model_name |                                                                       App.Role |
++------------+--------------------------------------------------------------------------------+
+|   required |                                                                          false |
++------------+--------------------------------------------------------------------------------+
+)
+```
+"""
+function relationship{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol) :: Nullable{SQLRelation}
   nullable_defined_rels::Nullable{Vector{SQLRelation}} = getfield(m, relationship_type)
   if ! isnull(nullable_defined_rels)
-    defined_rels::Vector{SQLRelation} = Base.get(nullable_defined_rels)
+    defined_rels::Vector{SQLRelation{R}} = Base.get(nullable_defined_rels)
 
-    for rel::SQLRelation in defined_rels
+    for rel::SQLRelation{R} in defined_rels
       if rel.model_name == model_name || split(string(rel.model_name), ".")[end] == string(model_name)
         return Nullable{SQLRelation}(rel)
       else
         Logger.log("Must check this: $(rel.model_name) == $(model_name) at $(@__FILE__) $(@__LINE__)", :debug)
+        Logger.@location()
       end
     end
   end
@@ -1517,8 +2060,57 @@ function relationship{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type
   Nullable{SQLRelation}()
 end
 
-function relationship_data{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol)
-  rel = relationship(m, model_name, relationship_type) |> Base.get
+
+"""
+    relationship_data{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol) :: Nullable{Union{RelationshipData, RelationshipDataArray}}
+
+Retrieves the data (model object or vector of model objects) associated by the relationship.
+
+# Examples
+```julia
+julia> u = SearchLight.find_one!!(User, 1)
+
+2016-12-22T19:01:24.483 - info: SQL QUERY: SELECT \"users\".\"id\" AS \"users_id\", \"users\".\"name\" AS \"users_name\", \"users\".\"email\" AS \"users_email\", \"users\".\"password\" AS \"users_password\", \"users\".\"role_id\" AS \"users_role_id\", \"users\".\"updated_at\" AS \"users_updated_at\" FROM \"users\" WHERE (\"id\" = 1) ORDER BY users.id ASC LIMIT 1
+
+  0.002004 seconds (1.23 k allocations: 52.641 KB)
+
+2016-12-22T19:01:28.214 - info: SQL QUERY: SELECT \"roles\".\"id\" AS \"roles_id\", \"roles\".\"name\" AS \"roles_name\" FROM \"roles\" WHERE (roles.id = 2) LIMIT 1
+
+  0.000760 seconds (13 allocations: 432 bytes)
+
+App.User
++============+==================================================================+
+|        key |                                                            value |
++============+==================================================================+
+|      email |                                                 e@essenciary.com |
++------------+------------------------------------------------------------------+
+|         id |                                               Nullable{Int32}(1) |
++------------+------------------------------------------------------------------+
+|       name |                                                  Adrian Salceanu |
++------------+------------------------------------------------------------------+
+|   password | 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08 |
++------------+------------------------------------------------------------------+
+|    role_id |                                               Nullable{Int32}(2) |
++------------+------------------------------------------------------------------+
+| updated_at |                                              2016-08-25T20:05:24 |
++------------+------------------------------------------------------------------+
+
+
+julia> SearchLight.relationship_data(u, Role, SearchLight.RELATIONSHIP_BELONGS_TO)
+Nullable{Union{Array{SearchLight.AbstractModel,1},SearchLight.AbstractModel}}(
+App.Role
++======+====================+
+|  key |              value |
++======+====================+
+|   id | Nullable{Int32}(2) |
++------+--------------------+
+| name |              admin |
++------+--------------------+
+)
+```
+"""
+function relationship_data{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol) :: Nullable{Union{RelationshipData,RelationshipDataArray}}
+  rel::SQLRelation{R} = relationship(m, model_name, relationship_type) |> Base.get
   if isnull(rel.data)
     rel.data = get_relationship_data(m, rel, relationship_type)
   end
@@ -1526,11 +2118,63 @@ function relationship_data{T<:AbstractModel, R<:AbstractModel}(m::T, model_name:
   rel.data
 end
 
-function relationship_data!!{T<:AbstractModel, R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol)
-  Base.get( relationship_data(m, model_name, relationship_type) )::Union{RelationshipData, RelationshipDataArray}
-end
 
-function get_relationship_data{T<:AbstractModel}(m::T, rel::SQLRelation, relationship_type::Symbol)
+"""
+    relationship_data!!{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol) :: Union{RelationshipData,RelationshipDataArray}
+
+Retrieves the data (model object or vector of model objects) associated by the relationship. Similar to `relationship_data` except if the data is null, throws error.
+
+# Examples
+```julia
+julia> u = SearchLight.find_one!!(User, 1)
+
+2016-12-22T19:01:24.483 - info: SQL QUERY: SELECT \"users\".\"id\" AS \"users_id\", \"users\".\"name\" AS \"users_name\", \"users\".\"email\" AS \"users_email\", \"users\".\"password\" AS \"users_password\", \"users\".\"role_id\" AS \"users_role_id\", \"users\".\"updated_at\" AS \"users_updated_at\" FROM \"users\" WHERE (\"id\" = 1) ORDER BY users.id ASC LIMIT 1
+
+  0.002004 seconds (1.23 k allocations: 52.641 KB)
+
+2016-12-22T19:01:28.214 - info: SQL QUERY: SELECT \"roles\".\"id\" AS \"roles_id\", \"roles\".\"name\" AS \"roles_name\" FROM \"roles\" WHERE (roles.id = 2) LIMIT 1
+
+  0.000760 seconds (13 allocations: 432 bytes)
+
+App.User
++============+==================================================================+
+|        key |                                                            value |
++============+==================================================================+
+|      email |                                                genie@example.com |
++------------+------------------------------------------------------------------+
+|         id |                                               Nullable{Int32}(1) |
++------------+------------------------------------------------------------------+
+|       name |                                                  Adrian Salceanu |
++------------+------------------------------------------------------------------+
+|   password | 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08 |
++------------+------------------------------------------------------------------+
+|    role_id |                                               Nullable{Int32}(2) |
++------------+------------------------------------------------------------------+
+| updated_at |                                              2016-08-25T20:05:24 |
++------------+------------------------------------------------------------------+
+
+julia> SearchLight.relationship_data!!(u, Role, SearchLight.RELATIONSHIP_BELONGS_TO)
+
+App.Role
++======+====================+
+|  key |              value |
++======+====================+
+|   id | Nullable{Int32}(2) |
++------+--------------------+
+| name |              admin |
++------+--------------------+
+```
+"""
+function relationship_data!!{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol) :: Union{RelationshipData,RelationshipDataArray}
+  Base.get( relationship_data(m, model_name, relationship_type) ) :: Union{RelationshipData,RelationshipDataArray}
+end
+# TODO this is type unstable
+
+
+"""
+
+"""
+function get_relationship_data{T<:AbstractModel}(m::T, rel::SQLRelation, relationship_type::Symbol) :: Nullable{Union{RelationshipData,RelationshipDataArray}}
   conditions = SQLWhere[]
   limit = if relationship_type == RELATIONSHIP_HAS_ONE || relationship_type == RELATIONSHIP_BELONGS_TO
             1
@@ -1625,6 +2269,7 @@ end
 function to_fetch_sql{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
   Database.to_fetch_sql(m, q)
 end
+const to_find_sql = to_fetch_sql
 
 function to_store_sql{T<:AbstractModel}(m::T; conflict_strategy = :error) # upsert strateygy = :none | :error | :ignore | :update
   Database.to_store_sql(m, conflict_strategy = conflict_strategy)
@@ -1843,7 +2488,7 @@ function to_fully_qualified_sql_column_name{T<:AbstractModel}(m::T, f::String; e
   end
 end
 
-function from_literal_column_name(c::String)
+function from_literal_column_name(c::String) :: Dict{Symbol,String}
   result = Dict{Symbol,String}()
   result[:original_string] = c
 

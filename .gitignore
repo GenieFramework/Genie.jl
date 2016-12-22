@@ -34,6 +34,7 @@ Thumbs.db
 *.sublime-workspace
 .vscode
 .tags*
+.tags
 
 # NPM packages folder.
 node_modules/

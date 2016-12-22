@@ -157,8 +157,6 @@ show{T<:SQLWhere}(io::IO, w::T) = print(io, Genie.genietype_to_print(w))
 
 convert(::Type{Vector{SQLWhere}}, w::SQLWhere) = [w]
 
-const SQLHaving = SQLWhere
-
 #
 # SQLWhereExpression
 #
@@ -248,6 +246,7 @@ function string(we::SQLWhereExpression)
 end
 
 typealias SQLWhereEntity Union{SQLWhere,SQLWhereExpression}
+typealias SQLHaving Union{SQLWhere,SQLWhereExpression}
 
 
 #
@@ -368,15 +367,15 @@ SQLJoin{T<:AbstractModel}(model_name::Type{T},
                           columns = SQLColumns[]
                           ) = SQLJoin{T}(model_name, on, join_type, outer, where, natural, columns)
 function string(j::SQLJoin)
-  _m = disposable_instance(j.model_name)
-  join = """ $(j.natural ? "NATURAL " : "") $(j.join_type) $(j.outer ? "OUTER " : "") JOIN $(Util.add_quotes(_m._table_name)) $(j.on) """
-  join *= if ! isempty(j.where)
-            j.where *= " WHERE " * join(map(x -> string(x), j.where), " AND ")
-          else
-            ""
-          end
+  _m = j.model_name()
+  sql = """ $(j.natural ? "NATURAL " : "") $(string(j.join_type)) $(j.outer ? "OUTER " : "") JOIN $(Util.add_quotes(_m._table_name)) $(string(j.on)) """
+  sql *=  if ! isempty(j.where)
+          SearchLight.to_where_part(j.where)
+        else
+          ""
+        end
 
-  join
+  sql
 end
 
 convert(::Type{Vector{SQLJoin}}, j::SQLJoin) = [j]
@@ -450,7 +449,7 @@ string{T<:AbstractModel}(q::SQLQuery, m::Type{T}) = to_fetch_sql(m, q)
 # SQLRelation
 #
 
-immutable SQLRelation{T<:AbstractModel} <: SQLType
+type SQLRelation{T<:AbstractModel} <: SQLType
   model_name::Type{T}
   required::Bool
   eagerness::Symbol
