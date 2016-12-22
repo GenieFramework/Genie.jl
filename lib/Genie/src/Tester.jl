@@ -1,11 +1,7 @@
 module Tester
+using Genie, App, Util, Migration, Configuration, Logger
 
-using Genie
-using Util
-using Migration
-using Configuration
-
-function bootstrap_tests(cmd_args::AbstractString, config::Genie.Config)
+function bootstrap_tests(cmd_args::AbstractString, config::Settings)
   set_test_env()
 
   include(abspath(joinpath(config.test_folder, "test_config.jl")))
@@ -22,7 +18,7 @@ function reset_db()
   Migration.all_up()
 end
 
-function run_all_tests(cmd_args::AbstractString, config::Genie.Config)
+function run_all_tests(cmd_args::AbstractString, config::Settings)
   bootstrap_tests(cmd_args, config)
 end
 

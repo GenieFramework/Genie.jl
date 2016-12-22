@@ -1,5 +1,5 @@
 export @dependencies
 
 macro dependencies()
-  :(using Genie, Model, Helpers, ControllerHelper, Renderer, Ejl, Cache, Router)
+  :(using Genie, SearchLight, Helpers, ControllerHelper, Renderer, Ejl, Cache, Router, Util)
 end

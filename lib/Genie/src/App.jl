@@ -1,7 +1,8 @@
 module App
-using Genie, Model, Validation, YAML
+using Genie, SearchLight, YAML
+using Validation
 
-function load_models(dir = abspath(joinpath(Genie.APP_PATH, "app", "resources")))
+function load_models(dir = Genie.RESOURCE_PATH)
   dir_contents = readdir(abspath(dir))
 
   for i in dir_contents
@@ -10,7 +11,7 @@ function load_models(dir = abspath(joinpath(Genie.APP_PATH, "app", "resources"))
       load_models(full_path)
     else
       if i == Genie.GENIE_MODEL_FILE_NAME
-        eval(App, parse("""include("$full_path")"""))
+        eval(App, :(include($full_path)))
         isfile(joinpath(dir, Genie.GENIE_VALIDATOR_FILE_NAME)) && eval(Validation, :(include(joinpath($dir, $(Genie.GENIE_VALIDATOR_FILE_NAME)))))
       end
     end
@@ -29,17 +30,17 @@ function export_controllers(controllers::AbstractString)
 end
 
 function load_acl(dir::AbstractString)
-  file_path = joinpath(dir, Genie.GENIE_AUTHORIZATION_FILE_NAME)
+  file_path = joinpath(dir, Genie.GENIE_AUTHORIZATOR_FILE_NAME)
   isfile(file_path) ? YAML.load(open(file_path)) : Dict{Any,Any}
 end
 
 function load_configurations()
-  include(abspath("config/loggers.jl"))
-  isfile(abspath("config/secrets.jl")) && include(abspath("config/secrets.jl"))
+  isfile(abspath("$(Genie.CONFIG_PATH)/loggers.jl")) && include(abspath("$(Genie.CONFIG_PATH)/loggers.jl"))
+  isfile(abspath("$(Genie.CONFIG_PATH)/secrets.jl")) && include(abspath("$(Genie.CONFIG_PATH)/secrets.jl"))
 end
 
 function load_initializers()
-  dir = abspath(joinpath(Genie.APP_PATH, "config", "initializers"))
+  dir = abspath(joinpath(Genie.CONFIG_PATH, "initializers"))
 
   if isdir(dir)
     f = readdir(dir)

@@ -1,10 +1,10 @@
 module Router
-using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions, Millboard, Configuration, App, Input, Logger
+using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions, Millboard, Configuration, App, Input, Logger, Util
 import HttpServer.mimetypes
 
 include(abspath(joinpath("lib", "Genie", "src", "router_converters.jl")))
 
-export route, routes, params
+export route, routes
 export GET, POST, PUT, PATCH, DELETE
 export to_link!!, to_link
 
@@ -18,6 +18,10 @@ const BEFORE_ACTION_HOOKS = :before_action
 
 const _routes = Dict{Symbol,Any}()
 const _params = Dict{Symbol,Any}()
+
+function params()
+  _params
+end
 
 function route_request(req::Request, res::Response)
   empty!(_params)
@@ -86,8 +90,9 @@ function print_routes()
   Millboard.table(routes())
 end
 
-function to_link!!{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Symbol,T}())
-  route = get_route!!(route_name)
+function to_link!!{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Symbol,T}(); with_error = true)
+  route = (with_error ? get_route!! : get_route)(route_name) |> Util.expand_nullable
+
   result = AbstractString[]
   for part in split(route[1][2], "/")
     if startswith(part, ":")
@@ -103,7 +108,7 @@ function to_link!!{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Sy
 end
 function to_link{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Symbol,T}())
   try
-    to_link!!(route_name, route_params)
+    to_link!!(route_name, route_params, with_error = false)
   catch ex
     Logger.log(ex, :err, showst = false)
     ""
@@ -124,7 +129,7 @@ function to_link(route_name::Symbol; route_params...)
   end
 
   try
-    to_link!!(route_name, d)
+    to_link!!(route_name, d, with_error = false)
   catch ex
     Logger.log(ex, :err, showst = false)
     ""
@@ -160,9 +165,9 @@ function match_routes(req::Request, res::Response, session::Sessions.Session)
 end
 
 function parse_route(route::AbstractString)
-  parts = Array{AbstractString,1}()
-  param_names = Array{AbstractString,1}()
-  param_types = Array{Any,1}()
+  parts = AbstractString[]
+  param_names = AbstractString[]
+  param_types = Any[]
 
   for rp in split(route, "/", keep = false)
     if startswith(rp, ":")
@@ -184,8 +189,7 @@ function parse_route(route::AbstractString)
   "/" * join(parts, "/"), param_names, param_types
 end
 
-function extract_uri_params(uri::URI, regex_route::Regex, param_names::Array{AbstractString,1}, param_types::Array{Any,1})
-  # in path params
+function extract_uri_params(uri::URI, regex_route::Regex, param_names::Vector{AbstractString}, param_types::Vector{Any})
   matches = match(regex_route, uri.path)
   i = 1
   for param_name in param_names
@@ -261,7 +265,7 @@ function setup_params!( params::Dict{Symbol,Any}, to_parts::Vector{AbstractStrin
   params[Genie.PARAMS_FLASH_KEY]     = begin
                                       s = Sessions.get(session, Genie.PARAMS_FLASH_KEY)
                                       if isnull(s)
-                                        ""::AbstractString
+                                        ""::String
                                       else
                                         ss = Base.get(s)
                                         Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
@@ -279,7 +283,7 @@ const loaded_controllers = UInt64[]
 function invoke_controller(to::AbstractString, req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session)
   to_parts::Vector{AbstractString} = split(to, "#")
 
-  controller_path = abspath(joinpath(Genie.APP_PATH, "app", "resources", to_parts[1]))
+  controller_path = abspath(joinpath(Genie.RESOURCE_PATH, to_parts[1]))
   controller_path_hash = hash(controller_path)
   if ! in(controller_path_hash, loaded_controllers) || Configuration.is_dev()
     App.load_controller(controller_path)
@@ -300,9 +304,8 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
   catch ex
     Logger.log("Failed to invoke hooks $(BEFORE_ACTION_HOOKS)", :err, showst = false)
     Logger.log(ex, :err, showst = false)
-    # show_stacktrace(catch_stacktrace())
 
-    return serve_error_file(500, string(ex) * "<br/><br/>" * join(catch_stacktrace(), "<br/>"))
+    return serve_error_file_500(ex)
   end
 
   return  try
@@ -310,9 +313,9 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
           catch ex
             Logger.log("$ex at $(@__FILE__):$(@__LINE__)", :critical, showst = false)
             Logger.log("While invoking $(action_name) with $(params)", :critical, showst = false)
-            # show_stacktrace(catch_stacktrace())
+            stacktrace()
 
-            serve_error_file(500, string(ex) * "<br/><br/>" * join(catch_stacktrace(), "<br/>"))
+            serve_error_file_500(ex)
           end
 end
 
@@ -329,8 +332,18 @@ function to_response(action_result)
             Logger.log("Can't convert $action_result to HttpServer Response", :err)
             Logger.log(ex, :err)
 
-            serve_error_file(500, string(ex) * "<br/><br/>" * join(catch_stacktrace(), "<br/>"))
+            serve_error_file_500(ex)
           end
+end
+
+function serve_error_file_500(ex::Exception)
+  serve_error_file( 500,
+                    string(ex) *
+                    "<br/><br/>" *
+                    join(catch_stacktrace(), "<br/>") *
+                    "<hr/>" *
+                    string(params())
+                  )
 end
 
 function hook_stop(hook_result)

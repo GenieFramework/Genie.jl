@@ -1,0 +1,3 @@
+<h1>$(article.title)</h1>
+<p class="subtitle">$(article.summary)</p>
+<p>$(article.content |> Markdown.parse |> Markdown.html)</p>

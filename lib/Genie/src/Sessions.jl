@@ -1,9 +1,6 @@
 module Sessions
-
-using Genie
-using SHA
-using HttpServer
-using Cookies
+using Genie, SHA, HttpServer, Cookies, App
+export Session
 
 const session_adapter_name = string(Genie.config.session_storage) * "SessionAdapter"
 eval(parse("using $session_adapter_name"))
@@ -16,7 +13,12 @@ end
 Session(id::AbstractString) = Session(id, Dict{Symbol,Any}())
 
 function id()
-  Genie.SECRET_TOKEN * ":" * bytes2hex(sha1(string(Dates.now()))) * ":" * string(rand()) * ":" * string(hash(Genie)) |> sha256 |> bytes2hex
+  try
+    App.SECRET_TOKEN * ":" * bytes2hex(sha1(string(Dates.now()))) * ":" * string(rand()) * ":" * string(hash(Genie)) |> sha256 |> bytes2hex
+  catch ex
+    # Genie.log(ex, :err)
+    error("Can't compute session id - please make sure SECRET_TOKEN is defined in config/secrets.jl")
+  end
 end
 function id(req::Request, res::Response)
   ! isnull(Cookies.get(res, Genie.config.session_key_name)) && return Base.get(Cookies.get(res, Genie.config.session_key_name))

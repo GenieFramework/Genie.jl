@@ -1,0 +1,14 @@
+writer:
+  create:
+  edit: own
+  delete: own
+  list: own
+editor:
+  edit:
+  list:
+admin:
+  create:
+  edit:
+  delete:
+  list_articles:
+    - top_two

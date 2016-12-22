@@ -1,0 +1,5 @@
+<div class="home-page-posts animated fadeIn ">
+  <% for a in articles :>
+    %+ app/resources/articles/views/item -> (:a => a)
+  <: end %>
+</div>

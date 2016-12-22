@@ -1,6 +1,6 @@
 module Helpers
 
-using Genie, Sessions, Router
+using Genie, Sessions, Router, URIParser
 
 export session, request, response, flash, number_of_pages, paginated_uri
 

@@ -7,7 +7,7 @@ type DbMigration # todo: rename the "migration_" prefix for the fields
   migration_class_name::AbstractString
 end
 
-function new(cmd_args::Dict{AbstractString,Any}, config::Configuration.Config)
+function new(cmd_args::Dict{AbstractString,Any}, config::Configuration.Settings)
   mfn = migration_file_name(cmd_args, config)
 
   if ispath(mfn)
@@ -26,7 +26,7 @@ function migration_hash()
   return join(m.captures)
 end
 
-function migration_file_name(cmd_args::Dict{AbstractString,Any}, config::Configuration.Config)
+function migration_file_name(cmd_args::Dict{AbstractString,Any}, config::Configuration.Settings)
   return joinpath(config.db_migrations_folder, migration_hash() * "_" * cmd_args["migration:new"] * ".jl")
 end
 
@@ -100,12 +100,16 @@ function run_migration(migration::DbMigration, direction::Symbol; force = false)
     end
   end
 
-  include(abspath(joinpath(Genie.config.db_migrations_folder, migration.migration_file_name)))
-  eval(parse("$(current_module()).$(string(direction))($(current_module()).$(migration.migration_class_name)())"))
+  try
+    m = include(abspath(joinpath(Genie.config.db_migrations_folder, migration.migration_file_name)))
+    getfield(m, direction)()
 
-  store_migration_status(migration, direction)
+    store_migration_status(migration, direction)
 
-  ! Genie.config.suppress_output && Logger.log("Executed migration $(migration.migration_class_name) $(direction)")
+    ! Genie.config.suppress_output && Logger.log("Executed migration $(migration.migration_class_name) $(direction)")
+  catch ex
+    Logger.log(ex, :err)
+  end
 end
 
 function store_migration_status(migration::DbMigration, direction::Symbol)

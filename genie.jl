@@ -1,20 +1,35 @@
-#!/usr/bin/env julia --color=yes
-dirname(@__FILE__) |> cd
-include(abspath(joinpath("lib", "Genie", "src", "branding.jl")))
+#!/usr/bin/env julia --color=yes --depwarn=no --math-mode=fast
 
-isfile("env.jl") && include("env.jl")
-! haskey(ENV, "GENIE_ENV") && (ENV["GENIE_ENV"] = "dev")
-in("s", ARGS) && ! haskey(ENV, "NWORKERS") ? ENV["NWORKERS"] = 4 : ( haskey(ENV, "NWORKERS") ? ENV["NWORKERS"] : ENV["NWORKERS"] = 1 )
-print_with_color(:green, "\nStarting Genie in >> $(ENV["GENIE_ENV"] |> uppercase) << mode using $(ENV["NWORKERS"]) worker(s) \n\n")
+"""
+    bootstrap_genie() :: Void
 
-nworkers() < parse(Int, ENV["NWORKERS"]) && addprocs(parse(Int, ENV["NWORKERS"]) - nworkers())
-@everywhere push!(LOAD_PATH, abspath(joinpath("lib", "Genie", "src")), abspath(pwd()))
+Bootstraps the Genie framework setting up paths and workers. Invoked automatically.
+"""
+function bootstrap_genie() :: Void
+  dirname(@__FILE__) |> cd
+  include(abspath(joinpath("lib", "Genie", "src", "branding.jl")))
+
+  const DEFAULT_NWORKERS_REPL = 1
+  const DEFAULT_NWORKERS_SERVER = 4
+
+  isfile("env.jl") && include("env.jl")
+  ! haskey(ENV, "GENIE_ENV") && (ENV["GENIE_ENV"] = "dev")
+  in("s", ARGS) && ! haskey(ENV, "NWORKERS") ? ENV["NWORKERS"] = DEFAULT_NWORKERS_SERVER : ( haskey(ENV, "NWORKERS") ? ENV["NWORKERS"] : ENV["NWORKERS"] = DEFAULT_NWORKERS_REPL )
+  print_with_color(:green, "\nStarting Genie in >> $(ENV["GENIE_ENV"] |> uppercase) << mode using $(ENV["NWORKERS"]) worker(s) \n\n")
+
+  nworkers() < parse(Int, ENV["NWORKERS"]) && addprocs(parse(Int, ENV["NWORKERS"]) - nworkers())
+
+  @everywhere push!(LOAD_PATH,  abspath(joinpath("lib", "Genie", "src")),
+                                abspath(joinpath("lib", "SearchLight", "src")),
+                                abspath(joinpath("lib", "Ejl", "src")),
+                                abspath(pwd()))
+end
+
+@everywhere bootstrap_genie()
 
 @everywhere import Genie
-using Genie
+using Genie, App, SearchLight
 
 try
-  eval(Main, :(using Genie, Model, App))
-catch ex
-  print_with_color(:red, "Can't load modules Genie and Model into Main")
+  using OhMyREPL
 end

@@ -1,0 +1,36 @@
+<section class="section">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-block">
+          <h3>Categories</h3>
+          <div class="card-title-block">
+            <div class="pull-right">
+              <a class="btn btn-success btn-sm" id="new_category" href="$( to_link(:admin_category_new) )">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                New
+              </a>
+            </div>
+          </div>
+          <section class="example">
+            <table class="table table-hover" id="articles_list">
+              <tbody>
+                <% for c in categories :>
+                <tr>
+                  <td scope="row" style="width: 80%">
+                    $(c.name)
+                  </td>
+                  <td class="actions-cell text-right pull-right">
+                    <a href="$( to_link(:admin_category_edit, category_id = _!!(c.id) ) )" class="btn btn-primary btn-sm">Edit</a>
+                    <a href="$( to_link(:admin_category_delete, category_id = _!!(c.id) ) )" class="btn btn-primary btn-sm">Delete</a>
+                  </td>
+                </tr>
+                <: end %>
+               </tbody>
+             </table>
+           </section>
+         </div>
+       </div>
+     </div>
+   </div>
+ </section>

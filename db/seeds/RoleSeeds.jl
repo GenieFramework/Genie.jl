@@ -1,12 +1,12 @@
 module RoleSeeds
-using Genie, Model
+using Genie, SearchLight
 
 function default_roles()
   for i in [:user, :admin, :editor, :blogger]
     role = Role()
     role.name = i
 
-    Model.save!!(role)
+    SearchLight.save!!(role)
   end
 end
 

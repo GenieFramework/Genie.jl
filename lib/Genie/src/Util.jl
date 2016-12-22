@@ -49,8 +49,11 @@ function _!_(value::Any)
 end
 
 function file_name_to_type_name(file_name)
-  file_name_without_extension = replace(file_name, r"\.jl$", "")
-  return join(map(x -> ucfirst(x), split(file_name_without_extension, "_")) , "")
+  return join(map(x -> ucfirst(x), split(file_name_without_extension(file_name), "_")) , "")
+end
+
+function file_name_without_extension(file_name, extension = ".jl")
+  file_name[1:end-length(extension)]
 end
 
 function walk_dir(dir; monitored_extensions = ["jl"])

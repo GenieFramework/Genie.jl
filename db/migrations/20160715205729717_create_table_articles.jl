@@ -1,10 +1,7 @@
-using Genie
+module CreateTableArticles
 using Database
 
-type CreateTableArticles
-end
-
-function up(::CreateTableArticles)
+function up()
   Database.query("""CREATE SEQUENCE articles__seq_id""")
   Database.query("""
     CREATE TABLE IF NOT EXISTS articles (
@@ -13,12 +10,14 @@ function up(::CreateTableArticles)
       summary       text NOT NULL,
       content       text NOT NULL,
       updated_at    timestamp DEFAULT current_timestamp,
-      CONSTRAINT articles__idx_name UNIQUE(title)
+      CONSTRAINT articles__idx_title UNIQUE(title)
     )
   """)
   Database.query("""ALTER SEQUENCE articles__seq_id OWNED BY articles.id""")
 end
 
-function down(::CreateTableArticles)
+function down()
   Database.query("DROP TABLE articles")
+end
+
 end
