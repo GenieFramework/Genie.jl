@@ -8,17 +8,17 @@ using Database, DataFrames, DataStructures, DateParser, Util, Reexport, Configur
 
 @reexport using Validation
 
-export RELATIONSHIP_HAS_ONE, RELATIONSHIP_BELONGS_TO, RELATIONSHIP_HAS_MANY
+export RELATION_HAS_ONE, RELATION_BELONGS_TO, RELATION_HAS_MANY
 export disposable_instance, to_fully_qualified_sql_column_names, persistable_fields, escape_column_name, is_fully_qualified, to_fully_qualified
-export relationships, has_relationship, find_df, is_persisted, prepare_for_db_save
+export relations, has_relation, find_df, is_persisted, prepare_for_db_save
 
-const RELATIONSHIP_HAS_ONE = :has_one
-const RELATIONSHIP_BELONGS_TO = :belongs_to
-const RELATIONSHIP_HAS_MANY = :has_many
+const RELATION_HAS_ONE = :has_one
+const RELATION_BELONGS_TO = :belongs_to
+const RELATION_HAS_MANY = :has_many
 
 # internals
 
-direct_relationships() = [RELATIONSHIP_HAS_ONE, RELATIONSHIP_BELONGS_TO, RELATIONSHIP_HAS_MANY]
+direct_relations() = [RELATION_HAS_ONE, RELATION_BELONGS_TO, RELATION_HAS_MANY]
 
 
 #
@@ -1279,18 +1279,18 @@ function to_models{T<:AbstractModel}(m::Type{T}, df::DataFrame) :: Vector{T}
       main_model = models[ getfield(main_model, Symbol(__m._id)) |> Base.get ]
     end
 
-    for relationship in relationships(m)
-      r::SQLRelation, r_type::Symbol = relationship
+    for relation in relations(m)
+      r::SQLRelation, r_type::Symbol = relation
 
       is_lazy(r) && continue
 
       related_model = r.model_name
       related_model_df::DataFrame = dfs[ related_model()._table_name ][row_count, :]
 
-      if r_type == RELATIONSHIP_HAS_ONE || r_type == RELATIONSHIP_BELONGS_TO
-        r = set_relationship_data(r, related_model, related_model_df)
-      elseif r_type == RELATIONSHIP_HAS_MANY
-        r = set_relationship_data_array(r, related_model, related_model_df)
+      if r_type == RELATION_HAS_ONE || r_type == RELATION_BELONGS_TO
+        r = set_relation_data(r, related_model, related_model_df)
+      elseif r_type == RELATION_HAS_MANY
+        r = set_relation_data_array(r, related_model, related_model_df)
       end
 
       model_rels::Vector{SQLRelation} = getfield(main_model, r_type)
@@ -1309,11 +1309,11 @@ end
 
 
 """
-    set_relationship_data{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame) :: SQLRelation
+    set_relation_data{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame) :: SQLRelation
 
-Sets model's relationship data (one to one). Automatically invoked if the relationship is eager.
+Sets model's relation data (one to one). Automatically invoked if the relation is eager.
 """
-function set_relationship_data{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame) :: SQLRelation
+function set_relation_data{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame) :: SQLRelation
   r.data = Nullable( to_model(related_model, related_model_df) )
 
   r
@@ -1321,11 +1321,11 @@ end
 
 
 """
-    set_relationship_data_array{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame) :: SQLRelation
+    set_relation_data_array{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame) :: SQLRelation
 
-Sets relationship data for one to many relationships.
+Sets relation data for one to many relations.
 """
-function set_relationship_data_array{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame) :: SQLRelation
+function set_relation_data_array{T<:AbstractModel}(r::SQLRelation, related_model::Type{T}, related_model_df::DataFrames.DataFrame) :: SQLRelation
   data =  if isnull(r.data)
             RelationshipDataArray()
           else
@@ -1921,13 +1921,13 @@ end
 
 
 """
-    relationships{T<:AbstractModel}(m::Type{T}) :: Vector{Tuple{SQLRelation,Symbol}}
+    relations{T<:AbstractModel}(m::Type{T}) :: Vector{Tuple{SQLRelation,Symbol}}
 
-Returns the vector of relationships for the given model type.
+Returns the vector of relations for the given model type.
 
 # Examples
 ```julia
-julia> SearchLight.relationships(User)
+julia> SearchLight.relations(User)
 1-element Array{Tuple{SearchLight.SQLRelation,Symbol},1}:
  (
 SearchLight.SQLRelation{App.Role}
@@ -1947,16 +1947,16 @@ SearchLight.SQLRelation{App.Role}
 ,:belongs_to)
 ```
 """
-function relationships{T<:AbstractModel}(m::Type{T}) :: Vector{Tuple{SQLRelation,Symbol}}
+function relations{T<:AbstractModel}(m::Type{T}) :: Vector{Tuple{SQLRelation,Symbol}}
   _m::T = m()
 
   rls = Tuple{SQLRelation,Symbol}[]
 
-  for r in direct_relationships()
+  for r in direct_relations()
     if has_field(_m, r)
-      relationship = getfield(_m, r)
-      if ! isempty(relationship)
-        for rel in relationship
+      relation = getfield(_m, r)
+      if ! isempty(relation)
+        for rel in relation
           push!(rls, (rel, r))
         end
       end
@@ -1968,9 +1968,9 @@ end
 
 
 """
-    relationship{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol) :: Nullable{SQLRelation{R}}
+    relation{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relation_type::Symbol) :: Nullable{SQLRelation{R}}
 
-Gets the relationship instance of `relationship_type` for the model instance `m` and `model_name`.
+Gets the relation instance of `relation_type` for the model instance `m` and `model_name`.
 
 # Examples
 ```julia
@@ -2002,7 +2002,7 @@ App.User
 +------------+------------------------------------------------------------------+
 
 
-julia> SearchLight.relationships(User)
+julia> SearchLight.relations(User)
 1-element Array{Tuple{SearchLight.SQLRelation,Symbol},1}:
  (
 SearchLight.SQLRelation{App.Role}
@@ -2021,7 +2021,7 @@ SearchLight.SQLRelation{App.Role}
 +------------+-----------------------------------------------------------------------+
 ,:belongs_to)
 
-julia> SearchLight.relationship(u, Role, :belongs_to)
+julia> SearchLight.relation(u, Role, :belongs_to)
 Nullable{SearchLight.SQLRelation{App.Role}}(
 SearchLight.SQLRelation{App.Role}
 +============+======================================================================+
@@ -2041,8 +2041,8 @@ SearchLight.SQLRelation{App.Role}
 )
 ```
 """
-function relationship{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol) :: Nullable{SQLRelation{R}}
-  nullable_defined_rels::Nullable{Vector{SQLRelation}} = getfield(m, relationship_type)
+function relation{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relation_type::Symbol) :: Nullable{SQLRelation{R}}
+  nullable_defined_rels::Nullable{Vector{SQLRelation}} = getfield(m, relation_type)
   if ! isnull(nullable_defined_rels)
     defined_rels::Vector{SQLRelation{R}} = Base.get(nullable_defined_rels)
 
@@ -2061,9 +2061,9 @@ end
 
 
 """
-    relationship_data{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol) :: Nullable{SQLRelationData{R}}
+    relation_data{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relation_type::Symbol) :: Nullable{SQLRelationData{R}}
 
-Retrieves the data (model object or vector of model objects) associated by the relationship.
+Retrieves the data (model object or vector of model objects) associated by the relation.
 
 # Examples
 ```julia
@@ -2095,7 +2095,7 @@ App.User
 +------------+------------------------------------------------------------------+
 
 
-julia> SearchLight.relationship_data(u, Role, :belongs_to)
+julia> SearchLight.relation_data(u, Role, :belongs_to)
 Nullable{SearchLight.SQLRelationData{App.Role}}(
 SearchLight.SQLRelationData{App.Role}
 +============+===============================+
@@ -2110,10 +2110,10 @@ SearchLight.SQLRelationData{App.Role}
 )
 ```
 """
-function relationship_data{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol) :: Nullable{SQLRelationData{R}}
-  rel::SQLRelation{R} = relationship(m, model_name, relationship_type) |> Base.get
+function relation_data{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relation_type::Symbol) :: Nullable{SQLRelationData{R}}
+  rel::SQLRelation{R} = relation(m, model_name, relation_type) |> Base.get
   if isnull(rel.data)
-    rel.data = get_relationship_data(m, rel, relationship_type)
+    rel.data = get_relation_data(m, rel, relation_type)
   end
 
   rel.data
@@ -2121,9 +2121,9 @@ end
 
 
 """
-    relationship_data!!{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol) :: SQLRelationData{R}
+    relation_data!!{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relation_type::Symbol) :: SQLRelationData{R}
 
-Retrieves the data (model object or vector of model objects) associated by the relationship. Similar to `relationship_data` except if the data is null, throws error.
+Retrieves the data (model object or vector of model objects) associated by the relation. Similar to `relation_data` except if the data is null, throws error.
 
 # Examples
 ```julia
@@ -2154,7 +2154,7 @@ App.User
 | updated_at |                                              2016-08-25T20:05:24 |
 +------------+------------------------------------------------------------------+
 
-julia> SearchLight.relationship_data!!(u, Role, :belongs_to)
+julia> SearchLight.relation_data!!(u, Role, :belongs_to)
 
 SearchLight.SQLRelationData{App.Role}
 +============+===============================+
@@ -2168,40 +2168,40 @@ SearchLight.SQLRelationData{App.Role}
 +------------+-------------------------------+
 ```
 """
-function relationship_data!!{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol) :: SQLRelationData{R}
-  Base.get( relationship_data(m, model_name, relationship_type) )
+function relation_data!!{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relation_type::Symbol) :: SQLRelationData{R}
+  Base.get( relation_data(m, model_name, relation_type) )
 end
 
 
-function relationship_collection!!{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol) :: Vector{R}
-  relationship_data!!(m, model_name, relationship_type).collection
+function relation_collection!!{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relation_type::Symbol) :: Vector{R}
+  relation_data!!(m, model_name, relation_type).collection
 end
 
-function relationship_object!!{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relationship_type::Symbol; idx = 1) :: R
-  relationship_collection!!(m, model_name, relationship_type)[idx]
+function relation_object!!{T<:AbstractModel,R<:AbstractModel}(m::T, model_name::Type{R}, relation_type::Symbol; idx = 1) :: R
+  relation_collection!!(m, model_name, relation_type)[idx]
 end
 
 
 """
-    get_relationship_data{T<:AbstractModel}{R<:AbstractModel}(m::T, rel::SQLRelation{R}, relationship_type::Symbol) :: Nullable{SQLRelationData{R}}
+    get_relation_data{T<:AbstractModel}{R<:AbstractModel}(m::T, rel::SQLRelation{R}, relation_type::Symbol) :: Nullable{SQLRelationData{R}}
 
-Extracts the data (instantiates the models) associated by the relationship, performing the corresponding SQL queries.
+Extracts the data (instantiates the models) associated by the relation, performing the corresponding SQL queries.
 
 # Examples
 ```julia
 
 ```
 """
-function get_relationship_data{T<:AbstractModel,R<:AbstractModel}(m::T, rel::SQLRelation{R}, relationship_type::Symbol) :: Nullable{SQLRelationData{R}}
+function get_relation_data{T<:AbstractModel,R<:AbstractModel}(m::T, rel::SQLRelation{R}, relation_type::Symbol) :: Nullable{SQLRelationData{R}}
   conditions = SQLWhere[]
-  limit = if relationship_type == RELATIONSHIP_HAS_ONE || relationship_type == RELATIONSHIP_BELONGS_TO
+  limit = if relation_type == RELATION_HAS_ONE || relation_type == RELATION_BELONGS_TO
             1
           else
             "ALL"
           end
-  where = if relationship_type == RELATIONSHIP_HAS_ONE || relationship_type == RELATIONSHIP_HAS_MANY
+  where = if relation_type == RELATION_HAS_ONE || relation_type == RELATION_HAS_MANY
             SQLColumn( ( (lowercase(string(typeof(m))) |> strip_module_name) * "_" * m._id |> escape_column_name), raw = true ), m.id
-          elseif relationship_type == RELATIONSHIP_BELONGS_TO
+          elseif relation_type == RELATION_BELONGS_TO
             _r = (rel.model_name)()
             SQLColumn(to_fully_qualified(_r._id, _r._table_name), raw = true), getfield(m, Symbol((lowercase(string(typeof(_r))) |> strip_module_name) * "_" * _r._id)) |> Base.get
           end
@@ -2210,7 +2210,7 @@ function get_relationship_data{T<:AbstractModel,R<:AbstractModel}(m::T, rel::SQL
 
   isempty(data) && return Nullable{SQLRelationData{R}}()
 
-  if relationship_type == RELATIONSHIP_HAS_ONE || relationship_type == RELATIONSHIP_BELONGS_TO
+  if relation_type == RELATION_HAS_ONE || relation_type == RELATION_BELONGS_TO
     return Nullable(SQLRelationData(first(data)))
   else
     return Nullable(SQLRelationData(data))
@@ -2219,9 +2219,9 @@ function get_relationship_data{T<:AbstractModel,R<:AbstractModel}(m::T, rel::SQL
   Nullable{SQLRelationData{R}}()
 end
 
-function relationships_tables_names{T<:AbstractModel}(m::Type{T})
+function relations_tables_names{T<:AbstractModel}(m::Type{T})
   tables_names = String[]
-  for r in relationships(m)
+  for r in relations(m)
     r, r_type = r
     rmdl = disposable_instance(r.model_name)
     push!(tables_names, rmdl._table_name)
@@ -2270,7 +2270,7 @@ end
 
 function df_result_to_models_data{T<:AbstractModel}(m::Type{T}, df::DataFrame)::Dict{String,DataFrame}
   _m::T = disposable_instance(m)
-  tables_names = vcat(String[_m._table_name], relationships_tables_names(m))
+  tables_names = vcat(String[_m._table_name], relations_tables_names(m))
 
   split_dfs_by_table( tables_names,
                       extract_columns_names(tables_names, df),
@@ -2576,8 +2576,8 @@ function constantize(s::Symbol, m::Module = Genie)
   string(m) * "." * ucfirst(string(s)) |> parse |> eval
 end
 
-function has_relationship{T<:GenieType}(m::T, relationship_type::Symbol)
-  has_field(m, relationship_type)
+function has_relation{T<:GenieType}(m::T, relation_type::Symbol)
+  has_field(m, relation_type)
 end
 
 function dataframe_to_dict(df::DataFrames.DataFrame)

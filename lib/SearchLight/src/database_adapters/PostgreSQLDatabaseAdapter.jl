@@ -73,7 +73,7 @@ function relation_to_sql{T<:AbstractModel}(m::T, rel::Tuple{SQLRelation,Symbol})
   j = disposable_instance(rel.model_name)
   join_table_name = j._table_name
 
-  if rel_type == RELATIONSHIP_BELONGS_TO
+  if rel_type == RELATION_BELONGS_TO
     j, m = m, j
   end
 
@@ -192,17 +192,17 @@ function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}, j
   function _to_select_part()
     joined_tables = []
 
-    if has_relationship(_m, RELATIONSHIP_HAS_ONE)
+    if has_relation(_m, RELATION_HAS_ONE)
       rels = _m.has_one
       joined_tables = vcat(joined_tables, map(x -> is_lazy(x) ? nothing : (x.model_name)(), rels))
     end
 
-    if has_relationship(_m, RELATIONSHIP_HAS_MANY)
+    if has_relation(_m, RELATION_HAS_MANY)
       rels = _m.has_many
       joined_tables = vcat(joined_tables, map(x -> is_lazy(x) ? nothing : (x.model_name)(), rels))
     end
 
-    if has_relationship(_m, RELATIONSHIP_BELONGS_TO)
+    if has_relation(_m, RELATION_BELONGS_TO)
       rels = _m.belongs_to
       joined_tables = vcat(joined_tables, map(x -> is_lazy(x) ? nothing : (x.model_name)(), rels))
     end
@@ -299,7 +299,7 @@ function to_join_part{T<:AbstractModel}(m::Type{T}, joins = SQLJoin[]) :: String
   _m = m()
   join_part = ""
 
-  for rel in relationships(m)
+  for rel in relations(m)
     mr = first(rel)
     if ( mr |> is_lazy ) continue end
     if ! isnull(mr.join)

@@ -9,7 +9,7 @@ type Comment <: AbstractModel
   id::Nullable{SearchLight.DbId}
   validator::ModelValidator
 
-  ### relationships
+  ### relations
   belongs_to::Vector{SearchLight.SQLRelation}
   has_one::Vector{SearchLight.SQLRelation}
   has_many::Vector{SearchLight.SQLRelation}

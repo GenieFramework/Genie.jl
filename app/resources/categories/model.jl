@@ -12,7 +12,7 @@ type Category <: AbstractModel
   # validator
   validator::ModelValidator
 
-  ### relationships
+  ### relations
   has_many::Vector{SearchLight.SQLRelation}
 
   ### constructor

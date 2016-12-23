@@ -466,13 +466,13 @@ type SQLRelation{T<:AbstractModel} <: SQLType
 end
 SQLRelation{T<:AbstractModel}(model_name::Type{T};
                               required = false,
-                              eagerness = MODEL_RELATIONSHIPS_EAGERNESS_AUTO,
+                              eagerness = MODEL_RELATIONS_EAGERNESS_AUTO,
                               data = Nullable{SQLRelationData}(),
                               join = Nullable{SQLJoin}()) = SQLRelation{T}(model_name, required, eagerness, data, join)
 
 function lazy(r::SQLRelation)
-  r.eagerness == Configuration.MODEL_RELATIONSHIPS_EAGERNESS_LAZY ||
-  r.eagerness == Configuration.MODEL_RELATIONSHIPS_EAGERNESS_AUTO && Genie.config.model_relationships_eagerness == Configuration.MODEL_RELATIONSHIPS_EAGERNESS_LAZY
+  r.eagerness == Configuration.MODEL_RELATIONS_EAGERNESS_LAZY ||
+  r.eagerness == Configuration.MODEL_RELATIONS_EAGERNESS_AUTO && Genie.config.model_relations_eagerness == Configuration.MODEL_RELATIONS_EAGERNESS_LAZY
 end
 function is_lazy(r::SQLRelation)
   lazy(r)

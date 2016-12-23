@@ -13,7 +13,7 @@ type ArticleCategory <: AbstractModel
   article_id::Nullable{SearchLight.DbId}
   category_id::Nullable{SearchLight.DbId}
 
-  ### relationships
+  ### relations
   belongs_to::Vector{SearchLight.SQLRelation}
 
   ### constructor
