@@ -162,7 +162,7 @@ function update_query_part{T<:AbstractModel}(m::T)
 end
 
 function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}, joins = SQLJoin[])
-  _m = m()
+  _m::T = m()
 
   function columns_from_joins()
     jcols = []
@@ -243,8 +243,9 @@ end
 function to_where_part{T<:AbstractModel}(m::Type{T}, w::Vector{SQLWhereEntity}, scopes::Vector{Symbol}) :: String
   w = vcat(w, required_scopes(m)) # automatically include required scopes
 
+  _m::T = m()
   for scope in scopes
-    w = vcat(w, m().scopes[scope])
+    w = vcat(w, _m.scopes[scope])
   end
 
   to_where_part(w)
@@ -262,8 +263,8 @@ function required_scopes{T<:AbstractModel}(m::Type{T}) :: Vector{SQLWhereEntity}
   haskey(s, :required) ? s[:required] : SQLWhereEntity[]
 end
 
-function scopes{T<:AbstractModel}(m::Type{T})
-  in(:scopes, fieldnames(m)) ? getfield(m(), :scopes) : Dict()
+function scopes{T<:AbstractModel}(m::Type{T}) :: Dict{Symbol,Vector{SQLWhereEntity}}
+  in(:scopes, fieldnames(m)) ? getfield(m()::T, :scopes) :  Dict{Symbol,Vector{SQLWhereEntity}}()
 end
 
 function to_order_part{T<:AbstractModel}(m::Type{T}, o::Vector{SQLOrder}) :: String

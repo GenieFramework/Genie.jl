@@ -65,7 +65,7 @@ function hydrate!(user::User, field::Symbol, value::Any)
 end
 
 function after_hydration(user::User)
-  user.role = SearchLight.relationship_data!!(user, App.Role, SearchLight.RELATIONSHIP_BELONGS_TO).name
+  user.role = SearchLight.relationship_object!!(user, App.Role, SearchLight.RELATIONSHIP_BELONGS_TO).name
 
   user
 end

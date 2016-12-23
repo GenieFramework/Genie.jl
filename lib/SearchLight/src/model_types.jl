@@ -9,7 +9,8 @@ import Base.==
 
 export DbId, SQLType, AbstractModel, ModelValidator
 export SQLInput, SQLColumn, SQLColumns, SQLLogicOperator
-export SQLWhere, SQLWhereExpression, SQLWhereEntity, SQLLimit, SQLOrder, SQLQuery, SQLRelation
+export SQLWhere, SQLWhereExpression, SQLWhereEntity, SQLLimit, SQLOrder, SQLQuery
+export SQLRelation, SQLRelationData
 export SQLJoin, SQLOn, SQLJoinType, SQLHaving, SQLScope
 
 export is_lazy
@@ -19,9 +20,6 @@ abstract AbstractModel <: Genie.GenieType
 
 typealias DbId Int32
 convert(::Type{Nullable{DbId}}, v::Number) = Nullable{DbId}(DbId(v))
-
-typealias RelationshipData AbstractModel
-typealias RelationshipDataArray Vector{AbstractModel}
 
 #
 # SearchLight validations
@@ -449,11 +447,19 @@ string{T<:AbstractModel}(q::SQLQuery, m::Type{T}) = to_fetch_sql(m, q)
 # SQLRelation
 #
 
+type SQLRelationData{T<:AbstractModel} <: SQLType
+  collection::Vector{T}
+
+  SQLRelationData(collection::Vector{T}) = new(collection)
+end
+SQLRelationData{T<:AbstractModel}(collection::Vector{T}) = SQLRelationData{T}(collection)
+SQLRelationData{T<:AbstractModel}(m::T) = SQLRelationData{T}([m])
+
 type SQLRelation{T<:AbstractModel} <: SQLType
   model_name::Type{T}
   required::Bool
   eagerness::Symbol
-  data::Nullable{Union{RelationshipData,RelationshipDataArray}}
+  data::Nullable{SQLRelationData}
   join::Nullable{SQLJoin}
 
   SQLRelation(model_name, required, eagerness, data, join) = new(model_name, required, eagerness, data, join)
@@ -461,7 +467,7 @@ end
 SQLRelation{T<:AbstractModel}(model_name::Type{T};
                               required = false,
                               eagerness = MODEL_RELATIONSHIPS_EAGERNESS_AUTO,
-                              data = Nullable{Union{RelationshipData,RelationshipDataArray}}(),
+                              data = Nullable{SQLRelationData}(),
                               join = Nullable{SQLJoin}()) = SQLRelation{T}(model_name, required, eagerness, data, join)
 
 function lazy(r::SQLRelation)
