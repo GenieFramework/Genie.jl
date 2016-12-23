@@ -19,11 +19,11 @@ const BEFORE_ACTION_HOOKS = :before_action
 const _routes = Dict{Symbol,Any}()
 const _params = Dict{Symbol,Any}()
 
-function params()
+function params() :: Dict{Symbol,Any}
   _params
 end
 
-function route_request(req::Request, res::Response)
+function route_request(req::Request, res::Response) :: Response
   empty!(_params)
 
   if is_static_file(req.resource)
@@ -43,7 +43,7 @@ function route_request(req::Request, res::Response)
   r
 end
 
-function route(params...; with::Dict = Dict{Any,Any}(), named::Symbol = :__anonymous_route)
+function route(params...; with::Dict = Dict{Any,Any}(), named::Symbol = :__anonymous_route) :: Tuple{Tuple{String,String,String},Dict{Symbol,Dict{Any,Any}}}
   extra_params = Dict(:with => with)
   named = named == :__anonymous_route ? route_name(params) : named
   if haskey(_routes, named)
@@ -56,7 +56,7 @@ function route(params...; with::Dict = Dict{Any,Any}(), named::Symbol = :__anony
   _routes[named] = (params, extra_params)
 end
 
-function route_name(params)
+function route_name(params) :: Symbol
   route_parts = AbstractString[lowercase(params[1])]
   for uri_part in split(params[2], "/", keep = false)
     startswith(uri_part, ":") && continue # we ignore named params
@@ -66,34 +66,38 @@ function route_name(params)
   join(route_parts, "_") |> Symbol
 end
 
-function named_routes()
+function named_routes() :: Dict{Symbol,Any}
   _routes
 end
 
-function print_named_routes()
+function print_named_routes() :: Void
   Millboard.table(named_routes())
+
+  nothing
 end
 
-function get_route(route_name::Symbol)
+function get_route(route_name::Symbol) :: Nullable{Tuple{Tuple{String,String,String},Dict{Symbol,Dict{Any,Any}}}}
   haskey(named_routes(), route_name) ? Nullable(named_routes()[route_name]) : Nullable()
 end
-function get_route!!(route_name::Symbol)
-  r = get_route(route_name)
-  ! isnull(r) ? Base.get(r) : error("Route $route_name does not exist")
+
+function get_route!!(route_name::Symbol) :: Tuple{Tuple{String,String,String},Dict{Symbol,Dict{Any,Any}}}
+  get_route(route_name) |> Base.get
 end
 
-function routes()
+function routes() :: Array{Tuple{Tuple{String,String,String},Dict{Symbol,Dict{Any,Any}}}}
   collect(values(_routes))
 end
 
-function print_routes()
+function print_routes() :: Void
   Millboard.table(routes())
+
+  nothing
 end
 
-function to_link!!{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Symbol,T}(); with_error = true)
+function to_link!!{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Symbol,T}(); with_error = true) :: String
   route = (with_error ? get_route!! : get_route)(route_name) |> Util.expand_nullable
 
-  result = AbstractString[]
+  result = String[]
   for part in split(route[1][2], "/")
     if startswith(part, ":")
       var_name = split(part, "::")[1][2:end] |> Symbol
@@ -106,7 +110,7 @@ function to_link!!{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Sy
 
   join(result, "/")
 end
-function to_link{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Symbol,T}())
+function to_link{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Symbol,T}()) :: String
   try
     to_link!!(route_name, route_params, with_error = false)
   catch ex
@@ -114,7 +118,7 @@ function to_link{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Symb
     ""
   end
 end
-function to_link!!(route_name::Symbol; route_params...)
+function to_link!!(route_name::Symbol; route_params...) :: String
   d = Dict{Symbol,Any}()
   for (k,v) in route_params
     d[k] = v
@@ -122,7 +126,7 @@ function to_link!!(route_name::Symbol; route_params...)
 
   to_link!!(route_name, d)
 end
-function to_link(route_name::Symbol; route_params...)
+function to_link(route_name::Symbol; route_params...) :: String
   d = Dict{Symbol,Any}()
   for (k,v) in route_params
     d[k] = v
@@ -136,7 +140,7 @@ function to_link(route_name::Symbol; route_params...)
   end
 end
 
-function match_routes(req::Request, res::Response, session::Sessions.Session)
+function match_routes(req::Request, res::Response, session::Sessions.Session) :: Response
   for r in routes()
     route_def, extra_params = r
     protocol, route, to = route_def
@@ -172,7 +176,7 @@ function match_routes(req::Request, res::Response, session::Sessions.Session)
   serve_error_file(404, "Not found")
 end
 
-function parse_route(route::AbstractString)
+function parse_route(route::AbstractString) :: Tuple{AbstractString,Vector{AbstractString},Vector{Any}}
   parts = AbstractString[]
   param_names = AbstractString[]
   param_types = Any[]
@@ -197,7 +201,7 @@ function parse_route(route::AbstractString)
   "/" * join(parts, "/"), param_names, param_types
 end
 
-function extract_uri_params(uri::URI, regex_route::Regex, param_names::Vector{AbstractString}, param_types::Vector{Any})
+function extract_uri_params(uri::URI, regex_route::Regex, param_names::Vector{AbstractString}, param_types::Vector{Any}) :: Bool
   matches = match(regex_route, uri.path)
   i = 1
   for param_name in param_names
@@ -220,26 +224,30 @@ function extract_uri_params(uri::URI, regex_route::Regex, param_names::Vector{Ab
     end
   end
 
-  true
+  true # this must be bool cause it's used in bool context for chaining
 end
 
-function extract_extra_params(extra_params::Dict)
+function extract_extra_params(extra_params::Dict) :: Void
   if ! isempty(extra_params[:with])
     for (k, v) in extra_params[:with]
       _params[Symbol(k)] = v
     end
   end
+
+  nothing
 end
 
-function extract_post_params(req::Request)
+function extract_post_params(req::Request) :: Void
   for (k, v) in Input.post(req)
     v = replace(v, "+", " ")
     nested_keys(k, v)
     _params[Symbol(k)] = v
   end
+
+  nothing
 end
 
-function nested_keys(k::AbstractString, v)
+function nested_keys(k::AbstractString, v) :: Void
   if contains(k, ".")
     parts = split(k, ".", limit = 2)
     nested_val_key = Symbol(parts[1])
@@ -250,19 +258,23 @@ function nested_keys(k::AbstractString, v)
       _params[nested_val_key][Symbol(parts[2])] = v
     end
   end
+
+  nothing
 end
 
-function extract_pagination_params()
+function extract_pagination_params() :: Void
   if ! haskey(_params, :page_number)
     _params[:page_number] = haskey(_params, Symbol("page[number]")) ? parse(Int, _params[Symbol("page[number]")]) : 1
   end
   if ! haskey(_params, :page_size)
     _params[:page_size] = haskey(_params, Symbol("page[size]")) ? parse(Int, _params[Symbol("page[size]")]) : Genie.config.pagination_default_items_per_page
   end
+
+  nothing
 end
 
 function setup_params!( params::Dict{Symbol,Any}, to_parts::Vector{AbstractString}, action_controller_parts::Vector{AbstractString},
-                        controller_path::AbstractString, req::Request, res::Response, session::Sessions.Session, action_name::AbstractString)
+                        controller_path::AbstractString, req::Request, res::Response, session::Sessions.Session, action_name::AbstractString) :: Dict{Symbol,Any}
   params[:action_controller] = to_parts[2]
   params[:action] = action_controller_parts[end]
   params[:controller] = join(action_controller_parts[1:end-1], ".")
@@ -288,7 +300,7 @@ end
 
 const loaded_controllers = UInt64[]
 
-function invoke_controller(to::AbstractString, req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session)
+function invoke_controller(to::AbstractString, req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session) :: Response
   to_parts::Vector{AbstractString} = split(to, "#")
 
   controller_path = abspath(joinpath(Genie.RESOURCE_PATH, to_parts[1]))
@@ -338,7 +350,7 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
           end
 end
 
-function to_response(action_result)
+function to_response(action_result) :: Response
   isa(action_result, Response) && return action_result
 
   return  try
@@ -355,7 +367,7 @@ function to_response(action_result)
           end
 end
 
-function serve_error_file_500(ex::Exception)
+function serve_error_file_500(ex::Exception) :: Response
   serve_error_file( 500,
                     string(ex) *
                     "<br/><br/>" *
@@ -365,11 +377,11 @@ function serve_error_file_500(ex::Exception)
                   )
 end
 
-function hook_stop(hook_result)
+function hook_stop(hook_result) :: Bool
   isa(hook_result, Tuple) && ! hook_result[1]
 end
 
-function run_hooks(hook_type::Symbol, m::Module, params::Dict{Symbol,Any})
+function run_hooks(hook_type::Symbol, m::Module, params::Dict{Symbol,Any}) :: Any
   if in(hook_type, names(m, true))
     hooks::Vector{Symbol} = getfield(m, hook_type)
     for hook in hooks
@@ -378,24 +390,25 @@ function run_hooks(hook_type::Symbol, m::Module, params::Dict{Symbol,Any})
     end
   end
 end
+# FIX: this is type unstable
 
-function load_routes()
+function load_routes() :: Void
   empty!(_routes)
   include(abspath(joinpath("config", "routes.jl")))
 
-  true
+  nothing
 end
 
-function is_static_file(resource::AbstractString)
+function is_static_file(resource::AbstractString) :: Bool
   isfile(file_path(URI(resource).path))
 end
 
-function serve_static_file(resource::AbstractString)
+function serve_static_file(resource::AbstractString) :: Response
   f = file_path(URI(resource).path)
   Response(200, file_headers(f), open(read, f))
 end
 
-function serve_error_file(error_code::Int, error_message::AbstractString = "")
+function serve_error_file(error_code::Int, error_message::AbstractString = "") :: Response
   if Configuration.is_dev()
     error_page =  open(Genie.DOC_ROOT_PATH * "/error-$(error_code).html") do f
                     readstring(f)
@@ -408,18 +421,18 @@ function serve_error_file(error_code::Int, error_message::AbstractString = "")
   end
 end
 
-function file_path(resource::AbstractString)
+function file_path(resource::AbstractString) :: String
   abspath(joinpath(Genie.config.server_document_root, resource[2:end]))
 end
 
-pathify(x) = replace(string(x), " ", "-") |> lowercase |> URIParser.escape
+pathify(x) :: String = replace(string(x), " ", "-") |> lowercase |> URIParser.escape
 
-file_extension(f) = ormatch(match(r"(?<=\.)[^\.\\/]*$", f), "")
-file_headers(f) = Dict{AbstractString, AbstractString}("Content-Type" => get(mimetypes, file_extension(f), "application/octet-stream"))
+file_extension(f) :: String = ormatch(match(r"(?<=\.)[^\.\\/]*$", f), "")
+file_headers(f) :: Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}("Content-Type" => get(mimetypes, file_extension(f), "application/octet-stream"))
 
 ormatch(r::RegexMatch, x) = r.match
 ormatch(r::Void, x) = x
 
-load_routes();
+load_routes()
 
 end
