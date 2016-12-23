@@ -60,7 +60,7 @@ Loads the ACL file associated with the invoked `controller` and returns the rule
 """
 function load_acl(dir::AbstractString) :: Dict{Any,Any}
   file_path = joinpath(dir, Genie.GENIE_AUTHORIZATOR_FILE_NAME)
-  isfile(file_path) ? YAML.load(open(file_path)) : Dict{Any,Any}
+  isfile(file_path) ? YAML.load(open(file_path)) : Dict{Any,Any}()
 end
 
 

@@ -27,7 +27,7 @@ type User <: AbstractModel
     role_id = Nullable{SearchLight.DbId}(),
     updated_at = DateTime(),
 
-    belongs_to = [SearchLight.SQLRelation(Role)],
+    belongs_to = [SearchLight.SQLRelation(Role, eagerness = RELATION_EAGERNESS_EAGER)],
 
     on_dehydration = Users.dehydrate,
     on_hydration! = Users.hydrate!,

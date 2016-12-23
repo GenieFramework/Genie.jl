@@ -157,7 +157,15 @@ function match_routes(req::Request, res::Response, session::Sessions.Session)
     extract_extra_params(extra_params)
     extract_pagination_params()
 
-    return invoke_controller(to, req, res, _params, session)
+    return  try
+              invoke_controller(to, req, res, _params, session)
+            catch ex
+              Logger.log("Failed invoking controller", :err, showst = false)
+              Logger.@location()
+              Logger.log(ex, :err, showst = true)
+
+              serve_error_file_500(ex)
+            end
   end
 
   Genie.config.log_router && Logger.log("Router: No route matched - defaulting 404", :err)
@@ -296,14 +304,24 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
 
   action_controller_parts::Vector{AbstractString} = split(to_parts[2], ".")
   setup_params!(params, to_parts, action_controller_parts, controller_path, req, res, session, action_name)
-  params[Genie.PARAMS_ACL_KEY] = App.load_acl(controller_path)
+
+  try
+    params[Genie.PARAMS_ACL_KEY] = App.load_acl(controller_path)
+  catch ex
+    Logger.log("Failed loading ACL", :err, showst = false)
+    Logger.@location()
+    Logger.log(ex, :err, showst = true)
+
+    return serve_error_file_500(ex)
+  end
 
   try
     hook_result = run_hooks(BEFORE_ACTION_HOOKS, eval(App, parse(join(split(action_name, ".")[1:end-1], "."))), params)
     hook_stop(hook_result) && return to_response(hook_result[2])
   catch ex
     Logger.log("Failed to invoke hooks $(BEFORE_ACTION_HOOKS)", :err, showst = false)
-    Logger.log(ex, :err, showst = false)
+    Logger.@location()
+    Logger.log(ex, :err, showst = true)
 
     return serve_error_file_500(ex)
   end
@@ -313,6 +331,7 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
           catch ex
             Logger.log("$ex at $(@__FILE__):$(@__LINE__)", :critical, showst = false)
             Logger.log("While invoking $(action_name) with $(params)", :critical, showst = false)
+            Logger.@location()
             stacktrace()
 
             serve_error_file_500(ex)
@@ -362,7 +381,7 @@ end
 
 function load_routes()
   empty!(_routes)
-  include(abspath("config/routes.jl"))
+  include(abspath(joinpath("config", "routes.jl")))
 
   true
 end

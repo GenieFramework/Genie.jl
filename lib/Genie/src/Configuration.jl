@@ -4,7 +4,6 @@ using Genie, YAML
 
 export is_dev, is_prod, is_test, env, cache_enabled, Settings, DEV, PROD, TEST, IN_REPL
 export RENDER_MUSTACHE_EXT, RENDER_EJL_EXT, RENDER_JSON_EXT, RENDER_EJL_WITH_CACHE
-export MODEL_RELATIONS_EAGERNESS_AUTO, MODEL_RELATIONS_EAGERNESS_LAZY, MODEL_RELATIONS_EAGERNESS_EAGER
 export LOG_LEVEL_VERBOSITY_VERBOSE, LOG_LEVEL_VERBOSITY_MINIMAL
 
 # app environments
@@ -16,11 +15,6 @@ const TEST  = "test"
 const RENDER_MUSTACHE_EXT   = "jl.mustache"
 const RENDER_JSON_EXT       = "jl.json"
 const RENDER_EJL_EXT        = "jl.html"
-
-# model relations
-const MODEL_RELATIONS_EAGERNESS_AUTO    = :auto
-const MODEL_RELATIONS_EAGERNESS_LAZY    = :lazy
-const MODEL_RELATIONS_EAGERNESS_EAGER   = :eager
 
 # log levels
 const LOG_LEVEL_VERBOSITY_VERBOSE = :verbose
@@ -224,7 +218,7 @@ type Settings
             pagination_default_items_per_page = 20,
             pagination_page_param_name = "page",
 
-            model_relations_eagerness = MODEL_RELATIONS_EAGERNESS_LAZY,
+            model_relations_eagerness = :lazy,
 
             tests_force_test_env = true,
 

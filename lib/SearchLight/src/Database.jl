@@ -1,5 +1,5 @@
 module Database
-using YAML, Genie, Memoize, SearchLight
+using YAML, Genie, Memoize, SearchLight, DataFrames
 
 eval(:(using $(Genie.config.db_adapter)))
 eval(:(const DatabaseAdapter = $(Genie.config.db_adapter)))
@@ -40,10 +40,10 @@ end
 
 @memoize function table_columns(table_name::AbstractString)
   conn, adapter = query_tools()
-  query_df(DatabaseAdapter.adapter_table_columns_sql(table_name), suppress_output = true)
+  query_df(DatabaseAdapter.adapter_table_columns_sql(table_name), suppress_output = true) :: DataFrames.DataFrame
 end
 
-function query_df(sql::AbstractString; suppress_output::Bool = false)
+function query_df(sql::AbstractString; suppress_output::Bool = false) :: DataFrames.DataFrame
   conn, adapter = query_tools()
   DatabaseAdapter.adapter_query_df(sql, (suppress_output || Genie.config.suppress_output), conn, adapter)
 end
@@ -52,22 +52,23 @@ function relation_to_sql{T<:AbstractModel}(m::T, rel::Tuple{SQLRelation,Symbol})
   DatabaseAdapter.relation_to_sql(m, rel)
 end
 
-function to_fetch_sql{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, joins::Vector{SQLJoin{N}})
-  DatabaseAdapter.to_fetch_sql(m, q, joins)
+function to_find_sql{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, joins::Vector{SQLJoin{N}})
+  DatabaseAdapter.to_find_sql(m, q, joins)
 end
-function to_fetch_sql{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
-  DatabaseAdapter.to_fetch_sql(m, q)
+function to_find_sql{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
+  DatabaseAdapter.to_find_sql(m, q)
 end
+const to_fetch_sql = to_find_sql
 
 function to_store_sql{T<:AbstractModel}(m::T; conflict_strategy = :error) # upsert strateygy = :none | :error | :ignore | :update
   DatabaseAdapter.to_store_sql(m, conflict_strategy = conflict_strategy)
 end
 
-function delete_all{T<:AbstractModel}(m::Type{T}; truncate::Bool = true, reset_sequence::Bool = true, cascade::Bool = false)
+function delete_all{T<:AbstractModel}(m::Type{T}; truncate::Bool = true, reset_sequence::Bool = true, cascade::Bool = false) :: Void
   DatabaseAdapter.delete_all(m, truncate = truncate, reset_sequence = reset_sequence, cascade = cascade)
 end
 
-function delete{T<:AbstractModel}(m::T)
+function delete{T<:AbstractModel}(m::T) :: T
   DatabaseAdapter.delete(m)
 end
 

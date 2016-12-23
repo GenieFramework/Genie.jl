@@ -12,13 +12,13 @@ function articles(params::Dict{Symbol,Any})
 end
 
 function article_new(params::Dict{Symbol,Any}; a::Article = Article())
-  with_authorization(:create, unauthorized_access, params) do
+  with_authorization(:create, unauthorized_access, params) do auth_scopes
     ejl(:admin, :article, layout = :admin, article = a, params = params) |> respond
   end
 end
 
 function article_create(params::Dict{Symbol,Any})
-  with_authorization(:edit, unauthorized_access, params) do
+  with_authorization(:edit, unauthorized_access, params) do auth_scopes
     article = Article()
     SearchLight.update_with!(article, params[:article])
 
@@ -48,7 +48,7 @@ function article_edit(params::Dict{Symbol,Any}; a::Article = Article())
 end
 
 function article_update(params::Dict{Symbol,Any})
-  with_authorization(:edit, unauthorized_access, params) do
+  with_authorization(:edit, unauthorized_access, params) do auth_scopes
     article = SearchLight.find_one!!(Article, params[:article_id])
     params[:article][:updated_at] = Dates.now()
     haskey(params[:article], :is_published) && App.Articles.is_draft(article) && (article.published_at = Nullable{DateTime}(Dates.now()))
@@ -65,7 +65,7 @@ function article_update(params::Dict{Symbol,Any})
 end
 
 function article_publish(params::Dict{Symbol,Any})
-  with_authorization(:edit, unauthorized_access, params) do
+  with_authorization(:edit, unauthorized_access, params) do auth_scopes
     article = SearchLight.find_one!!(Article, params[:article_id])
     article.published_at = Dates.now()
     if Validation.validate!(article)

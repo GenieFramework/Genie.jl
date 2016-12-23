@@ -11,4 +11,4 @@ admin:
   edit:
   delete:
   list_articles:
-    - top_two
+    - top_thousand

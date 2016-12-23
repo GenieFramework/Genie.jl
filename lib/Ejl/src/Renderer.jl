@@ -72,7 +72,7 @@ function mustache(content::AbstractString, layout::Union{Symbol,AbstractString} 
   Dict(:html => r)
 end
 
-function redirect_to(location::AbstractString, code::UInt8 = 302, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}())
+function redirect_to(location::AbstractString, code::Int = 302, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}())
   headers["Location"] = location
   respond(Dict(:text => ""), code, headers)
 end

@@ -12,7 +12,7 @@ function index(params)
                                               limit = params[:page_size],
                                               offset = (params[:page_number] - 1) * params[:page_size],
                                               where = [SQLWhereExpression("published_at < NOW()"), SQLWhereExpression("published_at IS NOT NULL")],
-                                              scopes = [:top_two])),
+                                              scopes = [])),
       params = params) |> respond
 end
 

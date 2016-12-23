@@ -69,6 +69,24 @@ function convert{T}(::Type{SQLInput}, n::Nullable{T})
   end
 end
 
+
+"""
+    escape_value(i::SQLInput)
+
+Sanitizes input to be used as values in SQL queries.
+"""
+function escape_value(i::SQLInput) :: SQLInput
+  (i.value == "NULL" || i.value == "NOT NULL") && return i
+
+  if ! i.escaped && ! i.raw
+    i.value = Database.escape_value(i.value)
+    i.escaped = true
+  end
+
+  return i
+end
+
+
 #
 # SQLColumn
 #
@@ -112,9 +130,31 @@ show(io::IO, s::SQLColumn) = print(io, string(s))
 
 const SQLColumns = SQLColumn # so we can use both
 
+
+"""
+    escape_column_name(c::SQLColumn) :: SQLColumn
+    escape_column_name(s::String)
+
+Sanitizes input to be use as column names in SQL queries.
+"""
+function escape_column_name(c::SQLColumn) :: SQLColumn
+  if ! c.escaped && ! c.raw
+    val = c.table_name != "" && ! startswith(c.value, (c.table_name * ".")) && ! is_fully_qualified(c.value) ? c.table_name * "." * c.value : c.value
+    c.value = escape_column_name(val)
+    c.escaped = true
+  end
+
+  c
+end
+function escape_column_name(s::String) :: String
+  join(map(x -> Database.escape_column_name(string(x)), split(s, ".")), ".")
+end
+
+
 #
 # SQLLogicOperator
 #
+
 
 immutable SQLLogicOperator <: SQLType
   value::String
@@ -466,13 +506,13 @@ type SQLRelation{T<:AbstractModel} <: SQLType
 end
 SQLRelation{T<:AbstractModel}(model_name::Type{T};
                               required = false,
-                              eagerness = MODEL_RELATIONS_EAGERNESS_AUTO,
+                              eagerness = RELATION_EAGERNESS_AUTO,
                               data = Nullable{SQLRelationData}(),
                               join = Nullable{SQLJoin}()) = SQLRelation{T}(model_name, required, eagerness, data, join)
 
 function lazy(r::SQLRelation)
-  r.eagerness == Configuration.MODEL_RELATIONS_EAGERNESS_LAZY ||
-  r.eagerness == Configuration.MODEL_RELATIONS_EAGERNESS_AUTO && Genie.config.model_relations_eagerness == Configuration.MODEL_RELATIONS_EAGERNESS_LAZY
+  r.eagerness == RELATION_EAGERNESS_LAZY ||
+  r.eagerness == RELATION_EAGERNESS_AUTO && Genie.config.model_relations_eagerness == RELATION_EAGERNESS_LAZY
 end
 function is_lazy(r::SQLRelation)
   lazy(r)

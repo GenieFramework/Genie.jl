@@ -52,7 +52,7 @@ function current_user(session)
   if isnull(auth_state)
     Nullable()
   else
-    SearchLight.find_one_by(User, Symbol(User()._id), Base.get(auth_state))
+    SearchLight.find_one(User, Base.get(auth_state))
   end
 end
 function current_user(params::Dict{Symbol,Any})

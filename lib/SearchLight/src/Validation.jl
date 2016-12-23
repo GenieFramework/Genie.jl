@@ -5,14 +5,14 @@ using Genie, SearchLight, App
 # validation rules
 #
 
-function not_empty{T<:AbstractModel}(field::Symbol, m::T, args::Vararg{Any})
+function not_empty{T<:AbstractModel}(field::Symbol, m::T) :: Bool
   error_message = "$field should be not empty"
   getfield(m, field) |> isempty && push_error!(m, field, :not_empty, error_message) && return false
 
   true
 end
 
-function min_length{T<:AbstractModel}(field::Symbol, m::T, args::Vararg{Any})
+function min_length{T<:AbstractModel}(field::Symbol, m::T, args::Vararg{Any}) :: Bool
   field_length = getfield(m, field) |> length
   error_message = "$field should be at least $(args[1]) chars long and it's only $field_length"
   field_length < args[1] && push_error!(m, field, :min_length, error_message) && return false
@@ -24,24 +24,26 @@ end
 # errors manipulation
 #
 
-function push_error!{T<:AbstractModel}(m::T, field::Symbol, error::Symbol, error_message::AbstractString)
-  push!(errors(m), (field, error, error_message))
+function push_error!{T<:AbstractModel}(m::T, field::Symbol, error::Symbol, error_message::AbstractString) :: Bool
+  push!(errors!!(m), (field, error, error_message))
 
-  true
+  true # this must be bool cause it's used for chaining Bool values
 end
 
-function clear_errors!{T<:AbstractModel}(m::T)
-  errors(m) |> empty!
+function clear_errors!{T<:AbstractModel}(m::T) :: Void
+  errors!!(m) |> empty!
+
+  nothing
 end
 
 #
 # validation logic
 #
 
-function validate!{T<:AbstractModel}(m::T)
+function validate!{T<:AbstractModel}(m::T) :: Bool
   clear_errors!(m)
 
-  for r in rules(m)
+  for r in rules!!(m)
     field = r[1]
     rule = r[2]
     args = length(r) == 3 ? r[3] : ()
@@ -51,41 +53,59 @@ function validate!{T<:AbstractModel}(m::T)
   is_valid(m)
 end
 
-function rules{T<:AbstractModel}(m::T)
-  validator(m).rules # rules::Vector{Tuple{Symbol,Symbol,Vararg{Any}}} -- field,method,args
+function rules!!{T<:AbstractModel}(m::T) :: Vector{Tuple{Symbol,Function,Vararg{Any,N}}}
+  validator!!(m).rules # rules::Vector{Tuple{Symbol,Symbol,Vararg{Any}}} -- field,method,args
 end
 
-function errors{T<:AbstractModel}(m::T)
-  validator(m).errors
+function rules{T<:AbstractModel}(m::T) :: Nullable{Vector{Tuple{Symbol,Function,Vararg{Any,N}}}}
+  v = validator(m)
+  isnull(v) ? Nullable{Vector{Tuple{Symbol,Symbol,Vararg{Any,N}}}}() : Nullable{Vector{Tuple{Symbol,Symbol,Vararg{Any,N}}}}(Base.get(v).errors)
 end
 
-function validator{T<:AbstractModel}(m::T)
+function errors!!{T<:AbstractModel}(m::T) :: Vector{Tuple{Symbol,Symbol,String}}
+  validator!!(m).errors
+end
+
+function errors{T<:AbstractModel}(m::T) :: Nullable{Vector{Tuple{Symbol,Symbol,String}}}
+  v = validator(m)
+  isnull(v) ? Nullable{Vector{Tuple{Symbol,Symbol,String}}}() : Nullable{Vector{Tuple{Symbol,Symbol,String}}}(v.errors)
+end
+
+function validator!!{T<:AbstractModel}(m::T) :: ModelValidator
   m.validator
 end
 
-function has_errors{T<:AbstractModel}(m::T)
-  ! isempty( errors(m) )
+function validator{T<:AbstractModel}(m::T) :: Nullable{ModelValidator}
+  if has_field(m, :validator)
+    Nullable{ModelValidator}(m.validator)
+  else
+    Nullable{ModelValidator}()
+  end
 end
 
-function has_errors_for{T<:AbstractModel}(m::T, field::Symbol)
+function has_errors{T<:AbstractModel}(m::T) :: Bool
+  ! isempty( errors!!(m) )
+end
+
+function has_errors_for{T<:AbstractModel}(m::T, field::Symbol) :: Bool
   ! isempty(errors_for(m, field))
 end
 
-function is_valid{T<:AbstractModel}(m::T)
+function is_valid{T<:AbstractModel}(m::T) :: Bool
   ! has_errors(m)
 end
 
-function errors_for{T<:AbstractModel}(m::T, field::Symbol)
-  result::Vector{Tuple{Symbol,Symbol,AbstractString}} = Vector{Tuple{Symbol,Symbol,AbstractString}}()
-  for err in errors(m)
+function errors_for{T<:AbstractModel}(m::T, field::Symbol) :: Vector{Tuple{Symbol,Symbol,AbstractString}}
+  result = Tuple{Symbol,Symbol,AbstractString}[]
+  for err in errors!!(m)
     err[1] == field && push!(result, err)
   end
 
   result
 end
 
-function errors_messages_for{T<:AbstractModel}(m::T, field::Symbol)
-  result::Vector{AbstractString} = Vector{AbstractString}()
+function errors_messages_for{T<:AbstractModel}(m::T, field::Symbol) :: Vector{AbstractString}
+  result = AbstractString[]
   for err in errors_for(m, field)
     push!(result, err[3])
   end
@@ -93,7 +113,7 @@ function errors_messages_for{T<:AbstractModel}(m::T, field::Symbol)
   result
 end
 
-function errors_to_string{T<:AbstractModel}(m::T, field::Symbol, separator = "\n"; upper_case_first = false)
+function errors_to_string{T<:AbstractModel}(m::T, field::Symbol, separator = "\n"; upper_case_first = false) :: String
   join( map(x -> upper_case_first ? ucfirst(x) : x, errors_messages_for(m, field)), separator)
 end
 

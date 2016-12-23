@@ -1,5 +1,5 @@
 module PostgreSQLDatabaseAdapter
-using PostgreSQL, DataFrames, Genie, Database, Logger, SearchLight
+using PostgreSQL, DataFrames, Genie, Database, Logger, SearchLight, Util
 
 export adapter_connect, db_adapter, adapter_table_columns_sql, create_migrations_table_sql, adapter_escape_column_name
 export adapter_query_df, adapter_query
@@ -16,11 +16,12 @@ function adapter_connect(conn_data::Dict{String,Any})
             conn_data["port"])
   catch ex
     Logger.log("Invalid DB connection settings", :err)
+    Logger.@location()
     Logger.log(ex, :err)
   end
 end
 
-function adapter_table_columns_sql(table_name::AbstractString)
+function adapter_table_columns_sql(table_name::AbstractString) :: String
   "SELECT
     column_name, ordinal_position, column_default, is_nullable, data_type, character_maximum_length,
     udt_name, is_identity, is_updatable
@@ -31,7 +32,7 @@ function adapter_create_migrations_table_sql()
   "CREATE TABLE $(Genie.config.db_migrations_table_name) (version varchar(30) CONSTRAINT firstkey PRIMARY KEY)"
 end
 
-function adapter_escape_column_name(c::AbstractString, conn, adapter)
+function adapter_escape_column_name(c::AbstractString, conn, adapter) :: String
   strptr = adapter.PQescapeIdentifier(conn.ptr, c, sizeof(c))
   str = unsafe_string(strptr)
   adapter.PQfreemem(strptr)
@@ -39,7 +40,7 @@ function adapter_escape_column_name(c::AbstractString, conn, adapter)
   str
 end
 
-function adapter_query_df(sql::AbstractString, suppress_output::Bool, conn, adapter)
+function adapter_query_df(sql::AbstractString, suppress_output::Bool, conn, adapter) :: DataFrames.DataFrame
   df::DataFrames.DataFrame = adapter.fetchdf(adapter_query(sql, suppress_output, conn, adapter))
   (! suppress_output && Genie.config.log_db) && Logger.log(df)
 
@@ -79,24 +80,25 @@ function relation_to_sql{T<:AbstractModel}(m::T, rel::Tuple{SQLRelation,Symbol})
 
   (join_table_name |> escape_column_name) * " ON " *
     (j._table_name |> escape_column_name) * "." *
-    ( (lowercase(string(typeof(m))) |> strip_module_name) * "_" * m._id |> escape_column_name) *
+    ( (lowercase(string(typeof(m))) |> SearchLight.strip_module_name) * "_" * m._id |> escape_column_name) *
     " = " *
     (m._table_name |> escape_column_name) * "." *
     (m._id |> escape_column_name)
 end
 
-function to_fetch_sql{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, joins::Vector{SQLJoin{N}})
+function to_find_sql{T<:AbstractModel, N<:AbstractModel}(m::Type{T}, q::SQLQuery, joins::Vector{SQLJoin{N}})
   sql::String = ( "$(to_select_part(m, q.columns, joins)) $(to_from_part(m)) $(to_join_part(m, joins)) $(to_where_part(m, q.where, q.scopes)) " *
                       "$(to_group_part(q.group)) $(to_order_part(m, q.order)) " *
                       "$(to_having_part(q.having)) $(to_limit_part(q.limit)) $(to_offset_part(q.offset))") |> strip
   replace(sql, r"\s+", " ")
 end
-function to_fetch_sql{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
+function to_find_sql{T<:AbstractModel}(m::Type{T}, q::SQLQuery)
   sql::String = ( "$(to_select_part(m, q.columns)) $(to_from_part(m)) $(to_join_part(m)) $(to_where_part(m, q.where, q.scopes)) " *
                       "$(to_group_part(q.group)) $(to_order_part(m, q.order)) " *
                       "$(to_having_part(q.having)) $(to_limit_part(q.limit)) $(to_offset_part(q.offset))") |> strip
   replace(sql, r"\s+", " ")
 end
+const to_fetch_sql = to_find_sql
 
 function to_store_sql{T<:AbstractModel}(m::T; conflict_strategy = :error) # upsert strateygy = :none | :error | :ignore | :update
   uf = persistable_fields(m)
@@ -106,7 +108,7 @@ function to_store_sql{T<:AbstractModel}(m::T; conflict_strategy = :error) # upse
     pos > 0 && splice!(uf, pos)
 
     fields = SQLColumn(uf)
-    vals = join( map(x -> string(prepare_for_db_save(m, Symbol(x), getfield(m, Symbol(x)))), uf), ", ")
+    vals = join( map(x -> string(to_sqlinput(m, Symbol(x), getfield(m, Symbol(x)))), uf), ", ")
 
     "INSERT INTO $(m._table_name) ( $fields ) VALUES ( $vals )" *
         if ( conflict_strategy == :error ) ""
@@ -122,8 +124,8 @@ function to_store_sql{T<:AbstractModel}(m::T; conflict_strategy = :error) # upse
   return sql * " RETURNING $(m._id)"
 end
 
-function delete_all{T<:AbstractModel}(m::Type{T}; truncate::Bool = true, reset_sequence::Bool = true, cascade::Bool = false)
-  _m = disposable_instance(m)
+function delete_all{T<:AbstractModel}(m::Type{T}; truncate::Bool = true, reset_sequence::Bool = true, cascade::Bool = false) :: Void
+  _m::T = m()
   if truncate
     sql = "TRUNCATE $(_m._table_name)"
     reset_sequence ? sql * " RESTART IDENTITY" : ""
@@ -132,14 +134,16 @@ function delete_all{T<:AbstractModel}(m::Type{T}; truncate::Bool = true, reset_s
     sql = "DELETE FROM $(_m._table_name)"
   end
 
-  query(sql)
+  SearchLight.query(sql)
+
+  nothing
 end
 
-function delete{T<:AbstractModel}(m::T)
-  sql = "DELETE FROM $(m._table_name) WHERE $(m._id) = '$(m.id)'"
-  query(sql)
+function delete{T<:AbstractModel}(m::T) :: T
+  sql = "DELETE FROM $(m._table_name) WHERE $(m._id) = '$(m.id |> Base.get)'"
+  SearchLight.query(sql)
 
-  tmp = typeof(m)()
+  tmp::T = T()
   m.id = tmp.id
 
   m
@@ -147,17 +151,13 @@ end
 
 function count{T<:AbstractModel}(m::Type{T}, q::SQLQuery = SQLQuery()) :: Int
   count_column = SQLColumn("COUNT(*) AS __cid", raw = true)
-  if isempty(q.columns)
-    q.columns = [count_column]
-  else
-    push!(q.columns, count_column)
-  end
+  q = SearchLight.clone(q, :columns, push!(q.columns, count_column))
 
   find_df(m, q)[1, Symbol("__cid")]
 end
 
 function update_query_part{T<:AbstractModel}(m::T)
-  update_values = join(map(x -> "$(string(SQLColumn(x))) = $( string(prepare_for_db_save(m, Symbol(x), getfield(m, Symbol(x)))) )", persistable_fields(m)), ", ")
+  update_values = join(map(x -> "$(string(SQLColumn(x))) = $( string(to_sqlinput(m, Symbol(x), getfield(m, Symbol(x)))) )", persistable_fields(m)), ", ")
   return " $update_values WHERE $(m._table_name).$(m._id) = '$(Base.get(m.id))'"
 end
 
