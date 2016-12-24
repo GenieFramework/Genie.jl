@@ -1,17 +1,18 @@
 using Configuration
-using Logging
+
+export config
 
 const config =  Settings(
                   output_length       = 0,
                   suppress_output     = false,
                   log_db              = false,
+                  log_queries         = false,
                   log_requests        = false,
                   log_responses       = false,
+                  log_router          = false,
                   log_formatted       = false,
-                  log_level           = Logging.ERROR,
+                  log_level           = "error",
                   log_verbosity       = LOG_LEVEL_VERBOSITY_MINIMAL,
                   assets_path         = "/",
-                  cache_ejl           = true,
+                  cache_duration      = 1_000
                 )
-
-export config

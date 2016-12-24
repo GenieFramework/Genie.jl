@@ -35,6 +35,7 @@ v 0.6.x
 ✔ rename methods to not use "_" @done (16-07-12 22:23)
 
 v 0.7.x
+☐ content negotiation
 ☐ channels (websockets communication)
 ☐ add the concept of State to sync app state between client (Vue.js data) and server (Genie state)
 ☐ refactor the views to use data from State and generate the reactive Vue.js code on the client

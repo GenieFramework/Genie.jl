@@ -21,8 +21,14 @@ function startup(port::Int = 8000) :: Void
     try
       nworkers() == 1 ? handle_request(req, res) : @fetch handle_request(req, res)
     catch ex
-      Logger.log("Genie error " * string(ex), :critical, showst = false)
-      Router.serve_error_file(500, string(ex))
+      if Configuration.is_dev()
+        rethrow(ex)
+      else
+        Logger.log("Genie error " * string(ex), :critical, showst = false)
+        Logger.@location()
+
+        Router.serve_error_file(500, string(ex))
+      end
     end
   end
 
@@ -39,14 +45,14 @@ end
 HttpServer handler function - invoked when the server gets a request.
 """
 function handle_request(req::Request, res::Response) :: Response
-  log_request(req)
-  sign_response!(res)
+  Genie.config.log_requests && log_request(req)
+  Genie.config.server_signature != "" && sign_response!(res)
 
   app_response::Response = Router.route_request(req, res)
   app_response.headers = merge(res.headers, app_response.headers)
   app_response.cookies = merge(res.cookies, app_response.cookies)
 
-  AppServer.log_response(req, app_response)
+  Genie.config.log_responses && log_response(req, app_response)
 
   app_response
 end

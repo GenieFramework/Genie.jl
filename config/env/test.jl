@@ -6,8 +6,7 @@ const config =  Settings(
                   log_db              = true,
                   log_requests        = true,
                   log_responses       = true,
-                  log_router          = true,
-                  cache_ejl           = false,
+                  log_router          = true
                 )
 
 export config

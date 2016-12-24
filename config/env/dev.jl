@@ -5,7 +5,7 @@ export config
 const config =  Settings(
                   output_length     = 100,
                   suppress_output   = false,
-                  log_db            = false,
+                  log_db            = true,
                   log_queries       = true,
                   log_requests      = true,
                   log_responses     = true,

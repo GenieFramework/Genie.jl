@@ -1,12 +1,14 @@
 module Router
-using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions, Millboard, Configuration, App, Input, Logger, Util
+
+using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions, Millboard, Configuration, App, Input, Logger, Util, Renderer
+
 import HttpServer.mimetypes
 
 include(abspath(joinpath("lib", "Genie", "src", "router_converters.jl")))
 
 export route, routes
 export GET, POST, PUT, PATCH, DELETE
-export to_link!!, to_link
+export to_link!!, to_link, response_type
 
 const GET     = "GET"
 const POST    = "POST"
@@ -18,13 +20,21 @@ const BEFORE_ACTION_HOOKS = :before_action
 
 const _routes = Dict{Symbol,Any}()
 const _params = Dict{Symbol,Any}()
+const sessionless = Symbol[:json]
 
 function params() :: Dict{Symbol,Any}
   _params
 end
 
+function response_type() :: Symbol
+  haskey(_params, :response_type) ? _params[:response_type] : collect(keys(Renderer.CONTENT_TYPES))[1]
+end
+
 function route_request(req::Request, res::Response) :: Response
   empty!(_params)
+
+  extract_get_params( URI(req.resource) )
+  res = negotiate_content(req, res)
 
   if is_static_file(req.resource)
     Genie.config.server_handle_static_files && return serve_static_file(req.resource)
@@ -37,10 +47,56 @@ function route_request(req::Request, res::Response) :: Response
   end
 
   session = Sessions.start(req, res)
+
   r = match_routes(req, res, session)
-  Sessions.persist(session)
+
+  ! in(response_type(), sessionless) && Sessions.persist(session)
 
   r
+end
+
+function negotiate_content(req::Request, res::Response) :: Response
+  if haskey(_params, :response_type) && in(Symbol(_params[:response_type]), collect(keys(Renderer.CONTENT_TYPES)) )
+    _params[:response_type] = Symbol(_params[:response_type])
+    res.headers["Content-Type"] = Renderer.CONTENT_TYPES[_params[:response_type]]
+
+    return res
+  end
+
+  accept_parts = split(req.headers["Accept"], ";")
+
+  if isempty(accept_parts)
+    _params[:response_type] = collect(keys(Renderer.CONTENT_TYPES))[1]
+    res.headers["Content-Type"] = Renderer.CONTENT_TYPES[_params[:response_type]]
+
+    return res
+  end
+
+  accept_order_parts = split(accept_parts[1], ",")
+
+  if isempty(accept_order_parts)
+    _params[:response_type] = collect(keys(Renderer.CONTENT_TYPES))[1]
+    res.headers["Content-Type"] = Renderer.CONTENT_TYPES[_params[:response_type]]
+
+    return res
+  end
+
+  for mime in accept_order_parts
+    if contains(mime, "/")
+      content_type = split(mime, "/")[2] |> lowercase |> Symbol
+      if haskey(Renderer.CONTENT_TYPES, content_type)
+        _params[:response_type] = content_type
+        res.headers["Content-Type"] = Renderer.CONTENT_TYPES[_params[:response_type]]
+
+        return res
+      end
+    end
+  end
+
+  _params[:response_type] = collect(keys(Renderer.CONTENT_TYPES))[1]
+  res.headers["Content-Type"] = Renderer.CONTENT_TYPES[_params[:response_type]]
+
+  return res
 end
 
 function route(params...; with::Dict = Dict{Any,Any}(), named::Symbol = :__anonymous_route) :: Tuple{Tuple{String,String,String},Dict{Symbol,Dict{Any,Any}}}
@@ -164,11 +220,14 @@ function match_routes(req::Request, res::Response, session::Sessions.Session) ::
     return  try
               invoke_controller(to, req, res, _params, session)
             catch ex
-              Logger.log("Failed invoking controller", :err, showst = false)
-              Logger.@location()
-              Logger.log(ex, :err, showst = true)
+              if is_dev()
+                rethrow(ex)
+              else
+                Logger.log("Failed invoking controller", :err, showst = false)
+                Logger.@location()
 
-              serve_error_file_500(ex)
+                serve_error_file_500(ex)
+              end
             end
   end
 
@@ -215,6 +274,10 @@ function extract_uri_params(uri::URI, regex_route::Regex, param_names::Vector{Ab
     i += 1
   end
 
+  true # this must be bool cause it's used in bool context for chaining
+end
+
+function extract_get_params(uri::URI) :: Bool
   # GET params
   if ! isempty(uri.query)
     for query_part in split(uri.query, "&")
@@ -320,33 +383,42 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
   try
     params[Genie.PARAMS_ACL_KEY] = App.load_acl(controller_path)
   catch ex
-    Logger.log("Failed loading ACL", :err, showst = false)
-    Logger.@location()
-    Logger.log(ex, :err, showst = true)
+    if Configuration.is_dev()
+      rethrow(ex)
+    else
+      Logger.log("Failed loading ACL", :err, showst = false)
+      Logger.@location()
 
-    return serve_error_file_500(ex)
+      return serve_error_file_500(ex)
+    end
   end
 
   try
     hook_result = run_hooks(BEFORE_ACTION_HOOKS, eval(App, parse(join(split(action_name, ".")[1:end-1], "."))), params)
     hook_stop(hook_result) && return to_response(hook_result[2])
   catch ex
-    Logger.log("Failed to invoke hooks $(BEFORE_ACTION_HOOKS)", :err, showst = false)
-    Logger.@location()
-    Logger.log(ex, :err, showst = true)
+    if Configuration.is_dev()
+      rethrow(ex)
+    else
+      Logger.log("Failed to invoke hooks $(BEFORE_ACTION_HOOKS)", :err, showst = false)
+      Logger.@location()
 
-    return serve_error_file_500(ex)
+      return serve_error_file_500(ex)
+    end
   end
 
   return  try
             eval(parse("App." * action_name))(params) |> to_response
           catch ex
-            Logger.log("$ex at $(@__FILE__):$(@__LINE__)", :critical, showst = false)
-            Logger.log("While invoking $(action_name) with $(params)", :critical, showst = false)
-            Logger.@location()
-            stacktrace()
+            if Configuration.is_dev()
+              rethrow(ex)
+            else
+              Logger.log("$ex at $(@__FILE__):$(@__LINE__)", :critical, showst = false)
+              Logger.log("While invoking $(action_name) with $(params)", :critical, showst = false)
+              Logger.@location()
 
-            serve_error_file_500(ex)
+              serve_error_file_500(ex)
+            end
           end
 end
 
@@ -361,7 +433,7 @@ function to_response(action_result) :: Response
             end
           catch ex
             Logger.log("Can't convert $action_result to HttpServer Response", :err)
-            Logger.log(ex, :err)
+            Logger.@location()
 
             serve_error_file_500(ex)
           end

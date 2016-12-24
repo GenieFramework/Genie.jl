@@ -1,25 +1,25 @@
 module Renderer
 export respond, json, mustache, ejl, redirect_to
-using Genie, Util, Macros, JSON, Ejl, Mustache, Configuration, HttpServer, App
+using Genie, Util, Macros, JSON, Ejl, Mustache, Configuration, HttpServer, App, Router
 @devtools()
 
-const CONTENT_TYPES = Dict{Symbol, AbstractString}(
-  :json   => "text/json",
+const CONTENT_TYPES = Dict{Symbol,AbstractString}(
   :html   => "text/html",
+  :plain  => "text/plain",
+  :json   => "text/json",
   :js     => "application/javascript",
-  :text   => "text/plain"
 )
 const MUSTACHE_YIELD_VAR_NAME = :yield
 const EJL_YIELD_VAR_NAME = :yield
 
-function json(resource::Symbol, action::Symbol; vars...)
+function json(resource::Symbol, action::Symbol; vars...) :: Dict{Symbol,AbstractString}
   spawn_splatted_vars(vars)
   r = include(abspath(joinpath(Genie.RESOURCE_PATH, string(resource), "views", string(action) * ".$RENDER_JSON_EXT")))
 
   Dict(:json => r)
 end
 
-function ejl(resource::Symbol, action::Symbol; layout::Union{Symbol,AbstractString} = :app, render_layout::Bool = true, vars...)
+function ejl(resource::Symbol, action::Symbol; layout::Union{Symbol,AbstractString} = :app, render_layout::Bool = true, vars...) :: Dict{Symbol,AbstractString}
   spawn_splatted_vars(vars)
 
   path = abspath(joinpath(Genie.RESOURCE_PATH, string(resource), "views", string(action) * "." * Configuration.RENDER_EJL_EXT))
@@ -32,22 +32,22 @@ function ejl(resource::Symbol, action::Symbol; layout::Union{Symbol,AbstractStri
     r = @ejl(:($path))
   end
 
-  Dict(:html => r)
+  Dict{Symbol,AbstractString}(:html => r)
 end
-function ejl(content::AbstractString, layout::Union{Symbol,AbstractString} = :app, vars...)
+function ejl(content::AbstractString, layout::Union{Symbol,AbstractString} = :app, vars...) :: Dict{Symbol,AbstractString}
   spawn_splatted_vars(vars)
   layout = Ejl.template_from_file(abspath(joinpath(Genie.APP_PATH, "layouts", string(layout) * "." * Configuration.RENDER_EJL_EXT)))
   spawn_vars(EJL_YIELD_VAR_NAME, content)
   r = Ejl.render_tpl(layout)
 
-  Dict(:html => r)
+  Dict{Symbol,AbstractString}(:html => r)
 end
-function ejl(content::Vector{AbstractString}; vars...)
+function ejl(content::Vector{AbstractString}; vars...) :: AbstractString
   spawn_splatted_vars(vars)
   Ejl.render_tpl(content)
 end
 
-function mustache(resource::Symbol, action::Symbol; layout::Union{Symbol,AbstractString} = :app, render_layout::Bool = true, vars...)
+function mustache(resource::Symbol, action::Symbol; layout::Union{Symbol,AbstractString} = :app, render_layout::Bool = true, vars...) :: Dict{Symbol,AbstractString}
   spawn_splatted_vars(vars)
 
   template = Mustache.template_from_file(abspath(joinpath(Genie.RESOURCE_PATH, string(resource), "views", string(action) * ".$RENDER_MUSTACHE_EXT")))
@@ -60,47 +60,51 @@ function mustache(resource::Symbol, action::Symbol; layout::Union{Symbol,Abstrac
     r = Mustache.render(layout, vals)
   end
 
-  Dict(:html => r)
+  Dict{Symbol,AbstractString}(:html => r)
 end
-function mustache(content::AbstractString, layout::Union{Symbol,AbstractString} = :app, vars...)
+function mustache(content::AbstractString, layout::Union{Symbol,AbstractString} = :app, vars...) :: Dict{Symbol,AbstractString}
   spawn_splatted_vars(vars)
   vals = merge(special_vals(), Dict(k => v for (k, v) in vars))
   layout = Mustache.template_from_file(abspath(joinpath(Genie.APP_PATH, "layouts", string(layout) * ".$RENDER_MUSTACHE_EXT")))
   vals[MUSTACHE_YIELD_VAR_NAME] = content
   r = Mustache.render(layout, vals)
 
-  Dict(:html => r)
+  Dict{Symbol,AbstractString}(:html => r)
 end
 
-function redirect_to(location::AbstractString, code::Int = 302, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}())
+function redirect_to(location::AbstractString, code::Int = 302, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}()) :: Dict{Symbol,AbstractString}
   headers["Location"] = location
-  respond(Dict(:text => ""), code, headers)
+  respond(Dict{Symbol,AbstractString}(:text => ""), code, headers)
 end
 
-function spawn_splatted_vars(vars, m::Module = current_module())
+function spawn_splatted_vars(vars, m::Module = current_module()) :: Void
   for arg in vars
     k, v = arg
     spawn_vars(k, v, m)
   end
+
+  nothing
 end
 
-function rendered_spawn_splatted_vars{T}(vars::Dict{Symbol,T}, m::Module = current_module())
+function rendered_spawn_splatted_vars{T}(vars::Dict{Symbol,T}, m::Module = current_module()) :: String
   spawn_splatted_vars(vars, m)
   ""
 end
 
-function special_vals()
+function special_vals() :: Dict{Symbol,Any}
   Dict{Symbol,Any}(
     :genie_assets_path => Genie.config.assets_path
   )
 end
 
-function spawn_vars(key, value, m::Module = current_module())
+function spawn_vars(key, value, m::Module = current_module()) :: Void
   eval(m, :(const $key = $value))
+
+  nothing
 end
 
-function structure_to_dict(structure, resource = nothing)
-  data_item = Dict()
+function structure_to_dict(structure, resource = nothing) :: Dict{Symbol,Any}
+  data_item = Dict{Symbol,Any}()
   for (k, v) in structure
     k = endswith(string(k), "_") ? Symbol(string(k)[1:end-1]) : k
     data_item[Symbol(k)] =  if isa(v, Symbol)
@@ -115,31 +119,38 @@ function structure_to_dict(structure, resource = nothing)
   data_item
 end
 
-function respond(body, code::Int = 200, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}())
-  body =  if haskey(body, :json)
-            headers["Content-Type"] = CONTENT_TYPES[:json]
-            JSON.json(body[:json])
-          elseif haskey(body, :html)
-            headers["Content-Type"] = CONTENT_TYPES[:html]
-            body[:html]
-          elseif haskey(body, :js)
-            headers["Content-Type"] = CONTENT_TYPES[:js]
-            body[:js]
-          elseif haskey(body, :text)
-            headers["Content-Type"] = CONTENT_TYPES[:text]
-            body[:text]
-          else
-            headers["Content-Type"] = CONTENT_TYPES[:json]
-            body
-          end
+function respond{T}(body::Dict{Symbol,T}, code::Int = 200, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}()) :: Tuple{Int,Dict{AbstractString,AbstractString},AbstractString}
+  sbody::String =   if haskey(body, :json)
+                      headers["Content-Type"] = CONTENT_TYPES[:json]
+                      JSON.json(body[:json])
+                    elseif haskey(body, :html)
+                      headers["Content-Type"] = CONTENT_TYPES[:html]
+                      string(body[:html])
+                    elseif haskey(body, :js)
+                      headers["Content-Type"] = CONTENT_TYPES[:js]
+                      string(body[:js])
+                    elseif haskey(body, :plain)
+                      headers["Content-Type"] = CONTENT_TYPES[:plain]
+                      string(body[:plain])
+                    end
 
-  (code, headers, body)
+  (code, headers, sbody)
 end
-function respond(response::Tuple, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}())
+function respond(response::Tuple, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}()) :: Tuple{Int,Dict{AbstractString,AbstractString},Dict{Symbol,Any}}
   respond(response[1], response[2], headers)
 end
-function respond(response::Response)
-  return response
+function respond(response::Response) :: Response
+  response
+end
+function respond(body::String, params::Dict{Symbol,Any}) :: Response
+  r = params[:RESPONSE]
+  r.data = body
+
+  r |> respond
+end
+function respond(body::String) :: Response
+  @show Router.params()[:RESPONSE].headers
+  respond(body, Router.params())
 end
 
 function http_error(status_code; id = "resource_not_found", code = "404-0001", title = "Not found", detail = "The requested resource was not found")
