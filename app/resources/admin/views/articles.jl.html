@@ -6,7 +6,7 @@
           <h3>Articles</h3>
           <div class="card-title-block">
             <div class="pull-right">
-              <a class="btn btn-success btn-sm" id="new_article" href="$( to_link(:admin_article_new) )">
+              <a class="btn btn-success btn-sm" id="new_article" href="$( Router.to_link(:admin_article_new) )">
                 <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                 New
               </a>
@@ -29,9 +29,9 @@
                     </div>
                   </td>
                   <td class="actions-cell text-right pull-right">
-                    <a href="$( to_link(:admin_article_edit, article_id = _!!(a.id) ) )" class="btn btn-primary btn-sm">Edit</a>
-                    <$ App.Articles.is_published(a) ? "" : """<a href="$( to_link(:admin_article_publish, article_id = _!!(a.id) ) )" class="btn btn-success btn-sm">Publish</a>""" $>
-                    <a href="$( to_link(:admin_article_preview, article_id = _!!(a.id) ) )" target="_blank" class="btn btn-info btn-sm">Preview</a>
+                    <a href="$( Router.to_link(:admin_article_edit, article_id = _!!(a.id) ) )" class="btn btn-primary btn-sm">Edit</a>
+                    <$ App.Articles.is_published(a) ? "" : """<a href="$( Router.to_link(:admin_article_publish, article_id = _!!(a.id) ) )" class="btn btn-success btn-sm">Publish</a>""" $>
+                    <a href="$( Router.to_link(:admin_article_preview, article_id = _!!(a.id) ) )" target="_blank" class="btn btn-info btn-sm">Preview</a>
                   </td>
                 </tr>
                 <: end %>

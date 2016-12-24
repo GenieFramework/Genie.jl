@@ -19,26 +19,32 @@ const DELETE  = "DELETE"
 const BEFORE_ACTION_HOOKS = :before_action
 
 const _routes = Dict{Symbol,Any}()
-const _params = Dict{Symbol,Any}()
 const sessionless = Symbol[:json]
 
-function params() :: Dict{Symbol,Any}
-  _params
+type Params{T}
+  collection::Dict{Symbol,T}
 end
+Params() = Params(Dict{Symbol,Any}())
 
-function response_type() :: Symbol
-  haskey(_params, :response_type) ? _params[:response_type] : collect(keys(Renderer.CONTENT_TYPES))[1]
+function response_type{T}(params::Dict{Symbol,T}) :: Symbol
+  haskey(params, :response_type) ? params[:response_type] : collect(keys(Renderer.CONTENT_TYPES))[1]
+end
+function response_type{T}(check::Symbol, params::Dict{Symbol,T}) :: Bool
+  check == response_type(params)
+end
+function response_type(params::Params) :: Symbol
+  response_type(params.collection)
 end
 
 function route_request(req::Request, res::Response) :: Response
-  empty!(_params)
+  params = Params()
 
-  extract_get_params( URI(req.resource) )
-  res = negotiate_content(req, res)
+  extract_get_params(URI(req.resource), params)
+  res = negotiate_content(req, res, params)
 
   if is_static_file(req.resource)
     Genie.config.server_handle_static_files && return serve_static_file(req.resource)
-    return serve_error_file(404, "File not found: $(req.resource)")
+    return serve_error_file(404, "File not found: $(req.resource)", params.collection)
   end
 
   if is_dev()
@@ -48,58 +54,56 @@ function route_request(req::Request, res::Response) :: Response
 
   session = Sessions.start(req, res)
 
-  r = match_routes(req, res, session)
+  r = match_routes(req, res, session, params)
 
-  ! in(response_type(), sessionless) && Sessions.persist(session)
+  ! in(response_type(params), sessionless) && Sessions.persist(session)
 
   r
 end
 
-function negotiate_content(req::Request, res::Response) :: Response
-  if haskey(_params, :response_type) && in(Symbol(_params[:response_type]), collect(keys(Renderer.CONTENT_TYPES)) )
-    _params[:response_type] = Symbol(_params[:response_type])
-    res.headers["Content-Type"] = Renderer.CONTENT_TYPES[_params[:response_type]]
+function negotiate_content(req::Request, res::Response, params::Params) :: Response
+  function set_negotiated_content()
+    params.collection[:response_type] = collect(keys(Renderer.CONTENT_TYPES))[1]
+    res.headers["Content-Type"] = Renderer.CONTENT_TYPES[params.collection[:response_type]]
+
+    true
+  end
+
+  if haskey(params.collection, :response_type) && in(Symbol(params.collection[:response_type]), collect(keys(Renderer.CONTENT_TYPES)) )
+    params.collection[:response_type] = Symbol(params.collection[:response_type])
+    res.headers["Content-Type"] = Renderer.CONTENT_TYPES[params.collection[:response_type]]
 
     return res
   end
 
-  accept_parts = split(req.headers["Accept"], ";")
+  negotiation_header = haskey(req.headers, "Accept") ? "Accept" : ( haskey(req.headers, "Content-Type") ? "Content-Type" : "" )
 
-  if isempty(accept_parts)
-    _params[:response_type] = collect(keys(Renderer.CONTENT_TYPES))[1]
-    res.headers["Content-Type"] = Renderer.CONTENT_TYPES[_params[:response_type]]
+  isempty(negotiation_header) && set_negotiated_content() && return res
 
-    return res
-  end
+  accept_parts = split(req.headers[negotiation_header], ";")
+
+  isempty(accept_parts) && set_negotiated_content() && return res
 
   accept_order_parts = split(accept_parts[1], ",")
 
-  if isempty(accept_order_parts)
-    _params[:response_type] = collect(keys(Renderer.CONTENT_TYPES))[1]
-    res.headers["Content-Type"] = Renderer.CONTENT_TYPES[_params[:response_type]]
-
-    return res
-  end
+  isempty(accept_order_parts) && set_negotiated_content() && return res
 
   for mime in accept_order_parts
     if contains(mime, "/")
       content_type = split(mime, "/")[2] |> lowercase |> Symbol
       if haskey(Renderer.CONTENT_TYPES, content_type)
-        _params[:response_type] = content_type
-        res.headers["Content-Type"] = Renderer.CONTENT_TYPES[_params[:response_type]]
+        params.collection[:response_type] = content_type
+        res.headers["Content-Type"] = Renderer.CONTENT_TYPES[params.collection[:response_type]]
 
         return res
       end
     end
   end
 
-  _params[:response_type] = collect(keys(Renderer.CONTENT_TYPES))[1]
-  res.headers["Content-Type"] = Renderer.CONTENT_TYPES[_params[:response_type]]
-
-  return res
+  set_negotiated_content() && return res
 end
 
-function route(params...; with::Dict = Dict{Any,Any}(), named::Symbol = :__anonymous_route) :: Tuple{Tuple{String,String,String},Dict{Symbol,Dict{Any,Any}}}
+function route(params...; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Tuple{Tuple{String,String,String},Dict{Symbol,Dict{Any,Any}}}
   extra_params = Dict(:with => with)
   named = named == :__anonymous_route ? route_name(params) : named
   if haskey(_routes, named)
@@ -196,7 +200,7 @@ function to_link(route_name::Symbol; route_params...) :: String
   end
 end
 
-function match_routes(req::Request, res::Response, session::Sessions.Session) :: Response
+function match_routes(req::Request, res::Response, session::Sessions.Session, params::Params) :: Response
   for r in routes()
     route_def, extra_params = r
     protocol, route, to = route_def
@@ -211,14 +215,16 @@ function match_routes(req::Request, res::Response, session::Sessions.Session) ::
 
     (! ismatch(regex_route, uri.path)) && continue
     Genie.config.log_router && Logger.log("Router: Matched route " * uri.path)
-    (! extract_uri_params(uri, regex_route, param_names, param_types)) && continue
+    (! extract_uri_params(uri, regex_route, param_names, param_types, params)) && continue
     Genie.config.log_router && Logger.log("Router: Matched type of route " * uri.path)
-    extract_post_params(req)
-    extract_extra_params(extra_params)
-    extract_pagination_params()
+    extract_post_params(req, params)
+    extract_extra_params(extra_params, params)
+    extract_pagination_params(params)
+
+    res = negotiate_content(req, res, params)
 
     return  try
-              invoke_controller(to, req, res, _params, session)
+              invoke_controller(to, req, res, params.collection, session)
             catch ex
               if is_dev()
                 rethrow(ex)
@@ -226,13 +232,13 @@ function match_routes(req::Request, res::Response, session::Sessions.Session) ::
                 Logger.log("Failed invoking controller", :err, showst = false)
                 Logger.@location()
 
-                serve_error_file_500(ex)
+                serve_error_file_500(ex, params.collection)
               end
             end
   end
 
   Genie.config.log_router && Logger.log("Router: No route matched - defaulting 404", :err)
-  serve_error_file(404, "Not found")
+  serve_error_file(404, "Not found", params.collection)
 end
 
 function parse_route(route::AbstractString) :: Tuple{AbstractString,Vector{AbstractString},Vector{Any}}
@@ -260,12 +266,12 @@ function parse_route(route::AbstractString) :: Tuple{AbstractString,Vector{Abstr
   "/" * join(parts, "/"), param_names, param_types
 end
 
-function extract_uri_params(uri::URI, regex_route::Regex, param_names::Vector{AbstractString}, param_types::Vector{Any}) :: Bool
+function extract_uri_params(uri::URI, regex_route::Regex, param_names::Vector{AbstractString}, param_types::Vector{Any}, params::Params) :: Bool
   matches = match(regex_route, uri.path)
   i = 1
   for param_name in param_names
     try
-      _params[Symbol(param_name)] = convert(param_types[i], matches[param_name])
+      params.collection[Symbol(param_name)] = convert(param_types[i], matches[param_name])
     catch ex
       Logger.log(ex)
       return false
@@ -277,60 +283,60 @@ function extract_uri_params(uri::URI, regex_route::Regex, param_names::Vector{Ab
   true # this must be bool cause it's used in bool context for chaining
 end
 
-function extract_get_params(uri::URI) :: Bool
+function extract_get_params(uri::URI, params::Params) :: Bool
   # GET params
   if ! isempty(uri.query)
     for query_part in split(uri.query, "&")
       qp = split(query_part, "=")
       (size(qp)[1] == 1) && (push!(qp, ""))
-      _params[Symbol(qp[1])] = qp[2]
+      params.collection[Symbol(qp[1])] = qp[2]
     end
   end
 
   true # this must be bool cause it's used in bool context for chaining
 end
 
-function extract_extra_params(extra_params::Dict) :: Void
+function extract_extra_params(extra_params::Dict, params::Params) :: Void
   if ! isempty(extra_params[:with])
     for (k, v) in extra_params[:with]
-      _params[Symbol(k)] = v
+      params.collection[Symbol(k)] = v
     end
   end
 
   nothing
 end
 
-function extract_post_params(req::Request) :: Void
+function extract_post_params(req::Request, params::Params) :: Void
   for (k, v) in Input.post(req)
     v = replace(v, "+", " ")
-    nested_keys(k, v)
-    _params[Symbol(k)] = v
+    nested_keys(k, v, params)
+    params.collection[Symbol(k)] = v
   end
 
   nothing
 end
 
-function nested_keys(k::AbstractString, v) :: Void
+function nested_keys(k::AbstractString, v, params::Params) :: Void
   if contains(k, ".")
     parts = split(k, ".", limit = 2)
     nested_val_key = Symbol(parts[1])
     if haskey(_params, nested_val_key) && isa(_params[nested_val_key], Dict)
       ! haskey(_params[nested_val_key], Symbol(parts[2])) && (_params[nested_val_key][Symbol(parts[2])] = v)
     elseif ! haskey(_params, nested_val_key)
-      _params[nested_val_key] = Dict()
-      _params[nested_val_key][Symbol(parts[2])] = v
+      params.collection[nested_val_key] = Dict()
+      params.collection[nested_val_key][Symbol(parts[2])] = v
     end
   end
 
   nothing
 end
 
-function extract_pagination_params() :: Void
-  if ! haskey(_params, :page_number)
-    _params[:page_number] = haskey(_params, Symbol("page[number]")) ? parse(Int, _params[Symbol("page[number]")]) : 1
+function extract_pagination_params(params::Params) :: Void
+  if ! haskey(params.collection, :page_number)
+    params.collection[:page_number] = haskey(params.collection, Symbol("page[number]")) ? parse(Int, params.collection[Symbol("page[number]")]) : 1
   end
-  if ! haskey(_params, :page_size)
-    _params[:page_size] = haskey(_params, Symbol("page[size]")) ? parse(Int, _params[Symbol("page[size]")]) : Genie.config.pagination_default_items_per_page
+  if ! haskey(params.collection, :page_size)
+    params.collection[:page_size] = haskey(params.collection, Symbol("page[size]")) ? parse(Int, params.collection[Symbol("page[size]")]) : Genie.config.pagination_default_items_per_page
   end
 
   nothing
@@ -389,7 +395,7 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
       Logger.log("Failed loading ACL", :err, showst = false)
       Logger.@location()
 
-      return serve_error_file_500(ex)
+      return serve_error_file_500(ex, params)
     end
   end
 
@@ -403,7 +409,7 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
       Logger.log("Failed to invoke hooks $(BEFORE_ACTION_HOOKS)", :err, showst = false)
       Logger.@location()
 
-      return serve_error_file_500(ex)
+      return serve_error_file_500(ex, params)
     end
   end
 
@@ -417,7 +423,7 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
               Logger.log("While invoking $(action_name) with $(params)", :critical, showst = false)
               Logger.@location()
 
-              serve_error_file_500(ex)
+              serve_error_file_500(ex, params)
             end
           end
 end
@@ -439,13 +445,13 @@ function to_response(action_result) :: Response
           end
 end
 
-function serve_error_file_500(ex::Exception) :: Response
+function serve_error_file_500(ex::Exception, params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
   serve_error_file( 500,
                     string(ex) *
                     "<br/><br/>" *
                     join(catch_stacktrace(), "<br/>") *
                     "<hr/>" *
-                    string(params())
+                    string(params)
                   )
 end
 

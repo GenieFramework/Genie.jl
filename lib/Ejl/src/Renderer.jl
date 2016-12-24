@@ -119,7 +119,7 @@ function structure_to_dict(structure, resource = nothing) :: Dict{Symbol,Any}
   data_item
 end
 
-function respond{T}(body::Dict{Symbol,T}, code::Int = 200, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}()) :: Tuple{Int,Dict{AbstractString,AbstractString},AbstractString}
+function respond{T}(body::Dict{Symbol,T}, code::Int = 200, headers = Dict{AbstractString,AbstractString}()) :: Response
   sbody::String =   if haskey(body, :json)
                       headers["Content-Type"] = CONTENT_TYPES[:json]
                       JSON.json(body[:json])
@@ -134,23 +134,22 @@ function respond{T}(body::Dict{Symbol,T}, code::Int = 200, headers::Dict{Abstrac
                       string(body[:plain])
                     end
 
-  (code, headers, sbody)
+  Response(code, headers, sbody)
 end
-function respond(response::Tuple, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}()) :: Tuple{Int,Dict{AbstractString,AbstractString},Dict{Symbol,Any}}
+function respond(response::Tuple, headers = Dict{AbstractString,AbstractString}()) :: Response
   respond(response[1], response[2], headers)
 end
 function respond(response::Response) :: Response
   response
 end
-function respond(body::String, params::Dict{Symbol,Any}) :: Response
+function respond{T}(body::String, params::Dict{Symbol,T}) :: Response
   r = params[:RESPONSE]
   r.data = body
 
   r |> respond
 end
 function respond(body::String) :: Response
-  @show Router.params()[:RESPONSE].headers
-  respond(body, Router.params())
+  respond(Response(body))
 end
 
 function http_error(status_code; id = "resource_not_found", code = "404-0001", title = "Not found", detail = "The requested resource was not found")

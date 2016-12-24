@@ -8,7 +8,7 @@ dev:
 
 prod:
   adapter: PostgreSQL
-  database: blogjl_prod
+  database: blogjl_dev
   host: localhost
   username: adrian
   password: adrian

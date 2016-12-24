@@ -1,5 +1,6 @@
 module FileSessionAdapter
-using Sessions, Genie, Logger
+
+using Sessions, Genie, Logger, Configuration
 
 function write(session)
   try
@@ -22,8 +23,10 @@ function read(session_id::AbstractString) :: Nullable{Sessions.Session}
 
     Nullable{Sessions.Session}(session)
   catch ex
-    Logger.log("Can't read session $(joinpath(Genie.config.session_folder, session_id))", :err)
-    Logger.@location()
+    if is_dev()
+      Logger.log("Can't read session $(joinpath(Genie.config.session_folder, session_id))", :err)
+      Logger.@location()
+    end
 
     Nullable{Sessions.Session}()
   end
