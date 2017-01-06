@@ -28,7 +28,7 @@ function adapter_table_columns_sql(table_name::AbstractString) :: String
   FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '$table_name'"
 end
 
-function adapter_create_migrations_table_sql()
+function adapter_create_migrations_table_sql() :: String
   "CREATE TABLE $(Genie.config.db_migrations_table_name) (version varchar(30) CONSTRAINT firstkey PRIMARY KEY)"
 end
 
@@ -156,9 +156,10 @@ function count{T<:AbstractModel}(m::Type{T}, q::SQLQuery = SQLQuery()) :: Int
   find_df(m, q)[1, Symbol("__cid")]
 end
 
-function update_query_part{T<:AbstractModel}(m::T)
+function update_query_part{T<:AbstractModel}(m::T) :: String
   update_values = join(map(x -> "$(string(SQLColumn(x))) = $( string(to_sqlinput(m, Symbol(x), getfield(m, Symbol(x)))) )", persistable_fields(m)), ", ")
-  return " $update_values WHERE $(m._table_name).$(m._id) = '$(Base.get(m.id))'"
+
+  " $update_values WHERE $(m._table_name).$(m._id) = '$(Base.get(m.id))'"
 end
 
 function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}, joins = SQLJoin[])

@@ -1,4 +1,5 @@
 module Ejl
+
 using Genie, Configuration, SHA, Cache, Renderer
 
 export @ejl_str, push_template_line!, @ejl

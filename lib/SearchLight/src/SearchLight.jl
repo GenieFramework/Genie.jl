@@ -549,6 +549,30 @@ end
 
 
 """
+    rand_one!!{T<:AbstractModel}(m::Type{T}) :: T
+
+Similar to `SearchLight.rand_one` -- returns one random instance of {T<:AbstractModel}, but also attempts to get the object within the Nullable{T} instance.
+Will throw an error if Nullable{T} is null.
+
+# Examples
+```julia
+julia> ar = SearchLight.rand_one!!(Article)
+
+App.Article
++==============+=========================================================================================================+
+|          key |                                                                                                   value |
++==============+=========================================================================================================+
+|           id |                                                                                     Nullable{Int32}(59) |
++--------------+---------------------------------------------------------------------------------------------------------+
+...
+```
+"""
+function rand_one!!{T<:AbstractModel}(m::Type{T}) :: T
+  rand_one(m) |> Base.get
+end
+
+
+"""
     all{T<:AbstractModel}(m::Type{T}) :: Vector{T}
 
 Executes a SQL `SELECT` query against the database and return all the results. Alias for `find(m)`
@@ -2991,61 +3015,265 @@ function table_name{T<:AbstractModel}(m::T) :: String
   m._table_name
 end
 
+
+"""
+    validator!!{T<:AbstractModel}(m::T) :: ModelValidator
+
+Gets the ModelValidator object defined for `m`.
+If no ModelValidator is defined, an error will be thrown.
+
+# Examples
+```julia
+julia> ar = SearchLight.rand_one!!(Article)
+
+App.Article
++==============+==========================================================================================+
+|          key |                                                                                    value |
++==============+==========================================================================================+
+|           id |                                                                      Nullable{Int32}(16) |
++--------------+------------------------------------------------------------------------------------------+
+...
+
+julia> SearchLight.validator!!(ar)
+
+SearchLight.ModelValidator
++========+=========================================================================================================+
+|    key |                                                                                                   value |
++========+=========================================================================================================+
+| errors |                                                                           Tuple{Symbol,Symbol,String}[] |
++--------+---------------------------------------------------------------------------------------------------------+
+|  rules | Tuple{Symbol,Function,Vararg{Any,N}}[(:title,Validation.not_empty),(:title,Validation.min_length,20)... |
++--------+---------------------------------------------------------------------------------------------------------+
+```
+"""
 function validator!!{T<:AbstractModel}(m::T) :: ModelValidator
   Validation.validator!!(m)
 end
 
+
+"""
+    validator{T<:AbstractModel}(m::T) :: Nullable{ModelValidator}
+
+Gets the ModelValidator object defined for `m` wrapped in a Nullable{ModelValidator}.
+
+# Examples
+```julia
+julia> SearchLight.rand_one!!(Article) |> SearchLight.validator
+
+Nullable{SearchLight.ModelValidator}(
+SearchLight.ModelValidator
++========+=========================================================================================================+
+|    key |                                                                                                   value |
++========+=========================================================================================================+
+| errors |                                                                           Tuple{Symbol,Symbol,String}[] |
++--------+---------------------------------------------------------------------------------------------------------+
+|  rules | Tuple{Symbol,Function,Vararg{Any,N}}[(:title,Validation.not_empty),(:title,Validation.min_length,20)... |
++--------+---------------------------------------------------------------------------------------------------------+
+)
+```
+"""
 function validator{T<:AbstractModel}(m::T) :: Nullable{ModelValidator}
   Validation.validator!!(m)
 end
 
-function has_field{T<:AbstractModel}(m::T, f::Symbol)
+
+"""
+    has_field{T<:AbstractModel}(m::T, f::Symbol) :: Bool
+
+Returns a `Bool` whether or not the field `f` is defined on the model `m`.
+
+# Examples
+```julia
+julia> SearchLight.has_field(ar, :validator)
+true
+
+julia> SearchLight.has_field(ar, :moo)
+false
+```
+"""
+function has_field{T<:AbstractModel}(m::T, f::Symbol) :: Bool
   in(f, fieldnames(m))
 end
 
-function strip_table_name{T<:AbstractModel}(m::T, f::Symbol)
+
+"""
+    strip_table_name{T<:AbstractModel}(m::T, f::Symbol) :: Symbol
+
+Strips the table name associated with the model from a fully qualified alias column name string.
+
+# Examples
+```julia
+julia> SearchLight.strip_table_name(SearchLight.rand_one!!(Article), :articles_updated_at)
+:updated_at
+```
+"""
+function strip_table_name{T<:AbstractModel}(m::T, f::Symbol) :: Symbol
   replace(string(f), Regex("^$(m._table_name)_"), "", 1) |> Symbol
 end
 
-function is_fully_qualified{T<:AbstractModel}(m::T, f::Symbol)
+
+"""
+    is_fully_qualified{T<:AbstractModel}(m::T, f::Symbol) :: Bool
+
+Returns a `Bool` whether or not `f` represents a fully qualified column name alias of the table associated with the model `m`.
+
+# Examples
+```julia
+julia> SearchLight.is_fully_qualified(SearchLight.rand_one!!(Article), :articles_updated_at)
+true
+
+julia> SearchLight.is_fully_qualified(SearchLight.rand_one!!(Article), :users_updated_at)
+false
+```
+"""
+function is_fully_qualified{T<:AbstractModel}(m::T, f::Symbol) :: Bool
   startswith(string(f), m._table_name) && has_field(m, strip_table_name(m, f))
 end
 
-function is_fully_qualified(s::String)
+
+"""
+    is_fully_qualified(s::String) :: Bool
+
+Returns a `Bool` whether or not `s` represents a fully qualified SQL column name.
+
+# Examples
+```julia
+julia> SearchLight.is_fully_qualified("articles.updated_at")
+true
+
+julia> SearchLight.is_fully_qualified("updated_at")
+false
+```
+"""
+function is_fully_qualified(s::String) :: Bool
   ! startswith(s, ".") && contains(s, ".")
 end
 
-function from_fully_qualified{T<:AbstractModel}(m::T, f::Symbol)
+
+"""
+    from_fully_qualified{T<:AbstractModel}(m::T, f::Symbol) :: String
+
+If `f` is a fully qualified column name alias of the table associated with the model `m`, it returns the column name with the table name stripped off.
+Otherwise it returns `f`.
+
+# Examples
+```julia
+julia> SearchLight.from_fully_qualified(SearchLight.rand_one!!(Article), :articles_updated_at)
+:updated_at
+
+julia> SearchLight.from_fully_qualified(SearchLight.rand_one!!(Article), :foo_bar)
+:foo_bar
+```
+"""
+function from_fully_qualified{T<:AbstractModel}(m::T, f::Symbol) :: Symbol
   is_fully_qualified(m, f) ? strip_table_name(m, f) : f
 end
-function from_fully_qualified(s::String)
-  arr = split(s, ".")
-  (arr[1], arr[2])
+
+
+"""
+    from_fully_qualified(s::String) :: Tuple{String,String}
+
+Attempts to split a fully qualified SQL column name into a Tuple of table_name and column_name.
+If `s` is not in the table_name.column_name format, an error is thrown.
+
+# Examples
+```julia
+julia> SearchLight.from_fully_qualified("articles.updated_at")
+("articles","updated_at")
+
+julia> SearchLight.from_fully_qualified("articles_updated_at")
+------ String -------------------------- Stacktrace (most recent call last)
+
+ [1] — from_fully_qualified(::String) at SearchLight.jl:3168
+
+"articles_updated_at is not a fully qualified SQL column name in the format table_name.column_name"
+```
+"""
+function from_fully_qualified(s::String) :: Tuple{String,String}
+  ! contains(s, ".") && throw("$s is not a fully qualified SQL column name in the format table_name.column_name")
+
+  (x,y) = split(s, ".")
+
+  (x,y)
 end
 
-function strip_module_name(s::String)
+
+"""
+    strip_module_name(s::String) :: String
+
+If `s` is in the format module_name.function_name, only the function name will be returned.
+Otherwise `s` will be returned.
+
+# Examples
+```julia
+julia> SearchLight.strip_module_name("SearchLight.rand")
+"rand"
+```
+"""
+function strip_module_name(s::String) :: String
   split(s, ".") |> last
 end
 
-function to_fully_qualified(v::String, t::String)
+
+"""
+    to_fully_qualified(v::String, t::String) :: String
+
+Takes `v` as the column name and `t` as the table name and returns a fully qualified SQL column name as `table_name.column_name`.
+
+# Examples
+```julia
+julia> SearchLight.to_fully_qualified("updated_at", "articles")
+"articles.updated_at"
+```
+"""
+function to_fully_qualified(v::String, t::String) :: String
   t * "." * v
 end
-function to_fully_qualified{T<:AbstractModel}(m::T, v::String)
+
+
+"""
+    to_fully_qualified{T<:AbstractModel}(m::T, v::String) :: String
+    to_fully_qualified{T<:AbstractModel}(m::T, c::SQLColumn) :: String
+    to_fully_qualified{T<:AbstractModel}(m::Type{T}, c::SQLColumn) :: String
+
+Returns the fully qualified SQL column name corresponding to the column `v` and the model `m`.
+
+# Examples
+```julia
+julia> SearchLight.to_fully_qualified(SearchLight.rand_one!!(Article), "updated_at")
+"articles.updated_at"
+```
+"""
+function to_fully_qualified{T<:AbstractModel}(m::T, v::String) :: String
   to_fully_qualified(v, m._table_name)
 end
-function to_fully_qualified{T<:AbstractModel}(m::T, c::SQLColumn)
+function to_fully_qualified{T<:AbstractModel}(m::T, c::SQLColumn) :: String
   c.raw && return c.value
   to_fully_qualified(c.value, m._table_name)
 end
-function to_fully_qualified{T<:AbstractModel}(m::Type{T}, c::SQLColumn)
+function to_fully_qualified{T<:AbstractModel}(m::Type{T}, c::SQLColumn) :: String
   to_fully_qualified(disposable_instance(m), c)
 end
 
-function to_sql_column_names{T<:AbstractModel}(m::T, fields::Array{Symbol,1})
+
+"""
+    to_sql_column_names{T<:AbstractModel}(m::T, fields::Vector{Symbol}) :: Vector{Symbol}
+
+Takes a model `m` and a Vector{Symbol} corresponding to unqualified SQL column names and returns a Vector{Symbol} of fully qualified alias columns.
+
+# Examples
+```julia
+julia> SearchLight.to_sql_column_names(SearchLight.rand_one!!(Article), Symbol[:updated_at, :deleted])
+2-element Array{Symbol,1}:
+ :articles_updated_at
+ :articles_deleted
+```
+"""
+function to_sql_column_names{T<:AbstractModel}(m::T, fields::Vector{Symbol}) :: Vector{Symbol}
   map(x -> (to_sql_column_name(m, string(x))) |> Symbol, fields)
 end
 
-function to_sql_column_name(v::String, t::String)
+function to_sql_column_name(v::String, t::String) :: String
   str = Util.strip_quotes(t) * "_" * Util.strip_quotes(v)
   if Util.is_quoted(t) && Util.is_quoted(v)
     Util.add_quotes(str)
@@ -3053,18 +3281,18 @@ function to_sql_column_name(v::String, t::String)
     str
   end
 end
-function to_sql_column_name{T<:AbstractModel}(m::T, v::String)
+function to_sql_column_name{T<:AbstractModel}(m::T, v::String) :: String
   to_sql_column_name(v, m._table_name)
 end
-function to_sql_column_name{T<:AbstractModel}(m::T, c::SQLColumn)
+function to_sql_column_name{T<:AbstractModel}(m::T, c::SQLColumn) :: String
   to_sql_column_name(c.value, m._table_name)
 end
 
-function to_fully_qualified_sql_column_names{T<:AbstractModel}(m::T, persistable_fields::Vector{String}; escape_columns::Bool = false)
+function to_fully_qualified_sql_column_names{T<:AbstractModel}(m::T, persistable_fields::Vector{String}; escape_columns::Bool = false) :: Vector{String}
   map(x -> to_fully_qualified_sql_column_name(m, x, escape_columns = escape_columns), persistable_fields)
 end
 
-function to_fully_qualified_sql_column_name{T<:AbstractModel}(m::T, f::String; escape_columns::Bool = false, alias::String = "")
+function to_fully_qualified_sql_column_name{T<:AbstractModel}(m::T, f::String; escape_columns::Bool = false, alias::String = "") :: String
   if escape_columns
     "$(to_fully_qualified(m, f) |> escape_column_name) AS $(isempty(alias) ? (to_sql_column_name(m, f) |> escape_column_name) : alias)"
   else
@@ -3095,15 +3323,15 @@ function from_literal_column_name(c::String) :: Dict{Symbol,String}
   result
 end
 
-function to_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, expand_nullables::Bool = false, symbolize_keys::Bool = false)
+function to_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, expand_nullables::Bool = false) :: Dict{String,Any}
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
-  Dict( ( symbolize_keys ? Symbol(f) : string(f) ) => Util.expand_nullable( getfield(m, Symbol(f)), expand = expand_nullables ) for f in fields )
+  Dict( string(f) => Util.expand_nullable( getfield(m, Symbol(f)), expand = expand_nullables ) for f in fields )
 end
-function to_dict{T<:GenieType}(m::T)
+function to_dict{T<:GenieType}(m::T) :: Dict{String,Any}
   Genie.to_dict(m)
 end
 
-function to_string_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, all_output::Bool = false)
+function to_string_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, all_output::Bool = false) :: Dict{String,String}
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
   output_length = all_output ? 100_000_000 : Genie.config.output_length
   response = Dict{String,String}()
@@ -3118,35 +3346,23 @@ function to_string_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, all_ou
 
   response
 end
-function to_string_dict{T<:GenieType}(m::T)
+function to_string_dict{T<:GenieType}(m::T) :: Dict{String,String}
   Genie.to_string_dict(m)
 end
 
-function to_nullable{T<:AbstractModel}(result::Vector{T})
+function to_nullable{T<:AbstractModel}(result::Vector{T}) :: Nullable{T}
   isempty(result) ? Nullable{T}() : Nullable{T}(result |> first)
 end
 
-function escape_type(value)
-  return if isa(value, String)
-    value = replace(value, "\$", "\\\$")
-    value = replace(value, "\@", "\\\@")
-    "\"$value\""
-  elseif isa(value, Char)
-    "'$value'"
-  else
-    value
-  end
-end
-
-function constantize(s::Symbol, m::Module = Genie)
+function constantize(s::Symbol, m::Module = Genie) :: Function
   string(m) * "." * ucfirst(string(s)) |> parse |> eval
 end
 
-function has_relation{T<:GenieType}(m::T, relation_type::Symbol)
+function has_relation{T<:GenieType}(m::T, relation_type::Symbol) :: Bool
   has_field(m, relation_type)
 end
 
-function dataframe_to_dict(df::DataFrames.DataFrame)
+function dataframe_to_dict(df::DataFrames.DataFrame) :: Vector{Dict{Symbol,Any}}
   result = Dict{Symbol,Any}[]
   for r in eachrow(df)
     push!(result, Dict{Symbol,Any}( [k => r[k] for k in DataFrames.names(df)] ) )
@@ -3155,19 +3371,19 @@ function dataframe_to_dict(df::DataFrames.DataFrame)
   result
 end
 
-function enclosure(v::Any, o::Any)
-  in(string(o), ["IN", "in"]) ? "($(string(v)))" : v
+function enclosure(v::Any, o::Any) :: String
+  in(string(o), ["IN", "in"]) ? "($(string(v)))" : string(v)
 end
 
-function convert(::Type{DateTime}, value::String)
+function convert(::Type{DateTime}, value::String) :: DateTime
   DateParser.parse(DateTime, value)
 end
 
-function convert(::Type{Nullable{DateTime}}, value::String)
+function convert(::Type{Nullable{DateTime}}, value::String) :: Nullable{DateTime}
   DateParser.parse(DateTime, value) |> Nullable
 end
 
-function update_query_part{T<:AbstractModel}(m::T)
+function update_query_part{T<:AbstractModel}(m::T) :: String
   Database.update_query_part(m)
 end
 

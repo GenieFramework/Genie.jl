@@ -33,10 +33,13 @@ v 0.6.x
 ✔ move postgres specific code into the adapter
 ✔ rename methods ending in ! to end in !! and follow julia's guidelines
 ✔ rename methods to not use "_" @done (16-07-12 22:23)
+✔ change from Logging to Lumberjack
 
 v 0.7.x
-☐ content negotiation
+✔ content negotiation
+☐ get the IP address of the request
 ☐ channels (websockets communication)
+☐ add frontend framework adapters - with Vue.js as default
 ☐ add the concept of State to sync app state between client (Vue.js data) and server (Genie state)
 ☐ refactor the views to use data from State and generate the reactive Vue.js code on the client
 ☐ server side reactivity from State (using Reactive.jl)
@@ -55,8 +58,11 @@ v 0.7.x
 ☐ support for mysql
 ☐ "Hello world" app
 ☐ "ToDo-Backend MVC" app
-
+☐ refactor EJL to parse the template into julia code (a module with a function that takes as args the variables) and "cache" it and invoke it accordingly
+☐ refactor Router to use Route types instead of Tuples
+✔ refactor params to use a Params type (no any Dict{Symbol,Any})
 ☐ all instances of m() must be type hinted
+✔ hooks: before controller action invoked & model hooks (before save, before dehydration, after hydration, etc)
 
 v 0.8.x
 ☐ add utility functions for migrations (add column, add index, etc)
@@ -76,11 +82,7 @@ v 1.1
 ☐ support for mongodb
 
 v 1.x
-✔ change from Logging to Lumberjack
-☐ refactor Router to use Route types instead of Tuples
-☐ refactor params to use a Params type (no any Dict{Symbol,Any})
 ☐ marketplace for Genie apps (list, search and install apps)
-☐ hooks: before controller action invoked & model hooks (before save, before dehydration, after hydration, etc)
 
 Other parts:
   ✔ lazy relationships - to skip relationship if lazy

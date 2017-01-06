@@ -25,7 +25,7 @@ convert(::Type{Nullable{DbId}}, v::Number) = Nullable{DbId}(DbId(v))
 # SearchLight validations
 #
 
-immutable ModelValidator
+immutable ModelValidator <: SQLType
   rules::Vector{Tuple{Symbol,Function,Vararg{Any}}} # [(:title, :not_empty), (:title, :min_length, (20)), (:content, :not_empty_if_published), (:email, :matches, (r"(.*)@(.*)"))]
   errors::Vector{Tuple{Symbol,Symbol,String}} # [(:title, :not_empty, "title not empty"), (:title, :min_length, "min length 20"), (:content, :min_length, "min length 200")]
 
