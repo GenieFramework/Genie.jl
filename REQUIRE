@@ -16,6 +16,7 @@ Lint
 URIParser
 Gallium
 Faker
+MbedTLS
 
 https://github.com/JuliaDB/DBI.jl
 https://github.com/JuliaDB/PostgreSQL.jl

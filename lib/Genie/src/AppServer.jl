@@ -1,6 +1,6 @@
 module AppServer
 
-using HttpServer, Router, Genie, Millboard, Logger, Sessions, Configuration
+using HttpServer, Router, Genie, Millboard, Logger, Sessions, Configuration, MbedTLS
 
 """
     startup(port::Int = 8000) :: Void
@@ -19,7 +19,8 @@ Future(1,1,1,Nullable{Any}())
 function startup(port::Int = 8000) :: Void
   http = HttpHandler() do req::Request, res::Response
     try
-      nworkers() == 1 ? handle_request(req, res) : @fetch handle_request(req, res)
+      ip::IPv4 = task_local_storage(:ip)
+      nworkers() == 1 ? handle_request(req, res, ip) : @fetch handle_request(req, res)
     catch ex
       if Configuration.is_dev()
         rethrow(ex)
@@ -32,11 +33,31 @@ function startup(port::Int = 8000) :: Void
     end
   end
 
+  http.events["connect"] = (client) -> handle_connect(client)
+
   server = Server(http)
-  run(server, port)
+  @async run(server, port) # !!! @async required to avoid race conditions when storing the request IP ???
 
   nothing
 end
+
+
+"""
+    handle_connect(client::HttpServer.Client) :: Void
+
+Connection callback for HttpServer. Stores the Request IP in the current task's local storage.
+"""
+function handle_connect(client::HttpServer.Client) :: Void
+  try
+    ip, port = getsockname(isa(client.sock, MbedTLS.SSLContext) ? client.sock.bio : client.sock)
+    task_local_storage(:ip, ip)
+
+     nothing
+  catch ex
+    string(ex) |> Logger.log
+    Logger.@location()
+  end
+ end
 
 
 """
@@ -44,11 +65,11 @@ end
 
 HttpServer handler function - invoked when the server gets a request.
 """
-function handle_request(req::Request, res::Response) :: Response
+function handle_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: Response
   Genie.config.log_requests && log_request(req)
   Genie.config.server_signature != "" && sign_response!(res)
 
-  app_response::Response = Router.route_request(req, res)
+  app_response::Response = Router.route_request(req, res, ip)
   app_response.headers = merge(res.headers, app_response.headers)
   app_response.cookies = merge(res.cookies, app_response.cookies)
 

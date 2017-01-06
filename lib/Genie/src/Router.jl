@@ -36,8 +36,9 @@ function response_type(params::Params) :: Symbol
   response_type(params.collection)
 end
 
-function route_request(req::Request, res::Response) :: Response
+function route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: Response
   params = Params()
+  params.collection[:request_ipv4] = ip
 
   extract_get_params(URI(req.resource), params)
   res = negotiate_content(req, res, params)
@@ -54,11 +55,11 @@ function route_request(req::Request, res::Response) :: Response
 
   session = Sessions.start(req, res)
 
-  r = match_routes(req, res, session, params)
+  controller_response::Response = match_routes(req, res, session, params)
 
   ! in(response_type(params), sessionless) && Sessions.persist(session)
 
-  r
+  controller_response
 end
 
 function negotiate_content(req::Request, res::Response, params::Params) :: Response
@@ -486,7 +487,7 @@ function serve_static_file(resource::AbstractString) :: Response
   Response(200, file_headers(f), open(read, f))
 end
 
-function serve_error_file(error_code::Int, error_message::AbstractString = "") :: Response
+function serve_error_file(error_code::Int, error_message::AbstractString = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
   if Configuration.is_dev()
     error_page =  open(Genie.DOC_ROOT_PATH * "/error-$(error_code).html") do f
                     readstring(f)

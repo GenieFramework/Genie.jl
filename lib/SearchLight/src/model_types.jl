@@ -147,7 +147,12 @@ function escape_column_name(c::SQLColumn) :: SQLColumn
   c
 end
 function escape_column_name(s::String) :: String
-  join(map(x -> Database.escape_column_name(string(x)), split(s, ".")), ".")
+  join(
+    map(
+      x -> Database.escape_column_name(string(x))
+      , split(s, ".")
+    )
+    , ".")
 end
 
 
