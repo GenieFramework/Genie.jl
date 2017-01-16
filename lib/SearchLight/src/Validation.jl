@@ -53,13 +53,13 @@ function validate!{T<:AbstractModel}(m::T) :: Bool
   is_valid(m)
 end
 
-function rules!!{T<:AbstractModel}(m::T) :: Vector{Tuple{Symbol,Function,Vararg{Any,N}}}
+function rules!!{T<:AbstractModel}(m::T) :: Vector{Tuple{Symbol,Function,Vararg{Any}}}
   validator!!(m).rules # rules::Vector{Tuple{Symbol,Symbol,Vararg{Any}}} -- field,method,args
 end
 
-function rules{T<:AbstractModel}(m::T) :: Nullable{Vector{Tuple{Symbol,Function,Vararg{Any,N}}}}
+function rules{T<:AbstractModel}(m::T) :: Nullable{Vector{Tuple{Symbol,Function,Vararg{Any}}}}
   v = validator(m)
-  isnull(v) ? Nullable{Vector{Tuple{Symbol,Symbol,Vararg{Any,N}}}}() : Nullable{Vector{Tuple{Symbol,Symbol,Vararg{Any,N}}}}(Base.get(v).errors)
+  isnull(v) ? Nullable{Vector{Tuple{Symbol,Symbol,Vararg{Any}}}}() : Nullable{Vector{Tuple{Symbol,Symbol,Vararg{Any}}}}(Base.get(v).errors)
 end
 
 function errors!!{T<:AbstractModel}(m::T) :: Vector{Tuple{Symbol,Symbol,String}}

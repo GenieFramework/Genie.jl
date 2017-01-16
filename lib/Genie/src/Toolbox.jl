@@ -1,4 +1,5 @@
 module Toolbox
+
 using Genie, Util, Millboard, FileTemplates, Configuration, Logger
 
 type TaskInfo
@@ -14,7 +15,7 @@ function run_task(task_type_name)
   eval(tasks[1].module_name).run_task!()
 end
 
-function print_all_tasks()
+function print_all_tasks() :: Void
   output = ""
   arr_output = []
   for t in all_tasks()
@@ -23,9 +24,11 @@ function print_all_tasks()
   end
 
   Millboard.table(arr_output, :colnames => ["Task name \nFilename \nDescription "], :rownames => []) |> println
+
+  nothing
 end
 
-function all_tasks(; filter_type_name = Symbol())
+function all_tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
   tasks = TaskInfo[]
 
   tasks_folder = abspath(Genie.config.tasks_folder)
@@ -44,10 +47,10 @@ function all_tasks(; filter_type_name = Symbol())
     end
   end
 
-  return tasks
+  tasks
 end
 
-function new(cmd_args::Dict{AbstractString,Any}, config::Settings)
+function new(cmd_args::Dict{String,Any}, config::Settings) :: Void
   tfn = task_file_name(cmd_args, config)
 
   if ispath(tfn)
@@ -59,13 +62,15 @@ function new(cmd_args::Dict{AbstractString,Any}, config::Settings)
   close(f)
 
   Logger.log("New task created at $tfn")
+
+  nothing
 end
 
-function task_file_name(cmd_args, config)
-  return joinpath(config.tasks_folder, cmd_args["task:new"] * ".jl")
+function task_file_name(cmd_args::Dict{String,Any}, config::Settings) :: String
+  joinpath(config.tasks_folder, cmd_args["task:new"] * ".jl")
 end
 
-function task_class_name(underscored_task_name)
+function task_class_name(underscored_task_name::String) :: String
   mapreduce( x -> ucfirst(x), *, split(replace(underscored_task_name, ".jl", ""), "_") )
 end
 

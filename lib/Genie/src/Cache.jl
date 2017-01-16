@@ -1,10 +1,12 @@
 module Cache
+
 using Genie, SHA, Logger
+
 eval(parse("using $(Genie.config.cache_adapter)"))
 
 export cache_key, with_cache
 
-function with_cache(f::Function, key::String, expiration::Int = Genie.config.cache_duration)
+function with_cache(f::Function, key::String, expiration::Int = Genie.config.cache_duration) :: String
   expiration == 0 && return f()
 
   ca = cache_adapter()
@@ -22,7 +24,7 @@ function with_cache(f::Function, key::String, expiration::Int = Genie.config.cac
   Base.get(cached_data)
 end
 
-function cache_key(args...)
+function cache_key(args...) :: String
   key = ""
   for a in args
     key *= string(a)
@@ -31,7 +33,7 @@ function cache_key(args...)
   bytes2hex(sha1(key))
 end
 
-function cache_adapter(adapter::Symbol = Genie.config.cache_adapter)
+function cache_adapter(adapter::Symbol = Genie.config.cache_adapter) :: Module
   eval(adapter)
 end
 

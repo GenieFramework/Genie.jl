@@ -2,7 +2,7 @@ module FileTemplates
 
 using Inflector
 
-function new_database_migration(class_name::AbstractString)
+function new_database_migration(class_name::String) :: String
   """
   module $class_name
   using Genie, Database
@@ -21,7 +21,7 @@ function new_database_migration(class_name::AbstractString)
   """
 end
 
-function new_task(class_name::AbstractString)
+function new_task(class_name::String) :: String
   """
   module $class_name
   using Genie
@@ -40,7 +40,7 @@ function new_task(class_name::AbstractString)
   """
 end
 
-function new_model(model_name::AbstractString, resource_name::AbstractString = model_name)
+function new_model(model_name::String, resource_name::String = model_name) :: String
   pluralized_name = Inflector.to_plural(model_name) |> Base.get
   table_name = Inflector.to_plural(resource_name) |> Base.get |> lowercase
 
@@ -98,7 +98,7 @@ function new_model(model_name::AbstractString, resource_name::AbstractString = m
   """
 end
 
-function new_controller(controller_name::AbstractString)
+function new_controller(controller_name::String) :: String
   """
   module $(controller_name)Controller
   using Genie, SearchLight, App
@@ -106,7 +106,7 @@ function new_controller(controller_name::AbstractString)
   """
 end
 
-function new_validator(validator_name::AbstractString)
+function new_validator(validator_name::String) :: String
   """
   module $(validator_name)Validator
   using App, SearchLight, Validation
@@ -120,7 +120,7 @@ function new_validator(validator_name::AbstractString)
   """
 end
 
-function new_authorizer()
+function new_authorizer() :: String
   """
   admin:
     create: all
@@ -138,7 +138,7 @@ function new_authorizer()
   """
 end
 
-function new_test(plural_name::AbstractString, singular_name::AbstractString)
+function new_test(plural_name::String, singular_name::String) :: String
   """
   using Genie, App, App.$(plural_name)
 

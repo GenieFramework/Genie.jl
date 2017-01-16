@@ -34,7 +34,7 @@ end
 
 ###
 
-function all(request::Request)
+function all(request::Request) :: HttpInput
   input::HttpInput = HttpInput()
 
   post_from_request!(request, input)

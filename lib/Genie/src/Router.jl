@@ -321,9 +321,9 @@ function nested_keys(k::AbstractString, v, params::Params) :: Void
   if contains(k, ".")
     parts = split(k, ".", limit = 2)
     nested_val_key = Symbol(parts[1])
-    if haskey(_params, nested_val_key) && isa(_params[nested_val_key], Dict)
-      ! haskey(_params[nested_val_key], Symbol(parts[2])) && (_params[nested_val_key][Symbol(parts[2])] = v)
-    elseif ! haskey(_params, nested_val_key)
+    if haskey(params.collection, nested_val_key) && isa(params.collection[nested_val_key], Dict)
+      ! haskey(params.collection[nested_val_key], Symbol(parts[2])) && (params.collection[nested_val_key][Symbol(parts[2])] = v)
+    elseif ! haskey(params.collection, nested_val_key)
       params.collection[nested_val_key] = Dict()
       params.collection[nested_val_key][Symbol(parts[2])] = v
     end

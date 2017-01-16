@@ -1,5 +1,5 @@
 module Database
-using YAML, Genie, Memoize, SearchLight, DataFrames
+using YAML, Genie, Memoize, SearchLight, DataFrames, Logger
 
 eval(:(using $(Genie.config.db_adapter)))
 eval(:(const DatabaseAdapter = $(Genie.config.db_adapter)))
@@ -89,7 +89,20 @@ end
 
 
 """
+    query(sql::AbstractString; system_query::Bool = false) :: ResultHandle
 
+Executes the `sql` query against the database adapter. If it is a `system_query` it won't be logged.
+
+# Examples
+```julia
+julia> SearchLight.to_fetch_sql(Article, SQLQuery(limit = 5)) |> Database.query
+
+2017-01-16T21:42:26.627 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" LIMIT 5
+
+  0.000950 seconds (16 allocations: 576 bytes)
+  
+PostgreSQL.PostgresResultHandle(Ptr{Void} @0x00007fcdaf33a450,DataType[PostgreSQL.PostgresType{:int4},PostgreSQL.PostgresType{:varchar},PostgreSQL.PostgresType{:text},PostgreSQL.PostgresType{:text},PostgreSQL.PostgresType{:timestamp},PostgreSQL.PostgresType{:timestamp},PostgreSQL.PostgresType{:varchar}],5,7)
+```
 """
 function query(sql::AbstractString; system_query::Bool = false) :: ResultHandle
   DatabaseAdapter.query(sql, system_query || Genie.config.suppress_output, connection())
@@ -101,8 +114,8 @@ end
 end
 
 
-@memoize function escape_value(v::Union{AbstractString,Real})
-  DatabaseAdapter.escape_value(v, connection()) :: String
+function escape_value{T}(v::T) :: T
+  DatabaseAdapter.escape_value(v, connection())
 end
 
 
@@ -112,10 +125,28 @@ end
 
 
 """
+    query_df(sql::AbstractString; suppress_output::Bool = false) :: DataFrames.DataFrame
 
+Executes the `sql` query against the database adapter and returns a DataFrame result.
+Optionally logs the result DataFrame.
+
+# Examples:
+```julia
+julia> SearchLight.to_fetch_sql(Article, SQLQuery(limit = 5)) |> Database.query_df;
+
+2017-01-16T21:33:40.079 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" LIMIT 5
+
+  0.001172 seconds (16 allocations: 576 bytes)
+
+2017-01-16T21:33:40.089 - info: 5×7 DataFrames.DataFrame
+...
+```
 """
 function query_df(sql::AbstractString; suppress_output::Bool = false) :: DataFrames.DataFrame
-  DatabaseAdapter.query_df(sql, (suppress_output || Genie.config.suppress_output), connection())
+  df::DataFrames.DataFrame = DatabaseAdapter.query_df(sql, (suppress_output || Genie.config.suppress_output), connection())
+  (! suppress_output && Genie.config.log_db) && Logger.log(df)
+
+  df
 end
 
 
@@ -271,7 +302,7 @@ end
 
 
 """
-  columns_from_joins() :: SQLColumn
+  columns_from_joins(joins::Vector{SQLJoin}) :: Vector{SQLColumn}
 
 Extracts columns from joins param and adds to be used for the SELECT part
 """
@@ -332,7 +363,7 @@ function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}, j
 
   if ! isempty(cols)
     table_columns = []
-    cols = vcat(cols, columns_from_joins())
+    cols = vcat(cols, columns_from_joins(joins))
 
     for column in cols
       push!(table_columns, prepare_column_name(column))

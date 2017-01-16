@@ -3273,6 +3273,10 @@ function to_sql_column_names{T<:AbstractModel}(m::T, fields::Vector{Symbol}) :: 
   map(x -> (to_sql_column_name(m, string(x))) |> Symbol, fields)
 end
 
+
+"""
+
+"""
 function to_sql_column_name(v::String, t::String) :: String
   str = Util.strip_quotes(t) * "_" * Util.strip_quotes(v)
   if Util.is_quoted(t) && Util.is_quoted(v)
@@ -3288,10 +3292,18 @@ function to_sql_column_name{T<:AbstractModel}(m::T, c::SQLColumn) :: String
   to_sql_column_name(c.value, m._table_name)
 end
 
+
+"""
+
+"""
 function to_fully_qualified_sql_column_names{T<:AbstractModel}(m::T, persistable_fields::Vector{String}; escape_columns::Bool = false) :: Vector{String}
   map(x -> to_fully_qualified_sql_column_name(m, x, escape_columns = escape_columns), persistable_fields)
 end
 
+
+"""
+
+"""
 function to_fully_qualified_sql_column_name{T<:AbstractModel}(m::T, f::String; escape_columns::Bool = false, alias::String = "") :: String
   if escape_columns
     "$(to_fully_qualified(m, f) |> escape_column_name) AS $(isempty(alias) ? (to_sql_column_name(m, f) |> escape_column_name) : alias)"
@@ -3300,6 +3312,10 @@ function to_fully_qualified_sql_column_name{T<:AbstractModel}(m::T, f::String; e
   end
 end
 
+
+"""
+
+"""
 function from_literal_column_name(c::String) :: Dict{Symbol,String}
   result = Dict{Symbol,String}()
   result[:original_string] = c
@@ -3323,6 +3339,10 @@ function from_literal_column_name(c::String) :: Dict{Symbol,String}
   result
 end
 
+
+"""
+
+"""
 function to_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, expand_nullables::Bool = false) :: Dict{String,Any}
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
   Dict( string(f) => Util.expand_nullable( getfield(m, Symbol(f)), expand = expand_nullables ) for f in fields )
@@ -3331,6 +3351,10 @@ function to_dict{T<:GenieType}(m::T) :: Dict{String,Any}
   Genie.to_dict(m)
 end
 
+
+"""
+
+"""
 function to_string_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, all_output::Bool = false) :: Dict{String,String}
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
   output_length = all_output ? 100_000_000 : Genie.config.output_length
@@ -3350,18 +3374,26 @@ function to_string_dict{T<:GenieType}(m::T) :: Dict{String,String}
   Genie.to_string_dict(m)
 end
 
+
+"""
+
+"""
 function to_nullable{T<:AbstractModel}(result::Vector{T}) :: Nullable{T}
   isempty(result) ? Nullable{T}() : Nullable{T}(result |> first)
 end
 
-function constantize(s::Symbol, m::Module = Genie) :: Function
-  string(m) * "." * ucfirst(string(s)) |> parse |> eval
-end
 
+"""
+
+"""
 function has_relation{T<:GenieType}(m::T, relation_type::Symbol) :: Bool
   has_field(m, relation_type)
 end
 
+
+"""
+
+"""
 function dataframe_to_dict(df::DataFrames.DataFrame) :: Vector{Dict{Symbol,Any}}
   result = Dict{Symbol,Any}[]
   for r in eachrow(df)
@@ -3371,9 +3403,18 @@ function dataframe_to_dict(df::DataFrames.DataFrame) :: Vector{Dict{Symbol,Any}}
   result
 end
 
+
+"""
+
+"""
 function enclosure(v::Any, o::Any) :: String
   in(string(o), ["IN", "in"]) ? "($(string(v)))" : string(v)
 end
+
+
+#
+# Conversion utilities
+#
 
 function convert(::Type{DateTime}, value::String) :: DateTime
   DateParser.parse(DateTime, value)
@@ -3382,6 +3423,7 @@ end
 function convert(::Type{Nullable{DateTime}}, value::String) :: Nullable{DateTime}
   DateParser.parse(DateTime, value) |> Nullable
 end
+
 
 function update_query_part{T<:AbstractModel}(m::T) :: String
   Database.update_query_part(m)

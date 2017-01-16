@@ -2,7 +2,7 @@ module FileSessionAdapter
 
 using Sessions, Genie, Logger, Configuration
 
-function write(session)
+function write(session::Sessions.Session) :: Sessions.Session
   try
     open(joinpath(Genie.config.session_folder, session.id), "w") do (io)
       serialize(io, session)
@@ -31,7 +31,7 @@ function read(session_id::AbstractString) :: Nullable{Sessions.Session}
     Nullable{Sessions.Session}()
   end
 end
-function read(session)
+function read(session::Sessions.Session) :: Nullable{Sessions.Session}
   read(session.id)
 end
 

@@ -1,10 +1,10 @@
 module Helpers
 
-using Genie, Sessions, Router, URIParser, Logger
+using Genie, Sessions, Router, URIParser, Logger, HttpServer
 
 export session, request, response, flash, number_of_pages, paginated_uri
 
-function session(params::Dict{Symbol,Any})
+function session(params::Dict{Symbol,Any}) :: Sessions.Session
   if haskey(params, Genie.PARAMS_SESSION_KEY)
     return params[Genie.PARAMS_SESSION_KEY]
   else
@@ -14,7 +14,7 @@ function session(params::Dict{Symbol,Any})
   end
 end
 
-function request(params::Dict{Symbol,Any})
+function request(params::Dict{Symbol,Any}) :: HttpServer.Request
   if haskey(params, Genie.PARAMS_REQUEST_KEY)
     return params[Genie.PARAMS_REQUEST_KEY]
   else
@@ -24,7 +24,7 @@ function request(params::Dict{Symbol,Any})
   end
 end
 
-function response(params::Dict{Symbol,Any})
+function response(params::Dict{Symbol,Any}) :: HttpServer.Response
   if haskey(params, Genie.PARAMS_RESPONSE_KEY)
     return params[Genie.PARAMS_RESPONSE_KEY]
   else
@@ -43,17 +43,16 @@ function flash(params::Dict{Symbol,Any})
     error(msg)
   end
 end
-
 function flash(value::Any, params::Dict{Symbol,Any})
   Sessions.set!(session(params), Genie.PARAMS_FLASH_KEY, value)
   params[Genie.PARAMS_FLASH_KEY] = value
 end
 
-function number_of_pages(params)
+function number_of_pages(params) :: Int
   convert(Int, ceil(params[:pagination_total]/params[:page_size]))
 end
 
-function paginated_uri(params, page)
+function paginated_uri(params, page) :: String
   uri = params[Genie.PARAMS_REQUEST_KEY].resource
   uri_query = URI(uri).query
   uri_query_parts = AbstractString[]

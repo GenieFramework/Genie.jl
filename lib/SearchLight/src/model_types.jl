@@ -36,19 +36,21 @@ end
 # SQLInput
 #
 
-type SQLInput
+
+type SQLInput <: SQLType
   value::Union{String,Real}
   escaped::Bool
   raw::Bool
   SQLInput(v::Union{String,Real}; escaped = false, raw = false) = new(v, escaped, raw)
 end
 SQLInput{T}(a::Vector{T}) = map(x -> SQLInput(x), a)
+SQLInput{T}(s::SubString{T}) = convert(String, s) |> SQLInput
 SQLInput(i::SQLInput) = i
-SQLInput{T}(s::SubString{T}) = SQLInput(convert(String, s))
+SQLInput(s::Symbol) = string(s) |> SQLInput
 
 ==(a::SQLInput, b::SQLInput) = a.value == b.value
 
-string(s::SQLInput) = safe(s).value
+string(s::SQLInput) = "$(safe(s).value)"
 string(a::Vector{SQLInput}) = join(map(x -> string(x), a), ",")
 endof(s::SQLInput) = endof(s.value)
 length(s::SQLInput) = length(s.value)
@@ -95,7 +97,7 @@ type SQLColumn <: SQLType
   value::String
   escaped::Bool
   raw::Bool
-  table_name::Union{String, Symbol}
+  table_name::Union{String,Symbol}
   function SQLColumn(v::String; escaped = false, raw = false, table_name = "")
     if v == "*"
       raw = true
@@ -150,6 +152,7 @@ function escape_column_name(s::String) :: String
   join(
     map(
       x -> Database.escape_column_name(string(x))
+
       , split(s, ".")
     )
     , ".")

@@ -3,14 +3,14 @@ using Genie
 
 const vowels = ["a", "e", "i", "o", "u"]
 
-function to_singular(word::AbstractString; is_irregular::Bool = false)
+function to_singular(word::String; is_irregular::Bool = false) :: Nullable{String}
   ( is_irregular || ! endswith(word, "s") ) && return to_singular_irregular(word)
   endswith(word, "ies") && ! in(word[end-3], vowels) && return Nullable{String}(word[1:end-3] * "y")
   endswith(word, "s") && return Nullable{String}(word[1:end-1])
   Nullable{String}()
 end
 
-function to_singular_irregular(word::AbstractString)
+function to_singular_irregular(word::String) :: Nullable{String}
   irr = irregular(word)
   if ! isnull(irr)
     Nullable{Base.get(irr)[1]}
@@ -19,13 +19,13 @@ function to_singular_irregular(word::AbstractString)
   end
 end
 
-function to_plural(word::AbstractString; is_irregular::Bool = false)
+function to_plural(word::String; is_irregular::Bool = false) :: Nullable{String}
   is_irregular && return to_plural_irregular(word)
   endswith(word, "y") && ! in(word[end-1], vowels) && return Nullable{String}(word[1:end-1] * "ies") # category -> categories // story -> stories
   is_singular(word) ? Nullable{String}(word * "s") : Nullable{String}(word)
 end
 
-function to_plural_irregular(word::AbstractString)
+function to_plural_irregular(word::String) :: Nullable{String}
   irr = irregular(word)
   if ! isnull(irr)
     Nullable{String}(Base.get(irr)[2])
@@ -34,23 +34,23 @@ function to_plural_irregular(word::AbstractString)
   end
 end
 
-function from_underscores(word::AbstractString)
+function from_underscores(word::String) :: String
   mapreduce(x -> ucfirst(x), *, split(word, "_"))
 end
 
-function is_singular(word::AbstractString)
+function is_singular(word::String) :: Bool
   ! is_plural(word)
 end
 
-function is_plural(word::AbstractString)
+function is_plural(word::String) :: Bool
   endswith(word, "s") || ! isnull(irregular(word))
 end
 
-function irregulars()
+function irregulars() :: Vector{Tuple{String,String}}
   vcat(irregular_nouns, Genie.config.inflector_irregulars)
 end
 
-function irregular(word::AbstractString)
+function irregular(word::String) :: Nullable{Tuple{String,String}}
   for (k, v) in irregular_nouns
     (word == k || word == v) && return Nullable{Tuple{String,String}}(k, v)
   end
@@ -58,7 +58,7 @@ function irregular(word::AbstractString)
   Nullable{Tuple{String,String}}()
 end
 
-irregular_nouns = Vector{Tuple{String,String}}([
+const irregular_nouns = Vector{Tuple{String,String}}([
   ("alumnus", "alumni"),
   ("cactus", "cacti"),
   ("focus", "foci"),

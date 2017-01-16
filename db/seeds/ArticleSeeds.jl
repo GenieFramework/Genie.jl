@@ -1,11 +1,10 @@
 module ArticleSeeds
-using App, SearchLight
-using Faker
+
+using App, SearchLight, Faker
 
 function create_random(no_of_articles::Int = 10)
   for i in 1:no_of_articles
     article = Article()
-    article.title = Faker.sentence()
 
     while length(article.title) < 20
       article.title *= ". " * Faker.sentence()

@@ -54,7 +54,9 @@ end
 
 
 """
+    create_database(db_name::String) :: Bool
 
+Creates the database `db_name`. Returns `true` on success - `false` on failure
 """
 function create_database(db_name::String) :: Bool
   error("Not implemented - manually create the database", :debug)
@@ -62,7 +64,9 @@ end
 
 
 """
+    table_columns_sql(table_name::AbstractString) :: String
 
+Returns the adapter specific query for SELECTing table columns information corresponding to `table_name`.
 """
 function table_columns_sql(table_name::AbstractString) :: String
   "SELECT
@@ -73,10 +77,14 @@ end
 
 
 """
+    create_migrations_table(table_name::String) :: Bool
 
+Runs a SQL DB query that creates the table `table_name` with the structure needed to be used as the DB migrations table.
+The table should contain one column, `version`, unique, as a string of maximum 30 chars long.
+Returns `true` on success.
 """
 function create_migrations_table(table_name::String) :: Bool
-  "CREATE TABLE $table_name (version varchar(30) CONSTRAINT firstkey PRIMARY KEY)" |> query
+  "CREATE TABLE $table_name (version varchar(30) CONSTRAINT firstkey PRIMARY KEY)" |> Database.query
 
   Logger.log("Created table $table_name")
 
@@ -90,7 +98,15 @@ end
 
 
 """
+    escape_column_name(c::AbstractString, conn::DatabaseHandle) :: String
 
+Escapes the column name using native features provided by the database backend.
+
+# Examples
+```julia
+julia> PostgreSQLDatabaseAdapter.escape_column_name("foo\"; DROP moo;", Database.connection())
+"\"foo\"\"; DROP moo;\""
+```
 """
 function escape_column_name(c::AbstractString, conn::DatabaseHandle) :: String
   strptr = DB_ADAPTER.PQescapeIdentifier(conn.ptr, c, sizeof(c))
@@ -102,9 +118,23 @@ end
 
 
 """
+    escape_value{T}(v::T, conn::DatabaseHandle) :: T
 
+Escapes the value `v` using native features provided by the database backend.
+
+# Examples
+```julia
+julia> PostgreSQLDatabaseAdapter.escape_value("'; DROP moo;", Database.connection())
+"'''; DROP moo;'"
+
+julia> PostgreSQLDatabaseAdapter.escape_value(SQLInput(22), Database.connection())
+22
+
+julia> PostgreSQLDatabaseAdapter.escape_value(SQLInput("hello"), Database.connection())
+'hello'
+```
 """
-function escape_value(v::Union{AbstractString,Real}, conn::DatabaseHandle) :: String
+function escape_value{T}(v::T, conn::DatabaseHandle) :: T
   DB_ADAPTER.escapeliteral(conn, v)
 end
 
@@ -114,16 +144,30 @@ end
 #
 
 
-function query_df(sql::AbstractString, suppress_output::Bool, conn::DatabaseHandle) :: DataFrames.DataFrame
-  df::DataFrames.DataFrame = query(sql, suppress_output, conn) |> DB_ADAPTER.fetchdf
-  (! suppress_output && Genie.config.log_db) && Logger.log(df)
+"""
+    query_df(sql::AbstractString, suppress_output::Bool, conn::DatabaseHandle) :: DataFrames.DataFrame
 
-  df
+Executes the `sql` query against the database backend and returns a DataFrame result.
+
+# Examples:
+```julia
+julia> PostgreSQLDatabaseAdapter.query_df(SearchLight.to_fetch_sql(Article, SQLQuery(limit = 5)), false, Database.connection())
+
+2017-01-16T21:36:21.566 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" LIMIT 5
+
+  0.000985 seconds (16 allocations: 576 bytes)
+
+5×7 DataFrames.DataFrame
+...
+```
+"""
+function query_df(sql::AbstractString, suppress_output::Bool, conn::DatabaseHandle) :: DataFrames.DataFrame
+  query(sql, suppress_output, conn) |> DB_ADAPTER.fetchdf
 end
 
 
 """
-
+    
 """
 function query(sql::AbstractString, suppress_output::Bool, conn::DatabaseHandle) :: PostgreSQL.PostgresResultHandle
   stmt = DB_ADAPTER.prepare(conn, sql)
@@ -137,7 +181,7 @@ function query(sql::AbstractString, suppress_output::Bool, conn::DatabaseHandle)
   DB_ADAPTER.finish(stmt)
 
   if ( DB_ADAPTER.errstring(result) != "" )
-    error("$(string(adapter)) error: $(adapter.errstring(result)) [$(adapter.errcode(result))]")
+    error("$(string(DB_ADAPTER)) error: $(DB_ADAPTER.errstring(result)) [$(DB_ADAPTER.errcode(result))]")
   end
 
   result

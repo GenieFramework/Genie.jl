@@ -2,7 +2,7 @@ module Util
 
 export expand_nullable, _!!, _!_
 
-function add_quotes(str)
+function add_quotes(str::String) :: String
   if ! startswith(str, "\"")
     str = "\"$str"
   end
@@ -13,7 +13,7 @@ function add_quotes(str)
   str
 end
 
-function strip_quotes(str)
+function strip_quotes(str::String) :: String
   if is_quoted(str)
     str[2:end-1]
   else
@@ -21,11 +21,11 @@ function strip_quotes(str)
   end
 end
 
-function is_quoted(str)
+function is_quoted(str::String) :: Bool
   startswith(str, "\"") && endswith(str, "\"")
 end
 
-function expand_nullable(value::Any; expand::Bool = true, default::Any = "NA")
+function expand_nullable{T}(value::Any; expand::Bool = true, default::T = "NA") :: T
   if ! expand || ! isa(value, Nullable)
     return value
   end
@@ -48,15 +48,15 @@ function _!_(value::Any)
   expand_nullable(value)
 end
 
-function file_name_to_type_name(file_name)
-  return join(map(x -> ucfirst(x), split(file_name_without_extension(file_name), "_")) , "")
+function file_name_to_type_name(file_name) :: String
+  join(map(x -> ucfirst(x), split(file_name_without_extension(file_name), "_")) , "")
 end
 
-function file_name_without_extension(file_name, extension = ".jl")
+function file_name_without_extension(file_name, extension = ".jl") :: String
   file_name[1:end-length(extension)]
 end
 
-function walk_dir(dir; monitored_extensions = ["jl"])
+function walk_dir(dir; monitored_extensions = ["jl"]) :: String
   f = readdir(abspath(dir))
   for i in f
     full_path = joinpath(dir, i)

@@ -1,5 +1,6 @@
 module RoleSeeds
-using Genie, SearchLight
+
+using Genie, SearchLight, App
 
 function default_roles()
   for i in [:user, :admin, :editor, :blogger]

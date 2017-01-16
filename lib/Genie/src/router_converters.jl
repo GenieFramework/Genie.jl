@@ -1,4 +1,3 @@
 import Base.convert
 
-convert(::Type{Int}, s::AbstractString) = parse(Int, s)
-
+convert(::Type{Int}, s::String) = parse(Int, s)

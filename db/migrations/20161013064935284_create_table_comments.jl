@@ -1,14 +1,17 @@
 module CreateTableComments
-using Genie, Database
+
+using Genie, Database, Logger
 
 function up()
   # Database.query("")
-  error("Not implemented")
+  Logger.log("Not implemented", :error)
+  Logger.@location
 end
 
 function down()
   # Database.query("")
-  error("Not implemented")
+  Logger.log("Not implemented", :error)
+  Logger.@location
 end
 
 end

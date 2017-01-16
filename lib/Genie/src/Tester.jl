@@ -1,7 +1,8 @@
 module Tester
+
 using Genie, App, Util, Migration, Configuration, Logger
 
-function bootstrap_tests(cmd_args::AbstractString, config::Settings)
+function bootstrap_tests(cmd_args::String, config::Settings) :: Void
   set_test_env()
 
   include(abspath(joinpath(config.test_folder, "test_config.jl")))
@@ -11,18 +12,24 @@ function bootstrap_tests(cmd_args::AbstractString, config::Settings)
       include(file_name)
     end
   end
+
+  nothing
 end
 
-function reset_db()
+function reset_db() :: Void
   Migration.all_down()
   Migration.all_up()
+
+  nothing
 end
 
-function run_all_tests(cmd_args::AbstractString, config::Settings)
+function run_all_tests(cmd_args::String, config::Settings) :: Void
   bootstrap_tests(cmd_args, config)
+
+  nothing
 end
 
-function set_test_env()
+function set_test_env() :: Void
   if ! is_test()
     Logger.log("You're attempting to run your test suite outside the TEST environment. This can lead to losing your production or development data, depending on your current/default environment.", :err, showst = false)
   end
@@ -33,6 +40,8 @@ function set_test_env()
 
     ! is_test() && error("Could not switch env")
   end
+
+  nothing
 end
 
 end

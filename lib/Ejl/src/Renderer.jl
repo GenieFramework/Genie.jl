@@ -1,6 +1,6 @@
 module Renderer
 export respond, json, mustache, ejl, redirect_to
-using Genie, Util, Macros, JSON, Ejl, Mustache, Configuration, HttpServer, App, Router
+using Genie, Util, Macros, JSON, Ejl, Mustache, Configuration, HttpServer, App, Router, Logger
 @devtools()
 
 const CONTENT_TYPES = Dict{Symbol,AbstractString}(
@@ -72,9 +72,9 @@ function mustache(content::AbstractString, layout::Union{Symbol,AbstractString} 
   Dict{Symbol,AbstractString}(:html => r)
 end
 
-function redirect_to(location::AbstractString, code::Int = 302, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}()) :: Dict{Symbol,AbstractString}
+function redirect_to(location::AbstractString, code::Int = 302, headers::Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}()) :: Response
   headers["Location"] = location
-  respond(Dict{Symbol,AbstractString}(:text => ""), code, headers)
+  respond(Dict{Symbol,AbstractString}(:plain => "Redirecting you to $location"), code, headers)
 end
 
 function spawn_splatted_vars(vars, m::Module = current_module()) :: Void
@@ -132,6 +132,12 @@ function respond{T}(body::Dict{Symbol,T}, code::Int = 200, headers = Dict{Abstra
                     elseif haskey(body, :plain)
                       headers["Content-Type"] = CONTENT_TYPES[:plain]
                       string(body[:plain])
+                    else
+                      Logger.log("Unsupported Content-Type", :err)
+                      Logger.log(body)
+                      Logger.@location
+
+                      error("Unsupported Content-Type")
                     end
 
   Response(code, headers, sbody)

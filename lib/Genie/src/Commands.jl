@@ -1,4 +1,5 @@
 module Commands
+
 using ArgParse, Configuration, Genie, Database, Generator, Tester, Toolbox, App, Migration, Logger, AppServer
 
 
@@ -16,7 +17,6 @@ function execute(config::Settings) :: Void
   Genie.config.websocket_port = parse(Int, parsed_args["websocket:port"])
 
   if called_command(parsed_args, "db:init")
-    Database.create_database()
     Database.create_migrations_table()
 
   elseif parsed_args["model:new"] != nothing
