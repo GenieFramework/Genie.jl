@@ -5,7 +5,7 @@ using Genie, Database, FileTemplates, Millboard, Configuration, Logger
 type DatabaseMigration # todo: rename the "migration_" prefix for the fields
   migration_hash::String
   migration_file_name::String
-  migration_class_name::String
+  migration_module_name::String
 end
 
 function new(cmd_args::Dict{String,Any}, config::Configuration.Settings) :: Void
@@ -16,7 +16,7 @@ function new(cmd_args::Dict{String,Any}, config::Configuration.Settings) :: Void
   end
 
   f = open(mfn, "w")
-  write(f, FileTemplates.new_database_migration(migration_class_name(cmd_args["migration:new"])))
+  write(f, FileTemplates.new_database_migration(migration_module_name(cmd_args["migration:new"])))
   close(f)
 
   Logger.log("New migration created at $mfn")
@@ -34,7 +34,7 @@ function migration_file_name(cmd_args::Dict{String,Any}, config::Configuration.S
   joinpath(config.db_migrations_folder, migration_hash() * "_" * cmd_args["migration:new"] * ".jl")
 end
 
-function migration_class_name(underscored_migration_name::String) :: String
+function migration_module_name(underscored_migration_name::String) :: String
   mapreduce( x -> ucfirst(x), *, split(replace(underscored_migration_name, ".jl", ""), "_") )
 end
 
@@ -46,29 +46,29 @@ function last_down() :: Void
   run_migration(last_migration(), :down)
 end
 
-function up_by_class_name(migration_class_name::String) :: Void
-  migration = migration_by_class_name(migration_class_name)
+function up_by_module_name(migration_module_name::String; force::Bool = false) :: Void
+  migration = migration_by_module_name(migration_module_name)
   if ! isnull(migration)
-    run_migration(Base.get(migration), :up)
+    run_migration(Base.get(migration), :up, force = force)
   else
-    error("Migration $migration_class_name not found")
+    error("Migration $migration_module_name not found")
   end
 end
 
-function down_by_class_name(migration_class_name::String) :: Void
-  migration = migration_by_class_name(migration_class_name)
+function down_by_module_name(migration_module_name::String; force::Bool = false) :: Void
+  migration = migration_by_module_name(migration_module_name)
   if ! isnull(migration)
-    run_migration(Base.get(migration), :down)
+    run_migration(Base.get(migration), :down, force = force)
   else
-    error("Migration $migration_class_name not found")
+    error("Migration $migration_module_name not found")
   end
 end
 
-function migration_by_class_name(migration_class_name::String) :: Nullable{DatabaseMigration}
+function migration_by_module_name(migration_module_name::String) :: Nullable{DatabaseMigration}
   ids, migrations = all_migrations()
   for id in ids
     migration = migrations[id]
-    if migration.migration_class_name == migration_class_name
+    if migration.migration_module_name == migration_module_name
       return Nullable(migration)
     end
   end
@@ -83,7 +83,7 @@ function all_migrations() :: Tuple{Vector{String},Dict{String,DatabaseMigration}
     if ismatch(r"\d{16,17}_.*\.jl", f)
       parts = map(x -> String(x), split(f, "_", limit = 2))
       push!(migrations, parts[1])
-      migrations_files[parts[1]] = DatabaseMigration(parts[1], f, migration_class_name(parts[2]))
+      migrations_files[parts[1]] = DatabaseMigration(parts[1], f, migration_module_name(parts[2]))
     end
   end
 
@@ -110,7 +110,7 @@ function run_migration(migration::DatabaseMigration, direction::Symbol; force = 
 
     store_migration_status(migration, direction)
 
-    ! Genie.config.suppress_output && Logger.log("Executed migration $(migration.migration_class_name) $(direction)")
+    ! Genie.config.suppress_output && Logger.log("Executed migration $(migration.migration_module_name) $(direction)")
   catch ex
     Logger.log(string(ex), :err)
   end
@@ -146,7 +146,7 @@ function status() :: Void
 
   for m in migrations
     sts = ( findfirst(up_migrations, m) > 0 ) ? :up : :down
-    push!(arr_output, [migrations_files[m].migration_class_name * ": " * uppercase(string(sts)); migrations_files[m].migration_file_name])
+    push!(arr_output, [migrations_files[m].migration_module_name * ": " * uppercase(string(sts)); migrations_files[m].migration_file_name])
   end
 
   Millboard.table(arr_output, :colnames => ["Class name & status \nFile name "], :rownames => []) |> println
@@ -164,7 +164,7 @@ function all_with_status() :: Tuple{Vector{String},Dict{String,Dict{Symbol,Any}}
     status = ( findfirst(up_migrations, m) > 0 ) ? :up : :down
     push!(indexes, migrations_files[m].migration_hash)
     result[migrations_files[m].migration_hash] = Dict(
-      :migration => DatabaseMigration(migrations_files[m].migration_hash, migrations_files[m].migration_file_name, migrations_files[m].migration_class_name),
+      :migration => DatabaseMigration(migrations_files[m].migration_hash, migrations_files[m].migration_file_name, migrations_files[m].migration_module_name),
       :status => status
     )
   end
@@ -177,7 +177,7 @@ function all_down() :: Void
   for v in values(m)
     if v[:status] == :up
       mm = v[:migration]
-      down_by_class_name(mm.migration_class_name)
+      down_by_module_name(mm.migration_module_name)
     end
   end
 
@@ -190,7 +190,7 @@ function all_up() :: Void
     v = m[v_hash]
     if v[:status] == :down
       mm = v[:migration]
-      up_by_class_name(mm.migration_class_name)
+      up_by_module_name(mm.migration_module_name)
     end
   end
 

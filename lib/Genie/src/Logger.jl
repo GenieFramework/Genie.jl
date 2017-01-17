@@ -7,6 +7,7 @@ const colors = Dict{String,Symbol}("info" => :gray, "warn" => :yellow, "debug" =
 
 """
     log(message, level = "info"; showst::Bool = true) :: Void
+    log(message::Any, level::Any = "info"; showst::Bool = false) :: Void
     log(message::String, level::Symbol) :: Void
 
 Logs `message` to all configured logs (STDOUT, FILE, etc) by delegating to `Lumberjack`.
@@ -51,6 +52,9 @@ function log(message, level::String = "info"; showst::Bool = true) :: Void
 end
 function log(message::String, level::Symbol; showst::Bool = false) :: Void
   log(message, level == :err ? "error" : string(level), showst = showst)
+end
+function log(message::Any, level::Any = "info"; showst::Bool = false) :: Void
+  log(string(message), string(level), showst = showst)
 end
 
 

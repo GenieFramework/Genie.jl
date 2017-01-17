@@ -736,7 +736,7 @@ function save!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validati
   save!!(m, conflict_strategy = conflict_strategy, skip_validation = skip_validation, skip_callbacks = skip_callbacks)
 end
 function save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false, skip_callbacks = Vector{Symbol}()) :: T
-  find_one_by!!(typeof(m), Symbol(m._id), (_save!!(m, conflict_strategy = conflict_strategy, skip_validation = skip_validation, skip_callbacks = skip_callbacks))[1, Symbol(m._id)])
+  find_one!!(typeof(m), (_save!!(m, conflict_strategy = conflict_strategy, skip_validation = skip_validation, skip_callbacks = skip_callbacks))[1, Symbol(m._id)])
 end
 
 function _save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false, skip_callbacks = Vector{Symbol}()) :: DataFrame

@@ -36,7 +36,7 @@ function execute(config::Settings) :: Void
   elseif called_command(parsed_args, "migration:up")
     Migration.last_up()
   elseif parsed_args["migration:up"] != nothing
-    Migration.up_by_class_name(parsed_args["migration:up"])
+    Migration.up_by_module_name(parsed_args["migration:up"])
 
   elseif called_command(parsed_args, "migration:alldown")
     Migration.all_down()
@@ -44,7 +44,7 @@ function execute(config::Settings) :: Void
   elseif called_command(parsed_args, "migration:down")
     Migration.last_down()
   elseif parsed_args["migration:down"] != nothing
-    Migration.down_by_class_name(parsed_args["db:migration:down"])
+    Migration.down_by_module_name(parsed_args["db:migration:down"])
 
   elseif called_command(parsed_args, "task:list")
     Toolbox.print_all_tasks()
@@ -120,13 +120,13 @@ function parse_commandline_args() :: Dict{AbstractString,Any}
             help = "migration_name -> create a new migration, ex: create_table_foos"
         "--migration:up"
             help = "true -> run last migration up \n
-                    migration_class_name -> run migration up, ex: CreateTableFoos"
+                    migration_module_name -> run migration up, ex: CreateTableFoos"
         "--migration:allup"
             help = "true -> run up all down migrations"
             default = "false"
         "--migration:down"
             help = "true -> run last migration down \n
-                    migration_class_name -> run migration down, ex: CreateTableFoos"
+                    migration_module_name -> run migration down, ex: CreateTableFoos"
         "--migration:alldown"
             help = "true -> run down all up migrations"
             default = "false"

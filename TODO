@@ -35,12 +35,12 @@ v 0.6.x
 
 v 0.7.x
 # PERFORMANCE
-☐ type hinting, API consolidation, cleanup
-☐ custom Genie sysimg: include(joinpath(dirname(JULIA_HOME),"share","julia","build_sysimg.jl")); build_sysimg(force=true)
+✔ type hinting, API consolidation, cleanup
+✔ all instances of m() must be type hinted
 ☐ use macros to completely remove function invocations that produce no effect based on settings (if they are disabled from settings)
 ☐ refactor EJL to parse the template into julia code (a module with a function that takes as args the variables) and "cache" it and invoke it accordingly
-☐ all instances of m() must be type hinted
 ☐ investigate more opportunities for parallelizing code
+☐ custom Genie sysimg: include(joinpath(dirname(JULIA_HOME),"share","julia","build_sysimg.jl")); build_sysimg(force=true)
 
 # SUPPORT
 ☐ doc comments
@@ -57,7 +57,6 @@ v 0.7.x
 ☐ encrypt sessions and cookies
 ☐ REPL utility to setup a new app
 ☐ should work without a DB
-☐ beautify error handling (50x, 40x) pages
 ☐ packages versioning (declarative packages)
 ☐ support for mysql
 ☐ refactor Router to use Route types instead of Tuples
@@ -68,6 +67,7 @@ v 0.7.x
 v 0.8.x
 ☐ add utility functions for migrations (add column, add index, create table, etc)
 ☐ EJL form helpers
+☐ beautify error handling (50x, 40x) pages
 
 v 0.9
 ☐ channels (websockets communication)

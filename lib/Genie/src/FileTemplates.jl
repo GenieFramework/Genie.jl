@@ -2,9 +2,10 @@ module FileTemplates
 
 using Inflector
 
-function new_database_migration(class_name::String) :: String
+function new_database_migration(module_name::String) :: String
   """
-  module $class_name
+  module $module_name
+  
   using Genie, Database
 
   function up()
@@ -21,9 +22,10 @@ function new_database_migration(class_name::String) :: String
   """
 end
 
-function new_task(class_name::String) :: String
+function new_task(module_name::String) :: String
   """
-  module $class_name
+  module $module_name
+
   using Genie
 
   function description()

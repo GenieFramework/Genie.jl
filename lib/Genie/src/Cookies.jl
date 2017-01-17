@@ -1,6 +1,6 @@
 module Cookies
 
-using HttpServer, Genie
+using HttpServer, HttpCommon, Genie
 
 function get(res::Response, key::Union{String,Symbol}) :: Nullable{String}
   key = string(key)
@@ -23,12 +23,12 @@ function get(req::Request, key::Union{String,Symbol}) :: Nullable{String}
   Nullable{String}()
 end
 
-function set!(res::Response, key::Union{String,Symbol}, value::Any, attributes::Dict) :: Dict{String,String}
+function set!(res::Response, key::Union{String,Symbol}, value::Any, attributes::Dict) :: Dict{String,HttpCommon.Cookie}
   setcookie!(res, string(key), string(value), attributes)
 
   res.cookies
 end
-function set!(res::Response, key::Union{AbstractString,Symbol}, value::Any) :: Dict{String,String}
+function set!(res::Response, key::Union{AbstractString,Symbol}, value::Any) :: Dict{String,HttpCommon.Cookie}
   set!(res, key, value, Dict())
 end
 

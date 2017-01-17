@@ -41,6 +41,8 @@ end
 #
 
 function validate!{T<:AbstractModel}(m::T) :: Bool
+  ! has_validator(m) && return true
+  
   clear_errors!(m)
 
   for r in rules!!(m)
@@ -76,11 +78,11 @@ function validator!!{T<:AbstractModel}(m::T) :: ModelValidator
 end
 
 function validator{T<:AbstractModel}(m::T) :: Nullable{ModelValidator}
-  if has_field(m, :validator)
-    Nullable{ModelValidator}(m.validator)
-  else
-    Nullable{ModelValidator}()
-  end
+  has_validator(m) ? Nullable{ModelValidator}(m.validator) : Nullable{ModelValidator}()
+end
+
+function has_validator{T<:AbstractModel}(m::T) :: Bool
+  has_field(m, :validator)
 end
 
 function has_errors{T<:AbstractModel}(m::T) :: Bool

@@ -145,7 +145,7 @@ function get_route!!(route_name::Symbol) :: Tuple{Tuple{String,String,String},Di
   get_route(route_name) |> Base.get
 end
 
-function routes() :: Array{Tuple{Tuple{String,String,String},Dict{Symbol,Dict{Any,Any}}}}
+function routes() :: Vector{Tuple{Tuple{String,String,String},Dict{Symbol,Dict{Any,Any}}}}
   collect(values(_routes))
 end
 
@@ -242,7 +242,7 @@ function match_routes(req::Request, res::Response, session::Sessions.Session, pa
   serve_error_file(404, "Not found", params.collection)
 end
 
-function parse_route(route::AbstractString) :: Tuple{AbstractString,Vector{AbstractString},Vector{Any}}
+function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
   parts = AbstractString[]
   param_names = AbstractString[]
   param_types = Any[]
@@ -267,7 +267,7 @@ function parse_route(route::AbstractString) :: Tuple{AbstractString,Vector{Abstr
   "/" * join(parts, "/"), param_names, param_types
 end
 
-function extract_uri_params(uri::URI, regex_route::Regex, param_names::Vector{AbstractString}, param_types::Vector{Any}, params::Params) :: Bool
+function extract_uri_params(uri::URI, regex_route::Regex, param_names::Vector{String}, param_types::Vector{Any}, params::Params) :: Bool
   matches = match(regex_route, uri.path)
   i = 1
   for param_name in param_names
@@ -317,7 +317,7 @@ function extract_post_params(req::Request, params::Params) :: Void
   nothing
 end
 
-function nested_keys(k::AbstractString, v, params::Params) :: Void
+function nested_keys(k::String, v, params::Params) :: Void
   if contains(k, ".")
     parts = split(k, ".", limit = 2)
     nested_val_key = Symbol(parts[1])
@@ -343,8 +343,8 @@ function extract_pagination_params(params::Params) :: Void
   nothing
 end
 
-function setup_params!( params::Dict{Symbol,Any}, to_parts::Vector{AbstractString}, action_controller_parts::Vector{AbstractString},
-                        controller_path::AbstractString, req::Request, res::Response, session::Sessions.Session, action_name::AbstractString) :: Dict{Symbol,Any}
+function setup_params!( params::Dict{Symbol,Any}, to_parts::Vector{String}, action_controller_parts::Vector{String},
+                        controller_path::String, req::Request, res::Response, session::Sessions.Session, action_name::String) :: Dict{Symbol,Any}
   params[:action_controller] = to_parts[2]
   params[:action] = action_controller_parts[end]
   params[:controller] = join(action_controller_parts[1:end-1], ".")
@@ -370,8 +370,8 @@ end
 
 const loaded_controllers = UInt64[]
 
-function invoke_controller(to::AbstractString, req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session) :: Response
-  to_parts::Vector{AbstractString} = split(to, "#")
+function invoke_controller(to::String, req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session) :: Response
+  to_parts::Vector{String} = split(to, "#")
 
   controller_path = abspath(joinpath(Genie.RESOURCE_PATH, to_parts[1]))
   controller_path_hash = hash(controller_path)
@@ -384,7 +384,7 @@ function invoke_controller(to::AbstractString, req::Request, res::Response, para
   controller = Genie.GenieController()
   action_name = to_parts[2]
 
-  action_controller_parts::Vector{AbstractString} = split(to_parts[2], ".")
+  action_controller_parts::Vector{String} = split(to_parts[2], ".")
   setup_params!(params, to_parts, action_controller_parts, controller_path, req, res, session, action_name)
 
   try
@@ -478,29 +478,29 @@ function load_routes() :: Void
   nothing
 end
 
-function is_static_file(resource::AbstractString) :: Bool
+function is_static_file(resource::String) :: Bool
   isfile(file_path(URI(resource).path))
 end
 
-function serve_static_file(resource::AbstractString) :: Response
+function serve_static_file(resource::String) :: Response
   f = file_path(URI(resource).path)
   Response(200, file_headers(f), open(read, f))
 end
 
-function serve_error_file(error_code::Int, error_message::AbstractString = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
+function serve_error_file(error_code::Int, error_message::String = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
   if Configuration.is_dev()
     error_page =  open(Genie.DOC_ROOT_PATH * "/error-$(error_code).html") do f
                     readstring(f)
                   end
     error_page = replace(error_page, "<error_message/>", error_message)
-    Response(error_code, Dict{AbstractString,AbstractString}(), error_page)
+    Response(error_code, Dict{String,String}(), error_page)
   else
     f = file_path(URI("/error-$(error_code).html").path)
     Response(error_code, file_headers(f), open(read, f))
   end
 end
 
-function file_path(resource::AbstractString) :: String
+function file_path(resource::String) :: String
   abspath(joinpath(Genie.config.server_document_root, resource[2:end]))
 end
 

@@ -38,6 +38,7 @@ type User <: AbstractModel
 end
 
 module Users
+
 using App, SearchLight, Sessions, Authentication, Helpers, DateParser, SHA, Logger, Router
 
 function login(email::String, password::String, session)

@@ -1,4 +1,5 @@
 module AddPublishedStatusToArticles
+
 using Database
 
 function up()
