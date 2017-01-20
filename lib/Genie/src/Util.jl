@@ -25,11 +25,11 @@ function is_quoted(str::String) :: Bool
   startswith(str, "\"") && endswith(str, "\"")
 end
 
-function expand_nullable{T}(value::Any; expand::Bool = true, default::T = "NA") :: T
-  if ! expand || ! isa(value, Nullable)
-    return value
-  end
+function expand_nullable{T}(value::T) :: T
+  value
+end
 
+function expand_nullable{T}(value::Nullable{T}, default::T) :: T
   if isnull(value)
     default
   else
@@ -37,15 +37,12 @@ function expand_nullable{T}(value::Any; expand::Bool = true, default::T = "NA") 
   end
 end
 
-function _!!(value::Any)
-  ret = expand_nullable(value)
-  ret == "NA" && error("Value $value is NULL")
-
-  ret
+function _!!{T}(value::Nullable{T}) :: T
+  Base.get(value)
 end
 
-function _!_(value::Any)
-  expand_nullable(value)
+function _!_{T}(value::Nullable{T}, default::T) :: T
+  expand_nullable(value, default)
 end
 
 function file_name_to_type_name(file_name) :: String

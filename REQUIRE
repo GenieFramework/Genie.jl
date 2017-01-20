@@ -17,6 +17,7 @@ URIParser
 Gallium
 Faker
 MbedTLS
+Match
 
 https://github.com/JuliaDB/DBI.jl
 https://github.com/JuliaDB/PostgreSQL.jl

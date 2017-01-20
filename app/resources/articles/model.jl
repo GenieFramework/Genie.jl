@@ -1,4 +1,5 @@
 export Article, Articles
+
 using Authentication
 
 type Article <: AbstractModel
@@ -49,6 +50,7 @@ type Article <: AbstractModel
 end
 
 module Articles
+
 using App, Util, URIParser, Faker
 
 function is_published(article::Article)

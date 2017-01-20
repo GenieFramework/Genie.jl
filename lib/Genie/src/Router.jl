@@ -155,15 +155,23 @@ function print_routes() :: Void
   nothing
 end
 
-function to_link!!{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Symbol,T}(); with_error = true) :: String
-  route = (with_error ? get_route!! : get_route)(route_name) |> Util.expand_nullable
+function to_link!!{T}(route_name::Symbol, d::Dict{Symbol,T}) :: String
+  route = try
+    get_route!!(route_name)
+  catch ex
+    Logger.log(string(ex), :err)
+    Logger.log("Route not found", :err)
+    Logger.@location()
+
+    error("Route not found")
+  end
 
   result = String[]
   for part in split(route[1][2], "/")
     if startswith(part, ":")
       var_name = split(part, "::")[1][2:end] |> Symbol
-      ( isempty(route_params) || ! haskey(route_params, var_name) ) && error("Route $route_name expects param $var_name")
-      push!(result, pathify(route_params[var_name]))
+      ( isempty(d) || ! haskey(d, var_name) ) && error("Route $route_name expects param $var_name")
+      push!(result, pathify(d[var_name]))
       continue
     end
     push!(result, part)
@@ -171,34 +179,29 @@ function to_link!!{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Sy
 
   join(result, "/")
 end
-function to_link{T}(route_name::Symbol, route_params::Dict{Symbol,T} = Dict{Symbol,T}()) :: String
-  try
-    to_link!!(route_name, route_params, with_error = false)
-  catch ex
-    Logger.log(ex, :err, showst = false)
-    ""
-  end
-end
 function to_link!!(route_name::Symbol; route_params...) :: String
-  d = Dict{Symbol,Any}()
-  for (k,v) in route_params
-    d[k] = v
-  end
-
-  to_link!!(route_name, d)
+  to_link!!(route_name, route_params_to_dict(route_params))
 end
-function to_link(route_name::Symbol; route_params...) :: String
-  d = Dict{Symbol,Any}()
-  for (k,v) in route_params
-    d[k] = v
-  end
 
+function to_link(route_name::Symbol; route_params...) :: String
   try
-    to_link!!(route_name, d, with_error = false)
+    to_link!!(route_name, route_params_to_dict(route_params))
   catch ex
-    Logger.log(ex, :err, showst = false)
+    Logger.log(string(ex), :err)
+    Logger.log("Route not found", :err)
+    Logger.@location()
+
     ""
   end
+end
+
+function route_params_to_dict(route_params)
+  d = Dict{Symbol,Any}()
+  for (k,v) in route_params
+    d[k] = v
+  end
+
+  d
 end
 
 function match_routes(req::Request, res::Response, session::Sessions.Session, params::Params) :: Response
@@ -275,6 +278,9 @@ function extract_uri_params(uri::URI, regex_route::Regex, param_names::Vector{St
       params.collection[Symbol(param_name)] = convert(param_types[i], matches[param_name])
     catch ex
       Logger.log(ex)
+      Logger.log("Failed to match URI params between $(param_types[i])::$(typeof(param_types[i])) and $(matches[param_name])::$(typeof(matches[param_name]))")
+      Logger.@location()
+
       return false
     end
 

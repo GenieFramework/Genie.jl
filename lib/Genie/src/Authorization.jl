@@ -6,7 +6,7 @@ export is_authorized, with_authorization
 
 function is_authorized(ability::Symbol, params::Dict{Symbol,Any}) :: Bool
   Authentication.is_authenticated(session(params)) || return false
-  user_role = expand_nullable(expand_nullable(current_user(session(params)), default = User()).role, default = "") |> Symbol
+  user_role = expand_nullable( expand_nullable(current_user(session(params)), User()).role, :user )
   role_has_ability(user_role, ability, params)
 end
 
@@ -14,7 +14,7 @@ function with_authorization(f::Function, ability::Symbol, fallback::Function, pa
   if ! is_authorized(ability, params)
     fallback(params)
   else
-    user_role = expand_nullable(expand_nullable(current_user(session(params)), default = User()).role, default = "")
+    user_role = expand_nullable( expand_nullable(current_user(session(params)), User()).role, :user )
     f(scopes_of_role_ability(user_role, ability, params))
   end
 end

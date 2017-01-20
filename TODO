@@ -41,6 +41,8 @@ v 0.7.x
 ☐ refactor EJL to parse the template into julia code (a module with a function that takes as args the variables) and "cache" it and invoke it accordingly
 ☐ investigate more opportunities for parallelizing code
 ☐ custom Genie sysimg: include(joinpath(dirname(JULIA_HOME),"share","julia","build_sysimg.jl")); build_sysimg(force=true)
+☐ implement Flax, a new template system in 100% julia
+☐ review the JSON builder / JSON templates
 
 # SUPPORT
 ☐ doc comments

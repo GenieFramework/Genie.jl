@@ -108,7 +108,7 @@ function structure_to_dict(structure, resource = nothing) :: Dict{Symbol,Any}
   for (k, v) in structure
     k = endswith(string(k), "_") ? Symbol(string(k)[1:end-1]) : k
     data_item[Symbol(k)] =  if isa(v, Symbol)
-                              getfield(current_module().eval(resource), v) |> Util.expand_nullable
+                              getfield(current_module().eval(resource), v) |> Base.get
                             elseif isa(v, Function)
                               v()
                             else

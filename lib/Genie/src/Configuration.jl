@@ -151,7 +151,7 @@ type Settings
   log_requests::Bool
   log_responses::Bool
   log_resources::Bool
-  log_level::String
+  log_level::Symbol
   log_verbosity::Symbol
   log_formatted::Bool
   log_cache::Bool
@@ -207,7 +207,7 @@ type Settings
             log_requests  = true,
             log_responses = true,
             log_resources = false,
-            log_level     = "debug",
+            log_level     = :debug,
             log_verbosity = LOG_LEVEL_VERBOSITY_VERBOSE,
             log_formatted = true,
             log_cache     = true,

@@ -8,6 +8,7 @@ type User <: AbstractModel
   name::String
   email::String
   password::String
+  hashed_password::String
   role_id::Nullable{SearchLight.DbId}
   updated_at::DateTime
 
@@ -24,6 +25,7 @@ type User <: AbstractModel
     name = "",
     email = "",
     password = "",
+    hashed_password = "",
     role_id = Nullable{SearchLight.DbId}(),
     updated_at = DateTime(),
 
@@ -34,12 +36,12 @@ type User <: AbstractModel
     after_hydration = Users.after_hydration,
 
     role = Nullable{Symbol}()
-  ) = new("users", "id", id, name, email, password, role_id, updated_at, belongs_to, on_dehydration, on_hydration!, after_hydration, role)
+  ) = new("users", "id", id, name, email, password, hashed_password, role_id, updated_at, belongs_to, on_dehydration, on_hydration!, after_hydration, role)
 end
 
 module Users
 
-using App, SearchLight, Sessions, Authentication, Helpers, DateParser, SHA, Logger, Router
+using App, SearchLight, Sessions, Authentication, Helpers, DateParser, SHA, Logger, Router, Match
 
 function login(email::String, password::String, session)
   users = SearchLight.find(User, SQLQuery(where = [SQLWhere(:email, email), SQLWhere(:password, sha256(password) |> bytes2hex)]))
@@ -58,7 +60,11 @@ function logout(session)
 end
 
 function dehydrate(user::User, field::Symbol, value::Any)
-  field == :updated_at ? Dates.now() : value
+  @match field begin
+    :updated_at => Dates.now()
+    :password   => value != user.hashed_password ? sha256(value) |> bytes2hex : value
+    _           => value
+  end
 end
 
 function hydrate!(user::User, field::Symbol, value::Any)
@@ -66,6 +72,7 @@ function hydrate!(user::User, field::Symbol, value::Any)
 end
 
 function after_hydration(user::User)
+  user.hashed_password = user.password
   user.role = SearchLight.relation_object!!(user, App.Role, SearchLight.RELATION_BELONGS_TO).name
 
   user

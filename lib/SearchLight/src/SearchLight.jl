@@ -3343,9 +3343,9 @@ end
 """
 
 """
-function to_dict{T<:AbstractModel}(m::T; all_fields::Bool = false, expand_nullables::Bool = false) :: Dict{String,Any}
+function to_dict{T<:AbstractModel}(m::T; all_fields::Bool = false) :: Dict{String,Any}
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
-  Dict( string(f) => Util.expand_nullable( getfield(m, Symbol(f)), expand = expand_nullables ) for f in fields )
+  Dict( string(f) => Util.expand_nullable( getfield(m, Symbol(f)) ) for f in fields )
 end
 function to_dict{T<:GenieType}(m::T) :: Dict{String,Any}
   Genie.to_dict(m)

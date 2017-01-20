@@ -1,4 +1,5 @@
 module AddSlugToArticles
+
 using Database
 
 function up()
