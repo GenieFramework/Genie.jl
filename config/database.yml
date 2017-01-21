@@ -1,23 +1,23 @@
 dev:
-  adapter: PostgreSQL
-  database: blogjl_dev
-  host: localhost
-  username: adrian
-  password: adrian
-  port: 5432
+  adapter:
+  database:
+  host:
+  username:
+  password:
+  port:
 
 prod:
-  adapter: PostgreSQL
-  database: blogjl_dev
-  host: localhost
-  username: adrian
-  password: adrian
-  port: 5432
+  adapter:
+  database:
+  host:
+  username:
+  password:
+  port:
 
 test:
-  adapter: PostgreSQL
-  database: blogjl_test
-  host: localhost
-  username: adrian
-  password: adrian
-  port: 5432
+  adapter:
+  database:
+  host:
+  username:
+  password:
+  port: 
