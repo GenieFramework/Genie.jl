@@ -36,7 +36,9 @@ julia> Logger.log("hello", "err")
 2016-12-21T18:38:38.403 - err: hello
 ```
 """
-function log(message, level::String = "info"; showst::Bool = true) :: Void
+function log(message, level::Any = "info"; showst = false) :: Void
+  message = string(message)
+  level = string(level)
   level == "err" && (level = "error")
 
   println()
@@ -52,9 +54,6 @@ function log(message, level::String = "info"; showst::Bool = true) :: Void
 end
 function log(message::String, level::Symbol; showst::Bool = false) :: Void
   log(message, level == :err ? "error" : string(level), showst = showst)
-end
-function log(message::Any, level::Any = "info"; showst::Bool = false) :: Void
-  log(string(message), string(level), showst = showst)
 end
 
 

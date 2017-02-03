@@ -217,6 +217,54 @@ end
 function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}, joins = SQLJoin[]) :: String
   DatabaseAdapter.to_select_part(m, cols, joins)
 end
+"""
+
+"""
+function _to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}, joins = SQLJoin[]) :: String
+  _m::T = m()
+
+  joined_tables = []
+
+  if has_relation(_m, RELATION_HAS_ONE)
+    rels = _m.has_one
+    joined_tables = vcat(joined_tables, map(x -> is_lazy(x) ? nothing : (x.model_name)(), rels))
+  end
+
+  if has_relation(_m, RELATION_HAS_MANY)
+    rels = _m.has_many
+    joined_tables = vcat(joined_tables, map(x -> is_lazy(x) ? nothing : (x.model_name)(), rels))
+  end
+
+  if has_relation(_m, RELATION_BELONGS_TO)
+    rels = _m.belongs_to
+    joined_tables = vcat(joined_tables, map(x -> is_lazy(x) ? nothing : (x.model_name)(), rels))
+  end
+
+  filter!(x -> x != nothing, joined_tables)
+
+  if ! isempty(cols)
+    table_columns = []
+    cols = vcat(cols, columns_from_joins(joins))
+
+    for column in cols
+      push!(table_columns, prepare_column_name(column))
+    end
+
+    return join(table_columns, ", ")
+  else
+    table_columns = join(to_fully_qualified_sql_column_names(_m, persistable_fields(_m), escape_columns = true), ", ")
+    table_columns = isempty(table_columns) ? AbstractString[] : vcat(table_columns, map(x -> prepare_column_name(x), columns_from_joins(joins)))
+
+    related_table_columns = String[]
+    for rels in map(x -> to_fully_qualified_sql_column_names(x, persistable_fields(x), escape_columns = true), joined_tables)
+      for col in rels
+        push!(related_table_columns, col)
+      end
+    end
+
+    return join([table_columns ; related_table_columns], ", ")
+  end
+end
 
 
 """
@@ -333,56 +381,6 @@ function prepare_column_name(column::SQLColumn) :: String
     end
 
     DatabaseAdapter.column_data_to_column_name(column, column_data)
-  end
-end
-
-
-"""
-
-"""
-function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}, joins = SQLJoin[]) :: String
-  _m::T = m()
-
-  joined_tables = []
-
-  if has_relation(_m, RELATION_HAS_ONE)
-    rels = _m.has_one
-    joined_tables = vcat(joined_tables, map(x -> is_lazy(x) ? nothing : (x.model_name)(), rels))
-  end
-
-  if has_relation(_m, RELATION_HAS_MANY)
-    rels = _m.has_many
-    joined_tables = vcat(joined_tables, map(x -> is_lazy(x) ? nothing : (x.model_name)(), rels))
-  end
-
-  if has_relation(_m, RELATION_BELONGS_TO)
-    rels = _m.belongs_to
-    joined_tables = vcat(joined_tables, map(x -> is_lazy(x) ? nothing : (x.model_name)(), rels))
-  end
-
-  filter!(x -> x != nothing, joined_tables)
-
-  if ! isempty(cols)
-    table_columns = []
-    cols = vcat(cols, columns_from_joins(joins))
-
-    for column in cols
-      push!(table_columns, prepare_column_name(column))
-    end
-
-    return join(table_columns, ", ")
-  else
-    table_columns = join(to_fully_qualified_sql_column_names(_m, persistable_fields(_m), escape_columns = true), ", ")
-    table_columns = isempty(table_columns) ? AbstractString[] : vcat(table_columns, map(x -> prepare_column_name(x), columns_from_joins(joins)))
-
-    related_table_columns = String[]
-    for rels in map(x -> to_fully_qualified_sql_column_names(x, persistable_fields(x), escape_columns = true), joined_tables)
-      for col in rels
-        push!(related_table_columns, col)
-      end
-    end
-
-    return join([table_columns ; related_table_columns], ", ")
   end
 end
 

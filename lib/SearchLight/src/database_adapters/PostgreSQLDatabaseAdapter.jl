@@ -322,7 +322,7 @@ end
 
 """
 function to_select_part{T<:AbstractModel}(m::Type{T}, cols::Vector{SQLColumn}, joins = SQLJoin[]) :: String
-  "SELECT " * Database.to_select_part(m, cols, joins)
+  "SELECT " * Database._to_select_part(m, cols, joins)
 end
 
 
