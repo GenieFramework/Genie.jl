@@ -1,4 +1,5 @@
 module Database
+
 using YAML, Genie, Memoize, SearchLight, DataFrames, Logger
 
 eval(:(using $(Genie.config.db_adapter)))
@@ -100,7 +101,7 @@ julia> SearchLight.to_fetch_sql(Article, SQLQuery(limit = 5)) |> Database.query
 2017-01-16T21:42:26.627 - info: SQL QUERY: SELECT \"articles\".\"id\" AS \"articles_id\", \"articles\".\"title\" AS \"articles_title\", \"articles\".\"summary\" AS \"articles_summary\", \"articles\".\"content\" AS \"articles_content\", \"articles\".\"updated_at\" AS \"articles_updated_at\", \"articles\".\"published_at\" AS \"articles_published_at\", \"articles\".\"slug\" AS \"articles_slug\" FROM \"articles\" LIMIT 5
 
   0.000950 seconds (16 allocations: 576 bytes)
-  
+
 PostgreSQL.PostgresResultHandle(Ptr{Void} @0x00007fcdaf33a450,DataType[PostgreSQL.PostgresType{:int4},PostgreSQL.PostgresType{:varchar},PostgreSQL.PostgresType{:text},PostgreSQL.PostgresType{:text},PostgreSQL.PostgresType{:timestamp},PostgreSQL.PostgresType{:timestamp},PostgreSQL.PostgresType{:varchar}],5,7)
 ```
 """

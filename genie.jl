@@ -21,7 +21,6 @@ function bootstrap_genie() :: Void
 
   @everywhere push!(LOAD_PATH,  abspath(joinpath("lib", "Genie", "src")),
                                 abspath(joinpath("lib", "SearchLight", "src")),
-                                abspath(joinpath("lib", "Ejl", "src")),
                                 abspath(joinpath("lib", "Flax", "src")),
                                 abspath(pwd()))
 end

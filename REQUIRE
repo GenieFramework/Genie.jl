@@ -18,6 +18,7 @@ Gallium
 Faker
 MbedTLS
 Match
+Gumbo
 
 https://github.com/JuliaDB/DBI.jl
 https://github.com/JuliaDB/PostgreSQL.jl

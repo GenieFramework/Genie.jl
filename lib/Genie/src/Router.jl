@@ -499,7 +499,7 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
                     readstring(f)
                   end
     error_page = replace(error_page, "<error_message/>", error_message)
-    Response(error_code, Dict{String,String}(), error_page)
+    Response(error_code, Dict{AbstractString,AbstractString}(), error_page)
   else
     f = file_path(URI("/error-$(error_code).html").path)
     Response(error_code, file_headers(f), open(read, f))

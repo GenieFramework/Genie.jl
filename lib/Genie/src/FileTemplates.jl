@@ -5,7 +5,7 @@ using Inflector
 function new_database_migration(module_name::String) :: String
   """
   module $module_name
-  
+
   using Genie, Database
 
   function up()
@@ -69,6 +69,8 @@ function new_model(model_name::String, resource_name::String = model_name) :: St
     # before_save::Function
     # on_dehydration::Function
     # on_hydration::Function
+    # on_hydration!::Function
+    # after_hydration::Function
 
     ### constructor
     $model_name(;
@@ -103,7 +105,9 @@ end
 function new_controller(controller_name::String) :: String
   """
   module $(controller_name)Controller
+
   using Genie, SearchLight, App
+
   end
   """
 end
@@ -111,6 +115,7 @@ end
 function new_validator(validator_name::String) :: String
   """
   module $(validator_name)Validator
+
   using App, SearchLight, Validation
 
   function not_empty{T<:AbstractModel}(::Symbol, m::T, args::Vararg{Any})::Bool

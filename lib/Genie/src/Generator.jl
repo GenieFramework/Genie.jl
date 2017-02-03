@@ -15,7 +15,20 @@ function new_model(cmd_args::Dict{String,Any}, config::Settings) :: Void
   nothing
 end
 
-function new_resource(cmd_args::Dict{AbstractString,Any}, config::Settings) :: Void
+function new_controller(cmd_args::Dict{String,Any}, config::Settings) :: Void
+  resource_name = ucfirst(cmd_args["controller:new"])
+  if Inflector.is_singular(resource_name)
+    resource_name = Inflector.to_plural(resource_name) |> Base.get
+  end
+
+  resource_path = setup_resource_path(resource_name)
+  write_resource_file(resource_path, Genie.GENIE_CONTROLLER_FILE_NAME, resource_name) &&
+    Logger.log("New controller created at $(joinpath(resource_path, Genie.GENIE_CONTROLLER_FILE_NAME))")
+
+  nothing
+end
+
+function new_resource(cmd_args::Dict{String,Any}, config::Settings) :: Void
   sf = Inflector.to_singular(cmd_args["resource:new"])
   cmd_args["model:new"] = (isnull(sf) ? cmd_args["resource:new"] : Base.get(sf)) |> ucfirst
   new_model(cmd_args, config)
@@ -56,10 +69,10 @@ function setup_resource_path(resource_name::String) :: String
   resource_path
 end
 
-function write_resource_file(resource_path::String, file_name::String, resource_name::String) :: Void
+function write_resource_file(resource_path::String, file_name::String, resource_name::String) :: Bool
   if isfile(joinpath(resource_path, file_name))
     Logger.log("File already exists, $(joinpath(resource_path, file_name)) - skipping", :err)
-    return nothing
+    return false
   end
 
   f = open(joinpath(resource_path, file_name), "w")
@@ -80,7 +93,7 @@ function write_resource_file(resource_path::String, file_name::String, resource_
 
   close(f)
 
-  nothing
+  true
 end
 
 end

@@ -37,10 +37,6 @@ v 0.7.x
 # PERFORMANCE
 ✔ type hinting, API consolidation, cleanup
 ✔ all instances of m() must be type hinted
-☐ use macros to completely remove function invocations that produce no effect based on settings (if they are disabled from settings)
-☐ refactor EJL to parse the template into julia code (a module with a function that takes as args the variables) and "cache" it and invoke it accordingly
-☐ investigate more opportunities for parallelizing code
-☐ custom Genie sysimg: include(joinpath(dirname(JULIA_HOME),"share","julia","build_sysimg.jl")); build_sysimg(force=true)
 ☐ implement Flax, a new template system in 100% julia
 ☐ review the JSON builder / JSON templates
 
@@ -57,29 +53,33 @@ v 0.7.x
 ✔ refactor params to use a Params type (no any Dict{Symbol,Any})
 ✔ hooks: before controller action invoked & model hooks (before save, before dehydration, after hydration, etc)
 ☐ encrypt sessions and cookies
-☐ REPL utility to setup a new app
 ☐ should work without a DB
-☐ packages versioning (declarative packages)
 ☐ support for mysql
 ☐ refactor Router to use Route types instead of Tuples
 
 # TEST APP
 ☐ "ToDo-Backend MVC" app
 
-v 0.8.x
-☐ add utility functions for migrations (add column, add index, create table, etc)
-☐ EJL form helpers
-☐ beautify error handling (50x, 40x) pages
-
-v 0.9
+v 0.8
 ☐ channels (websockets communication)
 ☐ add frontend framework adapters - with Vue.js as default
 ☐ add the concept of State to sync app state between client (Vue.js data) and server (Genie state)
 ☐ refactor the views to use data from State and generate the reactive Vue.js code on the client
 ☐ server side reactivity from State (using Reactive.jl)
-☐ reactive graphs, tables, lists rendering with Vuejs (reactive UI components)
+☐ reactive plots, tables, lists rendering with Vuejs (reactive UI components)
+☐ Flax form helpers
 
 ☐ "Hello world" app
+
+v 0.9
+☐ add utility functions for migrations (add column, add index, create table, etc)
+☐ beautify error handling (50x, 40x) pages
+☐ REPL utility to setup a new app
+☐ packages versioning (declarative packages)
+☐ HTML Flax views (and HTML to Flax utility)
+☐ custom Genie sysimg: include(joinpath(dirname(JULIA_HOME),"share","julia","build_sysimg.jl")); build_sysimg(force=true)
+☐ use macros to completely remove function invocations that produce no effect based on settings (if they are disabled from settings)
+☐ investigate more opportunities for parallelizing code
 
 v 1.0
 ☐ support for plugins

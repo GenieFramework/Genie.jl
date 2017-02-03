@@ -9,7 +9,7 @@ using ArgParse, Configuration, Genie, Database, Generator, Tester, Toolbox, App,
 Runs the requested Genie app command, based on the `args` passed to the script.
 """
 function execute(config::Settings) :: Void
-  parsed_args = parse_commandline_args()::Dict{AbstractString,Any}
+  parsed_args = parse_commandline_args()::Dict{String,Any}
 
   Genie.config.app_env = ENV["GENIE_ENV"]
   Genie.config.server_port = parse(Int, parsed_args["server:port"])
@@ -21,6 +21,9 @@ function execute(config::Settings) :: Void
 
   elseif parsed_args["model:new"] != nothing
     Generator.new_model(parsed_args, config)
+
+  elseif parsed_args["controller:new"] != nothing
+    Generator.new_controller(parsed_args, config)
 
   elseif parsed_args["resource:new"] != nothing
     Generator.new_resource(parsed_args, config)
@@ -74,7 +77,7 @@ end
 Extracts the command line args passed into the app and returns them as a `Dict`, possibly setting up defaults.
 Also, it is used by the ArgParse module to populate the command line help for the app `-h`.
 """
-function parse_commandline_args() :: Dict{AbstractString,Any}
+function parse_commandline_args() :: Dict{String,Any}
     settings = ArgParseSettings()
 
     settings.description = "Genie web framework CLI"
@@ -106,13 +109,14 @@ function parse_commandline_args() :: Dict{AbstractString,Any}
 
         "--model:new"
             help = "model_name -> creates a new model, ex: Product"
-
+        "--controller:new"
+            help = "controller_name -> creates a new controller, ex: Products"
         "--resource:new"
             help = "resource_name -> creates a new resource folder with all its files, ex: products"
 
         "--migration:status"
-              help = "true -> list migrations and their status"
-              default = "false"
+            help = "true -> list migrations and their status"
+            default = "false"
         "--migration:list"
             help = "alias for migration:status"
             default = "false"
@@ -154,7 +158,7 @@ end
 Checks if the name of the task passed as the command line arg is valid task identifier -- if not, attempts to address it, by appending the "Task" suffix.
 Returns the potentially modified `parsed_args` `Dict`.
 """
-function check_valid_task!(parsed_args::Dict{AbstractString,Any}) :: Dict{AbstractString,Any}
+function check_valid_task!(parsed_args::Dict{String,Any}) :: Dict{String,Any}
   haskey(parsed_args, "task:new") && isa(parsed_args["task:new"], String) && ! endswith(parsed_args["task:new"], "Task") && (parsed_args["task:new"] *= "Task")
   haskey(parsed_args, "task:run") && isa(parsed_args["task:run"], String) &&! endswith(parsed_args["task:run"], "Task") && (parsed_args["task:run"] *= "Task")
 
@@ -167,7 +171,7 @@ end
 
 Checks whether or not a certain command was invoked by looking at the command line args.
 """
-function called_command(args::Dict{AbstractString,Any}, key::String) :: Bool
+function called_command(args::Dict{String,Any}, key::String) :: Bool
     args[key] == "true" || args["s"] == key
 end
 

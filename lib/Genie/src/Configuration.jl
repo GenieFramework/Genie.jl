@@ -3,18 +3,12 @@ module Configuration
 using Genie, YAML
 
 export is_dev, is_prod, is_test, env, cache_enabled, Settings, DEV, PROD, TEST, IN_REPL
-export RENDER_MUSTACHE_EXT, RENDER_EJL_EXT, RENDER_JSON_EXT, RENDER_EJL_WITH_CACHE
 export LOG_LEVEL_VERBOSITY_VERBOSE, LOG_LEVEL_VERBOSITY_MINIMAL
 
 # app environments
 const DEV   = "dev"
 const PROD  = "prod"
 const TEST  = "test"
-
-# supported templates extensions
-const RENDER_MUSTACHE_EXT   = "jl.mustache"
-const RENDER_JSON_EXT       = "jl.json"
-const RENDER_EJL_EXT        = "jl.html"
 
 # log levels
 const LOG_LEVEL_VERBOSITY_VERBOSE = :verbose
@@ -172,6 +166,8 @@ type Settings
 
   inflector_irregulars::Vector{Tuple{String,String}}
 
+  template_engine::Symbol
+
   Settings(;
             server_port                 = 8000, # default port for binding the web server
             server_workers_count        = 1,
@@ -226,7 +222,9 @@ type Settings
             session_key_name    = "__GENIESID",
             session_storage     = :File,
 
-            inflector_irregulars = Tuple{AbstractString, AbstractString}[]
+            inflector_irregulars = Tuple{String,String}[],
+
+            template_engine = :Flax
         ) =
               new(
                   server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature,
@@ -242,7 +240,8 @@ type Settings
                   model_relations_eagerness,
                   tests_force_test_env,
                   session_auto_start, session_key_name, session_storage,
-                  inflector_irregulars)
+                  inflector_irregulars,
+                  template_engine)
 end
 
 end
