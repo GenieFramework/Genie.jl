@@ -1,6 +1,6 @@
 dev:
   adapter:  PostgreSQL
-  database: blogjl_dev
+  database: todomvc
   host:     localhost
   username: adrian
   password: adrian
