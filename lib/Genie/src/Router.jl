@@ -21,6 +21,8 @@ const BEFORE_ACTION_HOOKS = :before_action
 const _routes = Dict{Symbol,Any}()
 const sessionless = Symbol[:json]
 
+typealias Route Tuple{Tuple{String,String,Union{String,Function}},Dict{Symbol,Dict{Any,Any}}}
+
 type Params{T}
   collection::Dict{Symbol,T}
 end
@@ -104,9 +106,15 @@ function negotiate_content(req::Request, res::Response, params::Params) :: Respo
   set_negotiated_content() && return res
 end
 
-function route(params...; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Tuple{Tuple{String,String,String},Dict{Symbol,Dict{Any,Any}}}
+function route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
+  route(path, action, method = method, with = with, named = named)
+end
+function route(path::String, action::Union{String,Function}; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
+  params = (method, path, action)
+  
   extra_params = Dict(:with => with)
   named = named == :__anonymous_route ? route_name(params) : named
+
   if haskey(_routes, named)
     Logger.log(
       "Conflicting routes names - multiple routes are sharing the same name. Use the 'named' option to assign them different identifiers.\n" *
@@ -114,6 +122,7 @@ function route(params...; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__an
       string((params, extra_params))
       , :warn)
   end
+
   _routes[named] = (params, extra_params)
 end
 
@@ -137,15 +146,15 @@ function print_named_routes() :: Void
   nothing
 end
 
-function get_route(route_name::Symbol) :: Nullable{Tuple{Tuple{String,String,String},Dict{Symbol,Dict{Any,Any}}}}
+function get_route(route_name::Symbol) :: Nullable{Route}
   haskey(named_routes(), route_name) ? Nullable(named_routes()[route_name]) : Nullable()
 end
 
-function get_route!!(route_name::Symbol) :: Tuple{Tuple{String,String,String},Dict{Symbol,Dict{Any,Any}}}
+function get_route!!(route_name::Symbol) :: Route
   get_route(route_name) |> Base.get
 end
 
-function routes() :: Vector{Tuple{Tuple{String,String,String},Dict{Symbol,Dict{Any,Any}}}}
+function routes() :: Vector{Route}
   collect(values(_routes))
 end
 
@@ -221,14 +230,21 @@ function match_routes(req::Request, res::Response, session::Sessions.Session, pa
     Genie.config.log_router && Logger.log("Router: Matched route " * uri.path)
     (! extract_uri_params(uri, regex_route, param_names, param_types, params)) && continue
     Genie.config.log_router && Logger.log("Router: Matched type of route " * uri.path)
+
     extract_post_params(req, params)
     extract_extra_params(extra_params, params)
     extract_pagination_params(params)
 
     res = negotiate_content(req, res, params)
 
+    params.collection = setup_base_params(req, res, params.collection, session)
+
     return  try
-              invoke_controller(to, req, res, params.collection, session)
+              if isa(to, Function)
+                to(params.collection) |> to_response
+              else
+                invoke_controller(to, req, res, params.collection, session)
+              end
             catch ex
               if is_dev()
                 rethrow(ex)
@@ -349,27 +365,29 @@ function extract_pagination_params(params::Params) :: Void
   nothing
 end
 
-function setup_params!( params::Dict{Symbol,Any}, to_parts::Vector{String}, action_controller_parts::Vector{String},
-                        controller_path::String, req::Request, res::Response, session::Sessions.Session, action_name::String) :: Dict{Symbol,Any}
-  params[:action_controller] = to_parts[2]
-  params[:action] = action_controller_parts[end]
-  params[:controller] = join(action_controller_parts[1:end-1], ".")
-
+function setup_base_params(req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session) :: Dict{Symbol,Any}
   params[Genie.PARAMS_REQUEST_KEY]   = req
   params[Genie.PARAMS_RESPONSE_KEY]  = res
   params[Genie.PARAMS_SESSION_KEY]   = session
   params[Genie.PARAMS_FLASH_KEY]     = begin
-                                      s = Sessions.get(session, Genie.PARAMS_FLASH_KEY)
-                                      if isnull(s)
-                                        ""::String
-                                      else
-                                        ss = Base.get(s)
-                                        Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
-                                        ss
+                                        s = Sessions.get(session, Genie.PARAMS_FLASH_KEY)
+                                        if isnull(s)
+                                          ""::String
+                                        else
+                                          ss = Base.get(s)
+                                          Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
+                                          ss
+                                        end
                                       end
-                                    end
 
-  Genie.config.log_requests && Logger.log("Invoking $action_name with params: \n" * string(Millboard.table(params)), :debug)
+  params
+end
+
+function setup_params!(params::Dict{Symbol,Any}, to_parts::Vector{String}, action_controller_parts::Vector{String},
+                        controller_path::String, req::Request, res::Response, session::Sessions.Session, action_name::String) :: Dict{Symbol,Any}
+  params[:action_controller] = to_parts[2]
+  params[:action] = action_controller_parts[end]
+  params[:controller] = join(action_controller_parts[1:end-1], ".")
 
   params
 end
@@ -419,6 +437,8 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
       return serve_error_file_500(ex, params)
     end
   end
+
+  Genie.config.log_requests && Logger.log("Invoking $action_name with params: \n" * string(Millboard.table(params)), :debug)
 
   return  try
             eval(parse("App." * action_name))(params) |> to_response

@@ -1,3 +1,6 @@
 using Router
 
-route(GET,  "/", "home#HomeController.index", named = :home, with = Dict(:message => "Welcome deario!"))
+route("/", "home#HomeController.index", named = :home, with = Dict(:message => "Welcome deario!"))
+route("about") do (params)
+  "Hey man!"
+end
