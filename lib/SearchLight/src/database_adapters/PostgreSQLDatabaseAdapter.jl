@@ -69,10 +69,11 @@ end
 Returns the adapter specific query for SELECTing table columns information corresponding to `table_name`.
 """
 function table_columns_sql(table_name::AbstractString) :: String
-  "SELECT
-    column_name, ordinal_position, column_default, is_nullable, data_type, character_maximum_length,
-    udt_name, is_identity, is_updatable
-  FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '$table_name'"
+  # "SELECT
+  #   column_name, ordinal_position, column_default, is_nullable, data_type, character_maximum_length,
+  #   udt_name, is_identity, is_updatable
+  # FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '$table_name'"
+  "SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '$table_name'"
 end
 
 
@@ -167,7 +168,7 @@ end
 
 
 """
-    
+
 """
 function query(sql::AbstractString, suppress_output::Bool, conn::DatabaseHandle) :: PostgreSQL.PostgresResultHandle
   stmt = DB_ADAPTER.prepare(conn, sql)

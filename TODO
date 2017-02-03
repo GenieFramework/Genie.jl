@@ -37,7 +37,7 @@ v 0.7.x
 # PERFORMANCE
 ✔ type hinting, API consolidation, cleanup
 ✔ all instances of m() must be type hinted
-☐ implement Flax, a new template system in 100% julia
+✔ implement Flax, a new template system in 100% julia
 ☐ review the JSON builder / JSON templates
 
 # SUPPORT
@@ -55,7 +55,7 @@ v 0.7.x
 ☐ encrypt sessions and cookies
 ☐ should work without a DB
 ☐ support for mysql
-☐ refactor Router to use Route types instead of Tuples
+✔ refactor Router to use Route types instead of Tuples
 
 # TEST APP
 ☐ "ToDo-Backend MVC" app

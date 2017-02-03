@@ -1,10 +1,10 @@
 dev:
-  adapter:
-  database:
-  host:
-  username:
-  password:
-  port:
+  adapter:  PostgreSQL
+  database: blogjl_dev
+  host:     localhost
+  username: adrian
+  password: adrian
+  port:     5432
 
 prod:
   adapter:
@@ -20,4 +20,4 @@ test:
   host:
   username:
   password:
-  port: 
+  port:

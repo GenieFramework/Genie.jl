@@ -19,6 +19,7 @@ Faker
 MbedTLS
 Match
 Gumbo
+MySQL
 
 https://github.com/JuliaDB/DBI.jl
 https://github.com/JuliaDB/PostgreSQL.jl
