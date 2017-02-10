@@ -15,5 +15,5 @@ const config =  Settings(
                   log_cache         = true,
                   assets_path       = "/",
                   cache_duration    = 0,
-                  pagination_default_items_per_page = 25
+                  flax_compile_templates = true
                 )

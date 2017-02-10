@@ -38,6 +38,12 @@ function startup(port::Int = 8000) :: Void
   server = Server(http)
   @async run(server, port) # !!! @async required to avoid race conditions when storing the request IP ???
 
+  if Genie.config.run_as_server
+    while true
+      sleep(1_000_000)
+    end
+  end
+
   nothing
 end
 

@@ -72,6 +72,9 @@ function new_model(model_name::String, resource_name::String = model_name) :: St
     # on_hydration!::Function
     # after_hydration::Function
 
+    ### scopes
+    # scopes::Dict{Symbol,Vector{SearchLight.SQLWhereEntity}}
+
     ### constructor
     $model_name(;
       id = Nullable{SearchLight.DbId}(),
@@ -85,14 +88,17 @@ function new_model(model_name::String, resource_name::String = model_name) :: St
       # has_many = [],
 
       # before_save = (m::$model_name) -> warn("Not implemented"),
-      # on_dehydration = (m::$model_name) -> warn("Not implemented"),
-      # on_hydration = (m::$model_name) -> warn("Not implemented")
+      # on_dehydration = (m::$model_name, field::Symbol, value::Any) -> warn("Not implemented"),
+      # on_hydration = (m::$model_name, field::Symbol, value::Any) -> warn("Not implemented")
+
+      # scopes = Dict{Symbol,Vector{SearchLight.SQLWhereEntity}}()
 
     ) = new("$table_name", "id",
             id,
             validator
             # belongs_to, has_one, has_many,
             # before_save, on_dehydration, on_hydration
+            # scopes
             )
   end
 

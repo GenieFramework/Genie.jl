@@ -1,8 +1,8 @@
 module Flax
 
-using Genie, Renderer, Gumbo
+using Genie, Renderer, Gumbo, Logger, Configuration, Router, SHA
 
-export HTMLString, doctype, d
+export HTMLString, doctype, d, var_dump, include_template
 
 const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :article, :aside, :footer,
                           :header, :h1, :h2, :h3, :h4, :h5, :h6, :hgroup, :nav, :section,
@@ -14,7 +14,17 @@ const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :articl
                           :button, :datalist, :fieldset, :form, :label, :legend, :meter, :optgroup, :option,
                           :output, :progress, :select, :textarea, :details, :dialog, :menu, :menuitem, :summary,
                           :slot, :template]
-const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input]
+const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input,
+                          :html, :head, :body, :title, :style, :address, :article, :aside, :footer,
+                          :header, :h1, :h2, :h3, :h4, :h5, :h6, :hgroup, :nav, :section,
+                          :dd, :div, :dl, :dt, :figcaption, :figure, :li, :main, :ol, :p, :pre, :ul, :span,
+                          :a, :abbr, :b, :bdi, :bdo, :cite, :code, :data, :dfn, :em, :i, :kbd, :mark,
+                          :q, :rp, :rt, :rtc, :ruby, :s, :samp, :small, :spam, :strong, :sub, :sup, :time,
+                          :u, :var, :wrb, :audio, :map, :void, :embed, :object, :canvas, :noscript, :script,
+                          :del, :ins, :caption, :col, :colgroup, :table, :tbody, :td, :tfoot, :th, :thead, :tr,
+                          :button, :datalist, :fieldset, :form, :label, :legend, :meter, :optgroup, :option,
+                          :output, :progress, :select, :textarea, :details, :dialog, :menu, :menuitem, :summary,
+                          :slot, :template]
 
 const FILE_EXT      = ".flax.jl"
 const TEMPLATE_EXT  = ".flax.html"
@@ -24,7 +34,7 @@ typealias HTMLString String
 function attributes(attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: Vector{String}
   a = String[]
   for (k,v) in attrs
-    push!(a, "$(k)=\"$(v)\"")
+    push!(a, "$(k)=\"$(v)\" ")
   end
 
   a
@@ -42,29 +52,77 @@ function void_element(elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{
   "<$( string(lowercase(elem)) * (! isempty(a) ? (" " * join(a, " ")) : "") )>\n"
 end
 
+function include_template{T}(path::String, vars::Dict{Symbol,T} = Dict{Symbol,Any}()) :: String
+  path = relpath(path)
+  if Genie.config.flax_compile_templates
+    file_path = joinpath(Genie.config.cache_folder, path) * FILE_EXT
+    cache_file_name = sha1(path)
+    if isfile(file_path)
+      return (file_path |> include)(vars)
+    else
+      flax_code = path |> html_to_flax
+      if ! isdir(joinpath(Genie.config.cache_folder, dirname(path)))
+        mkpath(joinpath(Genie.config.cache_folder, dirname(path)))
+      end
+      open(file_path, "w") do io
+        write(io, flax_code)
+      end
+      return (flax_code |> include_string)(vars)
+    end
+  end
+
+  flax_code = path |> html_to_flax
+  (flax_code |> include_string)(vars)
+end
+
 function html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,AbstractString}
-  julia_action_template = abspath(joinpath(Genie.RESOURCE_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * TEMPLATE_EXT)) |> wrap_code_in_function
-  julia_layout_template = abspath(joinpath(Genie.APP_PATH, Renderer.LAYOUTS_FOLDER, string(layout) * TEMPLATE_EXT)) |> wrap_code_in_function
-
-  print(julia_action_template)
-  print(julia_layout_template)
-
-  push!(vars, (:yield!! => include_string(julia_action_template)(Dict(vars))))
-
-  Dict{Symbol,AbstractString}(:html => (include_string(julia_layout_template)(Dict(vars)) |> Gumbo.parsehtml |> string))
+  try
+    push!(vars, (:yield => include_template(joinpath(Genie.RESOURCE_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * TEMPLATE_EXT), Dict(vars)) ))
+    Dict{Symbol,AbstractString}(:html => include_template(joinpath(Genie.APP_PATH, Renderer.LAYOUTS_FOLDER, string(layout) * TEMPLATE_EXT), Dict(vars)) |> Gumbo.parsehtml |> string |> doc)
+  catch ex
+    if Configuration.is_dev()
+      rethrow(ex)
+    else
+      Router.serve_error_file_500()
+    end
+  end
 end
 
 function flax(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,AbstractString}
-  julia_action_template = abspath(joinpath(Genie.RESOURCE_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * FILE_EXT))
-  julia_layout_template = abspath(joinpath(Genie.APP_PATH, Renderer.LAYOUTS_FOLDER, string(layout) * FILE_EXT))
+  try
+    julia_action_template_func = joinpath(Genie.RESOURCE_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * FILE_EXT) |> include
+    julia_layout_template_func = joinpath(Genie.APP_PATH, Renderer.LAYOUTS_FOLDER, string(layout) * FILE_EXT) |> include
 
-  push!(vars, (:yield!! => include(julia_action_template)(Dict(vars))))
+    if isa(julia_action_template_func, Function)
+      push!(vars, (:yield => julia_action_template_func(Dict(vars))))
+    else
+      message = "The Flax view should return a function when including $julia_action_template"
+      Logger.log(message, :err)
+      Logger.@location
 
-  Dict{Symbol,AbstractString}(:html => (include(julia_layout_template)(Dict(vars)) |> Gumbo.parsehtml |> string))
+      throw(message)
+    end
+
+    return  if isa(julia_layout_template_func, Function)
+              Dict{Symbol,AbstractString}(:html => julia_layout_template_func(Dict(vars)) |> Gumbo.parsehtml |> string |> doc)
+            else
+              message = "The Flax template should return a function when including $julia_layout_template"
+              Logger.log(message, :err)
+              Logger.@location
+
+              throw(message)
+            end
+  catch ex
+    if Configuration.is_dev()
+      rethrow(ex)
+    else
+      Router.serve_error_file_500()
+    end
+  end
 end
 
-function wrap_code_in_function(file_path::String) :: String
-  code =  """function (_p::Dict) \n"""
+function html_to_flax(file_path::String) :: String
+  code =  """(vars) -> begin \n"""
   code *= file_path |> parse_template
   code *= """\nend"""
 
@@ -89,7 +147,7 @@ function read_template_file(file_path::String) :: String
 end
 
 function foreach(f::Function, v::Vector)
-  mapreduce(x->string(f(x)), *, v)
+  mapreduce(x -> string(f(x)), *, v)
 end
 
 function parse_template(file_path::String) :: String
@@ -107,7 +165,7 @@ function parse_tree(elem, output, depth) :: String
         end
       end
     else
-      output *= repeat("\t", depth) * "Flax.$(uppercase(string(tag(elem))))("
+      output *= repeat("\t", depth) * "Flax.$(lowercase(string(tag(elem))))("
 
       attributes = String[]
       for (k,v) in attrs(elem)
@@ -119,18 +177,18 @@ function parse_tree(elem, output, depth) :: String
       inner = ""
       if ! isempty(children(elem)) # || in(Symbol(elem), NORMAL_ELEMENTS)
         children_count = size(children(elem))[1]
-        output *= " do \n"
+        output *= " do;[ \n"
         idx = 0
         for child in children(elem)
           idx += 1
           inner *= parse_tree(child, "", depth + 1)
           if idx < children_count
             if ! in("type", collect(keys(attrs(child)))) || ( in("type", collect(keys(attrs(child)))) && (attrs(child)["type"] != "julia/eval") )
-              inner = repeat("\t", depth) * inner * " * \n"
+              inner = repeat("\t", depth) * inner * " \n"
             end
           end
         end
-        output *= inner * "\n " * repeat("\t", depth) * "end \n"
+        output *= inner * "\n " * repeat("\t", depth) * "]end \n"
       end
     end
 
@@ -193,5 +251,13 @@ end
 register_elements()
 
 d = div
+
+function var_dump(var, html = true) :: String
+  iobuffer = IOBuffer()
+  show(iobuffer, var)
+  content = takebuf_string(iobuffer)
+
+  html ? replace(replace("<code>$content</code>", "\n", "<br>"), " ", "&nbsp;") : content
+end
 
 end

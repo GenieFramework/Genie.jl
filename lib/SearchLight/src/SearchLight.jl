@@ -1441,6 +1441,7 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow) ::
     value = if in(:on_hydration!, fieldnames(_m))
               try
                 _m, value = _m.on_hydration!(_m, unq_field, row[field])
+                (is(value, Void) || value == nothing) && (value = row[field])
                 value
               catch ex
                 Logger.log("Failed to hydrate! field $unq_field ($field)", :debug)
@@ -1451,7 +1452,9 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow) ::
               end
             elseif in(:on_hydration, fieldnames(_m))
               try
-                _m.on_hydration(_m, unq_field, row[field])
+                value = _m.on_hydration(_m, unq_field, row[field])
+                (is(value, Void) || value == nothing) && (value = row[field])
+                value
               catch ex
                 Logger.log("Failed to hydrate field $unq_field ($field)", :debug)
                 Logger.@location()
@@ -2589,7 +2592,8 @@ julia> SearchLight.to_sqlinput(SearchLight.find_one!!(User, 1), :email, "genie@e
 function to_sqlinput{T<:AbstractModel}(m::T, field::Symbol, value) :: SQLInput
   value = if in(:on_dehydration, fieldnames(m))
             try
-              m.on_dehydration(m, field, value)
+              r = m.on_dehydration(m, field, value)
+              is(r, Void) || z == nothing ? value : r
             catch ex
               Logger.log("Failed to dehydrate field $field", :debug)
               Logger.@location()

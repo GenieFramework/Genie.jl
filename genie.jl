@@ -28,7 +28,7 @@ end
 @everywhere bootstrap_genie()
 
 @everywhere import Genie
-using Genie, App, SearchLight
+using Genie, App, SearchLight, Flax
 
 try
   using OhMyREPL

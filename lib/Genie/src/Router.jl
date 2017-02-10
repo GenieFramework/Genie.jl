@@ -111,11 +111,11 @@ function route(action::Function, path::String; method = GET, with::Dict = Dict{S
 end
 function route(path::String, action::Union{String,Function}; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
   params = (method, path, action)
-  
+
   extra_params = Dict(:with => with)
   named = named == :__anonymous_route ? route_name(params) : named
 
-  if haskey(_routes, named)
+  if Configuration.is_dev() && haskey(_routes, named)
     Logger.log(
       "Conflicting routes names - multiple routes are sharing the same name. Use the 'named' option to assign them different identifiers.\n" *
       string(_routes[named]) * "\n" *

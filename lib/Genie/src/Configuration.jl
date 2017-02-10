@@ -168,6 +168,10 @@ type Settings
 
   template_engine::Symbol
 
+  flax_compile_templates::Bool
+
+  run_as_server::Bool
+
   Settings(;
             server_port                 = 8000, # default port for binding the web server
             server_workers_count        = 1,
@@ -224,7 +228,11 @@ type Settings
 
             inflector_irregulars = Tuple{String,String}[],
 
-            template_engine = :Flax
+            template_engine = :Flax,
+
+            flax_compile_templates = false,
+
+            run_as_server = false
         ) =
               new(
                   server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature,
@@ -241,7 +249,9 @@ type Settings
                   tests_force_test_env,
                   session_auto_start, session_key_name, session_storage,
                   inflector_irregulars,
-                  template_engine)
+                  template_engine,
+                  flax_compile_templates,
+                  run_as_server)
 end
 
 end

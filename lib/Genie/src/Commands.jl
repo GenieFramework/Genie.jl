@@ -63,6 +63,7 @@ function execute(config::Settings) :: Void
     error("Not implemented!")
 
   elseif called_command(parsed_args, "s") || called_command(parsed_args, "server:start")
+    Genie.config.run_as_server = true
     AppServer.startup(Genie.config.server_port)
 
   end

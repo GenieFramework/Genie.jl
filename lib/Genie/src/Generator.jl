@@ -82,7 +82,7 @@ function write_resource_file(resource_path::String, file_name::String, resource_
   elseif file_name == Genie.GENIE_CONTROLLER_FILE_NAME
     write(f, FileTemplates.new_controller( Base.get(Inflector.to_plural( Inflector.from_underscores(resource_name) )) ))
   elseif file_name == Genie.GENIE_VALIDATOR_FILE_NAME
-    write(f, FileTemplates.new_validator( Base.get(Inflector.to_singular(resource_name) |> Inflector.from_underscores) ))
+    write(f, FileTemplates.new_validator( Base.get(Inflector.to_singular(resource_name)) |> Inflector.from_underscores ))
   elseif file_name == Genie.GENIE_AUTHORIZATOR_FILE_NAME
     write(f, FileTemplates.new_authorizer())
   elseif endswith(file_name, Genie.TEST_FILE_IDENTIFIER)

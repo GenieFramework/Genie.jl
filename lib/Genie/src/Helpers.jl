@@ -2,7 +2,7 @@ module Helpers
 
 using Genie, Sessions, Router, URIParser, Logger, HttpServer
 
-export session, request, response, flash, number_of_pages, paginated_uri
+export session, request, response, flash, number_of_pages, paginated_uri, var_dump
 
 function session(params::Dict{Symbol,Any}) :: Sessions.Session
   if haskey(params, Genie.PARAMS_SESSION_KEY)

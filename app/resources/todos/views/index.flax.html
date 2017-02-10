@@ -1,0 +1,9 @@
+<div class="row">
+  <ul class="list-group">
+  <% mapreduce(*, vars[:todos]) do (todo) %>
+      <li class="list-group-item">
+        <% todo.title %>
+      </li>
+  <% end %>
+  </ul>
+</div>
