@@ -164,6 +164,10 @@ function print_routes() :: Void
   nothing
 end
 
+function named_routes()
+  _routes()
+end
+
 function to_link!!{T}(route_name::Symbol, d::Dict{Symbol,T}) :: String
   route = try
     get_route!!(route_name)

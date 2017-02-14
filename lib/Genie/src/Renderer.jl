@@ -1,6 +1,6 @@
 module Renderer
 
-export respond, json, redirect_to, html, flax
+export respond, json, redirect_to, html, flax, include_asset
 
 using Genie, Util, Macros, JSON, Configuration, HttpServer, App, Router, Logger
 
@@ -130,6 +130,10 @@ function error_404()
                   readstring(f)
                 end
   (404, Dict{AbstractString,AbstractString}(), error_page)
+end
+
+function include_asset(asset_type::Symbol, file_name::String)
+  "/$asset_type/$file_name"
 end
 
 # =================================================== #

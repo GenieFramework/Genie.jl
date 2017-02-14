@@ -34,6 +34,9 @@ typealias HTMLString String
 function attributes(attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: Vector{String}
   a = String[]
   for (k,v) in attrs
+    if startswith(v, "<:") && endswith(v, ":>")
+      v = (replace(replace(replace(v, "<:", ""), ":>", ""), "'", "\"") |> strip) |> parse |> eval
+    end
     push!(a, "$(k)=\"$(v)\" ")
   end
 
@@ -133,20 +136,14 @@ function read_template_file(file_path::String) :: String
   html = String[]
   open(file_path) do f
     for line in enumerate(eachline(f))
-      if startswith(strip(line[2]), "<%+")
-        line = read_template_file(abspath("$(strip(parse_tags(line, true)) * TEMPLATE_EXT)"))
-      else
-        line = parse_tags(line)
-      end
-
-      push!(html, line)
+      push!(html, parse_tags(line))
     end
   end
 
   join(html, "\n")
 end
 
-function foreach(f::Function, v::Vector)
+function foreach(f::Function, v::Vector) :: String
   mapreduce(x -> string(f(x)), *, v)
 end
 
@@ -159,7 +156,7 @@ function parse_tree(elem, output, depth) :: String
   if isa(elem, HTMLElement)
 
     if lowercase(string(tag(elem))) == "script" && in("type", collect(keys(attrs(elem))))
-      if (attrs(elem)["type"] == "julia/output" || attrs(elem)["type"] == "julia/eval")
+      if attrs(elem)["type"] == "julia/eval"
         if ! isempty(children(elem))
           output *= repeat("\t", depth) * string(children(elem)[1].text) * " \n"
         end
@@ -169,6 +166,9 @@ function parse_tree(elem, output, depth) :: String
 
       attributes = String[]
       for (k,v) in attrs(elem)
+        if startswith(v, "<:") && endswith(v, ":>")
+          v = (replace(replace(replace(v, "<:", ""), ":>", ""), "'", "\"") |> strip) |> parse |> eval
+        end
         push!(attributes, ":$(Symbol(k)) => \"$v\"")
       end
 
@@ -201,14 +201,6 @@ end
 
 function parse_tags(line::Tuple{Int64,String}, strip_close_tag = false) :: String
   code = line[2]
-
-  code = replace(code, "<%+", "")
-
-  code = replace(code, "<%=", """<script type="julia/output"> ( """)
-  code = replace(code, "=%>", strip_close_tag ? " |> string ) " : """ |> string ) </script>""")
-
-  code = replace(code, "<%:", """<script type="julia/eval">""")
-  code = replace(code, ":%>", strip_close_tag ? "\n" : """</script>""")
 
   code = replace(code, "<%", """<script type="julia/eval">""")
   code = replace(code, "%>", strip_close_tag ? "" : """</script>""")

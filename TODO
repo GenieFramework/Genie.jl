@@ -52,9 +52,9 @@ v 0.7.x
 ✔ get the IP address of the request
 ✔ refactor params to use a Params type (no any Dict{Symbol,Any})
 ✔ hooks: before controller action invoked & model hooks (before save, before dehydration, after hydration, etc)
+✔ HTML Flax views (and HTML to Flax utility)
 ☐ encrypt sessions and cookies
 ☐ should work without a DB
-☐ support for mysql
 ✔ refactor Router to use Route types instead of Tuples
 
 # TEST APP
@@ -76,7 +76,6 @@ v 0.9
 ☐ beautify error handling (50x, 40x) pages
 ☐ REPL utility to setup a new app
 ☐ packages versioning (declarative packages)
-☐ HTML Flax views (and HTML to Flax utility)
 ☐ custom Genie sysimg: include(joinpath(dirname(JULIA_HOME),"share","julia","build_sysimg.jl")); build_sysimg(force=true)
 ☐ use macros to completely remove function invocations that produce no effect based on settings (if they are disabled from settings)
 ☐ investigate more opportunities for parallelizing code
@@ -90,6 +89,7 @@ v 1.0
 ☐ registration functionality - with login URLs by email (passwordless login) and regular (user / pass)
 
 v 1.1
+☐ support for mysql
 ☐ support for sqlite
 ☐ support for mongodb
 

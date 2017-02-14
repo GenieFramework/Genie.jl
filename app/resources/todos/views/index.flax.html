@@ -1,9 +1,15 @@
 <div class="row">
-  <ul class="list-group">
-  <% mapreduce(*, vars[:todos]) do (todo) %>
-      <li class="list-group-item">
-        <% todo.title %>
+  <form>
+    <ul class="list-group">
+    <% mapreduce(*, vars[:todos]) do (todo) %>
+      <li class="list-group-item -checkbox">
+        <%
+          a(:href => to_link(:todo_item, id = Base.get(todo.id))) do
+            todo.title
+          end
+        %>
       </li>
-  <% end %>
-  </ul>
+    <% end %>
+    </ul>
+  </form>
 </div>
