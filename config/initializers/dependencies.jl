@@ -1,5 +1,7 @@
+using Reexport
+
 export @dependencies
 
 macro dependencies()
-  :(using Genie, SearchLight, Helpers, ControllerHelper, Renderer, Cache, Router, Util, App)
+  :(using Genie, SearchLight, Helpers, ControllerHelper, Renderer, Cache, Router, Util, App, Logger)
 end

@@ -1,8 +1,10 @@
 module Flax
 
-using Genie, Renderer, Gumbo, Logger, Configuration, Router, SHA
+using Genie, Renderer, Gumbo, Logger, Configuration, Router, SHA, App, Reexport
+using ControllerHelper, ValidationHelper
+@dependencies
 
-export HTMLString, doctype, d, var_dump, include_template
+export HTMLString, doctype, d, var_dump, include_template, @vars, @yield
 
 const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :article, :aside, :footer,
                           :header, :h1, :h2, :h3, :h4, :h5, :h6, :hgroup, :nav, :section,
@@ -25,6 +27,7 @@ const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :pa
                           :button, :datalist, :fieldset, :form, :label, :legend, :meter, :optgroup, :option,
                           :output, :progress, :select, :textarea, :details, :dialog, :menu, :menuitem, :summary,
                           :slot, :template]
+const BOOL_ATTRIBUTES = [:checked, :disabled, :selected]
 
 const FILE_EXT      = ".flax.jl"
 const TEMPLATE_EXT  = ".flax.html"
@@ -34,8 +37,8 @@ typealias HTMLString String
 function attributes(attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: Vector{String}
   a = String[]
   for (k,v) in attrs
-    if startswith(v, "<:") && endswith(v, ":>")
-      v = (replace(replace(replace(v, "<:", ""), ":>", ""), "'", "\"") |> strip) |> parse |> eval
+    if startswith(v, "<\$") && endswith(v, "\$>")
+      v = (replace(replace(replace(v, "<\$", ""), "\$>", ""), "'", "\"") |> strip) |> parse |> eval
     end
     push!(a, "$(k)=\"$(v)\" ")
   end
@@ -45,7 +48,6 @@ end
 
 function normal_element(f::Function, elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: HTMLString
   a = attributes(attrs)
-
   """\n<$( string(lowercase(elem)) * (! isempty(a) ? (" " * join(a, " ")) : "") )>\n$(join(f()))\n</$( string(lowercase(elem)) )>\n"""
 end
 
@@ -55,13 +57,13 @@ function void_element(elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{
   "<$( string(lowercase(elem)) * (! isempty(a) ? (" " * join(a, " ")) : "") )>\n"
 end
 
-function include_template{T}(path::String, vars::Dict{Symbol,T} = Dict{Symbol,Any}()) :: String
+function include_template(path::String) :: String
   path = relpath(path)
   if Genie.config.flax_compile_templates
     file_path = joinpath(Genie.config.cache_folder, path) * FILE_EXT
     cache_file_name = sha1(path)
     if isfile(file_path)
-      return (file_path |> include)(vars)
+      return (file_path |> include)()
     else
       flax_code = path |> html_to_flax
       if ! isdir(joinpath(Genie.config.cache_folder, dirname(path)))
@@ -70,18 +72,20 @@ function include_template{T}(path::String, vars::Dict{Symbol,T} = Dict{Symbol,An
       open(file_path, "w") do io
         write(io, flax_code)
       end
-      return (flax_code |> include_string)(vars)
+      return (flax_code |> include_string)()
     end
   end
 
   flax_code = path |> html_to_flax
-  (flax_code |> include_string)(vars)
+  (flax_code |> include_string)()
 end
 
-function html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,AbstractString}
+function html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
   try
-    push!(vars, (:yield => include_template(joinpath(Genie.RESOURCE_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * TEMPLATE_EXT), Dict(vars)) ))
-    Dict{Symbol,AbstractString}(:html => include_template(joinpath(Genie.APP_PATH, Renderer.LAYOUTS_FOLDER, string(layout) * TEMPLATE_EXT), Dict(vars)) |> Gumbo.parsehtml |> string |> doc)
+    task_local_storage(:__vars, Dict(vars))
+    task_local_storage(:__yield, include_template(joinpath(Genie.RESOURCE_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * TEMPLATE_EXT)))
+
+    Dict{Symbol,AbstractString}(:html => include_template(joinpath(Genie.APP_PATH, Renderer.LAYOUTS_FOLDER, string(layout) * TEMPLATE_EXT)) |> Gumbo.parsehtml |> string |> doc)
   catch ex
     if Configuration.is_dev()
       rethrow(ex)
@@ -91,13 +95,15 @@ function html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict
   end
 end
 
-function flax(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,AbstractString}
+function flax(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
   try
     julia_action_template_func = joinpath(Genie.RESOURCE_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * FILE_EXT) |> include
     julia_layout_template_func = joinpath(Genie.APP_PATH, Renderer.LAYOUTS_FOLDER, string(layout) * FILE_EXT) |> include
 
+    task_local_storage(:__vars, Dict(vars))
+
     if isa(julia_action_template_func, Function)
-      push!(vars, (:yield => julia_action_template_func(Dict(vars))))
+      task_local_storage(:__yield, julia_action_template_func())
     else
       message = "The Flax view should return a function when including $julia_action_template"
       Logger.log(message, :err)
@@ -107,7 +113,7 @@ function flax(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict
     end
 
     return  if isa(julia_layout_template_func, Function)
-              Dict{Symbol,AbstractString}(:html => julia_layout_template_func(Dict(vars)) |> Gumbo.parsehtml |> string |> doc)
+              Dict{Symbol,AbstractString}(:html => julia_layout_template_func() |> Gumbo.parsehtml |> string |> doc)
             else
               message = "The Flax template should return a function when including $julia_layout_template"
               Logger.log(message, :err)
@@ -125,7 +131,7 @@ function flax(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict
 end
 
 function html_to_flax(file_path::String) :: String
-  code =  """(vars) -> begin \n"""
+  code =  """() -> begin \n"""
   code *= file_path |> parse_template
   code *= """\nend"""
 
@@ -166,10 +172,17 @@ function parse_tree(elem, output, depth) :: String
 
       attributes = String[]
       for (k,v) in attrs(elem)
-        if startswith(v, "<:") && endswith(v, ":>")
-          v = (replace(replace(replace(v, "<:", ""), ":>", ""), "'", "\"") |> strip) |> parse |> eval
+        if startswith(v, "<\$") && endswith(v, "\$>")
+          v = (replace(replace(replace(v, "<\$", ""), "\$>", ""), "'", "\"") |> strip) |> parse |> eval
         end
-        push!(attributes, ":$(Symbol(k)) => \"$v\"")
+
+        if in(Symbol(lowercase(k)), BOOL_ATTRIBUTES)
+          if v == true || v == "true" || v == :true || v == ":true" || v == ""
+            push!(attributes, ":$(Symbol(k)) => \"$k\"") # boolean attributes can have the same value as the attribute -- or be empty
+          end
+        else
+          push!(attributes, ":$(Symbol(k)) => \"$v\"")
+        end
       end
 
       output *= join(attributes, ", ") * ") "
@@ -240,7 +253,18 @@ function register_elements()
   end
 end
 
+push!(LOAD_PATH,  abspath(Genie.HELPERS_PATH))
+
+function include_helpers()
+  for h in readdir(Genie.HELPERS_PATH)
+    if isfile(joinpath(Genie.HELPERS_PATH, h)) && endswith(h, "Helper.jl")
+      eval("""@reexport using $(replace(h, r"\.jl$", ""))""" |> parse)
+    end
+  end
+end
+
 register_elements()
+include_helpers()
 
 d = div
 
@@ -250,6 +274,13 @@ function var_dump(var, html = true) :: String
   content = takebuf_string(iobuffer)
 
   html ? replace(replace("<code>$content</code>", "\n", "<br>"), " ", "&nbsp;") : content
+end
+
+macro vars(key)
+  :(task_local_storage(:__vars)[$key])
+end
+macro yield()
+  :(task_local_storage(:__yield))
 end
 
 end

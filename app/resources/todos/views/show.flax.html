@@ -1,0 +1,10 @@
+<div class="row">
+  <div class="row col-md-12">
+    <div class="checkbox">
+      <label>
+        <input type="checkbox" disabled checked="<$ @vars(:todo).completed $>"> <% @vars(:todo).title %>
+      </label>
+      <a class="btn btn-link pull-right" href="<$ link_to!!(:get_todos_edit, id = Base.get(@vars(:todo).id)) $>" style="margin-top: -12px">Edit</a>
+    </div>
+  </div>
+</div>

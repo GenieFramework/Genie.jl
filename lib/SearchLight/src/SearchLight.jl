@@ -2593,7 +2593,7 @@ function to_sqlinput{T<:AbstractModel}(m::T, field::Symbol, value) :: SQLInput
   value = if in(:on_dehydration, fieldnames(m))
             try
               r = m.on_dehydration(m, field, value)
-              is(r, Void) || z == nothing ? value : r
+              is(r, Void) || r == nothing ? value : r
             catch ex
               Logger.log("Failed to dehydrate field $field", :debug)
               Logger.@location()

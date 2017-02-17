@@ -1,6 +1,7 @@
 module Renderer
 
 export respond, json, redirect_to, html, flax, include_asset
+export error_404, error_500, error_XXX
 
 using Genie, Util, Macros, JSON, Configuration, HttpServer, App, Router, Logger
 
@@ -13,8 +14,9 @@ eval(:(export TemplateEngine))
 const CONTENT_TYPES = Dict{Symbol,AbstractString}(
   :html   => "text/html",
   :plain  => "text/plain",
-  :json   => "text/json",
-  :js     => "application/javascript",
+  :json   => "application/json",
+  :js     => "text/javascript",
+  :xml    => "text/xml",
 )
 
 const VIEWS_FOLDER = "views"
@@ -27,12 +29,37 @@ function json(resource::Symbol, action::Symbol; vars...) :: Dict{Symbol,Abstract
   Dict{Symbol,AbstractString}(:json => r)
 end
 
-function html(resource::Symbol, action::Symbol, layout::Symbol = :app; vars...) :: Dict{Symbol,AbstractString}
-  TemplateEngine.html(resource, action, layout; vars...)
+function parse_vars(vars)
+  pos_counter = 1
+  for pair in vars
+    if pair[1] != :check_nulls
+      pos_counter += 1
+      continue
+    end
+
+    for p in pair[2]
+      if ! isa(p[2], Nullable)
+        push!(vars, p[1] => p[2])
+        continue
+      end
+
+      if isnull(p[2])
+        return error_404()
+      else
+        push!(vars, p[1] => Base.get(p[2]))
+      end
+    end
+  end
+
+  vars
 end
 
-function flax(resource::Symbol, action::Symbol, layout::Symbol = :app; vars...) :: Dict{Symbol,AbstractString}
-  TemplateEngine.flax(resource, action, layout; vars...)
+function html(resource::Symbol, action::Symbol, layout::Symbol = :app, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
+  TemplateEngine.html(resource, action, layout; parse_vars(vars)...)
+end
+
+function flax(resource::Symbol, action::Symbol, layout::Symbol = :app, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
+  TemplateEngine.flax(resource, action, layout; parse_vars(vars)...)
 end
 
 function redirect_to(location::String, code::Int = 302, headers = Dict{AbstractString,AbstractString}()) :: Response
@@ -126,10 +153,24 @@ function http_error(status_code; id = "resource_not_found", code = "404-0001", t
 end
 
 function error_404()
-  error_page =  open(DOC_ROOT_PATH * "/error-404.html") do f
+  error_page =  open(Genie.DOC_ROOT_PATH * "/error-404.html") do f
                   readstring(f)
                 end
   (404, Dict{AbstractString,AbstractString}(), error_page)
+end
+
+function error_500()
+  error_page =  open(Genie.DOC_ROOT_PATH * "/error-500.html") do f
+                  readstring(f)
+                end
+  (500, Dict{AbstractString,AbstractString}(), error_page)
+end
+
+function error_XXX(xxx::Int)
+  error_page =  open(Genie.DOC_ROOT_PATH * "/error-$xxx.html") do f
+                  readstring(f)
+                end
+  (xxx, Dict{AbstractString,AbstractString}(), error_page)
 end
 
 function include_asset(asset_type::Symbol, file_name::String)

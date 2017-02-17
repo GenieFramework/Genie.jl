@@ -7,7 +7,7 @@ type Todo <: AbstractModel
 
   id::Nullable{SearchLight.DbId}
   title::String
-  description::String
+  completed::Bool
   created_at::DateTime
   updated_at::DateTime
 
@@ -23,11 +23,11 @@ type Todo <: AbstractModel
     id = Nullable{SearchLight.DbId}(),
 
     validator = ModelValidator([
-      # (:title, Validation.TodoValidator.not_empty)
+      (:title, Validation.TodoValidator.not_empty)
     ]),
 
     title = "",
-    description = "",
+    completed = false,
     created_at = Dates.now(),
     updated_at = Dates.now(),
 
@@ -47,7 +47,7 @@ type Todo <: AbstractModel
   ) = new("todos", "id",
           id,
           title,
-          description,
+          completed,
           created_at,
           updated_at,
 
@@ -66,7 +66,7 @@ using App, Faker
 function random()
   todo = Todo()
   todo.title = Faker.sentence()
-  todo.description = Faker.text()
+  # todo.description = Faker.text()
 
   todo
 end

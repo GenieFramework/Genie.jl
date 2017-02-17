@@ -1,20 +1,22 @@
 <html lang="en">
   <head>
     <title>Genie Todo MVC</title>
-    <link rel="stylesheet" href="<: include_asset(:css, 'cosmo.css') :>">
+    <link rel="stylesheet" href="<$ include_asset(:css, 'cosmo.css') $>">
     <script src="/js/bootstrap.js">//</script>
   </head>
   <body>
     <div class="container">
-      <div class="row col-md-2">&nbsp;</div>
+      <div class="row col-md-2"><strong></strong></div>
       <div class="row col-md-8">
         <div class="page-header">
           <h1>Todos</h1>
         </div>
-        <% vars[:yield] %>
-        <% include_template("app/layouts/shared/footer.flax.html") %>
+        <%
+          @yield
+          include_template("app/layouts/shared/footer.flax.html")
+        %>
       </div>
-      <div class="row col-md-2">&nbsp;</div>
+      <div class="row col-md-2"><strong></strong></div>
     </div>
   </body>
 </html>

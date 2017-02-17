@@ -8,7 +8,7 @@ include(abspath(joinpath("lib", "Genie", "src", "router_converters.jl")))
 
 export route, routes
 export GET, POST, PUT, PATCH, DELETE
-export to_link!!, to_link, response_type
+export to_link!!, to_link, link_to!!, link_to, response_type
 
 const GET     = "GET"
 const POST    = "POST"
@@ -61,6 +61,8 @@ function route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: R
 
   ! in(response_type(params), sessionless) && Sessions.persist(session)
 
+  print_with_color(:green, "[$(Dates.now())] -- $(URI(req.resource)) -- Done\n\n")
+
   controller_response
 end
 
@@ -110,20 +112,20 @@ function route(action::Function, path::String; method = GET, with::Dict = Dict{S
   route(path, action, method = method, with = with, named = named)
 end
 function route(path::String, action::Union{String,Function}; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
-  params = (method, path, action)
+  route_parts = (method, path, action)
 
-  extra_params = Dict(:with => with)
-  named = named == :__anonymous_route ? route_name(params) : named
+  extra_route_parts = Dict(:with => with)
+  named = named == :__anonymous_route ? route_name(route_parts) : named
 
   if Configuration.is_dev() && haskey(_routes, named)
     Logger.log(
       "Conflicting routes names - multiple routes are sharing the same name. Use the 'named' option to assign them different identifiers.\n" *
       string(_routes[named]) * "\n" *
-      string((params, extra_params))
+      string(route_parts, extra_route_parts)
       , :warn)
   end
 
-  _routes[named] = (params, extra_params)
+  _routes[named] = (route_parts, extra_route_parts)
 end
 
 function route_name(params) :: Symbol
@@ -164,10 +166,12 @@ function print_routes() :: Void
   nothing
 end
 
-function named_routes()
-  _routes()
+function to_link!!{T}(route_name::Symbol, d::Vector{Pair{Symbol,T}}) :: String
+  to_link!!(route_name, Dict(d...))
 end
-
+function to_link!!{T}(route_name::Symbol, d::Pair{Symbol,T}) :: String
+  to_link!!(route_name, Dict(d))
+end
 function to_link!!{T}(route_name::Symbol, d::Dict{Symbol,T}) :: String
   route = try
     get_route!!(route_name)
@@ -196,6 +200,8 @@ function to_link!!(route_name::Symbol; route_params...) :: String
   to_link!!(route_name, route_params_to_dict(route_params))
 end
 
+link_to!! = to_link!!
+
 function to_link(route_name::Symbol; route_params...) :: String
   try
     to_link!!(route_name, route_params_to_dict(route_params))
@@ -207,6 +213,8 @@ function to_link(route_name::Symbol; route_params...) :: String
     ""
   end
 end
+
+link_to = to_link
 
 function route_params_to_dict(route_params)
   d = Dict{Symbol,Any}()
@@ -221,6 +229,7 @@ function match_routes(req::Request, res::Response, session::Sessions.Session, pa
   for r in routes()
     route_def, extra_params = r
     protocol, route, to = route_def
+
     protocol != req.method && continue
 
     Genie.config.log_router && Logger.log("Router: Checking against " * route)
@@ -232,6 +241,7 @@ function match_routes(req::Request, res::Response, session::Sessions.Session, pa
 
     (! ismatch(regex_route, uri.path)) && continue
     Genie.config.log_router && Logger.log("Router: Matched route " * uri.path)
+
     (! extract_uri_params(uri, regex_route, param_names, param_types, params)) && continue
     Genie.config.log_router && Logger.log("Router: Matched type of route " * uri.path)
 
