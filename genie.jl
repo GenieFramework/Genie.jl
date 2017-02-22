@@ -32,4 +32,7 @@ using Genie, App, SearchLight, Flax
 
 try
   using OhMyREPL
+
+  OhMyREPL.input_prompt!( "genie>", :green)
+  OhMyREPL.output_prompt!("genie>", :white)
 end

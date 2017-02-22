@@ -166,7 +166,8 @@ type Settings
 
   inflector_irregulars::Vector{Tuple{String,String}}
 
-  template_engine::Symbol
+  html_template_engine::Symbol
+  json_template_engine::Symbol
 
   flax_compile_templates::Bool
 
@@ -228,7 +229,8 @@ type Settings
 
             inflector_irregulars = Tuple{String,String}[],
 
-            template_engine = :Flax,
+            html_template_engine = :Flax,
+            json_template_engine = :Flax,
 
             flax_compile_templates = false,
 
@@ -249,7 +251,7 @@ type Settings
                   tests_force_test_env,
                   session_auto_start, session_key_name, session_storage,
                   inflector_irregulars,
-                  template_engine,
+                  html_template_engine, json_template_engine,
                   flax_compile_templates,
                   run_as_server)
 end

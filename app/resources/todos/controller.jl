@@ -1,12 +1,12 @@
 module TodosController
 
-using App
+using App, JSON
 @dependencies
 
 function index(params)
   todos = SearchLight.find(Todo, SQLQuery(scopes = [:active]))
   if params[:response_type] == :json
-
+    return Renderer.json(:todos, :index, todos = todos) |> respond
   end
   html(:todos, :index, todos = todos) |> respond
 end

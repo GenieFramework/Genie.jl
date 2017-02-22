@@ -1,10 +1,10 @@
 module Flax
 
-using Genie, Renderer, Gumbo, Logger, Configuration, Router, SHA, App, Reexport
+using Genie, Renderer, Gumbo, Logger, Configuration, Router, SHA, App, Reexport, JSON
 using ControllerHelper, ValidationHelper
 @dependencies
 
-export HTMLString, doctype, d, var_dump, include_template, @vars, @yield
+export HTMLString, doctype, d, var_dump, include_template, @vars, @yield, el
 
 const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :article, :aside, :footer,
                           :header, :h1, :h2, :h3, :h4, :h5, :h6, :hgroup, :nav, :section,
@@ -31,8 +31,10 @@ const BOOL_ATTRIBUTES = [:checked, :disabled, :selected]
 
 const FILE_EXT      = ".flax.jl"
 const TEMPLATE_EXT  = ".flax.html"
+const JSON_FILE_EXT = ".json.jl"
 
 typealias HTMLString String
+typealias JSONString String
 
 function attributes(attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: Vector{String}
   a = String[]
@@ -105,7 +107,7 @@ function flax(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict
     if isa(julia_action_template_func, Function)
       task_local_storage(:__yield, julia_action_template_func())
     else
-      message = "The Flax view should return a function when including $julia_action_template"
+      message = "The Flax view should return a function"
       Logger.log(message, :err)
       Logger.@location
 
@@ -115,12 +117,26 @@ function flax(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict
     return  if isa(julia_layout_template_func, Function)
               Dict{Symbol,AbstractString}(:html => julia_layout_template_func() |> Gumbo.parsehtml |> string |> doc)
             else
-              message = "The Flax template should return a function when including $julia_layout_template"
+              message = "The Flax template should return a function"
               Logger.log(message, :err)
               Logger.@location
 
               throw(message)
             end
+  catch ex
+    if Configuration.is_dev()
+      rethrow(ex)
+    else
+      Router.serve_error_file_500()
+    end
+  end
+end
+
+function json(resource::Symbol, action::Symbol; vars...) :: Dict{Symbol,String}
+  try
+    task_local_storage(:__vars, Dict(vars))
+
+    return Dict{Symbol,AbstractString}(:json => (joinpath(Genie.RESOURCE_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * JSON_FILE_EXT) |> include) |> JSON.json)
   catch ex
     if Configuration.is_dev()
       rethrow(ex)
@@ -281,6 +297,10 @@ macro vars(key)
 end
 macro yield()
   :(task_local_storage(:__yield))
+end
+
+function el(; vars...)
+  Dict(vars)
 end
 
 end
