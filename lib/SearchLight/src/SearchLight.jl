@@ -740,7 +740,7 @@ function save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validat
 end
 
 function _save!!{T<:AbstractModel}(m::T; conflict_strategy = :error, skip_validation = false, skip_callbacks = Vector{Symbol}()) :: DataFrame
-  ! skip_validation && ! Validation.validate!(m) && error("SearchLight validation error(s) for $(typeof(m)) \n $(join(Validation.errors(m), "\n "))")
+  ! skip_validation && ! Validation.validate!(m) && error("SearchLight validation error(s) for $(typeof(m)) \n $(join((Validation.errors(m) |> Base.get), "\n "))")
 
   ! in(:before_save, skip_callbacks) && invoke_callback(m, :before_save)
 
@@ -960,11 +960,27 @@ function update_with!{T<:AbstractModel}(m::T, w::Dict) :: T
   for fieldname in fieldnames(typeof(m))
     ( startswith(string(fieldname), "_") || string(fieldname) == m._id ) && continue
 
-    if haskey(w, fieldname)
-      setfield!(m, fieldname, w[fieldname])
-    elseif haskey(w, string(fieldname))
-      setfield!(m, fieldname, w[string(fieldname)])
-    end
+    value = if haskey(w, fieldname)
+              w[fieldname]
+            elseif haskey(w, string(fieldname))
+              w[string(fieldname)]
+            else
+              nothing
+            end
+
+    value == nothing && continue
+
+    value = if typeof(getfield(m, fieldname)) == Bool
+              if lowercase(string(value)) == "on" || value == :on || value == "1" || value == 1 || lowercase(string(value)) == "true" || value == :true
+                true
+              elseif lowercase(string(value)) == "off" || value == :off || value == "0" || value == 0 || lowercase(string(value)) == "false" || value == :false || value == ""
+                false
+              end
+            else
+              value
+            end
+
+    setfield!(m, fieldname, value)
   end
 
   m

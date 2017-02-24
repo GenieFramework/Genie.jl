@@ -8,7 +8,7 @@ include(abspath(joinpath("lib", "Genie", "src", "router_converters.jl")))
 
 export route, routes
 export GET, POST, PUT, PATCH, DELETE
-export to_link!!, to_link, link_to!!, link_to, response_type
+export to_link!!, to_link, link_to!!, link_to, response_type, @params
 
 const GET     = "GET"
 const POST    = "POST"
@@ -438,6 +438,8 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
     end
   end
 
+  task_local_storage(:__params, params)
+
   try
     hook_result = run_hooks(BEFORE_ACTION_HOOKS, eval(App, parse(join(split(action_name, ".")[1:end-1], "."))), params)
     hook_stop(hook_result) && return to_response(hook_result[2])
@@ -455,7 +457,7 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
   Genie.config.log_requests && Logger.log("Invoking $action_name with params: \n" * string(Millboard.table(params)), :debug)
 
   return  try
-            eval(parse("App." * action_name))(params) |> to_response
+            eval(parse("App." * action_name))() |> to_response
           catch ex
             if Configuration.is_dev()
               rethrow(ex)
@@ -486,6 +488,13 @@ function to_response(action_result) :: Response
           end
 end
 
+macro params()
+  :(task_local_storage(:__params))
+end
+macro params(key)
+  :(task_local_storage(:__params)[$key])
+end
+
 function serve_error_file_500(ex::Exception, params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
   serve_error_file( 500,
                     string(ex) *
@@ -504,7 +513,7 @@ function run_hooks(hook_type::Symbol, m::Module, params::Dict{Symbol,Any}) :: An
   if in(hook_type, names(m, true))
     hooks::Vector{Symbol} = getfield(m, hook_type)
     for hook in hooks
-      r = eval(Genie, parse(string(hook)))(params)
+      r = eval(App, parse(string(hook)))() 
       hook_stop(r) && return r
     end
   end

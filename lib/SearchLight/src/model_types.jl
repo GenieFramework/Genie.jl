@@ -333,13 +333,19 @@ immutable SQLOrder <: SQLType
   SQLOrder(column::SQLColumn, direction::String) =
     new(column, uppercase(string(direction)) == "DESC" ? "DESC" : "ASC")
 end
-SQLOrder(column::Any, direction::Any; raw::Bool = false) = SQLOrder(SQLColumn(column, raw = raw), string(direction))
-SQLOrder(column::Any; raw::Bool = false) = SQLOrder(SQLColumn(column, raw = raw), "ASC")
+SQLOrder(column::Union{String,Symbol}, direction::Any; raw::Bool = false) = SQLOrder(SQLColumn(column, raw = raw), string(direction))
+function SQLOrder(s::Union{String,Symbol}; raw::Bool = false)
+  s = String(s)
+
+  if endswith(uppercase(s), " ASC") || endswith(uppercase(s), " DESC")
+    parts = split(s, " ")
+    SQLOrder(String(parts[1]), String(parts[2]), raw = raw)
+  else
+    SQLOrder(s, "ASC", raw = raw)
+  end
+end
 
 string(o::SQLOrder) = "($(o.column) $(o.direction))"
-
-convert(::Type{SQLOrder}, s::Symbol) = SQLOrder(s)
-convert(::Type{SQLOrder}, s::String) = SQLOrder(s)
 
 convert(::Type{Vector{SQLOrder}}, o::SQLOrder) = [o]
 convert(::Type{Vector{SQLOrder}}, s::Symbol) = [SQLOrder(s)]

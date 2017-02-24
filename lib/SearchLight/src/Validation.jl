@@ -1,24 +1,10 @@
 module Validation
+
 using Genie, SearchLight, App
 
-#
-# validation rules
-#
+export ValidationStatus
 
-function not_empty{T<:AbstractModel}(field::Symbol, m::T) :: Bool
-  error_message = "$field should be not empty"
-  getfield(m, field) |> isempty && push_error!(m, field, :not_empty, error_message) && return false
-
-  true
-end
-
-function min_length{T<:AbstractModel}(field::Symbol, m::T, args::Vararg{Any}) :: Bool
-  field_length = getfield(m, field) |> length
-  error_message = "$field should be at least $(args[1]) chars long and it's only $field_length"
-  field_length < args[1] && push_error!(m, field, :min_length, error_message) && return false
-
-  true
-end
+typealias ValidationStatus Tuple{Bool,Symbol,String}
 
 #
 # errors manipulation
@@ -42,14 +28,19 @@ end
 
 function validate!{T<:AbstractModel}(m::T) :: Bool
   ! has_validator(m) && return true
-  
+
   clear_errors!(m)
 
   for r in rules!!(m)
     field = r[1]
     rule = r[2]
     args = length(r) == 3 ? r[3] : ()
-    rule(field, m, args...)
+
+    status, error_type, error_message = rule(field, m, args...)
+
+    if ! status
+      push_error!(m, field, error_type, error_message)
+    end
   end
 
   is_valid(m)
@@ -70,7 +61,7 @@ end
 
 function errors{T<:AbstractModel}(m::T) :: Nullable{Vector{Tuple{Symbol,Symbol,String}}}
   v = validator(m)
-  isnull(v) ? Nullable{Vector{Tuple{Symbol,Symbol,String}}}() : Nullable{Vector{Tuple{Symbol,Symbol,String}}}(v.errors)
+  isnull(v) ? Nullable{Vector{Tuple{Symbol,Symbol,String}}}() : Nullable{Vector{Tuple{Symbol,Symbol,String}}}(Base.get(v).errors)
 end
 
 function validator!!{T<:AbstractModel}(m::T) :: ModelValidator

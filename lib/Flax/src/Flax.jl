@@ -1,6 +1,6 @@
 module Flax
 
-using Genie, Renderer, Gumbo, Logger, Configuration, Router, SHA, App, Reexport, JSON
+using Genie, Renderer, Gumbo, Logger, Configuration, Router, SHA, App, Reexport, JSON, DataStructures
 using ControllerHelper, ValidationHelper
 @dependencies
 
@@ -300,7 +300,7 @@ macro yield()
 end
 
 function el(; vars...)
-  Dict(vars)
+  OrderedDict(vars)
 end
 
 end

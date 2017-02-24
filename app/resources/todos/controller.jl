@@ -3,41 +3,47 @@ module TodosController
 using App, JSON
 @dependencies
 
-function index(params)
-  todos = SearchLight.find(Todo, SQLQuery(scopes = [:active]))
-  if params[:response_type] == :json
-    return Renderer.json(:todos, :index, todos = todos) |> respond
+before_action = [Symbol("TodosController.say_hello")]
+
+function index()
+  todos = SearchLight.find(Todo, SQLQuery(scopes = [:active], order = "created_at DESC"))
+
+  has_requested(:json) ?
+    respond_with_json(:todos, :index, todos = todos) :
+    respond_with_html(:todos, :index, todos = todos)
+end
+
+function show()
+  todo = SearchLight.find_one(Todo, @params(:id))
+  has_requested(:json) ?
+    respond_with_json(:todos, :show, check_nulls = [:todo => todo]) :
+    respond_with_html(:todos, :show, check_nulls = [:todo => todo])
+end
+
+function edit(todo = Todo())
+  todo = is_persisted(todo) ? todo : SearchLight.find_one(Todo, @params(:id))
+  respond_with_html(:todos, :edit, check_nulls = [:todo => todo], params = @params)
+end
+
+function update()
+  ntodo = SearchLight.find_one(Todo, @params(:id))
+  if isnull(ntodo)
+    return error_404()
   end
-  html(:todos, :index, todos = todos) |> respond
-end
 
-function show(params)
-  todo = SearchLight.find_one(Todo, params[:id])
-  html(:todos, :show, check_nulls = [:todo => todo]) |> respond
-end
+  todo = SearchLight.update_with!(Base.get(ntodo), @params(:todo))
 
-function edit(params)
-  todo = SearchLight.find_one(Todo, params[:id])
-  html(:todos, :edit, check_nulls = [:todo => todo], params = params) |> respond
-end
-
-function update(params)
-  try
-    if haskey(params[:todo], :completed) && params[:todo][:completed] == "on"
-      params[:todo][:completed] = true
-    else
-      params[:todo][:completed] = false
-    end
-
-    todo = SearchLight.find_one!!(Todo, params[:id])
-    todo = SearchLight.update_with!!(todo, params[:todo])
-    SearchLight.save!!(todo)
-
-    redirect_to( link_to!!(:todo_item, id = params[:id]) )
-  catch ex
-    Logger.log(string(ex), :critical)
-    error_500()
+  if Validation.validate!(todo) && SearchLight.save(todo)
+    flash("Todo updated", @params)
+    link_to!!(:todo_item, id = @params(:id)) |> redirect_to
+  else
+    flash("Todo has errors", @params)
+    return edit(todo)
   end
+end
+
+function say_hello()
+  println("Hello")
 end
 
 end

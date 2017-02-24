@@ -1,6 +1,7 @@
 module Renderer
 
-export respond, json, redirect_to, html, flax, include_asset
+export respond, json, redirect_to, html, flax, include_asset, has_requested
+export respond_with_json, respond_with_html
 export error_404, error_500, error_XXX
 
 using Genie, Util, Macros, JSON, Configuration, HttpServer, App, Router, Logger
@@ -14,7 +15,7 @@ eval(:(export HTMLTemplateEngine, JSONTemplateEngine))
 
 @devtools()
 
-const CONTENT_TYPES = Dict{Symbol,AbstractString}(
+const CONTENT_TYPES = Dict{Symbol,String}(
   :html   => "text/html",
   :plain  => "text/plain",
   :json   => "application/json",
@@ -29,6 +30,10 @@ function html(resource::Symbol, action::Symbol, layout::Symbol = :app, check_nul
   HTMLTemplateEngine.html(resource, action, layout; parse_vars(vars)...)
 end
 
+function respond_with_html(resource::Symbol, action::Symbol, layout::Symbol = :app, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
+  html(resource, action, layout, check_nulls; vars...) |> respond
+end
+
 function flax(resource::Symbol, action::Symbol, layout::Symbol = :app, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
   HTMLTemplateEngine.flax(resource, action, layout; parse_vars(vars)...)
 end
@@ -37,9 +42,17 @@ function json(resource::Symbol, action::Symbol, check_nulls::Vector{Pair{Symbol,
   JSONTemplateEngine.json(resource, action; parse_vars(vars)...)
 end
 
+function respond_with_json(resource::Symbol, action::Symbol, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
+  json(resource, action, check_nulls; vars...) |> respond
+end
+
 function redirect_to(location::String, code::Int = 302, headers = Dict{AbstractString,AbstractString}()) :: Response
   headers["Location"] = location
   respond(Dict{Symbol,AbstractString}(:plain => "Redirecting you to $location"), code, headers)
+end
+
+function has_requested(content_type::Symbol)
+  task_local_storage(:__params)[:response_type] == content_type
 end
 
 function respond{T}(body::Dict{Symbol,T}, code::Int = 200, headers = Dict{AbstractString,AbstractString}()) :: Response
