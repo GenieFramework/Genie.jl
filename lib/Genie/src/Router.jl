@@ -230,7 +230,7 @@ function match_routes(req::Request, res::Response, session::Sessions.Session, pa
     route_def, extra_params = r
     protocol, route, to = route_def
 
-    protocol != req.method && (! haskey(params.collection, :_method) || ( haskey(params.collection, :_method) && params.collection[:_method] != req.method )) && continue
+    protocol != req.method && (! haskey(params.collection, :_method) || ( haskey(params.collection, :_method) && params.collection[:_method] != protocol )) && continue
 
     Genie.config.log_router && Logger.log("Router: Checking against " * route)
 
