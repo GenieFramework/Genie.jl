@@ -1,15 +1,12 @@
 <div class="row">
+  <% output_flash(@params) %>
   <form>
     <ul class="list-group">
-    <% mapreduce(*, @vars(:todos)) do (todo) %>
-      <li class="list-group-item -checkbox">
-        <%
-          a(:href => to_link(:todo_item, id = Base.get(todo.id))) do
-            todo.title
-          end
-        %>
-      </li>
-    <% end %>
+      <%
+        foreachvar(:todo, @vars(:todos)) do (todo)
+          include_template("app/resources/todos/views/partials/item.flax.html")
+        end
+      %>
     </ul>
   </form>
 </div>

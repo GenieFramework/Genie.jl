@@ -230,7 +230,7 @@ function match_routes(req::Request, res::Response, session::Sessions.Session, pa
     route_def, extra_params = r
     protocol, route, to = route_def
 
-    protocol != req.method && continue
+    protocol != req.method && (! haskey(params.collection, :_method) || ( haskey(params.collection, :_method) && params.collection[:_method] != req.method )) && continue
 
     Genie.config.log_router && Logger.log("Router: Checking against " * route)
 
@@ -513,7 +513,7 @@ function run_hooks(hook_type::Symbol, m::Module, params::Dict{Symbol,Any}) :: An
   if in(hook_type, names(m, true))
     hooks::Vector{Symbol} = getfield(m, hook_type)
     for hook in hooks
-      r = eval(App, parse(string(hook)))() 
+      r = eval(App, parse(string(hook)))()
       hook_stop(r) && return r
     end
   end

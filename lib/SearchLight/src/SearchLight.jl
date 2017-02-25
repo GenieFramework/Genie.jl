@@ -1061,6 +1061,14 @@ end
 
 
 """
+
+"""
+function create_with{T<:AbstractModel}(m::Type{T}, w::Dict) :: T
+  update_with!(m(), w)
+end
+
+
+"""
     update_by_or_create!!{T<:AbstractModel}(m::T, property::Symbol[, value::Any]) :: T
 
 Looks up `m` by `property` and `value`. If value is not provided, it uses the corresponding value of `m`.

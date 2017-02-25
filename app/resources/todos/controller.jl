@@ -42,6 +42,28 @@ function update()
   end
 end
 
+function new(todo = Todo())
+  respond_with_html(:todos, :new, todo = todo, params = @params)
+end
+
+function create()
+  todo = SearchLight.create_with(Todo, @params(:todo))
+  if Validation.validate!(todo)
+    todo = SearchLight.save!!(todo)
+    redirect_to(link_to(:todo_item, id = Base.get(todo.id)))
+  else
+    new(todo)
+  end
+end
+
+function delete()
+  ntodo = SearchLight.find_one(Todo, @params(:id))
+  isnull(ntodo) && return error_404()
+  SearchLight.delete(Base.get(ntodo))
+  flash("Todo was deleted", @params)
+  redirect_to(link_to(:todos))
+end
+
 function say_hello()
   println("Hello")
 end

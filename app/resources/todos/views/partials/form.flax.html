@@ -1,0 +1,16 @@
+<form action="<$ is_persisted(@vars(:todo)) ? link_to!!(:update_todo_item, id = Base.get(@vars(:todo).id)) : link_to!!(:create_todo_item) $>" method="POST">
+  <% output_flash(@params) %>
+  <% output_errors(@vars(:todo), :unknown) %>
+  <div class="form-group">
+    <label for="todo.title">Todo</label>
+    <input type="text" class="form-control" id="todo.title" name="todo.title" placeholder="What do you need to do?" value="<$ @vars(:todo).title $>">
+    <% output_errors(@vars(:todo), :title) %>
+  </div>
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" name="todo.completed" checked="<$ (@vars(:todo).completed) $>" > Completed
+    </label>
+  </div>
+  <br>
+  <button type="submit" class="btn btn-default">Save</button>
+</form>

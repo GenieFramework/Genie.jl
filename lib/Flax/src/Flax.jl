@@ -4,7 +4,7 @@ using Genie, Renderer, Gumbo, Logger, Configuration, Router, SHA, App, Reexport,
 using ControllerHelper, ValidationHelper
 @dependencies
 
-export HTMLString, doctype, d, var_dump, include_template, @vars, @yield, el
+export HTMLString, doctype, d, var_dump, include_template, @vars, @yield, el, foreachvar
 
 const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :article, :aside, :footer,
                           :header, :h1, :h2, :h3, :h4, :h5, :h6, :hgroup, :nav, :section,
@@ -35,6 +35,8 @@ const JSON_FILE_EXT = ".json.jl"
 
 typealias HTMLString String
 typealias JSONString String
+
+task_local_storage(:__vars, Dict{Symbol,Any}())
 
 function attributes(attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: Vector{String}
   a = String[]
@@ -84,7 +86,7 @@ end
 
 function html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
   try
-    task_local_storage(:__vars, Dict(vars))
+    task_local_storage(:__vars, Dict{Symbol,Any}(vars))
     task_local_storage(:__yield, include_template(joinpath(Genie.RESOURCE_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * TEMPLATE_EXT)))
 
     Dict{Symbol,AbstractString}(:html => include_template(joinpath(Genie.APP_PATH, Renderer.LAYOUTS_FOLDER, string(layout) * TEMPLATE_EXT)) |> Gumbo.parsehtml |> string |> doc)
@@ -102,7 +104,7 @@ function flax(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict
     julia_action_template_func = joinpath(Genie.RESOURCE_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * FILE_EXT) |> include
     julia_layout_template_func = joinpath(Genie.APP_PATH, Renderer.LAYOUTS_FOLDER, string(layout) * FILE_EXT) |> include
 
-    task_local_storage(:__vars, Dict(vars))
+    task_local_storage(:__vars, Dict{Symbol,Any}(vars))
 
     if isa(julia_action_template_func, Function)
       task_local_storage(:__yield, julia_action_template_func())
@@ -134,7 +136,7 @@ end
 
 function json(resource::Symbol, action::Symbol; vars...) :: Dict{Symbol,String}
   try
-    task_local_storage(:__vars, Dict(vars))
+    task_local_storage(:__vars, Dict{Symbol,Any}(vars))
 
     return Dict{Symbol,AbstractString}(:json => (joinpath(Genie.RESOURCE_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * JSON_FILE_EXT) |> include) |> JSON.json)
   catch ex
@@ -163,10 +165,6 @@ function read_template_file(file_path::String) :: String
   end
 
   join(html, "\n")
-end
-
-function foreach(f::Function, v::Vector) :: String
-  mapreduce(x -> string(f(x)), *, v)
 end
 
 function parse_template(file_path::String) :: String
@@ -279,6 +277,16 @@ function include_helpers()
   end
 end
 
+function foreachvar(f::Function, key::Symbol, v::Vector)
+  mapreduce(*, v) do (value)
+    vars = task_local_storage(:__vars)
+    vars[key] = value
+    task_local_storage(:__vars, vars)
+
+    f(value)
+  end
+end
+
 register_elements()
 include_helpers()
 
@@ -292,8 +300,14 @@ function var_dump(var, html = true) :: String
   html ? replace(replace("<code>$content</code>", "\n", "<br>"), " ", "&nbsp;") : content
 end
 
+macro vars()
+  :(task_local_storage(:__vars))
+end
 macro vars(key)
   :(task_local_storage(:__vars)[$key])
+end
+macro vars(key, value)
+  :(task_local_storage(:__vars)[$key] = $value)
 end
 macro yield()
   :(task_local_storage(:__yield))
