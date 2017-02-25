@@ -38,7 +38,7 @@ v 0.7.x
 ✔ type hinting, API consolidation, cleanup
 ✔ all instances of m() must be type hinted
 ✔ implement Flax, a new template system in 100% julia
-☐ review the JSON builder / JSON templates
+✔ review the JSON builder / JSON templates
 
 # SUPPORT
 ☐ doc comments
@@ -56,12 +56,13 @@ v 0.7.x
 ☐ encrypt sessions and cookies
 ☐ should work without a DB
 ✔ refactor Router to use Route types instead of Tuples
+☐ channels (websockets communication)
+✔ link_to should support extra GET params, forward current GET params
 
 # TEST APP
 ☐ "ToDo-Backend MVC" app
 
 v 0.8
-☐ channels (websockets communication)
 ☐ add frontend framework adapters - with Vue.js as default
 ☐ add the concept of State to sync app state between client (Vue.js data) and server (Genie state)
 ☐ refactor the views to use data from State and generate the reactive Vue.js code on the client

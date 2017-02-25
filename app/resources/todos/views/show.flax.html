@@ -4,7 +4,7 @@
       <label>
         <input type="checkbox" disabled checked="<$ @vars(:todo).completed $>"> <% @vars(:todo).title %>
       </label>
-      <a class="btn btn-link pull-right" href="<$ link_to!!(:delete_todo_item, id = Base.get(@vars(:todo).id)) $>" style="margin-top: -12px">Delete</a>
+      <a class="btn btn-link pull-right" href="<$ link_to!!(:delete_todo_item, id = Base.get(@vars(:todo).id), _method = POST) $>" style="margin-top: -12px">Delete</a>
       <a class="btn btn-link pull-right" href="<$ link_to!!(:get_todos_edit, id = Base.get(@vars(:todo).id)) $>" style="margin-top: -12px">Edit</a>
     </div>
   </div>
