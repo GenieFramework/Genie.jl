@@ -2,6 +2,8 @@ module App
 
 using Genie, SearchLight, YAML, Validation
 
+const config = Genie.config
+
 
 """
     load_models(dir = Genie.RESOURCE_PATH) :: Void

@@ -112,7 +112,8 @@ function new_controller(controller_name::String) :: String
   """
   module $(controller_name)Controller
 
-  using Genie, SearchLight, App
+  using App
+  @dependencies
 
   end
   """

@@ -212,7 +212,7 @@ function to_link!!(route_name::Symbol; route_params...) :: String
   to_link!!(route_name, route_params_to_dict(route_params))
 end
 
-link_to!! = to_link!!
+const link_to!! = to_link!!
 
 function to_link(route_name::Symbol; route_params...) :: String
   try
@@ -226,7 +226,7 @@ function to_link(route_name::Symbol; route_params...) :: String
   end
 end
 
-link_to = to_link
+const link_to = to_link
 
 function route_params_to_dict(route_params)
   # d = Dict{Symbol,Any}()
