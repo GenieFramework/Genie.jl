@@ -57,9 +57,9 @@ end
 ###
 
 function post_from_request!(request::Request, input::HttpInput)
-  if (get(request.headers, "Content-Type", "") == "application/x-www-form-urlencoded")
+  if get(request.headers, "Content-Type", "") == "application/x-www-form-urlencoded"
     post_url_encoded!(request.data, input.post)
-  elseif (searchindex(get(request.headers, "Content-Type", ""), "multipart/form-data") != 0)
+  elseif searchindex(get(request.headers, "Content-Type", ""), "multipart/form-data") != 0
     post_multipart!(request, input.post, input.files)
   end
 end
@@ -77,7 +77,7 @@ function post_multipart!(request::Request, post_data::HttpPostData, files::HttpF
 
   boundary_length::Int = length(boundary)
 
-  if (boundary_length > 0)
+  if boundary_length > 0
     form_parts::Array{HttpFormPart} = HttpFormPart[]
 
     get_mutliform_parts!(request.data, form_parts, boundary, boundary_length)
@@ -85,35 +85,33 @@ function post_multipart!(request::Request, post_data::HttpPostData, files::HttpF
     ### Process form parts
     ### (This could potentially be done within get_mutliform_parts! - but then it would be even bigger than it is now)
 
-    if (length(form_parts) > 0)
+    if length(form_parts) > 0
       for part::HttpFormPart in form_parts
         hasFile::Bool = false
         file::HttpFile = HttpFile()
         fileFieldName::String = ""
 
         for (field::String, values::Dict{String, String}) in part.headers
-          if (
-            field == "Content-Disposition"
-            && getkey(values, "form-data", null) != null
-            )
+          if field == "Content-Disposition" && getkey(values, "form-data", null) != null
+
               # Check to see whether this part is a file upload
               # Otherwise, treat as basic POST data
 
-              if (getkey(values, "filename", null) != null)
-                if (length(values["filename"]) > 0)
+              if getkey(values, "filename", null) != null
+                if length(values["filename"]) > 0
                   fileFieldName = values["name"]
                   file.name = values["filename"]
                   hasFile = true
                 end
-              elseif (getkey(values, "name", null) != null)
+              elseif getkey(values, "name", null) != null
                 post_data[values["name"]] = String(part.data)
               end
-            elseif (field == "Content-Type")
+            elseif field == "Content-Type"
               (file.mime, mime) = first(values)
             end
         end # for
 
-        if (hasFile)
+        if hasFile
           file.data = part.data
 
           files[fileFieldName] = file
@@ -161,7 +159,7 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
 
   byteIndex::Int = boundaryLength + 5
 
-  while (!foundFinalBoundary && byteIndex <= bytes)
+  while !foundFinalBoundary && byteIndex <= bytes
     byte = http_data[byteIndex]
 
     # Test for boundary.
@@ -172,7 +170,7 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
       )
     foundBoundary = true
 
-    if (byte == 0x0d)
+    if byte == 0x0d
       byteIndexOffset = byteIndex + 3
     else
       byteIndexOffset = byteIndex + 1
@@ -182,10 +180,10 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
 
     testIndex = 1;
 
-    while (testIndex < boundaryLength)
+    while testIndex < boundaryLength
       byteTestIndex = byteIndexOffset + testIndex
 
-      if (byteTestIndex > bytes || http_data[byteTestIndex] != boundary[testIndex])
+      if byteTestIndex > bytes || http_data[byteTestIndex] != boundary[testIndex]
         foundBoundary = false
         break
       end
@@ -193,8 +191,8 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
       testIndex = testIndex + 1
     end
 
-    if (foundBoundary)
-      if (http_data[byteTestIndex + 2] == '-')
+    if foundBoundary
+      if http_data[byteTestIndex + 2] == '-'
         foundFinalBoundary = true
         byteIndex = byteTestIndex + 5
       else
@@ -207,7 +205,7 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
 
     ## Otherwise, process data
 
-    if (foundBoundary)
+    if foundBoundary
       captureAsData = false
       crOn = false
       hadLineEnding = false
@@ -217,20 +215,20 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
 
       part = HttpFormPart()
     else
-      if (captureAsData)
+      if captureAsData
         push!(part.data, byte)
       else
         ## Check for CR
 
-        if (byte == 0x0d)
+        if byte == 0x0d
           crOn = true
         else
           ## Check for LF and previous CR
 
-          if (byte == 0x0a && crOn)
+          if byte == 0x0a && crOn
             ## Check for CRLFCRLF
 
-            if (hadLineEnding)
+            if hadLineEnding
               ## End of headers
 
               captureAsData = true
@@ -241,12 +239,12 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
 
               header::String = String(headerRaw)
 
-              if (length(header) > 0)
+              if length(header) > 0
                 headerParts = split(header, ": ", 2)
 
                 valueDecoded = parse_seicolon_fields(String(headerParts[2]));
 
-                if (length(valueDecoded) > 0)
+                if length(valueDecoded) > 0
                   part.headers[headerParts[1]] = valueDecoded
                 end
               end
@@ -256,7 +254,7 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
               hadLineEnding = true
             end
           else
-            if (hadLineEnding)
+            if hadLineEnding
               hadLineEnding = false
             end
 
@@ -294,23 +292,23 @@ function parse_seicolon_fields(dataString::String)
   while charIndex < dataStringLengthLoop
     character = dataString[charIndex]
 
-    if (!inSingleQuotes && character == '"' && prevCharacter != '\\')
-      inDoubleQuotes = !inDoubleQuotes
+    if ! inSingleQuotes && character == '"' && prevCharacter != '\\'
+      inDoubleQuotes = ! inDoubleQuotes
       ignore = true
     end
 
-    if (!inDoubleQuotes && character == '\'' && prevCharacter != '\\')
-      inSingleQuotes = !inSingleQuotes
+    if ! inDoubleQuotes && character == '\'' && prevCharacter != '\\'
+      inSingleQuotes = ! inSingleQuotes
       ignore = true
     end
 
-    if (charIndex == dataStringLength || (character == ';' && !(inSingleQuotes || inDoubleQuotes)))
+    if charIndex == dataStringLength || (character == ';' && !(inSingleQuotes || inDoubleQuotes))
       workingString = strip(workingString)
 
-      if (length(workingString) > 0)
+      if length(workingString) > 0
         decoded = parse_quoted_params(workingString)
 
-        if (decoded != null)
+        if decoded != null
           (key, value) = decoded
 
           data[key] = value
@@ -320,7 +318,7 @@ function parse_seicolon_fields(dataString::String)
 
         workingString = ""
       end
-    elseif (!ignore)
+    elseif ! ignore
       workingString = workingString * string(character)
     end
 
@@ -337,7 +335,7 @@ end
 function parse_quoted_params(data::String)
   tokens = split(data, "=", 2)
 
-  if (length(tokens) == 2)
+  if length(tokens) == 2
     return (tokens[1], tokens[2])
   end
 

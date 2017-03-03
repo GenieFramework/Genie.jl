@@ -229,13 +229,6 @@ end
 const link_to = to_link
 
 function route_params_to_dict(route_params)
-  # d = Dict{Symbol,Any}()
-  # for (k,v) in route_params
-  #   d[k] = v
-  # end
-  #
-  # d
-
   Dict{Symbol,Any}(route_params)
 end
 

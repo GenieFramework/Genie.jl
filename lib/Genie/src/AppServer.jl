@@ -57,12 +57,14 @@ function handle_connect(client::HttpServer.Client) :: Void
   try
     ip, port = getsockname(isa(client.sock, MbedTLS.SSLContext) ? client.sock.bio : client.sock)
     task_local_storage(:ip, ip)
-
-     nothing
   catch ex
     string(ex) |> Logger.log
     Logger.@location()
+
+    task_local_storage(:ip, ip"255.255.255.255")
   end
+
+  nothing
  end
 
 

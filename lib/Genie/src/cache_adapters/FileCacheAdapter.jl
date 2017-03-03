@@ -13,7 +13,7 @@ function write(s::AbstractString) :: Void
   nothing
 end
 
-function to_cache(key::String, content::String) :: Void
+function to_cache(key::String, content::Any) :: Void
   open(cache_path(key), "w") do io
     serialize(io, content)
   end
@@ -21,15 +21,15 @@ function to_cache(key::String, content::String) :: Void
   nothing
 end
 
-function from_cache(key::String, expiration::Int) :: Nullable{String}
+function from_cache(key::String, expiration::Int) :: Nullable
   file_path = cache_path(key)
-  ( ! isfile(file_path) || stat(file_path).ctime + expiration < time() ) && return Nullable{String}()
+  ( ! isfile(file_path) || stat(file_path).ctime + expiration < time() ) && return Nullable()
 
   output = open(file_path) do io
     deserialize(io)
   end
 
-  Nullable{String}(output)
+  Nullable(output)
 end
 
 function purge(key::String) :: Void

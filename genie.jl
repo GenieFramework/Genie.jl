@@ -10,7 +10,7 @@ function bootstrap_genie() :: Void
   include(abspath(joinpath("lib", "Genie", "src", "branding.jl")))
 
   const DEFAULT_NWORKERS_REPL = 1
-  const DEFAULT_NWORKERS_SERVER = 4
+  const DEFAULT_NWORKERS_SERVER = 1
 
   isfile("env.jl") && include("env.jl")
   ! haskey(ENV, "GENIE_ENV") && (ENV["GENIE_ENV"] = "dev")
@@ -26,9 +26,8 @@ function bootstrap_genie() :: Void
 end
 
 @everywhere bootstrap_genie()
-
 @everywhere import Genie
-using Genie, App, SearchLight, Flax
+using Genie, App, SearchLight
 
 try
   using OhMyREPL

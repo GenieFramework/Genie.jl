@@ -11,7 +11,7 @@ eval(:(using $(Genie.config.html_template_engine), $(Genie.config.json_template_
 eval(:(const HTMLTemplateEngine = $(Genie.config.html_template_engine)))
 eval(:(const JSONTemplateEngine = $(Genie.config.json_template_engine)))
 
-eval(:(export HTMLTemplateEngine, JSONTemplateEngine))
+export HTMLTemplateEngine, JSONTemplateEngine
 
 @devtools()
 

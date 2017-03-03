@@ -15,7 +15,7 @@ function with_cache(f::Function, key::String, expiration::Int = Genie.config.cac
     Genie.config.log_cache && Logger.log("Missed cache for $key", :warn)
 
     output = f()
-    ca.to_cache(cache_key(key), String(output))
+    ca.to_cache(cache_key(key), output)
 
     return output
   end
