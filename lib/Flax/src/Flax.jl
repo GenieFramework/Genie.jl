@@ -189,7 +189,8 @@ function function_name(file_path::String)
 end
 
 function html_to_flax(file_path::String; partial = true) :: String
-  code =  """function $(function_name(file_path))() \n"""
+  code =  """using Flax\n"""
+  code *= """function $(function_name(file_path))() \n"""
   code *= parse_template(file_path, partial = partial)
   code *= """\nend"""
 
@@ -338,6 +339,8 @@ function include_helpers()
 end
 
 function foreachvar(f::Function, key::Symbol, v::Vector)
+  isempty(v) && return ""
+
   output = mapreduce(*, v) do (value)
     vars = task_local_storage(:__vars)
     vars[key] = value

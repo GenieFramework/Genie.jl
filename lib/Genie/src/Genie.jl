@@ -14,6 +14,7 @@ push!(LOAD_PATH,  abspath(joinpath(LIB_PATH, "Genie", "src", "cache_adapters")),
 include(abspath(joinpath("lib", "Genie", "src", "genie_types.jl")))
 
 using Macros, Configuration, Logger, AppServer, Commands, App, Millboard, SearchLight, Renderer
+@dependencies
 
 """
     run() :: Void
