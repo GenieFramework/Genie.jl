@@ -464,6 +464,7 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
   Genie.config.log_requests && Logger.log("Invoking $action_name with params: \n" * string(Millboard.table(params)), :debug)
 
   return  try
+            # getfield(current_module(), Symbol("App." * action_name))() |> to_response
             eval(parse("App." * action_name))() |> to_response
           catch ex
             if Configuration.is_dev()

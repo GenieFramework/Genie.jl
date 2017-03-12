@@ -13,8 +13,8 @@ function write(s::AbstractString) :: Void
   nothing
 end
 
-function to_cache(key::String, content::Any) :: Void
-  open(cache_path(key), "w") do io
+function to_cache(key::String, content::Any; dir = "") :: Void
+  open(cache_path(key, dir = dir), "w") do io
     serialize(io, content)
   end
 
@@ -44,8 +44,11 @@ function purge_all() :: Void
   nothing
 end
 
-function cache_path(key::String) :: String
-  joinpath(Genie.config.cache_folder, key)
+function cache_path(key::String; dir = "") :: String
+  path = joinpath(Genie.config.cache_folder, dir)
+  ! isdir(path) && mkpath(path)
+
+  joinpath(path, key)
 end
 
 end

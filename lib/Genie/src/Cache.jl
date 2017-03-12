@@ -6,7 +6,7 @@ eval(parse("using $(Genie.config.cache_adapter)"))
 
 export cache_key, with_cache
 
-function with_cache(f::Function, key::String, expiration::Int = Genie.config.cache_duration)
+function with_cache(f::Function, key::String, expiration::Int = Genie.config.cache_duration; dir = "")
   expiration == 0 && return f()
 
   ca = cache_adapter()
@@ -15,7 +15,7 @@ function with_cache(f::Function, key::String, expiration::Int = Genie.config.cac
     Genie.config.log_cache && Logger.log("Missed cache for $key", :warn)
 
     output = f()
-    ca.to_cache(cache_key(key), output)
+    ca.to_cache(cache_key(key), output, dir = dir)
 
     return output
   end

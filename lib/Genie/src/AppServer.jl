@@ -19,7 +19,7 @@ Future(1,1,1,Nullable{Any}())
 function startup(port::Int = 8000) :: Void
   http = HttpHandler() do req::Request, res::Response
     try
-      ip::IPv4 = task_local_storage(:ip)
+      ip::IPv4 = Genie.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
       nworkers() == 1 ? handle_request(req, res, ip) : @fetch handle_request(req, res)
     catch ex
       if Configuration.is_dev()
@@ -33,7 +33,7 @@ function startup(port::Int = 8000) :: Void
     end
   end
 
-  http.events["connect"] = (client) -> handle_connect(client)
+  Genie.config.lookup_ip && (http.events["connect"] = (client) -> handle_connect(client))
 
   server = Server(http)
   @async run(server, port) # !!! @async required to avoid race conditions when storing the request IP ???

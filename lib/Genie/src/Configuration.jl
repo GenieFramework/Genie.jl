@@ -149,6 +149,7 @@ type Settings
   log_verbosity::Symbol
   log_formatted::Bool
   log_cache::Bool
+  log_views::Bool
 
   assets_path::String
   assets_serve::Bool
@@ -170,6 +171,8 @@ type Settings
   json_template_engine::Symbol
 
   flax_compile_templates::Bool
+
+  lookup_ip::Bool
 
   run_as_server::Bool
 
@@ -212,6 +215,7 @@ type Settings
             log_verbosity = LOG_LEVEL_VERBOSITY_VERBOSE,
             log_formatted = true,
             log_cache     = true,
+            log_views     = true,
 
             assets_path   = "/",
             assets_serve  =  true,
@@ -234,6 +238,8 @@ type Settings
 
             flax_compile_templates = false,
 
+            lookup_ip = true,
+
             run_as_server = false
         ) =
               new(
@@ -244,7 +250,7 @@ type Settings
                   db_migrations_table_name, db_migrations_folder, db_config_settings, db_adapter,
                   task_folder, test_folder, session_folder, log_folder,
                   cache_folder, cache_adapter, cache_duration,
-                  log_router, log_db, log_queries, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted, log_cache,
+                  log_router, log_db, log_queries, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted, log_cache, log_views,
                   assets_path, assets_serve,
                   pagination_default_items_per_page, pagination_page_param_name,
                   model_relations_eagerness,
@@ -253,6 +259,7 @@ type Settings
                   inflector_irregulars,
                   html_template_engine, json_template_engine,
                   flax_compile_templates,
+                  lookup_ip,
                   run_as_server)
 end
 

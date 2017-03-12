@@ -1482,7 +1482,8 @@ function to_model{T<:AbstractModel}(m::Type{T}, row::DataFrames.DataFrameRow) ::
               catch ex
                 Logger.log("Failed to hydrate field $unq_field ($field)", :debug)
                 Logger.@location()
-                Logger.log(ex)
+                Logger.log(string(ex))
+                # rethrow(ex)
 
                 row[field]
               end

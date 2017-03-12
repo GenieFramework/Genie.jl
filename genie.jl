@@ -27,7 +27,8 @@ end
 
 @everywhere bootstrap_genie()
 @everywhere import Genie
-using Genie, App, SearchLight
+using App
+@dependencies
 
 try
   using OhMyREPL

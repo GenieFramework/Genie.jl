@@ -18,7 +18,9 @@ julia> @devtools()
 """
 macro devtools()
   if Configuration.is_dev()
-    :(using Gallium)
+    quote
+      using Gallium
+    end
   end
 end
 

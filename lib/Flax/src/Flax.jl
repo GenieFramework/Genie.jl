@@ -4,7 +4,10 @@ using Genie, Renderer, Gumbo, Logger, Configuration, Router, SHA, App, Reexport,
 using ControllerHelper, ValidationHelper
 @dependencies
 
-export HTMLString, doctype, d, var_dump, include_template, @vars, @yield, el, foreachvar
+export HTMLString, JSONString
+export doctype, var_dump, include_template, @vars, @yield, el, foreachvar
+
+import Base.string
 
 const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :article, :aside, :footer,
                           :header, :h1, :h2, :h3, :h4, :h5, :h6, :hgroup, :nav, :section,
@@ -15,18 +18,8 @@ const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :articl
                           :del, :ins, :caption, :col, :colgroup, :table, :tbody, :td, :tfoot, :th, :thead, :tr,
                           :button, :datalist, :fieldset, :form, :label, :legend, :meter, :optgroup, :option,
                           :output, :progress, :select, :textarea, :details, :dialog, :menu, :menuitem, :summary,
-                          :slot, :template]
-const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input,
-                          :html, :head, :body, :title, :style, :address, :article, :aside, :footer,
-                          :header, :h1, :h2, :h3, :h4, :h5, :h6, :hgroup, :nav, :section,
-                          :dd, :div, :dl, :dt, :figcaption, :figure, :li, :main, :ol, :p, :pre, :ul, :span,
-                          :a, :abbr, :b, :bdi, :bdo, :cite, :code, :data, :dfn, :em, :i, :kbd, :mark,
-                          :q, :rp, :rt, :rtc, :ruby, :s, :samp, :small, :spam, :strong, :sub, :sup, :time,
-                          :u, :var, :wrb, :audio, :map, :void, :embed, :object, :canvas, :noscript, :script,
-                          :del, :ins, :caption, :col, :colgroup, :table, :tbody, :td, :tfoot, :th, :thead, :tr,
-                          :button, :datalist, :fieldset, :form, :label, :legend, :meter, :optgroup, :option,
-                          :output, :progress, :select, :textarea, :details, :dialog, :menu, :menuitem, :summary,
-                          :slot, :template]
+                          :slot, :template, :blockquote]
+const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input]
 const BOOL_ATTRIBUTES = [:checked, :disabled, :selected]
 
 const FILE_EXT      = ".flax.jl"
@@ -38,13 +31,23 @@ typealias JSONString String
 
 task_local_storage(:__vars, Dict{Symbol,Any}())
 
+function prepare_template(s::String)
+  s
+end
+function prepare_template{T}(v::Vector{T})
+  filter!(v) do (x)
+    ! isa(x, Void)
+  end
+  join(v)
+end
+
 function attributes(attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: Vector{String}
   a = String[]
   for (k,v) in attrs
-    if startswith(v, "<\$") && endswith(v, "\$>")
-      v = (replace(replace(replace(v, "<\$", ""), "\$>", ""), "'", "\"") |> strip) |> parse |> eval
+    if startswith(v, "<:") && endswith(v, ":>")
+      v = (replace(replace(replace(v, "<:", ""), ":>", ""), "'", "\"") |> strip) |> parse |> eval
     end
-    push!(a, "$(k)=\"$(v)\" ")
+    push!(a, """$(k)=\"$(v)\" """)
   end
 
   a
@@ -52,7 +55,13 @@ end
 
 function normal_element(f::Function, elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: HTMLString
   a = attributes(attrs)
-  """\n<$( string(lowercase(elem)) * (! isempty(a) ? (" " * join(a, " ")) : "") )>\n$(join(f()))\n</$( string(lowercase(elem)) )>\n"""
+
+  """<$( string(lowercase(elem)) * (! isempty(a) ? (" " * join(a, " ")) : "") )>\n$(prepare_template(f()))\n</$( string(lowercase(elem)) )>\n"""
+end
+function normal_element(elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: HTMLString
+  a = attributes(attrs)
+
+  """<$( string(lowercase(elem)) * (! isempty(a) ? (" " * join(a, " ")) : "") )></$( string(lowercase(elem)) )>\n"""
 end
 
 function void_element(elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: HTMLString
@@ -61,15 +70,36 @@ function void_element(elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{
   "<$( string(lowercase(elem)) * (! isempty(a) ? (" " * join(a, " ")) : "") )>\n"
 end
 
-function include_template(path::String) :: String
+function skip_element(f::Function) :: HTMLString
+  """$(prepare_template(f()))\n"""
+end
+function skip_element() :: HTMLString
+  ""
+end
+
+function include_template(path::String; partial = true, func_name = "") :: String
+  if App.config.log_views
+    Logger.log("Including $path", :info)
+    @time _include_template(path, partial = partial, func_name = func_name)
+  else
+    _include_template(path, partial = partial, func_name = func_name)
+  end
+end
+function _include_template(path::String; partial = true, func_name = "") :: String
   path = relpath(path)
+
+  f_name = func_name != "" ? Symbol(func_name) : Symbol(function_name(path))
+  Genie.config.flax_compile_templates && isdefined(f_name) && return getfield(current_module(), f_name)()
+
   if Genie.config.flax_compile_templates
     file_path = joinpath(Genie.config.cache_folder, path) * FILE_EXT
     cache_file_name = sha1(path)
+
     if isfile(file_path)
+      App.config.log_views && Logger.log("Hit cache for view $path", :info)
       return (file_path |> include)()
     else
-      flax_code = path |> html_to_flax
+      flax_code = html_to_flax(path, partial = partial)
       if ! isdir(joinpath(Genie.config.cache_folder, dirname(path)))
         mkpath(joinpath(Genie.config.cache_folder, dirname(path)))
       end
@@ -80,8 +110,13 @@ function include_template(path::String) :: String
     end
   end
 
-  flax_code = path |> html_to_flax
-  (flax_code |> include_string)()
+  flax_code = html_to_flax(path, partial = partial)
+  try
+    (flax_code |> include_string)()
+  catch ex
+    @show flax_code
+    rethrow(ex)
+  end
 end
 
 function html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
@@ -89,7 +124,7 @@ function html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict
     task_local_storage(:__vars, Dict{Symbol,Any}(vars))
     task_local_storage(:__yield, include_template(joinpath(Genie.RESOURCE_PATH, string(resource), Renderer.VIEWS_FOLDER, string(action) * TEMPLATE_EXT)))
 
-    Dict{Symbol,AbstractString}(:html => include_template(joinpath(Genie.APP_PATH, Renderer.LAYOUTS_FOLDER, string(layout) * TEMPLATE_EXT)) |> Gumbo.parsehtml |> string |> doc)
+    Dict{Symbol,AbstractString}(:html => include_template(joinpath(Genie.APP_PATH, Renderer.LAYOUTS_FOLDER, string(layout) * TEMPLATE_EXT), partial = false) |> string |> doc)
   catch ex
     if Configuration.is_dev()
       rethrow(ex)
@@ -117,7 +152,7 @@ function flax(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict
     end
 
     return  if isa(julia_layout_template_func, Function)
-              Dict{Symbol,AbstractString}(:html => julia_layout_template_func() |> Gumbo.parsehtml |> string |> doc)
+              Dict{Symbol,AbstractString}(:html => julia_layout_template_func() |> string |> doc)
             else
               message = "The Flax template should return a function"
               Logger.log(message, :err)
@@ -148,9 +183,14 @@ function json(resource::Symbol, action::Symbol; vars...) :: Dict{Symbol,String}
   end
 end
 
-function html_to_flax(file_path::String) :: String
-  code =  """() -> begin \n"""
-  code *= file_path |> parse_template
+function function_name(file_path::String)
+  file_path = relpath(file_path)
+  "func_$(sha1(file_path) |> bytes2hex )"
+end
+
+function html_to_flax(file_path::String; partial = true) :: String
+  code =  """function $(function_name(file_path))() \n"""
+  code *= parse_template(file_path, partial = partial)
   code *= """\nend"""
 
   code
@@ -167,22 +207,28 @@ function read_template_file(file_path::String) :: String
   join(html, "\n")
 end
 
-function parse_template(file_path::String) :: String
+function parse_template(file_path::String; partial = true) :: String
   htmldoc = read_template_file(file_path) |> Gumbo.parsehtml
-  parse_tree(htmldoc.root, "", 0)
+  parse_tree(htmldoc.root, "", 0, partial = partial)
 end
 
-function parse_tree(elem, output, depth) :: String
+function parse_tree(elem, output, depth; partial = true) :: String
   if isa(elem, HTMLElement)
 
-    if lowercase(string(tag(elem))) == "script" && in("type", collect(keys(attrs(elem))))
+    tag_name = lowercase(string(tag(elem)))
+    invalid_tag = partial && (tag_name == "html" || tag_name == "head" || tag_name == "body")
+
+    if tag_name == "script" && in("type", collect(keys(attrs(elem))))
+
       if attrs(elem)["type"] == "julia/eval"
         if ! isempty(children(elem))
           output *= repeat("\t", depth) * string(children(elem)[1].text) * " \n"
         end
       end
+
     else
-      output *= repeat("\t", depth) * "Flax.$(lowercase(string(tag(elem))))("
+
+      output *= repeat("\t", depth) * ( ! invalid_tag ? "Flax.$(tag_name)(" : "Flax.skip_element(" )
 
       attributes = String[]
       for (k,v) in attrs(elem)
@@ -195,34 +241,42 @@ function parse_tree(elem, output, depth) :: String
             push!(attributes, ":$(Symbol(k)) => \"$k\"") # boolean attributes can have the same value as the attribute -- or be empty
           end
         else
-          push!(attributes, ":$(Symbol(k)) => \"$v\"")
+          push!(attributes, """Symbol("$k") => "$v" """)
         end
       end
 
       output *= join(attributes, ", ") * ") "
+      # end
 
       inner = ""
-      if ! isempty(children(elem)) # || in(Symbol(elem), NORMAL_ELEMENTS)
+      if ! isempty(children(elem))
         children_count = size(children(elem))[1]
+
         output *= " do;[ \n"
+
         idx = 0
         for child in children(elem)
           idx += 1
-          inner *= parse_tree(child, "", depth + 1)
+          inner *= parse_tree(child, "", depth + 1, partial = partial)
           if idx < children_count
-            if ! in("type", collect(keys(attrs(child)))) || ( in("type", collect(keys(attrs(child)))) && (attrs(child)["type"] != "julia/eval") )
-              inner = repeat("\t", depth) * inner * " \n"
+            if isa(child, HTMLText) ||
+                ( isa(child, HTMLElement) && ( ! in("type", collect(keys(attrs(child)))) || ( in("type", collect(keys(attrs(child)))) && (attrs(child)["type"] != "julia/eval") ) ) )
+                ! isempty(inner) && (inner = repeat("\t", depth) * inner * " \n")
             end
           end
         end
-        output *= inner * "\n " * repeat("\t", depth) * "]end \n"
+        ! isempty(inner) && (output *= inner * "\n " * repeat("\t", depth))
+
+        output *= "]end \n"
       end
     end
 
   elseif isa(elem, HTMLText)
-    output *= repeat("\t", depth) * "\"$(elem.text)\""
+    content = replace(elem.text, r"<:(.*):>", (x) -> replace(replace(x, "<:", ""), ":>", "") |> strip |> string )
+    output *= repeat("\t", depth) * "\"$(content)\""
   end
 
+  # @show output
   output
 end
 
@@ -253,7 +307,13 @@ function register_elements()
       end
     """ |> parse |> eval
 
-    @eval export $elem
+    """
+      function $elem(attrs::Pair{Symbol,String}...) :: HTMLString
+        \"\"\"\$(normal_element("$(string(elem))", Pair{Symbol,String}[attrs...]))\"\"\"
+      end
+    """ |> parse |> eval
+
+    # @eval export $elem
   end
 
   for elem in VOID_ELEMENTS
@@ -263,7 +323,7 @@ function register_elements()
       end
     """ |> parse |> eval
 
-    @eval export $elem
+    # @eval export $elem
   end
 end
 
@@ -278,19 +338,23 @@ function include_helpers()
 end
 
 function foreachvar(f::Function, key::Symbol, v::Vector)
-  mapreduce(*, v) do (value)
+  output = mapreduce(*, v) do (value)
     vars = task_local_storage(:__vars)
     vars[key] = value
     task_local_storage(:__vars, vars)
 
     f(value)
   end
+
+  vars = task_local_storage(:__vars)
+  delete!(vars, key)
+  task_local_storage(:__vars, vars)
+
+  output
 end
 
 register_elements()
 include_helpers()
-
-d = div
 
 function var_dump(var, html = true) :: String
   iobuffer = IOBuffer()
