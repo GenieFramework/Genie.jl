@@ -292,7 +292,8 @@ function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
       param_type =  if contains(rp, "::")
                       x = split(rp, "::")
                       rp = x[1]
-                      eval(parse(x[2]))
+                      # eval(parse(x[2]))
+                      getfield(current_module(), Symbol(x[2]))
                     else
                       Any
                     end
@@ -448,7 +449,7 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
   task_local_storage(:__params, params)
 
   try
-    hook_result = run_hooks(BEFORE_ACTION_HOOKS, eval(App, parse(join(split(action_name, ".")[1:end-1], "."))), params)
+    hook_result = run_hooks(BEFORE_ACTION_HOOKS, getfield(App, Symbol(join(split(action_name, ".")[1:end-1], "."))), params)
     hook_stop(hook_result) && return to_response(hook_result[2])
   catch ex
     if Configuration.is_dev()
@@ -464,8 +465,12 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
   Genie.config.log_requests && Logger.log("Invoking $action_name with params: \n" * string(Millboard.table(params)), :debug)
 
   return  try
-            # getfield(current_module(), Symbol("App." * action_name))() |> to_response
-            eval(parse("App." * action_name))() |> to_response
+            getfield(
+              getfield(
+                getfield(current_module(), Symbol("App")),
+              Symbol(split(action_name, ".")[1])),
+            Symbol(split(action_name, ".")[2]))() |> to_response
+            # eval(current_module(), parse("App." * action_name))() |> to_response
           catch ex
             if Configuration.is_dev()
               rethrow(ex)
@@ -521,7 +526,9 @@ function run_hooks(hook_type::Symbol, m::Module, params::Dict{Symbol,Any}) :: An
   if in(hook_type, names(m, true))
     hooks::Vector{Symbol} = getfield(m, hook_type)
     for hook in hooks
-      r = eval(App, parse(string(hook)))()
+      # r = eval(App, parse(string(hook)))()
+      c, a = split(string(hook), ".")
+      r = getfield(getfield(App, Symbol(c)), Symbol(a))()
       hook_stop(r) && return r
     end
   end
