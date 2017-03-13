@@ -234,12 +234,16 @@ function parse_tree(elem, output, depth; partial = true) :: String
 
       attributes = String[]
       for (k,v) in attrs(elem)
+        x = v
+
         if startswith(v, "<\$") && endswith(v, "\$>")
-          v = (replace(replace(replace(v, "<\$", ""), "\$>", ""), "'", "\"") |> strip) |> parse |> eval
+          v = (replace(replace(replace(v, "<\$", ""), "\$>", ""), "'", "\"") |> strip) # |> parse |> eval
+          x = v
+          v = "\$($v)"
         end
 
         if in(Symbol(lowercase(k)), BOOL_ATTRIBUTES)
-          if v == true || v == "true" || v == :true || v == ":true" || v == ""
+          if x == true || x == "true" || x == :true || x == ":true" || x == ""
             push!(attributes, ":$(Symbol(k)) => \"$k\"") # boolean attributes can have the same value as the attribute -- or be empty
           end
         else
