@@ -45,7 +45,7 @@ function attributes(attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,Stri
   a = String[]
   for (k,v) in attrs
     if startswith(v, "<:") && endswith(v, ":>")
-      v = (replace(replace(replace(v, "<:", ""), ":>", ""), "'", "\"") |> strip) # |> parse |> eval
+      v = (replace(replace(replace(v, "<:", ""), ":>", ""), "'", "\"") |> strip)
       v = "\$($v)"
     end
     push!(a, """$(k)=\"$(v)\" """)
@@ -237,7 +237,7 @@ function parse_tree(elem, output, depth; partial = true) :: String
         x = v
 
         if startswith(v, "<\$") && endswith(v, "\$>")
-          v = (replace(replace(replace(v, "<\$", ""), "\$>", ""), "'", "\"") |> strip) # |> parse |> eval
+          v = (replace(replace(replace(v, "<\$", ""), "\$>", ""), "'", "\"") |> strip) 
           x = v
           v = "\$($v)"
         end

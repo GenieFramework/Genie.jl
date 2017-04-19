@@ -9,13 +9,10 @@ HttpServer
 JSON
 Lint
 Lumberjack
-Match
 MbedTLS
 Memoize
 Millboard
-Mustache
 MySQL
-PatternDispatch
 Reexport
 SHA
 URIParser

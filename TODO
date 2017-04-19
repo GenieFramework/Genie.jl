@@ -58,6 +58,7 @@ v 0.7.x
 ✔ refactor Router to use Route types instead of Tuples
 ☐ channels (websockets communication)
 ✔ link_to should support extra GET params, forward current GET params
+☐ integrate Brocollijs and Yarnjs for asset management
 
 # TEST APP
 ☐ "ToDo-Backend MVC" app

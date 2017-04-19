@@ -26,9 +26,9 @@ function bootstrap_genie() :: Void
 end
 
 @everywhere bootstrap_genie()
-@everywhere import Genie
+@everywhere import Genie, App
 using App
-@dependencies
+App.@dependencies
 
 try
   using OhMyREPL
