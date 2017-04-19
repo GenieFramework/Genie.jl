@@ -1,3 +1,0 @@
-app/assets/* linguist-vendored
-public/* linguist-vendored
-*.jl.html linguist-language=HTML

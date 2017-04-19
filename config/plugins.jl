@@ -1,1 +1,0 @@
-const GENIE_PLUGINS = []
