@@ -2,12 +2,24 @@ module Cache
 
 using Genie, SHA, Logger
 
-eval(parse("using $(Genie.config.cache_adapter)"))
-
 export cache_key, with_cache
 
-function with_cache(f::Function, key::String, expiration::Int = Genie.config.cache_duration; dir = "")
-  expiration == 0 && return f()
+const CACHE_DURATION  = IS_IN_APP ? Genie.config.cache_duration : 600
+const CACHE_ADAPTER   = IS_IN_APP ? Genie.config.cache_adapter  : :FileCacheAdapter
+
+eval(parse("using $(CACHE_ADAPTER)"))
+
+
+"""
+    with_cache(f::Function, key::String, expiration::Int = CACHE_DURATION; dir = "", condition::Bool = true)
+
+Executes the function `f` and stores the result into the cache for the duration of `expiration`. Next time the function is invoked,
+if the cache has not expired, the cached result is returned skipping the function execution.
+The optional `dir` param is used to designate the folder where the cache will be stored (within the configured cache folder).
+If `condition` is `false` caching will be skipped. 
+"""
+function with_cache(f::Function, key::String, expiration::Int = CACHE_DURATION; dir = "", condition::Bool = true)
+  ( expiration == 0 || ! condition ) && return f()
 
   ca = cache_adapter()
   cached_data = ca.from_cache(cache_key(key), expiration)
@@ -24,6 +36,12 @@ function with_cache(f::Function, key::String, expiration::Int = Genie.config.cac
   Base.get(cached_data)
 end
 
+
+"""
+    cache_key(args...) :: String
+
+Computes a unique cache key based on `args`. Used to generate unique `key`s for storing data in cache.
+"""
 function cache_key(args...) :: String
   key = ""
   for a in args
@@ -33,8 +51,14 @@ function cache_key(args...) :: String
   bytes2hex(sha1(key))
 end
 
-function cache_adapter(adapter::Symbol = Genie.config.cache_adapter) :: Module
-  eval(adapter)
+
+"""
+    cache_adapter(adapter::Symbol = Genie.config.cache_adapter) :: Module
+
+Returns the currently active cache adapter, as defined in the settings.
+"""
+function cache_adapter(adapter::Symbol = CACHE_ADAPTER) :: Module
+  eval(parse("$adapter"))
 end
 
 end

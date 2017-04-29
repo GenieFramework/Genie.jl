@@ -1,10 +1,8 @@
 module App
 
-using Genie, SearchLight, YAML, Validation
+using Genie, SearchLight, YAML, Validation, Macros
 
-if isdefined(Genie, :config)
-  const config = Genie.config
-end
+IS_IN_APP && const config = Genie.config
 
 
 """

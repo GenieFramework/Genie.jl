@@ -2,6 +2,12 @@ module FileTemplates
 
 using Inflector
 
+
+"""
+    new_database_migration(module_name::String) :: String
+
+Default content for a new SearchLight migration.
+"""
 function new_database_migration(module_name::String) :: String
   """
   module $module_name
@@ -22,6 +28,12 @@ function new_database_migration(module_name::String) :: String
   """
 end
 
+
+"""
+    new_task(module_name::String) :: String
+
+Default content for a new Genie task.
+"""
 function new_task(module_name::String) :: String
   """
   module $module_name
@@ -42,6 +54,12 @@ function new_task(module_name::String) :: String
   """
 end
 
+
+"""
+    new_model(model_name::String, resource_name::String = model_name) :: String
+
+Default content for a new SearchLight model.
+"""
 function new_model(model_name::String, resource_name::String = model_name) :: String
   pluralized_name = Inflector.to_plural(model_name) |> Base.get
   table_name = Inflector.to_plural(resource_name) |> Base.get |> lowercase
@@ -108,6 +126,12 @@ function new_model(model_name::String, resource_name::String = model_name) :: St
   """
 end
 
+
+"""
+    new_controller(controller_name::String) :: String
+
+Default content for a new Genie controller.
+"""
 function new_controller(controller_name::String) :: String
   """
   module $(controller_name)Controller
@@ -119,6 +143,12 @@ function new_controller(controller_name::String) :: String
   """
 end
 
+
+"""
+    new_validator(validator_name::String) :: String
+
+Default content for a new SearchLight validator.
+"""
 function new_validator(validator_name::String) :: String
   """
   module $(validator_name)Validator
@@ -134,6 +164,12 @@ function new_validator(validator_name::String) :: String
   """
 end
 
+
+"""
+    new_authorizer() :: String
+
+Default content for a new Genie ACL YAML file.
+"""
 function new_authorizer() :: String
   """
   admin:
@@ -152,6 +188,12 @@ function new_authorizer() :: String
   """
 end
 
+
+"""
+    new_test(plural_name::String, singular_name::String) :: String
+
+Default content for a new test file.
+"""
 function new_test(plural_name::String, singular_name::String) :: String
   """
   using Genie, App, App.$(plural_name)

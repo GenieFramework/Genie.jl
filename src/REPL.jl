@@ -27,4 +27,20 @@ function db_init() :: Bool
   Database.create_migrations_table()
 end
 
+function new_model(model_name) :: Void
+  Generator.new_model(Dict{String,Any}("model:new" => model_name), Settings())
+end
+
+function new_controller(controller_name) :: Void
+  Generator.new_controller(Dict{String,Any}("controller:new" => controller_name), Settings())
+end
+
+function new_resource(resource_name) :: Void
+  Generator.new_resource(Dict{String,Any}("resource:new" => resource_name), Settings())
+end
+
+function new_migration(migration_name) :: Void
+  Generator.new_migration(Dict{String,Any}("migration:new" => migration_name), Settings())
+end
+
 end

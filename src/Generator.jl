@@ -2,7 +2,13 @@ module Generator
 
 using Genie, Logger, FileTemplates, Inflector, Configuration, Migration
 
-function new_model(cmd_args::Dict{String,Any}, config::Settings) :: Void
+
+"""
+    new_model(cmd_args::Dict{String,Any}) :: Void
+
+Generates a new SearchLight model file and persists it to the resources folder.
+"""
+function new_model(cmd_args::Dict{String,Any}) :: Void
   resource_name = ucfirst(cmd_args["model:new"])
   if Inflector.is_singular(resource_name)
     resource_name = Inflector.to_plural(resource_name) |> Base.get
@@ -15,7 +21,13 @@ function new_model(cmd_args::Dict{String,Any}, config::Settings) :: Void
   nothing
 end
 
-function new_controller(cmd_args::Dict{String,Any}, config::Settings) :: Void
+
+"""
+    new_controller(cmd_args::Dict{String,Any}) :: Void
+
+Generates a new Genie model file and persists it to the resources folder.
+"""
+function new_controller(cmd_args::Dict{String,Any}) :: Void
   resource_name = ucfirst(cmd_args["controller:new"])
   if Inflector.is_singular(resource_name)
     resource_name = Inflector.to_plural(resource_name) |> Base.get
@@ -28,10 +40,16 @@ function new_controller(cmd_args::Dict{String,Any}, config::Settings) :: Void
   nothing
 end
 
+
+"""
+    new_resource(cmd_args::Dict{String,Any}, config::Settings) :: Void
+
+Generates all the files associated with a new resource and persists them to the resources folder.
+"""
 function new_resource(cmd_args::Dict{String,Any}, config::Settings) :: Void
   sf = Inflector.to_singular(cmd_args["resource:new"])
   cmd_args["model:new"] = (isnull(sf) ? cmd_args["resource:new"] : Base.get(sf)) |> ucfirst
-  new_model(cmd_args, config)
+  new_model(cmd_args)
 
   resource_name = ucfirst(cmd_args["resource:new"])
   if Inflector.is_singular(resource_name)
@@ -58,6 +76,12 @@ function new_resource(cmd_args::Dict{String,Any}, config::Settings) :: Void
   nothing
 end
 
+
+"""
+    setup_resource_path(resource_name::String) :: String
+
+Computes and creates the directories structure needed to persist a new resource.
+"""
 function setup_resource_path(resource_name::String) :: String
   resources_dir = Genie.RESOURCE_PATH
   resource_path = joinpath(resources_dir, lowercase(resource_name))
@@ -69,6 +93,12 @@ function setup_resource_path(resource_name::String) :: String
   resource_path
 end
 
+
+"""
+    write_resource_file(resource_path::String, file_name::String, resource_name::String) :: Bool
+
+Generates all resouce files and persists them to disk. 
+"""
 function write_resource_file(resource_path::String, file_name::String, resource_name::String) :: Bool
   if isfile(joinpath(resource_path, file_name))
     Logger.log("File already exists, $(joinpath(resource_path, file_name)) - skipping", :err)

@@ -10,7 +10,7 @@ Session(id::AbstractString) = Session(id, Dict{Symbol,Any}())
 
 export Session
 
-if isdefined(Genie, :config)
+if IS_IN_APP
   const session_adapter_name = string(Genie.config.session_storage) * "SessionAdapter"
   eval(parse("using $session_adapter_name"))
   const SessionAdapter = eval(parse(session_adapter_name))

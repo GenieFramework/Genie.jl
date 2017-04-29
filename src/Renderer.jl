@@ -6,7 +6,7 @@ export error_404, error_500, error_XXX
 
 using Genie, Util, JSON, Configuration, HttpServer, App, Router, Logger, Macros
 
-if isdefined(Genie, :config)
+if IS_IN_APP
   eval(:(using $(Genie.config.html_template_engine), $(Genie.config.json_template_engine)))
   eval(:(const HTMLTemplateEngine = $(Genie.config.html_template_engine)))
   eval(:(const JSONTemplateEngine = $(Genie.config.json_template_engine)))

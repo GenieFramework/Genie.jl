@@ -4,7 +4,7 @@ using ArgParse, Configuration, Genie, Database, Generator, Tester, Toolbox, App,
 
 
 """
-    execute(config::Config) :: Void
+    execute(config::Settings) :: Void
 
 Runs the requested Genie app command, based on the `args` passed to the script.
 """
@@ -19,11 +19,14 @@ function execute(config::Settings) :: Void
   if called_command(parsed_args, "db:init")
     Database.create_migrations_table()
 
+  elseif parsed_args["app:new"] != nothing
+    Genie.REPL.new_app(parsed_args["app:new"])
+
   elseif parsed_args["model:new"] != nothing
-    Generator.new_model(parsed_args, config)
+    Generator.new_model(parsed_args)
 
   elseif parsed_args["controller:new"] != nothing
-    Generator.new_controller(parsed_args, config)
+    Generator.new_controller(parsed_args)
 
   elseif parsed_args["resource:new"] != nothing
     Generator.new_resource(parsed_args, config)
@@ -103,6 +106,10 @@ function parse_commandline_args() :: Dict{String,Any}
         "--websocket:port"
             help = "web sockets server port"
             default = "8008"
+
+        "--app:new"
+            help = "app_name -> creates a new Genie app"
+            default = "new_app"
 
         "--db:init"
             help = "true -> create database and core tables"

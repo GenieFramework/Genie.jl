@@ -52,7 +52,8 @@ v 0.7.x
 ✔ REPL utility to setup a new app
 ✔ reorganize Genie as a Package
 ☐ expose command line commands as Genie.REPL methods
-☐ add scaffolding functionality
+☐ add scaffolding functionality for CRUD
+☐ add generator for User model (for authentication)
 ☐ encrypt sessions and cookies
 ☐ beautify error handling (50x, 40x) pages
 
@@ -154,6 +155,9 @@ https://github.com/rened/Watcher.jl
 https://github.com/JuliaWeb/WebSockets.jl
 https://github.com/dcjones/YAML.jl
 https://github.com/JuliaLang/ZMQ.jl
+
+https://github.com/JuliaDB/DBI.jl
+https://github.com/JuliaDB/PostgreSQL.jl
 
 # DeclarativePackages
 https://github.com/rened/DeclarativePackages.jl

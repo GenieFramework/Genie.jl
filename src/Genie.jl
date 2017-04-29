@@ -1,13 +1,23 @@
 module Genie
 
-include(joinpath(Pkg.dir("Genie"), "src", "constants.jl"))
+push!(LOAD_PATH, joinpath(Pkg.dir("Genie"), "src"))
 
-haskey(ENV, "GENIE_ENV") && isfile(abspath(joinpath(ENV_PATH, ENV["GENIE_ENV"] * ".jl"))) && include(abspath(joinpath(ENV_PATH, ENV["GENIE_ENV"] * ".jl")))
-isfile(abspath(joinpath(CONFIG_PATH, "app.jl"))) && include(abspath(joinpath(CONFIG_PATH, "app.jl")))
+using Configuration
+
+include(joinpath(Pkg.dir("Genie"), "src", "constants.jl"))
+if haskey(ENV, "GENIE_ENV") && isfile(abspath(joinpath(ENV_PATH, ENV["GENIE_ENV"] * ".jl")))
+  include(abspath(joinpath(ENV_PATH, ENV["GENIE_ENV"] * ".jl")))
+  isfile(abspath(joinpath(CONFIG_PATH, "app.jl"))) && include(abspath(joinpath(CONFIG_PATH, "app.jl")))
+
+  const IS_IN_APP = true
+else
+  const IS_IN_APP = false
+end
+export IS_IN_APP
+
 isfile(abspath(joinpath(CONFIG_PATH, "plugins.jl"))) && include(abspath(joinpath(CONFIG_PATH, "plugins.jl")))
 
-push!(LOAD_PATH,  joinpath(Pkg.dir("Genie"), "src"),
-                  joinpath(Pkg.dir("Genie"), "src", "cache_adapters"),
+push!(LOAD_PATH,  joinpath(Pkg.dir("Genie"), "src", "cache_adapters"),
                   joinpath(Pkg.dir("Genie"), "src", "session_adapters"),
                   joinpath(Pkg.dir("SearchLight"), "src"),
                   joinpath(Pkg.dir("SearchLight"), "src", "database_adapters"),
@@ -16,15 +26,14 @@ push!(LOAD_PATH,  joinpath(Pkg.dir("Genie"), "src"),
 include(joinpath(Pkg.dir("Genie"), "src", "genie_types.jl"))
 include(joinpath(Pkg.dir("Genie"), "src", "REPL.jl"))
 
-using Macros, Configuration, Logger, AppServer, Commands, App, Millboard, SearchLight, Renderer
+using Macros, Logger, AppServer, Commands, App, Millboard, SearchLight, Renderer
 
-isdefined(Genie, :config) && eval(parse("@dependencies"))
+IS_IN_APP && @eval parse("@dependencies")
 
 """
     run() :: Void
 
 Runs the Genie app by parsing the command line args and invoking the corresponding actions.
-Automatically invoked.
 """
 function run() :: Void
   Configuration.load_db_connection()

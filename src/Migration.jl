@@ -8,6 +8,12 @@ type DatabaseMigration # todo: rename the "migration_" prefix for the fields
   migration_module_name::String
 end
 
+
+"""
+    new(cmd_args::Dict{String,Any}, config::Configuration.Settings) :: Void
+
+Creates a new default migration file and persists it to disk in the configured Genie migrations folder.
+"""
 function new(cmd_args::Dict{String,Any}, config::Configuration.Settings) :: Void
   mfn = migration_file_name(cmd_args, config)
 
@@ -24,28 +30,64 @@ function new(cmd_args::Dict{String,Any}, config::Configuration.Settings) :: Void
   nothing
 end
 
+
+"""
+    migration_hash() :: String
+
+Computes a unique hash for a migration identifier.
+"""
 function migration_hash() :: String
   m = match(r"(\d*)-(\d*)-(\d*)T(\d*):(\d*):(\d*)\.(\d*)", "$(Dates.unix2datetime(time()))")
 
   join(m.captures)
 end
 
+
+"""
+    migration_file_name(cmd_args::Dict{String,Any}, config::Configuration.Settings) :: String
+
+Computes the name of a new migration file.
+"""
 function migration_file_name(cmd_args::Dict{String,Any}, config::Configuration.Settings) :: String
   joinpath(config.db_migrations_folder, migration_hash() * "_" * cmd_args["migration:new"] * ".jl")
 end
 
+
+"""
+    migration_module_name(underscored_migration_name::String) :: String
+
+Computes the name of the module of the migration based on the input from the user (migration name).
+"""
 function migration_module_name(underscored_migration_name::String) :: String
   mapreduce( x -> ucfirst(x), *, split(replace(underscored_migration_name, ".jl", ""), "_") )
 end
 
+
+"""
+    last_up() :: Void
+
+Migrates up the last migration.
+"""
 function last_up() :: Void
   run_migration(last_migration(), :up)
 end
 
+
+"""
+    last_down() :: Void
+
+Migrates down the last migration.
+"""
 function last_down() :: Void
   run_migration(last_migration(), :down)
 end
 
+
+"""
+    up_by_module_name(migration_module_name::String; force::Bool = false) :: Void
+
+Runs up the migration corresponding to `migration_module_name`.
+"""
 function up_by_module_name(migration_module_name::String; force::Bool = false) :: Void
   migration = migration_by_module_name(migration_module_name)
   if ! isnull(migration)
@@ -55,6 +97,12 @@ function up_by_module_name(migration_module_name::String; force::Bool = false) :
   end
 end
 
+
+"""
+    down_by_module_name(migration_module_name::String; force::Bool = false) :: Void
+
+Runs down the migration corresponding to `migration_module_name`.
+"""
 function down_by_module_name(migration_module_name::String; force::Bool = false) :: Void
   migration = migration_by_module_name(migration_module_name)
   if ! isnull(migration)
@@ -64,6 +112,12 @@ function down_by_module_name(migration_module_name::String; force::Bool = false)
   end
 end
 
+
+"""
+    migration_by_module_name(migration_module_name::String) :: Nullable{DatabaseMigration}
+
+Computes the migration that corresponds to `migration_module_name`.
+"""
 function migration_by_module_name(migration_module_name::String) :: Nullable{DatabaseMigration}
   ids, migrations = all_migrations()
   for id in ids
@@ -76,6 +130,12 @@ function migration_by_module_name(migration_module_name::String) :: Nullable{Dat
   Nullable()
 end
 
+
+"""
+    all_migrations() :: Tuple{Vector{String},Dict{String,DatabaseMigration}}
+
+Returns the list of all the migrations.
+"""
 function all_migrations() :: Tuple{Vector{String},Dict{String,DatabaseMigration}}
   migrations = String[]
   migrations_files = Dict{String,DatabaseMigration}()
@@ -90,11 +150,23 @@ function all_migrations() :: Tuple{Vector{String},Dict{String,DatabaseMigration}
   sort!(migrations), migrations_files
 end
 
+
+"""
+    last_migration() :: DatabaseMigration
+
+Returns the last created migration.
+"""
 function last_migration() :: DatabaseMigration
   migrations, migrations_files = all_migrations()
   migrations_files[migrations[end]]
 end
 
+
+"""
+    run_migration(migration::DatabaseMigration, direction::Symbol; force = false) :: Void
+
+Runs `migration` in up or down, per `directon`. If `force` is true, the migration is run regardless of its current status (already `up` or `down`).
+"""
 function run_migration(migration::DatabaseMigration, direction::Symbol; force = false) :: Void
   if ! force
     if  ( direction == :up    && in(migration.migration_hash, upped_migrations()) ) ||
@@ -118,6 +190,12 @@ function run_migration(migration::DatabaseMigration, direction::Symbol; force = 
   nothing
 end
 
+
+"""
+    store_migration_status(migration::DatabaseMigration, direction::Symbol) :: Void
+
+Persists the `direction` of the `migration` into the database.
+"""
 function store_migration_status(migration::DatabaseMigration, direction::Symbol) :: Void
   if ( direction == :up )
     Database.query("INSERT INTO $(Genie.config.db_migrations_table_name) VALUES ('$(migration.migration_hash)')", system_query = true)
@@ -128,17 +206,35 @@ function store_migration_status(migration::DatabaseMigration, direction::Symbol)
   nothing
 end
 
+
+"""
+    upped_migrations() :: Vector{String}
+
+List of all migrations that are `up`.
+"""
 function upped_migrations() :: Vector{String}
   result = Database.query("SELECT * FROM $(Genie.config.db_migrations_table_name) ORDER BY version DESC", system_query = true)
 
   map(x -> x[1], result)
 end
 
+
+"""
+    downed_migrations() :: Vector{String}
+
+List of all migrations that are `down`.
+"""
 function downed_migrations() :: Vector{String}
   upped = upped_migrations()
   filter(m -> ! in(m, upped), all_migrations()[1])
 end
 
+
+"""
+    status() :: Void
+
+Prints a table that displays the `direction` of each migration.
+"""
 function status() :: Void
   migrations, migrations_files = all_migrations()
   up_migrations = upped_migrations()
@@ -154,6 +250,12 @@ function status() :: Void
   nothing
 end
 
+
+"""
+    all_with_status() :: Tuple{Vector{String},Dict{String,Dict{Symbol,Any}}}
+
+Returns a list of all the migrations and their status.
+"""
 function all_with_status() :: Tuple{Vector{String},Dict{String,Dict{Symbol,Any}}}
   migrations, migrations_files = all_migrations()
   up_migrations = upped_migrations()
@@ -172,6 +274,12 @@ function all_with_status() :: Tuple{Vector{String},Dict{String,Dict{Symbol,Any}}
   indexes, result
 end
 
+
+"""
+    all_down() :: Void
+
+Runs all migrations `down`.
+"""
 function all_down() :: Void
   i, m = all_with_status()
   for v in values(m)
@@ -184,6 +292,12 @@ function all_down() :: Void
   nothing
 end
 
+
+"""
+    all_up() :: Void
+
+Runs all migrations `up`. 
+"""
 function all_up() :: Void
   i, m = all_with_status()
   for v_hash in i

@@ -125,7 +125,7 @@ Automatically invoked.
 function setup_loggers() :: Bool
   configure(; modes=["debug", "info", "notice", "warn", "err", "critical", "alert", "emerg"])
   add_truck(LumberjackTruck(STDOUT, nothing, Dict{Any,Any}(:is_colorized => true)), "console")
-  isdefined(Genie, :config) && add_truck(LumberjackTruck("$(joinpath(Genie.LOG_PATH, Genie.config.app_env)).log", nothing, Dict{Any,Any}(:is_colorized => true)), "file-logger")
+  IS_IN_APP && add_truck(LumberjackTruck("$(joinpath(Genie.LOG_PATH, Genie.config.app_env)).log", nothing, Dict{Any,Any}(:is_colorized => true)), "file-logger")
 
   true
 end

@@ -14,6 +14,12 @@ end
 
 typealias Controller GenieController
 
+
+"""
+    genietype_to_print{T<:GenieType}(m::T) :: String
+
+Pretty printing of Genie types.
+"""
 function genietype_to_print{T<:GenieType}(m::T) :: String
   output = "\n" * "$(typeof(m))" * "\n"
   output *= string(Genie.config.log_formatted ? Millboard.table(Genie.SearchLight.to_string_dict(m)) : SearchLight.to_string_dict(m) ) * "\n"
@@ -21,10 +27,17 @@ function genietype_to_print{T<:GenieType}(m::T) :: String
   output
 end
 
+
+"""
+    to_dict(m::Any) :: Dict{String,Any}
+    to_string_dict(m::Any; all_output::Bool = false) :: Dict{String,String}
+    to_string_dict(m::Any, fields::Array{Symbol,1}; all_output::Bool = false) :: Dict{String,String}
+
+Creates a `Dict` using the fields and the values of `m`.
+"""
 function to_dict(m::Any) :: Dict{String,Any}
   Dict(string(f) => getfield(m, Symbol(f)) for f in fieldnames(m))
 end
-
 function to_string_dict(m::Any; all_output::Bool = false) :: Dict{String,String}
   to_string_dict(m, fieldnames(m), all_output = all_output)
 end

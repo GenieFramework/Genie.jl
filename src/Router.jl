@@ -536,7 +536,7 @@ end
 # FIX: this is type unstable
 
 function load_routes() :: Void
-  ! isdefined(Genie, :config) && return nothing
+  ! IS_IN_APP && return nothing
   ! isfile( abspath(joinpath("config", "routes.jl")) ) && return nothing
 
   empty!(_routes)

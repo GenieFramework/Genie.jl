@@ -1,15 +1,29 @@
 module Inflector
+
 using Genie
 
 const vowels = ["a", "e", "i", "o", "u"]
 
+
+"""
+    to_singular(word::String; is_irregular::Bool = false) :: Nullable{String}
+
+Returns the singural form of `word`.
+"""
 function to_singular(word::String; is_irregular::Bool = false) :: Nullable{String}
   ( is_irregular || ! endswith(word, "s") ) && return to_singular_irregular(word)
   endswith(word, "ies") && ! in(word[end-3], vowels) && return Nullable{String}(word[1:end-3] * "y")
   endswith(word, "s") && return Nullable{String}(word[1:end-1])
+
   Nullable{String}()
 end
 
+
+"""
+    to_singular_irregular(word::String) :: Nullable{String}
+
+Returns the singular form of the irregular word `word`.
+"""
 function to_singular_irregular(word::String) :: Nullable{String}
   irr = irregular(word)
   if ! isnull(irr)
@@ -19,12 +33,24 @@ function to_singular_irregular(word::String) :: Nullable{String}
   end
 end
 
+
+"""
+    to_plural(word::String; is_irregular::Bool = false) :: Nullable{String}
+
+Returns the plural form of `word`.
+"""
 function to_plural(word::String; is_irregular::Bool = false) :: Nullable{String}
   is_irregular && return to_plural_irregular(word)
   endswith(word, "y") && ! in(word[end-1], vowels) && return Nullable{String}(word[1:end-1] * "ies") # category -> categories // story -> stories
   is_singular(word) ? Nullable{String}(word * "s") : Nullable{String}(word)
 end
 
+
+"""
+    to_plural_irregular(word::String) :: Nullable{String}
+
+Returns the plural form of the irregular word `word`.
+"""
 function to_plural_irregular(word::String) :: Nullable{String}
   irr = irregular(word)
   if ! isnull(irr)
@@ -34,22 +60,52 @@ function to_plural_irregular(word::String) :: Nullable{String}
   end
 end
 
+
+"""
+    from_underscores(word::String) :: String
+
+Generates `SnakeCase` form of `word` from `underscore_case`.
+"""
 function from_underscores(word::String) :: String
   mapreduce(x -> ucfirst(x), *, split(word, "_"))
 end
 
+
+"""
+    is_singular(word::String) :: Bool
+
+Returns wether or not `word` is a singular.
+"""
 function is_singular(word::String) :: Bool
   ! is_plural(word)
 end
 
+
+"""
+    is_plural(word::String) :: Bool
+
+Returns wether or not `word` is a plural.
+"""
 function is_plural(word::String) :: Bool
   endswith(word, "s") || ! isnull(irregular(word))
 end
 
+
+"""
+    irregulars() :: Vector{Tuple{String,String}}
+
+Returns a `vector` of words with irregular singular or plural forms.
+"""
 function irregulars() :: Vector{Tuple{String,String}}
   vcat(irregular_nouns, Genie.config.inflector_irregulars)
 end
 
+
+"""
+    irregular(word::String) :: Nullable{Tuple{String,String}}
+
+Wether or not `word` has an irregular singular or plural form. 
+"""
 function irregular(word::String) :: Nullable{Tuple{String,String}}
   for (k, v) in irregular_nouns
     (word == k || word == v) && return Nullable{Tuple{String,String}}(k, v)

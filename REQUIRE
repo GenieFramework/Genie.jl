@@ -19,6 +19,5 @@ URIParser
 YAML
 Flax
 SearchLight
-
-https://github.com/JuliaDB/DBI.jl
-https://github.com/JuliaDB/PostgreSQL.jl
+DBI
+PostgreSQL

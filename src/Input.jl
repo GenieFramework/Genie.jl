@@ -1,7 +1,6 @@
 module Input
 
-using HttpCommon
-using URIParser
+using HttpCommon, URIParser
 
 export post, files, HttpInput, HttpPostData, HttpFiles, HttpFile
 
