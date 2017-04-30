@@ -23,22 +23,52 @@ function new_app(path = ".") :: Void
   nothing
 end
 
+
+"""
+    db_init() :: Bool
+
+Sets up the DB tables used by Genie.
+"""
 function db_init() :: Bool
   Database.create_migrations_table()
 end
 
+
+"""
+    new_model(model_name) :: Void
+
+Creates a new `model` file.
+"""
 function new_model(model_name) :: Void
   Generator.new_model(Dict{String,Any}("model:new" => model_name), Settings())
 end
 
+
+"""
+    new_controller(controller_name) :: Void
+
+Creates a new `controller` file.
+"""
 function new_controller(controller_name) :: Void
   Generator.new_controller(Dict{String,Any}("controller:new" => controller_name), Settings())
 end
 
+
+"""
+    new_resource(resource_name) :: Void
+
+Creates all the files associated with a new resource.
+"""
 function new_resource(resource_name) :: Void
   Generator.new_resource(Dict{String,Any}("resource:new" => resource_name), Settings())
 end
 
+
+"""
+    new_migration(migration_name) :: Void
+
+Creates a new migration file. 
+"""
 function new_migration(migration_name) :: Void
   Generator.new_migration(Dict{String,Any}("migration:new" => migration_name), Settings())
 end

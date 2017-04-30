@@ -28,16 +28,36 @@ type Params{T}
 end
 Params() = Params(Dict{Symbol,Any}())
 
+
+"""
+    response_type{T}(params::Dict{Symbol,T}) :: Symbol
+    response_type(params::Params) :: Symbol
+
+Returns the content-type of the current request-response cycle.
+"""
 function response_type{T}(params::Dict{Symbol,T}) :: Symbol
   haskey(params, :response_type) ? params[:response_type] : collect(keys(Renderer.CONTENT_TYPES))[1]
-end
-function response_type{T}(check::Symbol, params::Dict{Symbol,T}) :: Bool
-  check == response_type(params)
 end
 function response_type(params::Params) :: Symbol
   response_type(params.collection)
 end
 
+
+"""
+    response_type{T}(check::Symbol, params::Dict{Symbol,T}) :: Bool
+
+Checks if the content-type of the current request-response cycle matches `check`.
+"""
+function response_type{T}(check::Symbol, params::Dict{Symbol,T}) :: Bool
+  check == response_type(params)
+end
+
+
+"""
+    route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: Response
+
+First step in handling a request: sets up @params collection, handles query vars, negotiates content, starts and persists sessions.
+"""
 function route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: Response
   params = Params()
   params.collection[:request_ipv4] = ip
@@ -66,6 +86,12 @@ function route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: R
   controller_response
 end
 
+
+"""
+    negotiate_content(req::Request, res::Response, params::Params) :: Response
+
+Computes the content-type of the `Response`, based on the information in the `Request`.
+"""
 function negotiate_content(req::Request, res::Response, params::Params) :: Response
   function set_negotiated_content()
     params.collection[:response_type] = collect(keys(Renderer.CONTENT_TYPES))[1]
@@ -108,6 +134,13 @@ function negotiate_content(req::Request, res::Response, params::Params) :: Respo
   set_negotiated_content() && return res
 end
 
+
+"""
+    route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
+    route(path::String, action::Union{String,Function}; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
+
+Used for defining Genie routes.
+"""
 function route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
   route(path, action, method = method, with = with, named = named)
 end
@@ -128,8 +161,14 @@ function route(path::String, action::Union{String,Function}; method = GET, with:
   _routes[named] = (route_parts, extra_route_parts)
 end
 
+
+"""
+    route_name(params) :: Symbol
+
+Computes the name of a route.
+"""
 function route_name(params) :: Symbol
-  route_parts = AbstractString[lowercase(params[1])]
+  route_parts = String[lowercase(params[1])]
   for uri_part in split(params[2], "/", keep = false)
     startswith(uri_part, ":") && continue # we ignore named params
     push!(route_parts, lowercase(uri_part))
@@ -138,34 +177,75 @@ function route_name(params) :: Symbol
   join(route_parts, "_") |> Symbol
 end
 
+
+"""
+    named_routes() :: Dict{Symbol,Any}
+
+The list of the defined named routes.
+"""
 function named_routes() :: Dict{Symbol,Any}
   _routes
 end
 
-function print_named_routes() :: Void
-  Millboard.table(named_routes())
 
-  nothing
+"""
+    print_named_routes() :: Millboard.Mill
+
+Prints a table of the routes and their names to standard output.
+"""
+function print_named_routes() :: Millboard.Mill
+  Millboard.table(named_routes())
 end
 
+
+"""
+    get_route(route_name::Symbol) :: Nullable{Route}
+
+Gets the `Route` correspoding to `route_name`, wrapped in a `Nullable`.
+"""
 function get_route(route_name::Symbol) :: Nullable{Route}
   haskey(named_routes(), route_name) ? Nullable(named_routes()[route_name]) : Nullable()
 end
 
+
+"""
+    get_route!!(route_name::Symbol) :: Route
+
+Gets the `Route` correspoding to `route_name` - errors if the route is not defined.
+"""
 function get_route!!(route_name::Symbol) :: Route
   get_route(route_name) |> Base.get
 end
 
+
+"""
+    routes() :: Vector{Route}
+
+Returns a vector of defined routes.
+"""
 function routes() :: Vector{Route}
   collect(values(_routes))
 end
 
-function print_routes() :: Void
-  Millboard.table(routes())
 
-  nothing
+"""
+    print_routes() :: Millboard.Mill
+
+Prints a table of the defined routes to standard output.
+"""
+function print_routes() :: Millboard.Mill
+  Millboard.table(routes())
 end
 
+
+"""
+    to_link!!{T}(route_name::Symbol, d::Vector{Pair{Symbol,T}}) :: String
+    to_link!!{T}(route_name::Symbol, d::Pair{Symbol,T}) :: String
+    to_link!!{T}(route_name::Symbol, d::Dict{Symbol,T}) :: String
+    to_link!!(route_name::Symbol; route_params...) :: String
+
+Generates the HTTP link corresponding to `route_name`.
+"""
 function to_link!!{T}(route_name::Symbol, d::Vector{Pair{Symbol,T}}) :: String
   to_link!!(route_name, Dict(d...))
 end
@@ -228,10 +308,22 @@ end
 
 const link_to = to_link
 
-function route_params_to_dict(route_params)
+
+"""
+    route_params_to_dict(route_params)
+
+Converts the route params to a `Dict`.
+"""
+function route_params_to_dict(route_params) :: Dict{Symbol,Any}
   Dict{Symbol,Any}(route_params)
 end
 
+
+"""
+    match_routes(req::Request, res::Response, session::Sessions.Session, params::Params) :: Response
+
+Matches the invoked URL to the corresponding route, sets up the execution environment and invokes the controller method.
+"""
 function match_routes(req::Request, res::Response, session::Sessions.Session, params::Params) :: Response
   for r in routes()
     route_def, extra_params = r
@@ -282,6 +374,12 @@ function match_routes(req::Request, res::Response, session::Sessions.Session, pa
   serve_error_file(404, "Not found", params.collection)
 end
 
+
+"""
+    parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
+
+Parses a route and extracts its named parms and types.
+"""
 function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
   parts = AbstractString[]
   param_names = AbstractString[]
@@ -292,7 +390,6 @@ function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
       param_type =  if contains(rp, "::")
                       x = split(rp, "::")
                       rp = x[1]
-                      # eval(parse(x[2]))
                       getfield(current_module(), Symbol(x[2]))
                     else
                       Any
@@ -308,6 +405,12 @@ function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
   "/" * join(parts, "/"), param_names, param_types
 end
 
+
+"""
+    extract_uri_params(uri::URI, regex_route::Regex, param_names::Vector{String}, param_types::Vector{Any}, params::Params) :: Bool
+
+Extracts params from request URI and sets up the `params` `Dict`.
+"""
 function extract_uri_params(uri::URI, regex_route::Regex, param_names::Vector{String}, param_types::Vector{Any}, params::Params) :: Bool
   matches = match(regex_route, uri.path)
   i = 1
@@ -328,6 +431,12 @@ function extract_uri_params(uri::URI, regex_route::Regex, param_names::Vector{St
   true # this must be bool cause it's used in bool context for chaining
 end
 
+
+"""
+    extract_get_params(uri::URI, params::Params) :: Bool
+
+Extracts query vars and adds them to the execution `params` `Dict`.
+"""
 function extract_get_params(uri::URI, params::Params) :: Bool
   # GET params
   if ! isempty(uri.query)
@@ -341,6 +450,12 @@ function extract_get_params(uri::URI, params::Params) :: Bool
   true # this must be bool cause it's used in bool context for chaining
 end
 
+
+"""
+    extract_extra_params(extra_params::Dict, params::Params) :: Void
+
+Parses extra params present in the route's definition and sets them into the `params` `Dict`.
+"""
 function extract_extra_params(extra_params::Dict, params::Params) :: Void
   if ! isempty(extra_params[:with])
     for (k, v) in extra_params[:with]
@@ -351,6 +466,12 @@ function extract_extra_params(extra_params::Dict, params::Params) :: Void
   nothing
 end
 
+
+"""
+    extract_post_params(req::Request, params::Params) :: Void
+
+Parses POST variables and adds the to the `params` `Dict`.
+"""
 function extract_post_params(req::Request, params::Params) :: Void
   for (k, v) in Input.post(req)
     v = replace(v, "+", " ")
@@ -361,6 +482,12 @@ function extract_post_params(req::Request, params::Params) :: Void
   nothing
 end
 
+
+"""
+    nested_keys(k::String, v, params::Params) :: Void
+
+Utility function to process nested keys and set them up in `params`.
+"""
 function nested_keys(k::String, v, params::Params) :: Void
   if contains(k, ".")
     parts = split(k, ".", limit = 2)
@@ -376,6 +503,12 @@ function nested_keys(k::String, v, params::Params) :: Void
   nothing
 end
 
+
+"""
+    extract_pagination_params(params::Params) :: Void
+
+Parses special query params using for pagination.
+"""
 function extract_pagination_params(params::Params) :: Void
   if ! haskey(params.collection, :page_number)
     params.collection[:page_number] = haskey(params.collection, Symbol("page[number]")) ? parse(Int, params.collection[Symbol("page[number]")]) : 1
@@ -387,6 +520,12 @@ function extract_pagination_params(params::Params) :: Void
   nothing
 end
 
+
+"""
+    setup_base_params(req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session) :: Dict{Symbol,Any}
+
+Populates `params` with default environment vars.
+"""
 function setup_base_params(req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session) :: Dict{Symbol,Any}
   params[Genie.PARAMS_REQUEST_KEY]   = req
   params[Genie.PARAMS_RESPONSE_KEY]  = res
@@ -405,6 +544,12 @@ function setup_base_params(req::Request, res::Response, params::Dict{Symbol,Any}
   params
 end
 
+
+"""
+    setup_params!(params::Dict{Symbol,Any}, to_parts::Vector{String}, action_controller_parts::Vector{String}, controller_path::String, req::Request, res::Response, session::Sessions.Session, action_name::String) :: Dict{Symbol,Any}
+
+Populates `params` with action and controller names values.
+"""
 function setup_params!(params::Dict{Symbol,Any}, to_parts::Vector{String}, action_controller_parts::Vector{String},
                         controller_path::String, req::Request, res::Response, session::Sessions.Session, action_name::String) :: Dict{Symbol,Any}
   params[:action_controller] = to_parts[2]
@@ -416,6 +561,12 @@ end
 
 const loaded_controllers = UInt64[]
 
+
+"""
+    invoke_controller(to::String, req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session) :: Response
+
+Invokes the designated controller method.
+"""
 function invoke_controller(to::String, req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session) :: Response
   to_parts::Vector{String} = split(to, "#")
 
@@ -484,6 +635,12 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
           end
 end
 
+
+"""
+    to_response(action_result) :: Response
+
+Converts the result of invoking the controller action to a `Response`.
+"""
 function to_response(action_result) :: Response
   isa(action_result, Response) && return action_result
 
@@ -508,6 +665,12 @@ macro params(key)
   :(task_local_storage(:__params)[$key])
 end
 
+
+"""
+    serve_error_file_500(ex::Exception, params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
+
+Returns the default 500 error page.
+"""
 function serve_error_file_500(ex::Exception, params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
   serve_error_file( 500,
                     string(ex) *
@@ -518,10 +681,22 @@ function serve_error_file_500(ex::Exception, params::Dict{Symbol,Any} = Dict{Sym
                   )
 end
 
+
+"""
+    hook_stop(hook_result) :: Bool
+
+Checks whether or not the hook's invokation caused an error and execution must be stopped.
+"""
 function hook_stop(hook_result) :: Bool
   isa(hook_result, Tuple) && ! hook_result[1]
 end
 
+
+"""
+    run_hooks(hook_type::Symbol, m::Module, params::Dict{Symbol,Any}) :: Any
+
+Runs the hooks defined in the currently invoked controller.
+"""
 function run_hooks(hook_type::Symbol, m::Module, params::Dict{Symbol,Any}) :: Any
   if in(hook_type, names(m, true))
     hooks::Vector{Symbol} = getfield(m, hook_type)
@@ -535,6 +710,12 @@ function run_hooks(hook_type::Symbol, m::Module, params::Dict{Symbol,Any}) :: An
 end
 # FIX: this is type unstable
 
+
+"""
+    load_routes() :: Void
+
+Loads the routes file.
+"""
 function load_routes() :: Void
   ! IS_IN_APP && return nothing
   ! isfile( abspath(joinpath("config", "routes.jl")) ) && return nothing
@@ -545,15 +726,33 @@ function load_routes() :: Void
   nothing
 end
 
+
+"""
+    is_static_file(resource::String) :: Bool
+
+Checks if the requested resource is a static file.
+"""
 function is_static_file(resource::String) :: Bool
   isfile(file_path(URI(resource).path))
 end
 
+
+"""
+    serve_static_file(resource::String) :: Response
+
+Reads the static file and returns the content as a `Response`.
+"""
 function serve_static_file(resource::String) :: Response
   f = file_path(URI(resource).path)
   Response(200, file_headers(f), open(read, f))
 end
 
+
+"""
+    serve_error_file(error_code::Int, error_message::String = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
+
+Serves the error file correspoding to `error_code` and current environment.
+"""
 function serve_error_file(error_code::Int, error_message::String = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
   if Configuration.is_dev()
     error_page =  open(Genie.DOC_ROOT_PATH * "/error-$(error_code).html") do f
@@ -567,13 +766,38 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
   end
 end
 
+
+"""
+    file_path(resource::String) :: String
+
+Returns the path to a resource file.
+"""
 function file_path(resource::String) :: String
   abspath(joinpath(Genie.config.server_document_root, resource[2:end]))
 end
 
+
+"""
+    pathify(x) :: String
+
+Returns a proper URI path from a string `x`.
+"""
 pathify(x) :: String = replace(string(x), " ", "-") |> lowercase |> URIParser.escape
 
+
+"""
+    file_extension(f) :: String
+
+Returns the file extesion of `f`.
+"""
 file_extension(f) :: String = ormatch(match(r"(?<=\.)[^\.\\/]*$", f), "")
+
+
+"""
+    file_headers(f) :: Dict{AbstractString,AbstractString}
+
+Returns the file headers of `f`. 
+"""
 file_headers(f) :: Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}("Content-Type" => get(mimetypes, file_extension(f), "application/octet-stream"))
 
 ormatch(r::RegexMatch, x) = r.match

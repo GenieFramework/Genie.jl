@@ -25,10 +25,22 @@ const CONTENT_TYPES = Dict{Symbol,String}(
 const VIEWS_FOLDER = "views"
 const LAYOUTS_FOLDER = "layouts"
 
+
+"""
+    html(resource::Symbol, action::Symbol, layout::Symbol = :app, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
+
+Invokes the HTML renderer of the underlying configured templating library.
+"""
 function html(resource::Symbol, action::Symbol, layout::Symbol = :app, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
   HTMLTemplateEngine.html(resource, action, layout; parse_vars(vars)...)
 end
 
+
+"""
+    respond_with_html(resource::Symbol, action::Symbol, layout::Symbol = :app, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
+
+Invokes the HTML renderer of the underlying configured templating library and wraps it into a `HttpServer.Response`.
+"""
 function respond_with_html(resource::Symbol, action::Symbol, layout::Symbol = :app, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
   html(resource, action, layout, check_nulls; vars...) |> respond
 end
@@ -37,23 +49,53 @@ function flax(resource::Symbol, action::Symbol, layout::Symbol = :app, check_nul
   HTMLTemplateEngine.flax(resource, action, layout; parse_vars(vars)...)
 end
 
+
+"""
+    json(resource::Symbol, action::Symbol, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
+
+Invokes the JSON renderer of the underlying configured templating library.
+"""
 function json(resource::Symbol, action::Symbol, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
   JSONTemplateEngine.json(resource, action; parse_vars(vars)...)
 end
 
+
+"""
+    respond_with_json(resource::Symbol, action::Symbol, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
+
+Invokes the JSON renderer of the underlying configured templating library and wraps it into a `HttpServer.Response`.
+"""
 function respond_with_json(resource::Symbol, action::Symbol, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
   json(resource, action, check_nulls; vars...) |> respond
 end
 
+
+"""
+    redirect_to(location::String, code::Int = 302, headers = Dict{AbstractString,AbstractString}()) :: Response
+
+Sets redirect headers and prepares the `Response`.
+"""
 function redirect_to(location::String, code::Int = 302, headers = Dict{AbstractString,AbstractString}()) :: Response
   headers["Location"] = location
   respond(Dict{Symbol,AbstractString}(:plain => "Redirecting you to $location"), code, headers)
 end
 
-function has_requested(content_type::Symbol)
+
+"""
+    has_requested(content_type::Symbol) :: Bool
+
+Checks wheter or not the requested content type matches `content_type`.
+"""
+function has_requested(content_type::Symbol) :: Bool
   task_local_storage(:__params)[:response_type] == content_type
 end
 
+
+"""
+    respond{T}(body::Dict{Symbol,T}, code::Int = 200, headers = Dict{AbstractString,AbstractString}()) :: Response
+
+Constructs a `Response` corresponding to the content-type of the request.
+"""
 function respond{T}(body::Dict{Symbol,T}, code::Int = 200, headers = Dict{AbstractString,AbstractString}()) :: Response
   sbody::String =   if haskey(body, :json)
                       headers["Content-Type"] = CONTENT_TYPES[:json]
@@ -93,40 +135,73 @@ function respond(body::String) :: Response
   respond(Response(body))
 end
 
+
+"""
+    http_error(status_code; id = "resource_not_found", code = "404-0001", title = "Not found", detail = "The requested resource was not found")
+
+Constructs an error `Response`.
+"""
 function http_error(status_code; id = "resource_not_found", code = "404-0001", title = "Not found", detail = "The requested resource was not found")
   respond(detail, status_code, Dict{AbstractString,AbstractString}())
 end
 
-function error_404()
+
+"""
+    error_404() :: Tuple{Int,Dict{AbstractString,AbstractString},String}
+
+Reads the default 404 error page and returns it in a `Response` compatible Tuple.
+"""
+function error_404() :: Tuple{Int,Dict{AbstractString,AbstractString},String}
   error_page =  open(Genie.DOC_ROOT_PATH * "/error-404.html") do f
                   readstring(f)
                 end
   (404, Dict{AbstractString,AbstractString}(), error_page)
 end
 
-function error_500()
+
+"""
+    error_500() :: Tuple{Int,Dict{AbstractString,AbstractString},String}
+
+Reads the default 500 error page and returns it in a `Response` compatible Tuple.
+"""
+function error_500() :: Tuple{Int,Dict{AbstractString,AbstractString},String}
   error_page =  open(Genie.DOC_ROOT_PATH * "/error-500.html") do f
                   readstring(f)
                 end
   (500, Dict{AbstractString,AbstractString}(), error_page)
 end
 
-function error_XXX(xxx::Int)
+
+"""
+    error_XXX() :: Tuple{Int,Dict{AbstractString,AbstractString},String}
+
+Reads the default XXX error page and returns it in a `Response` compatible Tuple.
+"""
+function error_XXX(xxx::Int) :: Tuple{Int,Dict{AbstractString,AbstractString},String}
   error_page =  open(Genie.DOC_ROOT_PATH * "/error-$xxx.html") do f
                   readstring(f)
                 end
   (xxx, Dict{AbstractString,AbstractString}(), error_page)
 end
 
-function include_asset(asset_type::Symbol, file_name::String)
+
+"""
+    css_asset(file_name::String) :: String
+    js_asset(file_name::String) :: String
+    include_asset(asset_type::Symbol, file_name::String) :: String
+
+Returns the path to an asset as a file.
+"""
+function include_asset(asset_type::Symbol, file_name::String) :: String
   "/$asset_type/$file_name"
 end
-function css_asset(file_name::String)
+function css_asset(file_name::String) :: String
   include_asset(:css, file_name)
 end
-function js_asset(file_name::String)
+function js_asset(file_name::String) :: String
   include_asset(:js, file_name)
 end
+
 
 function parse_vars(vars)
   pos_counter = 1
@@ -152,6 +227,7 @@ function parse_vars(vars)
 
   vars
 end
+
 
 function json_pagination(path::AbstractString, total_items::Int; current_page::Int = 1, page_size::Int = Genie.config.pagination_jsonapi_default_items_per_page)
   page_param_name = "page"

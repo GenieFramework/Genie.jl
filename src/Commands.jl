@@ -109,7 +109,6 @@ function parse_commandline_args() :: Dict{String,Any}
 
         "--app:new"
             help = "app_name -> creates a new Genie app"
-            default = "new_app"
 
         "--db:init"
             help = "true -> create database and core tables"
