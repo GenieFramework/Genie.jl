@@ -189,12 +189,12 @@ end
 
 
 """
-    print_named_routes() :: Millboard.Mill
+    print_named_routes() :: Void
 
 Prints a table of the routes and their names to standard output.
 """
-function print_named_routes() :: Millboard.Mill
-  Millboard.table(named_routes())
+function print_named_routes() :: Void
+  Millboard.table(named_routes()) |> println
 end
 
 
@@ -229,12 +229,12 @@ end
 
 
 """
-    print_routes() :: Millboard.Mill
+    print_routes() :: Void
 
 Prints a table of the defined routes to standard output.
 """
-function print_routes() :: Millboard.Mill
-  Millboard.table(routes())
+function print_routes() :: Void
+  Millboard.table(routes()) |> println
 end
 
 
@@ -796,7 +796,7 @@ file_extension(f) :: String = ormatch(match(r"(?<=\.)[^\.\\/]*$", f), "")
 """
     file_headers(f) :: Dict{AbstractString,AbstractString}
 
-Returns the file headers of `f`. 
+Returns the file headers of `f`.
 """
 file_headers(f) :: Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}("Content-Type" => get(mimetypes, file_extension(f), "application/octet-stream"))
 

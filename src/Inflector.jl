@@ -1,3 +1,6 @@
+"""
+Handles the functionality for applying various gramatical rules. 
+"""
 module Inflector
 
 using Genie
@@ -104,7 +107,7 @@ end
 """
     irregular(word::String) :: Nullable{Tuple{String,String}}
 
-Wether or not `word` has an irregular singular or plural form. 
+Wether or not `word` has an irregular singular or plural form.
 """
 function irregular(word::String) :: Nullable{Tuple{String,String}}
   for (k, v) in irregular_nouns
@@ -114,6 +117,11 @@ function irregular(word::String) :: Nullable{Tuple{String,String}}
   Nullable{Tuple{String,String}}()
 end
 
+
+"""
+Vector of nouns with irregular forms of singular and/or plural.
+Each tuple contains pairs of singular and plural forms.
+"""
 const irregular_nouns = Vector{Tuple{String,String}}([
   ("alumnus", "alumni"),
   ("cactus", "cacti"),

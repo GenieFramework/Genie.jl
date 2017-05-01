@@ -1,10 +1,22 @@
+"""
+Easy to enable caching functionality for Genie - works with pluggable cache adapters for the persistance layer.
+"""
 module Cache
 
 using Genie, SHA, Logger
 
 export cache_key, with_cache
 
+
+"""
+Default period of time until the cache is expired.
+"""
 const CACHE_DURATION  = IS_IN_APP ? Genie.config.cache_duration : 600
+
+
+"""
+Underlying module that handles persistance and retrieval of cached data.
+"""
 const CACHE_ADAPTER   = IS_IN_APP ? Genie.config.cache_adapter  : :FileCacheAdapter
 
 eval(parse("using $(CACHE_ADAPTER)"))
@@ -16,7 +28,7 @@ eval(parse("using $(CACHE_ADAPTER)"))
 Executes the function `f` and stores the result into the cache for the duration of `expiration`. Next time the function is invoked,
 if the cache has not expired, the cached result is returned skipping the function execution.
 The optional `dir` param is used to designate the folder where the cache will be stored (within the configured cache folder).
-If `condition` is `false` caching will be skipped. 
+If `condition` is `false` caching will be skipped.
 """
 function with_cache(f::Function, key::String, expiration::Int = CACHE_DURATION; dir = "", condition::Bool = true)
   ( expiration == 0 || ! condition ) && return f()

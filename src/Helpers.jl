@@ -1,3 +1,6 @@
+"""
+Various utility functions for using across models, controllers and views. 
+"""
 module Helpers
 
 using Genie, Sessions, Router, URIParser, Logger, HttpServer

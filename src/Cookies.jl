@@ -1,3 +1,6 @@
+"""
+Functionality for dealing with HTTP cookies. 
+"""
 module Cookies
 
 using HttpServer, HttpCommon, Genie
@@ -55,7 +58,7 @@ end
 """
     to_dict(req::Request) :: Dict{String,String}
 
-Extracts the `Cookie` data from the `Request` and converts it into a dict. 
+Extracts the `Cookie` data from the `Request` and converts it into a dict.
 """
 function to_dict(req::Request) :: Dict{String,String}
   d = Dict{String,String}()

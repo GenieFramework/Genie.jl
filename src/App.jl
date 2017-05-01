@@ -1,3 +1,6 @@
+"""
+App level functionality -- loading and managing app-wide components like configs, models, initializers, etc.
+"""
 module App
 
 using Genie, SearchLight, YAML, Validation, Macros
@@ -8,7 +11,8 @@ IS_IN_APP && const config = Genie.config
 """
     load_models(dir = Genie.RESOURCE_PATH) :: Void
 
-Loads (includes) all available `model` and `validator` files. The modules are included into the `App` module.
+Loads (includes) all available `model` and `validator` files.
+The modules are included in the `App` module.
 """
 function load_models(dir = Genie.RESOURCE_PATH) :: Void
   ! isdir(abspath(dir)) && return nothing
@@ -34,7 +38,8 @@ end
 """
     load_controller(dir::AbstractString) :: Void
 
-Loads (includes) all available `controller` files. The modules are included into the `App` module.
+Loads (includes) the `controller` file that corresponds to the currently matched route.
+The modules are included in the `App` module.
 """
 function load_controller(dir::AbstractString) :: Void
   push!(LOAD_PATH, dir)

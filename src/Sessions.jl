@@ -16,6 +16,13 @@ if IS_IN_APP
   const SessionAdapter = eval(parse(session_adapter_name))
 end
 
+
+"""
+    id() :: String
+    id(req::Request, res::Response) :: String
+
+Generates a unique session id.
+"""
 function id() :: String
   try
     App.SECRET_TOKEN * ":" * bytes2hex(sha1(string(Dates.now()))) * ":" * string(rand()) * ":" * string(hash(Genie)) |> sha256 |> bytes2hex
@@ -31,6 +38,13 @@ function id(req::Request, res::Response) :: String
   id()
 end
 
+
+"""
+    start(session_id::AbstractString, req::Request, res::Response; options = Dict{String,String}()) :: Session
+    start(req::Request, res::Response) :: Session
+
+Initiates a session.
+"""
 function start(session_id::AbstractString, req::Request, res::Response; options = Dict{String,String}()) :: Session
   options = merge(Dict("Path" => "/", "HttpOnly" => "", "Expires" => "0"), options)
   Cookies.set!(res, Genie.config.session_key_name, session_id, options)
@@ -40,12 +54,24 @@ function start(req::Request, res::Response) :: Session
   start(id(req, res), req, res)
 end
 
+
+"""
+    set!(s::Session, key::Symbol, value::Any) :: Session
+
+Stores `value` as `key` on the `Session` `s`.
+"""
 function set!(s::Session, key::Symbol, value::Any) :: Session
   s.data[key] = value
 
   s
 end
 
+
+"""
+    get(s::Session, key::Symbol) :: Nullable
+
+Returns the value stored on the `Session` `s` as `key`, wrapped in a `Nullable`.
+"""
 function get(s::Session, key::Symbol) :: Nullable
   return  if haskey(s.data, key)
             Nullable(s.data[key])
@@ -54,26 +80,56 @@ function get(s::Session, key::Symbol) :: Nullable
           end
 end
 
+
+"""
+    get!!(s::Session, key::Symbol)
+
+Attempts to read the value stored on the `Session` `s` as `key` - throws an exception if the `key` does not exist.
+"""
 function get!!(s::Session, key::Symbol)
   s.data[key]
 end
 
+
+"""
+    unset!(s::Session, key::Symbol) :: Session
+
+Removes the value stored on the `Session` `s` as `key`.
+"""
 function unset!(s::Session, key::Symbol) :: Session
   delete!(s.data, key)
 
   s
 end
 
+
+"""
+    is_set(s::Session, key::Symbol) :: Bool
+
+Checks wheter or not `key` exists on the `Session` `s`.
+"""
 function is_set(s::Session, key::Symbol) :: Bool
   haskey(s.data, key)
 end
 
+
+"""
+    persist(s::Session) :: Session
+
+Generic method for persisting session data - delegates to the underlying `SessionAdapter`.
+"""
 function persist(s::Session) :: Session
   SessionAdapter.write(s)
 
   s
 end
 
+
+"""
+    load(session_id::AbstractString) :: Session
+
+Loads session data from persistent storage - delegates to the underlying `SessionAdapter`.
+"""
 function load(session_id::AbstractString) :: Session
   session = SessionAdapter.read(session_id)
   if isnull(session)

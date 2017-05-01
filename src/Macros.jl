@@ -1,3 +1,6 @@
+"""
+Various macro helpers. 
+"""
 module Macros
 
 using Genie, Configuration

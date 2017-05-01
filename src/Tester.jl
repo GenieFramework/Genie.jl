@@ -2,6 +2,12 @@ module Tester
 
 using Genie, App, Util, Migration, Configuration, Logger
 
+
+"""
+    bootstrap_tests(cmd_args::String, config::Settings) :: Void
+
+Sets up testing environment, includes test files, etc.
+"""
 function bootstrap_tests(cmd_args::String, config::Settings) :: Void
   set_test_env()
 
@@ -16,6 +22,12 @@ function bootstrap_tests(cmd_args::String, config::Settings) :: Void
   nothing
 end
 
+
+"""
+    reset_db() :: Void
+
+Prepares the test env DB running all migrations up.
+"""
 function reset_db() :: Void
   Migration.all_down()
   Migration.all_up()
@@ -23,12 +35,24 @@ function reset_db() :: Void
   nothing
 end
 
+
+"""
+    run_all_tests(cmd_args::String, config::Settings) :: Void
+
+Runs all existing tests.
+"""
 function run_all_tests(cmd_args::String, config::Settings) :: Void
   bootstrap_tests(cmd_args, config)
 
   nothing
 end
 
+
+"""
+    set_test_env() :: Void
+
+Switches Genie to the test env for the duration of the current execution. 
+"""
 function set_test_env() :: Void
   if ! is_test()
     Logger.log("You're attempting to run your test suite outside the TEST environment. This can lead to losing your production or development data, depending on your current/default environment.", :err, showst = false)

@@ -1,3 +1,6 @@
+"""
+Functionality for authenticating Genie users. 
+"""
 module Authentication
 
 using SearchLight, App, Genie, Sessions
@@ -151,7 +154,7 @@ end
     without_authentication(f::Function, session)
     without_authentication(f::Function, params::Dict{Symbol,Any})
 
-Invokes `f` if there is no user authenticated on the current session. 
+Invokes `f` if there is no user authenticated on the current session.
 """
 function without_authentication(f::Function, session)
   ! is_authenticated(session) && f()

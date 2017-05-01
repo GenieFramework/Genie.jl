@@ -1,3 +1,6 @@
+"""
+Deals with authorization functionality, roles, ACL. 
+"""
 module Authorization
 
 using Genie, SearchLight, Authentication, Helpers, App, Util, Logger
@@ -52,7 +55,7 @@ end
 """
     scopes_of_role_ability(role::Symbol, ability::Symbol, params::Dict{Symbol,Any}) :: Vector{Symbol}
 
-Returns a `vector` of SQL scopes defined by the role and ability settings. 
+Returns a `vector` of SQL scopes defined by the role and ability settings.
 """
 function scopes_of_role_ability(role::Symbol, ability::Symbol, params::Dict{Symbol,Any}) :: Vector{Symbol}
   haskey(params[Genie.PARAMS_ACL_KEY], string(role)) &&

@@ -1,3 +1,6 @@
+"""
+Provides logging functionality for Genie apps. 
+"""
 module Logger
 
 using Lumberjack, Millboard, Genie

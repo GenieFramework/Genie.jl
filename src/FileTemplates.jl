@@ -1,3 +1,6 @@
+"""
+Functionality for handling the defautl conent of the various Genie files (migrations, models, controllers, etc).
+"""
 module FileTemplates
 
 using Inflector

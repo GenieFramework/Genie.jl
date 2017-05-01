@@ -1,3 +1,6 @@
+"""
+Handles input coming through HttpServer requests.
+"""
 module Input
 
 using HttpCommon, URIParser

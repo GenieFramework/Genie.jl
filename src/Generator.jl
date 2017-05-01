@@ -1,3 +1,6 @@
+"""
+Generates various Genie files. 
+"""
 module Generator
 
 using Genie, Logger, FileTemplates, Inflector, Configuration, Migration
@@ -97,7 +100,7 @@ end
 """
     write_resource_file(resource_path::String, file_name::String, resource_name::String) :: Bool
 
-Generates all resouce files and persists them to disk. 
+Generates all resouce files and persists them to disk.
 """
 function write_resource_file(resource_path::String, file_name::String, resource_name::String) :: Bool
   if isfile(joinpath(resource_path, file_name))

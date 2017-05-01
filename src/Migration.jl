@@ -1,3 +1,6 @@
+"""
+Provides functionality for working with database migrations. 
+"""
 module Migration
 
 using Genie, Database, FileTemplates, Millboard, Configuration, Logger
@@ -296,7 +299,7 @@ end
 """
     all_up() :: Void
 
-Runs all migrations `up`. 
+Runs all migrations `up`.
 """
 function all_up() :: Void
   i, m = all_with_status()

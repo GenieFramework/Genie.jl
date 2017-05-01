@@ -1,3 +1,6 @@
+"""
+Handles HttpServer related functionality, manages requests and responses and their logging. 
+"""
 module AppServer
 
 using HttpServer, Router, Genie, Millboard, Logger, Sessions, Configuration, MbedTLS

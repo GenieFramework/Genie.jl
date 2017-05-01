@@ -1,3 +1,6 @@
+"""
+Loads dependencies and bootstraps a Genie app.
+"""
 module Genie
 
 push!(LOAD_PATH, joinpath(Pkg.dir("Genie"), "src"))

@@ -1,3 +1,6 @@
+"""
+Handles command line arguments for the genie.jl script. 
+"""
 module Commands
 
 using ArgParse, Configuration, Genie, Database, Generator, Tester, Toolbox, App, Migration, Logger, AppServer

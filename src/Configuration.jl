@@ -1,3 +1,6 @@
+"""
+Core genie configuration / settings functionality. 
+"""
 module Configuration
 
 using Genie, YAML
