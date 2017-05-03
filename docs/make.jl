@@ -4,7 +4,7 @@ using Cache, Commands, Configuration, Cookies
 using DatabaseSeeding, Error, FileTemplates, Generator
 using Helpers, Inflector, Input, Logger, Macros, Migration
 using Renderer, REPL, Router, Sessions, Tester, Toolbox, Util
-using FileCacheAdapter, FileSessionAdapter
+using FileCacheAdapter, FileSessionAdapter, Encryption
 
 push!(LOAD_PATH,  "../../src",
                   "../../src/cache_adapters",

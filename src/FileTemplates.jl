@@ -15,15 +15,15 @@ function new_database_migration(module_name::String) :: String
   """
   module $module_name
 
-  using Genie, Database
+  using Genie, SearchLight
 
   function up()
-    # Database.query("")
+    # SearchLight.query("")
     error("Not implemented")
   end
 
   function down()
-    # Database.query("")
+    # SearchLight.query("")
     error("Not implemented")
   end
 

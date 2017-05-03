@@ -1,9 +1,11 @@
 ```@meta
-CurrentModule = Error
+CurrentModule = Encryption
 ```
 
 ```@contents
 ```
 
 ```@docs
+encrypt
+decrypt
 ```

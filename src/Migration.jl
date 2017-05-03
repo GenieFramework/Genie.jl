@@ -1,9 +1,9 @@
 """
-Provides functionality for working with database migrations. 
+Provides functionality for working with database migrations.
 """
 module Migration
 
-using Genie, Database, FileTemplates, Millboard, Configuration, Logger
+using Genie, SearchLight, FileTemplates, Millboard, Configuration, Logger
 
 type DatabaseMigration # todo: rename the "migration_" prefix for the fields
   migration_hash::String
@@ -201,9 +201,9 @@ Persists the `direction` of the `migration` into the database.
 """
 function store_migration_status(migration::DatabaseMigration, direction::Symbol) :: Void
   if ( direction == :up )
-    Database.query("INSERT INTO $(Genie.config.db_migrations_table_name) VALUES ('$(migration.migration_hash)')", system_query = true)
+    SearchLight.query("INSERT INTO $(Genie.config.db_migrations_table_name) VALUES ('$(migration.migration_hash)')", system_query = true)
   else
-    Database.query("DELETE FROM $(Genie.config.db_migrations_table_name) WHERE version = ('$(migration.migration_hash)')", system_query = true)
+    SearchLight.query("DELETE FROM $(Genie.config.db_migrations_table_name) WHERE version = ('$(migration.migration_hash)')", system_query = true)
   end
 
   nothing
@@ -216,7 +216,7 @@ end
 List of all migrations that are `up`.
 """
 function upped_migrations() :: Vector{String}
-  result = Database.query("SELECT * FROM $(Genie.config.db_migrations_table_name) ORDER BY version DESC", system_query = true)
+  result = SearchLight.query_raw("SELECT * FROM $(Genie.config.db_migrations_table_name) ORDER BY version DESC", system_query = true)
 
   map(x -> x[1], result)
 end

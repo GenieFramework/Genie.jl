@@ -1,6 +1,6 @@
 module REPL
 
-using SHA, Logger, Configuration, SearchLight, Genie, Database, Generator, Tester, Toolbox, App, Migration
+using SHA, Logger, Configuration, SearchLight, Genie, Generator, Tester, Toolbox, App, Migration
 
 
 """
@@ -32,7 +32,7 @@ end
 Sets up the DB tables used by Genie.
 """
 function db_init() :: Bool
-  Database.create_migrations_table()
+  SearchLight.create_migrations_table(Genie.config.db_migrations_table_name)
 end
 
 

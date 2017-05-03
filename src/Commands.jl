@@ -1,9 +1,9 @@
 """
-Handles command line arguments for the genie.jl script. 
+Handles command line arguments for the genie.jl script.
 """
 module Commands
 
-using ArgParse, Configuration, Genie, Database, Generator, Tester, Toolbox, App, Migration, Logger, AppServer
+using ArgParse, Configuration, Genie, SearchLight, Generator, Tester, Toolbox, App, Migration, Logger, AppServer
 
 
 """
@@ -20,7 +20,7 @@ function execute(config::Settings) :: Void
   Genie.config.websocket_port = parse(Int, parsed_args["websocket:port"])
 
   if called_command(parsed_args, "db:init")
-    Database.create_migrations_table()
+    SearchLight.create_migrations_table(Genie.config.db_migrations_table_name)
 
   elseif parsed_args["app:new"] != nothing
     Genie.REPL.new_app(parsed_args["app:new"])
