@@ -1,6 +1,6 @@
 module Sessions
 
-using Genie, SHA, HttpServer, Cookies, App
+using Genie, SHA, HttpServer, Cookies, App, Helpers, Router
 
 type Session
   id::AbstractString

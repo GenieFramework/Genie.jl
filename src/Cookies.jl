@@ -1,9 +1,9 @@
 """
-Functionality for dealing with HTTP cookies. 
+Functionality for dealing with HTTP cookies.
 """
 module Cookies
 
-using HttpServer, HttpCommon, Genie
+using HttpServer, HttpCommon, Genie, Encryption
 
 
 """
@@ -12,9 +12,8 @@ using HttpServer, HttpCommon, Genie
 Retrieves a value stored on the cookie as `key` from the `Respose` object.
 """
 function get(res::Response, key::Union{String,Symbol}) :: Nullable{String}
-  key = string(key)
-  if haskey(res.cookies, Genie.config.session_key_name)
-    return Nullable{String}(res.cookies[Genie.config.session_key_name].value)
+  if haskey(res.cookies, string(key))
+    return Nullable{String}(res.cookies[string(key)].value |> Encryption.decrypt)
   end
 
   Nullable{String}()
@@ -27,11 +26,10 @@ end
 Retrieves a value stored on the cookie as `key` from the `Request` object.
 """
 function get(req::Request, key::Union{String,Symbol}) :: Nullable{String}
-  key = string(key)
   if haskey(req.headers, "Cookie")
     cookies = to_dict(req)
-    if haskey(cookies, key)
-      return Nullable{String}(cookies[Genie.config.session_key_name])
+    if haskey(cookies, string(key))
+      return Nullable{String}(cookies[string(key)] |> Encryption.decrypt)
     end
   end
 
@@ -46,7 +44,7 @@ end
 Sets `value` under the `key` label on the `Cookie`.
 """
 function set!(res::Response, key::Union{String,Symbol}, value::Any, attributes::Dict) :: Dict{String,HttpCommon.Cookie}
-  setcookie!(res, string(key), string(value), attributes)
+  setcookie!(res, string(key), string(value) |> Encryption.encrypt, attributes)
 
   res.cookies
 end
