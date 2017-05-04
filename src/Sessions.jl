@@ -19,6 +19,7 @@ end
 
 """
     id() :: String
+    id(req::Request) :: String
     id(req::Request, res::Response) :: String
 
 Generates a unique session id.
@@ -30,6 +31,11 @@ function id() :: String
     # Genie.log(ex, :err)
     error("Can't compute session id - please make sure SECRET_TOKEN is defined in config/secrets.jl")
   end
+end
+function id(req::Request) :: String
+  ! isnull(Cookies.get(req, Genie.config.session_key_name)) && return Base.get(Cookies.get(req, Genie.config.session_key_name))
+
+  id()
 end
 function id(req::Request, res::Response) :: String
   ! isnull(Cookies.get(res, Genie.config.session_key_name)) && return Base.get(Cookies.get(res, Genie.config.session_key_name))

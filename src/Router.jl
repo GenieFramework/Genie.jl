@@ -1,12 +1,13 @@
 module Router
 
-using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions, Millboard, Configuration, App, Input, Logger, Util, Renderer
+using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions, Millboard, Configuration, App, Input, Logger, Util, Renderer, WebSockets, JSON
+IS_IN_APP && @eval parse("@dependencies")
 
 import HttpServer.mimetypes
 
 include(joinpath(Pkg.dir("Genie"), "src", "router_converters.jl"))
 
-export route, routes
+export route, routes, channel, channels
 export GET, POST, PUT, PATCH, DELETE
 export to_link!!, to_link, link_to!!, link_to, response_type, @params
 
@@ -19,9 +20,11 @@ const DELETE  = "DELETE"
 const BEFORE_ACTION_HOOKS = :before_action
 
 const _routes = Dict{Symbol,Any}()
+const _channels = Dict{Symbol,Any}()
 const sessionless = Symbol[:json]
 
 typealias Route Tuple{Tuple{String,String,Union{String,Function}},Dict{Symbol,Dict{Any,Any}}}
+typealias Channel Tuple{Tuple{String,Union{String,Function}},Dict{Symbol,Dict{Any,Any}}}
 
 type Params{T}
   collection::Dict{Symbol,T}
@@ -84,6 +87,33 @@ function route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: R
   print_with_color(:green, "[$(Dates.now())] -- $(URI(req.resource)) -- Done\n\n")
 
   controller_response
+end
+
+
+"""
+    route_ws_request(req::Request, msg::String, ws_client::WebSockets.WebSocket, ip::IPv4 = ip"0.0.0.0") :: String
+
+First step in handling a web socket request: sets up @params collection, handles query vars, starts and persists sessions.
+"""
+function route_ws_request(req::Request, msg::String, ws_client::WebSockets.WebSocket, ip::IPv4 = ip"0.0.0.0") :: String
+  params = Params()
+  params.collection[:request_ipv4] = ip
+  params.collection[Genie.PARAMS_WS_CLIENT] = ws_client
+
+  extract_get_params(URI(req.resource), params)
+
+  if is_dev()
+    load_channels()
+    App.load_models()
+  end
+
+  session = Sessions.load(Sessions.id(req))
+
+  channel_response::String = match_channels(req, msg, ws_client, params, session)
+
+  print_with_color(:cyan, "[$(Dates.now())] -- $(URI(req.resource)) -- Done\n\n")
+
+  channel_response
 end
 
 
@@ -163,6 +193,33 @@ end
 
 
 """
+    channel(action::Function, path::String; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel) :: Channel
+    channel(path::String, action::Union{String,Function}; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel) :: Channel
+
+Used for defining Genie channels.
+"""
+function channel(action::Function, path::String; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel) :: Channel
+  route(path, action, with = with, named = named)
+end
+function channel(path::String, action::Union{String,Function}; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel) :: Channel
+  channel_parts = (path, action)
+
+  extra_channel_parts = Dict(:with => with)
+  named = named == :__anonymous_channel ? channel_name(channel_parts) : named
+
+  if Configuration.is_dev() && haskey(_channels, named)
+    Logger.log(
+      "Conflicting channel names - multiple channels are sharing the same name. Use the 'named' option to assign them different identifiers.\n" *
+      string(_channels[named]) * "\n" *
+      string(channel_parts, extra_channel_parts)
+      , :warn)
+  end
+
+  _channels[named] = (channel_parts, extra_channel_parts)
+end
+
+
+"""
     route_name(params) :: Symbol
 
 Computes the name of a route.
@@ -175,6 +232,22 @@ function route_name(params) :: Symbol
   end
 
   join(route_parts, "_") |> Symbol
+end
+
+
+"""
+    channel_name(params) :: Symbol
+
+Computes the name of a channel.
+"""
+function channel_name(params) :: Symbol
+  channel_parts = String[lowercase(params[1])]
+  for uri_part in split(params[2], "/", keep = false)
+    startswith(uri_part, ":") && continue # we ignore named params
+    push!(channel_parts, lowercase(uri_part))
+  end
+
+  join(channel_parts, "_") |> Symbol
 end
 
 
@@ -225,6 +298,16 @@ Returns a vector of defined routes.
 """
 function routes() :: Vector{Route}
   collect(values(_routes))
+end
+
+
+"""
+    routes() :: Vector{Route}
+
+Returns a vector of defined routes.
+"""
+function channels() :: Vector{Channel}
+  collect(values(_channels))
 end
 
 
@@ -341,7 +424,7 @@ function match_routes(req::Request, res::Response, session::Sessions.Session, pa
     (! ismatch(regex_route, uri.path)) && continue
     Genie.config.log_router && Logger.log("Router: Matched route " * uri.path)
 
-    (! extract_uri_params(uri, regex_route, param_names, param_types, params)) && continue
+    (! extract_uri_params(uri.path, regex_route, param_names, param_types, params)) && continue
     Genie.config.log_router && Logger.log("Router: Matched type of route " * uri.path)
 
     extract_post_params(req, params)
@@ -372,6 +455,66 @@ function match_routes(req::Request, res::Response, session::Sessions.Session, pa
 
   Genie.config.log_router && Logger.log("Router: No route matched - defaulting 404", :err)
   serve_error_file(404, "Not found", params.collection)
+end
+
+
+"""
+    match_routes(req::Request, res::Response, session::Sessions.Session, params::Params) :: Response
+
+Matches the invoked URL to the corresponding route, sets up the execution environment and invokes the controller method.
+"""
+function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSocket, params::Params, session::Session) :: String
+  for c in channels()
+    channel_def, extra_params = c
+    channel, to = channel_def
+
+    Genie.config.log_router && Logger.log("Channels: Checking against " * channel)
+
+    parsed_channel, param_names, param_types = parse_channel(channel)
+
+    payload::Dict{String,Any} = try
+                                  JSON.parse(msg)
+                                catch ex
+                                  Dict{String,Any}()
+                                end
+
+    uri = haskey(payload, "channel") ? "/" * payload["channel"] : "/"
+    uri = haskey(payload, "message") ? uri * "/" * payload["message"] : uri
+
+    haskey(payload, "payload") && (params.collection[:payload] = payload["payload"])
+
+    regex_channel = Regex("^" * parsed_channel * "\$")
+
+    (! ismatch(regex_channel, uri)) && continue
+    Genie.config.log_router && Logger.log("Channels: Matched channel " * uri)
+
+    (! extract_uri_params(uri, regex_channel, param_names, param_types, params)) && continue
+    Genie.config.log_router && Logger.log("Router: Matched type of channel " * uri)
+
+    extract_extra_params(extra_params, params)
+
+    params.collection = setup_base_params(req, nothing, params.collection, session)
+
+    return  try
+              if isa(to, Function)
+                to() |> string
+              else
+                invoke_channel(to, req, payload, ws_client, params.collection, session)
+              end
+            catch ex
+              if is_dev()
+                rethrow(ex)
+              else
+                Logger.log("Failed invoking channel", :err, showst = false)
+                Logger.@location()
+
+                string(ex)
+              end
+            end
+  end
+
+  Genie.config.log_router && Logger.log("Channel: No route matched - defaulting 404", :err)
+  string("404 - Not found")
 end
 
 
@@ -407,12 +550,43 @@ end
 
 
 """
-    extract_uri_params(uri::URI, regex_route::Regex, param_names::Vector{String}, param_types::Vector{Any}, params::Params) :: Bool
+    parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
+
+Parses a route and extracts its named parms and types.
+"""
+function parse_channel(channel::String) :: Tuple{String,Vector{String},Vector{Any}}
+  parts = AbstractString[]
+  param_names = AbstractString[]
+  param_types = Any[]
+
+  for rp in split(channel, "/", keep = false)
+    if startswith(rp, ":")
+      param_type =  if contains(rp, "::")
+                      x = split(rp, "::")
+                      rp = x[1]
+                      getfield(current_module(), Symbol(x[2]))
+                    else
+                      Any
+                    end
+      param_name = rp[2:end]
+      rp = """(?P<$param_name>[\\w\\-]+)"""
+      push!(param_names, param_name)
+      push!(param_types, param_type)
+    end
+    push!(parts, rp)
+  end
+
+  "/" * join(parts, "/"), param_names, param_types
+end
+
+
+"""
+    extract_uri_params(uri::String, regex_route::Regex, param_names::Vector{String}, param_types::Vector{Any}, params::Params) :: Bool
 
 Extracts params from request URI and sets up the `params` `Dict`.
 """
-function extract_uri_params(uri::URI, regex_route::Regex, param_names::Vector{String}, param_types::Vector{Any}, params::Params) :: Bool
-  matches = match(regex_route, uri.path)
+function extract_uri_params(uri::String, regex_route::Regex, param_names::Vector{String}, param_types::Vector{Any}, params::Params) :: Bool
+  matches = match(regex_route, uri)
   i = 1
   for param_name in param_names
     try
@@ -526,38 +700,38 @@ end
 
 Populates `params` with default environment vars.
 """
-function setup_base_params(req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session) :: Dict{Symbol,Any}
+function setup_base_params(req::Request, res::Union{Response,Void}, params::Dict{Symbol,Any}, session::Union{Sessions.Session,Void}) :: Dict{Symbol,Any}
   params[Genie.PARAMS_REQUEST_KEY]   = req
   params[Genie.PARAMS_RESPONSE_KEY]  = res
   params[Genie.PARAMS_SESSION_KEY]   = session
-  params[Genie.PARAMS_FLASH_KEY]     = begin
-                                        s = Sessions.get(session, Genie.PARAMS_FLASH_KEY)
-                                        if isnull(s)
-                                          ""::String
-                                        else
-                                          ss = Base.get(s)
-                                          Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
-                                          ss
-                                        end
-                                      end
+  params[Genie.PARAMS_FLASH_KEY]     = session == nothing ? nothing : begin
+                                                                        s = Sessions.get(session, Genie.PARAMS_FLASH_KEY)
+                                                                        if isnull(s)
+                                                                          ""::String
+                                                                        else
+                                                                          ss = Base.get(s)
+                                                                          Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
+                                                                          ss
+                                                                        end
+                                                                      end
 
   params
 end
 
 
 """
-    setup_params!(params::Dict{Symbol,Any}, to_parts::Vector{String}, action_controller_parts::Vector{String}, controller_path::String, req::Request, res::Response, session::Sessions.Session, action_name::String) :: Dict{Symbol,Any}
+    setup_params!(params::Dict{Symbol,Any}, to_parts::Vector{String}, action_controller_parts::Vector{String}) :: Dict{Symbol,Any}
 
 Populates `params` with action and controller names values.
 """
-function setup_params!(params::Dict{Symbol,Any}, to_parts::Vector{String}, action_controller_parts::Vector{String},
-                        controller_path::String, req::Request, res::Response, session::Sessions.Session, action_name::String) :: Dict{Symbol,Any}
+function setup_params!(params::Dict{Symbol,Any}, to_parts::Vector{String}, action_controller_parts::Vector{String}) :: Dict{Symbol,Any}
   params[:action_controller] = to_parts[2]
   params[:action] = action_controller_parts[end]
   params[:controller] = join(action_controller_parts[1:end-1], ".")
 
   params
 end
+
 
 const loaded_controllers = UInt64[]
 
@@ -582,7 +756,7 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
   action_name = to_parts[2]
 
   action_controller_parts::Vector{String} = split(to_parts[2], ".")
-  setup_params!(params, to_parts, action_controller_parts, controller_path, req, res, session, action_name)
+  setup_params!(params, to_parts, action_controller_parts)
 
   try
     params[Genie.PARAMS_ACL_KEY] = App.load_acl(controller_path)
@@ -631,6 +805,83 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
               Logger.@location()
 
               serve_error_file_500(ex, params)
+            end
+          end
+end
+
+
+const loaded_channels = UInt64[]
+
+
+"""
+    invoke_channel(to::String, req::Request, payload::Dict{String,Any}, ws_client::WebSockets.WebSocket, params::Dict{Symbol,Any}, session::Sessions.Session) :: String
+
+Invokes the designated channel method.
+"""
+function invoke_channel(to::String, req::Request, payload::Dict{String,Any}, ws_client::WebSockets.WebSocket, params::Dict{Symbol,Any}, session::Sessions.Session) :: String
+  to_parts::Vector{String} = split(to, "#")
+
+  channel_path = abspath(joinpath(Genie.RESOURCE_PATH, to_parts[1]))
+  channel_path_hash = hash(channel_path)
+  if ! in(channel_path_hash, loaded_channels) || Configuration.is_dev()
+    App.load_channel(channel_path)
+    App.export_channels(to_parts[2])
+    ! in(channel_path_hash, loaded_channels) && push!(loaded_channels, channel_path_hash)
+  end
+
+  controller = Genie.GenieChannel()
+  action_name = to_parts[2]
+
+  action_channel_parts::Vector{String} = split(to_parts[2], ".")
+  setup_params!(params, to_parts, action_channel_parts)
+
+  try
+    params[Genie.PARAMS_ACL_KEY] = App.load_acl(channel_path)
+  catch ex
+    if Configuration.is_dev()
+      rethrow(ex)
+    else
+      Logger.log("Failed loading ACL", :err, showst = false)
+      Logger.@location()
+
+      return "500 error -- $(string(ex))"
+    end
+  end
+
+  task_local_storage(:__params, params)
+
+  try
+    hook_result = run_hooks(BEFORE_ACTION_HOOKS, getfield(App, Symbol(join(split(action_name, ".")[1:end-1], "."))), params)
+    hook_stop(hook_result) && return string(hook_result[2])
+  catch ex
+    if Configuration.is_dev()
+      rethrow(ex)
+    else
+      Logger.log("Failed to invoke channel hooks $(BEFORE_ACTION_HOOKS)", :err, showst = false)
+      Logger.@location()
+
+      return "500 error -- $(string(ex))"
+    end
+  end
+
+  Genie.config.log_requests && Logger.log("Invoking channel $action_name with params: \n" * string(Millboard.table(params)), :debug)
+
+  return  try
+            # TODO: add support for arbitrarely nested modules
+            getfield(
+              getfield(
+                getfield(current_module(), Symbol("App")),
+              Symbol(split(action_name, ".")[1])),
+            Symbol(split(action_name, ".")[2]))() |> string
+          catch ex
+            if Configuration.is_dev()
+              rethrow(ex)
+            else
+              Logger.log("$ex at $(@__FILE__):$(@__LINE__)", :critical, showst = false)
+              Logger.log("While invoking $(action_name) with $(params)", :critical, showst = false)
+              Logger.@location()
+
+              return "500 error -- $(string(ex))"
             end
           end
 end
@@ -718,10 +969,26 @@ Loads the routes file.
 """
 function load_routes() :: Void
   ! IS_IN_APP && return nothing
-  ! isfile( abspath(joinpath("config", "routes.jl")) ) && return nothing
+  ! isfile(abspath(joinpath("config", "routes.jl"))) && return nothing
 
   empty!(_routes)
   include(abspath(joinpath("config", "routes.jl")))
+
+  nothing
+end
+
+
+"""
+    load_channels() :: Void
+
+Loads the routes file.
+"""
+function load_channels() :: Void
+  ! IS_IN_APP && return nothing
+  ! isfile(abspath(joinpath("config", "channels.jl"))) && return nothing
+
+  empty!(_channels)
+  include(abspath(joinpath("config", "channels.jl")))
 
   nothing
 end

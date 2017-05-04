@@ -17,7 +17,6 @@ function execute(config::Settings) :: Void
   Genie.config.app_env = ENV["GENIE_ENV"]
   Genie.config.server_port = parse(Int, parsed_args["server:port"])
   Genie.config.server_workers_count = (sw = parse(Int, parsed_args["server:workers"])) > 0 ? sw : config.server_workers_count
-  Genie.config.websocket_port = parse(Int, parsed_args["websocket:port"])
 
   if called_command(parsed_args, "db:init")
     SearchLight.create_migrations_table(Genie.config.db_migrations_table_name)
@@ -30,6 +29,9 @@ function execute(config::Settings) :: Void
 
   elseif parsed_args["controller:new"] != nothing
     Generator.new_controller(parsed_args)
+
+  elseif parsed_args["channel:new"] != nothing
+    Generator.new_channel(parsed_args)
 
   elseif parsed_args["resource:new"] != nothing
     Generator.new_resource(parsed_args, config)
@@ -121,6 +123,8 @@ function parse_commandline_args() :: Dict{String,Any}
             help = "model_name -> creates a new model, ex: Product"
         "--controller:new"
             help = "controller_name -> creates a new controller, ex: Products"
+        "--channel:new"
+            help = "channel_name -> creates a new channel, ex: Products"
         "--resource:new"
             help = "resource_name -> creates a new resource folder with all its files, ex: products"
 

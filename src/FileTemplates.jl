@@ -148,6 +148,23 @@ end
 
 
 """
+    new_channel(channel_name::String) :: String
+
+Default content for a new Genie channel.
+"""
+function new_channel(channel_name::String) :: String
+  """
+  module $(channel_name)Channel
+
+  using Channels, App
+  @dependencies
+
+  end
+  """
+end
+
+
+"""
     new_validator(validator_name::String) :: String
 
 Default content for a new SearchLight validator.

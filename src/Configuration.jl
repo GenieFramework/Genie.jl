@@ -1,5 +1,5 @@
 """
-Core genie configuration / settings functionality. 
+Core genie configuration / settings functionality.
 """
 module Configuration
 
@@ -120,8 +120,6 @@ type Settings
   server_handle_static_files::Bool
   server_signature::String
 
-  websocket_port::Int
-
   app_env::String
   app_is_api::Bool
 
@@ -179,14 +177,14 @@ type Settings
 
   run_as_server::Bool
 
+  websocket_server::Bool
+
   Settings(;
             server_port                 = 8000, # default port for binding the web server
             server_workers_count        = 1,
             server_document_root        = "public",
             server_handle_static_files  = true,
             server_signature            = "Genie/$GENIE_VERSION/Julia/$VERSION",
-
-            websocket_port              = 8008, # default port for binding the websocket
 
             app_env       = ENV["GENIE_ENV"],
             app_is_api    = true,
@@ -243,11 +241,12 @@ type Settings
 
             lookup_ip = true,
 
-            run_as_server = false
+            run_as_server = false,
+
+            websocket_server = false
         ) =
               new(
                   server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature,
-                  websocket_port,
                   app_env, app_is_api,
                   suppress_output, output_length,
                   db_migrations_table_name, db_migrations_folder, db_config_settings, db_adapter,
@@ -263,7 +262,8 @@ type Settings
                   html_template_engine, json_template_engine,
                   flax_compile_templates,
                   lookup_ip,
-                  run_as_server)
+                  run_as_server,
+                  websocket_server)
 end
 
 end

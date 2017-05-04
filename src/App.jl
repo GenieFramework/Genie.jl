@@ -36,7 +36,7 @@ end
 
 
 """
-    load_controller(dir::AbstractString) :: Void
+    load_controller(dir::String) :: Void
 
 Loads (includes) the `controller` file that corresponds to the currently matched route.
 The modules are included in the `App` module.
@@ -51,11 +51,26 @@ end
 
 
 """
-    export_controllers(controllers::AbstractString) :: Void
+    load_channel(dir::String) :: Void
+
+Loads (includes) the `channel` file that corresponds to the currently matched channel.
+The modules are included in the `App` module.
+"""
+function load_channel(dir::String) :: Void
+  push!(LOAD_PATH, dir)
+  file_path = joinpath(dir, Genie.GENIE_CHANNEL_FILE_NAME)
+  isfile(file_path) && eval(App, :(include($file_path)))
+
+  nothing
+end
+
+
+"""
+    export_controllers(controllers::String) :: Void
 
 Make `controller` modules available autside the `App` module.
 """
-function export_controllers(controllers::AbstractString) :: Void
+function export_controllers(controllers::String) :: Void
   eval(App, parse("""export $(split(controllers, ".")[1])"""))
 
   nothing
@@ -63,11 +78,23 @@ end
 
 
 """
-    load_acl(dir::AbstractString) :: Dict{Any,Any}
+    export_channels(controllers::AbstractString) :: Void
+
+Make `controller` modules available autside the `App` module.
+"""
+function export_channels(channels::String) :: Void
+  eval(App, parse("""export $(split(channels, ".")[1])"""))
+
+  nothing
+end
+
+
+"""
+    load_acl(dir::String) :: Dict{Any,Any}
 
 Loads the ACL file associated with the invoked `controller` and returns the rules.
 """
-function load_acl(dir::AbstractString) :: Dict{Any,Any}
+function load_acl(dir::String) :: Dict{Any,Any}
   file_path = joinpath(dir, Genie.GENIE_AUTHORIZATOR_FILE_NAME)
   isfile(file_path) ? YAML.load(open(file_path)) : Dict{Any,Any}()
 end

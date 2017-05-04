@@ -1,5 +1,5 @@
 """
-Generates various Genie files. 
+Generates various Genie files.
 """
 module Generator
 
@@ -45,6 +45,25 @@ end
 
 
 """
+    new_channel(cmd_args::Dict{String,Any}) :: Void
+
+Generates a new Genie channel file and persists it to the resources folder.
+"""
+function new_channel(cmd_args::Dict{String,Any}) :: Void
+  resource_name = ucfirst(cmd_args["channel:new"])
+  if Inflector.is_singular(resource_name)
+    resource_name = Inflector.to_plural(resource_name) |> Base.get
+  end
+
+  resource_path = setup_resource_path(resource_name)
+  write_resource_file(resource_path, Genie.GENIE_CHANNEL_FILE_NAME, resource_name) &&
+    Logger.log("New channel created at $(joinpath(resource_path, Genie.GENIE_CHANNEL_FILE_NAME))")
+
+  nothing
+end
+
+
+"""
     new_resource(cmd_args::Dict{String,Any}, config::Settings) :: Void
 
 Generates all the files associated with a new resource and persists them to the resources folder.
@@ -63,7 +82,7 @@ function new_resource(cmd_args::Dict{String,Any}, config::Settings) :: Void
   Migration.new(cmd_args, config)
 
   resource_path = setup_resource_path(resource_name)
-  for resource_file in [Genie.GENIE_CONTROLLER_FILE_NAME, Genie.GENIE_AUTHORIZATOR_FILE_NAME, Genie.GENIE_VALIDATOR_FILE_NAME]
+  for resource_file in [Genie.GENIE_CONTROLLER_FILE_NAME, Genie.GENIE_CHANNEL_FILE_NAME, Genie.GENIE_AUTHORIZATOR_FILE_NAME, Genie.GENIE_VALIDATOR_FILE_NAME]
     write_resource_file(resource_path, resource_file, resource_name) &&
       Logger.log("New $resource_file created at $(joinpath(resource_path, resource_file))")
   end

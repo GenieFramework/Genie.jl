@@ -1,11 +1,11 @@
 """
-Various utility functions for using across models, controllers and views. 
+Various utility functions for using across models, controllers and views.
 """
 module Helpers
 
-using Genie, Sessions, Router, URIParser, Logger, HttpServer
+using Genie, Sessions, Router, URIParser, Logger, HttpServer, WebSockets
 
-export session, request, response, flash, number_of_pages, paginated_uri, var_dump
+export session, request, response, flash, number_of_pages, paginated_uri, var_dump, wsclient
 
 
 """
@@ -73,6 +73,22 @@ end
 function flash(value::Any, params::Dict{Symbol,Any})
   Sessions.set!(session(params), Genie.PARAMS_FLASH_KEY, value)
   params[Genie.PARAMS_FLASH_KEY] = value
+end
+
+
+"""
+    wsclient(params::Dict{Symbol,Any}) :: WebSockets.WebSocket
+
+Returns the `WebSocket` object associated with the current WS request.
+"""
+function wsclient(params::Dict{Symbol,Any}) :: WebSockets.WebSocket
+  if haskey(params, Genie.PARAMS_WS_CLIENT)
+    return params[Genie.PARAMS_WS_CLIENT]
+  else
+    msg = "Invalid params Dict -- must have $(Genie.PARAMS_WS_CLIENT) key"
+    Logger.log(msg, :err)
+    error(msg)
+  end
 end
 
 end

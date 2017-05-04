@@ -1,9 +1,9 @@
 """
-Handles HttpServer related functionality, manages requests and responses and their logging. 
+Handles HttpServer related functionality, manages requests and responses and their logging.
 """
 module AppServer
 
-using HttpServer, Router, Genie, Millboard, Logger, Sessions, Configuration, MbedTLS
+using HttpServer, Router, Genie, Millboard, Logger, Sessions, Configuration, MbedTLS, WebSockets, Channels
 
 """
     startup(port::Int = 8000) :: Void
@@ -23,7 +23,7 @@ function startup(port::Int = 8000) :: Void
   http = HttpHandler() do req::Request, res::Response
     try
       ip::IPv4 = Genie.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
-      nworkers() == 1 ? handle_request(req, res, ip) : @fetch handle_request(req, res)
+      nworkers() == 1 ? handle_request(req, res, ip) : @fetch handle_request(req, res, ip)
     catch ex
       if Configuration.is_dev()
         rethrow(ex)
@@ -36,10 +36,36 @@ function startup(port::Int = 8000) :: Void
     end
   end
 
-  Genie.config.lookup_ip && (http.events["connect"] = (client) -> handle_connect(client))
+  if Genie.config.websocket_server
 
-  server = Server(http)
-  @async run(server, port) # !!! @async required to avoid race conditions when storing the request IP ???
+    wsh = WebSocketHandler() do req::Request, ws_client::WebSockets.WebSocket
+      while true
+        try
+          msg = read(ws_client)
+
+          ip::IPv4 = Genie.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
+          response = nworkers() == 1 ? handle_ws_request(req, String(msg), ws_client, ip) : @fetch handle_ws_request(req, String(msg), ws_client, ip)
+
+          write(ws_client, response)
+        catch ex
+          if Configuration.is_dev()
+            rethrow(ex)
+          else
+            Logger.log("Genie error " * string(ex), :critical, showst = false)
+            Logger.@location()
+
+            write(ws_client, "500 error: Socket communication error.")
+          end
+        end
+      end
+    end
+
+  end
+
+  Genie.config.lookup_ip && (http.events["connect"] = (http_client) -> handle_connect(http_client))
+
+  server = Server(http, wsh)
+  @async run(server, port) # !!! @async required to avoid race conditions when storing the request IP
 
   if Genie.config.run_as_server
     while true
@@ -72,7 +98,7 @@ function handle_connect(client::HttpServer.Client) :: Void
 
 
 """
-    handle_request(req::Request, res::Response) :: Response
+    handle_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: Response
 
 HttpServer handler function - invoked when the server gets a request.
 """
@@ -87,6 +113,18 @@ function handle_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: 
   Genie.config.log_responses && log_response(req, app_response)
 
   app_response
+end
+
+
+"""
+    handle_ws_request(req::Request, client::Client, ip::IPv4 = ip"0.0.0.0") :: Response
+
+HttpServer handler function - invoked when the server gets a request.
+"""
+function handle_ws_request(req::Request, msg::String, ws_client::WebSockets.WebSocket, ip::IPv4 = ip"0.0.0.0") :: String
+  Genie.config.log_requests && log_request(req)
+
+  Router.route_ws_request(req, msg, ws_client, ip)
 end
 
 

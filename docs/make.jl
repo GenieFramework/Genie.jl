@@ -1,6 +1,6 @@
 using Documenter, Genie
 using App, AppServer, Authentication, Authorization
-using Cache, Commands, Configuration, Cookies
+using Cache, Commands, Configuration, Cookies, Channels
 using DatabaseSeeding, Error, FileTemplates, Generator
 using Helpers, Inflector, Input, Logger, Macros, Migration
 using Renderer, REPL, Router, Sessions, Tester, Toolbox, Util
