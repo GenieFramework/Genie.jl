@@ -3,10 +3,10 @@ module Sessions
 using Genie, SHA, HttpServer, Cookies, App, Helpers, Router
 
 type Session
-  id::AbstractString
+  id::String
   data::Dict{Symbol,Any}
 end
-Session(id::AbstractString) = Session(id, Dict{Symbol,Any}())
+Session(id::String) = Session(id, Dict{Symbol,Any}())
 
 export Session
 
@@ -46,12 +46,12 @@ end
 
 
 """
-    start(session_id::AbstractString, req::Request, res::Response; options = Dict{String,String}()) :: Session
+    start(session_id::String, req::Request, res::Response; options = Dict{String,String}()) :: Session
     start(req::Request, res::Response) :: Session
 
 Initiates a session.
 """
-function start(session_id::AbstractString, req::Request, res::Response; options = Dict{String,String}()) :: Session
+function start(session_id::String, req::Request, res::Response; options = Dict{String,String}()) :: Session
   options = merge(Dict("Path" => "/", "HttpOnly" => "", "Expires" => "0"), options)
   Cookies.set!(res, Genie.config.session_key_name, session_id, options)
   load(session_id)
@@ -132,11 +132,11 @@ end
 
 
 """
-    load(session_id::AbstractString) :: Session
+    load(session_id::String) :: Session
 
 Loads session data from persistent storage - delegates to the underlying `SessionAdapter`.
 """
-function load(session_id::AbstractString) :: Session
+function load(session_id::String) :: Session
   session = SessionAdapter.read(session_id)
   if isnull(session)
     return Session(session_id)

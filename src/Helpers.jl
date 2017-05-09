@@ -5,14 +5,18 @@ module Helpers
 
 using Genie, Sessions, Router, URIParser, Logger, HttpServer, WebSockets
 
-export session, request, response, flash, number_of_pages, paginated_uri, var_dump, wsclient
+export session, request, response, flash, number_of_pages, paginated_uri, var_dump, wsclient, flash_has_message
 
 
 """
+    session() :: Sessions.Session
     session(params::Dict{Symbol,Any}) :: Sessions.Session
 
 Returns the `Session` object associated with the current HTTP request.
 """
+function session() :: Sessions.Session
+  session(Router._params_())
+end
 function session(params::Dict{Symbol,Any}) :: Sessions.Session
   if haskey(params, Genie.PARAMS_SESSION_KEY)
     return params[Genie.PARAMS_SESSION_KEY]
@@ -25,10 +29,14 @@ end
 
 
 """
+    request() :: HttpServer.Request
     request(params::Dict{Symbol,Any}) :: HttpServer.Request
 
 Returns the `Request` object associated with the current HTTP request.
 """
+function request() :: HttpServer.Request
+  request(Router._params_())
+end
 function request(params::Dict{Symbol,Any}) :: HttpServer.Request
   if haskey(params, Genie.PARAMS_REQUEST_KEY)
     return params[Genie.PARAMS_REQUEST_KEY]
@@ -41,10 +49,14 @@ end
 
 
 """
+    response() :: HttpServer.Response
     response(params::Dict{Symbol,Any}) :: HttpServer.Response
 
 Returns the `Response` object associated with the current HTTP request.
 """
+function response() :: HttpServer.Response
+  response(Router._params_())
+end
 function response(params::Dict{Symbol,Any}) :: HttpServer.Response
   if haskey(params, Genie.PARAMS_RESPONSE_KEY)
     return params[Genie.PARAMS_RESPONSE_KEY]
@@ -61,6 +73,9 @@ end
 
 Returns the `flash` dict object associated with the current HTTP request.
 """
+function flash()
+  flash(Router._params_())
+end
 function flash(params::Dict{Symbol,Any})
   if haskey(params, Genie.PARAMS_FLASH_KEY)
     return params[Genie.PARAMS_FLASH_KEY]
@@ -70,9 +85,30 @@ function flash(params::Dict{Symbol,Any})
     error(msg)
   end
 end
-function flash(value::Any, params::Dict{Symbol,Any})
+
+
+"""
+    flash(value::Any) :: Void
+    flash(value::Any, params::Dict{Symbol,Any}) :: Void
+
+Stores `value` on the `flash`.
+"""
+function flash(value::Any) :: Void
+  flash(value, Router._params_())
+end
+function flash(value::Any, params::Dict{Symbol,Any}) :: Void
   Sessions.set!(session(params), Genie.PARAMS_FLASH_KEY, value)
   params[Genie.PARAMS_FLASH_KEY] = value
+
+  nothing
+end
+
+
+"""
+
+"""
+function flash_has_message() :: Bool
+  ! isempty(flash())
 end
 
 

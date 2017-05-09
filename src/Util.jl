@@ -1,7 +1,12 @@
 module Util
 
-export expand_nullable, _!!, _!_
+using Genie
 
+export expand_nullable, _!!, _!_, get_nested_field, get_deepest_module, DynamicField
+
+type DynamicField{T}
+  field::T
+end
 
 """
     add_quotes(str::String) :: String
@@ -94,7 +99,7 @@ end
 """
     walk_dir(dir; monitored_extensions = ["jl"]) :: String
 
-Recursively walks dir and `produce`s non directories. 
+Recursively walks dir and `produce`s non directories.
 """
 function walk_dir(dir; monitored_extensions = ["jl"]) :: String
   f = readdir(abspath(dir))
@@ -107,6 +112,42 @@ function walk_dir(dir; monitored_extensions = ["jl"]) :: String
         produce( full_path )
       end
     end
+  end
+end
+
+
+"""
+    get_nested_field(path::String, depth::Int = 1, parent::Module) :: DynamicField
+
+Returns the deepest nested field in a `path` of form `Module.Module.Module.function`, wrapped into a `DynamicField`.
+"""
+function get_nested_field(path::String, depth::Int, parent::Module) :: DynamicField
+  parts = split(path, ".")
+
+  new_parent = getfield(parent, Symbol(parts[depth]))
+
+  if length(parts)-1 > depth
+    get_nested_field(path, depth+1, new_parent)
+  else
+    return getfield(new_parent, Symbol(parts[depth+1])) |> DynamicField
+  end
+end
+
+
+"""
+    get_deepest_module(path::String, depth::Int = 1, parent::Union{Module,Void} = nothing) :: Module
+
+Returns the deepest nested `module` in a `path` of form `Module.Module.Module`.
+"""
+function get_deepest_module(path::String, depth::Int, parent::Module) :: Module
+  parts = split(path, ".")
+
+  new_parent = getfield(parent, Symbol(parts[depth]))
+
+  if length(parts)-2 > depth
+    get_deepest_module(path, depth+1, new_parent)
+  else
+    return new_parent
   end
 end
 

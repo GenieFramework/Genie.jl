@@ -1,5 +1,5 @@
 """
-Functionality for authenticating Genie users. 
+Functionality for authenticating Genie users.
 """
 module Authentication
 
@@ -162,5 +162,151 @@ end
 function without_authentication(f::Function, params::Dict{Symbol,Any})
   without_authentication(f, params[:SESSION])
 end
+
+
+"""
+Sets up files and migrations needed by the Authentication module
+"""
+module FileTemplates
+
+using Genie
+
+function users_migration() :: String
+  """
+  module CreateTableUsers
+
+  using Genie, SearchLight
+
+  function up()
+    SearchLight.query("CREATE SEQUENCE users__seq_id")
+    SearchLight.query("
+      CREATE TABLE IF NOT EXISTS users (
+        id            integer CONSTRAINT users__idx_id PRIMARY KEY DEFAULT NEXTVAL('users__seq_id'),
+        name          varchar(100) NOT NULL,
+        email         varchar(100) NOT NULL,
+        password      varchar(256) NOT NULL,
+        role_id       integer DEFAULT NULL,
+        CONSTRAINT users__idx_name UNIQUE(email)
+      )
+    ")
+    SearchLight.query("ALTER SEQUENCE users__seq_id OWNED BY users.id")
+    SearchLight.query("CREATE INDEX users__idx_role_id ON users (role_id)")
+  end
+
+  function down()
+    SearchLight.query("DROP INDEX users__idx_role_id")
+    SearchLight.query("DROP INDEX users__seq_id")
+    SearchLight.query("DROP TABLE users")
+  end
+
+  end
+  """
+end
+
+function roles_migration() :: String
+  """
+  module CreateTableRoles
+
+  using Genie, SearchLight
+
+  function up()
+    SearchLight.query("CREATE SEQUENCE roles__seq_id")
+    SearchLight.query("
+      CREATE TABLE IF NOT EXISTS roles (
+        id            integer CONSTRAINT roles__idx_id PRIMARY KEY DEFAULT NEXTVAL('roles__seq_id'),
+        name          varchar(20) NOT NULL,
+        CONSTRAINT    roles__idx_id UNIQUE(id),
+        CONSTRAINT    roles__idx_name UNIQUE(name)
+      )
+    ")
+    SearchLight.query("ALTER SEQUENCE roles__seq_id OWNED BY roles.id")
+  end
+
+  function down()
+    SearchLight.query("DROP INDEX roles__seq_id")
+    SearchLight.query("DROP TABLE roles")
+  end
+
+  end
+  """
+end
+
+function routes() :: String
+  """
+  # Authentication
+  route("/login", "user_sessions#UserSessionsController.show_login", named = :show_login)
+  route("/login", "user_sessions#UserSessionsController.login", method = POST, named = :login)
+  route("/logout", "user_sessions#UserSessionsController.logout", named = :logout)
+  """
+end
+
+end # module FileTemplates
+
+
+"""
+File generation functionality for the Authentication module.
+"""
+module Generator
+
+using Migration, Authentication, Logger, Genie, Router
+
+function setup() :: Void
+  Logger.log("Creating migrations")
+  Migration.new("create_table_users", Authentication.FileTemplates.users_migration())
+  Migration.new("create_table_roles", Authentication.FileTemplates.roles_migration())
+
+  Logger.log("Creating paths")
+  try
+    mkpath(joinpath(Genie.APP_PATH, "layouts"))
+  catch ex
+    Logger.log("Destination $(joinpath(Genie.APP_PATH, "layouts")) already exists. Skipping.", :warn)
+  end
+  try
+    mkpath(joinpath(Genie.APP_PATH, "resources", "roles"))
+  catch ex
+    Logger.log("Destination $(joinpath(Genie.APP_PATH, "resources", "roles")) already exists. Skipping.", :warn)
+  end
+  try
+    mkpath(joinpath(Genie.APP_PATH, "resources", "users"))
+  catch ex
+    Logger.log("Destination $(joinpath(Genie.APP_PATH, "resources", "users")) already exists. Skipping.", :warn)
+  end
+  try
+    mkpath(joinpath(Genie.APP_PATH, "resources", "user_sessions"))
+  catch ex
+    Logger.log("Destination $(joinpath(Genie.APP_PATH, "resources", "user_sessions")) already exists. Skipping.", :warn)
+  end
+
+  Logger.log("Copying files")
+  try
+    cp(joinpath(Pkg.dir("Genie"), "files", "authentication", "app", "layouts", "login.flax.html"), joinpath(Genie.APP_PATH, "layouts", "login.flax.html"))
+  catch ex
+    Logger.log("Destination $(joinpath(Genie.APP_PATH, "layouts", "login.flax.html")) already exists. Skipping.", :warn)
+  end
+  try
+    cp(joinpath(Pkg.dir("Genie"), "files", "authentication", "app", "resources", "roles", "model.jl"), joinpath(Genie.APP_PATH, "resources", "roles", "model.jl"))
+  catch ex
+    Logger.log("Destination $(joinpath(Genie.APP_PATH, "resources", "roles", "model.jl")) already exists. Skipping.", :warn)
+  end
+  try
+    cp(joinpath(Pkg.dir("Genie"), "files", "authentication", "app", "resources", "users", "model.jl"), joinpath(Genie.APP_PATH, "resources", "users", "model.jl"))
+  catch ex
+    Logger.log("Destination $(joinpath(Genie.APP_PATH, "resources", "users", "model.jl")) already exists. Skipping.", :warn)
+  end
+  try
+    cp(joinpath(Pkg.dir("Genie"), "files", "authentication", "app", "resources", "user_sessions", "controller.jl"), joinpath(Genie.APP_PATH, "resources", "user_sessions", "controller.jl"))
+  catch ex
+    Logger.log("Destination $(joinpath(Genie.APP_PATH, "resources", "user_sessions", "controller.jl")) already exists. Skipping.", :warn)
+  end
+
+  Logger.log("Appending routes")
+  Router.append_to_routes_file(Authentication.FileTemplates.routes())
+
+  Logger.log("Success!")
+
+  nothing
+end
+
+end # module Generator
 
 end

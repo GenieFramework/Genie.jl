@@ -1,6 +1,7 @@
 module Router
 
-using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions, Millboard, Configuration, App, Input, Logger, Util, Renderer, WebSockets, JSON
+using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions
+using Millboard, Configuration, App, Input, Logger, Util, Renderer, WebSockets, JSON
 IS_IN_APP && @eval parse("@dependencies")
 
 import HttpServer.mimetypes
@@ -459,11 +460,11 @@ end
 
 
 """
-    match_routes(req::Request, res::Response, session::Sessions.Session, params::Params) :: Response
+    match_channels(req::Request, msg::String, ws_client::WebSockets.WebSocket, params::Params, session::Sessions.Session) :: String
 
-Matches the invoked URL to the corresponding route, sets up the execution environment and invokes the controller method.
+Matches the invoked URL to the corresponding channel, sets up the execution environment and invokes the channel controller method.
 """
-function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSocket, params::Params, session::Session) :: String
+function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSocket, params::Params, session::Sessions.Session) :: String
   for c in channels()
     channel_def, extra_params = c
     channel, to = channel_def
@@ -700,20 +701,20 @@ end
 
 Populates `params` with default environment vars.
 """
-function setup_base_params(req::Request, res::Union{Response,Void}, params::Dict{Symbol,Any}, session::Union{Sessions.Session,Void}) :: Dict{Symbol,Any}
+function setup_base_params(req::Request, res::Union{Response,Void}, params::Dict{Symbol,Any}, session::Sessions.Session) :: Dict{Symbol,Any}
   params[Genie.PARAMS_REQUEST_KEY]   = req
   params[Genie.PARAMS_RESPONSE_KEY]  = res
   params[Genie.PARAMS_SESSION_KEY]   = session
-  params[Genie.PARAMS_FLASH_KEY]     = session == nothing ? nothing : begin
-                                                                        s = Sessions.get(session, Genie.PARAMS_FLASH_KEY)
-                                                                        if isnull(s)
-                                                                          ""::String
-                                                                        else
-                                                                          ss = Base.get(s)
-                                                                          Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
-                                                                          ss
-                                                                        end
-                                                                      end
+  params[Genie.PARAMS_FLASH_KEY]     = begin
+                                        s = Sessions.get(session, Genie.PARAMS_FLASH_KEY)
+                                        if isnull(s)
+                                          ""::String
+                                        else
+                                          ss = Base.get(s)
+                                          Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
+                                          ss
+                                        end
+                                      end
 
   params
 end
@@ -774,7 +775,7 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
   task_local_storage(:__params, params)
 
   try
-    hook_result = run_hooks(BEFORE_ACTION_HOOKS, getfield(App, Symbol(join(split(action_name, ".")[1:end-1], "."))), params)
+    hook_result = run_hooks(BEFORE_ACTION_HOOKS, get_deepest_module(action_name, 1, App), params)
     hook_stop(hook_result) && return to_response(hook_result[2])
   catch ex
     if Configuration.is_dev()
@@ -790,12 +791,8 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
   Genie.config.log_requests && Logger.log("Invoking $action_name with params: \n" * string(Millboard.table(params)), :debug)
 
   return  try
-            # TODO: add support for arbitrarely nested modules
-            getfield(
-              getfield(
-                getfield(current_module(), Symbol("App")),
-              Symbol(split(action_name, ".")[1])),
-            Symbol(split(action_name, ".")[2]))() |> to_response
+            # getfield( getfield( getfield(current_module(), Symbol("App")), Symbol(split(action_name, ".")[1]) ), Symbol(split(action_name, ".")[2]) )() |> to_response
+            (get_nested_field(action_name, 1, App).field)() |> to_response
           catch ex
             if Configuration.is_dev()
               rethrow(ex)
@@ -868,11 +865,8 @@ function invoke_channel(to::String, req::Request, payload::Dict{String,Any}, ws_
 
   return  try
             # TODO: add support for arbitrarely nested modules
-            getfield(
-              getfield(
-                getfield(current_module(), Symbol("App")),
-              Symbol(split(action_name, ".")[1])),
-            Symbol(split(action_name, ".")[2]))() |> string
+            # getfield( getfield( getfield(current_module(), Symbol("App")), Symbol(split(action_name, ".")[1])), Symbol(split(action_name, ".")[2]))() |> string
+            (get_nested_field(action_name, 1, App).field)() |> string
           catch ex
             if Configuration.is_dev()
               rethrow(ex)
@@ -909,11 +903,18 @@ function to_response(action_result) :: Response
           end
 end
 
+
 macro params()
   :(task_local_storage(:__params))
 end
-macro params(key)
+macro params(key::Expr)
   :(task_local_storage(:__params)[$key])
+end
+function _params_()
+  task_local_storage(:__params)
+end
+function _params_(key::Union{String,Symbol})
+  task_local_storage(:__params)[$key]
 end
 
 
@@ -948,7 +949,7 @@ end
 
 Runs the hooks defined in the currently invoked controller.
 """
-function run_hooks(hook_type::Symbol, m::Module, params::Dict{Symbol,Any}) :: Any
+function run_hooks(hook_type::Symbol, m::Module, params::Dict{Symbol,Any}) :: Tuple{Bool,Any}
   if in(hook_type, names(m, true))
     hooks::Vector{Symbol} = getfield(m, hook_type)
     for hook in hooks
@@ -957,9 +958,23 @@ function run_hooks(hook_type::Symbol, m::Module, params::Dict{Symbol,Any}) :: An
       r = getfield(getfield(App, Symbol(c)), Symbol(a))()
       hook_stop(r) && return r
     end
+  else
+    tuple(true, nothing)
   end
 end
-# FIX: this is type unstable
+
+
+"""
+    routes_available() :: Bool
+
+Checkes if the routes file is available.
+"""
+function routes_available() :: Bool
+  ! IS_IN_APP && return false
+  ! isfile(Genie.ROUTES_FILE_NAME) && return false
+
+  true
+end
 
 
 """
@@ -968,11 +983,24 @@ end
 Loads the routes file.
 """
 function load_routes() :: Void
-  ! IS_IN_APP && return nothing
-  ! isfile(abspath(joinpath("config", "routes.jl"))) && return nothing
+  ! routes_available() && return nothing
 
   empty!(_routes)
-  include(abspath(joinpath("config", "routes.jl")))
+  include(Genie.ROUTES_FILE_NAME)
+
+  nothing
+end
+
+
+"""
+    append_to_routes_file(content::String) :: Void
+
+Appends `content` to the app's route file.
+"""
+function append_to_routes_file(content::String) :: Void
+  open(Genie.ROUTES_FILE_NAME, "a") do io
+    write(io, "\n" * content)
+  end
 
   nothing
 end

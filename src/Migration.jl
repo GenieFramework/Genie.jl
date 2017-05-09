@@ -13,10 +13,26 @@ end
 
 
 """
+    new(migration_name::String, content::String = "") :: Void
     new(cmd_args::Dict{String,Any}, config::Configuration.Settings) :: Void
 
 Creates a new default migration file and persists it to disk in the configured Genie migrations folder.
 """
+function new(migration_name::String, content::String = "") :: Void
+  mfn = migration_file_name(migration_name)
+
+  if ispath(mfn)
+    error("Migration file already exists")
+  end
+
+  f = open(mfn, "w")
+  write(f, isempty(content) ? FileTemplates.new_database_migration(migration_module_name(content)) : content)
+  close(f)
+
+  Logger.log("New migration created at $mfn")
+
+  nothing
+end
 function new(cmd_args::Dict{String,Any}, config::Configuration.Settings) :: Void
   mfn = migration_file_name(cmd_args, config)
 
@@ -34,6 +50,7 @@ function new(cmd_args::Dict{String,Any}, config::Configuration.Settings) :: Void
 end
 
 
+
 """
     migration_hash() :: String
 
@@ -47,10 +64,14 @@ end
 
 
 """
+    migration_file_name(migration_name::String) :: String
     migration_file_name(cmd_args::Dict{String,Any}, config::Configuration.Settings) :: String
 
 Computes the name of a new migration file.
 """
+function migration_file_name(migration_name::String) :: String
+  joinpath(Genie.config.db_migrations_folder, migration_hash() * "_" * migration_name * ".jl")
+end
 function migration_file_name(cmd_args::Dict{String,Any}, config::Configuration.Settings) :: String
   joinpath(config.db_migrations_folder, migration_hash() * "_" * cmd_args["migration:new"] * ".jl")
 end

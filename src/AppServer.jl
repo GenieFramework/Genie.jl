@@ -64,7 +64,7 @@ function startup(port::Int = 8000) :: Void
 
   Genie.config.lookup_ip && (http.events["connect"] = (http_client) -> handle_connect(http_client))
 
-  server = Server(http, wsh)
+  server = Genie.config.websocket_server ? Server(http, wsh) : Server(http)
   @async run(server, port) # !!! @async required to avoid race conditions when storing the request IP
 
   if Genie.config.run_as_server

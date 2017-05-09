@@ -41,7 +41,7 @@ end
 Loads (includes) the `controller` file that corresponds to the currently matched route.
 The modules are included in the `App` module.
 """
-function load_controller(dir::AbstractString) :: Void
+function load_controller(dir::String) :: Void
   push!(LOAD_PATH, dir)
   file_path = joinpath(dir, Genie.GENIE_CONTROLLER_FILE_NAME)
   isfile(file_path) && eval(App, :(include($file_path)))

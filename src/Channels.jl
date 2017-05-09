@@ -3,10 +3,17 @@ Handles WebSockets communication logic.
 """
 module Channels
 
-using WebSockets
+using WebSockets, JSON
 
 typealias ClientId  Int
 typealias ChannelId String
+
+type ChannelMessage
+  channel::ChannelId
+  client::ClientId
+  message::String
+  payload::Union{Void,Dict{Union{String,Symbol},Any}}
+end
 
 const CLIENTS       = Dict{ClientId, Dict{Symbol, Union{WebSockets.WebSocket,Vector{ChannelId}} } }() # { ws.id => { :client => ws, :channels => ["foo", "bar", "baz"] } }
 const SUBSCRIPTIONS = Dict{ChannelId,Vector{ClientId}}()  # { "foo" => ["4", "12"] }
@@ -117,11 +124,16 @@ Pushes `msg` to all the clients subscribed to the channels in `channels`.
 function broadcast(channels::Vector{ChannelId}, msg::String) :: Void
   for channel in channels
     for client in SUBSCRIPTIONS[channel]
-      write(CLIENTS[client][:client], msg)
+      ws_write_message(client, msg)
     end
   end
-
-  nothing
+end
+function broadcast(channels::Vector{ChannelId}, msg::String, payload::Dict{Union{String,Symbol},Any}) :: Void
+  for channel in channels
+    for client in SUBSCRIPTIONS[channel]
+      ws_write_message(client, ChannelMessage(channel, client, msg, payload) |> JSON.json)
+    end
+  end
 end
 
 
@@ -132,6 +144,31 @@ Pushes `msg` to all the clients subscribed to all the channels.
 """
 function broadcast(msg::String) :: Void
   broadcast(collect(keys(SUBSCRIPTIONS)), msg)
+end
+
+
+"""
+  message(channel::ChannelId, msg::String) :: Void
+
+Pushes `msg` to `channel`.
+"""
+function message(channel::ChannelId, msg::String) :: Void
+  broadcast(ChannelId[channel], msg)
+end
+function message(channel::ChannelId, msg::String, payload::Dict{Union{String,Symbol},Any}) :: Void
+  broadcast(ChannelId[channel], msg, payload)
+end
+
+
+"""
+    ws_write_message(client::ClientId, msg::String) :: Void
+
+Writes `msg` to web socket.
+"""
+function ws_write_message(client::ClientId, msg::String) :: Void
+  write(CLIENTS[client][:client], msg)
+
+  nothing
 end
 
 end
