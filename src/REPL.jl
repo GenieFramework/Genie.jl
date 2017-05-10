@@ -20,6 +20,12 @@ Creates a new Genie app at the indicated path.
 """
 function new_app(path = ".") :: Void
   cp(joinpath(Pkg.dir("Genie"), "files", "new_app"), abspath(path))
+  chmod(joinpath(path, "genie.jl"), 0o700)
+
+  open(joinpath(path, "config", "secrets.jl"), "w") do f
+    write(f, """const SECRET_TOKEN = "$(secret_token())" """)
+  end
+
   Logger.log("Done! New app created at $(abspath(path))")
 
   nothing

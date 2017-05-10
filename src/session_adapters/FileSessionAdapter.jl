@@ -15,7 +15,7 @@ function write(session::Sessions.Session) :: Sessions.Session
       serialize(io, session)
     end
   catch ex
-    Logger.log("Error when serializing session $session in $(@__FILE__):$(@__LINE__)")
+    Logger.log("Error when serializing session $session in $(@__FILE__):$(@__LINE__)", :err)
     Logger.@location()
   end
 
