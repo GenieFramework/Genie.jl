@@ -1,4 +1,4 @@
-#!/usr/bin/env julia --color=yes --depwarn=no --math-mode=fast
+#!/usr/bin/env julia --color=yes --depwarn=no --math-mode=fast --quiet --check-bounds=no
 
 """
     bootstrap_genie() :: Void
