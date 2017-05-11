@@ -6,7 +6,7 @@
 Genie is a full-stack MVC web framework that provides a streamlined and efficient workflow for developing modern web applications. It builds on Julia's strengths (high-level, high-performance, dynamic, JIT compiled), exposing a rich API and a series of tools for productive web development.
 
 ## Quick start
-In a Julia session clone `Genie` and its dependencies (it's not yet an official package):
+In a Julia session clone `Genie` and its dependencies:
 ```julia
 julia> Pkg.clone("https://github.com/essenciary/Flax.jl") # Genie's templating engine
 
