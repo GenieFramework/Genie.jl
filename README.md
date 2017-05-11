@@ -3,7 +3,7 @@
 # Genie
 ### The high-performance high-productivity Julia web framework
 
-Genie is a full-stack MVC web framework that provides a streamlined and efficient workflow for developing modern web applications. It builds on Julia's strengths (high-level, high-performance, dynamic, JIT compiled), exposing a rich API and a series of tools for productive web development.
+Genie is a full-stack MVC web framework that provides a streamlined and efficient workflow for developing modern web applications. It builds on Julia's strengths (high-level, high-performance, dynamic, JIT compiled), exposing a rich API and a powerful toolset for productive web development.
 
 ## Quick start
 In a Julia session clone `Genie` and its dependencies:
