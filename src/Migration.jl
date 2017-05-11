@@ -208,7 +208,9 @@ function run_migration(migration::DatabaseMigration, direction::Symbol; force = 
 
     ! Genie.config.suppress_output && Logger.log("Executed migration $(migration.migration_module_name) $(direction)")
   catch ex
+    Logger.log("Failed executing migration $(migration.migration_module_name) $(direction)", :err)
     Logger.log(string(ex), :err)
+    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
   end
 
   nothing

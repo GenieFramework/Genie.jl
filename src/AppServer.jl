@@ -28,8 +28,8 @@ function startup(port::Int = 8000) :: Void
       if Configuration.is_dev()
         rethrow(ex)
       else
-        Logger.log("Genie error " * string(ex), :critical, showst = false)
-        Logger.@location()
+        Logger.log(string(ex), :critical)
+        Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
 
         Router.serve_error_file(500, string(ex))
       end
@@ -51,8 +51,8 @@ function startup(port::Int = 8000) :: Void
           if Configuration.is_dev()
             rethrow(ex)
           else
-            Logger.log("Genie error " * string(ex), :critical, showst = false)
-            Logger.@location()
+            Logger.log(string(ex), :critical)
+            Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
 
             write(ws_client, "500 error: Socket communication error.")
           end
@@ -87,8 +87,9 @@ function handle_connect(client::HttpServer.Client) :: Void
     ip, port = getsockname(isa(client.sock, MbedTLS.SSLContext) ? client.sock.bio : client.sock)
     task_local_storage(:ip, ip)
   catch ex
-    string(ex) |> Logger.log
-    Logger.@location()
+    Logger.log("Failed getting IP address of request", :err)
+    Logger.log(string(ex), :err)
+    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
     task_local_storage(:ip, ip"255.255.255.255")
   end

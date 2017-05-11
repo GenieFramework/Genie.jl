@@ -124,6 +124,8 @@ function current_user!!(session) :: User
     current_user(session) |> Base.get
   catch ex
     Logger.log("The current user is not authenticated", :err)
+    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+
     rethrow(ex)
   end
 end

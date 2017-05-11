@@ -28,18 +28,26 @@ function id() :: String
   try
     App.SECRET_TOKEN * ":" * bytes2hex(sha1(string(Dates.now()))) * ":" * string(rand()) * ":" * string(hash(Genie)) |> sha256 |> bytes2hex
   catch ex
-    # Genie.log(ex, :err)
+    Logger.log("Session error", :err)
+    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
     error("Can't compute session id - please make sure SECRET_TOKEN is defined in config/secrets.jl")
   end
 end
 function id(req::Request) :: String
-  ! isnull(Cookies.get(req, Genie.config.session_key_name)) && return Base.get(Cookies.get(req, Genie.config.session_key_name))
+  ! isnull(Cookies.get(req, Genie.config.session_key_name)) &&
+    ! isempty(Base.get(Cookies.get(req, Genie.config.session_key_name))) && 
+      return Base.get(Cookies.get(req, Genie.config.session_key_name))
 
   id()
 end
 function id(req::Request, res::Response) :: String
-  ! isnull(Cookies.get(res, Genie.config.session_key_name)) && return Base.get(Cookies.get(res, Genie.config.session_key_name))
-  ! isnull(Cookies.get(req, Genie.config.session_key_name)) && return Base.get(Cookies.get(req, Genie.config.session_key_name))
+  ! isnull(Cookies.get(res, Genie.config.session_key_name)) &&
+    ! isempty(Base.get(Cookies.get(res, Genie.config.session_key_name))) &&
+      return Base.get(Cookies.get(res, Genie.config.session_key_name))
+
+  ! isnull(Cookies.get(req, Genie.config.session_key_name)) &&
+    ! isempty(Base.get(Cookies.get(req, Genie.config.session_key_name))) &&
+      return Base.get(Cookies.get(req, Genie.config.session_key_name))
 
   id()
 end
@@ -54,6 +62,7 @@ Initiates a session.
 function start(session_id::String, req::Request, res::Response; options = Dict{String,String}()) :: Session
   options = merge(Dict("Path" => "/", "HttpOnly" => "", "Expires" => "0"), options)
   Cookies.set!(res, Genie.config.session_key_name, session_id, options)
+
   load(session_id)
 end
 function start(req::Request, res::Response) :: Session
@@ -138,6 +147,7 @@ Loads session data from persistent storage - delegates to the underlying `Sessio
 """
 function load(session_id::String) :: Session
   session = SessionAdapter.read(session_id)
+
   if isnull(session)
     return Session(session_id)
   else

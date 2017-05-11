@@ -10,6 +10,8 @@ const SESSION_FOLDER = IS_IN_APP ? Genie.config.session_folder : tempdir()
 Persists the `Session` object to the file system, using the configured sessions folder and returns it.
 """
 function write(session::Sessions.Session) :: Sessions.Session
+  @show session
+
   try
     open(joinpath(SESSION_FOLDER, session.id), "w") do (io)
       serialize(io, session)
@@ -17,6 +19,9 @@ function write(session::Sessions.Session) :: Sessions.Session
   catch ex
     Logger.log("Error when serializing session $session in $(@__FILE__):$(@__LINE__)", :err)
     Logger.log(string(ex), :err)
+    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+
+    rethrow(ex)
   end
 
   session
@@ -30,6 +35,13 @@ end
 Attempts to read from file the session object serialized as `session_id`.
 """
 function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
+  if isempty(session_id)
+    Logger.log("Invalid session ID", :err)
+    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+
+    return Nullable{Sessions.Session}()
+  end
+  
   try
     session = open(joinpath(SESSION_FOLDER, session_id), "r") do (io)
       deserialize(io)
@@ -37,10 +49,9 @@ function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
 
     Nullable{Sessions.Session}(session)
   catch ex
-    if is_dev()
-      Logger.log("Can't read session $(joinpath(SESSION_FOLDER, session_id))", :err)
-      Logger.@location()
-    end
+    Logger.log("Can't read session $(joinpath(SESSION_FOLDER, session_id))", :err)
+    Logger.log(string(ex), :err)
+    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
     Nullable{Sessions.Session}()
   end

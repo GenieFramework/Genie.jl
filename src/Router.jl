@@ -338,14 +338,14 @@ function to_link!!{T}(route_name::Symbol, d::Pair{Symbol,T}) :: String
 end
 function to_link!!{T}(route_name::Symbol, d::Dict{Symbol,T}) :: String
   route = try
-    get_route!!(route_name)
-  catch ex
-    Logger.log(string(ex), :err)
-    Logger.log("Route not found", :err)
-    Logger.@location()
+            get_route!!(route_name)
+          catch ex
+            Logger.log("Route not found", :err)
+            Logger.log(string(ex), :err)
+            Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
-    error("Route not found")
-  end
+            rethrow(ex)
+          end
 
   result = String[]
   for part in split(route[1][2], "/")
@@ -382,9 +382,9 @@ function to_link(route_name::Symbol; route_params...) :: String
   try
     to_link!!(route_name, route_params_to_dict(route_params))
   catch ex
-    Logger.log(string(ex), :err)
     Logger.log("Route not found", :err)
-    Logger.@location()
+    Logger.log(string(ex), :err)
+    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
     ""
   end
@@ -443,14 +443,11 @@ function match_routes(req::Request, res::Response, session::Sessions.Session, pa
                 invoke_controller(to, req, res, params.collection, session)
               end
             catch ex
-              if is_dev()
-                rethrow(ex)
-              else
-                Logger.log("Failed invoking controller", :err, showst = false)
-                Logger.@location()
+              Logger.log("Failed invoking controller", :err)
+              Logger.log(string(ex), :err)
+              Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
-                serve_error_file_500(ex, params.collection)
-              end
+              rethrow(ex)
             end
   end
 
@@ -506,8 +503,9 @@ function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSock
               if is_dev()
                 rethrow(ex)
               else
-                Logger.log("Failed invoking channel", :err, showst = false)
-                Logger.@location()
+                Logger.log("Failed invoking channel", :err)
+                Logger.log(string(ex), :err)
+                Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
                 string(ex)
               end
@@ -593,9 +591,9 @@ function extract_uri_params(uri::String, regex_route::Regex, param_names::Vector
     try
       params.collection[Symbol(param_name)] = convert(param_types[i], matches[param_name])
     catch ex
-      Logger.log(ex)
-      Logger.log("Failed to match URI params between $(param_types[i])::$(typeof(param_types[i])) and $(matches[param_name])::$(typeof(matches[param_name]))")
-      Logger.@location()
+      Logger.log("Failed to match URI params between $(param_types[i])::$(typeof(param_types[i])) and $(matches[param_name])::$(typeof(matches[param_name]))", :err)
+      Logger.log(string(ex), :err)
+      Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
       return false
     end
@@ -762,14 +760,11 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
   try
     params[Genie.PARAMS_ACL_KEY] = App.load_acl(controller_path)
   catch ex
-    if Configuration.is_dev()
-      rethrow(ex)
-    else
-      Logger.log("Failed loading ACL", :err, showst = false)
-      Logger.@location()
+      Logger.log("Failed loading ACL", :err)
+      Logger.log(string(ex), :err)
+      Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
-      return serve_error_file_500(ex, params)
-    end
+      rethrow(ex)
   end
 
   task_local_storage(:__params, params)
@@ -778,31 +773,23 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
     hook_result = run_hooks(BEFORE_ACTION_HOOKS, get_deepest_module(action_name, 1, App), params)
     hook_stop(hook_result) && return to_response(hook_result[2])
   catch ex
-    if Configuration.is_dev()
-      rethrow(ex)
-    else
-      Logger.log("Failed to invoke hooks $(BEFORE_ACTION_HOOKS)", :err, showst = false)
-      Logger.@location()
+    Logger.log("Failed to invoke hooks $(BEFORE_ACTION_HOOKS)", :err)
+    Logger.log(string(ex), :err)
+    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
-      return serve_error_file_500(ex, params)
-    end
+    rethrow(ex)
   end
 
   Genie.config.log_requests && Logger.log("Invoking $action_name with params: \n" * string(Millboard.table(params)), :debug)
 
   return  try
-            # getfield( getfield( getfield(current_module(), Symbol("App")), Symbol(split(action_name, ".")[1]) ), Symbol(split(action_name, ".")[2]) )() |> to_response
             (get_nested_field(action_name, 1, App).field)() |> to_response
           catch ex
-            if Configuration.is_dev()
-              rethrow(ex)
-            else
-              Logger.log("$ex at $(@__FILE__):$(@__LINE__)", :critical, showst = false)
-              Logger.log("While invoking $(action_name) with $(params)", :critical, showst = false)
-              Logger.@location()
+            Logger.log("Error while invoking $(action_name) with $(params)", :err)
+            Logger.log(string(ex), :err)
+            Logger.log("$ex at $(@__FILE__):$(@__LINE__)", :err)
 
-              serve_error_file_500(ex, params)
-            end
+            rethrow(ex)
           end
 end
 
@@ -838,8 +825,9 @@ function invoke_channel(to::String, req::Request, payload::Dict{String,Any}, ws_
     if Configuration.is_dev()
       rethrow(ex)
     else
-      Logger.log("Failed loading ACL", :err, showst = false)
-      Logger.@location()
+      Logger.log("Failed loading ACL", :err)
+      Logger.log(string(ex), :err)
+      Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
       return "500 error -- $(string(ex))"
     end
@@ -854,8 +842,9 @@ function invoke_channel(to::String, req::Request, payload::Dict{String,Any}, ws_
     if Configuration.is_dev()
       rethrow(ex)
     else
-      Logger.log("Failed to invoke channel hooks $(BEFORE_ACTION_HOOKS)", :err, showst = false)
-      Logger.@location()
+      Logger.log("Failed to invoke channel hooks $(BEFORE_ACTION_HOOKS)", :err)
+      Logger.log(string(ex), :err)
+      Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
       return "500 error -- $(string(ex))"
     end
@@ -871,9 +860,9 @@ function invoke_channel(to::String, req::Request, payload::Dict{String,Any}, ws_
             if Configuration.is_dev()
               rethrow(ex)
             else
-              Logger.log("$ex at $(@__FILE__):$(@__LINE__)", :critical, showst = false)
-              Logger.log("While invoking $(action_name) with $(params)", :critical, showst = false)
-              Logger.@location()
+              Logger.log("$ex at $(@__FILE__):$(@__LINE__)", :err)
+              Logger.log("While invoking $(action_name) with $(params)", :err)
+              Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
               return "500 error -- $(string(ex))"
             end
@@ -896,10 +885,11 @@ function to_response(action_result) :: Response
               Response(action_result)
             end
           catch ex
-            Logger.log("Can't convert $action_result to HttpServer Response", :err)
-            Logger.@location()
+            Logger.log("Can't convert $action_result to HttpServer.Response", :err)
+            Logger.log(string(ex), :err)
+            Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
-            serve_error_file_500(ex)
+            rethrow(ex)
           end
 end
 
