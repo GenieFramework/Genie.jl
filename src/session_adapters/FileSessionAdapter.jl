@@ -10,8 +10,6 @@ const SESSION_FOLDER = IS_IN_APP ? Genie.config.session_folder : tempdir()
 Persists the `Session` object to the file system, using the configured sessions folder and returns it.
 """
 function write(session::Sessions.Session) :: Sessions.Session
-  @show session
-
   try
     open(joinpath(SESSION_FOLDER, session.id), "w") do (io)
       serialize(io, session)
@@ -41,7 +39,7 @@ function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
 
     return Nullable{Sessions.Session}()
   end
-  
+
   try
     session = open(joinpath(SESSION_FOLDER, session_id), "r") do (io)
       deserialize(io)

@@ -1,5 +1,5 @@
 using Router
 
 route("/") do
-  Flax.include_template("$(Genie.LAYOUTS_PATH)/app.flax.html", partial = false)
+  Router.serve_static_file("/welcome.html")
 end

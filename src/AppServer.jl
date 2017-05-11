@@ -25,19 +25,16 @@ function startup(port::Int = 8000) :: Void
       ip::IPv4 = Genie.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
       nworkers() == 1 ? handle_request(req, res, ip) : @fetch handle_request(req, res, ip)
     catch ex
-      if Configuration.is_dev()
-        rethrow(ex)
-      else
-        Logger.log(string(ex), :critical)
-        Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
+      Logger.log(string(ex), :critical)
+      Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
 
-        Router.serve_error_file(500, string(ex))
-      end
+      message = Configuration.is_prod() ? "The error has been logged and our developers will address it ASAP." : string(ex)
+
+      return Router.serve_error_file(500, message)
     end
   end
 
   if Genie.config.websocket_server
-
     wsh = WebSocketHandler() do req::Request, ws_client::WebSockets.WebSocket
       while true
         try
@@ -48,18 +45,15 @@ function startup(port::Int = 8000) :: Void
 
           write(ws_client, response)
         catch ex
-          if Configuration.is_dev()
-            rethrow(ex)
-          else
-            Logger.log(string(ex), :critical)
-            Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
+          Logger.log(string(ex), :critical)
+          Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
 
-            write(ws_client, "500 error: Socket communication error.")
-          end
+          message = Configuration.is_prod() ? "The error has been logged and our developers will address it ASAP." : string(ex)
+
+          return write(ws_client, "500 Internal Server Error: $(message).")
         end
       end
     end
-
   end
 
   Genie.config.lookup_ip && (http.events["connect"] = (http_client) -> handle_connect(http_client))
