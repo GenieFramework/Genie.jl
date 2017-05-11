@@ -23,10 +23,10 @@ julia> using Genie
 Create a new app:
 ```julia
 julia> Genie.REPL.new_app("demo_app")
-2017-05-10T20:52:51.13 - info: Done! New app created at /demo_app
+info: Done! New app created at /demo_app
 ```
 
-Start your app:
+`cd` into the new app's dir and start the server:
 ```
 $> ./genie.jl s
 ```
@@ -40,10 +40,16 @@ In order to start a Genie interactive session, load the app into the Julia REPL:
 $> julia -L genie.jl --color=yes --depwarn=no -q
 ```
 
-Once the app is loaded you can start the web server anytime with:
+Alternatively, from a regular Julia session, you can just
+```julia
+julia> include("genie.jl")
+```
+
+Once the app is loaded you can start the web server anytime with
 ```julia
 julia> AppServer.startup()
 ```
+
 
 ## Next steps
 If you want to learn more about Genie you can
