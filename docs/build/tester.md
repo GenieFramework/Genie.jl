@@ -16,7 +16,7 @@ bootstrap_tests(cmd_args::String, config::Settings) :: Void
 Sets up testing environment, includes test files, etc.
 
 
-<a target='_blank' href='https://github.com/essenciary/Genie.jl/tree/61381348076549d7b0c8162b0c07b9b8fbb313c3/src/Tester.jl#L6-L10' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/essenciary/Genie.jl/tree/1aab131c148827d91cab858ce55f693885b4501f/src/Tester.jl#L6-L10' class='documenter-source'>source</a><br>
 
 <a id='Tester.reset_db' href='#Tester.reset_db'>#</a>
 **`Tester.reset_db`** &mdash; *Function*.
@@ -30,7 +30,7 @@ reset_db() :: Void
 Prepares the test env DB running all migrations up.
 
 
-<a target='_blank' href='https://github.com/essenciary/Genie.jl/tree/61381348076549d7b0c8162b0c07b9b8fbb313c3/src/Tester.jl#L26-L30' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/essenciary/Genie.jl/tree/1aab131c148827d91cab858ce55f693885b4501f/src/Tester.jl#L26-L30' class='documenter-source'>source</a><br>
 
 <a id='Tester.run_all_tests' href='#Tester.run_all_tests'>#</a>
 **`Tester.run_all_tests`** &mdash; *Function*.
@@ -44,7 +44,7 @@ run_all_tests(cmd_args::String, config::Settings) :: Void
 Runs all existing tests.
 
 
-<a target='_blank' href='https://github.com/essenciary/Genie.jl/tree/61381348076549d7b0c8162b0c07b9b8fbb313c3/src/Tester.jl#L39-L43' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/essenciary/Genie.jl/tree/1aab131c148827d91cab858ce55f693885b4501f/src/Tester.jl#L39-L43' class='documenter-source'>source</a><br>
 
 <a id='Tester.set_test_env' href='#Tester.set_test_env'>#</a>
 **`Tester.set_test_env`** &mdash; *Function*.
@@ -58,5 +58,5 @@ set_test_env() :: Void
 Switches Genie to the test env for the duration of the current execution. 
 
 
-<a target='_blank' href='https://github.com/essenciary/Genie.jl/tree/61381348076549d7b0c8162b0c07b9b8fbb313c3/src/Tester.jl#L51-L55' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/essenciary/Genie.jl/tree/1aab131c148827d91cab858ce55f693885b4501f/src/Tester.jl#L51-L55' class='documenter-source'>source</a><br>
 

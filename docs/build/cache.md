@@ -16,7 +16,7 @@ with_cache(f::Function, key::String, expiration::Int = CACHE_DURATION; dir = "",
 Executes the function `f` and stores the result into the cache for the duration of `expiration`. Next time the function is invoked, if the cache has not expired, the cached result is returned skipping the function execution. The optional `dir` param is used to designate the folder where the cache will be stored (within the configured cache folder). If `condition` is `false` caching will be skipped.
 
 
-<a target='_blank' href='https://github.com/essenciary/Genie.jl/tree/61381348076549d7b0c8162b0c07b9b8fbb313c3/src/Cache.jl#L25-L32' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/essenciary/Genie.jl/tree/1aab131c148827d91cab858ce55f693885b4501f/src/Cache.jl#L25-L32' class='documenter-source'>source</a><br>
 
 <a id='Cache.cache_key' href='#Cache.cache_key'>#</a>
 **`Cache.cache_key`** &mdash; *Function*.
@@ -30,7 +30,7 @@ cache_key(args...) :: String
 Computes a unique cache key based on `args`. Used to generate unique `key`s for storing data in cache.
 
 
-<a target='_blank' href='https://github.com/essenciary/Genie.jl/tree/61381348076549d7b0c8162b0c07b9b8fbb313c3/src/Cache.jl#L52-L56' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/essenciary/Genie.jl/tree/1aab131c148827d91cab858ce55f693885b4501f/src/Cache.jl#L52-L56' class='documenter-source'>source</a><br>
 
 <a id='Cache.cache_adapter' href='#Cache.cache_adapter'>#</a>
 **`Cache.cache_adapter`** &mdash; *Function*.
@@ -44,5 +44,5 @@ cache_adapter(adapter::Symbol = Genie.config.cache_adapter) :: Module
 Returns the currently active cache adapter, as defined in the settings.
 
 
-<a target='_blank' href='https://github.com/essenciary/Genie.jl/tree/61381348076549d7b0c8162b0c07b9b8fbb313c3/src/Cache.jl#L67-L71' class='documenter-source'>source</a><br>
+<a target='_blank' href='https://github.com/essenciary/Genie.jl/tree/1aab131c148827d91cab858ce55f693885b4501f/src/Cache.jl#L67-L71' class='documenter-source'>source</a><br>
 
