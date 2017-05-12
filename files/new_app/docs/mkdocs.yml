@@ -1,0 +1,24 @@
+site_name:        PACKAGE_NAME.jl
+repo_url:         https://github.com/USER_NAME/PACKAGE_NAME.jl
+site_description: Description...
+site_author:      USER_NAME
+
+theme: readthedocs
+
+extra_css:
+  - assets/Documenter.css
+
+extra_javascript:
+  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML
+  - assets/mathjaxhelper.js
+
+markdown_extensions:
+  - extra
+  - tables
+  - fenced_code
+  - mdx_math
+
+docs_dir: 'build'
+
+pages:
+  - Home: index.md

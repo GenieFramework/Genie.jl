@@ -1,5 +1,3 @@
-_debug/
-
 # App
 config/secrets.jl
 log/
@@ -38,3 +36,7 @@ Thumbs.db
 
 # NPM packages folder.
 node_modules/
+
+# docs
+docs/build
+docs/site/

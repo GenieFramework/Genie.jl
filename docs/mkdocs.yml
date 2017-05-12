@@ -1,0 +1,20 @@
+site_name:        Genie.jl
+repo_url:         https://github.com/essenciary/Genie.jl
+site_description: Genie is a full-stack MVC web framework that promotes a streamlined and efficient workflow for developing modern web applications.
+site_author:      essenciary
+
+theme: readthedocs
+
+extra_css:
+  - assets/Documenter.css
+
+markdown_extensions:
+  - extra
+  - tables
+  - fenced_code
+  - mdx_math
+
+docs_dir: 'build'
+
+pages:
+  - Home: index.md
