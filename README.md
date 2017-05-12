@@ -11,6 +11,10 @@ Genie is a full-stack MVC web framework that provides a streamlined and efficien
 ## Quick start
 In a Julia session clone `Genie` and its dependencies:
 ```julia
+julia> Pkg.clone("https://github.com/JuliaDB/DBI.jl") # Julia's DB interface
+
+julia> Pkg.clone("https://github.com/JuliaDB/PostgreSQL.jl") # PostgreSQL adapter
+
 julia> Pkg.clone("https://github.com/essenciary/Flax.jl") # Genie's templating engine
 
 julia> Pkg.clone("https://github.com/essenciary/SearchLight.jl") # Genie's ORM
@@ -26,7 +30,10 @@ julia> using Genie
 Create a new app:
 ```julia
 julia> Genie.REPL.new_app("demo_app")
+
 info: Done! New app created at /demo_app
+
+warn: You must restart the current Julia session before loading the new app to properly reinitialize Genie.
 ```
 
 `cd` into the new app's dir and start the server:

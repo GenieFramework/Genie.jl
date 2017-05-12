@@ -26,7 +26,9 @@ function new_app(path = ".") :: Void
     write(f, """const SECRET_TOKEN = "$(secret_token())" """)
   end
 
-  Logger.log("Done! New app created at $(abspath(path))")
+  Logger.log("Done! New app created at $(abspath(path))", :info)
+
+  Logger.log("You must restart the current Julia session before loading the new app to properly reinitialize Genie.", :warn)
 
   nothing
 end

@@ -2,6 +2,9 @@
 ![Genie Logo](https://dl.dropboxusercontent.com/s/0dbiza50r63cvvc/genie_logo.png)
 
 
+[![Stable](https://readthedocs.org/projects/docs/badge/?version=stable)](http://geniejl.readthedocs.io/en/stable/build/) [![Latest](https://readthedocs.org/projects/docs/badge/?version=latest)](http://geniejl.readthedocs.io/en/latest/build/)
+
+
 <a id='Genie-1'></a>
 
 # Genie
@@ -24,6 +27,10 @@ In a Julia session clone `Genie` and its dependencies:
 
 
 ```julia
+julia> Pkg.clone("https://github.com/JuliaDB/DBI.jl") # Julia's DB interface
+
+julia> Pkg.clone("https://github.com/JuliaDB/PostgreSQL.jl") # PostgreSQL adapter
+
 julia> Pkg.clone("https://github.com/essenciary/Flax.jl") # Genie's templating engine
 
 julia> Pkg.clone("https://github.com/essenciary/SearchLight.jl") # Genie's ORM
@@ -45,7 +52,10 @@ Create a new app:
 
 ```julia
 julia> Genie.REPL.new_app("demo_app")
+
 info: Done! New app created at /demo_app
+
+warn: You must restart the current Julia session before loading the new app to properly reinitialize Genie.
 ```
 
 
@@ -102,4 +112,17 @@ If you want to learn more about Genie you can
       * [TodoMVC](https://github.com/essenciary/genie-todo-mvc)
       * [PkgSearch web app and REST API](https://github.com/essenciary/pgksearch-api-website)
       * [Genie CMS]()
+
+
+<a id='Acknowledgements-1'></a>
+
+## Acknowledgements
+
+
+  * The amazing Genie logo was designed by my friend Alvaro Casanova (www.yeahstyledg.com).
+  * Genie uses a multitude of packages that have been contributed by so many incredible developers.
+  * I wouldn't have made it so far without the help and the patience of the amazing people at the `julia-users` group.
+
+
+Thank you all.
 
