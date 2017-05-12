@@ -1,5 +1,7 @@
 ![Genie Logo](https://dl.dropboxusercontent.com/s/0dbiza50r63cvvc/genie_logo.png)
 
+|docs|
+
 # Genie
 ### The high-performance high-productivity Julia web framework
 
@@ -67,3 +69,8 @@ If you want to learn more about Genie you can
 * I wouldn't have made it so far without the help and the patience of the amazing people at the `julia-users` group.
 
 Thank you all.
+
+.. |docs| image:: https://readthedocs.org/projects/docs/badge/?version=latest
+    :alt: Documentation Status
+    :scale: 100%
+    :target: https://docs.readthedocs.io/en/latest/?badge=latest
