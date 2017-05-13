@@ -28,7 +28,7 @@ function new_app(path = ".") :: Void
 
   Logger.log("Done! New app created at $(abspath(path))", :info)
 
-  Logger.log("You must restart the current Julia session before loading the new app to properly reinitialize Genie.", :warn)
+  Logger.log("Please restart the current Julia session before loading the new app to properly reinitialize Genie.", :warn)
 
   nothing
 end

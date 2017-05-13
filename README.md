@@ -29,11 +29,11 @@ julia> using Genie
 
 Create a new app:
 ```julia
-julia> Genie.REPL.new_app("demo_app")
+julia> Genie.REPL.new_app("your_cool_new_app")
 
-info: Done! New app created at /demo_app
+info: Done! New app created at /your_cool_new_app
 
-warn: You must restart the current Julia session before loading the new app to properly reinitialize Genie.
+warn: Please restart the current Julia session before loading the new app to properly reinitialize Genie.
 ```
 
 `cd` into the new app's dir and start the server:
