@@ -12,15 +12,12 @@ Lumberjack
 MbedTLS
 Memoize
 Millboard
-MySQL
 Reexport
 SHA
 URIParser
 YAML
 Flax
 SearchLight
-DBI
-PostgreSQL
 Documenter
 Nettle
 WebSockets

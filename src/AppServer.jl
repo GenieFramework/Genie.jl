@@ -26,9 +26,12 @@ function startup(port::Int = 8000) :: Void
       nworkers() == 1 ? handle_request(req, res, ip) : @fetch handle_request(req, res, ip)
     catch ex
       Logger.log(string(ex), :critical)
+      Logger.log(sprint(io->Base.show_backtrace(io, backtrace())), :critical)
       Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
 
-      message = Configuration.is_prod() ? "The error has been logged and our developers will address it ASAP." : string(ex)
+      message = Configuration.is_prod() ?
+                  "The error has been logged and we'll look into it ASAP." :
+                  string(ex, " in $(@__FILE__):$(@__LINE__)", "\n\n", sprint(io->Base.show_backtrace(io, backtrace())))
 
       return Router.serve_error_file(500, message)
     end
@@ -48,7 +51,7 @@ function startup(port::Int = 8000) :: Void
           Logger.log(string(ex), :critical)
           Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
 
-          message = Configuration.is_prod() ? "The error has been logged and our developers will address it ASAP." : string(ex)
+          message = Configuration.is_prod() ? "The error has been logged and we'll look into it ASAP." : string(ex)
 
           return write(ws_client, "500 Internal Server Error: $(message).")
         end

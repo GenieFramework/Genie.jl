@@ -47,7 +47,7 @@ function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
 
     Nullable{Sessions.Session}(session)
   catch ex
-    Logger.log("Can't read session $(joinpath(SESSION_FOLDER, session_id))", :err)
+    Logger.log("Can't read session", :err)
     Logger.log(string(ex), :err)
     Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
