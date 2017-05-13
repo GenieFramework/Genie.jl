@@ -51,24 +51,24 @@ v 0.7.x
 ✔ should work without a DB
 ✔ REPL utility to setup a new app
 ✔ reorganize Genie as a Package
-☐ expose command line commands as Genie.REPL methods
-☐ add scaffolding functionality for CRUD
-☐ add generator for User model (for authentication)
-☐ encrypt sessions and cookies
-☐ beautify error handling (50x, 40x) pages
+✔ expose command line commands as Genie.REPL methods
+✔ add generator for User model (for authentication)
+✔ encrypt cookies
+✔ beautify error handling (50x, 40x) pages
 
 # SUPPORT
-☐ doc comments
-☐ official API docs
-☐ more tests
-☐ official website - blog, walkthroughs, tutorials, etc
-☐ app examples repos (extract them from the test apps used during development)
+✔ doc comments
+✔ official API docs
+✔ official website - blog, walkthroughs, tutorials, etc
+✔ app examples repos (extract them from the test apps used during development)
 
 # TEST APP
-☐ "ToDo-Backend MVC" app
+✔ "ToDo-Backend MVC" app
 
 v 0.8
-☐ channels (websockets communication)
+☐ support for mysql
+☐ support for sqlite
+✔ channels (websockets communication)
 ☐ add frontend framework adapters - with Vue.js as default
 ☐ add the concept of State to sync app state between client (Vue.js data) and server (Genie state)
 ☐ refactor the views to use data from State and generate the reactive Vue.js code on the client
@@ -77,6 +77,8 @@ v 0.8
 ☐ Flax form helpers
 ☐ asset pipeline with Broccoli.js
 ☐ frontend package management with Yarn.js
+☐ add scaffolding functionality for CRUD
+☐ tests
 
 ☐ "Hello world" app
 
@@ -96,8 +98,6 @@ v 1.0
 ☐ registration functionality - with login URLs by email (passwordless login) and regular (user / pass)
 
 v 1.1
-☐ support for mysql
-☐ support for sqlite
 ☐ support for mongodb
 
 v 1.x
