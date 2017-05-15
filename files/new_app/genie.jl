@@ -1,5 +1,8 @@
 #!/usr/bin/env julia
 
+# If supported use next line: 
+#!/usr/bin/env julia --color=yes --depwarn=no --math-mode=fast --quiet --check-bounds=no
+
 """
     bootstrap_genie() :: Void
 
