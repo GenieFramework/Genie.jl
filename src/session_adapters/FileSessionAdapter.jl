@@ -40,6 +40,8 @@ function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
     return Nullable{Sessions.Session}()
   end
 
+  ! isfile(joinpath(SESSION_FOLDER, session_id)) && return Nullable{Sessions.Session}()
+
   try
     session = open(joinpath(SESSION_FOLDER, session_id), "r") do (io)
       deserialize(io)
@@ -48,13 +50,7 @@ function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
     Nullable{Sessions.Session}(session)
   catch ex
     Logger.log("Can't read session", :err)
-
-    try
-      Logger.log(string(ex), :err)
-    catch ex
-      #
-    end
-    
+    Logger.log(string(ex), :err)
     Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
     Nullable{Sessions.Session}()
