@@ -48,7 +48,13 @@ function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
     Nullable{Sessions.Session}(session)
   catch ex
     Logger.log("Can't read session", :err)
-    Logger.log(string(ex), :err)
+
+    try
+      Logger.log(string(ex), :err)
+    catch ex
+      #
+    end
+    
     Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
     Nullable{Sessions.Session}()
