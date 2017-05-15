@@ -22,6 +22,24 @@ function new_app(path = ".") :: Void
   cp(joinpath(Pkg.dir("Genie"), "files", "new_app"), abspath(path))
   chmod(joinpath(path, "genie.jl"), 0o700)
 
+  try
+    mkdir(joinpath(abspath(path), "cache"))
+  catch ex
+    Logger.log("Skipping /cache folder - already exists", :info)
+  end
+
+  try
+    mkdir(joinpath(abspath(path), "log"))
+  catch ex
+    Logger.log("Skipping /log folder - already exists", :info)
+  end
+
+  try
+    mkdir(joinpath(abspath(path), "session"))
+  catch ex
+    Logger.log("Skipping /session folder - already exists", :info)
+  end
+
   open(joinpath(path, "config", "secrets.jl"), "w") do f
     write(f, """const SECRET_TOKEN = "$(secret_token())" """)
   end
