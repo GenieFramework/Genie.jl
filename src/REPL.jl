@@ -119,4 +119,21 @@ function write_secrets_file() :: Void
   nothing
 end
 
+
+"""
+    reload_app() :: Void
+"""
+function reload_app() :: Void
+  Logger.log("Attempting to reload the Genie's core modules. If you get unexpected errors or things don't work as expected, simply exit this Julia session and start a new one to fully reload Genie.", :warn)
+
+
+  reload("App")
+  App.load_configurations()
+  App.load_initializers()
+
+  Logger.log("The app was reloaded.", :info)
+
+  nothing
+end
+
 end
