@@ -139,12 +139,7 @@ Wrapper around /config/secrets.jl SECRET_TOKEN `const`.
 """
 function secret_token() :: String
   isdefined(App, :SECRET_TOKEN) ||
-    throw("
-SECRET_TOKEN not configured - please make sure that you have a valid secrets.jl file.
-You can generate a new secrets.jl file with a random SECRET_TOKEN using Genie.REPL.write_secrets_file()
-or use the included /app/config/secrets.jl.example file as a model.
-
-")
+    throw("SECRET_TOKEN not configured - please make sure that you have a valid secrets.jl file. You can generate a new secrets.jl file with a random SECRET_TOKEN using Genie.REPL.write_secrets_file() or use the included /app/config/secrets.jl.example file as a model.")
 
   SECRET_TOKEN
 end
