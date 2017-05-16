@@ -20,7 +20,9 @@ Creates a new Genie app at the indicated path.
 """
 function new_app(path = ".") :: Void
   cp(joinpath(Pkg.dir("Genie"), "files", "new_app"), abspath(path))
-  chmod(joinpath(path, "genie.jl"), 0o700)
+
+  chmod(joinpath(path, "bin/server"), 0o700)
+  chmod(joinpath(path, "bin/repl"), 0o700)
 
   try
     mkdir(joinpath(abspath(path), "cache"))
