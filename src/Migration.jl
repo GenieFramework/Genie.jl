@@ -224,9 +224,9 @@ Persists the `direction` of the `migration` into the database.
 """
 function store_migration_status(migration::DatabaseMigration, direction::Symbol) :: Void
   if ( direction == :up )
-    SearchLight.query("INSERT INTO $(Genie.config.db_migrations_table_name) VALUES ('$(migration.migration_hash)')", system_query = true)
+    SearchLight.query_raw("INSERT INTO $(Genie.config.db_migrations_table_name) VALUES ('$(migration.migration_hash)')", system_query = true)
   else
-    SearchLight.query("DELETE FROM $(Genie.config.db_migrations_table_name) WHERE version = ('$(migration.migration_hash)')", system_query = true)
+    SearchLight.query_raw("DELETE FROM $(Genie.config.db_migrations_table_name) WHERE version = ('$(migration.migration_hash)')", system_query = true)
   end
 
   nothing
