@@ -35,8 +35,8 @@ function decrypt(s::String) :: String
 end
 
 function encryption_sauce()
-  passwd = App.SECRET_TOKEN[1:32]
-  salt = hex2bytes(App.SECRET_TOKEN[33:64])
+  passwd = App.secret_token()[1:32]
+  salt = hex2bytes(App.secret_token()[33:64])
 
   gen_key32_iv16(passwd.data, salt)
 end

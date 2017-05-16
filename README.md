@@ -38,16 +38,16 @@ warn: Please restart the current Julia session before loading the new app to pro
 
 `cd` into the new app's dir and start the server:
 ```
-$> ./genie.jl s
+$> bin/server
 ```
 
 See it in action by navigating to `http://localhost:8000/` with your favorite browser.
 
 ---
 
-In order to start a Genie interactive session, load the app into the Julia REPL:
+In order to start a Genie interactive session, use:
 ```
-$> julia -L genie.jl --color=yes --depwarn=no -q
+$> bin/repl
 ```
 
 Alternatively, from a regular Julia session, you can just
@@ -68,7 +68,7 @@ If you want to learn more about Genie you can
 * dive into the demo apps
   * [TodoMVC](https://github.com/essenciary/genie-todo-mvc)
   * [PkgSearch web app and REST API](https://github.com/essenciary/pgksearch-api-website)
-  * [Genie CMS]()
+  * [Genie CMS]() (pending)
 
 
 ## Acknowledgements

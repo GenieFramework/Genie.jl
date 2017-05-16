@@ -26,12 +26,12 @@ function startup(port::Int = 8000) :: Void
       nworkers() == 1 ? handle_request(req, res, ip) : @fetch handle_request(req, res, ip)
     catch ex
       Logger.log(string(ex), :critical)
-      Logger.log(sprint(io->Base.show_backtrace(io, backtrace())), :critical)
+      Logger.log(sprint(io->Base.show_backtrace(io, catch_backtrace())), :critical)
       Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
 
       message = Configuration.is_prod() ?
                   "The error has been logged and we'll look into it ASAP." :
-                  string(ex, " in $(@__FILE__):$(@__LINE__)", "\n\n", sprint(io->Base.show_backtrace(io, backtrace())))
+                  string(ex, " in $(@__FILE__):$(@__LINE__)", "\n\n", sprint(io->Base.show_backtrace(io, catch_backtrace())))
 
       return Router.serve_error_file(500, message)
     end

@@ -103,4 +103,20 @@ function new_migration(migration_name) :: Void
   Generator.new_migration(Dict{String,Any}("migration:new" => migration_name), Settings())
 end
 
+
+"""
+    write_secrets_file() :: Void
+
+Generates a valid secrets.jl file with a random SECRET_TOKEN.
+"""
+function write_secrets_file() :: Void
+  open(joinpath(Genie.CONFIG_PATH, "secrets.jl"), "w") do f
+    write(f, """const SECRET_TOKEN = "$(secret_token())" """)
+  end
+
+  Logger.log("Generated secrets.jl file in $(Genie.CONFIG_PATH)", :info)
+
+  nothing
+end
+
 end
