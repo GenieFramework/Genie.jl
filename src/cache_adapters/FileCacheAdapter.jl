@@ -1,9 +1,13 @@
 module FileCacheAdapter
 
-using Genie
+using Genie, Logger
 
 const VALIDITY_START_MARKER = ">>>"
 const VALIDITY_END_MARKER   = "<<<"
+
+"""
+The subfolder under the cache folder where the cache should be stored.
+"""
 const CACHE_FOLDER = IS_IN_APP ? Genie.config.cache_folder : tempdir()
 
 
@@ -24,11 +28,14 @@ end
 """
     from_cache(key::Union{String,Symbol}, expiration::Int) :: Nullable
 
-Retrieves from cache the object stored under the `key` key.
+Retrieves from cache the object stored under the `key` key if the `expiration` delta (in seconds) is in the future.
 """
-function from_cache(key::Union{String,Symbol}, expiration::Int) :: Nullable
-  file_path = cache_path(string(key))
+function from_cache(key::Union{String,Symbol}, expiration::Int; dir = "") :: Nullable
+  file_path = cache_path(string(key), dir = dir)
+
   ( ! isfile(file_path) || stat(file_path).ctime + expiration < time() ) && return Nullable()
+
+  Genie.config.log_cache && Logger.log("Found file system cache for $key at $file_path", :info)
 
   output = open(file_path) do io
     deserialize(io)
@@ -43,8 +50,8 @@ end
 
 Removes the cache data stored under the `key` key.
 """
-function purge(key::Union{String,Symbol}) :: Void
-  rm(cache_path(string(key)))
+function purge(key::Union{String,Symbol}; dir = "") :: Void
+  rm(cache_path(string(key), dir = dir))
 
   nothing
 end
@@ -55,8 +62,9 @@ end
 
 Removes all cached data.
 """
-function purge_all() :: Void
-  rm(cache_path(""), recursive = true)
+function purge_all(; dir = "") :: Void
+  rm(cache_path("", dir = dir), recursive = true)
+  mkpath(cache_path("", dir = dir))
 
   nothing
 end
@@ -65,7 +73,7 @@ end
 """
     cache_path(key::Union{String,Symbol}; dir = "") :: String
 
-Computes the path to a cache `key` based on current cache settings. 
+Computes the path to a cache `key` based on current cache settings.
 """
 function cache_path(key::Union{String,Symbol}; dir = "") :: String
   path = joinpath(CACHE_FOLDER, dir)
