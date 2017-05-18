@@ -24,24 +24,6 @@ function new_app(path = ".") :: Void
   chmod(joinpath(path, "bin/server"), 0o700)
   chmod(joinpath(path, "bin/repl"), 0o700)
 
-  try
-    mkdir(joinpath(abspath(path), "cache"))
-  catch ex
-    Logger.log("Skipping /cache folder - already exists", :info)
-  end
-
-  try
-    mkdir(joinpath(abspath(path), "log"))
-  catch ex
-    Logger.log("Skipping /log folder - already exists", :info)
-  end
-
-  try
-    mkdir(joinpath(abspath(path), "session"))
-  catch ex
-    Logger.log("Skipping /session folder - already exists", :info)
-  end
-
   open(joinpath(path, "config", "secrets.jl"), "w") do f
     write(f, """const SECRET_TOKEN = "$(secret_token())" """)
   end
@@ -70,7 +52,7 @@ end
 Creates a new `model` file.
 """
 function new_model(model_name) :: Void
-  Generator.new_model(Dict{String,Any}("model:new" => model_name), Settings())
+  Generator.new_model(Dict{String,Any}("model:new" => model_name))
 end
 
 
@@ -80,7 +62,7 @@ end
 Creates a new `controller` file.
 """
 function new_controller(controller_name) :: Void
-  Generator.new_controller(Dict{String,Any}("controller:new" => controller_name), Settings())
+  Generator.new_controller(Dict{String,Any}("controller:new" => controller_name))
 end
 
 

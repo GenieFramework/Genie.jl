@@ -65,6 +65,9 @@ Removes all cached data.
 function purge_all(; dir = "") :: Void
   rm(cache_path("", dir = dir), recursive = true)
   mkpath(cache_path("", dir = dir))
+  open(joinpath(cache_path("", dir = dir), ".gitkeep"), "w") do f
+    write(f, "")
+  end
 
   nothing
 end

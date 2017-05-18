@@ -31,10 +31,11 @@ end
 Generates a new Genie model file and persists it to the resources folder.
 """
 function new_controller(cmd_args::Dict{String,Any}) :: Void
-  resource_name = ucfirst(cmd_args["controller:new"])
-  if Inflector.is_singular(resource_name)
-    resource_name = Inflector.to_plural(resource_name) |> Base.get
-  end
+  resource_name = cmd_args["controller:new"]
+  Inflector.is_singular(resource_name) && (resource_name = Inflector.to_plural(resource_name) |> Base.get)
+  resource_name = ucfirst(resource_name)
+
+  @show resource_name
 
   resource_path = setup_resource_path(resource_name)
   write_resource_file(resource_path, Genie.GENIE_CONTROLLER_FILE_NAME, resource_name) &&
@@ -132,7 +133,7 @@ function write_resource_file(resource_path::String, file_name::String, resource_
   if file_name == Genie.GENIE_MODEL_FILE_NAME
     write(f, FileTemplates.new_model( Base.get(Inflector.to_singular( Inflector.from_underscores(resource_name) )), resource_name ))
   elseif file_name == Genie.GENIE_CONTROLLER_FILE_NAME
-    write(f, FileTemplates.new_controller( Base.get(Inflector.to_plural( Inflector.from_underscores(resource_name) )) ))
+    write(f, FileTemplates.new_controller( Base.get(Inflector.to_plural(resource_name)) |> Inflector.from_underscores ))
   elseif file_name == Genie.GENIE_VALIDATOR_FILE_NAME
     write(f, FileTemplates.new_validator( Base.get(Inflector.to_singular(resource_name)) |> Inflector.from_underscores ))
   elseif file_name == Genie.GENIE_AUTHORIZATOR_FILE_NAME

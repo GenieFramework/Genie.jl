@@ -3,7 +3,7 @@ App level functionality -- loading and managing app-wide components like configs
 """
 module App
 
-using Genie, SearchLight, YAML, Validation, Macros
+using Genie, SearchLight, YAML, Validation, Macros, Logger
 
 IS_IN_APP && const config = Genie.config
 
@@ -44,9 +44,19 @@ The modules are included in the `App` module.
 function load_controller(dir::String) :: Void
   push!(LOAD_PATH, dir)
   file_path = joinpath(dir, Genie.GENIE_CONTROLLER_FILE_NAME)
-  isfile(file_path) && eval(App, :(include($file_path)))
+  isfile(file_path) ? eval(App, :(include($file_path))) : Logger.log("Failed loading controller $dir", :err)
 
   nothing
+end
+
+
+"""
+    load_resource_controller(resource::String) :: Void
+
+Load the controller file corresponding to `resource`.
+"""
+function load_resource_controller(resource::String) :: Void
+  load_controller(joinpath(Genie.RESOURCE_PATH, resource))
 end
 
 
@@ -62,6 +72,16 @@ function load_channel(dir::String) :: Void
   isfile(file_path) && eval(App, :(include($file_path)))
 
   nothing
+end
+
+
+"""
+    load_resource_channel(resource::String) :: Void
+
+Load the channel file corresponding to `resource`.
+"""
+function load_resource_channel(resource::String) :: Void
+  load_channel(joinpath(Genie.RESOURCE_PATH, resource))
 end
 
 

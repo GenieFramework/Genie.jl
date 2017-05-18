@@ -1,5 +1,5 @@
 """
-Handles the functionality for applying various gramatical rules. 
+Handles the functionality for applying various gramatical rules.
 """
 module Inflector
 
@@ -13,7 +13,7 @@ const vowels = ["a", "e", "i", "o", "u"]
 
 Returns the singural form of `word`.
 """
-function to_singular(word::String; is_irregular::Bool = false) :: Nullable{String}
+function to_singular(word::String; is_irregular::Bool = Inflector.is_irregular(word)) :: Nullable{String}
   ( is_irregular || ! endswith(word, "s") ) && return to_singular_irregular(word)
   endswith(word, "ies") && ! in(word[end-3], vowels) && return Nullable{String}(word[1:end-3] * "y")
   endswith(word, "s") && return Nullable{String}(word[1:end-1])
@@ -42,7 +42,7 @@ end
 
 Returns the plural form of `word`.
 """
-function to_plural(word::String; is_irregular::Bool = false) :: Nullable{String}
+function to_plural(word::String; is_irregular::Bool = Inflector.is_irregular(word)) :: Nullable{String}
   is_irregular && return to_plural_irregular(word)
   endswith(word, "y") && ! in(word[end-1], vowels) && return Nullable{String}(word[1:end-1] * "ies") # category -> categories // story -> stories
   is_singular(word) ? Nullable{String}(word * "s") : Nullable{String}(word)
@@ -90,7 +90,11 @@ end
 Returns wether or not `word` is a plural.
 """
 function is_plural(word::String) :: Bool
-  endswith(word, "s") || ! isnull(irregular(word))
+  word = normalize_string(word, casefold = true)
+  irr_word = irregular(word)
+  (! isnull(irr_word) && word != Base.get(irr_word)[1]) &&
+    endswith(word, "s") || (! isnull(irr_word) &&
+    word == Base.get(irr_word)[2])
 end
 
 
@@ -100,7 +104,7 @@ end
 Returns a `vector` of words with irregular singular or plural forms.
 """
 function irregulars() :: Vector{Tuple{String,String}}
-  vcat(irregular_nouns, Genie.config.inflector_irregulars)
+  vcat(IRREGULAR_NOUNS, Genie.config.inflector_irregulars)
 end
 
 
@@ -110,8 +114,10 @@ end
 Wether or not `word` has an irregular singular or plural form.
 """
 function irregular(word::String) :: Nullable{Tuple{String,String}}
-  for (k, v) in irregular_nouns
-    (word == k || word == v) && return Nullable{Tuple{String,String}}(k, v)
+  word = normalize_string(word, casefold = true)
+
+  for (k, v) in IRREGULAR_NOUNS
+    (word == k || word == v) && return Nullable{Tuple{String,String}}( (k,v) )
   end
 
   Nullable{Tuple{String,String}}()
@@ -119,10 +125,20 @@ end
 
 
 """
+    function is_irregular(word::String) :: Bool
+
+Whether or not `word` has a singular or plural irregular form.
+"""
+function is_irregular(word::String) :: Bool
+  isnull(irregular(word)) ? false : true
+end
+
+
+"""
 Vector of nouns with irregular forms of singular and/or plural.
 Each tuple contains pairs of singular and plural forms.
 """
-const irregular_nouns = Vector{Tuple{String,String}}([
+const IRREGULAR_NOUNS = Vector{Tuple{String,String}}([
   ("alumnus", "alumni"),
   ("cactus", "cacti"),
   ("focus", "foci"),
@@ -179,6 +195,7 @@ const irregular_nouns = Vector{Tuple{String,String}}([
   ("vertebra", "vertebrae"),
   ("vita", "vitae"),
   ("louse", "lice"),
-  ("mouse", "mice")
+  ("mouse", "mice"),
+  ("quiz", "quizzes")
 ])
 end
