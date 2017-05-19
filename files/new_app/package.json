@@ -9,16 +9,19 @@
     "jquery": "^3.2.1"
   },
   "devDependencies": {
-    "css-loader": "^0.28.1",
-    "node-sass": "^4.5.3",
-    "sass-loader": "^6.0.5",
-    "style-loader": "^0.17.0",
     "babel-core": "^6.24.1",
     "babel-loader": "^7.0.0",
     "babel-polyfill": "^6.23.0",
     "babel-preset-es2015": "^6.24.1",
+    "css-loader": "^0.28.1",
+    "extract-text-webpack-plugin": "^2.1.0",
     "file-loader": "^0.11.1",
+    "node-sass": "^4.5.3",
+    "raw-loader": "^0.5.1",
+    "sass-loader": "^6.0.5",
+    "style-loader": "^0.17.0",
     "url-loader": "^0.5.8",
-    "webpack": "^2.5.1"
+    "webpack": "^2.5.1",
+    "webpack-livereload-plugin": "^0.11.0"
   }
 }

@@ -7,6 +7,9 @@ const fs = require("fs");
 const prod = process.argv.indexOf("-p") !== -1;
 const js_output_template = prod ? "js/[name]-[hash].js" : "js/[name].js";
 
+const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const LiveReloadPlugin = require("webpack-livereload-plugin");
+
 module.exports = {
   context: path.join(__dirname, "/app/assets"),
 
@@ -36,12 +39,15 @@ module.exports = {
       },
       {
         test: /\.css$/,
-        use: [
-          { loader: "style-loader" }, // creates style nodes from JS strings
-          { loader: "css-loader" } // translates CSS into CommonJS
-          // { loader: "style-loader/url" },
-          // { loader: "file-loader" }
-        ]
+        exclude: /node_modules/,
+        use: ExtractTextPlugin.extract({
+          // { loader: "style-loader" }, // creates style nodes from JS strings
+          // { loader: "css-loader" } // translates CSS into CommonJS
+          // { loader: "style-loader/url" }, // loads css URL
+          // { loader: "file-loader" } // loads file
+          use: "css-loader",
+          fallback: "style-loader"
+        })
       },
       {
         test: /\.sass$/,
@@ -75,6 +81,43 @@ module.exports = {
       $: "jquery",
       jQuery: "jquery",
       "window.jQuery": "jquery"
-    })
+    }),
+
+    new ExtractTextPlugin("css/application.css"),
+
+    new LiveReloadPlugin({
+      port: 44444,
+      appendScriptTag: true
+    }),
+
+    function() {
+      // output the fingerprint
+      this.plugin("done", function(stats) {
+        let output = "const ASSET_FINGERPRINT = \"" + stats.hash + "\""
+        fs.writeFileSync("config/initializers/fingerprint.jl", output, "utf8");
+      });
+    },
+
+    function() {
+      // delete previous outputs
+      this.plugin("compile", function() {
+        let basepath = __dirname + "/public";
+        let paths = ["/javascripts", "/stylesheets"];
+
+        for (let x = 0; x < paths.length; x++) {
+          const asset_path = basepath + paths[x];
+
+          fs.readdir(asset_path, function(err, files) {
+            if (files === undefined) {
+              return;
+            }
+
+            for (let i = 0; i < files.length; i++) {
+              fs.unlinkSync(asset_path + "/" + files[i]);
+            }
+          });
+        }
+      });
+    }
   ]
 }

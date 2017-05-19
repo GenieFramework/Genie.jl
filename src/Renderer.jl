@@ -186,20 +186,36 @@ end
 
 
 """
-    css_asset(file_name::String) :: String
-    js_asset(file_name::String) :: String
-    include_asset(asset_type::Symbol, file_name::String) :: String
+    include_asset(asset_type::Symbol, file_name::String; fingerprinted = Genie.config.assets_fingerprinted) :: String
 
-Returns the path to an asset as a file.
+Returns the path to an asset. `asset_type` can be one of `:js`, `:css`. `file_name` should not include the extension.
+`fingerprinted` is a `Bool` indicated wheter or not fingerprinted (unique hash) should be added to the asset's filename (used in production to invalidate caches).
 """
-function include_asset(asset_type::Symbol, file_name::String) :: String
-  "/$asset_type/$file_name"
+function include_asset(asset_type::Symbol, file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
+  suffix = fingerprinted ? "-" * App.ASSET_FINGERPRINT * ".$(asset_type)" : ".$(asset_type)"
+  "/$asset_type/$(file_name)$(suffix)"
 end
-function css_asset(file_name::String) :: String
-  include_asset(:css, file_name)
+
+
+"""
+    css_asset(file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
+
+Path to a css asset. `file_name` should not include the extension.
+`fingerprinted` is a `Bool` indicated wheter or not fingerprinted (unique hash) should be added to the asset's filename (used in production to invalidate caches).
+"""
+function css_asset(file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
+  include_asset(:css, file_name, fingerprinted = fingerprinted)
 end
-function js_asset(file_name::String) :: String
-  include_asset(:js, file_name)
+
+
+"""
+    js_asset(file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
+
+Path to a js asset. `file_name` should not include the extension.
+`fingerprinted` is a `Bool` indicated wheter or not fingerprinted (unique hash) should be added to the asset's filename (used in production to invalidate caches).
+"""
+function js_asset(file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
+  include_asset(:js, file_name, fingerprinted = fingerprinted)
 end
 
 

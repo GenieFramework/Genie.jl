@@ -154,6 +154,7 @@ type Settings
 
   assets_path::String
   assets_serve::Bool
+  assets_fingerprinted::Bool
 
   pagination_default_items_per_page::Int
   pagination_page_param_name::String
@@ -218,8 +219,9 @@ type Settings
             log_cache     = true,
             log_views     = true,
 
-            assets_path   = "/",
-            assets_serve  =  true,
+            assets_path           = "/",
+            assets_serve          =  true,
+            assets_fingerprinted  = false,
 
             pagination_default_items_per_page = 20,
             pagination_page_param_name = "page",
@@ -253,7 +255,7 @@ type Settings
                   task_folder, test_folder, session_folder, log_folder,
                   cache_folder, cache_adapter, cache_duration,
                   log_router, log_db, log_queries, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted, log_cache, log_views,
-                  assets_path, assets_serve,
+                  assets_path, assets_serve, assets_fingerprinted,
                   pagination_default_items_per_page, pagination_page_param_name,
                   model_relations_eagerness,
                   tests_force_test_env,
