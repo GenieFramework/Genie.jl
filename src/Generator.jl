@@ -35,8 +35,6 @@ function new_controller(cmd_args::Dict{String,Any}) :: Void
   Inflector.is_singular(resource_name) && (resource_name = Inflector.to_plural(resource_name) |> Base.get)
   resource_name = ucfirst(resource_name)
 
-  @show resource_name
-
   resource_path = setup_resource_path(resource_name)
   write_resource_file(resource_path, Genie.GENIE_CONTROLLER_FILE_NAME, resource_name) &&
     Logger.log("New controller created at $(joinpath(resource_path, Genie.GENIE_CONTROLLER_FILE_NAME))")

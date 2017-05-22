@@ -47,42 +47,53 @@ end
 
 
 """
-    new_model(model_name) :: Void
+    new_model(model_name::String) :: Void
 
 Creates a new `model` file.
 """
-function new_model(model_name) :: Void
+function new_model(model_name::String) :: Void
   Generator.new_model(Dict{String,Any}("model:new" => model_name))
 end
 
 
 """
-    new_controller(controller_name) :: Void
+    new_controller(controller_name::String) :: Void
 
 Creates a new `controller` file.
 """
-function new_controller(controller_name) :: Void
+function new_controller(controller_name::String) :: Void
   Generator.new_controller(Dict{String,Any}("controller:new" => controller_name))
 end
 
 
 """
-    new_resource(resource_name) :: Void
+    new_resource(resource_name::String) :: Void
 
 Creates all the files associated with a new resource.
 """
-function new_resource(resource_name) :: Void
+function new_resource(resource_name::String) :: Void
   Generator.new_resource(Dict{String,Any}("resource:new" => resource_name), Settings())
 end
 
 
 """
-    new_migration(migration_name) :: Void
+    new_migration(migration_name::String) :: Void
 
 Creates a new migration file.
 """
-function new_migration(migration_name) :: Void
+function new_migration(migration_name::String) :: Void
   Generator.new_migration(Dict{String,Any}("migration:new" => migration_name), Settings())
+end
+
+
+"""
+    new_task(task_name::String) :: Void
+
+Creates a new `Task` file.
+"""
+function new_task(task_name::String) :: Void
+  endswith(task_name, "Task") || (task_name = task_name * "Task")
+  Toolbox.new(Dict{String,Any}("task:new" => task_name), Genie.config)
 end
 
 

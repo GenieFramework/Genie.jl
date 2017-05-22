@@ -58,7 +58,7 @@ function execute(config::Settings) :: Void
     Migration.down_by_module_name(parsed_args["db:migration:down"])
 
   elseif called_command(parsed_args, "task:list")
-    Toolbox.print_all_tasks()
+    Toolbox.print_tasks()
   elseif parsed_args["task:run"] != nothing
     Toolbox.run_task(check_valid_task!(parsed_args)["task:run"])
   elseif parsed_args["task:new"] != nothing

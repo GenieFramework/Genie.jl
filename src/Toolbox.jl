@@ -1,6 +1,10 @@
 module Toolbox
 
-using Genie, Util, Millboard, FileTemplates, Configuration, Logger
+import Base.string
+
+using Genie, Util, Millboard, FileTemplates, Configuration, Logger, Inflector
+
+export TaskResult, VoidTaskResult
 
 type TaskInfo
   file_name::String
@@ -8,26 +12,55 @@ type TaskInfo
   description::String
 end
 
+type TaskResult{T}
+  code::Int
+  message::String
+  result::T
+end
+
 
 """
-    run_task(task_type_name)
+    run_task(task_name::String)
 
-Executes a Genie task.
+Executes the Genie task `task_name`.
 """
-function run_task(task_type_name)
-  tasks = all_tasks(filter_type_name = Symbol(task_type_name))
+function run_task(task_name::String) :: TaskResult
+  task_name = valid_task_name(task_name)
+  tasks = all_tasks(filter_type_name = Symbol(task_name))
 
-  isempty(tasks) && (Logger.log("Task not found", :err) & return)
+  if isempty(tasks)
+    Logger.log("Task not found", :err)
+    return
+  end
+
   eval(tasks[1].module_name).run_task!()
-end # todo -- type unstable -- make tasks return TaskResult(code: , message: , result: )
+end
+
+
+function VoidTaskResult()
+  TaskResult(0, "", nothing)
+end
 
 
 """
-    print_all_tasks() :: Void
+    valid_task_name(task_name::String) :: String
+
+Attempts to convert a potentially invalid (partial) `task_name` into a valid one.
+"""
+function valid_task_name(task_name::String) :: String
+  task_name = Inflector.from_underscores(task_name)
+  endswith(task_name, "Task") || (task_name = task_name * "Task")
+
+  task_name
+end
+
+
+"""
+    print_tasks() :: Void
 
 Prints a list of all the registered Genie tasks to the standard output.
 """
-function print_all_tasks() :: Void
+function print_tasks() :: Void
   output = ""
   arr_output = []
   for t in all_tasks()
@@ -40,11 +73,12 @@ end
 
 
 """
+    tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
     all_tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
 
 Returns a vector of all registered Genie tasks.
 """
-function all_tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
+function tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
   tasks = TaskInfo[]
 
   tasks_folder = abspath(Genie.config.tasks_folder)
@@ -65,6 +99,7 @@ function all_tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
 
   tasks
 end
+const all_tasks = tasks
 
 
 """

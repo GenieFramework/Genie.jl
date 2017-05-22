@@ -41,7 +41,7 @@ function new_task(module_name::String) :: String
   """
   module $module_name
 
-  using Genie
+  using Genie, App, Toolbox
 
   function description()
     \"\"\"

@@ -97,22 +97,25 @@ end
 
 
 """
-    walk_dir(dir; monitored_extensions = ["jl"]) :: String
+    walk_dir(dir; only_extensions = ["jl"], only_files = true, only_dirs = false) :: Void
 
-Recursively walks dir and `produce`s non directories.
+Recursively walks dir and `produce`s non directories. If `only_files`, directories will be skipped. If `only_dirs`, files will be skipped.
 """
-function walk_dir(dir; monitored_extensions = ["jl"]) :: String
+function walk_dir(dir; only_extensions = ["jl"], only_files = true, only_dirs = false) :: Void
   f = readdir(abspath(dir))
   for i in f
     full_path = joinpath(dir, i)
     if isdir(full_path)
+      ! only_files || only_dirs && produce(full_path)
       walk_dir(full_path)
     else
-      if ( last( split(i, ['.']) ) in monitored_extensions )
-        produce( full_path )
-      end
+      only_dirs && continue
+
+      (last(split(i, ['.'])) in only_extensions) || isempty(only_extensions) && produce(full_path)
     end
   end
+
+  nothing
 end
 
 

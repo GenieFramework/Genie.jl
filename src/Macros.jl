@@ -1,12 +1,12 @@
 """
-Various macro helpers. 
+Various macro helpers.
 """
 module Macros
 
 using Genie, Configuration
 
 export @devtools, @ifdevtools
-export @run_with_time, @unless, @psst, @in_repl
+export @run_with_time, @unless, @psst, @in_repl, @location_in_file
 
 """
     devtools()
@@ -99,6 +99,16 @@ macro psst(expr::Expr)
   Genie.config.suppress_output = false
 
   evx
+end
+
+
+"""
+    macro location_in_file()
+
+Returns the location (file name and line number) in the file where it's called.
+"""
+macro location_in_file()
+  :(String(esc(@__FILE__) * ":" * esc(@__LINE__)))
 end
 
 end

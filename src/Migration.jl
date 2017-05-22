@@ -3,7 +3,7 @@ Provides functionality for working with database migrations.
 """
 module Migration
 
-using Genie, SearchLight, FileTemplates, Millboard, Configuration, Logger
+using Genie, SearchLight, FileTemplates, Millboard, Configuration, Logger, Macros
 
 type DatabaseMigration # todo: rename the "migration_" prefix for the fields
   migration_hash::String
@@ -88,22 +88,22 @@ end
 
 
 """
-    last_up() :: Void
+    last_up(; force = false) :: Void
 
-Migrates up the last migration.
+Migrates up the last migration. If `force` is `true`, the migration will be executed even if it's already up.
 """
-function last_up() :: Void
-  run_migration(last_migration(), :up)
+function last_up(; force = false) :: Void
+  run_migration(last_migration(), :up, force = force)
 end
 
 
 """
     last_down() :: Void
 
-Migrates down the last migration.
+Migrates down the last migration. If `force` is `true`, the migration will be executed even if it's already down.
 """
-function last_down() :: Void
-  run_migration(last_migration(), :down)
+function last_down(; force = false) :: Void
+  run_migration(last_migration(), :down, force = force)
 end
 
 
@@ -204,7 +204,7 @@ function run_migration(migration::DatabaseMigration, direction::Symbol; force = 
     m = include(abspath(joinpath(Genie.config.db_migrations_folder, migration.migration_file_name)))
     getfield(m, direction)()
 
-    store_migration_status(migration, direction)
+    store_migration_status(migration, direction, force = force)
 
     ! Genie.config.suppress_output && Logger.log("Executed migration $(migration.migration_module_name) $(direction)")
   catch ex
@@ -222,11 +222,18 @@ end
 
 Persists the `direction` of the `migration` into the database.
 """
-function store_migration_status(migration::DatabaseMigration, direction::Symbol) :: Void
-  if ( direction == :up )
-    SearchLight.query_raw("INSERT INTO $(Genie.config.db_migrations_table_name) VALUES ('$(migration.migration_hash)')", system_query = true)
-  else
-    SearchLight.query_raw("DELETE FROM $(Genie.config.db_migrations_table_name) WHERE version = ('$(migration.migration_hash)')", system_query = true)
+function store_migration_status(migration::DatabaseMigration, direction::Symbol; force = false) :: Void
+  try
+    if direction == :up
+      SearchLight.query_raw("INSERT INTO $(Genie.config.db_migrations_table_name) VALUES ('$(migration.migration_hash)')", system_query = true)
+    else
+      SearchLight.query_raw("DELETE FROM $(Genie.config.db_migrations_table_name) WHERE version = ('$(migration.migration_hash)')", system_query = true)
+    end
+  catch ex
+    Logger.log(string(ex), :err)
+    Logger.log(@location_in_file, :err)
+
+    force || rethrow(ex)
   end
 
   nothing

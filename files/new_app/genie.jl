@@ -17,7 +17,8 @@ function bootstrap_genie() :: Void
 
   nworkers() < parse(Int, ENV["NWORKERS"]) && addprocs(parse(Int, ENV["NWORKERS"]) - nworkers())
 
-  @everywhere push!(LOAD_PATH,  joinpath(Pkg.dir("Genie"), "src"),
+  @everywhere push!(LOAD_PATH,  joinpath("lib"),
+                                joinpath(Pkg.dir("Genie"), "src"),
                                 joinpath(Pkg.dir("SearchLight"), "src"),
                                 joinpath(Pkg.dir("Flax"), "src"),
                                 abspath(pwd()))
@@ -34,5 +35,5 @@ try
   using OhMyREPL
 
   OhMyREPL.input_prompt!( "genie>", :green)
-  OhMyREPL.output_prompt!("genie>", :white)
+  OhMyREPL.output_prompt!("genie>", :cyan)
 end

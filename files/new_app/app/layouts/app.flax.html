@@ -1,8 +1,14 @@
+<!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Genie</title>
+    <meta charset="utf-8" />
+    <title>Genie :: The highly productive Julia web framework</title>
+    <link rel="stylesheet" href="/css/application.css" />
   </head>
   <body>
-    <h1>Welcome!</h1>
+    <%
+      @yield
+    %>
+    <script src="/js/application.js"></script>
   </body>
 </html>
