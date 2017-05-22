@@ -40,20 +40,32 @@ function startup(port::Int = 8000) :: Void
   if Genie.config.websocket_server
     wsh = WebSocketHandler() do req::Request, ws_client::WebSockets.WebSocket
       while true
+        response =  try
+                      msg = read(ws_client)
+                      ip::IPv4 = Genie.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
+
+                      nworkers() == 1 ? handle_ws_request(req, String(msg), ws_client, ip) : @fetch handle_ws_request(req, String(msg), ws_client, ip)
+                    catch ex
+                      if typeof(ex) == WebSockets.WebSocketClosedError
+                        Logger.log("Client disconnected - bye!")
+
+                        break
+                      end
+
+                      Logger.log(string(ex), :critical)
+                      Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
+
+                      Configuration.is_prod() ? "The error has been logged and we'll look into it ASAP." : string(ex)
+
+                      break
+                    end
+
         try
-          msg = read(ws_client)
-
-          ip::IPv4 = Genie.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
-          response = nworkers() == 1 ? handle_ws_request(req, String(msg), ws_client, ip) : @fetch handle_ws_request(req, String(msg), ws_client, ip)
-
           write(ws_client, response)
-        catch ex
-          Logger.log(string(ex), :critical)
-          Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
+        catch socket_exception
+          Channels.unsubscribe_client(ws_client)
 
-          message = Configuration.is_prod() ? "The error has been logged and we'll look into it ASAP." : string(ex)
-
-          return write(ws_client, "500 Internal Server Error: $(message).")
+          break
         end
       end
     end

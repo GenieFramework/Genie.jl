@@ -67,6 +67,16 @@ end
 
 
 """
+    new_channel(channel_name::String) :: Void
+
+Creates a new `channel` file.
+"""
+function new_channel(channel_name::String) :: Void
+  Generator.new_channel(Dict{String,Any}("channel:new" => channel_name))
+end
+
+
+"""
     new_resource(resource_name::String) :: Void
 
 Creates all the files associated with a new resource.

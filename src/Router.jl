@@ -200,7 +200,7 @@ end
 Used for defining Genie channels.
 """
 function channel(action::Function, path::String; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel) :: Channel
-  route(path, action, with = with, named = named)
+  channel(path, action, with = with, named = named)
 end
 function channel(path::String, action::Union{String,Function}; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel) :: Channel
   channel_parts = (path, action)
@@ -549,9 +549,9 @@ end
 
 
 """
-    parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
+    parse_channel(channel::String) :: Tuple{String,Vector{String},Vector{Any}}
 
-Parses a route and extracts its named parms and types.
+Parses a channel and extracts its named parms and types.
 """
 function parse_channel(channel::String) :: Tuple{String,Vector{String},Vector{Any}}
   parts = AbstractString[]

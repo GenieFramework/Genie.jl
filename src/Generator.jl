@@ -138,6 +138,8 @@ function write_resource_file(resource_path::String, file_name::String, resource_
     write(f, FileTemplates.new_authorizer())
   elseif endswith(file_name, Genie.TEST_FILE_IDENTIFIER)
     write(f, FileTemplates.new_test(Base.get(Inflector.to_plural( Inflector.from_underscores(resource_name) )), Base.get(Inflector.to_singular( Inflector.from_underscores(resource_name) )) ))
+  elseif file_name == Genie.GENIE_CHANNEL_FILE_NAME
+    write(f, FileTemplates.new_channel( Base.get(Inflector.to_plural(resource_name)) |> Inflector.from_underscores ))
   else
     error("Not supported, $file_name")
   end

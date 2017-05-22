@@ -5,18 +5,22 @@ module Channels
 
 using WebSockets, JSON
 
-typealias ClientId  Int
-typealias ChannelId String
+typealias ClientId                        Int
+typealias ChannelId                       String
+typealias ChannelClient                   Dict{Symbol, Union{WebSockets.WebSocket,Vector{ChannelId}}}
+typealias ChannelClientsCollection        Dict{ClientId,ChannelClient} # { ws.id => { :client => ws, :channels => ["foo", "bar", "baz"] } }
+typealias ChannelSubscriptionsCollection  Dict{ChannelId,Vector{ClientId}}  # { "foo" => ["4", "12"] }
+typealias MessagePayload                  Union{Void,Dict{Union{String,Symbol},Any}}
 
 type ChannelMessage
   channel::ChannelId
   client::ClientId
   message::String
-  payload::Union{Void,Dict{Union{String,Symbol},Any}}
+  payload::MessagePayload
 end
 
-const CLIENTS       = Dict{ClientId, Dict{Symbol, Union{WebSockets.WebSocket,Vector{ChannelId}} } }() # { ws.id => { :client => ws, :channels => ["foo", "bar", "baz"] } }
-const SUBSCRIPTIONS = Dict{ChannelId,Vector{ClientId}}()  # { "foo" => ["4", "12"] }
+const CLIENTS       = ChannelClientsCollection()
+const SUBSCRIPTIONS = ChannelSubscriptionsCollection()
 
 
 """
@@ -47,7 +51,7 @@ Unsubscribes a web socket client `ws` from `channel`.
 """
 function unsubscribe(ws::WebSockets.WebSocket, channel::ChannelId) :: Void
   if haskey(CLIENTS, ws.id)
-    delete!( CLIENTS[ws.id][:channels], channel )
+    delete!(CLIENTS[ws.id][:channels], channel)
   end
 
   pop_subscription(ws.id, channel)
@@ -57,16 +61,18 @@ end
 
 
 """
-    unsubscribe_client(ws::WebSockets.WebSocket, channel::ChannelId) :: Void
+    unsubscribe_client(ws::WebSockets.WebSocket) :: Void
 
 Unsubscribes a web socket client `ws` from all the channels.
 """
 function unsubscribe_client(ws::WebSockets.WebSocket) :: Void
   if haskey(CLIENTS, ws.id)
-    delete!( CLIENTS, ws.id )
-  end
+    for channel_id in CLIENTS[ws.id][:channels]
+      pop_subscription(ws.id, channel_id)
+    end
 
-  pop_subscription(ws.id)
+    delete!(CLIENTS, ws.id)
+  end
 
   nothing
 end
@@ -95,7 +101,7 @@ Removes the subscription of `client` to `channel`.
 """
 function pop_subscription(client::ClientId, channel::ChannelId) :: Void
   if haskey(SUBSCRIPTIONS, channel)
-    delete!(SUBSCRIPTIONS[channel], client)
+    filter!(client -> client in SUBSCRIPTIONS[channel], SUBSCRIPTIONS[channel])
   end
 
   nothing
@@ -163,10 +169,22 @@ end
 """
     ws_write_message(client::ClientId, msg::String) :: Void
 
-Writes `msg` to web socket.
+Writes `msg` to web socket for `client`.
 """
 function ws_write_message(client::ClientId, msg::String) :: Void
   write(CLIENTS[client][:client], msg)
+
+  nothing
+end
+
+
+"""
+    message(client::ChannelClient, msg::String) :: Void
+
+Send message `msg` to `client`.
+"""
+function message(client::ChannelClient, msg::String) :: Void
+  write(client[:client], msg)
 
   nothing
 end

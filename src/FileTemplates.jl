@@ -79,7 +79,7 @@ function new_model(model_name::String, resource_name::String = model_name) :: St
     id::Nullable{SearchLight.DbId}
 
     ### validator
-    validator::ModelValidator
+    # validator::ModelValidator
 
     ### relations
     # belongs_to::Vector{SearchLight.SQLRelation}
@@ -100,9 +100,9 @@ function new_model(model_name::String, resource_name::String = model_name) :: St
     $model_name(;
       id = Nullable{SearchLight.DbId}(),
 
-      validator = ModelValidator([
+      # validator = ModelValidator([
         # (:title, Validation.$(model_name)Validator.not_empty)
-      ]),
+      # ]),
 
       # belongs_to = [],
       # has_one = [],
@@ -158,6 +158,12 @@ function new_channel(channel_name::String) :: String
 
   using Channels, App
   @dependencies
+
+
+  function subscribe()
+    Channels.subscribe(wsclient(@params), :$(lowercase(channel_name)))
+    "OK"
+  end
 
   end
   """
