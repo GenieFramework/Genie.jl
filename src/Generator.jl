@@ -104,7 +104,7 @@ end
 Computes and creates the directories structure needed to persist a new resource.
 """
 function setup_resource_path(resource_name::String) :: String
-  resources_dir = Genie.RESOURCE_PATH
+  resources_dir = Genie.RESOURCES_PATH
   resource_path = joinpath(resources_dir, lowercase(resource_name))
 
   if ! isdir(resource_path)

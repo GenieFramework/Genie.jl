@@ -11,22 +11,36 @@ IS_IN_APP && const config = Genie.config
 """
     load_libs(dir = Genie.LIB_PATH) :: Void
 
-Recursively adds subfolders of `dir` to LOAD_PATH. 
+Recursively adds subfolders of lib to LOAD_PATH.
 """
 function load_libs(dir = Genie.LIB_PATH) :: Void
-  push!(LOAD_PATH, [dir for dir in Task( ()-> Util.walk_dir("app", only_dirs = true) )]...)
+  lib_dirs = [d for d in Task( ()-> Util.walk_dir(dir, only_dirs = true) )]
+  ! isempty(lib_dirs) && push!(LOAD_PATH, lib_dirs...)
 
   nothing
 end
 
 
 """
-    load_models(dir = Genie.RESOURCE_PATH) :: Void
+    load_resources(dir = Genie.RESOURCES_PATH) :: Void
+
+Recursively adds subfolders of resources to LOAD_PATH.
+"""
+function load_resources(dir = Genie.RESOURCES_PATH) :: Void
+  res_dirs = [d for d in Task( ()-> Util.walk_dir(dir, only_dirs = true) )]
+  ! isempty(res_dirs) && push!(LOAD_PATH, res_dirs...)
+
+  nothing
+end
+
+
+"""
+    load_models(dir = Genie.RESOURCES_PATH) :: Void
 
 Loads (includes) all available `model` and `validator` files.
 The modules are included in the `App` module.
 """
-function load_models(dir = Genie.RESOURCE_PATH) :: Void
+function load_models(dir = Genie.RESOURCES_PATH) :: Void
   ! isdir(abspath(dir)) && return nothing
 
   dir_contents = readdir(abspath(dir))
@@ -69,7 +83,7 @@ Load the controller file corresponding to `resource`.
 """
 function load_resource_controller(resource::String) :: Void
   Inflector.is_singular(resource) && (resource = Inflector.to_plural(resource) |> Base.get)
-  load_controller(joinpath(Genie.RESOURCE_PATH, resource))
+  load_controller(joinpath(Genie.RESOURCES_PATH, resource))
 end
 
 
@@ -95,7 +109,7 @@ Load the channel file corresponding to `resource`.
 """
 function load_resource_channel(resource::String) :: Void
   Inflector.is_singular(resource) && (resource = Inflector.to_plural(resource) |> Base.get)
-  load_channel(joinpath(Genie.RESOURCE_PATH, resource))
+  load_channel(joinpath(Genie.RESOURCES_PATH, resource))
 end
 
 
@@ -181,6 +195,7 @@ end
 load_configurations()
 load_initializers()
 IS_IN_APP && load_libs()
+IS_IN_APP && load_resources()
 load_models()
 
 end

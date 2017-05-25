@@ -175,6 +175,13 @@ Used for defining Genie routes.
 function route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
   route(path, action, method = method, with = with, named = named)
 end
+function route(path::String; resource::Union{String,Symbol} = "", controller::Union{String,Symbol} = "", action::Union{String,Symbol} = "",
+                method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
+  resource = string(resource)
+  controller = string(controller)
+  action = string(action)
+  route(path, resource * "#" * (! isempty(controller) ? controller * "." : "") * action, method = method, with = with, named = named)
+end
 function route(path::String, action::Union{String,Function}; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
   route_parts = (method, path, action)
 
@@ -743,7 +750,7 @@ Invokes the designated controller method.
 function invoke_controller(to::String, req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session) :: Response
   to_parts::Vector{String} = split(to, "#")
 
-  controller_path = abspath(joinpath(Genie.RESOURCE_PATH, to_parts[1]))
+  controller_path = abspath(joinpath(Genie.RESOURCES_PATH, to_parts[1]))
   controller_path_hash = hash(controller_path)
   if ! in(controller_path_hash, loaded_controllers) || Configuration.is_dev()
     App.load_controller(controller_path)
@@ -805,7 +812,7 @@ Invokes the designated channel method.
 function invoke_channel(to::String, req::Request, payload::Dict{String,Any}, ws_client::WebSockets.WebSocket, params::Dict{Symbol,Any}, session::Sessions.Session) :: String
   to_parts::Vector{String} = split(to, "#")
 
-  channel_path = abspath(joinpath(Genie.RESOURCE_PATH, to_parts[1]))
+  channel_path = abspath(joinpath(Genie.RESOURCES_PATH, to_parts[1]))
   channel_path_hash = hash(channel_path)
   if ! in(channel_path_hash, loaded_channels) || Configuration.is_dev()
     App.load_channel(channel_path)

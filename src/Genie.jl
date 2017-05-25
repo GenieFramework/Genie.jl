@@ -22,7 +22,7 @@ isfile(abspath(joinpath(CONFIG_PATH, "plugins.jl"))) && include(abspath(joinpath
 
 push!(LOAD_PATH,  joinpath(Pkg.dir("Genie"), "src", "cache_adapters"),
                   joinpath(Pkg.dir("Genie"), "src", "session_adapters"),
-                  RESOURCE_PATH, HELPERS_PATH)
+                  RESOURCES_PATH, HELPERS_PATH)
 
 include(joinpath(Pkg.dir("Genie"), "src", "genie_types.jl"))
 include(joinpath(Pkg.dir("Genie"), "src", "REPL.jl"))
