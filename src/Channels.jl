@@ -3,14 +3,14 @@ Handles WebSockets communication logic.
 """
 module Channels
 
-using WebSockets, JSON
+using WebSockets, JSON, Logger
 
 typealias ClientId                        Int
 typealias ChannelId                       String
 typealias ChannelClient                   Dict{Symbol, Union{WebSockets.WebSocket,Vector{ChannelId}}}
 typealias ChannelClientsCollection        Dict{ClientId,ChannelClient} # { ws.id => { :client => ws, :channels => ["foo", "bar", "baz"] } }
 typealias ChannelSubscriptionsCollection  Dict{ChannelId,Vector{ClientId}}  # { "foo" => ["4", "12"] }
-typealias MessagePayload                  Union{Void,Dict{Union{String,Symbol},Any}}
+typealias MessagePayload                  Union{Void,Dict}
 
 type ChannelMessage
   channel::ChannelId
@@ -65,6 +65,9 @@ end
 
 Unsubscribes a web socket client `ws` from all the channels.
 """
+function unsubscribe_client(client::ClientId) :: Void
+  unsubscribe_client(Channels.CLIENTS[client][:client])
+end
 function unsubscribe_client(ws::WebSockets.WebSocket) :: Void
   if haskey(CLIENTS, ws.id)
     for channel_id in CLIENTS[ws.id][:channels]
@@ -101,7 +104,9 @@ Removes the subscription of `client` to `channel`.
 """
 function pop_subscription(client::ClientId, channel::ChannelId) :: Void
   if haskey(SUBSCRIPTIONS, channel)
-    filter!(client -> client in SUBSCRIPTIONS[channel], SUBSCRIPTIONS[channel])
+    filter!(SUBSCRIPTIONS[channel]) do (client_id)
+      client_id != client
+    end
   end
 
   nothing
@@ -124,44 +129,54 @@ end
 
 """
     broadcast(channels::Vector{ChannelId}, msg::String) :: Void
+    broadcast{U,T}(channels::Vector{ChannelId}, msg::String, payload::Dict{U,T}) :: Void
 
-Pushes `msg` to all the clients subscribed to the channels in `channels`.
+Pushes `msg` (and `payload`) to all the clients subscribed to the channels in `channels`.
 """
 function broadcast(channels::Vector{ChannelId}, msg::String) :: Void
-  for channel in channels
+  @parallel for channel in channels
     for client in SUBSCRIPTIONS[channel]
       ws_write_message(client, msg)
     end
   end
+
+  nothing
 end
-function broadcast(channels::Vector{ChannelId}, msg::String, payload::Dict{Union{String,Symbol},Any}) :: Void
-  for channel in channels
+function broadcast{U,T}(channels::Vector{ChannelId}, msg::String, payload::Dict{U,T}) :: Void
+  @parallel for channel in channels
     for client in SUBSCRIPTIONS[channel]
       ws_write_message(client, ChannelMessage(channel, client, msg, payload) |> JSON.json)
     end
   end
+
+  nothing
 end
 
 
 """
     broadcast(msg::String) :: Void
+    broadcast{U,T}(msg::String, payload::Dict{U,T}) :: Void
 
-Pushes `msg` to all the clients subscribed to all the channels.
+Pushes `msg` (and `payload`) to all the clients subscribed to all the channels.
 """
 function broadcast(msg::String) :: Void
   broadcast(collect(keys(SUBSCRIPTIONS)), msg)
+end
+function broadcast{U,T}(msg::String, payload::Dict{U,T}) :: Void
+  broadcast(collect(keys(SUBSCRIPTIONS)), msg, payload)
 end
 
 
 """
   message(channel::ChannelId, msg::String) :: Void
+  message{U,T}(channel::ChannelId, msg::String, payload::Dict{U,T}) :: Void
 
-Pushes `msg` to `channel`.
+Pushes `msg` (and `payload`) to `channel`.
 """
 function message(channel::ChannelId, msg::String) :: Void
   broadcast(ChannelId[channel], msg)
 end
-function message(channel::ChannelId, msg::String, payload::Dict{Union{String,Symbol},Any}) :: Void
+function message{U,T}(channel::ChannelId, msg::String, payload::Dict{U,T}) :: Void
   broadcast(ChannelId[channel], msg, payload)
 end
 

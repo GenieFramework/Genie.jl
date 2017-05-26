@@ -47,7 +47,8 @@ function startup(port::Int = 8000) :: Void
                       nworkers() == 1 ? handle_ws_request(req, String(msg), ws_client, ip) : @fetch handle_ws_request(req, String(msg), ws_client, ip)
                     catch ex
                       if typeof(ex) == WebSockets.WebSocketClosedError
-                        Logger.log("Client disconnected - bye!")
+                        Logger.log("Client disconnected $(ws_client.id) - bye!", :debug)
+                        Channels.unsubscribe_client(ws_client)
 
                         break
                       end
