@@ -33,7 +33,7 @@ function run_task(task_name::String) :: TaskResult
     return
   end
 
-  eval(tasks[1].module_name).run_task!()
+  @time eval(tasks[1].module_name).run_task!()
 end
 
 

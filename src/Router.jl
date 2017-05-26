@@ -169,6 +169,8 @@ end
 """
     route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
     route(path::String, action::Union{String,Function}; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
+    route(path::String; resource::Union{String,Symbol} = "", controller::Union{String,Symbol} = "", action::Union{String,Symbol} = "",
+                    method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
 
 Used for defining Genie routes.
 """
@@ -208,6 +210,13 @@ Used for defining Genie channels.
 """
 function channel(action::Function, path::String; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel) :: Channel
   channel(path, action, with = with, named = named)
+end
+function channel(path::String; resource::Union{String,Symbol} = "", controller::Union{String,Symbol} = "", action::Union{String,Symbol} = "",
+                with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
+  resource = string(resource)
+  controller = string(controller)
+  action = string(action)
+  route(path, resource * "#" * (! isempty(controller) ? controller * "." : "") * action, with = with, named = named)
 end
 function channel(path::String, action::Union{String,Function}; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel) :: Channel
   channel_parts = (path, action)
