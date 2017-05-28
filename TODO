@@ -75,12 +75,10 @@ v 0.8
 ☐ server side reactivity from State (using Reactive.jl)
 ☐ reactive plots, tables, lists rendering with Vuejs (reactive UI components)
 ☐ Flax form helpers
-☐ asset pipeline with Broccoli.js
-☐ frontend package management with Yarn.js
+✔ asset pipeline with Webpack
+✔ frontend package management with Yarn.js
 ☐ add scaffolding functionality for CRUD
 ☐ tests
-
-☐ "Hello world" app
 
 v 0.9
 ☐ add utility functions for migrations (add column, add index, create table, etc)
