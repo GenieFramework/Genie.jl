@@ -20,11 +20,21 @@ end
 
 
 """
-    run_task(task_name::String)
+    run_task(task_name::String, params...)
 
 Executes the Genie task `task_name`.
 """
-function run_task(task_name::String) :: TaskResult
+function run_task(task_name::String, params...) :: TaskResult
+  @time import_task(task_name).run_task!(params...)
+end
+
+
+"""
+    import_task(task_name::String)
+
+Brings the Genie task `task_name` into scope.
+"""
+function import_task(task_name::String) :: Module
   task_name = valid_task_name(task_name)
   tasks = all_tasks(filter_type_name = Symbol(task_name))
 
@@ -33,7 +43,7 @@ function run_task(task_name::String) :: TaskResult
     return
   end
 
-  @time eval(tasks[1].module_name).run_task!()
+  eval(tasks[1].module_name)
 end
 
 

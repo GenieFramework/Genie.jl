@@ -26,7 +26,7 @@ function new(migration_name::String, content::String = "") :: Void
   end
 
   f = open(mfn, "w")
-  write(f, isempty(content) ? FileTemplates.new_database_migration(migration_module_name(content)) : content)
+  write(f, isempty(content) ? FileTemplates.new_database_migration(migration_module_name(migration_name)) : content)
   close(f)
 
   Logger.log("New migration created at $mfn")
@@ -108,11 +108,12 @@ end
 
 
 """
+    up(migration_module_name::String; force::Bool = false) :: Void
     up_by_module_name(migration_module_name::String; force::Bool = false) :: Void
 
 Runs up the migration corresponding to `migration_module_name`.
 """
-function up_by_module_name(migration_module_name::String; force::Bool = false) :: Void
+function up(migration_module_name::String; force::Bool = false) :: Void
   migration = migration_by_module_name(migration_module_name)
   if ! isnull(migration)
     run_migration(Base.get(migration), :up, force = force)
@@ -120,20 +121,27 @@ function up_by_module_name(migration_module_name::String; force::Bool = false) :
     error("Migration $migration_module_name not found")
   end
 end
+function up_by_module_name(migration_module_name::String; force::Bool = false) :: Void
+  up(migration_module_name, force = force)
+end
 
 
 """
+    down(migration_module_name::String; force::Bool = false) :: Void
     down_by_module_name(migration_module_name::String; force::Bool = false) :: Void
 
 Runs down the migration corresponding to `migration_module_name`.
 """
-function down_by_module_name(migration_module_name::String; force::Bool = false) :: Void
+function down(migration_module_name::String; force::Bool = false) :: Void
   migration = migration_by_module_name(migration_module_name)
   if ! isnull(migration)
     run_migration(Base.get(migration), :down, force = force)
   else
     error("Migration $migration_module_name not found")
   end
+end
+function down_by_module_name(migration_module_name::String; force::Bool = false) :: Void
+  down(migration_module_name, force = force)
 end
 
 
@@ -313,7 +321,14 @@ end
 
 Runs all migrations `down`.
 """
-function all_down() :: Void
+function all_down(; confirm = true) :: Void
+  if confirm
+    print_with_color(:yellow, "!!!WARNING!!! This will run down all the migration, potentially leading to irrecuperable data loss! You have 5 seconds to cancel this.")
+    sleep(3)
+    print_with_color(:yellow, "Running down all the migrations in 2 seconds.")
+    sleep(2)
+  end
+
   i, m = all_with_status()
   for v in values(m)
     if v[:status] == :up

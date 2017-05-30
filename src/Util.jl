@@ -2,7 +2,7 @@ module Util
 
 using Genie
 
-export expand_nullable, _!!, _!_, get_nested_field, get_deepest_module, DynamicField
+export expand_nullable, _!!, _!_, get_nested_field, get_deepest_module, DynamicField, psst
 
 type DynamicField{T}
   field::T
@@ -152,6 +152,25 @@ function get_deepest_module(path::String, depth::Int, parent::Module) :: Module
   else
     return new_parent
   end
+end
+
+
+"""
+    psst(f::Function)
+
+Invokes `f` while supressing all debugging output for the duration of the invocation.
+"""
+function psst(f::Function)
+  Genie.config.suppress_output = true
+  result = f()
+  Genie.config.suppress_output = false
+
+  result
+end
+
+
+function kill(t::Task) :: Void
+  Base.throwto(t, InterruptException())
 end
 
 end

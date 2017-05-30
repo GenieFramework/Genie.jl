@@ -1,5 +1,5 @@
 """
-Provides logging functionality for Genie apps. 
+Provides logging functionality for Genie apps.
 """
 module Logger
 
@@ -44,9 +44,11 @@ function log(message, level::Any = "info"; showst = false) :: Void
   level = string(level)
   level == "err" && (level = "error")
 
-  println()
-  Lumberjack.log(string(level), string(message))
-  println()
+  if ! Genie.config.suppress_output
+    println()
+    Lumberjack.log(string(level), string(message))
+    println()
+  end
 
   if (level == "critical" || level == "error") && showst
     println()

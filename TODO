@@ -79,6 +79,7 @@ v 0.8
 ✔ frontend package management with Yarn.js
 ☐ add scaffolding functionality for CRUD
 ☐ tests
+☐ Toolbox tasks with arguments
 
 v 0.9
 ☐ add utility functions for migrations (add column, add index, create table, etc)

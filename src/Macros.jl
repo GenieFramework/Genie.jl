@@ -80,29 +80,6 @@ end
 
 
 """
-    psst(expr::Expr)
-
-Evals `expr` while supressing all debugging output for the duration of the evaluation.
-To be used, for example, to hide internals of various functions while in `dev` mode.
-
-# Examples
-
-```julia
-julia> @psst SearchLight.rand(Article)
-```
-"""
-macro psst(expr::Expr)
-  Genie.config.suppress_output = true
-  evx = quote
-          @eval $(esc(expr))
-        end
-  Genie.config.suppress_output = false
-
-  evx
-end
-
-
-"""
     macro location_in_file()
 
 Returns the location (file name and line number) in the file where it's called.

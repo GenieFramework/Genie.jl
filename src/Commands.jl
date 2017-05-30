@@ -81,7 +81,7 @@ end
 
 
 """
-    parse_commandline_args() :: Dict{AbstractString,Any}
+    parse_commandline_args() :: Dict{String,Any}
 
 Extracts the command line args passed into the app and returns them as a `Dict`, possibly setting up defaults.
 Also, it is used by the ArgParse module to populate the command line help for the app `-h`.
@@ -167,7 +167,7 @@ end
 
 
 """
-    check_valid_task!(parsed_args::Dict{AbstractString,Any}) :: Dict{AbstractString,Any}
+    check_valid_task!(parsed_args::Dict{String,Any}) :: Dict{String,Any}
 
 Checks if the name of the task passed as the command line arg is valid task identifier -- if not, attempts to address it, by appending the "Task" suffix.
 Returns the potentially modified `parsed_args` `Dict`.

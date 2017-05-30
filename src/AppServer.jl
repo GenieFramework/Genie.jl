@@ -6,20 +6,18 @@ module AppServer
 using HttpServer, Router, Genie, Millboard, Logger, Sessions, Configuration, MbedTLS, WebSockets, Channels
 
 """
-    startup(port::Int = 8000) :: Void
+    startup(port::Int = 8000) :: Task
 
 Starts the web server on the configurated port.
 Automatically invoked when Genie is started with the `s` or the `server:start` command line params.
-Can be manually invoked from the REPL as well, when starting Genie without the above params -- ideally `async` to allow reusing the REPL session.
 
 # Examples
 ```julia
-julia> @spawn AppServer.startup()
+julia> AppServer.startup()
 Listening on 0.0.0.0:8000...
-Future(1,1,1,Nullable{Any}())
 ```
 """
-function startup(port::Int = 8000) :: Void
+function startup(port::Int = 8000) :: Task
   http = HttpHandler() do req::Request, res::Response
     try
       ip::IPv4 = Genie.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
@@ -75,7 +73,7 @@ function startup(port::Int = 8000) :: Void
   Genie.config.lookup_ip && (http.events["connect"] = (http_client) -> handle_connect(http_client))
 
   server = Genie.config.websocket_server ? Server(http, wsh) : Server(http)
-  @async run(server, port) # !!! @async required to avoid race conditions when storing the request IP
+  server_task = @async run(server, port)
 
   if Genie.config.run_as_server
     while true
@@ -83,7 +81,7 @@ function startup(port::Int = 8000) :: Void
     end
   end
 
-  nothing
+  server_task
 end
 
 

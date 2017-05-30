@@ -107,6 +107,7 @@ function pop_subscription(client::ClientId, channel::ChannelId) :: Void
     filter!(SUBSCRIPTIONS[channel]) do (client_id)
       client_id != client
     end
+    isempty(SUBSCRIPTIONS[channel]) && delete!(SUBSCRIPTIONS, channel)
   end
 
   nothing
@@ -128,12 +129,14 @@ end
 
 
 """
-    broadcast(channels::Vector{ChannelId}, msg::String) :: Void
+    broadcast(channels::Union{ChannelId,Vector{ChannelId}}, msg::String) :: Void
     broadcast{U,T}(channels::Vector{ChannelId}, msg::String, payload::Dict{U,T}) :: Void
 
 Pushes `msg` (and `payload`) to all the clients subscribed to the channels in `channels`.
 """
-function broadcast(channels::Vector{ChannelId}, msg::String) :: Void
+function broadcast(channels::Union{ChannelId,Vector{ChannelId}}, msg::String) :: Void
+  isa(channels, Array) || (channels = ChannelId[channels])
+
   @parallel for channel in channels
     for client in SUBSCRIPTIONS[channel]
       ws_write_message(client, msg)
@@ -142,10 +145,19 @@ function broadcast(channels::Vector{ChannelId}, msg::String) :: Void
 
   nothing
 end
-function broadcast{U,T}(channels::Vector{ChannelId}, msg::String, payload::Dict{U,T}) :: Void
+function broadcast{U,T}(channels::Union{ChannelId,Vector{ChannelId}}, msg::String, payload::Dict{U,T}) :: Void
+  isa(channels, Array) || (channels = ChannelId[channels])
+
   @parallel for channel in channels
     for client in SUBSCRIPTIONS[channel]
-      ws_write_message(client, ChannelMessage(channel, client, msg, payload) |> JSON.json)
+      try
+        ws_write_message(client, ChannelMessage(channel, client, msg, payload) |> JSON.json)
+      catch ex
+        Logger.log(string(ex), :err)
+        Logger.log("$(@__FILE__):$(@__LINE__)")
+
+        rethrow(ex)
+      end
     end
   end
 
