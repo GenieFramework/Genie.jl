@@ -17,7 +17,6 @@ SHA
 URIParser
 YAML
 Flax
-SearchLight
 Documenter
 Nettle
 WebSockets

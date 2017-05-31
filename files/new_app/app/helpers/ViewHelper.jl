@@ -1,6 +1,7 @@
 module ViewHelper
 
-using Genie, Validation, Helpers, App
+using Genie, Helpers, App
+SEARCHLIGHT_ON && eval(:(using Validation))
 
 export output_errors, output_flash
 

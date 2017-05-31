@@ -169,8 +169,21 @@ function psst(f::Function)
 end
 
 
+"""
+    kill(t::Task) :: Void
+
+Kills `Task` `t` by forcing it to throw an `InterruptException`.
+"""
 function kill(t::Task) :: Void
   Base.throwto(t, InterruptException())
+end
+
+
+"""
+
+"""
+function package_added(pkg_name::String) :: Bool
+  isdir(Pkg.dir(pkg_name))
 end
 
 end

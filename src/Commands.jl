@@ -3,8 +3,8 @@ Handles command line arguments for the genie.jl script.
 """
 module Commands
 
-using ArgParse, Configuration, Genie, SearchLight, Generator, Tester, Toolbox, App, Migration, Logger, AppServer
-
+using ArgParse, Configuration, Genie, Generator, Tester, Toolbox, App, Logger, AppServer
+SEARCHLIGHT_ON && eval(:(using SearchLight, Migration))
 
 """
     execute(config::Settings) :: Void

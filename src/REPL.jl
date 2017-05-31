@@ -1,6 +1,7 @@
 module REPL
 
-using SHA, Logger, Configuration, SearchLight, Genie, Generator, Tester, Toolbox, App, Migration
+using SHA, Logger, Configuration, Genie, Generator, Tester, Toolbox, App, Util
+SEARCHLIGHT_ON && eval(:(using SearchLight, Migration))
 
 
 """
@@ -30,7 +31,9 @@ function new_app(path = ".") :: Void
 
   Logger.log("Done! New app created at $(abspath(path))", :info)
 
-  Logger.log("Please restart the current Julia session before loading the new app to properly reinitialize Genie.", :warn)
+  Logger.log("Starting your brand new Genie app - hang tight!", :info)
+  cd(abspath(path))
+  run(`bin/repl`)
 
   nothing
 end

@@ -22,7 +22,7 @@ end
 """
     run_task(task_name::String, params...)
 
-Executes the Genie task `task_name`.
+Runs the Genie task named `task_name`.
 """
 function run_task(task_name::String, params...) :: TaskResult
   @time import_task(task_name).run_task!(params...)

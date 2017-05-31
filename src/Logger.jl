@@ -44,7 +44,7 @@ function log(message, level::Any = "info"; showst = false) :: Void
   level = string(level)
   level == "err" && (level = "error")
 
-  if ! Genie.config.suppress_output
+  if ! isdefined(:Genie) || ! isdefined(Genie, :config) || ! Genie.config.suppress_output
     println()
     Lumberjack.log(string(level), string(message))
     println()

@@ -3,7 +3,8 @@ Generates various Genie files.
 """
 module Generator
 
-using Genie, Logger, FileTemplates, Inflector, Configuration, Migration
+using Genie, Logger, FileTemplates, Inflector, Configuration
+SEARCHLIGHT_ON && eval(:(using SearchLight, Migration))
 
 
 """

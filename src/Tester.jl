@@ -1,6 +1,7 @@
 module Tester
 
-using Genie, App, Util, Migration, Configuration, Logger
+using Genie, App, Util, Configuration, Logger
+SEARCHLIGHT_ON && eval(:(using Migration))
 
 
 """
@@ -51,7 +52,7 @@ end
 """
     set_test_env() :: Void
 
-Switches Genie to the test env for the duration of the current execution. 
+Switches Genie to the test env for the duration of the current execution.
 """
 function set_test_env() :: Void
   if ! is_test()

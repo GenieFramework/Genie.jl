@@ -3,7 +3,8 @@ App level functionality -- loading and managing app-wide components like configs
 """
 module App
 
-using Genie, SearchLight, YAML, Validation, Macros, Logger, Inflector, Util
+using Genie, YAML, Macros, Logger, Inflector, Util
+SEARCHLIGHT_ON && eval(:(using SearchLight, Validation))
 
 IS_IN_APP && const config = Genie.config
 

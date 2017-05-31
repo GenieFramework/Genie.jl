@@ -16,7 +16,11 @@ if haskey(ENV, "GENIE_ENV") && isfile(abspath(joinpath(ENV_PATH, ENV["GENIE_ENV"
 else
   const IS_IN_APP = false
 end
-export IS_IN_APP
+
+const SEARCHLIGHT_ON = isdir(Pkg.dir("SearchLight")) ?  true : false
+
+export IS_IN_APP, SEARCHLIGHT_ON
+
 
 isfile(abspath(joinpath(CONFIG_PATH, "plugins.jl"))) && include(abspath(joinpath(CONFIG_PATH, "plugins.jl")))
 
@@ -27,7 +31,8 @@ push!(LOAD_PATH,  joinpath(Pkg.dir("Genie"), "src", "cache_adapters"),
 include(joinpath(Pkg.dir("Genie"), "src", "genie_types.jl"))
 include(joinpath(Pkg.dir("Genie"), "src", "REPL.jl"))
 
-using Macros, Logger, AppServer, Commands, App, Millboard, SearchLight, Renderer
+using Macros, Logger, AppServer, Commands, App, Millboard, Renderer
+SEARCHLIGHT_ON && eval(:(using SearchLight))
 
 IS_IN_APP && @eval parse("@dependencies")
 
