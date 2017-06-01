@@ -3,7 +3,7 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
-using Genie, YAML
+using Genie, YAML, Memoize
 
 export is_dev, is_prod, is_test, env, cache_enabled, Settings, DEV, PROD, TEST, IN_REPL
 export LOG_LEVEL_VERBOSITY_VERBOSE, LOG_LEVEL_VERBOSITY_MINIMAL
@@ -84,13 +84,13 @@ Dict{Any,Any} with 6 entries:
   "adapter"  => "PostgreSQL"
 ```
 """
-function read_db_connection_data!!(db_settings_file::String) :: Dict{Any,Any}
+function read_db_connection_data!!(db_settings_file::String) :: Dict{String,Any}
   db_conn_data = YAML.load(open(db_settings_file))
   if haskey(db_conn_data, Genie.config.app_env)
     db_conn_data[Genie.config.app_env]
   else
     push!(Genie.GENIE_LOG_QUEUE, ("DB configuration for $(Genie.config.app_env) not found", :debug))
-    Dict{Any,Any}()
+    Dict{String,Any}()
   end
 end
 
@@ -100,11 +100,14 @@ end
 
 Attempts to load the database configuration from file. Returns `true` if successful, otherwise `false`.
 """
-function load_db_connection() :: Bool
+function load_db_connection() :: Dict{String,Any}
+  _load_db_connection()
+end
+@memoize function _load_db_connection()
   db_config_file = joinpath(Genie.CONFIG_PATH, Genie.GENIE_DB_CONFIG_FILE_NAME)
   isfile(db_config_file) && (Genie.config.db_config_settings = read_db_connection_data!!(db_config_file))
 
-  ! isempty(Genie.config.db_config_settings)
+  Genie.config.db_config_settings
 end
 
 

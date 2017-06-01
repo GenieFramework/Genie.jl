@@ -17,7 +17,7 @@ else
   const IS_IN_APP = false
 end
 
-const SEARCHLIGHT_ON = isdir(Pkg.dir("SearchLight")) && IS_IN_APP ?  true : false
+const SEARCHLIGHT_ON = isdir(Pkg.dir("SearchLight")) && IS_IN_APP && ! isempty(Configuration.load_db_connection()) ? true : false
 
 export IS_IN_APP, SEARCHLIGHT_ON
 
@@ -44,6 +44,8 @@ Runs the Genie app by parsing the command line args and invoking the correspondi
 function run() :: Void
   Configuration.load_db_connection()
   Commands.execute(Configuration.config)
+
+  nothing
 end
 
 end
