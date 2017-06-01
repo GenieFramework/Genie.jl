@@ -1,6 +1,6 @@
 module Util
 
-using Genie
+using Genie, Logger
 
 export expand_nullable, _!!, _!_, get_nested_field, get_deepest_module, DynamicField, psst
 
@@ -186,6 +186,34 @@ Checks if the Julia package `pkg_name` has already been added.
 """
 function package_added(pkg_name::String) :: Bool
   isdir(Pkg.dir(pkg_name))
+end
+
+
+"""
+    reload_modules(dir::String, md::Module = current_module()) :: Void
+
+Reloads all the modules in the specified `dir` in the scope of `md`.
+"""
+function reload_modules(dir::String, md::Module = current_module()) :: Void
+  for file in readdir(dir)
+    isfile(joinpath(dir, file)) && endswith(file, ".jl") && isdefined(Symbol(file[1:end-3])) && eval(md, :(reload($file[1:end-3])) )
+  end
+
+  nothing
+end
+
+
+"""
+    reload_modules(dirs::Vector{String}, md::Module = current_module()) :: Void
+
+Reloads all the modules in all the directories specified in `dirs` in the scope of `md`.
+"""
+function reload_modules(dirs::Vector{String}, md::Module = current_module()) :: Void
+  for dir in dirs
+    reload_modules(dir, md)
+  end
+
+  nothing
 end
 
 end

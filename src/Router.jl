@@ -76,7 +76,9 @@ function route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: R
 
   if is_dev()
     load_routes()
+
     App.load_models()
+    App.load_libs()
   end
 
   session = Sessions.start(req, res)

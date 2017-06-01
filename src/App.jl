@@ -15,8 +15,10 @@ IS_IN_APP && const config = Genie.config
 Recursively adds subfolders of lib to LOAD_PATH.
 """
 function load_libs(dir = Genie.LIB_PATH) :: Void
-  lib_dirs = [d for d in Task( ()-> Util.walk_dir(dir, only_dirs = true) )]
+  lib_dirs = [d::String for d::String in Task( ()-> Util.walk_dir(dir, only_dirs = true) )]
   ! isempty(lib_dirs) && push!(LOAD_PATH, lib_dirs...)
+
+  Util.reload_modules([dir, lib_dirs...], App)
 
   nothing
 end
@@ -85,6 +87,8 @@ Load the controller file corresponding to `resource`.
 function load_resource_controller(resource::String) :: Void
   Inflector.is_singular(resource) && (resource = Inflector.to_plural(resource) |> Base.get)
   load_controller(joinpath(Genie.RESOURCES_PATH, resource))
+
+  nothing
 end
 
 
@@ -111,6 +115,8 @@ Load the channel file corresponding to `resource`.
 function load_resource_channel(resource::String) :: Void
   Inflector.is_singular(resource) && (resource = Inflector.to_plural(resource) |> Base.get)
   load_channel(joinpath(Genie.RESOURCES_PATH, resource))
+
+  nothing
 end
 
 
@@ -193,10 +199,12 @@ function secret_token() :: String
   SECRET_TOKEN
 end
 
-load_configurations()
-load_initializers()
-IS_IN_APP && load_libs()
-IS_IN_APP && load_resources()
-load_models()
+if IS_IN_APP
+  load_configurations()
+  load_initializers()
+  load_libs()
+  load_resources()
+  load_models()
+end
 
 end

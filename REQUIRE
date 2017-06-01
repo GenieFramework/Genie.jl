@@ -1,14 +1,11 @@
 ArgParse
-DataFrames
 DataStructures
 DateParser
 Documenter
-Faker
 Gallium
 Gumbo
 HttpServer
 JSON
-Lint
 Lumberjack
 MbedTLS
 Memoize

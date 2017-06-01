@@ -5,8 +5,9 @@ module AppServer
 
 using HttpServer, Router, Genie, Millboard, Logger, Sessions, Configuration, MbedTLS, WebSockets, Channels
 
+
 """
-    startup(port::Int = 8000) :: Task
+    startup(port::Int = 8000) :: HttpServer.Server
 
 Starts the web server on the configurated port.
 Automatically invoked when Genie is started with the `s` or the `server:start` command line params.
@@ -17,7 +18,7 @@ julia> AppServer.startup()
 Listening on 0.0.0.0:8000...
 ```
 """
-function startup(port::Int = 8000) :: Task
+function startup(port::Int = 8000) :: Tuple{Task,HttpServer.Server}
   http = HttpHandler() do req::Request, res::Response
     try
       ip::IPv4 = Genie.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
@@ -81,7 +82,7 @@ function startup(port::Int = 8000) :: Task
     end
   end
 
-  server_task
+  server_task, server
 end
 
 
