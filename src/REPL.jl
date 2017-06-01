@@ -15,11 +15,11 @@ end
 
 
 """
-    new_app(path = ".") :: Void
+    function new_app(path = "."; db_support = false, skip_dependencies = false) :: Void
 
 Creates a new Genie app at the indicated path.
 """
-function new_app(path = ".") :: Void
+function new_app(path = "."; db_support = false, skip_dependencies = false) :: Void
   cp(joinpath(Pkg.dir("Genie"), "files", "new_app"), abspath(path))
 
   chmod(joinpath(path, "bin/server"), 0o700)
@@ -31,9 +31,39 @@ function new_app(path = ".") :: Void
 
   Logger.log("Done! New app created at $(abspath(path))", :info)
 
+  skip_dependencies || add_dependencies(db_support = db_support)
+
   Logger.log("Starting your brand new Genie app - hang tight!", :info)
   cd(abspath(path))
   run(`bin/repl`)
+
+  nothing
+end
+
+
+"""
+    add_dependencies(; db_support = false) :: Void
+
+Attempts to install Genie's dependencies - packages that are not part of METADATA. 
+"""
+function add_dependencies(; db_support = false) :: Void
+  Logger.log("Looking for dependencies", :info)
+
+  Logger.log("Checking for Flax rendering engine support", :info)
+  Util.package_added("Flax") || Pkg.clone("https://github.com/essenciary/Flax.jl")
+
+  if db_support
+    Logger.log("Checking for DBI support", :info)
+    Util.package_added("DBI") || Pkg.clone("https://github.com/JuliaDB/DBI.jl")
+
+    Logger.log("Checking for PostgreSQL support", :info)
+    Util.package_added("PostgreSQL") || Pkg.clone("https://github.com/JuliaDB/PostgreSQL.jl")
+
+    Logger.log("Checking for SearchLight ORM support", :info)
+    Util.package_added("SearchLight") || Pkg.clone("https://github.com/essenciary/SearchLight.jl")
+  end
+
+  Logger.log("Finished adding dependencies", :info)
 
   nothing
 end

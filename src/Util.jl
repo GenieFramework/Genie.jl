@@ -180,7 +180,9 @@ end
 
 
 """
+    package_added(pkg_name::String) :: Bool
 
+Checks if the Julia package `pkg_name` has already been added.
 """
 function package_added(pkg_name::String) :: Bool
   isdir(Pkg.dir(pkg_name))

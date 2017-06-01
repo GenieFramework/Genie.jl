@@ -2,9 +2,10 @@ ArgParse
 DataFrames
 DataStructures
 DateParser
+Documenter
 Faker
-Gumbo
 Gallium
+Gumbo
 HttpServer
 JSON
 Lint
@@ -12,11 +13,9 @@ Lumberjack
 MbedTLS
 Memoize
 Millboard
+Nettle
 Reexport
 SHA
 URIParser
-YAML
-Flax
-Documenter
-Nettle
 WebSockets
+YAML
