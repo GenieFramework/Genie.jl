@@ -798,7 +798,13 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
     rethrow(ex)
   end
 
-  Genie.config.log_requests && Logger.log("Invoking $action_name with params: \n" * string(Millboard.table(params)), :debug)
+  try
+    Genie.config.log_requests && Logger.log("Invoking $action_name with params: \n" * string(Millboard.table(params)), :debug)
+  catch ex
+    Logger.log("Can't log request", :err)
+    Logger.log(string(ex), :err)
+    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+  end
 
   return  try
             (get_nested_field(action_name, 1, App).field)() |> to_response

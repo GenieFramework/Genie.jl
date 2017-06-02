@@ -23,7 +23,7 @@ function write(session::Sessions.Session) :: Sessions.Session
       serialize(io, session)
     end
   catch ex
-    Logger.log("Error when serializing session $session in $(@__FILE__):$(@__LINE__)", :err)
+    Logger.log("Error when serializing session $(escape_string(session)) in $(@__FILE__):$(@__LINE__)", :err)
     Logger.log(string(ex), :err)
     Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
@@ -49,7 +49,15 @@ function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
     return Nullable{Sessions.Session}()
   end
 
-  ! isfile(joinpath(SESSION_FOLDER, session_id)) && return Nullable{Sessions.Session}()
+  try
+    isfile(joinpath(SESSION_FOLDER, session_id)) || return Nullable{Sessions.Session}()
+  catch ex
+    Logger.log("Can't check session file", :err)
+    Logger.log(string(ex), :err)
+    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+
+    Nullable{Sessions.Session}()
+  end
 
   try
     session = open(joinpath(SESSION_FOLDER, session_id), "r") do (io)
