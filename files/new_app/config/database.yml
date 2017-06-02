@@ -1,23 +1,23 @@
 dev:
-  adapter:  PostgreSQL
-  database: db_dev
-  host:     localhost
+  adapter:
+  database:
+  host:
   username:
   password:
-  port:     5432
+  port:
 
 prod:
-  adapter:  PostgreSQL
-  database: db_prod
-  host:     localhost
+  adapter:
+  database:
+  host:
   username:
   password:
-  port:     5432
+  port:
 
 test:
-  adapter:  PostgreSQL
-  database: db_test
-  host:     localhost
+  adapter:
+  database:
+  host:
   username:
-  password: 
-  port:     5432
+  password:
+  port:

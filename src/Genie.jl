@@ -17,7 +17,9 @@ else
   const IS_IN_APP = false
 end
 
-const SEARCHLIGHT_ON = isdir(Pkg.dir("SearchLight")) && IS_IN_APP && ! isempty(Configuration.load_db_connection()) ? true : false
+const SEARCHLIGHT_ON = isdir(Pkg.dir("SearchLight")) && IS_IN_APP &&
+                        haskey(Configuration.load_db_connection(), "host") && 
+                        Configuration.load_db_connection()["host"] != nothing ? true : false
 
 export IS_IN_APP, SEARCHLIGHT_ON
 
