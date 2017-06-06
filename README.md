@@ -8,18 +8,11 @@
 
 Genie is a full-stack MVC web framework that provides a streamlined and efficient workflow for developing modern web applications. It builds on Julia's strengths (high-level, high-performance, dynamic, JIT compiled), exposing a rich API and a powerful toolset for productive web development.
 
+
 ## Quick start
 In a Julia session clone `Genie` and its dependencies:
 ```julia
-julia> Pkg.clone("https://github.com/JuliaDB/DBI.jl") # Julia's DB interface
-
-julia> Pkg.clone("https://github.com/JuliaDB/PostgreSQL.jl") # PostgreSQL adapter
-
-julia> Pkg.clone("https://github.com/essenciary/Flax.jl") # Genie's templating engine
-
-julia> Pkg.clone("https://github.com/essenciary/SearchLight.jl") # Genie's ORM
-
-julia> Pkg.clone("https://github.com/essenciary/Genie.jl") # Finally the Genie itself 👻
+julia> Pkg.clone("https://github.com/essenciary/Genie.jl")
 ```
 
 Bring it into scope:
@@ -31,49 +24,59 @@ Create a new app:
 ```julia
 julia> Genie.REPL.new_app("your_cool_new_app")
 
-info: Done! New app created at /your_cool_new_app
-
-warn: Please restart the current Julia session before loading the new app to properly reinitialize Genie.
+info: Done! New app created at /path/to/your_cool_new_app
 ```
 
-`cd` into the new app's dir and start the server:
-```
-$> bin/server
+Genie will automatically load the new app into the REPL and start an interactive `genie>` session.
+
+Edit `/path/to/your_cool_new_app/config/routes.jl` and append:
+
+```julia
+route("/hello") do
+  "Hello - Welcome to Genie!"
+end
 ```
 
-See it in action by navigating to `http://localhost:8000/` with your favorite browser.
+Start the web server:
+```julia
+genie> AppServer.startup()
+Listening on 0.0.0.0:8000...
+```
+
+Visit `http://localhost:8000/hello` for a warm welcome!
 
 ---
 
-In order to start a Genie interactive session, use:
+At any time, from the command line you can start a Genie interactive session by using
 ```
 $> bin/repl
 ```
 
-Alternatively, from a regular Julia session, you can just
-```julia
-julia> include("genie.jl")
+Or you can use
 ```
-
-Once the app is loaded you can start the web server anytime with
-```julia
-julia> AppServer.startup()
+$> bin/server
 ```
+to start the app in non-interactive mode.
 
 
 ## Next steps
 If you want to learn more about Genie you can
-* read the guides
 * check out the API docs
+  * [Genie Web Framework](http://geniejl.readthedocs.io/en/latest/build/)
+  * [SearchLight ORM](http://searchlightjl.readthedocs.io/en/latest/build/)
+  * [Flax Templates](http://flaxjl.readthedocs.io/en/latest/build/)
 * dive into the demo apps
   * [TodoMVC](https://github.com/essenciary/genie-todo-mvc)
   * [PkgSearch web app and REST API](https://github.com/essenciary/pgksearch-api-website)
-  * [Genie CMS]() (pending)
+  * [Genie CMS]() (coming soon)
+  * [Hashtag Analytics]() (coming soon)
+* read the guides (coming soon)
+* visit to [genieframework.com](http://genieframework.com) for more resources
 
 
 ## Acknowledgements
-* The amazing Genie logo was designed by my friend Alvaro Casanova (www.yeahstyledg.com).
 * Genie uses a multitude of packages that have been contributed by so many incredible developers.
-* I wouldn't have made it so far without the help and the patience of the amazing people at the `julia-users` group.
+* The amazing Genie logo was designed by my friend Alvaro Casanova (www.yeahstyledg.com).
+* Built with the help and support of many amazing developers at the `julia-users` group.
 
-Thank you all.
+Thank you all!
