@@ -58,9 +58,6 @@ To be used to automatically disable timed execution outside `dev` mode.
 
 # Examples
 ```julia
-julia> Genie.config.app_env
-"dev"
-
 julia> @run_with_time rand(2,2)
   0.059437 seconds (39.18 k allocations: 1.586 MB)
 2×2 Array{Float64,2}:

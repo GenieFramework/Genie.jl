@@ -34,6 +34,18 @@ function new_app(path = "."; db_support = false, skip_dependencies = false) :: V
   skip_dependencies || add_dependencies(db_support = db_support)
 
   Logger.log("Starting your brand new Genie app - hang tight!", :info)
+  run_repl_app(path)
+
+  nothing
+end
+
+
+"""
+    run_repl_app() :: Void
+
+Runs a new Genie REPL app within the current thread.
+"""
+function run_repl_app(path = ".") :: Void
   cd(abspath(path))
   run(`bin/repl`)
 
@@ -44,7 +56,7 @@ end
 """
     add_dependencies(; db_support = false) :: Void
 
-Attempts to install Genie's dependencies - packages that are not part of METADATA. 
+Attempts to install Genie's dependencies - packages that are not part of METADATA.
 """
 function add_dependencies(; db_support = false) :: Void
   Logger.log("Looking for dependencies", :info)
@@ -75,7 +87,7 @@ end
 Sets up the DB tables used by Genie.
 """
 function db_init() :: Bool
-  SearchLight.create_migrations_table(Genie.config.db_migrations_table_name)
+  SearchLight.create_migrations_table(App.config.db_migrations_table_name)
 end
 
 
@@ -136,7 +148,7 @@ Creates a new `Task` file.
 """
 function new_task(task_name::String) :: Void
   endswith(task_name, "Task") || (task_name = task_name * "Task")
-  Toolbox.new(Dict{String,Any}("task:new" => task_name), Genie.config)
+  Toolbox.new(Dict{String,Any}("task:new" => task_name), App.config)
 end
 
 

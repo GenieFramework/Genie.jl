@@ -1,6 +1,6 @@
 module FileCacheAdapter
 
-using Genie, Logger
+using Genie, Logger, App
 
 const VALIDITY_START_MARKER = ">>>"
 const VALIDITY_END_MARKER   = "<<<"
@@ -8,7 +8,7 @@ const VALIDITY_END_MARKER   = "<<<"
 """
 The subfolder under the cache folder where the cache should be stored.
 """
-const CACHE_FOLDER = IS_IN_APP ? Genie.config.cache_folder : tempdir()
+const CACHE_FOLDER = IS_IN_APP ? App.config.cache_folder : tempdir()
 
 
 """
@@ -35,7 +35,7 @@ function from_cache(key::Union{String,Symbol}, expiration::Int; dir = "") :: Nul
 
   ( ! isfile(file_path) || stat(file_path).ctime + expiration < time() ) && return Nullable()
 
-  Genie.config.log_cache && Logger.log("Found file system cache for $key at $file_path", :info)
+  App.config.log_cache && Logger.log("Found file system cache for $key at $file_path", :info)
 
   output = open(file_path) do io
     deserialize(io)

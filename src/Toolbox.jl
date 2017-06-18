@@ -2,7 +2,7 @@ module Toolbox
 
 import Base.string
 
-using Genie, Util, Millboard, FileTemplates, Configuration, Logger, Inflector
+using Genie, Util, Millboard, FileTemplates, Configuration, Logger, Inflector, App
 
 export TaskResult, VoidTaskResult
 
@@ -91,7 +91,7 @@ Returns a vector of all registered Genie tasks.
 function tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
   tasks = TaskInfo[]
 
-  tasks_folder = abspath(Genie.config.tasks_folder)
+  tasks_folder = abspath(App.config.tasks_folder)
   f = readdir(tasks_folder)
   for i in f
     if ( endswith(i, "Task.jl") )

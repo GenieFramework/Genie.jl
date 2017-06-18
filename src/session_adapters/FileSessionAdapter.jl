@@ -1,8 +1,8 @@
 module FileSessionAdapter
 
-using Sessions, Genie, Logger, Configuration
+using Sessions, Genie, Logger, Configuration, App
 
-const SESSION_FOLDER = IS_IN_APP ? Genie.config.session_folder : tempdir()
+const SESSION_FOLDER = IS_IN_APP ? App.config.session_folder : tempdir()
 
 """
     write(session::Sessions.Session) :: Sessions.Session

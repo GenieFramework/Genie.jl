@@ -7,11 +7,15 @@ export error_404, error_500, error_XXX
 using Genie, Util, JSON, Configuration, HttpServer, App, Router, Logger, Macros
 
 if IS_IN_APP
-  eval(:(using $(Genie.config.html_template_engine), $(Genie.config.json_template_engine)))
-  eval(:(const HTMLTemplateEngine = $(Genie.config.html_template_engine)))
-  eval(:(const JSONTemplateEngine = $(Genie.config.json_template_engine)))
+  eval(:(using $(App.config.html_template_engine), $(App.config.json_template_engine)))
+  eval(:(const HTMLTemplateEngine = $(App.config.html_template_engine)))
+  eval(:(const JSONTemplateEngine = $(App.config.json_template_engine)))
 
   export HTMLTemplateEngine, JSONTemplateEngine
+
+  const DEFAULT_LAYOUT_FILE = App.config.renderer_default_layout_file
+else
+  const DEFAULT_LAYOUT_FILE = :app
 end
 
 const CONTENT_TYPES = Dict{Symbol,String}(
@@ -27,25 +31,25 @@ const LAYOUTS_FOLDER = "layouts"
 
 
 """
-    html(resource::Symbol, action::Symbol, layout::Symbol = :app, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
+    html(resource::Symbol, action::Symbol, layout::Symbol = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
 
 Invokes the HTML renderer of the underlying configured templating library.
 """
-function html(resource::Symbol, action::Symbol, layout::Symbol = :app, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
+function html(resource::Symbol, action::Symbol, layout::Symbol = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
   HTMLTemplateEngine.html(resource, action, layout; parse_vars(vars)...)
 end
 
 
 """
-    respond_with_html(resource::Symbol, action::Symbol, layout::Symbol = :app, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
+    respond_with_html(resource::Symbol, action::Symbol, layout::Symbol = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
 
 Invokes the HTML renderer of the underlying configured templating library and wraps it into a `HttpServer.Response`.
 """
-function respond_with_html(resource::Symbol, action::Symbol, layout::Symbol = :app, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
+function respond_with_html(resource::Symbol, action::Symbol, layout::Symbol = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
   html(resource, action, layout, check_nulls; vars...) |> respond
 end
 
-function flax(resource::Symbol, action::Symbol, layout::Symbol = :app, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
+function flax(resource::Symbol, action::Symbol, layout::Symbol = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
   HTMLTemplateEngine.flax(resource, action, layout; parse_vars(vars)...)
 end
 
@@ -186,35 +190,35 @@ end
 
 
 """
-    include_asset(asset_type::Symbol, file_name::String; fingerprinted = Genie.config.assets_fingerprinted) :: String
+    include_asset(asset_type::Symbol, file_name::String; fingerprinted = App.config.assets_fingerprinted) :: String
 
 Returns the path to an asset. `asset_type` can be one of `:js`, `:css`. `file_name` should not include the extension.
 `fingerprinted` is a `Bool` indicated wheter or not fingerprinted (unique hash) should be added to the asset's filename (used in production to invalidate caches).
 """
-function include_asset(asset_type::Symbol, file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
+function include_asset(asset_type::Symbol, file_name::String; fingerprinted::Bool = App.config.assets_fingerprinted) :: String
   suffix = fingerprinted ? "-" * App.ASSET_FINGERPRINT * ".$(asset_type)" : ".$(asset_type)"
   "/$asset_type/$(file_name)$(suffix)"
 end
 
 
 """
-    css_asset(file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
+    css_asset(file_name::String; fingerprinted::Bool = App.config.assets_fingerprinted) :: String
 
 Path to a css asset. `file_name` should not include the extension.
 `fingerprinted` is a `Bool` indicated wheter or not fingerprinted (unique hash) should be added to the asset's filename (used in production to invalidate caches).
 """
-function css_asset(file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
+function css_asset(file_name::String; fingerprinted::Bool = App.config.assets_fingerprinted) :: String
   include_asset(:css, file_name, fingerprinted = fingerprinted)
 end
 
 
 """
-    js_asset(file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
+    js_asset(file_name::String; fingerprinted::Bool = App.config.assets_fingerprinted) :: String
 
 Path to a js asset. `file_name` should not include the extension.
 `fingerprinted` is a `Bool` indicated wheter or not fingerprinted (unique hash) should be added to the asset's filename (used in production to invalidate caches).
 """
-function js_asset(file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
+function js_asset(file_name::String; fingerprinted::Bool = App.config.assets_fingerprinted) :: String
   include_asset(:js, file_name, fingerprinted = fingerprinted)
 end
 
@@ -245,7 +249,7 @@ function parse_vars(vars)
 end
 
 
-function json_pagination(path::AbstractString, total_items::Int; current_page::Int = 1, page_size::Int = Genie.config.pagination_jsonapi_default_items_per_page)
+function json_pagination(path::AbstractString, total_items::Int; current_page::Int = 1, page_size::Int = App.config.pagination_jsonapi_default_items_per_page)
   page_param_name = "page"
 
   pg = Dict{Symbol,String}()

@@ -1,6 +1,6 @@
 module Util
 
-using Genie, Logger
+using Genie, Logger, App
 
 export expand_nullable, _!!, _!_, get_nested_field, get_deepest_module, DynamicField, psst
 
@@ -161,9 +161,9 @@ end
 Invokes `f` while supressing all debugging output for the duration of the invocation.
 """
 function psst(f::Function)
-  Genie.config.suppress_output = true
+  App.config.suppress_output = true
   result = f()
-  Genie.config.suppress_output = false
+  App.config.suppress_output = false
 
   result
 end

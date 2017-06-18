@@ -66,11 +66,11 @@ function route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: R
   params = Params()
   params.collection[:request_ipv4] = ip
 
-  extract_get_params(URI(req.resource), params)
+  extract_get_params(URI(to_uri(req.resource)), params)
   res = negotiate_content(req, res, params)
 
   if is_static_file(req.resource)
-    Genie.config.server_handle_static_files && return serve_static_file(req.resource)
+    App.config.server_handle_static_files && return serve_static_file(req.resource)
     return serve_error_file(404, "File not found: $(req.resource)", params.collection)
   end
 
@@ -85,9 +85,9 @@ function route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: R
 
   controller_response::Response = match_routes(req, res, session, params)
 
-  ! in(response_type(params), sessionless) && Sessions.persist(session)
+  ! in(response_type(params), sessionless) && App.config.session_auto_start && Sessions.persist(session)
 
-  print_with_color(:green, "[$(Dates.now())] -- $(URI(req.resource)) -- Done\n\n")
+  print_with_color(:green, "[$(Dates.now())] -- $(URI(to_uri(req.resource))) -- Done\n\n")
 
   controller_response
 end
@@ -433,18 +433,18 @@ function match_routes(req::Request, res::Response, session::Sessions.Session, pa
 
     protocol != req.method && (! haskey(params.collection, :_method) || ( haskey(params.collection, :_method) && params.collection[:_method] != protocol )) && continue
 
-    Genie.config.log_router && Logger.log("Router: Checking against " * route)
+    App.config.log_router && Logger.log("Router: Checking against " * route)
 
     parsed_route, param_names, param_types = parse_route(route)
 
-    uri = URI(req.resource)
+    uri = URI(to_uri(req.resource))
     regex_route = Regex("^" * parsed_route * "\$")
 
     (! ismatch(regex_route, uri.path)) && continue
-    Genie.config.log_router && Logger.log("Router: Matched route " * uri.path)
+    App.config.log_router && Logger.log("Router: Matched route " * uri.path)
 
     (! extract_uri_params(uri.path, regex_route, param_names, param_types, params)) && continue
-    Genie.config.log_router && Logger.log("Router: Matched type of route " * uri.path)
+    App.config.log_router && Logger.log("Router: Matched type of route " * uri.path)
 
     extract_post_params(req, params)
     extract_extra_params(extra_params, params)
@@ -453,6 +453,8 @@ function match_routes(req::Request, res::Response, session::Sessions.Session, pa
     res = negotiate_content(req, res, params)
 
     params.collection = setup_base_params(req, res, params.collection, session)
+
+    task_local_storage(:__params, params.collection)
 
     return  try
               if isa(to, Function)
@@ -469,7 +471,7 @@ function match_routes(req::Request, res::Response, session::Sessions.Session, pa
             end
   end
 
-  Genie.config.log_router && Logger.log("Router: No route matched - defaulting 404", :err)
+  App.config.log_router && Logger.log("Router: No route matched - defaulting 404", :err)
   serve_error_file(404, "Not found", params.collection)
 end
 
@@ -484,7 +486,7 @@ function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSock
     channel_def, extra_params = c
     channel, to = channel_def
 
-    Genie.config.log_router && Logger.log("Channels: Checking against " * channel)
+    App.config.log_router && Logger.log("Channels: Checking against " * channel)
 
     parsed_channel, param_names, param_types = parse_channel(channel)
 
@@ -502,14 +504,16 @@ function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSock
     regex_channel = Regex("^" * parsed_channel * "\$")
 
     (! ismatch(regex_channel, uri)) && continue
-    Genie.config.log_router && Logger.log("Channels: Matched channel " * uri)
+    App.config.log_router && Logger.log("Channels: Matched channel " * uri)
 
     (! extract_uri_params(uri, regex_channel, param_names, param_types, params)) && continue
-    Genie.config.log_router && Logger.log("Router: Matched type of channel " * uri)
+    App.config.log_router && Logger.log("Router: Matched type of channel " * uri)
 
     extract_extra_params(extra_params, params)
 
     params.collection = setup_base_params(req, nothing, params.collection, session)
+
+    task_local_storage(:__params, params.collection)
 
     return  try
               if isa(to, Function)
@@ -530,7 +534,7 @@ function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSock
             end
   end
 
-  Genie.config.log_router && Logger.log("Channel: No route matched - defaulting 404", :err)
+  App.log_router && Logger.log("Channel: No route matched - defaulting 404", :err)
   string("404 - Not found")
 end
 
@@ -634,7 +638,7 @@ function extract_get_params(uri::URI, params::Params) :: Bool
     for query_part in split(uri.query, "&")
       qp = split(query_part, "=")
       (size(qp)[1] == 1) && (push!(qp, ""))
-      params.collection[Symbol(qp[1])] = qp[2]
+      params.collection[Symbol(URIParser.unescape(qp[1]))] = URIParser.unescape(qp[2])
     end
   end
 
@@ -705,7 +709,7 @@ function extract_pagination_params(params::Params) :: Void
     params.collection[:page_number] = haskey(params.collection, Symbol("page[number]")) ? parse(Int, params.collection[Symbol("page[number]")]) : 1
   end
   if ! haskey(params.collection, :page_size)
-    params.collection[:page_size] = haskey(params.collection, Symbol("page[size]")) ? parse(Int, params.collection[Symbol("page[size]")]) : Genie.config.pagination_default_items_per_page
+    params.collection[:page_size] = haskey(params.collection, Symbol("page[size]")) ? parse(Int, params.collection[Symbol("page[size]")]) : App.config.pagination_default_items_per_page
   end
 
   nothing
@@ -799,7 +803,7 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
   end
 
   try
-    Genie.config.log_requests && Logger.log("Invoking $action_name with params: \n" * string(Millboard.table(params)), :debug)
+    App.config.log_requests && Logger.log("Invoking $action_name with params: \n" * string(Millboard.table(params)), :debug)
   catch ex
     Logger.log("Can't log request", :err)
     Logger.log(string(ex), :err)
@@ -874,7 +878,7 @@ function invoke_channel(to::String, req::Request, payload::Dict{String,Any}, ws_
     end
   end
 
-  Genie.config.log_requests && Logger.log("Invoking channel $action_name with params: \n" * string(Millboard.table(params)), :debug)
+  App.config.log_requests && Logger.log("Invoking channel $action_name with params: \n" * string(Millboard.table(params)), :debug)
 
   return  try
             # TODO: add support for arbitrarely nested modules
@@ -1042,7 +1046,32 @@ end
 Checks if the requested resource is a static file.
 """
 function is_static_file(resource::String) :: Bool
-  isfile(file_path(URI(resource).path))
+  isfile(file_path(to_uri(resource).path))
+end
+
+
+"""
+    to_uri(resource::String) :: URI
+
+Attempts to convert `resource` to URI
+"""
+function to_uri(resource::String) :: URI
+  try
+    URI(resource)
+  catch ex
+    qp = URIParser.query_params(resource) |> keys |> collect
+    escaped_resource = join(map( x -> ( startswith(x, "/") ? escape_resource_path(x) : URIParser.escape(x) ) * "=" * URIParser.escape(URIParser.query_params(resource)[x]), qp ), "&")
+
+    URI(escaped_resource)
+  end
+end
+
+
+function escape_resource_path(resource::String)
+  startswith(resource, "/") || return resource
+  resource = resource[2:end]
+
+  "/" * join(map(x -> URIParser.escape(x), split(resource, "?")), "?")
 end
 
 
@@ -1052,7 +1081,13 @@ end
 Reads the static file and returns the content as a `Response`.
 """
 function serve_static_file(resource::String) :: Response
-  f = file_path(URI(resource).path)
+  resource_path = try
+                    URI(resource).path
+                  catch ex
+                    resource
+                  end
+  f = file_path(resource_path)
+  
   Response(200, file_headers(f), open(read, f))
 end
 
@@ -1082,7 +1117,7 @@ end
 Returns the path to a resource file.
 """
 function file_path(resource::String) :: String
-  abspath(joinpath(Genie.config.server_document_root, resource[2:end]))
+  abspath(joinpath(App.config.server_document_root, resource[(startswith(resource, "/") ? 2 : 1):end]))
 end
 
 

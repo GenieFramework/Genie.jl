@@ -3,7 +3,7 @@ Easy to enable caching functionality for Genie - works with pluggable cache adap
 """
 module Cache
 
-using Genie, SHA, Logger
+using Genie, SHA, Logger, App
 
 export cache_key, with_cache, @cache_key
 
@@ -11,13 +11,13 @@ export cache_key, with_cache, @cache_key
 """
 Default period of time until the cache is expired.
 """
-const CACHE_DURATION  = IS_IN_APP ? Genie.config.cache_duration : 600
+const CACHE_DURATION  = IS_IN_APP ? App.config.cache_duration : 600
 
 
 """
 Underlying module that handles persistance and retrieval of cached data.
 """
-const CACHE_ADAPTER_NAME = IS_IN_APP ? Genie.config.cache_adapter  : :FileCacheAdapter
+const CACHE_ADAPTER_NAME = IS_IN_APP ? App.config.cache_adapter  : :FileCacheAdapter
 eval(parse("using $(CACHE_ADAPTER_NAME)"))
 const CACHE_ADAPTER = eval(parse("$CACHE_ADAPTER_NAME"))
 
@@ -36,7 +36,7 @@ function with_cache(f::Function, key::Union{String,Symbol}, expiration::Int = CA
   cached_data = CACHE_ADAPTER.from_cache(cache_key(key), expiration, dir = dir)
 
   if isnull(cached_data)
-    Genie.config.log_cache && Logger.log("Missed cache for $key", :warn)
+    App.config.log_cache && Logger.log("Missed cache for $key", :warn)
 
     output = f()
     CACHE_ADAPTER.to_cache(cache_key(key), output, dir = dir)
@@ -44,7 +44,7 @@ function with_cache(f::Function, key::Union{String,Symbol}, expiration::Int = CA
     return output
   end
 
-  Genie.config.log_cache && Logger.log("Hit cache for $(cache_key(key))", :info)
+  App.config.log_cache && Logger.log("Hit cache for $(cache_key(key))", :info)
 
   Base.get(cached_data)
 end

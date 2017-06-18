@@ -11,7 +11,7 @@ Session(id::String) = Session(id, Dict{Symbol,Any}())
 export Session
 
 if IS_IN_APP
-  const session_adapter_name = string(Genie.config.session_storage) * "SessionAdapter"
+  const session_adapter_name = string(App.config.session_storage) * "SessionAdapter"
   eval(parse("using $session_adapter_name"))
   const SessionAdapter = eval(parse(session_adapter_name))
 end
@@ -34,20 +34,20 @@ function id() :: String
   end
 end
 function id(req::Request) :: String
-  ! isnull(Cookies.get(req, Genie.config.session_key_name)) &&
-    ! isempty(Base.get(Cookies.get(req, Genie.config.session_key_name))) && 
-      return Base.get(Cookies.get(req, Genie.config.session_key_name))
+  ! isnull(Cookies.get(req, App.config.session_key_name)) &&
+    ! isempty(Base.get(Cookies.get(req, App.config.session_key_name))) &&
+      return Base.get(Cookies.get(req, App.config.session_key_name))
 
   id()
 end
 function id(req::Request, res::Response) :: String
-  ! isnull(Cookies.get(res, Genie.config.session_key_name)) &&
-    ! isempty(Base.get(Cookies.get(res, Genie.config.session_key_name))) &&
-      return Base.get(Cookies.get(res, Genie.config.session_key_name))
+  ! isnull(Cookies.get(res, App.config.session_key_name)) &&
+    ! isempty(Base.get(Cookies.get(res, App.config.session_key_name))) &&
+      return Base.get(Cookies.get(res, App.config.session_key_name))
 
-  ! isnull(Cookies.get(req, Genie.config.session_key_name)) &&
-    ! isempty(Base.get(Cookies.get(req, Genie.config.session_key_name))) &&
-      return Base.get(Cookies.get(req, Genie.config.session_key_name))
+  ! isnull(Cookies.get(req, App.config.session_key_name)) &&
+    ! isempty(Base.get(Cookies.get(req, App.config.session_key_name))) &&
+      return Base.get(Cookies.get(req, App.config.session_key_name))
 
   id()
 end
@@ -61,7 +61,7 @@ Initiates a session.
 """
 function start(session_id::String, req::Request, res::Response; options = Dict{String,String}()) :: Session
   options = merge(Dict("Path" => "/", "HttpOnly" => "", "Expires" => "0"), options)
-  Cookies.set!(res, Genie.config.session_key_name, session_id, options)
+  Cookies.set!(res, App.config.session_key_name, session_id, options)
 
   load(session_id)
 end

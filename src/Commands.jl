@@ -14,12 +14,12 @@ Runs the requested Genie app command, based on the `args` passed to the script.
 function execute(config::Settings) :: Void
   parsed_args = parse_commandline_args()::Dict{String,Any}
 
-  Genie.config.app_env = ENV["GENIE_ENV"]
-  Genie.config.server_port = parse(Int, parsed_args["server:port"])
-  Genie.config.server_workers_count = (sw = parse(Int, parsed_args["server:workers"])) > 0 ? sw : config.server_workers_count
+  App.config.app_env = ENV["GENIE_ENV"]
+  App.config.server_port = parse(Int, parsed_args["server:port"])
+  App.config.server_workers_count = (sw = parse(Int, parsed_args["server:workers"])) > 0 ? sw : config.server_workers_count
 
   if called_command(parsed_args, "db:init")
-    SearchLight.create_migrations_table(Genie.config.db_migrations_table_name)
+    SearchLight.create_migrations_table(App.config.db_migrations_table_name)
 
   elseif parsed_args["app:new"] != nothing
     Genie.REPL.new_app(parsed_args["app:new"])
@@ -71,8 +71,8 @@ function execute(config::Settings) :: Void
     error("Not implemented!")
 
   elseif called_command(parsed_args, "s") || called_command(parsed_args, "server:start")
-    Genie.config.run_as_server = true
-    AppServer.startup(Genie.config.server_port)
+    App.config.run_as_server = true
+    AppServer.startup(App.config.server_port)
 
   end
 

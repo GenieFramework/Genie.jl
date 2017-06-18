@@ -3,7 +3,7 @@ Handles HttpServer related functionality, manages requests and responses and the
 """
 module AppServer
 
-using HttpServer, Router, Genie, Millboard, Logger, Sessions, Configuration, MbedTLS, WebSockets, Channels
+using HttpServer, Router, Genie, Millboard, Logger, Sessions, Configuration, MbedTLS, WebSockets, Channels, App, URIParser
 
 
 """
@@ -21,7 +21,7 @@ Listening on 0.0.0.0:8000...
 function startup(port::Int = 8000) :: Tuple{Task,HttpServer.Server}
   http = HttpHandler() do req::Request, res::Response
     try
-      ip::IPv4 = Genie.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
+      ip::IPv4 = App.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
       nworkers() == 1 ? handle_request(req, res, ip) : @fetch handle_request(req, res, ip)
     catch ex
       Logger.log(string(ex), :critical)
@@ -36,12 +36,12 @@ function startup(port::Int = 8000) :: Tuple{Task,HttpServer.Server}
     end
   end
 
-  if Genie.config.websocket_server
+  if App.config.websocket_server
     wsh = WebSocketHandler() do req::Request, ws_client::WebSockets.WebSocket
       while true
         response =  try
                       msg = read(ws_client)
-                      ip::IPv4 = Genie.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
+                      ip::IPv4 = App.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
 
                       nworkers() == 1 ? handle_ws_request(req, String(msg), ws_client, ip) : @fetch handle_ws_request(req, String(msg), ws_client, ip)
                     catch ex
@@ -71,12 +71,12 @@ function startup(port::Int = 8000) :: Tuple{Task,HttpServer.Server}
     end
   end
 
-  Genie.config.lookup_ip && (http.events["connect"] = (http_client) -> handle_connect(http_client))
+  App.config.lookup_ip && (http.events["connect"] = (http_client) -> handle_connect(http_client))
 
-  server = Genie.config.websocket_server ? Server(http, wsh) : Server(http)
+  server = App.config.websocket_server ? Server(http, wsh) : Server(http)
   server_task = @async run(server, port)
 
-  if Genie.config.run_as_server
+  if App.config.run_as_server
     while true
       sleep(1_000_000)
     end
@@ -113,14 +113,14 @@ function handle_connect(client::HttpServer.Client) :: Void
 HttpServer handler function - invoked when the server gets a request.
 """
 function handle_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: Response
-  Genie.config.log_requests && log_request(req)
-  Genie.config.server_signature != "" && sign_response!(res)
+  App.config.log_requests && log_request(req)
+  App.config.server_signature != "" && sign_response!(res)
 
   app_response::Response = Router.route_request(req, res, ip)
   app_response.headers = merge(res.headers, app_response.headers)
   app_response.cookies = merge(res.cookies, app_response.cookies)
 
-  Genie.config.log_responses && log_response(req, app_response)
+  App.config.log_responses && log_response(req, app_response)
 
   app_response
 end
@@ -132,7 +132,7 @@ end
 HttpServer handler function - invoked when the server gets a request.
 """
 function handle_ws_request(req::Request, msg::String, ws_client::WebSockets.WebSocket, ip::IPv4 = ip"0.0.0.0") :: String
-  Genie.config.log_requests && log_request(req)
+  App.config.log_requests && log_request(req)
 
   Router.route_ws_request(req, msg, ws_client, ip)
 end
@@ -141,12 +141,12 @@ end
 """
     sign_response!(res::Response) :: Response
 
-Adds a signature header to the response using the value in `Genie.config.server_signature`.
-If `Genie.config.server_signature` is empty, the header is not added.
+Adds a signature header to the response using the value in `App.config.server_signature`.
+If `App.config.server_signature` is empty, the header is not added.
 """
 function sign_response!(res::Response) :: Response
-  if ! isempty(Genie.config.server_signature)
-    res.headers["Server"] = Genie.config.server_signature
+  if ! isempty(App.config.server_signature)
+    res.headers["Server"] = App.config.server_signature
   end
 
   res
@@ -160,8 +160,8 @@ Logs information about the request.
 """
 function log_request(req::Request) :: Void
   if Router.is_static_file(req.resource)
-    Genie.config.log_resources && log_request_response(req)
-  elseif Genie.config.log_responses
+    App.config.log_resources && log_request_response(req)
+  elseif App.config.log_responses
     log_request_response(req)
   end
 
@@ -176,8 +176,8 @@ Logs information about the response.
 """
 function log_response(req::Request, res::Response) :: Void
   if Router.is_static_file(req.resource)
-    Genie.config.log_resources && log_request_response(res)
-  elseif Genie.config.log_responses
+    App.config.log_resources && log_request_response(res)
+  elseif App.config.log_responses
     log_request_response(res)
   end
 
@@ -202,14 +202,14 @@ function log_request_response(req_res::Union{Request,Response}) :: Void
 
     req_data[f] = if f == "data" && ! isempty(v)
                     mapreduce(x -> string(Char(Int(x))), *, v) |> Logger.truncate_logged_output
-                  elseif isa(v, Dict) && Genie.config.log_formatted
+                  elseif isa(v, Dict) && App.config.log_formatted
                     Millboard.table(parse_inner_dict(v)) |> string
                   else
                     string(v) |> Logger.truncate_logged_output
                   end
   end
 
-  Logger.log(string(req_res) * "\n" * string(Genie.config.log_formatted ? Millboard.table(req_data) : req_data), response_is_error ? :err : :debug, showst = false)
+  Logger.log(string(req_res) * "\n" * string(App.config.log_formatted ? Millboard.table(req_data) : req_data), response_is_error ? :err : :debug, showst = false)
 
   nothing
 end
@@ -224,7 +224,7 @@ function parse_inner_dict{K,V}(d::Dict{K,V}) :: Dict{String,String}
   r = Dict{String,String}()
   for (k, v) in d
     k = string(k)
-    if k == "Cookie" && Genie.config.log_verbosity == Configuration.LOG_LEVEL_VERBOSITY_VERBOSE
+    if k == "Cookie" && App.config.log_verbosity == Configuration.LOG_LEVEL_VERBOSITY_VERBOSE
       cookie = Dict{String,String}()
       cookies = split(v, ";")
       for c in cookies
@@ -232,7 +232,7 @@ function parse_inner_dict{K,V}(d::Dict{K,V}) :: Dict{String,String}
         cookie[cookie_part[1]] = cookie_part[2] |> Logger.truncate_logged_output
       end
 
-      r[k] = (Genie.config.log_formatted ? Millboard.table(cookie) : cookie) |> string
+      r[k] = (App.config.log_formatted ? Millboard.table(cookie) : cookie) |> string
     else
       r[k] = Logger.truncate_logged_output(string(v))
     end

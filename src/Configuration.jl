@@ -114,7 +114,7 @@ end
 """
     type Settings
 
-Genie app configuration - sets up the app's defaults. Individual options are overwritten in the corresponding environment file.
+App configuration - sets up the app's defaults. Individual options are overwritten in the corresponding environment file.
 """
 type Settings
   server_port::Int
@@ -183,6 +183,8 @@ type Settings
 
   websocket_server::Bool
 
+  renderer_default_layout_file::Symbol
+
   Settings(;
             server_port                 = 8000, # default port for binding the web server
             server_workers_count        = 1,
@@ -248,7 +250,9 @@ type Settings
 
             run_as_server = false,
 
-            websocket_server = false
+            websocket_server = false,
+
+            renderer_default_layout_file = :app
         ) =
               new(
                   server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature,
@@ -268,7 +272,9 @@ type Settings
                   flax_compile_templates,
                   lookup_ip,
                   run_as_server,
-                  websocket_server)
+                  websocket_server,
+                  renderer_default_layout_file
+                )
 end
 
 end

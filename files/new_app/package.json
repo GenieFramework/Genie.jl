@@ -1,9 +1,9 @@
 {
-  "name": "test",
+  "name": "Genie App",
   "version": "1.0.0",
-  "description": "a test project",
+  "description": "A new Genie app",
   "main": "index.js",
-  "author": "me",
+  "author": "Author",
   "license": "MIT",
   "dependencies": {
     "jquery": "^3.2.1"
