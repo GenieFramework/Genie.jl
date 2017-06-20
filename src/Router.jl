@@ -1087,8 +1087,12 @@ function serve_static_file(resource::String) :: Response
                     resource
                   end
   f = file_path(resource_path)
-  
-  Response(200, file_headers(f), open(read, f))
+
+  if isfile(f)
+    Response(200, file_headers(f), open(read, f))
+  else
+    Renderer.error_404() |> to_response
+  end
 end
 
 
@@ -1112,12 +1116,12 @@ end
 
 
 """
-    file_path(resource::String) :: String
+    file_path(resource::String; within_doc_root = true) :: String
 
-Returns the path to a resource file.
+Returns the path to a resource file. If `within_doc_root` it will automatically prepend the document root to `resource`.
 """
-function file_path(resource::String) :: String
-  abspath(joinpath(App.config.server_document_root, resource[(startswith(resource, "/") ? 2 : 1):end]))
+function file_path(resource::String; within_doc_root = true) :: String
+  abspath(joinpath(within_doc_root ? App.config.server_document_root : "", resource[(startswith(resource, "/") ? 2 : 1):end]))
 end
 
 
