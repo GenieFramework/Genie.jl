@@ -18,7 +18,7 @@ function load_libs(dir = Genie.LIB_PATH) :: Void
   lib_dirs = [d::String for d::String in Task( ()-> Util.walk_dir(dir, only_dirs = true) )]
   ! isempty(lib_dirs) && push!(LOAD_PATH, lib_dirs...)
 
-  Util.reload_modules([dir, lib_dirs...], App)
+  Util.reload_modules([dir, lib_dirs...], current_module())
 
   nothing
 end

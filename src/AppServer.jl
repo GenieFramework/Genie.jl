@@ -46,16 +46,19 @@ function startup(port::Int = 8000) :: Tuple{Task,HttpServer.Server}
                       nworkers() == 1 ? handle_ws_request(req, String(msg), ws_client, ip) : @fetch handle_ws_request(req, String(msg), ws_client, ip)
                     catch ex
                       if typeof(ex) == WebSockets.WebSocketClosedError
-                        # Logger.log("Client disconnected $(ws_client.id) - bye!", :debug)
                         Channels.unsubscribe_client(ws_client)
 
                         break
                       end
 
-                      Logger.log(string(ex), :critical)
-                      Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
+                      try
+                        Logger.log(string(ex), :critical)
+                        Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
 
-                      Configuration.is_prod() ? "The error has been logged and we'll look into it ASAP." : string(ex)
+                        Configuration.is_prod() ? "The error has been logged and we'll look into it ASAP." : string(ex)
+                      catch exx
+                        print_with_color(:red, "One can not simply log an error")
+                      end
 
                       break
                     end

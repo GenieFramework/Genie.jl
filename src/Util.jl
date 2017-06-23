@@ -190,30 +190,39 @@ end
 
 
 """
-    reload_modules(dir::String, md::Module = current_module()) :: Void
+    reload_modules(dir::String, md::Module = current_module()) :: Bool
 
 Reloads all the modules in the specified `dir` in the scope of `md`.
+Returns `true` if any modules were reloaded, `false` otherwise.
 """
-function reload_modules(dir::String, md::Module = current_module()) :: Void
+function reload_modules(dir::String, md::Module = current_module()) :: Bool
+  status = false
+
   for file in readdir(dir)
-    isfile(joinpath(dir, file)) && endswith(file, ".jl") && isdefined(Symbol(file[1:end-3])) && eval(md, :(reload($file[1:end-3])) )
+    if isfile(joinpath(dir, file)) && endswith(file, ".jl") && isdefined(Symbol(file[1:end-3]))
+      eval(md, :(reload("$($file[1:end-3])")) )
+      status = true
+    end
   end
 
-  nothing
+  status
 end
 
 
 """
-    reload_modules(dirs::Vector{String}, md::Module = current_module()) :: Void
+    reload_modules(dirs::Vector{String}, md::Module = current_module()) :: Bool
 
 Reloads all the modules in all the directories specified in `dirs` in the scope of `md`.
+Returns `true` if any modules were reloaded, `false` otherwise.
 """
-function reload_modules(dirs::Vector{String}, md::Module = current_module()) :: Void
+function reload_modules(dirs::Vector{String}, md::Module = current_module()) :: Bool
+  status = false
+
   for dir in dirs
-    reload_modules(dir, md)
+    reload_modules(dir, md) && (status = true)
   end
 
-  nothing
+  status
 end
 
 end
