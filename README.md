@@ -8,6 +8,11 @@
 
 Genie is a full-stack MVC web framework that provides a streamlined and efficient workflow for developing modern web applications. It builds on Julia's strengths (high-level, high-performance, dynamic, JIT compiled), exposing a rich API and a powerful toolset for productive web development.
 
+#### Julia compatibility
+At the moment Genie runs on Julia v0.5, waiting for a few dependency packages to be made compatible with Julia v0.6.
+
+If you want to try it out, there are `*-julia_v0.6` branches for `Genie`, `SearchLight` and `Flax`.
+
 
 ## Quick start
 In a Julia session clone `Genie` and its dependencies:
@@ -48,6 +53,8 @@ Visit `http://localhost:8000/hello` for a warm welcome!
 ---
 
 At any time, from the command line you can start a Genie interactive session by using
+
+##### MacOS / Linux / *nix
 ```
 $> bin/repl
 ```
@@ -58,6 +65,17 @@ $> bin/server
 ```
 to start the app in non-interactive mode.
 
+##### Windows
+On Windows, `repl.bat` and `server.bat` are provided inside the `bin/` folder. Just double click them to start an interactive REPL session or a server session, respectively.
+
+##### Juno / Jupyter / other Julia environment
+
+```julia
+using Genie
+
+Genie.REPL.run_repl_app()
+```
+
 
 ## Next steps
 If you want to learn more about Genie you can
@@ -66,10 +84,10 @@ If you want to learn more about Genie you can
   * [SearchLight ORM](http://searchlightjl.readthedocs.io/en/latest/build/)
   * [Flax Templates](http://flaxjl.readthedocs.io/en/latest/build/)
 * dive into the demo apps
+  * [Hello World](https://github.com/essenciary/genie-demo-hello-world)
+  * [Tweet Stats](https://github.com/essenciary/genie-demo-tweet-stats)
   * [TodoMVC](https://github.com/essenciary/genie-todo-mvc)
   * [PkgSearch web app and REST API](https://github.com/essenciary/pgksearch-api-website)
-  * [Genie CMS]() (coming soon)
-  * [Hashtag Analytics]() (coming soon)
 * read the guides (coming soon)
 * visit to [genieframework.com](http://genieframework.com) for more resources
 
