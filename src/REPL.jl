@@ -3,6 +3,8 @@ module REPL
 using SHA, Logger, Configuration, Genie, Generator, Tester, Toolbox, App, Util
 SEARCHLIGHT_ON && eval(:(using SearchLight, Migration))
 
+const JULIA_PATH = joinpath(JULIA_HOME, "julia")
+
 
 """
     secret_token() :: String
@@ -22,8 +24,8 @@ Creates a new Genie app at the indicated path.
 function new_app(path = "."; db_support = false, skip_dependencies = false) :: Void
   cp(joinpath(Pkg.dir("Genie"), "files", "new_app"), abspath(path))
 
-  chmod(joinpath(path, "bin/server"), 0o700)
-  chmod(joinpath(path, "bin/repl"), 0o700)
+  chmod(joinpath(path, "bin", "server"), 0o700)
+  chmod(joinpath(path, "bin", "repl"), 0o700)
 
   open(joinpath(path, "config", "secrets.jl"), "w") do f
     write(f, """const SECRET_TOKEN = "$(secret_token())" """)
@@ -32,6 +34,8 @@ function new_app(path = "."; db_support = false, skip_dependencies = false) :: V
   Logger.log("Done! New app created at $(abspath(path))", :info)
 
   skip_dependencies || add_dependencies(db_support = db_support)
+
+  is_windows() && setup_windows_bin_files(path)
 
   Logger.log("Starting your brand new Genie app - hang tight!", :info)
   run_repl_app(path)
@@ -47,9 +51,24 @@ Runs a new Genie REPL app within the current thread.
 """
 function run_repl_app(path = ".") :: Void
   cd(abspath(path))
-  run(`bin/repl`)
+
+  run(`$JULIA_PATH -L $(abspath("genie.jl")) --color=yes --depwarn=no -q`)
 
   nothing
+end
+
+
+"""
+
+"""
+function setup_windows_bin_files(path = ".")
+  open(joinpath(path, "bin", "repl.bat"), "w") do f
+    write(f, "$JULIA_PATH -L ../genie.jl --color=yes --depwarn=no -q -- %*")
+  end
+
+  open(joinpath(path, "bin", "server.bat"), "w") do f
+    write(f, "$JULIA_PATH -L ../genie.jl --color=yes --depwarn=no -q -- s %*")
+  end
 end
 
 
