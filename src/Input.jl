@@ -15,8 +15,8 @@ type HttpFile
   HttpFile() = new("", "", UInt8[])
 end
 
-typealias HttpPostData Dict{String, String}
-typealias HttpFiles Dict{String, HttpFile}
+const HttpPostData = Dict{String, String}
+const HttpFiles    = Dict{String, HttpFile}
 
 type HttpInput
   post::HttpPostData
