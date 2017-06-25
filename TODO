@@ -66,14 +66,17 @@ v 0.7.x
 ✔ "ToDo-Backend MVC" app
 
 v 0.8
+☐ support for Julia 0.6
+☐ upgrade of server stack
+☐ windows support for creating new apps
 ☐ support for mysql
 ☐ support for sqlite
+☐ database session adapter
+☐ memcache session adapter
+☐ redis session adapter
+☐ database cache adapter
+☐ redis cache adapter
 ✔ channels (websockets communication)
-☐ add frontend framework adapters - with Vue.js as default
-☐ add the concept of State to sync app state between client (Vue.js data) and server (Genie state)
-☐ refactor the views to use data from State and generate the reactive Vue.js code on the client
-☐ server side reactivity from State (using Reactive.jl)
-☐ reactive plots, tables, lists rendering with Vuejs (reactive UI components)
 ☐ Flax form helpers
 ✔ asset pipeline with Webpack
 ✔ frontend package management with Yarn.js
@@ -87,6 +90,12 @@ v 0.9
 ☐ custom Genie sysimg: include(joinpath(dirname(JULIA_HOME),"share","julia","build_sysimg.jl")); build_sysimg(force=true)
 ☐ use macros to completely remove function invocations that produce no effect based on settings (if they are disabled from settings)
 ☐ investigate more opportunities for parallelizing code
+
+☐ add frontend framework adapters - with Vue.js as default
+☐ add the concept of State to sync app state between client (Vue.js data) and server (Genie state)
+☐ refactor the views to use data from State and generate the reactive Vue.js code on the client
+☐ server side reactivity from State (using Reactive.jl)
+☐ reactive plots, tables, lists rendering with Vuejs (reactive UI components)
 
 v 1.0
 ☐ support for plugins
