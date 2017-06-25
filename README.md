@@ -89,6 +89,7 @@ If you want to learn more about Genie you can
   * [TodoMVC](https://github.com/essenciary/genie-todo-mvc)
   * [PkgSearch web app and REST API](https://github.com/essenciary/pgksearch-api-website)
 * read the guides (coming soon)
+* take a look at the slides for the Genie presentation at the 2017 JuliaCon [JuliaCon 2017 Genie Slides](https://github.com/essenciary/JuliaCon-2017-Slides/tree/master/v1.1)
 * visit to [genieframework.com](http://genieframework.com) for more resources
 
 
