@@ -1,6 +1,6 @@
 export Role
 
-type Role <: AbstractModel
+mutable struct Role <: AbstractModel
   _table_name::String
   _id::String
 

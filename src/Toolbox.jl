@@ -6,13 +6,13 @@ using Genie, Util, Millboard, FileTemplates, Configuration, Logger, Inflector, A
 
 export TaskResult, VoidTaskResult
 
-type TaskInfo
+mutable struct TaskInfo
   file_name::String
   module_name::Symbol
   description::String
 end
 
-type TaskResult{T}
+mutable struct TaskResult{T}
   code::Int
   message::String
   result::T

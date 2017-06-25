@@ -17,7 +17,7 @@ function encrypt{T}(s::T) :: String
   (key32, iv16) = encryption_sauce()
   encryptor = Encryptor(ENCRYPTION_METHOD, key32)
 
-  Nettle.encrypt(encryptor, :CBC, iv16, add_padding_PKCS5(s.data, 16)) |> bytes2hex
+  Nettle.encrypt(encryptor, :CBC, iv16, add_padding_PKCS5(Vector{UInt8}(s), 16)) |> bytes2hex
 end
 
 
@@ -34,11 +34,11 @@ function decrypt(s::String) :: String
   String(trim_padding_PKCS5(deciphertext))
 end
 
-function encryption_sauce()
+function encryption_sauce() :: String
   passwd = App.secret_token()[1:32]
   salt = hex2bytes(App.secret_token()[33:64])
 
-  gen_key32_iv16(passwd.data, salt)
+  gen_key32_iv16(Vector{UInt8}(passwd), salt)
 end
 
 end

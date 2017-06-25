@@ -7,7 +7,7 @@ using HttpCommon, URIParser
 
 export post, files, HttpInput, HttpPostData, HttpFiles, HttpFile
 
-type HttpFile
+mutable struct HttpFile
   name::String
   mime::String
   data::Array{UInt8}
@@ -15,10 +15,10 @@ type HttpFile
   HttpFile() = new("", "", UInt8[])
 end
 
-typealias HttpPostData Dict{String, String}
-typealias HttpFiles Dict{String, HttpFile}
+const HttpPostData  = Dict{String, String}
+const HttpFiles     = Dict{String, HttpFile}
 
-type HttpInput
+mutable struct HttpInput
   post::HttpPostData
   files::HttpFiles
 
@@ -27,7 +27,7 @@ end
 
 ###
 
-type HttpFormPart
+mutable struct HttpFormPart
   headers::Dict{String, Dict{String, String}}
   data::Array{UInt8}
 

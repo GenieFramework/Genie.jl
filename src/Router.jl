@@ -24,10 +24,10 @@ const _routes = Dict{Symbol,Any}()
 const _channels = Dict{Symbol,Any}()
 const sessionless = Symbol[:json]
 
-typealias Route Tuple{Tuple{String,String,Union{String,Function}},Dict{Symbol,Dict{Any,Any}}}
-typealias Channel Tuple{Tuple{String,Union{String,Function}},Dict{Symbol,Dict{Any,Any}}}
+const Route   = Tuple{Tuple{String,String,Union{String,Function}},Dict{Symbol,Dict{Any,Any}}}
+const Channel = Tuple{Tuple{String,Union{String,Function}},Dict{Symbol,Dict{Any,Any}}}
 
-type Params{T}
+mutable struct Params{T}
   collection::Dict{Symbol,T}
 end
 Params() = Params(Dict{Symbol,Any}())

@@ -4,7 +4,7 @@ using Genie, Logger, App
 
 export expand_nullable, _!!, _!_, get_nested_field, get_deepest_module, DynamicField, psst
 
-type DynamicField{T}
+mutable struct DynamicField{T}
   field::T
 end
 
