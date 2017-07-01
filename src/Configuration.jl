@@ -132,7 +132,6 @@ type Settings
   db_migrations_table_name::String
   db_migrations_folder::String
   db_config_settings::Dict{String,Any}
-  db_adapter::Symbol
 
   tasks_folder::String
   test_folder::String
@@ -201,7 +200,6 @@ type Settings
             db_migrations_table_name  = "schema_migrations",
             db_migrations_folder      = abspath(joinpath("db", "migrations")),
             db_config_settings        = Dict{String,Any}(),
-            db_adapter                = :PostgreSQLDatabaseAdapter,
 
             task_folder       = abspath(joinpath("task")),
             test_folder       = abspath(joinpath("test")),
@@ -258,7 +256,7 @@ type Settings
                   server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature,
                   app_env, app_is_api,
                   suppress_output, output_length,
-                  db_migrations_table_name, db_migrations_folder, db_config_settings, db_adapter,
+                  db_migrations_table_name, db_migrations_folder, db_config_settings, 
                   task_folder, test_folder, session_folder, log_folder,
                   cache_folder, cache_adapter, cache_duration,
                   log_router, log_db, log_queries, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted, log_cache, log_views,
