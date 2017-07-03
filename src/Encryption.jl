@@ -34,7 +34,7 @@ function decrypt(s::String) :: String
   String(trim_padding_PKCS5(deciphertext))
 end
 
-function encryption_sauce() :: String
+function encryption_sauce() :: Tuple{Vector{UInt8},Vector{UInt8}}
   passwd = App.secret_token()[1:32]
   salt = hex2bytes(App.secret_token()[33:64])
 
