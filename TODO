@@ -69,7 +69,7 @@ v 0.8
 ☐ support for Julia 0.6
 ☐ upgrade of server stack
 ✔ windows support for creating new apps
-☐ support for mysql
+✔ support for mysql
 ☐ support for sqlite
 ☐ database session adapter
 ☐ memcache session adapter
@@ -83,6 +83,7 @@ v 0.8
 ☐ add scaffolding functionality for CRUD
 ☐ tests
 ☐ Toolbox tasks with arguments
+☐ Try using Revise.jl to reload function definitions
 
 v 0.9
 ☐ add utility functions for migrations (add column, add index, create table, etc)
