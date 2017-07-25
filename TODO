@@ -70,12 +70,13 @@ v 0.8
 ☐ upgrade of server stack
 ✔ windows support for creating new apps
 ✔ support for mysql
-☐ support for sqlite
+✔ support for sqlite
 ☐ database session adapter
 ☐ memcache session adapter
 ☐ redis session adapter
 ☐ database cache adapter
 ☐ redis cache adapter
+☐ memcache cache adapter
 ✔ channels (websockets communication)
 ☐ Flax form helpers
 ✔ asset pipeline with Webpack
@@ -84,9 +85,10 @@ v 0.8
 ☐ tests
 ☐ Toolbox tasks with arguments
 ☐ Try using Revise.jl to reload function definitions
+☐ PredixUI integration
+☐ add utility functions for migrations (add column, add index, create table, etc)
 
 v 0.9
-☐ add utility functions for migrations (add column, add index, create table, etc)
 ☐ packages versioning (declarative packages)
 ☐ custom Genie sysimg: include(joinpath(dirname(JULIA_HOME),"share","julia","build_sysimg.jl")); build_sysimg(force=true)
 ☐ use macros to completely remove function invocations that produce no effect based on settings (if they are disabled from settings)
