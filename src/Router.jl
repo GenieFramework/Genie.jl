@@ -81,7 +81,7 @@ function route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: R
     App.load_libs()
   end
 
-  session = Sessions.start(req, res)
+  session = App.config.session_auto_start ? Sessions.start(req, res) : nothing
 
   controller_response::Response = match_routes(req, res, session, params)
 
@@ -110,7 +110,7 @@ function route_ws_request(req::Request, msg::String, ws_client::WebSockets.WebSo
     App.load_models()
   end
 
-  session = Sessions.load(Sessions.id(req))
+  session = App.config.session_auto_start ? Sessions.load(Sessions.id(req)) : nothing
 
   channel_response::String = match_channels(req, msg, ws_client, params, session)
 
@@ -426,7 +426,7 @@ end
 
 Matches the invoked URL to the corresponding route, sets up the execution environment and invokes the controller method.
 """
-function match_routes(req::Request, res::Response, session::Sessions.Session, params::Params) :: Response
+function match_routes(req::Request, res::Response, session::Union{Sessions.Session,Void}, params::Params) :: Response
   for r in routes()
     route_def, extra_params = r
     protocol, route, to = route_def
@@ -481,7 +481,7 @@ end
 
 Matches the invoked URL to the corresponding channel, sets up the execution environment and invokes the channel controller method.
 """
-function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSocket, params::Params, session::Sessions.Session) :: String
+function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSocket, params::Params, session::Union{Sessions.Session,Void}) :: String
   for c in channels()
     channel_def, extra_params = c
     channel, to = channel_def
@@ -721,20 +721,21 @@ end
 
 Populates `params` with default environment vars.
 """
-function setup_base_params(req::Request, res::Union{Response,Void}, params::Dict{Symbol,Any}, session::Sessions.Session) :: Dict{Symbol,Any}
+function setup_base_params(req::Request, res::Union{Response,Void}, params::Dict{Symbol,Any}, session::Union{Sessions.Session,Void}) :: Dict{Symbol,Any}
   params[Genie.PARAMS_REQUEST_KEY]   = req
   params[Genie.PARAMS_RESPONSE_KEY]  = res
   params[Genie.PARAMS_SESSION_KEY]   = session
-  params[Genie.PARAMS_FLASH_KEY]     = begin
+  params[Genie.PARAMS_FLASH_KEY]     = App.config.session_auto_start ?
+                                       begin
                                         s = Sessions.get(session, Genie.PARAMS_FLASH_KEY)
                                         if isnull(s)
-                                          ""::String
+                                          ""
                                         else
                                           ss = Base.get(s)
                                           Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
                                           ss
                                         end
-                                      end
+                                       end : ""
 
   params
 end
@@ -762,7 +763,7 @@ const loaded_controllers = UInt64[]
 
 Invokes the designated controller method.
 """
-function invoke_controller(to::String, req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session) :: Response
+function invoke_controller(to::String, req::Request, res::Response, params::Dict{Symbol,Any}, session::Union{Sessions.Session,Void}) :: Response
   to_parts::Vector{String} = split(to, "#")
 
   controller_path = abspath(joinpath(Genie.RESOURCES_PATH, to_parts[1]))
@@ -830,7 +831,7 @@ const loaded_channels = UInt64[]
 
 Invokes the designated channel method.
 """
-function invoke_channel(to::String, req::Request, payload::Dict{String,Any}, ws_client::WebSockets.WebSocket, params::Dict{Symbol,Any}, session::Sessions.Session) :: String
+function invoke_channel(to::String, req::Request, payload::Dict{String,Any}, ws_client::WebSockets.WebSocket, params::Dict{Symbol,Any}, session::Union{Sessions.Session,Void}) :: String
   to_parts::Vector{String} = split(to, "#")
 
   channel_path = abspath(joinpath(Genie.RESOURCES_PATH, to_parts[1]))
