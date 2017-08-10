@@ -66,35 +66,36 @@ v 0.7.x
 ✔ "ToDo-Backend MVC" app
 
 v 0.8
-☐ support for Julia 0.6
-☐ upgrade of server stack
 ✔ windows support for creating new apps
 ✔ support for mysql
 ✔ support for sqlite
-☐ database session adapter
+✔ database session adapter
 ☐ memcache session adapter
 ☐ redis session adapter
 ☐ database cache adapter
 ☐ redis cache adapter
 ☐ memcache cache adapter
 ✔ channels (websockets communication)
-☐ Flax form helpers
 ✔ asset pipeline with Webpack
 ✔ frontend package management with Yarn.js
-☐ add scaffolding functionality for CRUD
-☐ tests
 ☐ Toolbox tasks with arguments
 ☐ Try using Revise.jl to reload function definitions
-☐ PredixUI integration
-☐ add utility functions for migrations (add column, add index, create table, etc)
+✔ add utility functions for migrations (add column, add index, create table, etc)
+☐ SearchLight ODBC support
 
 v 0.9
+☐ tests
+☐ support for Julia 0.6
+☐ upgrade of server stack
 ☐ packages versioning (declarative packages)
 ☐ custom Genie sysimg: include(joinpath(dirname(JULIA_HOME),"share","julia","build_sysimg.jl")); build_sysimg(force=true)
 ☐ use macros to completely remove function invocations that produce no effect based on settings (if they are disabled from settings)
 ☐ investigate more opportunities for parallelizing code
 
 v 1.0
+☐ Flax form helpers
+☐ add scaffolding functionality for CRUD
+☐ PredixUI integration
 
 v 1.x
 ☐ support for plugins

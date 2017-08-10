@@ -135,7 +135,7 @@ type Settings
 
   tasks_folder::String
   test_folder::String
-  session_folder::String
+
   log_folder::String
 
   cache_folder::String
@@ -168,6 +168,8 @@ type Settings
   session_auto_start::Bool
   session_key_name::String
   session_storage::Symbol
+  session_folder::String
+  session_table::String
 
   inflector_irregulars::Vector{Tuple{String,String}}
 
@@ -203,7 +205,7 @@ type Settings
 
             task_folder       = abspath(joinpath("task")),
             test_folder       = abspath(joinpath("test")),
-            session_folder    = abspath(joinpath("session")),
+
             log_folder        = abspath(joinpath("log")),
 
             cache_folder      = abspath(joinpath("cache")),
@@ -236,6 +238,8 @@ type Settings
             session_auto_start  = true,
             session_key_name    = "__GENIESID",
             session_storage     = :File,
+            session_folder      = abspath(joinpath("session")),
+            session_table       = "storage_sessions",
 
             inflector_irregulars = Tuple{String,String}[],
 
@@ -256,15 +260,16 @@ type Settings
                   server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature,
                   app_env, app_is_api,
                   suppress_output, output_length,
-                  db_migrations_table_name, db_migrations_folder, db_config_settings, 
-                  task_folder, test_folder, session_folder, log_folder,
+                  db_migrations_table_name, db_migrations_folder, db_config_settings,
+                  task_folder, test_folder,
+                  log_folder,
                   cache_folder, cache_adapter, cache_duration,
                   log_router, log_db, log_queries, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted, log_cache, log_views,
                   assets_path, assets_serve, assets_fingerprinted,
                   pagination_default_items_per_page, pagination_page_param_name,
                   model_relations_eagerness,
                   tests_force_test_env,
-                  session_auto_start, session_key_name, session_storage,
+                  session_auto_start, session_key_name, session_storage, session_folder, session_table,
                   inflector_irregulars,
                   html_template_engine, json_template_engine,
                   flax_compile_templates,
