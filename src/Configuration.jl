@@ -141,6 +141,7 @@ type Settings
   cache_folder::String
   cache_adapter::Symbol
   cache_duration::Int
+  cache_table::String
 
   log_router::Bool
   log_db::Bool
@@ -211,6 +212,7 @@ type Settings
             cache_folder      = abspath(joinpath("cache")),
             cache_adapter     = :FileCacheAdapter,
             cache_duration    = 0,
+            cache_table       = "storage_caches",
 
             log_router    = false,
             log_db        = true,
@@ -263,7 +265,7 @@ type Settings
                   db_migrations_table_name, db_migrations_folder, db_config_settings,
                   task_folder, test_folder,
                   log_folder,
-                  cache_folder, cache_adapter, cache_duration,
+                  cache_folder, cache_adapter, cache_duration, cache_table, 
                   log_router, log_db, log_queries, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted, log_cache, log_views,
                   assets_path, assets_serve, assets_fingerprinted,
                   pagination_default_items_per_page, pagination_page_param_name,

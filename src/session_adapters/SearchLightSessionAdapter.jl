@@ -2,7 +2,7 @@ module SearchLightSessionAdapter
 
 using Sessions, Genie, Logger, Configuration, App, Migration, JSON, SearchLight
 
-type StorageSessions <: AbstractModel
+type StorageSession <: AbstractModel
   ### internals
   _table_name::String
   _id::String
@@ -13,7 +13,7 @@ type StorageSessions <: AbstractModel
   val::String
 
   ### constructor
-  StorageSessions(;
+  StorageSession(;
     id = Nullable{SearchLight.DbId}(),
     name = "",
     val = ""
@@ -28,7 +28,7 @@ Persists the `Session` object to the DB, using the configured SearchLight DB and
 """
 function write(session::Sessions.Session) :: Sessions.Session
   try
-    SearchLight.update_by_or_create!!(StorageSessions(name = session.id, val = JSON.json(session.data)), :name)
+    SearchLight.update_by_or_create!!(StorageSession(name = session.id, val = JSON.json(session.data)), :name)
   catch ex
     Logger.log("Error when serializing session in $(@__FILE__):$(@__LINE__)", :err)
     Logger.log(string(ex), :err)
@@ -49,7 +49,7 @@ Attempts to read from DB the session object.
 """
 function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
   try
-    session_info = SearchLight.find_one_by!!(StorageSessions, :name, session_id)
+    session_info = SearchLight.find_one_by!!(StorageSession, :name, session_id)
     session = Sessions.Session(session_info.name, JSON.parse(session_info.val))
 
     return isnull(session) ? Nullable{Sessions.Session}() : Nullable{Sessions.Session}(session)
@@ -70,7 +70,7 @@ end
 
 module Migrations
 
-module CreateTableSessions
+module CreateTableStorageSessions
 
 import Migration: create_table, column, column_id, add_index, drop_table
 using Configuration, App
@@ -94,7 +94,7 @@ function down()
   drop_table(App.config.session_table)
 end
 
-end # module CreateTableSessions
+end # module CreateTableStorageSessions
 
 end # module Migrations
 

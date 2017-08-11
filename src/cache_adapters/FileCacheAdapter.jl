@@ -2,8 +2,6 @@ module FileCacheAdapter
 
 using Genie, Logger, App
 
-const VALIDITY_START_MARKER = ">>>"
-const VALIDITY_END_MARKER   = "<<<"
 
 """
 The subfolder under the cache folder where the cache should be stored.

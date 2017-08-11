@@ -70,8 +70,8 @@ v 0.8
 ✔ support for mysql
 ✔ support for sqlite
 ✔ database session adapter
-☐ memcache session adapter
-☐ redis session adapter
+✔ memcache session adapter
+✔ redis session adapter
 ☐ database cache adapter
 ☐ redis cache adapter
 ☐ memcache cache adapter
@@ -79,7 +79,7 @@ v 0.8
 ✔ asset pipeline with Webpack
 ✔ frontend package management with Yarn.js
 ☐ Toolbox tasks with arguments
-☐ Try using Revise.jl to reload function definitions
+☐ Revise.jl to reload function definitions
 ✔ add utility functions for migrations (add column, add index, create table, etc)
 ☐ SearchLight ODBC support
 
