@@ -4,7 +4,6 @@ ArgParse
 DataStructures
 DateParser
 Documenter
-Gallium
 Gumbo
 HttpServer
 JSON
@@ -13,7 +12,6 @@ MbedTLS
 Memoize
 Millboard
 Nettle
-OhMyREPL
 Reexport
 SHA
 URIParser
