@@ -5,14 +5,14 @@ module Channels
 
 using WebSockets, JSON, Logger
 
-typealias ClientId                        Int
-typealias ChannelId                       String
-typealias ChannelClient                   Dict{Symbol, Union{WebSockets.WebSocket,Vector{ChannelId}}}
-typealias ChannelClientsCollection        Dict{ClientId,ChannelClient} # { ws.id => { :client => ws, :channels => ["foo", "bar", "baz"] } }
-typealias ChannelSubscriptionsCollection  Dict{ChannelId,Vector{ClientId}}  # { "foo" => ["4", "12"] }
-typealias MessagePayload                  Union{Void,Dict}
+const ClientId =                          Int
+const ChannelId =                         String
+const ChannelClient =                     Dict{Symbol, Union{WebSockets.WebSocket,Vector{ChannelId}}}
+const ChannelClientsCollection =          Dict{ClientId,ChannelClient} # { ws.id => { :client => ws, :channels => ["foo", "bar", "baz"] } }
+const ChannelSubscriptionsCollection =    Dict{ChannelId,Vector{ClientId}}  # { "foo" => ["4", "12"] }
+const MessagePayload =                    Union{Void,Dict}
 
-type ChannelMessage
+mutable struct ChannelMessage
   channel::ChannelId
   client::ClientId
   message::String

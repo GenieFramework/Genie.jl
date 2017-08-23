@@ -1,6 +1,6 @@
 export User
 
-type User <: AbstractModel
+mutable struct User <: AbstractModel
   _table_name::String
   _id::String
 

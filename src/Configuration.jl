@@ -112,11 +112,11 @@ end
 
 
 """
-    type Settings
+    mutable struct Settings
 
 App configuration - sets up the app's defaults. Individual options are overwritten in the corresponding environment file.
 """
-type Settings
+mutable struct Settings
   server_port::Int
   server_workers_count::Int
   server_document_root::String

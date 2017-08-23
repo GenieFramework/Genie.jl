@@ -70,7 +70,7 @@ function new_model(model_name::String, resource_name::String = model_name) :: St
   """
   export $model_name, $pluralized_name
 
-  type $model_name <: AbstractModel
+  mutable struct $model_name <: AbstractModel
     ### internals
     _table_name::String
     _id::String

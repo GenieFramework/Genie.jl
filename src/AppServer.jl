@@ -25,7 +25,7 @@ function startup(port::Int = 8000) :: Tuple{Task,HttpServer.Server}
       nworkers() == 1 ? handle_request(req, res, ip) : @fetch handle_request(req, res, ip)
     catch ex
       Logger.log(string(ex), :critical)
-      Logger.log(sprint(io->Base.show_backtrace(io, catch_backtrace())), :critical)
+      Logger.log(sprint(io->Base.show_backtrace(io, catch_backtrace() )), :critical)
       Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
 
       message = Configuration.is_prod() ?

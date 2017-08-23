@@ -2,7 +2,7 @@ module Sessions
 
 using Genie, SHA, HttpServer, Cookies, App, Helpers, Router
 
-type Session
+mutable struct Session
   id::String
   data::Dict{Symbol,Any}
 end

@@ -4,20 +4,20 @@ import Base.show
 
 export GenieType, GenieController, Controller
 
-abstract GenieType
+abstract type GenieType end
 string{T<:GenieType}(io::IO, t::T) = "$(typeof(t)) <: $(super(typeof(t)))"
 print{T<:GenieType}(io::IO, t::T) = print(io, "$(typeof(t)) <: $(super(typeof(t)))")
 show{T<:GenieType}(io::IO, t::T) = print(io, genietype_to_print(t))
 
-type GenieController <: GenieType
+mutable struct GenieController <: GenieType
 end
 
-typealias Controller GenieController
+const Controller = GenieController
 
-type GenieChannel <: GenieType
+mutable struct GenieChannel <: GenieType
 end
 
-typealias Channel GenieChannel
+const Channel = GenieChannel
 
 
 """
