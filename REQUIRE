@@ -3,7 +3,6 @@ julia 0.5
 ArgParse
 DataStructures
 DateParser
-Documenter
 Gumbo
 HttpServer
 JSON
