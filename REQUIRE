@@ -12,6 +12,7 @@ MbedTLS
 Memoize
 Millboard
 Nettle
+OhMyREPL
 Reexport
 SHA
 URIParser
