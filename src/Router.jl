@@ -75,9 +75,11 @@ function route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: R
   end
 
   if is_dev()
-    load_routes()
+    load_routes_definitions()
 
     App.load_models()
+    App.load_controllers()
+    App.load_channels()
     App.load_libs()
   end
 
@@ -106,8 +108,12 @@ function route_ws_request(req::Request, msg::String, ws_client::WebSockets.WebSo
   extract_get_params(URI(req.resource), params)
 
   if is_dev()
-    load_channels()
+    load_channels_definitions()
+
     App.load_models()
+    App.load_controllers()
+    App.load_channels()
+    App.load_libs()
   end
 
   session = App.config.session_auto_start ? Sessions.load(Sessions.id(req)) : nothing
@@ -192,7 +198,7 @@ function route(path::String, action::Union{String,Function}; method = GET, with:
   extra_route_parts = Dict(:with => with)
   named = named == :__anonymous_route ? route_name(route_parts) : named
 
-  if Configuration.is_dev() && haskey(_routes, named)
+  if is_dev() && haskey(_routes, named)
     Logger.log(
       "Conflicting routes names - multiple routes are sharing the same name. Use the 'named' option to assign them different identifiers.\n" *
       string(_routes[named]) * "\n" *
@@ -226,7 +232,7 @@ function channel(path::String, action::Union{String,Function}; with::Dict = Dict
   extra_channel_parts = Dict(:with => with)
   named = named == :__anonymous_channel ? channel_name(channel_parts) : named
 
-  if Configuration.is_dev() && haskey(_channels, named)
+  if is_dev() && haskey(_channels, named)
     Logger.log(
       "Conflicting channel names - multiple channels are sharing the same name. Use the 'named' option to assign them different identifiers.\n" *
       string(_channels[named]) * "\n" *
@@ -458,7 +464,7 @@ function match_routes(req::Request, res::Response, session::Union{Sessions.Sessi
 
     return  try
               if isa(to, Function)
-                to() |> to_response
+                (is_dev() ? Base.invokelatest(to) : to()) |> to_response
               else
                 invoke_controller(to, req, res, params.collection, session)
               end
@@ -517,7 +523,7 @@ function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSock
 
     return  try
               if isa(to, Function)
-                to() |> string
+                (is_dev() ? Base.invokelatest(to) : to()) |> string
               else
                 invoke_channel(to, req, payload, ws_client, params.collection, session)
               end
@@ -755,9 +761,6 @@ function setup_params!(params::Dict{Symbol,Any}, to_parts::Vector{String}, actio
 end
 
 
-const loaded_controllers = UInt64[]
-
-
 """
     invoke_controller(to::String, req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session) :: Response
 
@@ -767,12 +770,6 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
   to_parts::Vector{String} = split(to, "#")
 
   controller_path = abspath(joinpath(Genie.RESOURCES_PATH, to_parts[1]))
-  controller_path_hash = hash(controller_path)
-  if ! in(controller_path_hash, loaded_controllers) || Configuration.is_dev()
-    App.load_controller(controller_path)
-    App.export_controllers(to_parts[2])
-    ! in(controller_path_hash, loaded_controllers) && push!(loaded_controllers, controller_path_hash)
-  end
 
   controller = Genie.GenieController()
   action_name = to_parts[2]
@@ -812,7 +809,7 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
   end
 
   return  try
-            (get_nested_field(action_name, 1, App).field)() |> to_response
+            (is_dev() ? Base.invokelatest(get_nested_field(action_name, 1, App).field) : (get_nested_field(action_name, 1, App).field)()) |> to_response
           catch ex
             Logger.log("Error while invoking $(action_name) with $(params)", :err)
             Logger.log(string(ex), :err)
@@ -821,9 +818,6 @@ function invoke_controller(to::String, req::Request, res::Response, params::Dict
             rethrow(ex)
           end
 end
-
-
-const loaded_channels = UInt64[]
 
 
 """
@@ -835,12 +829,6 @@ function invoke_channel(to::String, req::Request, payload::Dict{String,Any}, ws_
   to_parts::Vector{String} = split(to, "#")
 
   channel_path = abspath(joinpath(Genie.RESOURCES_PATH, to_parts[1]))
-  channel_path_hash = hash(channel_path)
-  if ! in(channel_path_hash, loaded_channels) || Configuration.is_dev()
-    App.load_channel(channel_path)
-    App.export_channels(to_parts[2])
-    ! in(channel_path_hash, loaded_channels) && push!(loaded_channels, channel_path_hash)
-  end
 
   controller = Genie.GenieChannel()
   action_name = to_parts[2]
@@ -851,7 +839,7 @@ function invoke_channel(to::String, req::Request, payload::Dict{String,Any}, ws_
   try
     params[Genie.PARAMS_ACL_KEY] = App.load_acl(channel_path)
   catch ex
-    if Configuration.is_dev()
+    if is_dev()
       rethrow(ex)
     else
       Logger.log("Failed loading ACL", :err)
@@ -868,7 +856,7 @@ function invoke_channel(to::String, req::Request, payload::Dict{String,Any}, ws_
     hook_result = run_hooks(BEFORE_ACTION_HOOKS, getfield(App, Symbol(join(split(action_name, ".")[1:end-1], "."))), params)
     hook_stop(hook_result) && return string(hook_result[2])
   catch ex
-    if Configuration.is_dev()
+    if is_dev()
       rethrow(ex)
     else
       Logger.log("Failed to invoke channel hooks $(BEFORE_ACTION_HOOKS)", :err)
@@ -883,10 +871,9 @@ function invoke_channel(to::String, req::Request, payload::Dict{String,Any}, ws_
 
   return  try
             # TODO: add support for arbitrarely nested modules
-            # getfield( getfield( getfield(current_module(), Symbol("App")), Symbol(split(action_name, ".")[1])), Symbol(split(action_name, ".")[2]))() |> string
-            (get_nested_field(action_name, 1, App).field)() |> string
+            (is_dev() ? Base.invokelatest((get_nested_field(action_name, 1, App).field)) : (get_nested_field(action_name, 1, App).field)()) |> string
           catch ex
-            if Configuration.is_dev()
+            if is_dev()
               rethrow(ex)
             else
               Logger.log("$ex at $(@__FILE__):$(@__LINE__)", :err)
@@ -997,11 +984,11 @@ end
 
 
 """
-    load_routes() :: Void
+    load_routes_definitions() :: Void
 
 Loads the routes file.
 """
-function load_routes() :: Void
+function load_routes_definitions() :: Void
   ! routes_available() && return nothing
 
   empty!(_routes)
@@ -1026,11 +1013,11 @@ end
 
 
 """
-    load_channels() :: Void
+    load_channels_definitions() :: Void
 
-Loads the routes file.
+Loads the channels file.
 """
-function load_channels() :: Void
+function load_channels_definitions() :: Void
   ! IS_IN_APP && return nothing
   ! isfile(abspath(joinpath("config", "channels.jl"))) && return nothing
 
@@ -1103,7 +1090,7 @@ end
 Serves the error file correspoding to `error_code` and current environment.
 """
 function serve_error_file(error_code::Int, error_message::String = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
-  if Configuration.is_dev()
+  if is_dev()
     error_page =  open(Genie.DOC_ROOT_PATH * "/error-$(error_code).html") do f
                     readstring(f)
                   end
@@ -1152,6 +1139,11 @@ file_headers(f) :: Dict{AbstractString,AbstractString} = Dict{AbstractString,Abs
 ormatch(r::RegexMatch, x) = r.match
 ormatch(r::Void, x) = x
 
-load_routes()
+if ! is_dev()
+  App.load_controllers()
+  App.load_channels()
+  load_routes_definitions()
+  load_channels_definitions()
+end
 
 end

@@ -72,7 +72,7 @@ v 0.8
 ✔ database session adapter
 ✔ memcache session adapter
 ✔ redis session adapter
-☐ database cache adapter
+✔ database cache adapter
 ☐ redis cache adapter
 ☐ memcache cache adapter
 ✔ channels (websockets communication)
@@ -82,12 +82,14 @@ v 0.8
 ☐ Revise.jl to reload function definitions
 ✔ add utility functions for migrations (add column, add index, create table, etc)
 ☐ SearchLight ODBC support
+✔ support for Julia 0.6
+☐ make SearchLight a completely separate package -- docs, tests and all
+☐ make Flax a completely separate package
 
 v 0.9
 ☐ tests
-☐ support for Julia 0.6
 ☐ upgrade of server stack
-☐ packages versioning (declarative packages)
+☐ packages versioning (declarative packages -- or Pkg3?)
 ☐ custom Genie sysimg: include(joinpath(dirname(JULIA_HOME),"share","julia","build_sysimg.jl")); build_sysimg(force=true)
 ☐ use macros to completely remove function invocations that produce no effect based on settings (if they are disabled from settings)
 ☐ investigate more opportunities for parallelizing code

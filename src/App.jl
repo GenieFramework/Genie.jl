@@ -3,7 +3,7 @@ App level functionality -- loading and managing app-wide components like configs
 """
 module App
 
-using Genie, YAML, Macros, Logger, Inflector, Util
+using Genie, YAML, Macros, Logger, Inflector, Util, Configuration
 SEARCHLIGHT_ON && eval(:(using SearchLight, Validation))
 
 IS_IN_APP && const config = Genie.config
@@ -56,6 +56,59 @@ function load_models(dir = Genie.RESOURCES_PATH) :: Void
       if i == Genie.GENIE_MODEL_FILE_NAME
         eval(App, :(include($full_path)))
         isfile(joinpath(dir, Genie.GENIE_VALIDATOR_FILE_NAME)) && eval(Validation, :(include(joinpath($dir, $(Genie.GENIE_VALIDATOR_FILE_NAME)))))
+      end
+    end
+  end
+
+  nothing
+end
+
+
+"""
+    load_controllers(dir = Genie.RESOURCES_PATH) :: Void
+
+Loads (includes) all available `controller` files.
+The modules are included in the `App` module.
+"""
+function load_controllers(dir = Genie.RESOURCES_PATH) :: Void
+  ! isdir(abspath(dir)) && return nothing
+
+  dir_contents = readdir(abspath(dir))
+
+  for i in dir_contents
+    full_path = joinpath(dir, i)
+    if isdir(full_path)
+      load_controllers(full_path)
+    else
+      if i == Genie.GENIE_CONTROLLER_FILE_NAME
+        Logger.log("Loading controller $full_path")
+        eval(App, :(include($full_path)))
+      end
+    end
+  end
+
+  nothing
+end
+
+
+"""
+    load_channels(dir = Genie.RESOURCES_PATH) :: Void
+
+Loads (includes) all available `channel` files.
+The modules are included in the `App` module.
+"""
+function load_channels(dir = Genie.RESOURCES_PATH) :: Void
+  ! isdir(abspath(dir)) && return nothing
+
+  dir_contents = readdir(abspath(dir))
+
+  for i in dir_contents
+    full_path = joinpath(dir, i)
+    if isdir(full_path)
+      load_channels(full_path)
+    else
+      if i == Genie.GENIE_CHANNEL_FILE_NAME
+        eval(App, :(include($full_path)))
       end
     end
   end

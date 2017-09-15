@@ -32,6 +32,8 @@ function startup(port::Int = 8000) :: Tuple{Task,HttpServer.Server}
                   "The error has been logged and we'll look into it ASAP." :
                   string(ex, " in $(@__FILE__):$(@__LINE__)", "\n\n", sprint(io->Base.show_backtrace(io, catch_backtrace())))
 
+      rethrow(ex)
+
       return Router.serve_error_file(500, message)
     end
   end

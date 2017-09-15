@@ -99,7 +99,7 @@ function tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
 
       module_name = Util.file_name_without_extension(i) |> Symbol
       eval(:(using $(module_name)))
-      ti = TaskInfo(i, module_name, eval(module_name).description())
+      ti = TaskInfo(i, module_name, Base.invokelatest(eval(module_name).description))
 
       if ( filter_type_name == Symbol() ) push!(tasks, ti)
       elseif ( filter_type_name == module_name ) return TaskInfo[ti]
