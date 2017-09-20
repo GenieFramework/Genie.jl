@@ -1,6 +1,4 @@
-using Configuration
-
-export config
+using Genie.Configuration
 
 const config =  Settings(
                   output_length       = 0,
@@ -15,5 +13,6 @@ const config =  Settings(
                   log_level           = "error",
                   log_verbosity       = LOG_LEVEL_VERBOSITY_MINIMAL,
                   assets_path         = "/",
-                  cache_duration      = 1_000
+                  cache_duration      = 1_000,
+                  session_auto_start  = false
                 )

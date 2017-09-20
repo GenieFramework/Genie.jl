@@ -1,4 +1,4 @@
-using Configuration
+using Genie.Configuration
 
 const config =  Settings(
                   output_length       = 100,
@@ -6,7 +6,6 @@ const config =  Settings(
                   log_db              = true,
                   log_requests        = true,
                   log_responses       = true,
-                  log_router          = true
+                  log_router          = true,
+                  session_auto_start  = false
                 )
-
-export config

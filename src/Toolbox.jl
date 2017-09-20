@@ -2,7 +2,7 @@ module Toolbox
 
 import Base.string
 
-using Genie, Util, Millboard, FileTemplates, Configuration, Logger, Inflector, App
+using Genie, Util, Millboard, FileTemplates, Genie.Configuration, Logger, Inflector, App
 
 export TaskResult, VoidTaskResult
 

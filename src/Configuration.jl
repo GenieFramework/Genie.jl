@@ -66,52 +66,6 @@ cache_enabled() :: Bool = (Genie.config.cache_duration > 0)
 
 
 """
-    read_db_connection_data!!(db_settings_file::String) :: Dict{Any,Any}
-
-Attempts to read the database configuration file and returns the part corresponding to the current environment as a `Dict`.
-Does not check if `db_settings_file` actually exists so it can throw errors.
-If the database connection information for the current environment does not exist, it returns an empty `Dict`.
-
-# Examples
-```julia
-julia> Configuration.read_db_connection_data!!(joinpath(Genie.CONFIG_PATH, Genie.GENIE_DB_CONFIG_FILE_NAME))
-Dict{Any,Any} with 6 entries:
-  "host"     => "localhost"
-  "password" => "..."
-  "username" => "..."
-  "port"     => 5432
-  "database" => "..."
-  "adapter"  => "PostgreSQL"
-```
-"""
-function read_db_connection_data!!(db_settings_file::String) :: Dict{String,Any}
-  db_conn_data = YAML.load(open(db_settings_file))
-  if haskey(db_conn_data, Genie.config.app_env)
-    db_conn_data[Genie.config.app_env]
-  else
-    push!(Genie.GENIE_LOG_QUEUE, ("DB configuration for $(Genie.config.app_env) not found", :debug))
-    Dict{String,Any}()
-  end
-end
-
-
-"""
-    load_db_connection() :: Bool
-
-Attempts to load the database configuration from file. Returns `true` if successful, otherwise `false`.
-"""
-function load_db_connection() :: Dict{String,Any}
-  _load_db_connection()
-end
-@memoize function _load_db_connection()
-  db_config_file = joinpath(Genie.CONFIG_PATH, Genie.GENIE_DB_CONFIG_FILE_NAME)
-  isfile(db_config_file) && (Genie.config.db_config_settings = read_db_connection_data!!(db_config_file))
-
-  Genie.config.db_config_settings
-end
-
-
-"""
     mutable struct Settings
 
 App configuration - sets up the app's defaults. Individual options are overwritten in the corresponding environment file.
@@ -265,7 +219,7 @@ mutable struct Settings
                   db_migrations_table_name, db_migrations_folder, db_config_settings,
                   task_folder, test_folder,
                   log_folder,
-                  cache_folder, cache_adapter, cache_duration, cache_table, 
+                  cache_folder, cache_adapter, cache_duration, cache_table,
                   log_router, log_db, log_queries, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted, log_cache, log_views,
                   assets_path, assets_serve, assets_fingerprinted,
                   pagination_default_items_per_page, pagination_page_param_name,

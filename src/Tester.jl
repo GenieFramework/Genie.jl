@@ -1,6 +1,6 @@
 module Tester
 
-using Genie, App, Util, Configuration, Logger
+using Genie, App, Util, Genie.Configuration, Logger
 SEARCHLIGHT_ON && eval(:(using Migration))
 
 

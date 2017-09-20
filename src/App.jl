@@ -3,10 +3,11 @@ App level functionality -- loading and managing app-wide components like configs
 """
 module App
 
-using Genie, YAML, Macros, Logger, Inflector, Util, Configuration
+using Genie, YAML, Macros, Logger, Inflector, Util, Genie.Configuration
 SEARCHLIGHT_ON && eval(:(using SearchLight, Validation))
 
-IS_IN_APP && const config = Genie.config
+
+IS_IN_APP && ! isdefined(:config) && const config = Genie.config
 
 
 """
@@ -81,7 +82,6 @@ function load_controllers(dir = Genie.RESOURCES_PATH) :: Void
       load_controllers(full_path)
     else
       if i == Genie.GENIE_CONTROLLER_FILE_NAME
-        Logger.log("Loading controller $full_path")
         eval(App, :(include($full_path)))
       end
     end

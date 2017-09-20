@@ -1,7 +1,7 @@
 module Router
 
 using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions
-using Millboard, Configuration, App, Input, Logger, Util, Renderer, WebSockets, JSON
+using Millboard, Genie.Configuration, App, Input, Logger, Util, Renderer, WebSockets, JSON
 IS_IN_APP && @eval parse("@dependencies")
 
 import HttpServer.mimetypes
@@ -1139,7 +1139,7 @@ file_headers(f) :: Dict{AbstractString,AbstractString} = Dict{AbstractString,Abs
 ormatch(r::RegexMatch, x) = r.match
 ormatch(r::Void, x) = x
 
-if ! is_dev()
+if IS_IN_APP && ! is_dev()
   App.load_controllers()
   App.load_channels()
   load_routes_definitions()

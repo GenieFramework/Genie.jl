@@ -4,7 +4,7 @@ export respond, json, redirect_to, html, flax, include_asset, has_requested, css
 export respond_with_json, respond_with_html
 export error_404, error_500, error_XXX
 
-using Genie, Util, JSON, Configuration, HttpServer, App, Router, Logger, Macros
+using Genie, Util, JSON, Genie.Configuration, HttpServer, App, Router, Logger, Macros
 
 if IS_IN_APP
   eval(:(using $(App.config.html_template_engine), $(App.config.json_template_engine)))

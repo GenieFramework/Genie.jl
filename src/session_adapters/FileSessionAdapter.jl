@@ -1,6 +1,6 @@
 module FileSessionAdapter
 
-using Sessions, Genie, Logger, Configuration, App
+using Sessions, Genie, Logger, Genie.Configuration, App
 
 const SESSION_FOLDER = IS_IN_APP ? App.config.session_folder : tempdir()
 

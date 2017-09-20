@@ -3,7 +3,7 @@ Handles HttpServer related functionality, manages requests and responses and the
 """
 module AppServer
 
-using HttpServer, Router, Genie, Millboard, Logger, Sessions, Configuration, MbedTLS, WebSockets, Channels, App, URIParser
+using HttpServer, Router, Genie, Millboard, Logger, Sessions, Genie.Configuration, MbedTLS, WebSockets, Channels, App, URIParser
 
 
 """

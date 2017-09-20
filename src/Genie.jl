@@ -5,7 +5,7 @@ module Genie
 
 push!(LOAD_PATH, joinpath(Pkg.dir("Genie"), "src"))
 
-using Configuration
+include(joinpath(Pkg.dir("Genie"), "src", "configuration.jl"))
 
 include(joinpath(Pkg.dir("Genie"), "src", "constants.jl"))
 if haskey(ENV, "GENIE_ENV") && isfile(abspath(joinpath(ENV_PATH, ENV["GENIE_ENV"] * ".jl")))
@@ -17,11 +17,7 @@ else
   const IS_IN_APP = false
 end
 
-const SEARCHLIGHT_ON = isdir(Pkg.dir("SearchLight")) && IS_IN_APP &&
-                        (
-                          (haskey(Configuration.load_db_connection(), "host") && Configuration.load_db_connection()["host"] != nothing) ||
-                          (haskey(Configuration.load_db_connection(), "filename") && Configuration.load_db_connection()["filename"] != nothing)
-                        ) ? true : false
+const SEARCHLIGHT_ON = isdir(Pkg.dir("SearchLight")) && IS_IN_APP ? true : false
 
 export IS_IN_APP, SEARCHLIGHT_ON
 
@@ -46,8 +42,7 @@ IS_IN_APP && @eval parse("@dependencies")
 Runs the Genie app by parsing the command line args and invoking the corresponding actions.
 """
 function run() :: Void
-  Configuration.load_db_connection()
-  Commands.execute(Configuration.config)
+  Commands.execute(Genie.config)
 
   nothing
 end

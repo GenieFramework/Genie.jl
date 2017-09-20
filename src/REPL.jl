@@ -1,6 +1,6 @@
 module REPL
 
-using SHA, Logger, Configuration, Genie, Generator, Tester, Toolbox, App, Util
+using SHA, Logger, Genie.Configuration, Genie, Generator, Tester, Toolbox, App, Util
 SEARCHLIGHT_ON && eval(:(using SearchLight, Migration))
 
 const JULIA_PATH = joinpath(JULIA_HOME, "julia")

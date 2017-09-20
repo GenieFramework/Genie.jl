@@ -1,6 +1,4 @@
-using Configuration
-
-export config
+using Genie.Configuration
 
 const config =  Settings(
                   output_length           = 100,
@@ -16,5 +14,6 @@ const config =  Settings(
                   assets_path             = "/",
                   cache_duration          = 0,
                   flax_compile_templates  = false,
-                  websocket_server        = false
+                  websocket_server        = false,
+                  session_auto_start      = false
                 )

@@ -3,7 +3,7 @@ Various macro helpers.
 """
 module Macros
 
-using Genie, Configuration
+using Genie, Genie.Configuration
 
 export @devtools, @ifdevtools
 export @run_with_time, @unless, @psst, @in_repl, @location_in_file
