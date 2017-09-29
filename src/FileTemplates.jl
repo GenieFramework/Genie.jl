@@ -15,16 +15,21 @@ function new_database_migration(module_name::String) :: String
   """
   module $module_name
 
-  using Genie, SearchLight
+  using SearchLight
 
   function up()
-    # SearchLight.query("")
-    error("Not implemented")
+    create_table(:table_name) do
+      [
+        column_id()
+        column(:column_name, :column_type, options)
+      ]
+    end
+
+    add_index(:table_name, :column_name, options)
   end
 
   function down()
-    # SearchLight.query("")
-    error("Not implemented")
+    drop_table(:table_name)
   end
 
   end
@@ -118,7 +123,7 @@ function new_model(model_name::String, resource_name::String = model_name) :: St
 
     ) = new("$table_name", "id",
             id,
-            validator
+            # validator
             # belongs_to, has_one, has_many,
             # before_save, after_save, on_dehydration, on_hydration, after_hydration
             # scopes
