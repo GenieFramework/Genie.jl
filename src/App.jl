@@ -31,7 +31,7 @@ end
 Recursively adds subfolders of resources to LOAD_PATH.
 """
 function load_resources(dir = Genie.RESOURCES_PATH) :: Void
-  res_dirs = [d for d in Task( ()-> Util.walk_dir(dir, only_dirs = true) )]
+  res_dirs = Util.walk_dir(dir, only_dirs = true)
   ! isempty(res_dirs) && push!(LOAD_PATH, res_dirs...)
 
   nothing

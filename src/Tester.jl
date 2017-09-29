@@ -14,7 +14,7 @@ function bootstrap_tests(cmd_args::String, config::Settings) :: Void
 
   include(abspath(joinpath(config.test_folder, "test_config.jl")))
 
-  for file_name in Task(() -> Util.walk_dir(abspath(joinpath(config.test_folder))))
+  for file_name in Util.walk_dir(abspath(joinpath(config.test_folder)))
     if ( endswith(file_name, "_test.jl") )
       include(file_name)
     end

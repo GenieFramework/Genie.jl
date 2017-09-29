@@ -10,7 +10,7 @@ end
 
 function run_task!()
   dir = joinpath(Pkg.dir("Genie"), "src")
-  for filename in Task(() -> Util.walk_dir(dir))
+  for filename in Util.walk_dir(dir)
     @show filename
     try
       for message in lintfile(filename)
