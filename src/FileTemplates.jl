@@ -15,7 +15,7 @@ function new_database_migration(module_name::String) :: String
   """
   module $module_name
 
-  using SearchLight
+  import Migration: create_table, column, column_id, add_index, drop_table
 
   function up()
     create_table(:table_name) do
