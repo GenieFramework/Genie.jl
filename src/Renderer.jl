@@ -199,6 +199,9 @@ function include_asset(asset_type::Symbol, file_name::String; fingerprinted::Boo
   suffix = fingerprinted ? "-" * App.ASSET_FINGERPRINT * ".$(asset_type)" : ".$(asset_type)"
   "/$asset_type/$(file_name)$(suffix)"
 end
+function include_asset(asset_type::Symbol, file_name::Symbol; fingerprinted::Bool = App.config.assets_fingerprinted) :: String
+  include_asset(asset_type, string(file_name), fingerprinted = fingerprinted)
+end
 
 
 """
