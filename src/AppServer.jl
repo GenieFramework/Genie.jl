@@ -19,63 +19,8 @@ Listening on 0.0.0.0:8000...
 ```
 """
 function startup(port::Int = 8000) :: Tuple{Task,HttpServer.Server}
-  http = HttpHandler() do req::Request, res::Response
-    try
-      ip::IPv4 = App.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
-      nworkers() == 1 ? handle_request(req, res, ip) : @fetch handle_request(req, res, ip)
-    catch ex
-      Logger.log(string(ex), :critical)
-      Logger.log(sprint(io->Base.show_backtrace(io, catch_backtrace() )), :critical)
-      Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
-
-      message = Configuration.is_prod() ?
-                  "The error has been logged and we'll look into it ASAP." :
-                  string(ex, " in $(@__FILE__):$(@__LINE__)", "\n\n", sprint(io->Base.show_backtrace(io, catch_backtrace())))
-
-      rethrow(ex)
-
-      return Router.serve_error_file(500, message)
-    end
-  end
-
-  if App.config.websocket_server
-    wsh = WebSocketHandler() do req::Request, ws_client::WebSockets.WebSocket
-      while true
-        response =  try
-                      msg = read(ws_client)
-                      ip::IPv4 = App.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
-
-                      nworkers() == 1 ? handle_ws_request(req, String(msg), ws_client, ip) : @fetch handle_ws_request(req, String(msg), ws_client, ip)
-                    catch ex
-                      if typeof(ex) == WebSockets.WebSocketClosedError
-                        Channels.unsubscribe_client(ws_client)
-
-                        break
-                      end
-
-                      try
-                        Logger.log(string(ex), :critical)
-                        Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
-
-                        Configuration.is_prod() ? "The error has been logged and we'll look into it ASAP." : string(ex)
-                      catch exx
-                        print_with_color(:red, "One can not simply log an error")
-                      end
-
-                      break
-                    end
-
-        try
-          write(ws_client, response)
-        catch socket_exception
-          Channels.unsubscribe_client(ws_client)
-
-          break
-        end
-      end
-    end
-  end
-
+  http = setup_http_handler()
+  App.config.websocket_server && (wsh = setup_ws_handler())
   App.config.lookup_ip && (http.events["connect"] = (http_client) -> handle_connect(http_client))
 
   server = App.config.websocket_server ? Server(http, wsh) : Server(http)
@@ -88,6 +33,69 @@ function startup(port::Int = 8000) :: Tuple{Task,HttpServer.Server}
   end
 
   server_task, server
+end
+
+
+"""
+"""
+function setup_http_handler() :: HttpHandler
+  HttpHandler() do req::Request, res::Response
+    try
+      ip::IPv4 = App.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
+      nworkers() == 1 ? handle_request(req, res, ip) : @fetch handle_request(req, res, ip)
+    catch ex
+      Logger.log(string(ex), :critical)
+      Logger.log(sprint(io->Base.show_backtrace(io, catch_backtrace() )), :critical)
+      Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
+
+      message = Configuration.is_prod() ?
+                  "The error has been logged and we'll look into it ASAP." :
+                  string(ex, " in $(@__FILE__):$(@__LINE__)", "\n\n", sprint(io->Base.show_backtrace(io, catch_backtrace())))
+
+      Configuration.is_dev() ? rethrow(ex) : return Router.serve_error_file(500, message)
+    end
+  end
+end
+
+
+"""
+"""
+function setup_ws_handler() :: WebSocketHandler 
+  WebSocketHandler() do req::Request, ws_client::WebSockets.WebSocket
+    while true
+      response =  try
+                    msg = read(ws_client)
+                    ip::IPv4 = App.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
+
+                    nworkers() == 1 ? handle_ws_request(req, String(msg), ws_client, ip) : @fetch handle_ws_request(req, String(msg), ws_client, ip)
+                  catch ex
+                    if typeof(ex) == WebSockets.WebSocketClosedError
+                      Channels.unsubscribe_client(ws_client)
+
+                      break
+                    end
+
+                    try
+                      Logger.log(string(ex), :critical)
+                      Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
+
+                      Configuration.is_prod() ? "The error has been logged and we'll look into it ASAP." : string(ex)
+                    catch exx
+                      print_with_color(:red, "One can not simply log an error")
+                    end
+
+                    break
+                  end
+
+      try
+        write(ws_client, response)
+      catch socket_exception
+        Channels.unsubscribe_client(ws_client)
+
+        break
+      end
+    end
+  end
 end
 
 
@@ -132,7 +140,7 @@ end
 
 
 """
-    handle_ws_request(req::Request, client::Client, ip::IPv4 = ip"0.0.0.0") :: Response
+    handle_ws_request(req::Request, client::Client, ip::IPv4 = ip"0.0.0.0") :: String
 
 HttpServer handler function - invoked when the server gets a request.
 """
