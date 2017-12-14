@@ -79,7 +79,7 @@ function new_resource(cmd_args::Dict{String,Any}, config::Settings) :: Void
   end
 
   cmd_args["migration:new"] = "create_table_" * lowercase(resource_name)
-  Migration.new(cmd_args, config)
+  Migration.new(cmd_args["migration:new"])
 
   resource_path = setup_resource_path(resource_name)
   for resource_file in [Genie.GENIE_CONTROLLER_FILE_NAME, Genie.GENIE_CHANNEL_FILE_NAME, Genie.GENIE_AUTHORIZATOR_FILE_NAME, Genie.GENIE_VALIDATOR_FILE_NAME]
