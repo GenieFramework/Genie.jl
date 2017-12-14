@@ -18,8 +18,9 @@
     * Layouts
 * Helpers
 * Model (SearchLight.jl)
-* Migrations
-* Database seeding
+  * Validators
+  * Migrations
+  * Database seeding
 * File structure of a Genie app
   * /app
   * /lib - Integrating with existing Julia code
