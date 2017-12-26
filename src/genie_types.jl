@@ -5,9 +5,9 @@ import Base.show
 export GenieType, GenieController, Controller
 
 abstract type GenieType end
-string{T<:GenieType}(io::IO, t::T) = "$(typeof(t)) <: $(super(typeof(t)))"
-print{T<:GenieType}(io::IO, t::T) = print(io, "$(typeof(t)) <: $(super(typeof(t)))")
-show{T<:GenieType}(io::IO, t::T) = print(io, genietype_to_print(t))
+string(io::IO, t::T) where {T<:GenieType} = "$(typeof(t)) <: $(super(typeof(t)))"
+print(io::IO, t::T) where {T<:GenieType} = print(io, "$(typeof(t)) <: $(super(typeof(t)))")
+show(io::IO, t::T) where {T<:GenieType} = print(io, genietype_to_print(t))
 
 mutable struct GenieController <: GenieType
 end
@@ -25,7 +25,7 @@ const Channel = GenieChannel
 
 Pretty printing of Genie types.
 """
-function genietype_to_print{T<:GenieType}(m::T) :: String
+function genietype_to_print(m::T) :: String where {T<:GenieType}
   output = "\n" * "$(typeof(m))" * "\n"
   output *= string(config.log_formatted ? Millboard.table(to_string_dict(m)) : to_string_dict(m) ) * "\n"
 
@@ -40,7 +40,7 @@ Converts a type `m` to a `Dict{String,String}`. Orginal types of the fields valu
 If `all_fields` is `true`, all fields are included; otherwise just the fields corresponding to database columns.
 If `all_output` is `false` the values are truncated if longer than `output_length`.
 """
-function to_string_dict{T<:GenieType}(m::T; all_fields::Bool = false, all_output::Bool = false) :: Dict{String,String}
+function to_string_dict(m::T; all_fields::Bool = false, all_output::Bool = false) :: Dict{String,String} where {T<:GenieType}
   fields = all_fields ? fieldnames(m) : persistable_fields(m)
   output_length = all_output ? 100_000_000 : config.output_length
   response = Dict{String,String}()
