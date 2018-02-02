@@ -65,10 +65,11 @@ end
 
 """
     new_resource(cmd_args::Dict{String,Any}, config::Settings) :: Void
+    new_resource(resource_name::Union{String,Symbol}) :: Void
 
 Generates all the files associated with a new resource and persists them to the resources folder.
 """
-function new_resource(cmd_args::Dict{String,Any}, config::Settings) :: Void
+function new_resource(cmd_args::Dict{String,Any}) :: Void
   sf = Inflector.to_singular(cmd_args["resource:new"])
   cmd_args["model:new"] = (isnull(sf) ? cmd_args["resource:new"] : Base.get(sf)) |> ucfirst
   new_model(cmd_args)
@@ -96,6 +97,9 @@ function new_resource(cmd_args::Dict{String,Any}, config::Settings) :: Void
     Logger.log("New $test_file created at $(joinpath(Genie.TEST_PATH_UNIT, test_file))")
 
   nothing
+end
+function new_resource(resource_name::Union{String,Symbol}) :: Void 
+  new_resource(Dict{String,Any}("resource:new" => string(resource_name)))
 end
 
 

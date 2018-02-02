@@ -28,6 +28,8 @@
 * The frontend stack: Webpack and Yarn
 * Genie Channels (WebSockets communication)
 * Caching
+  * File system
+  * Memcache 
 * Sessions
 * Authentication
 * Logging

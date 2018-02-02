@@ -34,7 +34,7 @@ function execute(config::Settings) :: Void
     Generator.new_channel(parsed_args)
 
   elseif parsed_args["resource:new"] != nothing
-    Generator.new_resource(parsed_args, config)
+    Generator.new_resource(parsed_args)
 
   elseif called_command(parsed_args, "migration:status") || called_command(parsed_args, "migration:list")
     Migration.status()
