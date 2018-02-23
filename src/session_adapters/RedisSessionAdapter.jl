@@ -1,6 +1,6 @@
 module RedisSessionAdapter
 
-using Sessions, Genie, Logger, Configuration, App, Redis, JSON
+using Sessions, Genie, Logger, Genie.Configuration, App, Redis, JSON
 
 
 """

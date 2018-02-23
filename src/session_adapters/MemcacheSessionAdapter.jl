@@ -1,6 +1,6 @@
 module MemcacheSessionAdapter
 
-using Sessions, Genie, Logger, Configuration, App, Memcache, JSON
+using Sessions, Genie, Logger, Genie.Configuration, App, Memcache, JSON
 
 
 """

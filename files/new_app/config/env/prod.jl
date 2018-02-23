@@ -16,3 +16,5 @@ const config =  Settings(
                   cache_duration      = 1_000,
                   session_auto_start  = false
                 )
+
+ENV["JULIA_REVISE"] = "off"

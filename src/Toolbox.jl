@@ -2,7 +2,7 @@ module Toolbox
 
 import Base.string
 
-using Genie, Util, Millboard, FileTemplates, Genie.Configuration, Logger, Inflector, App
+using Genie, Util, Millboard, Genie.FileTemplates, Genie.Configuration, Logger, Inflector, App
 
 export TaskResult, VoidTaskResult
 
@@ -125,7 +125,7 @@ function new(cmd_args::Dict{String,Any}, config::Settings) :: Void
   end
 
   f = open(tfn, "w")
-  write(f, FileTemplates.new_task(task_module_name(cmd_args["task:new"])))
+  write(f, Genie.FileTemplates.new_task(task_module_name(cmd_args["task:new"])))
   close(f)
 
   Logger.log("New task created at $tfn")

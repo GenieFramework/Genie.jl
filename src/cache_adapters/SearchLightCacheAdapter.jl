@@ -120,6 +120,7 @@ module Migrations
 module CreateTableStorageCaches
 
 import Migration: create_table, column, column_id, add_index, drop_table
+
 using Configuration, App
 
 """

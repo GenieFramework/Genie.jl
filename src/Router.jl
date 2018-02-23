@@ -39,7 +39,7 @@ Params() = Params(Dict{Symbol,Any}())
 
 Returns the content-type of the current request-response cycle.
 """
-function response_type{T}(params::Dict{Symbol,T}) :: Symbol
+function response_type(params::Dict{Symbol,T})::Symbol where {T}
   haskey(params, :response_type) ? params[:response_type] : collect(keys(Renderer.CONTENT_TYPES))[1]
 end
 function response_type(params::Params) :: Symbol
@@ -52,7 +52,7 @@ end
 
 Checks if the content-type of the current request-response cycle matches `check`.
 """
-function response_type{T}(check::Symbol, params::Dict{Symbol,T}) :: Bool
+function response_type(check::Symbol, params::Dict{Symbol,T})::Bool where {T}
   check == response_type(params)
 end
 
@@ -180,28 +180,26 @@ end
 
 """
     route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_route) :: Route
-    route(path::String, action::Union{String,Function}; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_route) :: Route
-    route(path::String; resource::Union{String,Symbol} = "", controller::Union{String,Symbol} = "", action::Union{String,Symbol} = "",
-                    method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_route) :: Route
+    route(path::String, action::Function; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_route) :: Route
 
 Used for defining Genie routes.
 """
 function route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
   route(path, action, method = method, with = with, named = named)
 end
-function route(path::String, resource::Union{String,Symbol}, controller::Union{String,Symbol}, action::Union{String,Symbol};
-                method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
-  route(path, resource = resource, controller = controller, action = action, method = method, with = with, named = named)
-end
-function route(path::String; resource::Union{String,Symbol} = "", controller::Union{String,Symbol} = "", action::Union{String,Symbol} = "",
-                method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
-  resource = string(resource)
-  controller = string(controller)
-  action = string(action)
-
-  route(path, resource * "#" * (! isempty(controller) ? controller * "." : "") * action, method = method, with = with, named = named)
-end
-function route(path::String, action::Union{String,Function}; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
+# function route(path::String, resource::Union{String,Symbol}, controller::Union{String,Symbol}, action::Union{String,Symbol};
+#                 method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
+#   route(path, resource = resource, controller = controller, action = action, method = method, with = with, named = named)
+# end
+# function route(path::String; resource::Union{String,Symbol} = "", controller::Union{String,Symbol} = "", action::Union{String,Symbol} = "",
+#                 method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
+#   resource = string(resource)
+#   controller = string(controller)
+#   action = string(action)
+#
+#   route(path, resource * "#" * (! isempty(controller) ? controller * "." : "") * action, method = method, with = with, named = named)
+# end
+function route(path::String, action::Function; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
   route_parts = (method, path, action)
 
   extra_route_parts = Dict(:with => with)
@@ -1154,8 +1152,8 @@ ormatch(r::RegexMatch, x) = r.match
 ormatch(r::Void, x) = x
 
 if IS_IN_APP # && ! is_dev()
-  App.load_controllers()
-  App.load_channels()
+  # App.load_controllers()
+  # App.load_channels()
   load_routes_definitions()
   load_channels_definitions()
 end

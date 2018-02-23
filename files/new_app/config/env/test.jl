@@ -9,3 +9,5 @@ const config =  Settings(
                   log_router          = true,
                   session_auto_start  = false
                 )
+
+ENV["JULIA_REVISE"] = "off"

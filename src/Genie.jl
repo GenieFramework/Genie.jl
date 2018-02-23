@@ -29,9 +29,12 @@ push!(LOAD_PATH,  joinpath(Pkg.dir("Genie"), "src", "cache_adapters"),
                   RESOURCES_PATH, HELPERS_PATH)
 
 include(joinpath(Pkg.dir("Genie"), "src", "genie_types.jl"))
+include(joinpath(Pkg.dir("Genie"), "src", "file_templates.jl"))
+include(joinpath(Pkg.dir("Genie"), "src", "generator.jl"))
 include(joinpath(Pkg.dir("Genie"), "src", "REPL.jl"))
 
-using Macros, Logger, AppServer, Commands, App, Millboard, Renderer
+using Macros, Logger, App, Commands, AppServer, Millboard, Renderer
+
 SEARCHLIGHT_ON && eval(:(using SearchLight))
 
 IS_IN_APP && @eval parse("@dependencies")

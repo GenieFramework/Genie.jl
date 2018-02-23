@@ -1,7 +1,7 @@
 module REPL
 
-using SHA, Logger, Genie.Configuration, Genie, Generator, Tester, Toolbox, App, Util
-SEARCHLIGHT_ON && eval(:(using SearchLight, Migration))
+using SHA, Logger, Genie.Configuration, Genie, Genie.Generator, Tester, Toolbox, App, Util, Revise
+SEARCHLIGHT_ON && eval(:(using SearchLight, SearchLight.Generator, Migration))
 
 const JULIA_PATH = joinpath(JULIA_HOME, "julia")
 
@@ -118,7 +118,10 @@ end
 Creates a new `model` file.
 """
 function new_model(model_name::String) :: Void
-  Generator.new_model(Dict{String,Any}("model:new" => model_name))
+  SearchLight.Generator.new_model(Dict{String,Any}("model:new" => model_name))
+  App.load_resources()
+
+  nothing
 end
 
 
@@ -128,7 +131,10 @@ end
 Creates a new `controller` file.
 """
 function new_controller(controller_name::String) :: Void
-  Generator.new_controller(Dict{String,Any}("controller:new" => controller_name))
+  Genie.Generator.new_controller(Dict{String,Any}("controller:new" => controller_name))
+  App.load_resources()
+
+  nothing
 end
 
 
@@ -138,7 +144,10 @@ end
 Creates a new `channel` file.
 """
 function new_channel(channel_name::String) :: Void
-  Generator.new_channel(Dict{String,Any}("channel:new" => channel_name))
+  Genie.Generator.new_channel(Dict{String,Any}("channel:new" => channel_name))
+  App.load_resources()
+
+  nothing
 end
 
 
@@ -148,7 +157,10 @@ end
 Creates all the files associated with a new resource.
 """
 function new_resource(resource_name::String) :: Void
-  Generator.new_resource(Dict{String,Any}("resource:new" => resource_name), Settings())
+  Genie.Generator.new_resource(Dict{String,Any}("resource:new" => resource_name))
+  App.load_resources()
+
+  nothing
 end
 
 
@@ -158,7 +170,7 @@ end
 Creates a new migration file.
 """
 function new_migration(migration_name::String) :: Void
-  Generator.new_migration(Dict{String,Any}("migration:new" => migration_name), Settings())
+  SearchLight.Generator.new_migration(Dict{String,Any}("migration:new" => migration_name))
 end
 
 
@@ -195,8 +207,8 @@ end
 function reload_app() :: Void
   Logger.log("Attempting to reload the Genie's core modules. If you get unexpected errors or things don't work as expected, simply exit this Julia session and start a new one to fully reload Genie.", :warn)
 
+  Revise.revise(App)
 
-  reload("App")
   App.load_configurations()
   App.load_initializers()
 

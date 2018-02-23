@@ -17,3 +17,5 @@ const config =  Settings(
                   websocket_server        = false,
                   session_auto_start      = false
                 )
+
+ENV["JULIA_REVISE"] = "auto"

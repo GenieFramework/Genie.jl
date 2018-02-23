@@ -3,7 +3,7 @@ Handles command line arguments for the genie.jl script.
 """
 module Commands
 
-using ArgParse, Genie.Configuration, Genie, Generator, Tester, Toolbox, App, Logger, AppServer
+using ArgParse, Genie.Configuration, Genie, Genie.Generator, Tester, Toolbox, App, Logger, AppServer
 SEARCHLIGHT_ON && eval(:(using SearchLight, Migration))
 
 """
@@ -25,16 +25,17 @@ function execute(config::Settings) :: Void
     Genie.REPL.new_app(parsed_args["app:new"])
 
   elseif parsed_args["model:new"] != nothing
-    Generator.new_model(parsed_args)
+    Genie.Generator.new_model(parsed_args)
 
   elseif parsed_args["controller:new"] != nothing
-    Generator.new_controller(parsed_args)
+    Genie.Generator.new_controller(parsed_args)
 
   elseif parsed_args["channel:new"] != nothing
-    Generator.new_channel(parsed_args)
+    Genie.Generator.new_channel(parsed_args)
 
   elseif parsed_args["resource:new"] != nothing
-    Generator.new_resource(parsed_args)
+    Genie.Generator.new_resource(parsed_args)
+    SearchLight.Generator.new_resource(parsed_pargs)
 
   elseif called_command(parsed_args, "migration:status") || called_command(parsed_args, "migration:list")
     Migration.status()
@@ -91,7 +92,7 @@ function parse_commandline_args() :: Dict{String,Any}
 
     settings.description = "Genie web framework CLI"
     settings.epilog = "Visit http://genieframework.com for more info"
-    settings.version = string(Configuration.GENIE_VERSION)
+    settings.version = string(Genie.Configuration.GENIE_VERSION)
     settings.add_version = true
 
     @add_arg_table settings begin

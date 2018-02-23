@@ -12,12 +12,11 @@ const LOG_PATH        = ROOT_PATH     * "/log"
 const LAYOUTS_PATH    = APP_PATH      * "/layouts"
 const TASKS_PATH      = ROOT_PATH     * "/tasks"
 
-const GENIE_MODEL_FILE_NAME             = "model.jl"
-const GENIE_CONTROLLER_FILE_NAME        = "controller.jl"
-const GENIE_CHANNEL_FILE_NAME           = "channel.jl"
-const GENIE_VALIDATOR_FILE_NAME         = "validator.jl"
 const GENIE_AUTHORIZATOR_FILE_NAME      = "authorization.yml"
 const GENIE_DB_CONFIG_FILE_NAME         = "database.yml"
+
+const GENIE_CONTROLLER_FILE_POSTFIX     = "Controller.jl"
+const GENIE_CHANNEL_FILE_POSTFIX        = "Channel.jl"
 
 const ROUTES_FILE_NAME  = joinpath(CONFIG_PATH, "routes.jl")
 
