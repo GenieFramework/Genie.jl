@@ -1,6 +1,6 @@
 module Renderer
 
-export respond, json, redirect_to, html, flax, include_asset, has_requested, css_asset, js_asset, json_pagination
+export respond, json, redirect_to, html, flax, include_asset, has_requested, css_asset, js_asset
 export respond_with_json, respond_with_html
 export error_404, error_500, error_XXX
 
@@ -251,26 +251,5 @@ function parse_vars(vars)
   vars
 end
 
-
-function json_pagination(path::AbstractString, total_items::Int; current_page::Int = 1, page_size::Int = App.config.pagination_jsonapi_default_items_per_page)
-  page_param_name = "page"
-
-  pg = Dict{Symbol,String}()
-  pg[:first] = path
-
-  pg[:first] = path * "?" * page_param_name * "[number]=1&" * page_param_name * "[size]=" * string(page_size)
-
-  if current_page > 1
-    pg[:prev] = path * "?" * page_param_name * "[number]=" * string(current_page - 1) * "&" * page_param_name * "[size]=" * string(page_size)
-  end
-
-  if current_page * page_size < total_items
-    pg[:next] = path * "?" * page_param_name * "[number]=" * string(current_page + 1) * "&" * page_param_name * "[size]=" * string(page_size)
-  end
-
-  pg[:last] = path * "?" * page_param_name * "[number]=" * string(Int(ceil(total_items / page_size))) * "&" * page_param_name * "[size]=" * string(page_size)
-
-  pg
-end
 
 end
