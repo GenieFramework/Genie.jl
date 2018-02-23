@@ -100,7 +100,7 @@ end
 
 Constructs a `Response` corresponding to the content-type of the request.
 """
-function respond{T}(body::Dict{Symbol,T}, code::Int = 200, headers = Dict{AbstractString,AbstractString}()) :: Response
+function respond(body::Dict{Symbol,T}, code::Int = 200, headers = Dict{AbstractString,AbstractString}())::Response where {T}
   sbody::String =   if haskey(body, :json)
                       headers["Content-Type"] = CONTENT_TYPES[:json]
                       body[:json]

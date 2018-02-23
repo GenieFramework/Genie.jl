@@ -1,6 +1,6 @@
 module Router
 
-using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions
+using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions, Revise
 using Millboard, Genie.Configuration, App, Input, Logger, Util, Renderer, WebSockets, JSON
 IS_IN_APP && @eval parse("@dependencies")
 
@@ -74,14 +74,16 @@ function route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: R
     return serve_error_file(404, "File not found: $(req.resource)", params.collection)
   end
 
-  if is_dev()
-    load_routes_definitions()
+  # if is_dev()
+    # load_routes_definitions()
 
-    App.load_models()
-    App.load_controllers()
-    App.load_channels()
-    App.load_libs()
-  end
+    # App.load_models()
+    # App.load_controllers()
+    # App.load_channels()
+    # App.load_libs()
+  # end
+
+  Genie.Configuration.is_dev() && Revise.revise()
 
   session = App.config.session_auto_start ? Sessions.start(req, res) : nothing
 
@@ -107,14 +109,16 @@ function route_ws_request(req::Request, msg::String, ws_client::WebSockets.WebSo
 
   extract_get_params(URI(req.resource), params)
 
-  if is_dev()
-    load_channels_definitions()
+  # if is_dev()
+    # load_channels_definitions()
 
-    App.load_models()
-    App.load_controllers()
-    App.load_channels()
-    App.load_libs()
-  end
+    # App.load_models()
+    # App.load_controllers()
+    # App.load_channels()
+    # App.load_libs()
+  # end
+
+  Genie.Configuration.is_dev() && Revise.revise()
 
   session = App.config.session_auto_start ? Sessions.load(Sessions.id(req)) : nothing
 
@@ -175,21 +179,26 @@ end
 
 
 """
-    route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
-    route(path::String, action::Union{String,Function}; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
+    route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_route) :: Route
+    route(path::String, action::Union{String,Function}; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_route) :: Route
     route(path::String; resource::Union{String,Symbol} = "", controller::Union{String,Symbol} = "", action::Union{String,Symbol} = "",
-                    method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
+                    method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_route) :: Route
 
 Used for defining Genie routes.
 """
 function route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
   route(path, action, method = method, with = with, named = named)
 end
+function route(path::String, resource::Union{String,Symbol}, controller::Union{String,Symbol}, action::Union{String,Symbol};
+                method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
+  route(path, resource = resource, controller = controller, action = action, method = method, with = with, named = named)
+end
 function route(path::String; resource::Union{String,Symbol} = "", controller::Union{String,Symbol} = "", action::Union{String,Symbol} = "",
                 method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
   resource = string(resource)
   controller = string(controller)
   action = string(action)
+
   route(path, resource * "#" * (! isempty(controller) ? controller * "." : "") * action, method = method, with = with, named = named)
 end
 function route(path::String, action::Union{String,Function}; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
@@ -211,8 +220,8 @@ end
 
 
 """
-    channel(action::Function, path::String; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel) :: Channel
-    channel(path::String, action::Union{String,Function}; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel) :: Channel
+    channel(action::Function, path::String; with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_channel) :: Channel
+    channel(path::String, action::Union{String,Function}; with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_channel) :: Channel
 
 Used for defining Genie channels.
 """
@@ -354,13 +363,13 @@ end
 
 Generates the HTTP link corresponding to `route_name`.
 """
-function to_link!!{T}(route_name::Symbol, d::Vector{Pair{Symbol,T}}) :: String
+function to_link!!(route_name::Symbol, d::Vector{Pair{Symbol,T}})::String where {T}
   to_link!!(route_name, Dict(d...))
 end
-function to_link!!{T}(route_name::Symbol, d::Pair{Symbol,T}) :: String
+function to_link!!(route_name::Symbol, d::Pair{Symbol,T})::String where {T}
   to_link!!(route_name, Dict(d))
 end
-function to_link!!{T}(route_name::Symbol, d::Dict{Symbol,T}) :: String
+function to_link!!(route_name::Symbol, d::Dict{Symbol,T})::String where {T}
   route = try
             get_route!!(route_name)
           catch ex
@@ -898,7 +907,7 @@ function to_response(action_result) :: Response
             if isa(action_result, Tuple)
               Response(action_result...)
             else
-              Response(action_result)
+              Response(string(action_result))
             end
           catch ex
             Logger.log("Can't convert $action_result to HttpServer.Response", :err)
@@ -991,8 +1000,9 @@ Loads the routes file.
 function load_routes_definitions() :: Void
   ! routes_available() && return nothing
 
-  empty!(_routes)
+  # empty!(_routes)
   include(Genie.ROUTES_FILE_NAME)
+  Genie.Configuration.is_dev() && Revise.track(Genie.ROUTES_FILE_NAME)
 
   nothing
 end
@@ -1019,10 +1029,14 @@ Loads the channels file.
 """
 function load_channels_definitions() :: Void
   ! IS_IN_APP && return nothing
-  ! isfile(abspath(joinpath("config", "channels.jl"))) && return nothing
 
-  empty!(_channels)
-  include(abspath(joinpath("config", "channels.jl")))
+  channels_defs = abspath(joinpath("config", "channels.jl"))
+  ! isfile(channels_defs) && return nothing
+
+  # empty!(_channels)
+  include(channels_defs)
+
+  Genie.Configuration.is_dev() && Revise.track(channels_defs)
 
   nothing
 end
@@ -1139,7 +1153,7 @@ file_headers(f) :: Dict{AbstractString,AbstractString} = Dict{AbstractString,Abs
 ormatch(r::RegexMatch, x) = r.match
 ormatch(r::Void, x) = x
 
-if IS_IN_APP && ! is_dev()
+if IS_IN_APP # && ! is_dev()
   App.load_controllers()
   App.load_channels()
   load_routes_definitions()

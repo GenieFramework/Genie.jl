@@ -3,7 +3,7 @@ Generates various Genie files.
 """
 module Generator
 
-using Genie, Logger, FileTemplates, Inflector, Genie.Configuration
+using Genie, Logger, FileTemplates, Inflector, Genie.Configuration, Revise, App
 SEARCHLIGHT_ON && eval(:(using SearchLight, Migration))
 
 
@@ -19,8 +19,10 @@ function new_model(cmd_args::Dict{String,Any}) :: Void
   end
 
   resource_path = setup_resource_path(resource_name)
-  write_resource_file(resource_path, Genie.GENIE_MODEL_FILE_NAME, resource_name) &&
+  if write_resource_file(resource_path, Genie.GENIE_MODEL_FILE_NAME, resource_name)
     Logger.log("New model created at $(joinpath(resource_path, Genie.GENIE_MODEL_FILE_NAME))")
+    App.load_models()
+  end
 
   nothing
 end
@@ -37,8 +39,10 @@ function new_controller(cmd_args::Dict{String,Any}) :: Void
   resource_name = ucfirst(resource_name)
 
   resource_path = setup_resource_path(resource_name)
-  write_resource_file(resource_path, Genie.GENIE_CONTROLLER_FILE_NAME, resource_name) &&
+  if write_resource_file(resource_path, Genie.GENIE_CONTROLLER_FILE_NAME, resource_name)
     Logger.log("New controller created at $(joinpath(resource_path, Genie.GENIE_CONTROLLER_FILE_NAME))")
+    App.load_controllers()
+  end
 
   nothing
 end
@@ -56,8 +60,10 @@ function new_channel(cmd_args::Dict{String,Any}) :: Void
   end
 
   resource_path = setup_resource_path(resource_name)
-  write_resource_file(resource_path, Genie.GENIE_CHANNEL_FILE_NAME, resource_name) &&
+  if write_resource_file(resource_path, Genie.GENIE_CHANNEL_FILE_NAME, resource_name)
     Logger.log("New channel created at $(joinpath(resource_path, Genie.GENIE_CHANNEL_FILE_NAME))")
+    App.load_channels()
+  end
 
   nothing
 end
@@ -96,9 +102,13 @@ function new_resource(cmd_args::Dict{String,Any}) :: Void
   write_resource_file(Genie.TEST_PATH_UNIT, test_file, resource_name) &&
     Logger.log("New $test_file created at $(joinpath(Genie.TEST_PATH_UNIT, test_file))")
 
+  App.load_controllers()
+  App.load_channels()
+  App.load_models()
+
   nothing
 end
-function new_resource(resource_name::Union{String,Symbol}) :: Void 
+function new_resource(resource_name::Union{String,Symbol}) :: Void
   new_resource(Dict{String,Any}("resource:new" => string(resource_name)))
 end
 

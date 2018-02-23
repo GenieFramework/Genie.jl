@@ -3,7 +3,7 @@ App level functionality -- loading and managing app-wide components like configs
 """
 module App
 
-using Genie, YAML, Macros, Logger, Inflector, Util, Genie.Configuration
+using Genie, YAML, Macros, Logger, Inflector, Util, Genie.Configuration, Revise
 SEARCHLIGHT_ON && eval(:(using SearchLight, Validation))
 
 
@@ -19,7 +19,7 @@ function load_libs(dir = Genie.LIB_PATH) :: Void
   lib_dirs = [d::String for d::String in Util.walk_dir(dir, only_dirs = true)]
   ! isempty(lib_dirs) && push!(LOAD_PATH, lib_dirs...)
 
-  Util.reload_modules([dir, lib_dirs...], current_module())
+  # Util.reload_modules([dir, lib_dirs...], current_module())
 
   nothing
 end
@@ -56,7 +56,13 @@ function load_models(dir = Genie.RESOURCES_PATH) :: Void
     else
       if i == Genie.GENIE_MODEL_FILE_NAME
         eval(App, :(include($full_path)))
-        isfile(joinpath(dir, Genie.GENIE_VALIDATOR_FILE_NAME)) && eval(Validation, :(include(joinpath($dir, $(Genie.GENIE_VALIDATOR_FILE_NAME)))))
+        Genie.Configuration.is_dev() && Revise.track(full_path)
+
+        validator_path = joinpath(dir, Genie.GENIE_VALIDATOR_FILE_NAME)
+        if isfile(validator_path)
+          eval(Validation, :(include(validator_path)))
+          Genie.Configuration.is_dev() && Revise.track(validator_path)
+        end
       end
     end
   end
@@ -83,6 +89,7 @@ function load_controllers(dir = Genie.RESOURCES_PATH) :: Void
     else
       if i == Genie.GENIE_CONTROLLER_FILE_NAME
         eval(App, :(include($full_path)))
+        Genie.Configuration.is_dev() && Revise.track(full_path)
       end
     end
   end
@@ -109,6 +116,7 @@ function load_channels(dir = Genie.RESOURCES_PATH) :: Void
     else
       if i == Genie.GENIE_CHANNEL_FILE_NAME
         eval(App, :(include($full_path)))
+        Genie.Configuration.is_dev() && Revise.track(full_path)
       end
     end
   end
@@ -126,7 +134,12 @@ The modules are included in the `App` module.
 function load_controller(dir::String) :: Void
   push!(LOAD_PATH, dir)
   file_path = joinpath(dir, Genie.GENIE_CONTROLLER_FILE_NAME)
-  isfile(file_path) ? eval(App, :(include($file_path))) : Logger.log("Failed loading controller $dir", :err)
+  if isfile(file_path)
+    eval(App, :(include($file_path)))
+    Genie.Configuration.is_dev() && Revise.track(file_path)
+  else
+    Logger.log("Failed loading controller $dir", :err)
+  end
 
   nothing
 end
@@ -154,7 +167,10 @@ The modules are included in the `App` module.
 function load_channel(dir::String) :: Void
   push!(LOAD_PATH, dir)
   file_path = joinpath(dir, Genie.GENIE_CHANNEL_FILE_NAME)
-  isfile(file_path) && eval(App, :(include($file_path)))
+  if isfile(file_path)
+    eval(App, :(include($file_path)))
+    Genie.Configuration.is_dev() && Revise.track(file_path)
+  end
 
   nothing
 end
@@ -214,8 +230,17 @@ end
 Loads (includes) the framework's configuration files.
 """
 function load_configurations() :: Void
-  isfile(abspath("$(Genie.CONFIG_PATH)/loggers.jl")) && include(abspath("$(Genie.CONFIG_PATH)/loggers.jl"))
-  isfile(abspath("$(Genie.CONFIG_PATH)/secrets.jl")) && include(abspath("$(Genie.CONFIG_PATH)/secrets.jl"))
+  loggers_path = abspath("$(Genie.CONFIG_PATH)/loggers.jl")
+  if isfile(loggers_path)
+    include(loggers_path)
+    Genie.Configuration.is_dev() && Revise.track(loggers_path)
+  end
+
+  secrets_path = abspath("$(Genie.CONFIG_PATH)/secrets.jl")
+  if isfile(secrets_path)
+    include(secrets_path)
+    Genie.Configuration.is_dev() && Revise.track(secrets_path)
+  end
 
   nothing
 end
@@ -232,7 +257,9 @@ function load_initializers() :: Void
   if isdir(dir)
     f = readdir(dir)
     for i in f
-      include(joinpath(dir, i))
+      fi = joinpath(dir, i)
+      include(fi)
+      Genie.Configuration.is_dev() && Revise.track(fi)
     end
   end
 

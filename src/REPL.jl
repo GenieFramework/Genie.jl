@@ -21,7 +21,7 @@ end
 
 Creates a new Genie app at the indicated path.
 """
-function new_app(path = "."; db_support = false, skip_dependencies = false) :: Void
+function new_app(path = "."; db_support = false, skip_dependencies = false, autostart = true) :: Void
   cp(joinpath(Pkg.dir("Genie"), "files", "new_app"), abspath(path))
 
   chmod(joinpath(path, "bin", "server"), 0o700)
@@ -36,6 +36,8 @@ function new_app(path = "."; db_support = false, skip_dependencies = false) :: V
   skip_dependencies || add_dependencies(db_support = db_support)
 
   is_windows() && setup_windows_bin_files(path)
+
+  autostart || return nothing
 
   Logger.log("Starting your brand new Genie app - hang tight!", :info)
   run_repl_app(path)
