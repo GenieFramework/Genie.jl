@@ -11,6 +11,7 @@ const HELPERS_PATH    = APP_PATH      * "/helpers"
 const LOG_PATH        = ROOT_PATH     * "/log"
 const LAYOUTS_PATH    = APP_PATH      * "/layouts"
 const TASKS_PATH      = ROOT_PATH     * "/tasks"
+const BUILD_PATH      = ROOT_PATH     * "/build"
 
 const GENIE_AUTHORIZATOR_FILE_NAME      = "authorization.yml"
 const GENIE_DB_CONFIG_FILE_NAME         = "database.yml"
