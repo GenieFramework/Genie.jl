@@ -73,18 +73,26 @@ v 0.8
 ✔ memcache session adapter
 ✔ redis session adapter
 ✔ database cache adapter
-☐ redis cache adapter
-☐ memcache cache adapter
 ✔ channels (websockets communication)
 ✔ asset pipeline with Webpack
 ✔ frontend package management with Yarn.js
-☐ Toolbox tasks with arguments
-☐ Revise.jl to reload function definitions
+✔ Revise.jl to reload function definitions
 ✔ add utility functions for migrations (add column, add index, create table, etc)
-☐ SearchLight ODBC support
 ✔ support for Julia 0.6
-☐ make SearchLight a completely separate package -- docs, tests and all
-☐ make Flax a completely separate package
+✔ make SearchLight a completely separate package -- docs, tests and all
+✔ make Flax a completely separate package
+
+v 0.8.1
+☐ refactoring of authorization and authentication. Use hierarchies of types [Admin > User > Guest] and abitities
+☐ redis cache adapter
+☐ memcache cache adapter
+☐ Toolbox tasks with arguments
+☐ SearchLight ODBC support
+☐ SearchLight fluent interface (so one can pipe operations select |> from |> ...)
+☐ Guide - "Web application development with Genie"
+☐ Tests
+☐ Complete docstrings and regenerate docs (use DocExtensions)
+☐ publish packages
 
 v 0.9
 ☐ tests
