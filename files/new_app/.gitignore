@@ -1,9 +1,10 @@
 # App
+build/*
+cache/*
 config/secrets.jl
+docs/build
 log/*
 session/*
-cache/*
-docs/build
 !*.gitkeep
 
 # Vagrant
