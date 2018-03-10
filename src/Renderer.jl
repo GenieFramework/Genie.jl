@@ -35,7 +35,7 @@ const LAYOUTS_FOLDER = "layouts"
 
 Invokes the HTML renderer of the underlying configured templating library.
 """
-function html(resource::Symbol, action::Symbol, layout::Symbol = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
+function html(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
   HTMLTemplateEngine.html(resource, action, layout; parse_vars(vars)...)
 end
 
@@ -45,11 +45,11 @@ end
 
 Invokes the HTML renderer of the underlying configured templating library and wraps it into a `HttpServer.Response`.
 """
-function respond_with_html(resource::Symbol, action::Symbol, layout::Symbol = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
+function respond_with_html(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
   html(resource, action, layout, check_nulls; vars...) |> respond
 end
 
-function flax(resource::Symbol, action::Symbol, layout::Symbol = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
+function flax(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
   HTMLTemplateEngine.flax(resource, action, layout; parse_vars(vars)...)
 end
 
@@ -59,7 +59,7 @@ end
 
 Invokes the JSON renderer of the underlying configured templating library.
 """
-function json(resource::Symbol, action::Symbol, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
+function json(resource::Union{Symbol,String}, action::Union{Symbol,String}, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
   JSONTemplateEngine.json(resource, action; parse_vars(vars)...)
 end
 
@@ -69,7 +69,7 @@ end
 
 Invokes the JSON renderer of the underlying configured templating library and wraps it into a `HttpServer.Response`.
 """
-function respond_with_json(resource::Symbol, action::Symbol, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
+function respond_with_json(resource::Union{Symbol,String}, action::Union{Symbol,String}, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
   json(resource, action, check_nulls; vars...) |> respond
 end
 

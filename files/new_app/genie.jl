@@ -34,6 +34,6 @@ App.@dependencies
 try
   using OhMyREPL
 
-  OhMyREPL.input_prompt!( "↳", :white)
-  OhMyREPL.output_prompt!("⇨", :white)
+  OhMyREPL.input_prompt!("genie>", :magenta)
+  OhMyREPL.output_prompt!("genie>", :white)
 end

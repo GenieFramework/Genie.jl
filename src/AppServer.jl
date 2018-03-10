@@ -5,6 +5,11 @@ module AppServer
 
 using HttpServer, Router, Genie, Millboard, Logger, Sessions, Genie.Configuration, MbedTLS, WebSockets, Channels, App, URIParser
 
+struct WebServer
+  task::Task
+  server::HttpServer.Server
+end
+
 
 """
     startup(port::Int = 8000) :: HttpServer.Server
@@ -18,7 +23,7 @@ julia> AppServer.startup()
 Listening on 0.0.0.0:8000...
 ```
 """
-function startup(port::Int = 8000) :: Tuple{Task,HttpServer.Server}
+function startup(port::Int = 8000) :: WebServer
   http = setup_http_handler()
   App.config.websocket_server && (wsh = setup_ws_handler())
   App.config.lookup_ip && (http.events["connect"] = (http_client) -> handle_connect(http_client))
@@ -32,7 +37,7 @@ function startup(port::Int = 8000) :: Tuple{Task,HttpServer.Server}
     end
   end
 
-  server_task, server
+  WebServer(server_task, server)
 end
 
 
@@ -52,7 +57,8 @@ function setup_http_handler() :: HttpHandler
                   "The error has been logged and we'll look into it ASAP." :
                   string(ex, " in $(@__FILE__):$(@__LINE__)", "\n\n", sprint(io->Base.show_backtrace(io, catch_backtrace())))
 
-      Configuration.is_dev() ? rethrow(ex) : return Router.serve_error_file(500, message)
+      # Configuration.is_dev() ? rethrow(ex) : return 
+      Router.serve_error_file(500, message)
     end
   end
 end
@@ -60,7 +66,7 @@ end
 
 """
 """
-function setup_ws_handler() :: WebSocketHandler 
+function setup_ws_handler() :: WebSocketHandler
   WebSocketHandler() do req::Request, ws_client::WebSockets.WebSocket
     while true
       response =  try
@@ -252,6 +258,13 @@ function parse_inner_dict{K,V}(d::Dict{K,V}) :: Dict{String,String}
   end
 
   r
+end
+
+
+"""
+"""
+function shutdown(w::WebServer) :: Void
+  close(w.server)
 end
 
 end
