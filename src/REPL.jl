@@ -103,16 +103,6 @@ end
 
 
 """
-    db_init() :: Bool
-
-Sets up the DB tables used by Genie.
-"""
-function db_init() :: Bool
-  SearchLight.create_migrations_table(App.config.db_migrations_table_name)
-end
-
-
-"""
     new_model(model_name::String) :: Void
 
 Creates a new `model` file.
@@ -171,6 +161,13 @@ Creates a new migration file.
 """
 function new_migration(migration_name::String) :: Void
   SearchLight.Generator.new_migration(Dict{String,Any}("migration:new" => migration_name))
+end
+
+
+"""
+"""
+function new_table_migration(migration_name::String) :: Void
+  SearchLight.Generator.new_table_migration(Dict{String,Any}("migration:new" => migration_name))
 end
 
 

@@ -68,4 +68,44 @@ This command will open the "home_page.md" file with your default editor. Add the
 Chirper is a cool website which allows you to post short public messages for the Chirper community -- and to follow other chirpers and see their messages!
 ```
 
-Finally, we need to edit our routes file. We can no longer use the `serve_static_file` function because the markdown file needs to be parsed and converted into HTML. Instead, we'll call the `respond_with_html` function -- which takes at least two arguments: the name of the resource (in our case `home`, the name of the folder) and the name of the view file (in our case, `home_page`). 
+Finally, we need to edit our routes file. We can no longer use the `serve_static_file` function because the markdown file needs to be parsed and converted into HTML. Instead, we'll call the `respond_with_html` function -- which takes at least two arguments: the name of the resource (in our case `home`, the name of the folder) and the name of the view file (in our case, `home_page`).
+
+---
+
+#Configuring the database
+SearchLight, Genie's ORM layer works transparently with all major relational databases supported by Julia. Thanks to its DSL for managing and querying databases, you can, for instance, prototype on SQLite and deploy on MySQL. Let's add a SQLite backend for our app.
+
+For start, make sure that you have the `SQLite.jl` package installed. You can check the package's README at https://github.com/JuliaDatabases/SQLite.jl.
+
+Once you have it, edit the `config/database.yml` file:
+```julia
+genie> edit("config/database.yml")
+```
+The file contains placeholders for database configuration for each of the three environments: dev, test and prod. Our application runs in dev mode, and that's what we'll need to configure. Setup the `adapter: ` key to `SQLite` and the `host: ` to `db/dev.sqlite`. You'll have to restart the Genie app so the changes are loaded. Close the terminal window (or the Julia process). Then make sure you open the terminal in the app's root (or `cd` into the app's root). You can load a Genie app with:
+```
+$ bin/repl
+```
+Now that we're back into the app's environment, with the database configured, let's allow Genie to set things up. This needs to be run only once, once we've configured a new database:
+```julia
+genie> Genie.REPL.db_init()
+```
+This creates the database, if it does not exist, at `db/dev.sqlite`. And then creates a new table within the database -- this table, called `schema_migrations`, is used for database versioning and schema management.
+
+---
+
+#Creating the `chirps` table
+Genie's ORM layer, SearchLight, implements database versioning via migration scripts. The migrations are defined using a cross-database, readable DSL. And as you probably expect, there's a generator for adding a new migration:
+```julia
+genie> Genie.REPL.new_migration("create_table_chirps")
+```
+A very important convention is that with Genie, table names are plural -- because they contain many records. So the table that holds chirps will be called `chirps`. Since this migration will create the code to create the table, we call it `create_table_chirps`. You can check that the migration was created with
+```julia
+genie> Migration.status()
++===+=======================================================+
+|   |                                  Class name & status  |
+|   |                                            File name  |
++===+=======================================================+
+|   |                    CreateTableCreateTableChirps: DOWN |
+| 1 | 20180310205126396_create_table_create_table_chirps.jl |
++---+-------------------------------------------------------+
+```
