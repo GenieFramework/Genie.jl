@@ -93,19 +93,29 @@ This creates the database, if it does not exist, at `db/dev.sqlite`. And then cr
 
 ---
 
-#Creating the `chirps` table
-Genie's ORM layer, SearchLight, implements database versioning via migration scripts. The migrations are defined using a cross-database, readable DSL. And as you probably expect, there's a generator for adding a new migration:
+#Working with resources
+The concept of resource is central to Genie apps. A resource is a "thing" - a business object which is accessible over the internet. Such resources can be created, read, updated and deleted (in what is called a CRUD workflow).
+
+In order to implement a complete CRUD workflow, the full MVC stack is involved. We'll need routing, controller files, models (and the underlying database table), views -- and optionally, model data validators and controller access rules. But don't worries, we don't need to create all these files by hand: we have a powerful genie sidekick.
+
+We can ask Genie to create a new _chirp_ resource -- which will represent a user message in our system.
 ```julia
-genie> Genie.REPL.new_migration("create_table_chirps")
+genie> Genie.REPL.new_resource("chirp")
+
+info: New model created at /Users/adrian/Dropbox/Projects/chirper/app/resources/chirps/Chirps.jl
+info: New migration created at /Users/adrian/Dropbox/Projects/chirper/db/migrations/20180311124824247_create_table_chirps.jl
+info: New ChirpsValidator.jl created at /Users/adrian/Dropbox/Projects/chirper/app/resources/chirps/ChirpsValidator.jl
+info: New chirps_test.jl created at /Users/adrian/Dropbox/Projects/chirper/test/unit/chirps_test.jl
+info: New ChirpsController.jl created at /Users/adrian/Dropbox/Projects/chirper/app/resources/chirps/ChirpsController.jl
+info: New ChirpsChannel.jl created at /Users/adrian/Dropbox/Projects/chirper/app/resources/chirps/ChirpsChannel.jl
+info: New authorization.yml created at /Users/adrian/Dropbox/Projects/chirper/app/resources/chirps/authorization.yml
+info: New chirps_test.jl created at /Users/adrian/Dropbox/Projects/chirper/test/unit/chirps_test.jl
 ```
-A very important convention is that with Genie, table names are plural -- because they contain many records. So the table that holds chirps will be called `chirps`. Since this migration will create the code to create the table, we call it `create_table_chirps`. You can check that the migration was created with
-```julia
-genie> Migration.status()
-+===+=======================================================+
-|   |                                  Class name & status  |
-|   |                                            File name  |
-+===+=======================================================+
-|   |                    CreateTableCreateTableChirps: DOWN |
-| 1 | 20180310205126396_create_table_create_table_chirps.jl |
-+---+-------------------------------------------------------+
-```
+Genie creates the full range of MVC files. We'll cover each one of them as we'll use them to develop our app.
+
+---
+
+#Database versioning with migrations
+SearchLight, Genie's ORM layer comes with database migration functionality. Migrations are scripts used to change the database -- by creating and altering tables, for example. These scripts are put under version control and shared with the whole development team. Also, using the migration's API, the changes can be managed properly (for instance, they need to be run in the proper order).
+
+Asking Genie to create a new resource has added a new migration. It will be called {timestamp}
