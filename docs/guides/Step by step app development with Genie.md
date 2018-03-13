@@ -335,6 +335,7 @@ Next we need to add the logic to render the links for each page. We want to gene
 In the `app/helpers` folder you'll find the `ViewHelper.jl` file. Please open it in the editor and append this to the `ViewHelper` module:
 ```julia
 function chirps_pagination(total_chirps::Int, chirps_per_page::Int) :: String
+  total_chirps < chirps_per_page && return ""
   mapreduce(*, [Int(i) for i in 0:floor(total_chirps/chirps_per_page)]) do i
     """<a href="/chirps?page=$i">$(i+1)</a> """
   end
@@ -349,4 +350,12 @@ Finally, go to the `index.flax.html` view file and add this at the bottom:
 </div>
 ```
 
-Reload the `/chirps` page. You should now see the navigation component -- and the list of chirps only showing 20 chirps at a time. Try out the page navigation. 
+Reload the `/chirps` page. You should now see the navigation component -- and the list of chirps only showing 20 chirps at a time. Try out the page navigation.
+
+# Using forms
+Our app is working great so far, but we really need a way to create chirps. We need a form!
+
+The form will stay on a new page, at `/chirps/new` -- let's open `routes.jl` and add it:
+```julia
+route("/chirps/new", ChirpsController.new)
+```
