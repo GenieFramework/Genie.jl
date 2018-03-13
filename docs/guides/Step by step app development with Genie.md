@@ -277,3 +277,76 @@ genie> Chirp(content = "The quick fox") |> SearchLight.save!!
 Refreshing `http://localhost:8000/chirps` should show the new chirp.
 
 # Generating test data with database seeding
+Creating and persisting chirps through Genie's REPL is straightforward -- but not very effective if we need to generate a lot of test data. For this reason SearchLight comes with a `DatabaseSeeding` module which makes it very easy to generate and persist any number of models.
+
+By convention, `DatabaseSeeding` invokes the model's `random` method. Which means we need to add a new `random()` function to the `Chirps` module. We'll also need a way to generate random content for our chirps. We can do this by using the `Faker` package. Please add the `Faker` package now.
+
+Now, edit `app/resources/chirps/Chirps.jl` and add this function to the module:
+```julia
+function random()
+  Chirp(content = Faker.sentence())
+end
+```
+While we're at it, don't forget to declare that we're `using Faker`.
+
+Finally, back to Genie's REPL, run:
+```julia
+genie> using DatabaseSeeding
+genie> DatabaseSeeding.random_seeder(Chirps)
+```
+This will create ten random `Chirps` and will persist them. Let's add a few more, say, 100.
+```julia
+genie> DatabaseSeeding.random_seeder(Chirps, 100)
+```
+Awesome!
+
+If you reload the `/chirps` page you'll see a long list of literally random sentences, lorem-ipsum style. And right off the bat we can tell that we're going to need to paginate these results.
+
+# Paginating lists
+In order to implement pagination we'll need to know how many chirps we have in total -- and decide how many chirps we want to display per page. In order to get the total number of chirps, we need to perform a `count` query against the `chirps` table. With SearchLight we do it like this:
+```julia
+total_chirps = SearchLight.count(Chirp)
+```
+As for the chirps per page, let's decide on 20:
+```julia
+const CHIRPS_PER_PAGE = 20
+```
+
+Next we need to select only the number of chirps we need, using the `limit` and `offset` parameters for the SearchLight query:
+```julia
+chirps = SearchLight.find(Chirp, SQLQuery(limit = CHIRPS_PER_PAGE, offset = Int(@params(:page, 0)) * CHIRPS_PER_PAGE))
+```
+For refining our `find` we pass a second parameter, a `SQLQuery` object. This sets a select limit of 20 and an offset of `:page` multiplied by `CHIRPS_PER_PAGE`. The `@params` collection contains all the request parameters; that is, all the GET and POST variables. In this case, we'll send the `:page` param over GET, as `?page=`. In order to access request parameters we use `@params(:var_name)`. But in this case, it's possible that the `:page` param is not sent - so we use `@params(:var_name, default_value)` in order to use 0 as the default value.
+
+We also need to pass the extra value we computed to the view layer. The `ChirpsController.index` function should now look like this:
+```julia
+const CHIRPS_PER_PAGE = 20
+
+function index()
+  total_chirps = SearchLight.count(Chirp)
+  chirps = SearchLight.find(Chirp, SQLQuery(limit = CHIRPS_PER_PAGE, offset = Int(@params(:page, 0)) * CHIRPS_PER_PAGE))
+  respond_with_html(:chirps, :index, chirps = chirps, chirps_per_page = CHIRPS_PER_PAGE, total_chirps = total_chirps)
+end
+```
+
+Next we need to add the logic to render the links for each page. We want to generate a list of links that look like `/chirps?page=1`, `/chirps?page=2`, etc. We could do it in the view file (in `index.flax.html`) but that would be very bad practice. The views should not contain complex logic. For such cases we should use a view helper method.
+
+### Working with ViewHelpers
+In the `app/helpers` folder you'll find the `ViewHelper.jl` file. Please open it in the editor and append this to the `ViewHelper` module:
+```julia
+function chirps_pagination(total_chirps::Int, chirps_per_page::Int) :: String
+  mapreduce(*, [Int(i) for i in 0:floor(total_chirps/chirps_per_page)]) do i
+    """<a href="/chirps?page=$i">$(i+1)</a> """
+  end
+end
+```
+Also, don't forget to `export chirps_pagination`.
+
+Finally, go to the `index.flax.html` view file and add this at the bottom:
+```html
+<div>
+  <% chirps_pagination(@vars(:total_chirps), @vars(:chirps_per_page)) %>
+</div>
+```
+
+Reload the `/chirps` page. You should now see the navigation component -- and the list of chirps only showing 20 chirps at a time. Try out the page navigation. 

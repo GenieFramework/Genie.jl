@@ -917,11 +917,16 @@ function to_response(action_result) :: Response
 end
 
 
+"""
+"""
 macro params()
   :(task_local_storage(:__params))
 end
-macro params(key::Expr)
+macro params(key)
   :(task_local_storage(:__params)[$key])
+end
+macro params(key, default)
+  :(haskey(task_local_storage(:__params), $key) ? task_local_storage(:__params)[$key] : $default)
 end
 function _params_()
   task_local_storage(:__params)
