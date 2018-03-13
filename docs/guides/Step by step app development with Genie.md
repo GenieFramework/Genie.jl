@@ -276,4 +276,4 @@ genie> Chirp(content = "The quick fox") |> SearchLight.save!!
 ```
 Refreshing `http://localhost:8000/chirps` should show the new chirp.
 
-# Generating more test data with database seeding
+# Generating test data with database seeding
