@@ -1,4 +1,17 @@
-# Scaffolding our app
+# Step By Step: Web App Development with Genie and Julia
+
+## Intro
+Genie is a web framework for developing professional level web applications. It builds on top of Julia's excellent performance and readable syntax, exposing a rich API for productive web development. Genie follows the MVC design pattern, in the style of other powerful web frameworks from other languages, like Ruby's Rails, Python's Django or Elixir's Phoenix.
+
+In this guide I'll show you how to build a reasonably complex web application using Genie and Julia. We'll start with the basic features like setting up our database, creating views, handling POST data and validating and persisting data through models (Part 1). Then we'll progressively advance towards more complex features like model relationships, and we'll learn about useful functionalities like caching, authentication and authorisation (Part 2). Once we're happy with the feature set, we'll see how to expose a REST API (Part 3). Then we'll focus on building rich, responsive UIs using web sockets and the Genie's integration with Webpack and Yarn (Part 4). Finally, once our app is complete, we'll learn to configure it for production usage and deploy it on a web server in the cloud (Part 5).
+
+The requirements for following along are the latest released Julia version and your favourite Julia editor. Enjoy!
+
+---
+
+# Part 1
+
+## Scaffolding our app
 The first thing that we need to do is to setup the file structure of our app. Genie uses the "convention over configuration" design pattern, preferring to use sensible defaults represented by files of certain structures and in certain locations. Genie however does not require setting up these files ourselves - instead, it provides a rich set of generators for scaffolding every component of a web app.
 
 The only requirement to get things started is installing Genie itself:
@@ -23,10 +36,10 @@ info: Starting your brand new Genie app - hang tight!
 ```
 
 Once the app is ready, it will be automatically started. This means that:
-* it will automatically `cd()` into the app's folder
-* will load the Genie app environment
-* will take you to a Genie REPL -- which is a Julia REPL, so you have all the power of Julia at your disposal
-* the Genie REPL is indicated by the custom prompt `genie ❱❱`
+  - it will automatically `cd()` into the app's folder
+  - will load the Genie app environment
+  - will take you to a Genie REPL -- which is a Julia REPL, so you have all the power of Julia at your disposal
+  - the Genie REPL is indicated by the custom prompt `genie>`
 
 We can check that everything worked well by starting up a server and taking it for a spin:
 ```julia
@@ -34,9 +47,7 @@ genie> server = AppServer.startup()
 ```
 You can now visit `http://localhost:8000` in your browser - you will be welcomed by our very smart and helpful genie.
 
-___
-
-# Setting up the home page
+## Setting up the home page
 Genie uses a route file to map web requests to functions. These functions process the request info and return the response. The route are defined within the `config/routes.jl` file. Right now, the file looks like this:
 ```julia
 using Router
@@ -70,9 +81,7 @@ Chirper is a cool website which allows you to post short public messages for the
 
 Finally, we need to edit our routes file. We can no longer use the `serve_static_file` function because the markdown file needs to be parsed and converted into HTML. Instead, we'll call the `respond_with_html` function -- which takes at least two arguments: the name of the resource (in our case `home`, the name of the folder) and the name of the view file (in our case, `home_page`).
 
----
-
-# Configuring the database
+## Configuring the database
 SearchLight, Genie's ORM layer works transparently with all major relational databases supported by Julia. Thanks to its DSL for managing and querying databases, you can, for instance, prototype on SQLite and deploy on MySQL. Let's add a SQLite backend for our app.
 
 For start, make sure that you have the `SQLite.jl` package installed. You can check the package's README at https://github.com/JuliaDatabases/SQLite.jl.
@@ -91,9 +100,7 @@ genie> Genie.REPL.db_init()
 ```
 This creates the database, if it does not exist, at `db/dev.sqlite`. And then creates a new table within the database -- this table, called `schema_migrations`, is used for database versioning and schema management.
 
----
-
-# Working with resources
+## Working with resources
 The concept of resource is central to Genie apps. A resource is a "thing" - a business object which is accessible over the internet. Such resources can be created, read, updated and deleted (in what is called a CRUD workflow).
 
 In order to implement a complete CRUD workflow, the full MVC stack is involved. We'll need routing, controller files, models (and the underlying database table), views -- and optionally, model data validators and controller access rules. But don't worries, we don't need to create all these files by hand: we have a powerful genie sidekick.
@@ -113,9 +120,7 @@ info: New chirps_test.jl created at /Users/adrian/Dropbox/Projects/chirper/test/
 ```
 Genie creates the full range of MVC files. We'll cover each one of them as we'll use them to develop our app.
 
----
-
-# Database versioning with migrations
+## Database versioning with migrations
 SearchLight, Genie's ORM layer comes with database migration functionality. Migrations are scripts used to change the database -- by creating and altering tables, for example. These scripts are put under version control and shared with the whole development team. Also, using the migration's API, the changes can be managed properly (for instance, they need to be run in the proper order).
 
 Asking Genie to create a new resource has added a new migration. It was called {timestamp}_{migration_name}.jl -- for example, `20180312172359808_create_table_chirps.jl`. Genie's migrations have one of two states: up or down. These are defined in two functions with the same name. The `up` function contains the functionality for modifying the database -- while the `down` function has code to revert the changes. For instance, if `up()` has code to create a table, `down()` will have code to drop the table. Conversely, a migration is said to be `up` if it's `up()` function has been run -- and `down` if not. Genie/SearchLight keeps track of what migrations are up and which are down.
@@ -156,7 +161,7 @@ info: SQL QUERY: CREATE  INDEX chirps__idx_created_at ON chirps (created_at)
 info: Executed migration CreateTableChirps up
 ```
 
-# Setting up the `Chirp` model
+## Setting up the `Chirp` model
 Another file created by Genie's resource generator is the `Chirps.jl` model. It can be found at `app/resources/chirps/Chirps.jl`. It contains the definition of the `Chirp` `type`/`struct` -- and it designed to hold all the functions related to the manipulation of `Chirp` types. The `Chirp` `struct` is meant to model/map the underlying `chirps` table. Genie/SearchLight provides a rich API for CRUD operations against the table by working with the `struct` only. But first we need to set it up.
 
 All we want to do at this point is map the columns of the `chirps` table to fields of the `Chirp` `struct`. Open the file in your editor (`genie> edit("app/resources/chirps/Chirps.jl")`) and edit it as follows:
@@ -231,7 +236,7 @@ Chirps.Chirp
 ```
 Our chirp has been saved to the database.
 
-# Listing chirps
+## Listing chirps
 Now that we're able to create, persist and read chirps, let's display them on the website. Open the routes file (`config/routes.jl`) and append a new route:
 ```julia
 route("/chirps", ChirpsController.index)
@@ -276,7 +281,7 @@ genie> Chirp(content = "The quick fox") |> SearchLight.save!!
 ```
 Refreshing `http://localhost:8000/chirps` should show the new chirp.
 
-# Generating test data with database seeding
+## Generating test data with database seeding
 Creating and persisting chirps through Genie's REPL is straightforward -- but not very effective if we need to generate a lot of test data. For this reason SearchLight comes with a `DatabaseSeeding` module which makes it very easy to generate and persist any number of models.
 
 By convention, `DatabaseSeeding` invokes the model's `random` method. Which means we need to add a new `random()` function to the `Chirps` module. We'll also need a way to generate random content for our chirps. We can do this by using the `Faker` package. Please add the `Faker` package now.
@@ -302,7 +307,7 @@ Awesome!
 
 If you reload the `/chirps` page you'll see a long list of literally random sentences, lorem-ipsum style. And right off the bat we can tell that we're going to need to paginate these results.
 
-# Paginating lists
+## Paginating lists
 In order to implement pagination we'll need to know how many chirps we have in total -- and decide how many chirps we want to display per page. In order to get the total number of chirps, we need to perform a `count` query against the `chirps` table. With SearchLight we do it like this:
 ```julia
 total_chirps = SearchLight.count(Chirp)
@@ -352,7 +357,7 @@ Finally, go to the `index.flax.html` view file and add this at the bottom:
 
 Reload the `/chirps` page. You should now see the navigation component -- and the list of chirps only showing 20 chirps at a time. Try out the page navigation.
 
-# Using forms
+## Using forms
 Our app is working great so far, but we really need a way to create chirps from the web page. We need a form!
 
 The form will stay on a new page, at `/chirps/new` -- let's open `routes.jl` and add it:
@@ -396,7 +401,7 @@ We look for the `content` variable in the request params and create a new `Chirp
 
 Go ahead and try it: go to `http://localhost:8000/chirps/new` and submit the form.
 
-# Handling forms workflows
+## Handling forms workflows
 If your code is correct you've just added a new chirp and you see "OK" on the page. Things have worked but we're not done yet.
 
 If the chirp is successfully created, we should redirect the user to the list of chirps with a success message. If the request failed, we should show the form again, with the previous submitted data already pre-filled and an error message. Let's do this.
@@ -449,7 +454,7 @@ genie> Router.print_named_routes()
 ```
 This is the routes registry for our app so far. Notice that from the routes we can also push extra variables into @params using the `with` `Dict`.
 
-# Using the `flash`
+## Using the `flash`
 The `flash` is a temporary storage which allows us to pass a value from the current request to the next. Its main objective is to pass success or error messages across redirects. Let's use it to inform our user that the chirp was successfully added.
 
 We need to add a new line in our `new` function to set the `flash`:
@@ -492,7 +497,7 @@ Finally, we need to enable sessions as `flash` uses them to store the data. Sess
 
 After you restart the app, once you successfully add a new chirp, you'll be redirected to the chirps list and the `flash` message will be displayed. If you refresh the list, the `flash` message will disappear.
 
-# Validating model data
+## Validating model data
 So far our app will gladly accept any kind of input. But a chirp without content -- or with a very short one -- won't be of any use. We need to make sure that the content of the chirps has a minimum length.
 
 SearchLight models have built-in data validation functionality -- which can be coupled with the ViewHelper API to output the validation results.
