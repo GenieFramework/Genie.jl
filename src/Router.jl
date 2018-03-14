@@ -920,13 +920,17 @@ end
 """
 """
 macro params()
-  :(task_local_storage(:__params))
+  quote
+    haskey(task_local_storage(), :__params) ? task_local_storage(:__params) : Dict{Symbol,Any}()
+  end
 end
 macro params(key)
-  :(task_local_storage(:__params)[$key])
+  :((@params)[$key])
 end
 macro params(key, default)
-  :(haskey(task_local_storage(:__params), $key) ? task_local_storage(:__params)[$key] : $default)
+  quote
+    haskey(@params, $key) ? @params($key) : $default
+  end
 end
 function _params_()
   task_local_storage(:__params)
@@ -1111,10 +1115,18 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
     error_page =  open(Genie.DOC_ROOT_PATH * "/error-$(error_code).html") do f
                     readstring(f)
                   end
+
+    error_message = """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                             $("\n" ^ 3)""" *
+                    """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(params))                 $("\n" ^ 3)""" *
+                    """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Router.named_routes()))  $("\n" ^ 3)""" *
+                    """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$ENV                                       $("\n" ^ 1)"""
+
     error_page = replace(error_page, "<error_message/>", error_message)
+
     Response(error_code, Dict{AbstractString,AbstractString}(), error_page)
   else
     f = file_path(URI("/error-$(error_code).html").path)
+
     Response(error_code, file_headers(f), open(read, f))
   end
 end

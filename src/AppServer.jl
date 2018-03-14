@@ -57,7 +57,7 @@ function setup_http_handler() :: HttpHandler
                   "The error has been logged and we'll look into it ASAP." :
                   string(ex, " in $(@__FILE__):$(@__LINE__)", "\n\n", sprint(io->Base.show_backtrace(io, catch_backtrace())))
 
-      Router.serve_error_file(500, message)
+      Router.serve_error_file(500, message, Router.@params)
     end
   end
 end

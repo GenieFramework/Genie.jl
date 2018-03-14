@@ -314,9 +314,9 @@ const CHIRPS_PER_PAGE = 20
 
 Next we need to select only the number of chirps we need, using the `limit` and `offset` parameters for the SearchLight query:
 ```julia
-chirps = SearchLight.find(Chirp, SQLQuery(limit = CHIRPS_PER_PAGE, offset = Int(@params(:page, 0)) * CHIRPS_PER_PAGE))
+chirps = SearchLight.find(Chirp, SQLQuery(limit = CHIRPS_PER_PAGE, offset = Int(@params(:page, 0)) * CHIRPS_PER_PAGE, order = "created_at DESC"))
 ```
-For refining our `find` we pass a second parameter, a `SQLQuery` object. This sets a select limit of 20 and an offset of `:page` multiplied by `CHIRPS_PER_PAGE`. The `@params` collection contains all the request parameters; that is, all the GET and POST variables. In this case, we'll send the `:page` param over GET, as `?page=`. In order to access request parameters we use `@params(:var_name)`. But in this case, it's possible that the `:page` param is not sent - so we use `@params(:var_name, default_value)` in order to use 0 as the default value.
+For refining our `find` we pass a second parameter, a `SQLQuery` object. This sets a select limit of 20 and an offset of `:page` multiplied by `CHIRPS_PER_PAGE`. The `@params` collection contains all the request parameters; that is, all the GET and POST variables. In this case, we'll send the `:page` param over GET, as `?page=`. In order to access request parameters we use `@params(:var_name)`. But in this case, it's possible that the `:page` param is not sent - so we use `@params(:var_name, default_value)` in order to use 0 as the default value. We also said that we want to order the chirps by newest first, and we're doing that using the `created_at` field we setup especially for this.
 
 We also need to pass the extra value we computed to the view layer. The `ChirpsController.index` function should now look like this:
 ```julia
@@ -324,7 +324,7 @@ const CHIRPS_PER_PAGE = 20
 
 function index()
   total_chirps = SearchLight.count(Chirp)
-  chirps = SearchLight.find(Chirp, SQLQuery(limit = CHIRPS_PER_PAGE, offset = Int(@params(:page, 0)) * CHIRPS_PER_PAGE))
+  chirps = SearchLight.find(Chirp, SQLQuery(limit = CHIRPS_PER_PAGE, offset = Int(@params(:page, 0)) * CHIRPS_PER_PAGE, order = "created_at DESC"))
   respond_with_html(:chirps, :index, chirps = chirps, chirps_per_page = CHIRPS_PER_PAGE, total_chirps = total_chirps)
 end
 ```
@@ -353,9 +353,146 @@ Finally, go to the `index.flax.html` view file and add this at the bottom:
 Reload the `/chirps` page. You should now see the navigation component -- and the list of chirps only showing 20 chirps at a time. Try out the page navigation.
 
 # Using forms
-Our app is working great so far, but we really need a way to create chirps. We need a form!
+Our app is working great so far, but we really need a way to create chirps from the web page. We need a form!
 
 The form will stay on a new page, at `/chirps/new` -- let's open `routes.jl` and add it:
 ```julia
 route("/chirps/new", ChirpsController.new)
 ```
+
+In `ChirpsController` add a `new()` function:
+```julia
+function new()
+  respond_with_html(:chirps, :new)
+end
+```
+
+And let's add the view file as `new.flax.html` under the `app/resources/chirps/views` folder:
+```html
+<h1>New chirp</h1>
+
+<form action="/chirps" method="POST">
+  <textarea name="content" placeholder="Chirp content"></textarea>
+  <br />
+  <input type="submit" value="Chirp!" />
+</form>
+```
+If you are familiar with HTML, it should be crystal clear: we have a form with POSTs data to `/chirps/create`. And a textarea with the name `content`.
+
+Next we need to add the route for `/chirps/create`:
+```julia
+route("/chirps", ChirpsController.create, method = POST)
+```
+Notice the extra keyword argument, `method = POST` -- which defines the route for POST requests.
+
+Finally, we need to define the function in the controller. Let's try a first basic iteration:
+```julia
+function create()
+  chirp = Chirp(content = @params(:content))
+  SearchLight.save(chirp) ? "OK" : "Failed"
+end
+```
+We look for the `content` variable in the request params and create a new `Chirp` object. Then if we save it successfully, we display "OK", otherwise "Failed".
+
+Go ahead and try it: go to `http://localhost:8000/chirps/new` and submit the form.
+
+# Handling forms workflows
+If your code is correct you've just added a new chirp and you see "OK" on the page. Things have worked but we're not done yet.
+
+If the chirp is successfully created, we should redirect the user to the list of chirps with a success message. If the request failed, we should show the form again, with the previous submitted data already pre-filled and an error message. Let's do this.
+
+The `new` and `create` functions should now look like this:
+```julia
+function new(chirp = Chirp(content = ""))
+  respond_with_html(:chirps, :new, chirp = chirp)
+end
+
+function create()
+  chirp = Chirp(content = @params(:content))
+  if SearchLight.save(chirp)
+    redirect_to(:get_chirps)
+  else
+    new(chirp)
+  end
+end
+```
+As discussed, if the chirp is successfully persisted, we `redirect_to` the chirps list. The URL for this page is `/chirps` -- and the request method is GET. If persisting the chirp fails, we invoke the `new` function. However, notice that we've extended the `new` method to accept a `chirp` param. If this method is invoked by Genie to handle the request, `chirp` will get the default value. If we invoke it, we pass the chirp with the values provided by the user. The `chirp` object is then forwarded into the view.
+
+We need to extend our view so that it displays the values from the `chirp` variable.
+```html
+<h1>New chirp</h1>
+
+<form action="$(link_to(:get_chirps))" method="POST">
+  <textarea name="content" placeholder="Chirp content">$(@vars(:chirp).content)</textarea>
+  <br />
+  <input type="submit" value="Chirp!" />
+</form>
+```
+
+### Reverse routing
+In the controller we could have used `redirect_to("/chirps")`. Also, notice that we've changed the form's action to a call to `link_to(:get_chirps)`. Using hard coded URLs is a bad practice. If later on we decide to change the link, we have to update them throughout the whole app. Instead we use a feature that can be considered _reversed routing_: from a route, we generate the corresponding URL. The routes are referenced by name -- you can explicitly name a route by passing the keyword argument `named = :your_route_name`. If we don't name our routes, Genie will do it for us.
+
+The default name of the route is composed of the method and URI parts. For example, if we route the URI `/foo/bar/baz` over POST, the route will be named `:post_foo_bar_baz`. Anyway, when in doubt, you can either explicitly name the routes and/or check with Genie:
+```julia
+genie> Router.print_named_routes()
++=================+=================================================================================+
+|             key |                                                                           value |
++=================+=================================================================================+
+|            :get |                     (("GET", "/", Router.#18), Dict(:with=>Dict{Symbol,Any}())) |
++-----------------+---------------------------------------------------------------------------------+
+|     :get_chirps |   (("GET", "/chirps", ChirpsController.index), Dict(:with=>Dict{Symbol,Any}())) |
++-----------------+---------------------------------------------------------------------------------+
+| :get_chirps_new | (("GET", "/chirps/new", ChirpsController.new), Dict(:with=>Dict{Symbol,Any}())) |
++-----------------+---------------------------------------------------------------------------------+
+|    :post_chirps | (("POST", "/chirps", ChirpsController.create), Dict(:with=>Dict{Symbol,Any}())) |
++-----------------+---------------------------------------------------------------------------------+
+```
+This is the routes registry for our app so far. Notice that from the routes we can also push extra variables into @params using the `with` `Dict`.
+
+# Using the `flash`
+The `flash` is a temporary storage which allows us to pass a value from the current request to the next. Its main objective is to pass success or error messages across redirects. Let's use it to inform our user that the chirp was successfully added.
+
+We need to add a new line in our `new` function to set the `flash`:
+```julia
+function create()
+  chirp = Chirp(content = @params(:content))
+  if SearchLight.save(chirp)
+    flash("Your chirp was saved")       # this sets the flash
+    redirect_to(:get_chirps)
+  else
+    new(chirp)
+  end
+end
+```
+
+And we also need to output the `flash` into the view:
+```html
+<h1>Chirps</h1>
+
+<a href="$(link_to(:get_chirps_new))">Chirp in</a>
+<br /><br />
+
+<% output_flash(@params) %>
+
+<ul>
+  <% @foreach(@vars(:chirps)) do ch %>
+    <li>
+      $(ch.content)
+    </li>
+  <% end %>
+</ul>
+
+<div>
+  <% ViewHelper.chirps_pagination(@vars(:total_chirps), @vars(:chirps_per_page)) %>
+</div>
+```
+Your `index.flax.html` file should now look like the above. Notice the `<% output_flash(@params) %>` line which is responsible with displaying the `flash` value, if set. And as an added bonus, we've also included a link to the new chirp form.
+
+Finally, we need to enable sessions as `flash` uses them to store the data. Sessions are not enabled by default. We turn them on in the `config/env/dev.jl` file, which is the settings file for the development environment. Our app is running in dev mode and these are the settings its using. In the `Settings` constructor, look for a line that says `session_auto_start = false` and set that to `true`. You'll need to restart the app by killing the current Julia process (Ctrl/Cmd + D) in the Genie REPL and then `$ bin/repl` in the terminal.
+
+After you restart the app, once you successfully add a new chirp, you'll be redirected to the chirps list and the `flash` message will be displayed. If you refresh the list, the `flash` message will disappear.
+
+# Validating model data
+So far our app will gladly accept any kind of input. But a chirp without content -- or with a very short one -- won't be of any use. We need to make sure that the content of the chirps has a minimum length.
+
+SearchLight models have built-in data validation functionality -- which can be coupled with the ViewHelper API to output the validation results.

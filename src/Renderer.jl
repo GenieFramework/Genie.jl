@@ -79,9 +79,12 @@ end
 
 Sets redirect headers and prepares the `Response`.
 """
-function redirect_to(location::String, code::Int = 302, headers = Dict{AbstractString,AbstractString}()) :: Response
+function redirect_to(location::String, code = 302, headers = Dict{AbstractString,AbstractString}()) :: Response
   headers["Location"] = location
   respond(Dict{Symbol,AbstractString}(:plain => "Redirecting you to $location"), code, headers)
+end
+function redirect_to(named_route::Symbol, code = 302, headers = Dict{AbstractString,AbstractString}()) :: Response
+  redirect_to(link_to(named_route), code, headers)
 end
 
 
