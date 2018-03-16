@@ -1,11 +1,11 @@
 # Step By Step: Web App Development with Genie and Julia
 
 ## Intro
-Genie is a web framework for developing professional level web applications. It builds on top of Julia's excellent performance and readable syntax, exposing a rich API for productive web development. Genie follows the MVC design pattern, in the style of other powerful web frameworks from other languages, like Ruby's Rails, Python's Django or Elixir's Phoenix.
+Genie is a web framework for developing professional grade web applications. It builds on top of Julia's excellent performance and very readable syntax, contributing a rich API for productive web development. Genie follows the MVC design pattern, in the style of other established web frameworks from different languages, like Ruby's Rails, Python's Django or Elixir's Phoenix.
 
-In this guide I'll show you how to build a reasonably complex web application using Genie and Julia. We'll start with the basic features like setting up our database, creating views, handling POST data and validating and persisting data through models (Part 1). Then we'll progressively advance towards more complex features like model relationships, and we'll learn about useful functionalities like caching, authentication and authorisation (Part 2). Once we're happy with the feature set, we'll see how to expose a REST API (Part 3). Then we'll focus on building rich, responsive UIs using web sockets and the Genie's integration with Webpack and Yarn (Part 4). Finally, once our app is complete, we'll learn to configure it for production usage and deploy it on a web server in the cloud (Part 5).
+In this guide I'll show you how to build a reasonably complex web application using Genie and Julia. We'll start with the basic features like scaffolding our app, setting up our database connection, creating views, handling POST data and validating and persisting data through models (Part 1). Then we'll progressively advance towards more complex features like model relationships, and we'll learn about useful functionalities like caching, authentication and authorisation (Part 2). Once we're happy with the feature set, we'll see how to expose a REST API (Part 3). Then we'll focus on building rich, responsive UIs using web sockets and Genie's integration with Webpack and Yarn (Part 4). Finally, once our app is complete, we'll learn to configure it for production use and deploy it on a server in the cloud (Part 5).
 
-The requirements for following along are the latest released Julia version and your favourite Julia editor. Enjoy!
+The only requirement for following along is the latest stable Julia version. Enjoy!
 
 ---
 
@@ -500,4 +500,127 @@ After you restart the app, once you successfully add a new chirp, you'll be redi
 ## Validating model data
 So far our app will gladly accept any kind of input. But a chirp without content -- or with a very short one -- won't be of any use. We need to make sure that the content of the chirps has a minimum length.
 
-SearchLight models have built-in data validation functionality -- which can be coupled with the ViewHelper API to output the validation results.
+SearchLight models have built-in data validation functionality -- which can be coupled with the ViewHelper API to output the validation results. Our `Chirps` model already has a few commented out lines which we can use to enable validations.
+
+Edit the `Chirps.jl` model file (in `app/resources/chirps`) and look for a line that says `### validator`. Uncomment the next line:
+```julia
+### validator
+validator::ModelValidator
+```
+
+Next look for `### constructor` and edit the corresponding lines to look like this:
+```julia
+### constructor
+Chirp(;
+  id = Nullable{SearchLight.DbId}(),
+  content = "",
+  created_at = Dates.now(),
+
+  validator = ModelValidator([                                # <-- validator
+    ValidationRule(:content, ChirpsValidator.not_empty)       # <-- validator
+  ])                                                          # <-- validator
+
+  # belongs_to = [],
+)
+```
+
+Finally we need to enable the validator within the `new()` call:
+```julia
+new("chirps", "id",
+        id, content, created_at,
+        validator                         # <-- validator
+        # belongs_to, has_one, has_many,
+)
+```
+
+The important bit here is `ValidationRule(:content, ChirpsValidator.not_empty)` -- the rest is just setting up the `Type`. Here we register a `ValidationRule` which states that the `content` field should be checked with the `ChirpsValidator.not_empty` function. Validation functions are expected to always return an instance of `ValidationResult`. A `ValidationResult` encodes a validation success (as `ValidationResult(valid)`) or a validation error. If it's a validation error, the `ValidationResult` object will also include details about the error: `ValidationResult(invalid, :not_empty, "should not be empty")`.
+
+Let's add another `ValidationRule` requiring that the content of a Chirp is at least 20 characters long. Edit `app/resources/chirps/ChirpsValidator.jl` and add the following function definition:
+```julia
+function minimum_length(field::Symbol, m::T, args::Vararg{Any})::ValidationResult where {T<:AbstractModel}
+  length(getfield(m, field)) < 20 && return ValidationResult(invalid, :minimum_length, "should be at least 20 letters long")
+
+  ValidationResult(valid)
+end
+```
+
+We also need to register the corresponding `ValidationRule` in the `Chirps.jl` model:
+```julia
+validator = ModelValidator([
+  ValidationRule(:content, ChirpsValidator.not_empty),
+  ValidationRule(:content, ChirpsValidator.minimum_length)      # <-- add this
+])
+```
+
+Now we can try it out in the REPL (you might have to restart the app to pick up the changes):
+```julia
+genie> using Chirps
+
+genie> ch = Chirp(content = "")
+genie>
+Chirps.Chirp
++============+=========================================+
+|        key |                                   value |
++============+=========================================+
+|    content |                                         |
++------------+-----------------------------------------+
+| created_at |                 2018-03-16T18:43:17.242 |
++------------+-----------------------------------------+
+|         id | Nullable{Union{Int32, Int64, String}}() |
++------------+-----------------------------------------+
+
+
+genie> Validation.validate!(ch)
+genie> false
+
+genie> Validation.errors(ch)
+genie> Nullable{Array{Validation.ValidationError,1}}(Validation.ValidationError[
+Validation.ValidationError
++===============+=====================+
+|           key |               value |
++===============+=====================+
+| error_message | should not be empty |
++---------------+---------------------+
+|    error_type |           not_empty |
++---------------+---------------------+
+|         field |             content |
++---------------+---------------------+
+,
+Validation.ValidationError
++===============+====================================+
+|           key |                              value |
++===============+====================================+
+| error_message | should be at least 20 letters long |
++---------------+------------------------------------+
+|    error_type |                     minimum_length |
++---------------+------------------------------------+
+|         field |                            content |
++---------------+------------------------------------+
+])
+```
+We create a new `Chirp` object with invalid `content`. Then we call the `validate!` method -- it returns `false` indicating that the validation has failed. We can get the list of errors with `Validation.errors`.
+
+Let's use this to validate chirps on our website. We need to add the validation check to our `ChirpsController`:
+```julia
+function create()
+  chirp = Chirp(content = @params(:content))
+  if Validation.validate!(chirp) && SearchLight.save(chirp)   # <-- validation here
+    flash("Your chirp was saved")
+    redirect_to(:get_chirps)
+  else
+    new(chirp)
+  end
+end
+```
+
+And enable the output of the errors in the view, in `new.flax.html`. Add the `<div>` element on the line under the `<textarea>`, like in the following snippet:
+```html
+<form action="$(link_to(:get_chirps))" method="POST">
+  <textarea name="content" placeholder="Chirp content">$(@vars(:chirp).content)</textarea>
+  <div><% output_errors(@vars(:chirp), :content) %></div>     
+  <input type="submit" value="Chirp!" />
+</form>
+```
+That's all! Try out the app, you should see the errors.
+
+## Testing our app

@@ -20,12 +20,36 @@ const DELETE  = "DELETE"
 
 const BEFORE_ACTION_HOOKS = :before_action
 
-const _routes = Dict{Symbol,Any}()
-const _channels = Dict{Symbol,Any}()
 const sessionless = Symbol[:json]
 
-const Route   = Tuple{Tuple{String,String,Union{String,Function}},Dict{Symbol,Dict{Any,Any}}}
-const Channel = Tuple{Tuple{String,Union{String,Function}},Dict{Symbol,Dict{Any,Any}}}
+# const Route   = Tuple{Tuple{String,String,Function},Dict{Symbol,Dict{Any,Any}}}
+# const Channel = Tuple{Tuple{String,Function},Dict{Symbol,Dict{Any,Any}}}
+
+
+mutable struct Route
+  method::String
+  path::String
+  action::Function
+  with::Dict{Symbol,Any}
+
+  Route(; method = GET, path = "", action = () -> error("Route not set"), with = Dict{Symbol,Any}()) =
+    new(method, path, action, with)
+end
+
+
+mutable struct Channel
+  path::String
+  action::Function
+  with::Dict{Symbol,Any}
+
+  Channel(; path = "", action = () -> error("Channel not set"), with = Dict{Symbol,Any}()) =
+    new(path, action, with)
+end
+
+
+const _routes = Dict{Symbol,Route}()
+const _channels = Dict{Symbol,Channel}()
+
 
 mutable struct Params{T}
   collection::Dict{Symbol,T}
@@ -74,15 +98,6 @@ function route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: R
     return serve_error_file(404, "File not found: $(req.resource)", params.collection)
   end
 
-  # if is_dev()
-    # load_routes_definitions()
-
-    # App.load_models()
-    # App.load_controllers()
-    # App.load_channels()
-    # App.load_libs()
-  # end
-
   Genie.Configuration.is_dev() && Revise.revise()
 
   session = App.config.session_auto_start ? Sessions.start(req, res) : nothing
@@ -108,15 +123,6 @@ function route_ws_request(req::Request, msg::String, ws_client::WebSockets.WebSo
   params.collection[Genie.PARAMS_WS_CLIENT] = ws_client
 
   extract_get_params(URI(req.resource), params)
-
-  # if is_dev()
-    # load_channels_definitions()
-
-    # App.load_models()
-    # App.load_controllers()
-    # App.load_channels()
-    # App.load_libs()
-  # end
 
   Genie.Configuration.is_dev() && Revise.revise()
 
@@ -187,67 +193,45 @@ Used for defining Genie routes.
 function route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
   route(path, action, method = method, with = with, named = named)
 end
-# function route(path::String, resource::Union{String,Symbol}, controller::Union{String,Symbol}, action::Union{String,Symbol};
-#                 method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
-#   route(path, resource = resource, controller = controller, action = action, method = method, with = with, named = named)
-# end
-# function route(path::String; resource::Union{String,Symbol} = "", controller::Union{String,Symbol} = "", action::Union{String,Symbol} = "",
-#                 method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
-#   resource = string(resource)
-#   controller = string(controller)
-#   action = string(action)
-#
-#   route(path, resource * "#" * (! isempty(controller) ? controller * "." : "") * action, method = method, with = with, named = named)
-# end
 function route(path::String, action::Function; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
-  route_parts = (method, path, action)
+  # route_parts = (method, path, action)
+  # extra_route_parts = Dict(:with => with)
+  r = Route(method = method, path = path, action = action, with = with)
 
-  extra_route_parts = Dict(:with => with)
-  named = named == :__anonymous_route ? route_name(route_parts) : named
+  named = named == :__anonymous_route ? route_name(r) : named
 
   if is_dev() && haskey(_routes, named)
     Logger.log(
       "Conflicting routes names - multiple routes are sharing the same name. Use the 'named' option to assign them different identifiers.\n" *
-      string(_routes[named]) * "\n" *
-      string(route_parts, extra_route_parts)
-      , :warn)
+      "Route " * string(_routes[named]) * "\n" * "is now overwritten by " * string(r), :warn)
   end
 
-  _routes[named] = (route_parts, extra_route_parts)
+  _routes[named] = r
 end
 
 
 """
     channel(action::Function, path::String; with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_channel) :: Channel
-    channel(path::String, action::Union{String,Function}; with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_channel) :: Channel
+    channel(path::String, action::Function; with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_channel) :: Channel
 
 Used for defining Genie channels.
 """
 function channel(action::Function, path::String; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel) :: Channel
   channel(path, action, with = with, named = named)
 end
-function channel(path::String; resource::Union{String,Symbol} = "", controller::Union{String,Symbol} = "", action::Union{String,Symbol} = "",
-                with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
-  resource = string(resource)
-  controller = string(controller)
-  action = string(action)
-  route(path, resource * "#" * (! isempty(controller) ? controller * "." : "") * action, with = with, named = named)
-end
-function channel(path::String, action::Union{String,Function}; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel) :: Channel
-  channel_parts = (path, action)
-
-  extra_channel_parts = Dict(:with => with)
-  named = named == :__anonymous_channel ? channel_name(channel_parts) : named
+function channel(path::String, action::Function; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel) :: Channel
+  # channel_parts = (path, action)
+  # extra_channel_parts = Dict(:with => with)
+  c = Channel(path = path, action = action, with = with)
+  named = named == :__anonymous_channel ? channel_name(c) : named
 
   if is_dev() && haskey(_channels, named)
     Logger.log(
       "Conflicting channel names - multiple channels are sharing the same name. Use the 'named' option to assign them different identifiers.\n" *
-      string(_channels[named]) * "\n" *
-      string(channel_parts, extra_channel_parts)
-      , :warn)
+      "Channel " * string(_channels[named]) * "\n" * "is now overwritten by " * string(channel_parts, extra_channel_parts), :warn)
   end
 
-  _channels[named] = (channel_parts, extra_channel_parts)
+  _channels[named] = c
 end
 
 
@@ -256,9 +240,9 @@ end
 
 Computes the name of a route.
 """
-function route_name(params) :: Symbol
-  route_parts = String[lowercase(params[1])]
-  for uri_part in split(params[2], "/", keep = false)
+function route_name(params::Route) :: Symbol
+  route_parts = String[lowercase(params.method)]
+  for uri_part in split(params.path, "/", keep = false)
     startswith(uri_part, ":") && continue # we ignore named params
     push!(route_parts, lowercase(uri_part))
   end
@@ -272,9 +256,9 @@ end
 
 Computes the name of a channel.
 """
-function channel_name(params) :: Symbol
-  channel_parts = String[lowercase(params[1])]
-  for uri_part in split(params[2], "/", keep = false)
+function channel_name(params::Channel) :: Symbol
+  channel_parts = String[]
+  for uri_part in split(params.path, "/", keep = false)
     startswith(uri_part, ":") && continue # we ignore named params
     push!(channel_parts, lowercase(uri_part))
   end
@@ -334,9 +318,9 @@ end
 
 
 """
-    routes() :: Vector{Route}
+    channels() :: Vector{Channel}
 
-Returns a vector of defined routes.
+Returns a vector of defined channels.
 """
 function channels() :: Vector{Channel}
   collect(values(_channels))
@@ -379,7 +363,7 @@ function to_link!!(route_name::Symbol, d::Dict{Symbol,T})::String where {T}
           end
 
   result = String[]
-  for part in split(route[1][2], "/")
+  for part in split(route.path, "/")
     if startswith(part, ":")
       var_name = split(part, "::")[1][2:end] |> Symbol
       ( isempty(d) || ! haskey(d, var_name) ) && error("Route $route_name expects param $var_name")
@@ -435,20 +419,28 @@ end
 
 
 """
+"""
+function action_controller_params(action::Function, params::Params) :: Void
+  params.collection[:action_controller] = action |> string |> Symbol
+  params.collection[:action] = Base.function_name(action)
+  params.collection[:controller] = (action |> typeof).name.module |> string |> Symbol
+
+  nothing
+end
+
+
+"""
     match_routes(req::Request, res::Response, session::Sessions.Session, params::Params) :: Response
 
 Matches the invoked URL to the corresponding route, sets up the execution environment and invokes the controller method.
 """
 function match_routes(req::Request, res::Response, session::Union{Sessions.Session,Void}, params::Params) :: Response
   for r in routes()
-    route_def, extra_params = r
-    protocol, route, to = route_def
+    r.method != req.method && (! haskey(params.collection, :_method) || ( haskey(params.collection, :_method) && params.collection[:_method] != r.method )) && continue
 
-    protocol != req.method && (! haskey(params.collection, :_method) || ( haskey(params.collection, :_method) && params.collection[:_method] != protocol )) && continue
+    App.config.log_router && Logger.log("Router: Checking against " * r.path)
 
-    App.config.log_router && Logger.log("Router: Checking against " * route)
-
-    parsed_route, param_names, param_types = parse_route(route)
+    parsed_route, param_names, param_types = parse_route(r.path)
 
     uri = URI(to_uri(req.resource))
     regex_route = Regex("^" * parsed_route * "\$")
@@ -460,8 +452,8 @@ function match_routes(req::Request, res::Response, session::Union{Sessions.Sessi
     App.config.log_router && Logger.log("Router: Matched type of route " * uri.path)
 
     extract_post_params(req, params)
-    extract_extra_params(extra_params, params)
-    extract_pagination_params(params)
+    extract_extra_params(r.with, params)
+    action_controller_params(r.action, params)
 
     res = negotiate_content(req, res, params)
 
@@ -470,11 +462,7 @@ function match_routes(req::Request, res::Response, session::Union{Sessions.Sessi
     task_local_storage(:__params, params.collection)
 
     return  try
-              if isa(to, Function)
-                (is_dev() ? Base.invokelatest(to) : to()) |> to_response
-              else
-                invoke_controller(to, req, res, params.collection, session)
-              end
+              (is_dev() ? Base.invokelatest(r.action) : (r.action)()) |> to_response
             catch ex
               Logger.log("Failed invoking controller", :err)
               Logger.log(string(ex), :err)
@@ -496,12 +484,9 @@ Matches the invoked URL to the corresponding channel, sets up the execution envi
 """
 function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSocket, params::Params, session::Union{Sessions.Session,Void}) :: String
   for c in channels()
-    channel_def, extra_params = c
-    channel, to = channel_def
+    App.config.log_router && Logger.log("Channels: Checking against " * c.path)
 
-    App.config.log_router && Logger.log("Channels: Checking against " * channel)
-
-    parsed_channel, param_names, param_types = parse_channel(channel)
+    parsed_channel, param_names, param_types = parse_channel(c.path)
 
     payload::Dict{String,Any} = try
                                   JSON.parse(msg)
@@ -519,21 +504,18 @@ function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSock
     (! ismatch(regex_channel, uri)) && continue
     App.config.log_router && Logger.log("Channels: Matched channel " * uri)
 
-    (! extract_uri_params(uri, regex_channel, param_names, param_types, params)) && continue
+    extract_uri_params(uri, regex_channel, param_names, param_types, params) || continue
     App.config.log_router && Logger.log("Router: Matched type of channel " * uri)
 
-    extract_extra_params(extra_params, params)
+    extract_extra_params(c.with, params)
+    action_controller_params(params, r.action)
 
     params.collection = setup_base_params(req, nothing, params.collection, session)
 
     task_local_storage(:__params, params.collection)
 
     return  try
-              if isa(to, Function)
-                (is_dev() ? Base.invokelatest(to) : to()) |> string
-              else
-                invoke_channel(to, req, payload, ws_client, params.collection, session)
-              end
+              (is_dev() ? Base.invokelatest(c.action) : (c.action)()) |> string
             catch ex
               if is_dev()
                 rethrow(ex)
@@ -665,10 +647,10 @@ end
 Parses extra params present in the route's definition and sets them into the `params` `Dict`.
 """
 function extract_extra_params(extra_params::Dict, params::Params) :: Void
-  if ! isempty(extra_params[:with])
-    for (k, v) in extra_params[:with]
-      params.collection[Symbol(k)] = v
-    end
+  isempty(extra_params) && return nothing
+
+  for (k, v) in extra_params
+    params.collection[Symbol(k)] = v
   end
 
   nothing
@@ -713,23 +695,6 @@ end
 
 
 """
-    extract_pagination_params(params::Params) :: Void
-
-Parses special query params using for pagination.
-"""
-function extract_pagination_params(params::Params) :: Void
-  if ! haskey(params.collection, :page_number)
-    params.collection[:page_number] = haskey(params.collection, Symbol("page[number]")) ? parse(Int, params.collection[Symbol("page[number]")]) : 1
-  end
-  if ! haskey(params.collection, :page_size)
-    params.collection[:page_size] = haskey(params.collection, Symbol("page[size]")) ? parse(Int, params.collection[Symbol("page[size]")]) : App.config.pagination_default_items_per_page
-  end
-
-  nothing
-end
-
-
-"""
     setup_base_params(req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session) :: Dict{Symbol,Any}
 
 Populates `params` with default environment vars.
@@ -751,145 +716,6 @@ function setup_base_params(req::Request, res::Union{Response,Void}, params::Dict
                                        end : ""
 
   params
-end
-
-
-"""
-    setup_params!(params::Dict{Symbol,Any}, to_parts::Vector{String}, action_controller_parts::Vector{String}) :: Dict{Symbol,Any}
-
-Populates `params` with action and controller names values.
-"""
-function setup_params!(params::Dict{Symbol,Any}, to_parts::Vector{String}, action_controller_parts::Vector{String}) :: Dict{Symbol,Any}
-  params[:action_controller] = to_parts[2]
-  params[:action] = action_controller_parts[end]
-  params[:controller] = join(action_controller_parts[1:end-1], ".")
-
-  params
-end
-
-
-"""
-    invoke_controller(to::String, req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session) :: Response
-
-Invokes the designated controller method.
-"""
-function invoke_controller(to::String, req::Request, res::Response, params::Dict{Symbol,Any}, session::Union{Sessions.Session,Void}) :: Response
-  to_parts::Vector{String} = split(to, "#")
-
-  controller_path = abspath(joinpath(Genie.RESOURCES_PATH, to_parts[1]))
-
-  controller = Genie.GenieController()
-  action_name = to_parts[2]
-
-  action_controller_parts::Vector{String} = split(to_parts[2], ".")
-  setup_params!(params, to_parts, action_controller_parts)
-
-  try
-    params[Genie.PARAMS_ACL_KEY] = App.load_acl(controller_path)
-  catch ex
-      Logger.log("Failed loading ACL", :err)
-      Logger.log(string(ex), :err)
-      Logger.log("$(@__FILE__):$(@__LINE__)", :err)
-
-      rethrow(ex)
-  end
-
-  task_local_storage(:__params, params)
-
-  try
-    hook_result = run_hooks(BEFORE_ACTION_HOOKS, get_deepest_module(action_name, 1, App), params)
-    hook_stop(hook_result) && return to_response(hook_result[2])
-  catch ex
-    Logger.log("Failed to invoke hooks $(BEFORE_ACTION_HOOKS)", :err)
-    Logger.log(string(ex), :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
-
-    rethrow(ex)
-  end
-
-  try
-    App.config.log_requests && Logger.log("Invoking $action_name with params: \n" * string(Millboard.table(params)), :debug)
-  catch ex
-    Logger.log("Can't log request", :err)
-    Logger.log(string(ex), :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
-  end
-
-  return  try
-            (is_dev() ? Base.invokelatest(get_nested_field(action_name, 1, App).field) : (get_nested_field(action_name, 1, App).field)()) |> to_response
-          catch ex
-            Logger.log("Error while invoking $(action_name) with $(params)", :err)
-            Logger.log(string(ex), :err)
-            Logger.log("$ex at $(@__FILE__):$(@__LINE__)", :err)
-
-            rethrow(ex)
-          end
-end
-
-
-"""
-    invoke_channel(to::String, req::Request, payload::Dict{String,Any}, ws_client::WebSockets.WebSocket, params::Dict{Symbol,Any}, session::Sessions.Session) :: String
-
-Invokes the designated channel method.
-"""
-function invoke_channel(to::String, req::Request, payload::Dict{String,Any}, ws_client::WebSockets.WebSocket, params::Dict{Symbol,Any}, session::Union{Sessions.Session,Void}) :: String
-  to_parts::Vector{String} = split(to, "#")
-
-  channel_path = abspath(joinpath(Genie.RESOURCES_PATH, to_parts[1]))
-
-  controller = Genie.GenieChannel()
-  action_name = to_parts[2]
-
-  action_channel_parts::Vector{String} = split(to_parts[2], ".")
-  setup_params!(params, to_parts, action_channel_parts)
-
-  try
-    params[Genie.PARAMS_ACL_KEY] = App.load_acl(channel_path)
-  catch ex
-    if is_dev()
-      rethrow(ex)
-    else
-      Logger.log("Failed loading ACL", :err)
-      Logger.log(string(ex), :err)
-      Logger.log("$(@__FILE__):$(@__LINE__)", :err)
-
-      return "500 error -- $(string(ex))"
-    end
-  end
-
-  task_local_storage(:__params, params)
-
-  try
-    hook_result = run_hooks(BEFORE_ACTION_HOOKS, getfield(App, Symbol(join(split(action_name, ".")[1:end-1], "."))), params)
-    hook_stop(hook_result) && return string(hook_result[2])
-  catch ex
-    if is_dev()
-      rethrow(ex)
-    else
-      Logger.log("Failed to invoke channel hooks $(BEFORE_ACTION_HOOKS)", :err)
-      Logger.log(string(ex), :err)
-      Logger.log("$(@__FILE__):$(@__LINE__)", :err)
-
-      return "500 error -- $(string(ex))"
-    end
-  end
-
-  App.config.log_requests && Logger.log("Invoking channel $action_name with params: \n" * string(Millboard.table(params)), :debug)
-
-  return  try
-            # TODO: add support for arbitrarely nested modules
-            (is_dev() ? Base.invokelatest((get_nested_field(action_name, 1, App).field)) : (get_nested_field(action_name, 1, App).field)()) |> string
-          catch ex
-            if is_dev()
-              rethrow(ex)
-            else
-              Logger.log("$ex at $(@__FILE__):$(@__LINE__)", :err)
-              Logger.log("While invoking $(action_name) with $(params)", :err)
-              Logger.log("$(@__FILE__):$(@__LINE__)", :err)
-
-              return "500 error -- $(string(ex))"
-            end
-          end
 end
 
 
@@ -953,36 +779,6 @@ function serve_error_file_500(ex::Exception, params::Dict{Symbol,Any} = Dict{Sym
                     "<hr/>" *
                     string(params)
                   )
-end
-
-
-"""
-    hook_stop(hook_result) :: Bool
-
-Checks whether or not the hook's invokation caused an error and execution must be stopped.
-"""
-function hook_stop(hook_result) :: Bool
-  isa(hook_result, Tuple) && ! hook_result[1]
-end
-
-
-"""
-    run_hooks(hook_type::Symbol, m::Module, params::Dict{Symbol,Any}) :: Any
-
-Runs the hooks defined in the currently invoked controller.
-"""
-function run_hooks(hook_type::Symbol, m::Module, params::Dict{Symbol,Any}) :: Tuple{Bool,Any}
-  if in(hook_type, names(m, true))
-    hooks::Vector{Symbol} = getfield(m, hook_type)
-    for hook in hooks
-      # r = eval(App, parse(string(hook)))()
-      c, a = split(string(hook), ".")
-      r = getfield(getfield(App, Symbol(c)), Symbol(a))()
-      hook_stop(r) && return r
-    end
-  else
-    tuple(true, nothing)
-  end
 end
 
 
@@ -1168,9 +964,7 @@ file_headers(f) :: Dict{AbstractString,AbstractString} = Dict{AbstractString,Abs
 ormatch(r::RegexMatch, x) = r.match
 ormatch(r::Void, x) = x
 
-if IS_IN_APP # && ! is_dev()
-  # App.load_controllers()
-  # App.load_channels()
+if IS_IN_APP
   load_routes_definitions()
   load_channels_definitions()
 end

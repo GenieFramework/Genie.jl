@@ -113,9 +113,6 @@ mutable struct Settings
   assets_serve::Bool
   assets_fingerprinted::Bool
 
-  pagination_default_items_per_page::Int
-  pagination_page_param_name::String
-
   model_relations_eagerness::Symbol
 
   tests_force_test_env::Bool
@@ -184,9 +181,6 @@ mutable struct Settings
             assets_serve          =  true,
             assets_fingerprinted  = false,
 
-            pagination_default_items_per_page = 20,
-            pagination_page_param_name = "page",
-
             model_relations_eagerness = :lazy,
 
             tests_force_test_env = true,
@@ -222,7 +216,6 @@ mutable struct Settings
                   cache_folder, cache_adapter, cache_duration, cache_table,
                   log_router, log_db, log_queries, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted, log_cache, log_views,
                   assets_path, assets_serve, assets_fingerprinted,
-                  pagination_default_items_per_page, pagination_page_param_name,
                   model_relations_eagerness,
                   tests_force_test_env,
                   session_auto_start, session_key_name, session_storage, session_folder, session_table,

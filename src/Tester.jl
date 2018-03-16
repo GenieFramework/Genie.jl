@@ -9,16 +9,22 @@ SEARCHLIGHT_ON && eval(:(using Migration))
 
 Sets up testing environment, includes test files, etc.
 """
-function bootstrap_tests(cmd_args::String, config::Settings) :: Void
+function bootstrap_tests(cmd_args::String = "", config::Settings = App.config, resource::String = "") :: Void
+  current_env = config.app_env
+
   set_test_env()
 
   include(abspath(joinpath(config.test_folder, "test_config.jl")))
 
-  for file_name in Util.walk_dir(abspath(joinpath(config.test_folder)))
-    if ( endswith(file_name, "_test.jl") )
-      include(file_name)
+  for (path, _, files) in (walkdir(abspath(joinpath(config.test_folder))) |> collect)
+    for file_name in files
+      isempty(resource) && endswith(file_name, "_test.jl") && include(joinpath(path, file_name))
+      ! isempty(resource) && startswith(file_name, resource) && endswith(file_name, "_test.jl") && include(joinpath(path, file_name))
     end
   end
+
+  App.config.app_env = current_env
+  Logger.log("Switched app to >> $(uppercase(App.config.app_env)) << env", :debug)
 
   nothing
 end
@@ -42,10 +48,18 @@ end
 
 Runs all existing tests.
 """
-function run_all_tests(cmd_args::String, config::Settings) :: Void
+function run_all_tests(cmd_args::String = "", config::Settings = App.config) :: Void
   bootstrap_tests(cmd_args, config)
 
   nothing
+end
+
+
+function run_tests() :: Void
+  run_all_tests()
+end
+function run_tests(resource_name::Symbol) :: Void
+  bootstrap_tests("", App.config, string(resource_name) |> lowercase)
 end
 
 
