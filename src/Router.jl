@@ -18,7 +18,9 @@ const PUT     = "PUT"
 const PATCH   = "PATCH"
 const DELETE  = "DELETE"
 
-const BEFORE_ACTION_HOOKS = :before_action
+const BEFORE_HOOK  = :before_hook
+const AFTER_HOOK   = :after_hook
+const RESCUE_HOOK  = :rescue_hook
 
 const sessionless = Symbol[:json]
 
@@ -194,8 +196,6 @@ function route(action::Function, path::String; method = GET, with::Dict = Dict{S
   route(path, action, method = method, with = with, named = named)
 end
 function route(path::String, action::Function; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
-  # route_parts = (method, path, action)
-  # extra_route_parts = Dict(:with => with)
   r = Route(method = method, path = path, action = action, with = with)
 
   named = named == :__anonymous_route ? route_name(r) : named
@@ -220,8 +220,6 @@ function channel(action::Function, path::String; with::Dict = Dict{Symbol,Any}()
   channel(path, action, with = with, named = named)
 end
 function channel(path::String, action::Function; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel) :: Channel
-  # channel_parts = (path, action)
-  # extra_channel_parts = Dict(:with => with)
   c = Channel(path = path, action = action, with = with)
   named = named == :__anonymous_channel ? channel_name(c) : named
 
@@ -430,6 +428,25 @@ end
 
 
 """
+"""
+function run_hook(controller::Module, hook_type::Symbol) :: Bool
+  isdefined(controller, hook_type) || return false
+
+  try
+    getfield(controller, hook_type)()
+  catch ex
+    Logger.log("Failed invoking $hook_type", :err)
+    Logger.log(string(ex), :err)
+    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+
+    rethrow(ex)
+  end
+
+  true
+end
+
+
+"""
     match_routes(req::Request, res::Response, session::Sessions.Session, params::Params) :: Response
 
 Matches the invoked URL to the corresponding route, sets up the execution environment and invokes the controller method.
@@ -461,14 +478,20 @@ function match_routes(req::Request, res::Response, session::Union{Sessions.Sessi
 
     task_local_storage(:__params, params.collection)
 
+    controller = (r.action |> typeof).name.module
+
     return  try
-              (is_dev() ? Base.invokelatest(r.action) : (r.action)()) |> to_response
+              run_hook(controller, BEFORE_HOOK)
+              result =  (is_dev() ? Base.invokelatest(r.action) : (r.action)()) |> to_response
+              run_hook(controller, AFTER_HOOK)
+
+              result
             catch ex
               Logger.log("Failed invoking controller", :err)
               Logger.log(string(ex), :err)
               Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
-              rethrow(ex)
+              (isdefined(controller, RESCUE_HOOK) && return to_response(getfield(controller, RESCUE_HOOK)())) || rethrow(ex)
             end
   end
 
@@ -514,19 +537,23 @@ function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSock
 
     task_local_storage(:__params, params.collection)
 
-    return  try
-              (is_dev() ? Base.invokelatest(c.action) : (c.action)()) |> string
-            catch ex
-              if is_dev()
-                rethrow(ex)
-              else
+    controller = (r.action |> typeof).name.module
+
+     return   try
+                run_hook(controller, BEFORE_HOOK)
+                result = (is_dev() ? Base.invokelatest(c.action) : (c.action)()) |> string
+                run_hook(controller, AFTER_HOOK)
+
+                result
+              catch ex
+                is_dev() && rethrow(ex)
+
                 Logger.log("Failed invoking channel", :err)
                 Logger.log(string(ex), :err)
                 Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
-                string(ex)
+                (isdefined(controller, RESCUE_HOOK) && return string(getfield(controller, RESCUE_HOOK)())) || string(ex)
               end
-            end
   end
 
   App.log_router && Logger.log("Channel: No route matched - defaulting 404", :err)
