@@ -494,7 +494,7 @@ function match_routes(req::Request, res::Response, session::Union{Sessions.Sessi
               Logger.log(string(ex), :err)
               Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
-              (isdefined(controller, RESCUE_HOOK) && return to_response(getfield(controller, RESCUE_HOOK)())) || rethrow(ex)
+              (isdefined(controller, RESCUE_HOOK) && return to_response(getfield(controller, RESCUE_HOOK)(ex))) || rethrow(ex)
             end
   end
 
