@@ -3,9 +3,14 @@ App level functionality -- loading and managing app-wide components like configs
 """
 module App
 
-using Genie, YAML, Macros, Logger, Inflector, Util, Genie.Configuration, Revise
-SEARCHLIGHT_ON && eval(:(using SearchLight, Validation))
+using Genie.Configuration
 
+if is_dev()
+  @eval using Revise
+end
+
+using Genie, YAML, Macros, Logger, Inflector, Util
+SEARCHLIGHT_ON && eval(:(using SearchLight, Validation))
 
 IS_IN_APP && ! isdefined(:config) && const config = Genie.config
 
@@ -60,13 +65,13 @@ function load_configurations() :: Void
   loggers_path = abspath("$(Genie.CONFIG_PATH)/loggers.jl")
   if isfile(loggers_path)
     include(loggers_path)
-    Genie.Configuration.is_dev() && Revise.track(loggers_path)
+    is_dev() && Revise.track(loggers_path)
   end
 
   secrets_path = abspath("$(Genie.CONFIG_PATH)/secrets.jl")
   if isfile(secrets_path)
     include(secrets_path)
-    Genie.Configuration.is_dev() && Revise.track(secrets_path)
+    is_dev() && Revise.track(secrets_path)
   end
 
   nothing
@@ -86,7 +91,7 @@ function load_initializers() :: Void
     for i in f
       fi = joinpath(dir, i)
       include(fi)
-      Genie.Configuration.is_dev() && Revise.track(fi)
+      is_dev() && Revise.track(fi)
     end
   end
 

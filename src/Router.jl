@@ -1,7 +1,10 @@
 module Router
 
-using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions, Revise
+using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions
 using Millboard, Genie.Configuration, App, Input, Logger, Util, Renderer, WebSockets, JSON
+if is_dev()
+  @eval using Revise
+end
 IS_IN_APP && @eval parse("@dependencies")
 
 import HttpServer.mimetypes
@@ -100,7 +103,7 @@ function route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: R
     return serve_error_file(404, "File not found: $(req.resource)", params.collection)
   end
 
-  Genie.Configuration.is_dev() && Revise.revise()
+  is_dev() && Revise.revise()
 
   session = App.config.session_auto_start ? Sessions.start(req, res) : nothing
 
@@ -126,7 +129,7 @@ function route_ws_request(req::Request, msg::String, ws_client::WebSockets.WebSo
 
   extract_get_params(URI(req.resource), params)
 
-  Genie.Configuration.is_dev() && Revise.revise()
+  is_dev() && Revise.revise()
 
   session = App.config.session_auto_start ? Sessions.load(Sessions.id(req)) : nothing
 
@@ -832,7 +835,7 @@ function load_routes_definitions() :: Void
 
   # empty!(_routes)
   include(Genie.ROUTES_FILE_NAME)
-  Genie.Configuration.is_dev() && Revise.track(Genie.ROUTES_FILE_NAME)
+  is_dev() && Revise.track(Genie.ROUTES_FILE_NAME)
 
   nothing
 end
@@ -866,7 +869,7 @@ function load_channels_definitions() :: Void
   # empty!(_channels)
   include(channels_defs)
 
-  Genie.Configuration.is_dev() && Revise.track(channels_defs)
+  is_dev() && Revise.track(channels_defs)
 
   nothing
 end

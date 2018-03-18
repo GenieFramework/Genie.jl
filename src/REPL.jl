@@ -1,7 +1,11 @@
 module REPL
 
-using SHA, Logger, Genie.Configuration, Genie, Genie.Generator, Tester, Toolbox, App, Util, Revise
+using SHA, Logger, Genie.Configuration, Genie, Genie.Generator, Tester, Toolbox, App, Util
 SEARCHLIGHT_ON && eval(:(using SearchLight, SearchLight.Generator, Migration))
+
+if is_dev()
+  @eval using Revise
+end
 
 const JULIA_PATH = joinpath(JULIA_HOME, "julia")
 
@@ -204,7 +208,7 @@ end
 function reload_app() :: Void
   Logger.log("Attempting to reload the Genie's core modules. If you get unexpected errors or things don't work as expected, simply exit this Julia session and start a new one to fully reload Genie.", :warn)
 
-  Revise.revise(App)
+  is_dev() && Revise.revise(App)
 
   App.load_configurations()
   App.load_initializers()

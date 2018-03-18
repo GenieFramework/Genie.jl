@@ -3,9 +3,12 @@ Generates various Genie files.
 """
 module Generator
 
-using Genie, Logger, Genie.FileTemplates, Inflector, Genie.Configuration, Revise, App
+using Genie, Logger, Genie.FileTemplates, Inflector, Genie.Configuration, App
 SEARCHLIGHT_ON && eval(:(using SearchLight, Migration))
 
+if is_dev()
+  @eval using Revise
+end
 
 """
     new_controller(cmd_args::Dict{String,Any}) :: Void
