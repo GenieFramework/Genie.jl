@@ -2,7 +2,6 @@ module Renderer
 
 export respond, json, redirect_to, html, flax, include_asset, has_requested, css_asset, js_asset
 export respond_with_json, respond_with_html
-export error_404, error_500, error_XXX
 
 using Genie, Util, JSON, Genie.Configuration, HttpServer, App, Router, Logger, Macros
 
@@ -150,45 +149,6 @@ Constructs an error `Response`.
 """
 function http_error(status_code; id = "resource_not_found", code = "404-0001", title = "Not found", detail = "The requested resource was not found")
   respond(detail, status_code, Dict{AbstractString,AbstractString}())
-end
-
-
-"""
-    error_404() :: Tuple{Int,Dict{AbstractString,AbstractString},String}
-
-Reads the default 404 error page and returns it in a `Response` compatible Tuple.
-"""
-function error_404() :: Tuple{Int,Dict{AbstractString,AbstractString},String}
-  error_page =  open(Genie.DOC_ROOT_PATH * "/error-404.html") do f
-                  readstring(f)
-                end
-  (404, Dict{AbstractString,AbstractString}(), error_page)
-end
-
-
-"""
-    error_500() :: Tuple{Int,Dict{AbstractString,AbstractString},String}
-
-Reads the default 500 error page and returns it in a `Response` compatible Tuple.
-"""
-function error_500() :: Tuple{Int,Dict{AbstractString,AbstractString},String}
-  error_page =  open(Genie.DOC_ROOT_PATH * "/error-500.html") do f
-                  readstring(f)
-                end
-  (500, Dict{AbstractString,AbstractString}(), error_page)
-end
-
-
-"""
-    error_XXX() :: Tuple{Int,Dict{AbstractString,AbstractString},String}
-
-Reads the default XXX error page and returns it in a `Response` compatible Tuple.
-"""
-function error_XXX(xxx::Int) :: Tuple{Int,Dict{AbstractString,AbstractString},String}
-  error_page =  open(Genie.DOC_ROOT_PATH * "/error-$xxx.html") do f
-                  readstring(f)
-                end
-  (xxx, Dict{AbstractString,AbstractString}(), error_page)
 end
 
 

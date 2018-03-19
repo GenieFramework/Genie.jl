@@ -14,6 +14,7 @@ include(joinpath(Pkg.dir("Genie"), "src", "router_converters.jl"))
 export route, routes, channel, channels
 export GET, POST, PUT, PATCH, DELETE
 export to_link!!, to_link, link_to!!, link_to, response_type, @params
+export error_404, error_500
 
 const GET     = "GET"
 const POST    = "POST"
@@ -499,7 +500,9 @@ function match_routes(req::Request, res::Response, session::Union{Sessions.Sessi
   end
 
   App.config.log_router && Logger.log("Router: No route matched - defaulting 404", :err)
-  serve_error_file(404, "Not found", params.collection)
+
+  # serve_error_file(404, "Not found", params.collection)
+  error_404(req.resource)
 end
 
 
@@ -833,7 +836,6 @@ Loads the routes file.
 function load_routes_definitions() :: Void
   ! routes_available() && return nothing
 
-  # empty!(_routes)
   include(Genie.ROUTES_FILE_NAME)
   is_dev() && Revise.track(Genie.ROUTES_FILE_NAME)
 
@@ -916,6 +918,7 @@ end
 Reads the static file and returns the content as a `Response`.
 """
 function serve_static_file(resource::String) :: Response
+  startswith(resource, "/") || (resource = "/$resource")
   resource_path = try
                     URI(resource).path
                   catch ex
@@ -926,8 +929,22 @@ function serve_static_file(resource::String) :: Response
   if isfile(f)
     Response(200, file_headers(f), open(read, f))
   else
-    Renderer.error_404() |> to_response
+    error_404(resource)
   end
+end
+
+
+"""
+"""
+function error_404(resource = "")
+  serve_error_file(404, resource)
+end
+
+
+"""
+"""
+function error_500(error_message = "")
+  serve_error_file(500, error_message, @params)
 end
 
 
@@ -942,10 +959,13 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
                     readstring(f)
                   end
 
-    error_message = """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                             $("\n" ^ 3)""" *
-                    """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(params))                 $("\n" ^ 3)""" *
-                    """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Router.named_routes()))  $("\n" ^ 3)""" *
-                    """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$ENV                                       $("\n" ^ 1)"""
+    if error_code == 500
+      error_message = error_message * "\n" *
+                      """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                             $("\n" ^ 3)""" *
+                      """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(params))                 $("\n" ^ 3)""" *
+                      """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Router.named_routes()))  $("\n" ^ 3)""" *
+                      """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$ENV                                       $("\n" ^ 1)"""
+    end
 
     error_page = replace(error_page, "<error_message/>", error_message)
 
@@ -953,7 +973,7 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
   else
     f = file_path(URI("/error-$(error_code).html").path)
 
-    Response(error_code, file_headers(f), open(read, f))
+    Response(error_code, file_headers(f), replace(open(read, f), "<error_message/>", error_message))
   end
 end
 

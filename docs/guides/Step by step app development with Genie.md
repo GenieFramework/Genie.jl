@@ -1,32 +1,35 @@
 # Step By Step: Web App Development with Genie and Julia
 
 ## Intro
-Genie is a web framework for developing professional grade web applications. It builds on top of Julia's excellent performance and very readable syntax, contributing a rich API for productive web development. Genie follows the MVC design pattern, in the style of other established web frameworks from different languages, like Ruby's Rails, Python's Django or Elixir's Phoenix.
+Genie is a web framework for developing professional grade web applications. Genie builds on top of Julia's excellent performance and readable syntax, contributing a rich API for productive web development. Genie follows the MVC design pattern, in the style of other established web frameworks from different languages, like Ruby's Rails, Python's Django or Elixir's Phoenix.
 
-In this guide I'll show you how to build a reasonably complex web application using Genie and Julia. We'll start with the basic features like scaffolding our app, setting up our database connection, creating views, handling POST data and validating and persisting data through models (Part 1). Then we'll progressively advance towards more complex features like model relationships, and we'll learn about useful functionalities like caching, authentication and authorisation (Part 2). Once we're happy with the feature set, we'll see how to expose a REST API (Part 3). Then we'll focus on building rich, responsive UIs using web sockets and Genie's integration with Webpack and Yarn (Part 4). Finally, once our app is complete, we'll learn to configure it for production use and deploy it on a server in the cloud (Part 5).
+In this guide you'll learn how to build a reasonably complex web application using Genie and Julia. Our app, called Chirper, will allow the users to post small messages which will be shared on the app's wall.
 
-The only requirement for following along is the latest stable Julia version. Enjoy!
+We'll start with the basic features like scaffolding our app, setting up our database connection, creating views, handling POST data, validating and persisting data through models and unit testing (Part 1). Then we'll progressively advance towards more complex features like model relationships, and we'll learn about useful functionalities like caching, authentication and authorisation while adding an admin area (Part 2). Once we're happy with the feature set, we'll see how build a REST API to expose our data (Part 3). Then we'll focus on enhancing the front-end, building rich, responsive UIs using web sockets and Genie's seamless integration with Webpack and Yarn (Part 4). Finally, once our app is complete, we'll learn to add integration tests, configure it for production use and deploy it on a server in the cloud (Part 5).
+
+You are encouraged to actively follow through the code, by developing the app in parallel. The only technical requirement for following along is the latest stable Julia version. Familiarity with web development and Julia is assumed. Things will be explained step-by-step but we won't cover web development basics -- nor coding with Julia. That being said, enjoy!
 
 ---
 
 # Part 1
 
 ## Scaffolding our app
-The first thing that we need to do is to setup the file structure of our app. Genie uses the "convention over configuration" design pattern, preferring to use sensible defaults represented by files of certain structures and in certain locations. Genie however does not require setting up these files ourselves - instead, it provides a rich set of generators for scaffolding every component of a web app.
+The first thing that we need to do is to setup the file structure of our app. Genie uses "convention over configuration" -- that is, it employs sensible defaults, expecting certain files and folders in certain locations. In exchange, Genie will be able to automatically load and expose dependencies, while ensuring that the application stays maintainable and predictable as the codebase grows. Genie does not require setting up these files manually - instead, it provides a rich set of generators for scaffolding every component of the web app.
 
 The only requirement to get things started is installing Genie itself:
 ```julia
 julia> using Pkg
-julia> Pkg.clone("htts://github.com/essenciary/Genie.jl")
+julia> Pkg.clone("htts://github.com/essenciary/Genie.jl") # Soon to be Pkg.add("Genie")
 julia> using Genie
 ```
 
-Now we can ask Genie to scaffold our app -- which we'll name "Chirper".
+Now we can ask Genie to scaffold our app -- which we'll name "chirper".
 ```julia
 julia> Genie.REPL.new_app("chirper")
 ```
+This creates a new folder in the current directory, `./chirper`, and sets up the application's files.
 
-You'll see output in the console informing you about the status of the operation:
+You'll see the output in the console, informing you about the status of the operation:
 ```julia
 info: Done! New app created at /Users/adrian/Dropbox/Projects/chirper
 info: Looking for dependencies
@@ -36,16 +39,21 @@ info: Starting your brand new Genie app - hang tight!
 ```
 
 Once the app is ready, it will be automatically started. This means that:
-  - it will automatically `cd()` into the app's folder
-  - will load the Genie app environment
-  - will take you to a Genie REPL -- which is a Julia REPL, so you have all the power of Julia at your disposal
-  - the Genie REPL is indicated by the custom prompt `genie>`
+- Julia will `cd()` into the app's folder
+- will load the Genie app environment
+- will take you to a Genie REPL -- which is a Julia REPL, so you have all the power of Julia at your disposal -- where you'll have access to Genie's API
+- the Genie REPL is indicated by the custom prompt `genie>`
 
-We can check that everything worked well by starting up a server and taking it for a spin:
+To manually start the application in the future you will have to follow more or less the same steps:
+* from the terminal `cd` into the app's folder: `$ cd /path/to/chirper`
+* load the REPL by running in the terminal: `$ bin/repl`
+* the Genie environment will load - when done you'll find yourself at the `genie>` prompt.
+
+Once Genie is loaded, we can check that everything worked well by starting up a server and taking it for a spin:
 ```julia
 genie> server = AppServer.startup()
 ```
-You can now visit `http://localhost:8000` in your browser - you will be welcomed by our very smart and helpful genie.
+You can now visit [localhost:8000](http://localhost:8000) in your browser - you will be welcomed by our very helpful genie. That's pretty good - but it's time we take ownership and build our home page. 
 
 ## Setting up the home page
 Genie uses a route file to map web requests to functions. These functions process the request info and return the response. The route are defined within the `config/routes.jl` file. Right now, the file looks like this:
