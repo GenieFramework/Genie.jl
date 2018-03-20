@@ -48,6 +48,7 @@ function respond_with_html(resource::Union{Symbol,String}, action::Union{Symbol,
   html(resource, action, layout, check_nulls; vars...) |> respond
 end
 
+
 function flax(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
   HTMLTemplateEngine.flax(resource, action, layout; parse_vars(vars)...)
 end

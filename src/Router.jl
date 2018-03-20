@@ -960,7 +960,7 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
                   end
 
     if error_code == 500
-      error_message = error_message * "\n" *
+      error_message = error_message * "\n\n\n" *
                       """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                             $("\n" ^ 3)""" *
                       """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(params))                 $("\n" ^ 3)""" *
                       """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Router.named_routes()))  $("\n" ^ 3)""" *
