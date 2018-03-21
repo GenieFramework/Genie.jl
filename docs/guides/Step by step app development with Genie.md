@@ -127,11 +127,11 @@ genie> Genie.REPL.db_init()
 The `db_init` function creates the database, if it does not exist, at `db/dev.sqlite`. And then creates a new table within the database -- this table, called `schema_migrations`, is used for storing database versioning and schema management.
 
 ## Working with resources
-The concept of resource is central to Genie apps. A resource is a "thing" - a business object which is accessible over the internet. Such resources can be created, read, updated and deleted (in what is called a CRUD workflow).
+The concept of resource is central to Genie apps. A resource is a "thing" - a business object that is accessible over the internet. Such resources can be created, read, updated and deleted -- in what is called a CRUD workflow.
 
-In order to implement a complete CRUD workflow, the full MVC stack is involved. We'll need routing, controller files, models (and the underlying database table), views -- and optionally, model data validators and controller access rules. But don't worries, we don't need to create all these files by hand: we have a powerful genie sidekick.
+In order to implement a complete CRUD workflow, the full MVC stack is involved. We'll need routing, controller files, models (and the underlying database table), views -- and optionally, model data validators and controller access rules. But don't worry, we don't need to create all these files by hand.
 
-We can ask Genie to create a new _chirp_ resource -- which will represent a user message in our system.
+We can ask Genie to create a new `chirp` resource -- which will represent a user message in our system.
 ```julia
 genie> Genie.REPL.new_resource("chirp")
 
@@ -144,12 +144,12 @@ info: New ChirpsChannel.jl created at /Users/adrian/Dropbox/Projects/chirper/app
 info: New authorization.yml created at /Users/adrian/Dropbox/Projects/chirper/app/resources/chirps/authorization.yml
 info: New chirps_test.jl created at /Users/adrian/Dropbox/Projects/chirper/test/unit/chirps_test.jl
 ```
-Genie creates the full range of MVC files. We'll cover each one of them as we'll use them to develop our app.
+Genie created the full range of MVC files. We'll cover each one of them as we'll use them to develop our app.
 
 ## Database versioning with migrations
-SearchLight, Genie's ORM layer comes with database migration functionality. Migrations are scripts used to change the database -- by creating and altering tables, for example. These scripts are put under version control and shared with the whole development team. Also, using the migration's API, the changes can be managed properly (for instance, they need to be run in the proper order).
+SearchLight, Genie's ORM layer comes with database migration functionality. Migrations are scripts used to change the database -- by creating and altering tables, for example. These scripts are placed under version control and can be shared with the whole development team. Using the migrations API, the database changes can be applied and rolled back, to sync the database schema between different developers.
 
-Asking Genie to create a new resource has added a new migration. It was called {timestamp}_{migration_name}.jl -- for example, `20180312172359808_create_table_chirps.jl`. Genie's migrations have one of two states: up or down. These are defined in two functions with the same name. The `up` function contains the functionality for modifying the database -- while the `down` function has code to revert the changes. For instance, if `up()` has code to create a table, `down()` will have code to drop the table. Conversely, a migration is said to be `up` if it's `up()` function has been run -- and `down` if not. Genie/SearchLight keeps track of what migrations are up and which are down.
+Asking Genie to create a new resource has added a new migration. In my case it is called `20180312172359808_create_table_chirps.jl`, but for you the first part of the file name will be different. The file's prefix is the timestamp when the file was created -- a strategy employed in order to avoid name clashes. The naming pattern for migration files is {timestamp}_{migration_name}.jl. Genie's migrations have one of two states: up or down. These are defined in two functions with the same name. The `up` function is invoked for modifying the database -- while the `down` function has code to revert the changes. For instance, if `up()` has code to create a table, `down()` will have code to drop the table. Conversely, a migration is said to be `up` if its `up()` function has been run -- and `down` if not. SearchLight keeps track of what migrations are up and which are down.
 ```julia
 genie> Migration.status()
 +===+==========================================+
@@ -160,11 +160,14 @@ genie> Migration.status()
 | 1 | 20180312172359808_create_table_chirps.jl |
 +---+------------------------------------------+
 ```
-As expected, the migration is `DOWN`. We need to write the code for `up()` and `down()` and then run the migration. All the migrations files are stored within the `db/migrations` folder. Let's edit our migration (your migration will have a different name, because of the different timestamp):
+As expected, the migration is `DOWN`. We need to write the code for the `up()` and `down()` functions and then run UP the migration. All the migrations files are stored within the `db/migrations/` folder. Let's edit our migration (remember, your migration will have a different name, because of the different timestamp):
 ```julia
 genie> edit("db/migrations/20180312172359808_create_table_chirps.jl")
 ```
-You will see that the file already comes filled up with some sensible defaults. It's to early to understand all the details of our app, so let's not overthink it. But for sure, our chirps need to have a content, some text. And a timestamp -- because we'll want to show them in a timeline. Make sure the `up()` function looks like this then save the file:
+
+You will see that the file already comes pre-filled with some sensible defaults. The migrations API exposes a readable DSL for creating and altering databases tables. 
+???
+. But for sure, our chirps need to have a content, some text. And a timestamp -- because we'll want to show them in a timeline. Make sure the `up()` function looks like this then save the file:
 ```julia
 function up()
   create_table(:chirps) do
