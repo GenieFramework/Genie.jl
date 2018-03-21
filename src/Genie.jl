@@ -17,6 +17,8 @@ else
   const IS_IN_APP = false
 end
 
+config=Configuration.Settings(app_env=Configuration.DEV)
+
 const SEARCHLIGHT_ON = isdir(Pkg.dir("SearchLight")) && IS_IN_APP ? true : false
 
 export IS_IN_APP, SEARCHLIGHT_ON
