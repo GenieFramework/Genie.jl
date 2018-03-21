@@ -165,9 +165,7 @@ As expected, the migration is `DOWN`. We need to write the code for the `up()` a
 genie> edit("db/migrations/20180312172359808_create_table_chirps.jl")
 ```
 
-You will see that the file already comes pre-filled with some sensible defaults. The migrations API exposes a readable DSL for creating and altering databases tables. 
-???
-. But for sure, our chirps need to have a content, some text. And a timestamp -- because we'll want to show them in a timeline. Make sure the `up()` function looks like this then save the file:
+You will see that the file already comes pre-filled with some sensible defaults. The migrations API exposes a readable DSL for creating and altering databases tables. It provides functionality to define/alter/drop tables, columns and indexes. Our migration includes a bit of code to start us in the right direction -- we just need to add the individual column definitions. For sure, our chirps need to have a content, as text. And a timestamp -- because we'll want to show them in a timeline, so we'll want to sort by creation date. Make sure the `up()` function looks like this then save the file:
 ```julia
 function up()
   create_table(:chirps) do
@@ -181,7 +179,7 @@ function up()
   add_index(:chirps, :created_at)
 end
 ```
-Here we have a call to the `create_table` function, passing in the name of the table, "chirps" (by convention, table names are pluralised). The `column_id` function creates a `primary_key`, auto-incrementable. While `column` creates a new column - the first argument is the name of the column, the second is the type. Finally, `add_index` will created an index on the `created_at` column. Now we can run our migration:
+Here we call the `create_table` function, passing in the name of the table (as a `Symbol`, but a `String` will work too), "chirps". By convention, table names are pluralised in Genie/SearchLight. The `column_id` function creates a `primary_key`, auto-incrementable. While `column` returns a column definition - the first argument is the name of the column, the second is the type. Finally, `add_index` will created an index on the `created_at` column. Now we can run our migration:
 ```julia
 genie> Migration.up()
 
@@ -191,32 +189,38 @@ info: Executed migration CreateTableChirps up
 ```
 
 ## Setting up the `Chirp` model
-Another file created by Genie's resource generator is the `Chirps.jl` model. It can be found at `app/resources/chirps/Chirps.jl`. It contains the definition of the `Chirp` `type`/`struct` -- and it designed to hold all the functions related to the manipulation of `Chirp` types. The `Chirp` `struct` is meant to model/map the underlying `chirps` table. Genie/SearchLight provides a rich API for CRUD operations against the table by working with the `struct` only. But first we need to set it up.
+Another file created by Genie's resource generator is the `Chirps.jl` model. It can be found at `app/resources/chirps/Chirps.jl`. It contains the definition of the `Chirp` type -- and it is designed to encapsulate all the methods used for the manipulation of `Chirp` types. The `Chirp` `struct` is meant to model the underlying `chirps` table: fields to columns. Genie/SearchLight provides a rich API for CRUD operations against relational database tables, by working with the Julia  `struct` only. But in order to work, we need to first set it up.
 
 All we want to do at this point is map the columns of the `chirps` table to fields of the `Chirp` `struct`. Open the file in your editor (`genie> edit("app/resources/chirps/Chirps.jl")`) and edit it as follows:
 ```julia
-# ... code here ...
+# ... more code here ...
 
 ### fields
 id::Nullable{SearchLight.DbId}
 content::String                       # add this
 created_at::DateTime                  # and this
-# ... code here ...
+# ... more code here ...
+```
+Here we define the fields corresponding to the columns -- each field should have the same name as the corresponding column.
 
-# ... code here ...
+Next, look for the `Chirp` constructor:
+```julia
+# ... more code here ...
 Chirp(;
   id = Nullable{SearchLight.DbId}(),
   content = "",                       # add this
   created_at = Dates.now()            # and this
-# ... code here ...
+# ... more code here ...
 ) = new("chirps", "id",
         id,
         content,                      # add this
         created_at                    # and this
-# ... code here ...
+# ... more code here ...
 )
 ```
-In the first section we define the fields corresponding to the columns (same name). In the second, we update the constructor with default values for each field. You can try it now:
+In the above snippet we update the constructor with the default values for each field.
+
+You can try it now (you might need to reload the `Chirps` module -- Genie does it automatically for web server requests, but the REPL might need `genie> reload("Chirps")`):
 ```julia
 genie> using Chirps
 
@@ -233,7 +237,8 @@ Chirps.Chirp
 |         id | Nullable{Union{Int32, Int64, String}}() |
 +------------+-----------------------------------------+
 ```
-We can persist it to the database with:
+
+You can see that the `id` is null, meaning that the chirp object was not saved. We can persist it to the database with:
 ```julia
 genie> SearchLight.save!!(chirp)
 
@@ -263,36 +268,43 @@ Chirps.Chirp
 |         id | Nullable{Union{Int32, Int64, String}}(1) |
 +------------+------------------------------------------+
 ```
-Our chirp has been saved to the database.
+Our chirp has been saved to the database and the `id` was set to 1.
+
+Genie uses the `!!` convention to mark methods which throw errors. Most of the methods suffixed with `!!` also have a non-error-throwing variation. For example, there is a corresponding `save` function which returns boolean `true` on success, `false` otherwise.
+
+Just to confirm that everything works well, let's add another chirp to the database:
+```julia
+genie> Chirp(content = "The quick fox") |> SearchLight.save!!
+```
 
 ## Listing chirps
-Now that we're able to create, persist and read chirps, let's display them on the website. Open the routes file (`config/routes.jl`) and append a new route:
+Now that we're able to create, persist and read chirps, let's list them on the website. We'll need to create a new page for this. Open the routes file (`config/routes.jl`) and append a new route:
 ```julia
 route("/chirps", ChirpsController.index)
 ```
-For this to work, don't forget to declare that you're `using ChirpsController`. Now, edit `app/resources/chirps/ChirpsController.jl` and add a placeholder `index` function:
+
+For this to work, don't forget to declare that we're `using ChirpsController` -- please add the `using` instruction at the top of the routes file. Now, edit `app/resources/chirps/ChirpsController.jl` and add a placeholder `index` function:
 ```julia
 function index()
   "List chirps here"
 end
 ```
-Make sure that the web server is running (if not, start it with `genie> AppServer.startup()`) and visit `http://localhost:8000/chirps`. You should see the message "List chirps here".
 
-Great! If only this was more useful. No worries, it's easy.
+Make sure that the web server is running (if not, start it with `genie> AppServer.startup()`) and visit [http://localhost:8000/chirps](http://localhost:8000/chirps). You should see the message "List chirps here".
 
-Go back to the `ChirpsController.jl` file and make sure the `index()` function reads:
+If all works well, go back to the `ChirpsController.jl` file and make sure the `index()` function reads as follows:
 ```julia
 function index()
   chirps = SearchLight.find(Chirp)
   respond_with_html(:chirps, :index, chirps = chirps)
 end
 ```
-In order for this to work, you also need to update the `using` command:
+In order for this to work, you also need to update the `using` instructions:
 ```julia
 using App, SearchLight, Chirps
 ```
 
-Then, create a new view file in `app/resources/chirps/views`, called `index.flax.html` and edit its content as follows:
+Then, create a new view file in `app/resources/chirps/views/`, called `index.flax.html` and edit its content as follows:
 ```julia
 <h1>Chirps</h1>
 <ul>
@@ -304,16 +316,12 @@ Then, create a new view file in `app/resources/chirps/views`, called `index.flax
 </ul>
 ```
 
-Just to confirm that everything works well, let's add another chirp to the database:
-```julia
-genie> Chirp(content = "The quick fox") |> SearchLight.save!!
-```
-Refreshing `http://localhost:8000/chirps` should show the new chirp.
+Refresh [http://localhost:8000/chirps](http://localhost:8000/chirps) -- the page should now show a list of chirps.
 
 ## Generating test data with database seeding
-Creating and persisting chirps through Genie's REPL is straightforward -- but not very effective if we need to generate a lot of test data. For this reason SearchLight comes with a `DatabaseSeeding` module which makes it very easy to generate and persist any number of models.
+Creating and persisting chirps through Genie's REPL is straightforward -- but not very effective if we need to generate a lot of test data. For this reason SearchLight comes with a `DatabaseSeeding` module which makes it very easy to generate and persist a large volume of data.
 
-By convention, `DatabaseSeeding` invokes the model's `random` method. Which means we need to add a new `random()` function to the `Chirps` module. We'll also need a way to generate random content for our chirps. We can do this by using the `Faker` package. Please add the `Faker` package now.
+By convention, `DatabaseSeeding` invokes the `random` method of the given module. This `random` function should instantiate and return a random object of the corresponding type. This means that  we need to add a `random()` function to the `Chirps` module -- which will create random `Chirp` objects. Thus, we'll also need a way to generate some random content for our chirps. One way to do this is with the `Faker` package. Please add the `Faker` package if you don't have it already (`julia> Pkg.add("Faker")`).
 
 Now, edit `app/resources/chirps/Chirps.jl` and add this function to the module:
 ```julia
@@ -334,7 +342,7 @@ genie> DatabaseSeeding.random_seeder(Chirps, 100)
 ```
 Awesome!
 
-If you reload the `/chirps` page you'll see a long list of literally random sentences, lorem-ipsum style. And right off the bat we can tell that we're going to need to paginate these results.
+If you reload the `/chirps` page you'll see a long list of chirps, lorem-ipsum style. The long list reveals a problem though: right off the bat we can tell that we're going to need to paginate these results.
 
 ## Paginating lists
 In order to implement pagination we'll need to know how many chirps we have in total -- and decide how many chirps we want to display per page. In order to get the total number of chirps, we need to perform a `count` query against the `chirps` table. With SearchLight we do it like this:
