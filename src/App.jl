@@ -12,7 +12,7 @@ end
 using Genie, YAML, Macros, Logger, Inflector, Util
 SEARCHLIGHT_ON && eval(:(using SearchLight, Validation))
 
-IS_IN_APP && ! isdefined(:config) && const config = Genie.config
+IS_IN_APP && (isdefined(:config) || const config = Genie.config)
 
 
 """

@@ -10,6 +10,7 @@ const config =  Settings(
                   log_router          = false,
                   log_formatted       = false,
                   log_cache           = false,
+                  log_views           = false, 
                   log_level           = "error",
                   log_verbosity       = LOG_LEVEL_VERBOSITY_MINIMAL,
                   assets_path         = "/",

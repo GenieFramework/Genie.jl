@@ -9,15 +9,14 @@ include(joinpath(Pkg.dir("Genie"), "src", "configuration.jl"))
 
 include(joinpath(Pkg.dir("Genie"), "src", "constants.jl"))
 if haskey(ENV, "GENIE_ENV") && isfile(abspath(joinpath(ENV_PATH, ENV["GENIE_ENV"] * ".jl")))
-  include(abspath(joinpath(ENV_PATH, ENV["GENIE_ENV"] * ".jl")))
+  isdefined(:config) || include(abspath(joinpath(ENV_PATH, ENV["GENIE_ENV"] * ".jl")))
   isfile(abspath(joinpath(CONFIG_PATH, "app.jl"))) && include(abspath(joinpath(CONFIG_PATH, "app.jl")))
 
   const IS_IN_APP = true
 else
   const IS_IN_APP = false
+  const config = Configuration.Settings(app_env = Configuration.DEV)
 end
-
-config=Configuration.Settings(app_env=Configuration.DEV)
 
 const SEARCHLIGHT_ON = isdir(Pkg.dir("SearchLight")) && IS_IN_APP ? true : false
 

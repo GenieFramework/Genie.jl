@@ -973,7 +973,7 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
   else
     f = file_path(URI("/error-$(error_code).html").path)
 
-    Response(error_code, file_headers(f), replace(open(read, f), "<error_message/>", error_message))
+    Response(error_code, file_headers(f), replace(open(readstring, f), "<error_message/>", error_message))
   end
 end
 
