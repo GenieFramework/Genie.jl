@@ -537,13 +537,13 @@ function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSock
     App.config.log_router && Logger.log("Router: Matched type of channel " * uri)
 
     extract_extra_params(c.with, params)
-    action_controller_params(params, r.action)
+    action_controller_params(c.action, params)
 
     params.collection = setup_base_params(req, nothing, params.collection, session)
 
     task_local_storage(:__params, params.collection)
 
-    controller = (r.action |> typeof).name.module
+    controller = (c.action |> typeof).name.module
 
      return   try
                 run_hook(controller, BEFORE_HOOK)
