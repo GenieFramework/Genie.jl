@@ -69,11 +69,11 @@ end
 Switches Genie to the test env for the duration of the current execution.
 """
 function set_test_env() :: Void
-  if ! is_test()
-    Logger.log("You're attempting to run your test suite outside the TEST environment. This can lead to losing your production or development data, depending on your current/default environment.", :err, showst = false)
-  end
+  # if ! is_test()
+  #   Logger.log("You're attempting to run your test suite outside the TEST environment. This can lead to losing your production or development data, depending on your current/default environment.", :err, showst = false)
+  # end
   if App.config.tests_force_test_env
-    Logger.log("Automatically switching to TEST environment to avoid data corruption. If you want to force running your test in a different environment, switch the `tests_force_test_env` variable to `false` in your env's config file.", :debug)
+    # Logger.log("Automatically switching to TEST environment to avoid data corruption. If you want to force running your test in a different environment, switch the `tests_force_test_env` variable to `false` in your env's config file.", :debug)
     App.config.app_env = TEST
     Logger.log("Switched app to >> $(uppercase(App.config.app_env)) << env", :debug)
 
