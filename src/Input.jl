@@ -243,7 +243,7 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
               header::String = String(headerRaw)
 
               if length(header) > 0
-                headerParts = split(header, ": ", 2)
+                headerParts = split(header, ": "; limit=2)
 
                 valueDecoded = parse_seicolon_fields(String(headerParts[2]));
 
@@ -336,7 +336,7 @@ function parse_seicolon_fields(dataString::String)
 end
 
 function parse_quoted_params(data::String)
-  tokens = split(data, "=", 2)
+  tokens = split(data, "="; limit=2)
 
   if length(tokens) == 2
     return (tokens[1], tokens[2])
