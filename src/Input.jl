@@ -205,9 +205,6 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
         byteIndex = byteTestIndex + 3
       end
     end
-  else
-    foundBoundary = false
-  end
 
     ## Otherwise, process data
 
