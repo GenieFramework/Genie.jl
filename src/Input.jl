@@ -167,8 +167,8 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
     # Test for boundary.
 
     if (
-      (byte == 0x0d && http_data[byteIndex + 1] == 0x0a && http_data[byteIndex + 2] == '-' && http_data[byteIndex + 3] == '-')
-      || (byte == '-' && http_data[byteIndex + 1] == '-')
+      (byte == 0x0d && bytes >= byteIndex+3 && http_data[byteIndex + 1] == 0x0a && Char(http_data[byteIndex + 2]) == '-' && Char(http_data[byteIndex + 3]) == '-')
+      || (byte == '-' && bytes >= byteIndex+1 && Char(http_data[byteIndex + 1]) == '-')
       )
       foundBoundary = true
     end
@@ -186,7 +186,7 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
     while testIndex < boundaryLength
       byteTestIndex = byteIndexOffset + testIndex
 
-      if byteTestIndex > bytes || http_data[byteTestIndex] != boundary[testIndex]
+      if byteTestIndex > bytes || Char(http_data[byteTestIndex]) != boundary[testIndex]
         foundBoundary = false
         break
       end
@@ -195,7 +195,7 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
     end
 
     if foundBoundary
-      if http_data[byteTestIndex + 2] == '-'
+      if Char(http_data[byteTestIndex + 2]) == '-'
         foundFinalBoundary = true
         byteIndex = byteTestIndex + 5
       else
