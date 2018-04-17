@@ -184,15 +184,16 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
     testIndex = 1;
 
     # Find the position of the next char NOT in the boundary
-    while testIndex < boundaryLength
-      byteTestIndex = byteIndexOffset + testIndex
+    if foundBoundary
+      while testIndex < boundaryLength
+        byteTestIndex = byteIndexOffset + testIndex
 
-      if byteTestIndex > bytes || Char(http_data[byteTestIndex]) != boundary[testIndex]
-        foundBoundary = false
-        break
+        if byteTestIndex > bytes || Char(http_data[byteTestIndex]) != boundary[testIndex]
+          break
+        end
+
+        testIndex = testIndex + 1
       end
-
-      testIndex = testIndex + 1
     end
 
     # Check if this boundary is the final one
