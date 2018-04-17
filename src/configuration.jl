@@ -79,7 +79,9 @@ mutable struct Settings
 
   app_env::String
   app_is_api::Bool
+
   cors_headers::Dict{String,String}
+  cors_allowed_origins::Vector{String}
 
   suppress_output::Bool
   output_length::Int
@@ -148,7 +150,16 @@ mutable struct Settings
 
             app_env       = ENV["GENIE_ENV"],
             app_is_api    = true,
-            cors_headers  = Dict{String,String}(),
+
+            cors_headers  = Dict{String,String}(
+              "Access-Control-Allow-Origin"       => "", # ex: "*" or "http://mozilla.org"
+              "Access-Control-Expose-Headers"     => "", # ex: "X-My-Custom-Header, X-Another-Custom-Header"
+              "Access-Control-Max-Age"            => "86400", # 24 hours
+              "Access-Control-Allow-Credentials"  => "", # "true" or "false"
+              "Access-Control-Allow-Methods"      => "", # ex: "POST, GET"
+              "Access-Control-Allow-Headers"      => "", # ex: "X-PINGOTHER, Content-Type"
+            ),
+            cors_allowed_origins = String[],
 
             suppress_output = false,
             output_length   = 10_000, # where to truncate strings in console
@@ -210,7 +221,8 @@ mutable struct Settings
         ) =
               new(
                   server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature,
-                  app_env, app_is_api, cors_headers,
+                  app_env, app_is_api,
+                  cors_headers, cors_allowed_origins, 
                   suppress_output, output_length,
                   db_migrations_table_name, db_migrations_folder, db_config_settings,
                   task_folder, test_folder,
