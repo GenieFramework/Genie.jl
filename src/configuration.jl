@@ -79,6 +79,7 @@ mutable struct Settings
 
   app_env::String
   app_is_api::Bool
+  cors_headers::Dict{String,String}
 
   suppress_output::Bool
   output_length::Int
@@ -147,6 +148,7 @@ mutable struct Settings
 
             app_env       = ENV["GENIE_ENV"],
             app_is_api    = true,
+            cors_headers  = Dict{String,String}(),
 
             suppress_output = false,
             output_length   = 10_000, # where to truncate strings in console
@@ -208,7 +210,7 @@ mutable struct Settings
         ) =
               new(
                   server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature,
-                  app_env, app_is_api,
+                  app_env, app_is_api, cors_headers,
                   suppress_output, output_length,
                   db_migrations_table_name, db_migrations_folder, db_config_settings,
                   task_folder, test_folder,

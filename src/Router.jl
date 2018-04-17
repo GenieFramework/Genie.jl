@@ -12,7 +12,7 @@ import HttpServer.mimetypes
 include(joinpath(Pkg.dir("Genie"), "src", "router_converters.jl"))
 
 export route, routes, channel, channels
-export GET, POST, PUT, PATCH, DELETE
+export GET, POST, PUT, PATCH, DELETE, OPTIONS
 export to_link!!, to_link, link_to!!, link_to, response_type, @params
 export error_404, error_500
 
@@ -21,6 +21,7 @@ const POST    = "POST"
 const PUT     = "PUT"
 const PATCH   = "PATCH"
 const DELETE  = "DELETE"
+const OPTIONS  = "OPTIONS"
 
 const BEFORE_HOOK  = :before_hook
 const AFTER_HOOK   = :after_hook
@@ -98,6 +99,8 @@ function route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: R
 
   extract_get_params(URI(to_uri(req.resource)), params)
   res = negotiate_content(req, res, params)
+
+  req.method == OPTIONS && App.config.app_is_api && return preflight_response()
 
   if is_static_file(req.resource)
     App.config.server_handle_static_files && return serve_static_file(req.resource)
@@ -931,6 +934,11 @@ function serve_static_file(resource::String) :: Response
   else
     error_404(resource)
   end
+end
+
+
+function preflight_response()
+  Response(200, App.config.cors_headers, "Success")
 end
 
 
