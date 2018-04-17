@@ -100,7 +100,7 @@ function route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: R
   extract_get_params(URI(to_uri(req.resource)), params)
   res = negotiate_content(req, res, params)
 
-  req.method == OPTIONS && App.config.app_is_api && return preflight_response()
+  req.method == OPTIONS && return preflight_response()
 
   if is_static_file(req.resource)
     App.config.server_handle_static_files && return serve_static_file(req.resource)
