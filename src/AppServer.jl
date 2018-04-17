@@ -135,6 +135,9 @@ function handle_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: 
   App.config.server_signature != "" && sign_response!(res)
 
   app_response::Response = Router.route_request(req, res, ip)
+  if(App.config.app_is_api)
+    app_response.headers = merge(res.headers, App.config.cors_headers)
+  end
   app_response.headers = merge(res.headers, app_response.headers)
   app_response.cookies = merge(res.cookies, app_response.cookies)
 
