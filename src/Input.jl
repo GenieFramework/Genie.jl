@@ -94,23 +94,23 @@ function post_multipart!(request::Request, post_data::HttpPostData, files::HttpF
         fileFieldName::String = ""
 
         for (field::String, values::Dict{String, String}) in part.headers
-          if field == "Content-Disposition" && getkey(values, "form-data", null) != null
+          if field == "Content-Disposition" && getkey(values, "form-data", nothing) != nothing
 
-              # Check to see whether this part is a file upload
-              # Otherwise, treat as basic POST data
+            # Check to see whether this part is a file upload
+            # Otherwise, treat as basic POST data
 
-              if getkey(values, "filename", null) != null
-                if length(values["filename"]) > 0
-                  fileFieldName = values["name"]
-                  file.name = values["filename"]
-                  hasFile = true
-                end
-              elseif getkey(values, "name", null) != null
-                post_data[values["name"]] = String(part.data)
+            if getkey(values, "filename", nothing) != nothing
+              if length(values["filename"]) > 0
+                fileFieldName = values["name"]
+                file.name = values["filename"]
+                hasFile = true
               end
-            elseif field == "Content-Type"
-              (file.mime, mime) = first(values)
+            elseif getkey(values, "name", nothing) != nothing
+              post_data[values["name"]] = String(part.data)
             end
+          elseif field == "Content-Type"
+            (file.mime, mime) = first(values)
+          end
         end # for
 
         if hasFile
@@ -170,7 +170,8 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
       (byte == 0x0d && http_data[byteIndex + 1] == 0x0a && http_data[byteIndex + 2] == '-' && http_data[byteIndex + 3] == '-')
       || (byte == '-' && http_data[byteIndex + 1] == '-')
       )
-    foundBoundary = true
+      foundBoundary = true
+    end
 
     if byte == 0x0d
       byteIndexOffset = byteIndex + 3
@@ -310,7 +311,7 @@ function parse_seicolon_fields(dataString::String)
       if length(workingString) > 0
         decoded = parse_quoted_params(workingString)
 
-        if decoded != null
+        if decoded != nothing
           (key, value) = decoded
 
           data[key] = value
@@ -341,7 +342,7 @@ function parse_quoted_params(data::String)
     return (tokens[1], tokens[2])
   end
 
-  return null
+  return nothing
 end
 
 
