@@ -38,7 +38,10 @@ using Macros, Logger, App, Commands, AppServer, Millboard, Renderer
 
 SEARCHLIGHT_ON && eval(:(using SearchLight))
 
-IS_IN_APP && @eval parse("@dependencies")
+if IS_IN_APP
+  @eval parse("@dependencies")
+  include(joinpath(Pkg.dir("Genie"), "src", "deprecations.jl"))
+end
 
 """
     run() :: Void

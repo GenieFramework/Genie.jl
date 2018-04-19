@@ -78,7 +78,6 @@ mutable struct Settings
   server_signature::String
 
   app_env::String
-  app_is_api::Bool
 
   cors_headers::Dict{String,String}
   cors_allowed_origins::Vector{String}
@@ -141,6 +140,9 @@ mutable struct Settings
 
   renderer_default_layout_file::Symbol
 
+  # to be removed
+  app_is_api::Bool
+
   Settings(;
             server_port                 = 8000, # default port for binding the web server
             server_workers_count        = 1,
@@ -149,7 +151,6 @@ mutable struct Settings
             server_signature            = "Genie/$GENIE_VERSION/Julia/$VERSION",
 
             app_env       = ENV["GENIE_ENV"],
-            app_is_api    = true,
 
             cors_headers  = Dict{String,String}(
               "Access-Control-Allow-Origin"       => "", # ex: "*" or "http://mozilla.org"
@@ -217,12 +218,15 @@ mutable struct Settings
 
             websocket_server = false,
 
-            renderer_default_layout_file = :app
+            renderer_default_layout_file = :app,
+
+            # to be removed
+            app_is_api = false
         ) =
               new(
                   server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature,
-                  app_env, app_is_api,
-                  cors_headers, cors_allowed_origins, 
+                  app_env,
+                  cors_headers, cors_allowed_origins,
                   suppress_output, output_length,
                   db_migrations_table_name, db_migrations_folder, db_config_settings,
                   task_folder, test_folder,
@@ -239,7 +243,10 @@ mutable struct Settings
                   lookup_ip,
                   run_as_server,
                   websocket_server,
-                  renderer_default_layout_file
+                  renderer_default_layout_file,
+
+                  # to be removed
+                  app_is_api
                 )
 end
 
