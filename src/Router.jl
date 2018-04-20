@@ -28,9 +28,6 @@ const RESCUE_HOOK  = :rescue_hook
 
 const sessionless = Symbol[:json]
 
-# const Route   = Tuple{Tuple{String,String,Function},Dict{Symbol,Dict{Any,Any}}}
-# const Channel = Tuple{Tuple{String,Function},Dict{Symbol,Dict{Any,Any}}}
-
 
 mutable struct Route
   method::String
