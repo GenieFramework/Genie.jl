@@ -134,11 +134,30 @@ function handle_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: 
   App.config.log_requests && log_request(req)
   App.config.server_signature != "" && sign_response!(res)
 
-  app_response::Response = Router.route_request(req, res, ip)
-  app_response.headers = merge(res.headers, app_response.headers)
-  app_response.cookies = merge(res.cookies, app_response.cookies)
+  app_response::Response = set_headers!(req, res, Router.route_request(req, res, ip))
 
   App.config.log_responses && log_response(req, app_response)
+
+  app_response
+end
+
+
+function set_headers!(req::Request, res::Response, app_response::Response) :: Response
+  if req.method == OPTIONS
+    App.config.cors_headers["Access-Control-Allow-Origin"] = strip(App.config.cors_headers["Access-Control-Allow-Origin"])
+
+    ! isempty(App.config.cors_allowed_origins) &&
+      in(req.headers["Origin"], App.config.cors_allowed_origins) &&
+      (App.config.cors_headers["Access-Control-Allow-Origin"] == "" ||
+        App.config.cors_headers["Access-Control-Allow-Origin"] == "*") &&
+      (App.config.cors_headers["Access-Control-Allow-Origin"] = req.headers["Origin"])
+
+    app_response.headers = merge(res.headers, App.config.cors_headers)
+  end
+
+  app_response.headers = merge(res.headers, app_response.headers)
+
+  app_response.cookies = merge(res.cookies, app_response.cookies)
 
   app_response
 end

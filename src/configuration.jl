@@ -78,7 +78,9 @@ mutable struct Settings
   server_signature::String
 
   app_env::String
-  app_is_api::Bool
+
+  cors_headers::Dict{String,String}
+  cors_allowed_origins::Vector{String}
 
   suppress_output::Bool
   output_length::Int
@@ -138,6 +140,9 @@ mutable struct Settings
 
   renderer_default_layout_file::Symbol
 
+  # to be removed
+  app_is_api::Bool
+
   Settings(;
             server_port                 = 8000, # default port for binding the web server
             server_workers_count        = 1,
@@ -146,7 +151,16 @@ mutable struct Settings
             server_signature            = "Genie/$GENIE_VERSION/Julia/$VERSION",
 
             app_env       = ENV["GENIE_ENV"],
-            app_is_api    = true,
+
+            cors_headers  = Dict{String,String}(
+              "Access-Control-Allow-Origin"       => "", # ex: "*" or "http://mozilla.org"
+              "Access-Control-Expose-Headers"     => "", # ex: "X-My-Custom-Header, X-Another-Custom-Header"
+              "Access-Control-Max-Age"            => "86400", # 24 hours
+              "Access-Control-Allow-Credentials"  => "", # "true" or "false"
+              "Access-Control-Allow-Methods"      => "", # ex: "POST, GET"
+              "Access-Control-Allow-Headers"      => "", # ex: "X-PINGOTHER, Content-Type"
+            ),
+            cors_allowed_origins = String[],
 
             suppress_output = false,
             output_length   = 10_000, # where to truncate strings in console
@@ -204,11 +218,15 @@ mutable struct Settings
 
             websocket_server = false,
 
-            renderer_default_layout_file = :app
+            renderer_default_layout_file = :app,
+
+            # to be removed
+            app_is_api = false
         ) =
               new(
                   server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature,
-                  app_env, app_is_api,
+                  app_env,
+                  cors_headers, cors_allowed_origins,
                   suppress_output, output_length,
                   db_migrations_table_name, db_migrations_folder, db_config_settings,
                   task_folder, test_folder,
@@ -225,7 +243,10 @@ mutable struct Settings
                   lookup_ip,
                   run_as_server,
                   websocket_server,
-                  renderer_default_layout_file
+                  renderer_default_layout_file,
+
+                  # to be removed
+                  app_is_api
                 )
 end
 
