@@ -35,9 +35,11 @@ mutable struct Route
   path::String
   action::Function
   with::Dict{Symbol,Any}
+  before::Array{Function,1}
+  after::Array{Function,1}
 
-  Route(; method = GET, path = "", action = () -> error("Route not set"), with = Dict{Symbol,Any}()) =
-    new(method, path, action, with)
+  Route(; method = GET, path = "", action = () -> error("Route not set"), with = Dict{Symbol,Any}(), before = Function[], after = Function[]) =
+    new(method, path, action, with, before, after)
 end
 
 
@@ -45,9 +47,11 @@ mutable struct Channel
   path::String
   action::Function
   with::Dict{Symbol,Any}
+  before::Array{Function,1}
+  after::Array{Function,1}
 
-  Channel(; path = "", action = () -> error("Channel not set"), with = Dict{Symbol,Any}()) =
-    new(path, action, with)
+  Channel(; path = "", action = () -> error("Channel not set"), with = Dict{Symbol,Any}(), before = Function[], after = Function[]) =
+    new(path, action, with, before, after)
 end
 
 
@@ -191,16 +195,16 @@ end
 
 
 """
-    route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_route) :: Route
-    route(path::String, action::Function; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_route) :: Route
+    route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_route, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Route
+    route(path::String, action::Function; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_route, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Route
 
 Used for defining Genie routes.
 """
-function route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
-  route(path, action, method = method, with = with, named = named)
+function route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Route
+  route(path, action, method = method, with = with, named = named, before = before, after = after)
 end
-function route(path::String, action::Function; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route) :: Route
-  r = Route(method = method, path = path, action = action, with = with)
+function route(path::String, action::Function; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Route
+  r = Route(method = method, path = path, action = action, with = with, before = before, after = after)
 
   named = named == :__anonymous_route ? route_name(r) : named
 
@@ -215,16 +219,16 @@ end
 
 
 """
-    channel(action::Function, path::String; with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_channel) :: Channel
-    channel(path::String, action::Function; with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_channel) :: Channel
+    channel(action::Function, path::String; with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_channel, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Channel
+    channel(path::String, action::Function; with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_channel, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Channel
 
 Used for defining Genie channels.
 """
-function channel(action::Function, path::String; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel) :: Channel
-  channel(path, action, with = with, named = named)
+function channel(action::Function, path::String; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Channel
+  channel(path, action, with = with, named = named, before = before, after = after)
 end
-function channel(path::String, action::Function; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel) :: Channel
-  c = Channel(path = path, action = action, with = with)
+function channel(path::String, action::Function; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Channel
+  c = Channel(path = path, action = action, with = with, before = before, after = after)
   named = named == :__anonymous_channel ? channel_name(c) : named
 
   if is_dev() && haskey(_channels, named)
@@ -485,9 +489,11 @@ function match_routes(req::Request, res::Response, session::Union{Sessions.Sessi
     controller = (r.action |> typeof).name.module
 
     return  try
+              map(x->x(), r.before)
               run_hook(controller, BEFORE_HOOK)
               result =  (is_dev() ? Base.invokelatest(r.action) : (r.action)()) |> to_response
               run_hook(controller, AFTER_HOOK)
+              map(x->x(), r.after)
 
               result
             catch ex
@@ -546,9 +552,11 @@ function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSock
     controller = (c.action |> typeof).name.module
 
      return   try
+                map(x->x(), c.before)
                 run_hook(controller, BEFORE_HOOK)
                 result = (is_dev() ? Base.invokelatest(c.action) : (c.action)()) |> string
                 run_hook(controller, AFTER_HOOK)
+                map(x->x(), c.after)
 
                 result
               catch ex
