@@ -168,20 +168,6 @@ end
 
 
 """
-    check_valid_task!(parsed_args::Dict{String,Any}) :: Dict{String,Any}
-
-Checks if the name of the task passed as the command line arg is valid task identifier -- if not, attempts to address it, by appending the "Task" suffix.
-Returns the potentially modified `parsed_args` `Dict`.
-"""
-function check_valid_task!(parsed_args::Dict{String,Any}) :: Dict{String,Any}
-  haskey(parsed_args, "task:new") && isa(parsed_args["task:new"], String) && ! endswith(parsed_args["task:new"], "Task") && (parsed_args["task:new"] *= "Task")
-  haskey(parsed_args, "task:run") && isa(parsed_args["task:run"], String) &&! endswith(parsed_args["task:run"], "Task") && (parsed_args["task:run"] *= "Task")
-
-  parsed_args
-end
-
-
-"""
     called_command(args::Dict, key::String) :: Bool
 
 Checks whether or not a certain command was invoked by looking at the command line args.

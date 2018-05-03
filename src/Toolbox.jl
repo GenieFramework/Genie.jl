@@ -4,7 +4,9 @@ import Base.string
 
 using Genie, Util, Millboard, Genie.FileTemplates, Genie.Configuration, Logger, Inflector, App
 
-export TaskResult, VoidTaskResult
+export TaskResult, VoidTaskResult, check_valid_task
+
+const TASK_SUFFIX = "Task"
 
 mutable struct TaskInfo
   file_name::String
@@ -20,12 +22,16 @@ end
 
 
 """
-    run_task(task_name::String, params...)
+    run_task(task_name::String; params...)
+    function run_task(task::Module; params)
 
 Runs the Genie task named `task_name`.
 """
-function run_task(task_name::String, params...) :: TaskResult
-  @time import_task(task_name).run_task!(params...)
+function run_task(task_name::Union{String,Symbol}; params...)
+  @time Base.invokelatest(import_task(string(task_name)).run_task!, params)
+end
+function run_task(task::Module; params...)
+  @time task.run_task!(params)
 end
 
 
@@ -58,8 +64,9 @@ end
 Attempts to convert a potentially invalid (partial) `task_name` into a valid one.
 """
 function valid_task_name(task_name::String) :: String
+  task_name = replace(task_name, " ", "_")
   task_name = Inflector.from_underscores(task_name)
-  endswith(task_name, "Task") || (task_name = task_name * "Task")
+  endswith(task_name, TASK_SUFFIX) || (task_name = task_name * TASK_SUFFIX)
 
   task_name
 end
@@ -99,7 +106,7 @@ function tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
 
       module_name = Util.file_name_without_extension(i) |> Symbol
       eval(:(using $(module_name)))
-      ti = TaskInfo(i, module_name, Base.invokelatest(eval(module_name).description))
+      ti = TaskInfo(i, module_name, Base.invokelatest(eval(module_name).description) |> string)
 
       if ( filter_type_name == Symbol() ) push!(tasks, ti)
       elseif ( filter_type_name == module_name ) return TaskInfo[ti]
@@ -114,10 +121,11 @@ const all_tasks = tasks
 
 """
     new(cmd_args::Dict{String,Any}, config::Settings) :: Void
+    new(task_name::String, config::Settings = App.config) :: Void
 
 Generates a new Genie task file.
 """
-function new(cmd_args::Dict{String,Any}, config::Settings) :: Void
+function new(cmd_args::Dict{String,Any}, config::Settings = App.config) :: Void
   tfn = task_file_name(cmd_args, config)
 
   if ispath(tfn)
@@ -132,6 +140,9 @@ function new(cmd_args::Dict{String,Any}, config::Settings) :: Void
 
   nothing
 end
+function new(task_name::String, config::Settings = App.config) :: Void
+  new(Dict{String,Any}("task:new" => valid_task_name(task_name)), config)
+end
 
 
 """
@@ -139,7 +150,7 @@ end
 
 Computes the name of a Genie task based on the command line input.
 """
-function task_file_name(cmd_args::Dict{String,Any}, config::Settings) :: String
+function task_file_name(cmd_args::Dict{String,Any}, config::Settings = App.config) :: String
   joinpath(config.tasks_folder, cmd_args["task:new"] * ".jl")
 end
 
@@ -151,6 +162,20 @@ Computes the name of a Genie task based on the command line input.
 """
 function task_module_name(underscored_task_name::String) :: String
   mapreduce( x -> ucfirst(x), *, split(replace(underscored_task_name, ".jl", ""), "_") )
+end
+
+
+"""
+    check_valid_task!(parsed_args::Dict{String,Any}) :: Dict{String,Any}
+
+Checks if the name of the task passed as the command line arg is valid task identifier -- if not, attempts to address it, by appending the TASK_SUFFIX suffix.
+Returns the potentially modified `parsed_args` `Dict`.
+"""
+function check_valid_task!(parsed_args::Dict{String,Any}) :: Dict{String,Any}
+  haskey(parsed_args, "task:new") && isa(parsed_args["task:new"], String) && ! endswith(parsed_args["task:new"], TASK_SUFFIX) && (parsed_args["task:new"] *= TASK_SUFFIX)
+  haskey(parsed_args, "task:run") && isa(parsed_args["task:run"], String) &&! endswith(parsed_args["task:run"], TASK_SUFFIX) && (parsed_args["task:run"] *= TASK_SUFFIX)
+
+  parsed_args
 end
 
 end

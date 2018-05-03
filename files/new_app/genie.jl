@@ -25,7 +25,7 @@ function bootstrap_genie() :: Void
 end
 
 @everywhere bootstrap_genie()
-@everywhere import Genie, App
+@everywhere import Revise, Genie, App
 using App
 App.@dependencies
 
