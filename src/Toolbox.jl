@@ -106,7 +106,7 @@ function tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
 
       module_name = Util.file_name_without_extension(i) |> Symbol
       eval(:(using $(module_name)))
-      ti = TaskInfo(i, module_name, Base.invokelatest(eval(module_name).description) |> string)
+      ti = TaskInfo(i, module_name, task_docs(module_name))
 
       if ( filter_type_name == Symbol() ) push!(tasks, ti)
       elseif ( filter_type_name == module_name ) return TaskInfo[ti]
@@ -117,6 +117,23 @@ function tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
   tasks
 end
 const all_tasks = tasks
+
+
+"""
+    task_docs(module_name::Module) :: String
+
+Retrieves the docstring of the run_task! method and returns it at a string.
+"""
+function task_docs(module_name::Symbol) :: String
+  try
+    docs = Base.doc(Base.Docs.Binding(getfield(current_module(), module_name), :run_task!)) |> string
+    startswith(docs, "No documentation found") && (docs = "No documentation found -- add docstring to `$(module_name).run_task!()` to see it here.")
+
+    docs
+  catch
+    ""
+  end
+end
 
 
 """

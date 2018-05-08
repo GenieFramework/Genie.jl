@@ -2,7 +2,9 @@ module Util
 
 using Genie, Logger, App
 
-export expand_nullable, _!!, _!_, get_nested_field, get_deepest_module, DynamicField, psst, time_to_unixtimestamp
+export expand_nullable, _!!, _!_, get_nested_field, get_deepest_module, DynamicField, psst, time_to_unixtimestamp, reload
+
+import Base.reload
 
 mutable struct DynamicField{T}
   field::T
@@ -234,6 +236,13 @@ function time_to_unixtimestamp(t::Float64)
 end
 function time_to_unixtimestamp()
   time_to_unixtimestamp(time())
+end
+
+
+"""
+"""
+function reload(m::Module)
+  reload(string(m))
 end
 
 end

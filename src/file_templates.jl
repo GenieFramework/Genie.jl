@@ -17,12 +17,10 @@ function new_task(module_name::String) :: String
 
   using Genie, App, Toolbox
 
-  function description()
-    \"\"\"
-    Description of the task here
-    \"\"\"
-  end
 
+  \"\"\"
+  Description of the task here
+  \"\"\"
   function run_task!()
     # Build something great
   end
