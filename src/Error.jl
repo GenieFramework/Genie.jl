@@ -1,5 +1,5 @@
 """
-Error handling module. 
+Error handling module.
 """
 module Error
 

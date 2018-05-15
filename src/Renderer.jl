@@ -1,7 +1,7 @@
 module Renderer
 
 export respond, json, redirect_to, html, flax, include_asset, has_requested, css_asset, js_asset
-export respond_with_json, respond_with_html
+export respond_with_json, respond_with_html, respond_with
 
 using Genie, Util, JSON, Genie.Configuration, HttpServer, App, Router, Logger, Macros
 
@@ -27,6 +27,24 @@ const CONTENT_TYPES = Dict{Symbol,String}(
 
 const VIEWS_FOLDER = "views"
 const LAYOUTS_FOLDER = "layouts"
+
+
+"""
+"""
+function respond_with(response_type::Symbol, args...; kargs...)
+  if lowercase(string(response_type)) == "html"
+    respond_with_html(args...; kargs...)
+  elseif lowercase(string(response_type)) == "json"
+    respond_with_json(args...; kargs...)
+  end
+end
+function respond_with(response_type::Symbol, err::T) where {T<:Exception}
+  if lowercase(string(response_type)) == "html"
+    error_404(err.msg)
+  elseif lowercase(string(response_type)) == "json"
+    respond(Dict(:json => JSON.json(err)), 404, Dict{AbstractString,AbstractString}("Content-Type" => "application/json"))
+  end
+end
 
 
 """
@@ -132,7 +150,7 @@ end
 function respond(response::Response) :: Response
   response
 end
-function respond{T}(body::String, params::Dict{Symbol,T}) :: Response
+function respond(body::String, params::Dict{Symbol,T})::Response where {T}
   r = params[:RESPONSE]
   r.data = body
 
