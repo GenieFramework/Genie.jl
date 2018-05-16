@@ -86,13 +86,15 @@ v 0.8.1
 ☐ refactoring of authorization and authentication. Use hierarchies of types [Admin > User > Guest] and abitities
 ☐ redis cache adapter
 ☐ memcache cache adapter
-☐ Toolbox tasks with arguments
+✔ Toolbox tasks with arguments
 ☐ SearchLight ODBC support
-☐ SearchLight fluent interface (so one can pipe operations select |> from |> ...)
+✔ SearchLight fluent interface (so one can pipe operations select |> from |> ...)
 ☐ Guide - "Web application development with Genie"
 ☐ Tests
 ☐ Complete docstrings and regenerate docs (use DocExtensions)
 ☐ publish packages
+☐ compiled Flax JSON views
+☐ better error auto-rendering (json and html, 4xx, 5xx)
 
 v 0.9
 ☐ tests

@@ -66,30 +66,6 @@ Params() = Params(Dict{Symbol,Any}())
 
 
 """
-    response_type{T}(params::Dict{Symbol,T}) :: Symbol
-    response_type(params::Params) :: Symbol
-
-Returns the content-type of the current request-response cycle.
-"""
-function response_type(params::Dict{Symbol,T})::Symbol where {T}
-  haskey(params, :response_type) ? params[:response_type] : collect(keys(Renderer.CONTENT_TYPES))[1]
-end
-function response_type(params::Params) :: Symbol
-  response_type(params.collection)
-end
-
-
-"""
-    response_type{T}(check::Symbol, params::Dict{Symbol,T}) :: Bool
-
-Checks if the content-type of the current request-response cycle matches `check`.
-"""
-function response_type(check::Symbol, params::Dict{Symbol,T})::Bool where {T}
-  check == response_type(params)
-end
-
-
-"""
     route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: Response
 
 First step in handling a request: sets up @params collection, handles query vars, negotiates content, starts and persists sessions.
@@ -804,6 +780,33 @@ function _params_()
 end
 function _params_(key::Union{String,Symbol})
   task_local_storage(:__params)[$key]
+end
+
+
+"""
+    response_type{T}(params::Dict{Symbol,T}) :: Symbol
+    response_type(params::Params) :: Symbol
+
+Returns the content-type of the current request-response cycle.
+"""
+function response_type(params::Dict{Symbol,T})::Symbol where {T}
+  haskey(params, :response_type) ? params[:response_type] : collect(keys(Renderer.CONTENT_TYPES))[1]
+end
+function response_type(params::Params) :: Symbol
+  response_type(params.collection)
+end
+function response_type() :: Symbol
+  response_type(@params())
+end
+
+
+"""
+    response_type{T}(check::Symbol, params::Dict{Symbol,T}) :: Bool
+
+Checks if the content-type of the current request-response cycle matches `check`.
+"""
+function response_type(check::Symbol, params::Dict{Symbol,T})::Bool where {T}
+  check == response_type(params)
 end
 
 
