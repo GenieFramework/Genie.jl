@@ -38,12 +38,18 @@ function respond_with(response_type::Symbol, args...; kargs...)
     respond_with_json(args...; kargs...)
   end
 end
+function respond(args...; kargs...)
+  respond_with(response_type(), args...; kargs...)
+end
 function respond_with(response_type::Symbol, err::T) where {T<:Exception}
   if lowercase(string(response_type)) == "html"
     error_404(err.msg)
   elseif lowercase(string(response_type)) == "json"
     respond(Dict(:json => JSON.json(err)), 404, Dict{AbstractString,AbstractString}("Content-Type" => "application/json"))
   end
+end
+function respond(err::T) where {T<:Exception}
+  respond_with(response_type(), err)
 end
 
 
@@ -143,6 +149,10 @@ function respond(body::Dict{Symbol,T}, code::Int = 200, headers = Dict{AbstractS
                     end
 
   Response(code, headers, sbody)
+end
+function respond(body::String, content_type::Union{Symbol,String})
+  content_type = isa(content_type, Symbol) ? CONTENT_TYPES[content_type] : content_type
+  Response(200, Dict{AbstractString,AbstractString}("Content-Type" => content_type), body)
 end
 function respond(response::Tuple, headers = Dict{AbstractString,AbstractString}()) :: Response
   respond(response[1], response[2], headers)

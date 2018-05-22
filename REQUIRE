@@ -4,6 +4,7 @@ ArgParse
 DataStructures
 DateParser
 Gumbo
+HttpCommon
 HttpServer
 JSON
 Lumberjack

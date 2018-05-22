@@ -99,7 +99,6 @@ v 0.8.1
 v 0.9
 ☐ tests
 ☐ upgrade of server stack
-☐ packages versioning (declarative packages -- or Pkg3?)
 ☐ custom Genie sysimg: include(joinpath(dirname(JULIA_HOME),"share","julia","build_sysimg.jl")); build_sysimg(force=true)
 ☐ use macros to completely remove function invocations that produce no effect based on settings (if they are disabled from settings)
 ☐ investigate more opportunities for parallelizing code

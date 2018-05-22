@@ -1,6 +1,6 @@
 module Router
 
-using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions
+using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions, HttpCommon
 using Millboard, Genie.Configuration, App, Input, Logger, Util, Renderer, WebSockets, JSON
 if is_dev()
   @eval using Revise
@@ -983,7 +983,7 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
                       """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$ENV                                       $("\n" ^ 1)"""
     end
 
-    error_page = replace(error_page, "<error_message/>", error_message)
+    error_page = replace(error_page, "<error_message/>", escapeHTML(error_message))
 
     Response(error_code, Dict{AbstractString,AbstractString}(), error_page)
   else
