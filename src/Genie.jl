@@ -54,4 +54,14 @@ function run() :: Void
   nothing
 end
 
+
+"""
+    new_app(path = "."; db_support = false, skip_dependencies = false, autostart = true) :: Void
+
+Scaffolds a new Genie app.
+"""
+function new_app(path = "."; db_support = false, skip_dependencies = false, autostart = true) :: Void
+  REPL.new_app(path, db_support, skip_dependencies, autostart)
+end
+
 end

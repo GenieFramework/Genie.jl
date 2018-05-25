@@ -85,9 +85,9 @@ mutable struct Settings
   suppress_output::Bool
   output_length::Int
 
-  db_migrations_table_name::String
-  db_migrations_folder::String
-  db_config_settings::Dict{String,Any}
+  # db_migrations_table_name::String
+  # db_migrations_folder::String
+  # db_config_settings::Dict{String,Any}
 
   tasks_folder::String
   test_folder::String
@@ -100,8 +100,8 @@ mutable struct Settings
   cache_table::String
 
   log_router::Bool
-  log_db::Bool
-  log_queries::Bool
+  # log_db::Bool
+  # log_queries::Bool
   log_requests::Bool
   log_responses::Bool
   log_resources::Bool
@@ -115,7 +115,7 @@ mutable struct Settings
   assets_serve::Bool
   assets_fingerprinted::Bool
 
-  model_relations_eagerness::Symbol
+  # model_relations_eagerness::Symbol
 
   tests_force_test_env::Bool
 
@@ -141,7 +141,7 @@ mutable struct Settings
   renderer_default_layout_file::Symbol
 
   # to be removed
-  app_is_api::Bool
+  # app_is_api::Bool
 
   Settings(;
             server_port                 = 8000, # default port for binding the web server
@@ -165,9 +165,9 @@ mutable struct Settings
             suppress_output = false,
             output_length   = 10_000, # where to truncate strings in console
 
-            db_migrations_table_name  = "schema_migrations",
-            db_migrations_folder      = abspath(joinpath("db", "migrations")),
-            db_config_settings        = Dict{String,Any}(),
+            # db_migrations_table_name  = "schema_migrations",
+            # db_migrations_folder      = abspath(joinpath("db", "migrations")),
+            # db_config_settings        = Dict{String,Any}(),
 
             task_folder       = abspath(joinpath("task")),
             test_folder       = abspath(joinpath("test")),
@@ -180,8 +180,8 @@ mutable struct Settings
             cache_table       = "storage_caches",
 
             log_router    = false,
-            log_db        = true,
-            log_queries   = true,
+            # log_db        = true,
+            # log_queries   = true,
             log_requests  = true,
             log_responses = true,
             log_resources = false,
@@ -195,7 +195,7 @@ mutable struct Settings
             assets_serve          =  true,
             assets_fingerprinted  = false,
 
-            model_relations_eagerness = :lazy,
+            # model_relations_eagerness = :lazy,
 
             tests_force_test_env = true,
 
@@ -221,20 +221,22 @@ mutable struct Settings
             renderer_default_layout_file = :app,
 
             # to be removed
-            app_is_api = false
+            # app_is_api = false
         ) =
               new(
                   server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature,
                   app_env,
                   cors_headers, cors_allowed_origins,
                   suppress_output, output_length,
-                  db_migrations_table_name, db_migrations_folder, db_config_settings,
+                  # db_migrations_table_name, db_migrations_folder, db_config_settings,
                   task_folder, test_folder,
                   log_folder,
                   cache_folder, cache_adapter, cache_duration, cache_table,
-                  log_router, log_db, log_queries, log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted, log_cache, log_views,
+                  log_router,
+                  # log_db, log_queries,
+                  log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted, log_cache, log_views,
                   assets_path, assets_serve, assets_fingerprinted,
-                  model_relations_eagerness,
+                  # model_relations_eagerness,
                   tests_force_test_env,
                   session_auto_start, session_key_name, session_storage, session_folder, session_table,
                   inflector_irregulars,
@@ -243,10 +245,10 @@ mutable struct Settings
                   lookup_ip,
                   run_as_server,
                   websocket_server,
-                  renderer_default_layout_file,
+                  renderer_default_layout_file
 
                   # to be removed
-                  app_is_api
+                  # app_is_api
                 )
 end
 
