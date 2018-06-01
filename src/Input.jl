@@ -59,7 +59,7 @@ end
 ###
 
 function post_from_request!(request::Request, input::HttpInput)
-  if get(request.headers, "Content-Type", "") == "application/x-www-form-urlencoded"
+  if  searchindex(get(request.headers, "Content-Type", ""), "application/x-www-form-urlencoded") != 0 
     post_url_encoded!(request.data, input.post)
   elseif searchindex(get(request.headers, "Content-Type", ""), "multipart/form-data") != 0
     post_multipart!(request, input.post, input.files)
