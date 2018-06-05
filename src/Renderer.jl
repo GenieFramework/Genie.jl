@@ -5,17 +5,13 @@ export respond_with_json, respond_with_html, respond_with
 
 using Genie, Util, JSON, Genie.Configuration, HttpServer, App, Router, Logger, Macros
 
-if IS_IN_APP
-  eval(:(using $(App.config.html_template_engine), $(App.config.json_template_engine)))
-  eval(:(const HTMLTemplateEngine = $(App.config.html_template_engine)))
-  eval(:(const JSONTemplateEngine = $(App.config.json_template_engine)))
+eval(:(using $(App.config.html_template_engine), $(App.config.json_template_engine)))
+eval(:(const HTMLTemplateEngine = $(App.config.html_template_engine)))
+eval(:(const JSONTemplateEngine = $(App.config.json_template_engine)))
 
-  export HTMLTemplateEngine, JSONTemplateEngine
+export HTMLTemplateEngine, JSONTemplateEngine
 
-  const DEFAULT_LAYOUT_FILE = App.config.renderer_default_layout_file
-else
-  const DEFAULT_LAYOUT_FILE = :app
-end
+const DEFAULT_LAYOUT_FILE = App.config.renderer_default_layout_file
 
 const CONTENT_TYPES = Dict{Symbol,String}(
   :html   => "text/html",
@@ -24,6 +20,7 @@ const CONTENT_TYPES = Dict{Symbol,String}(
   :js     => "text/javascript",
   :xml    => "text/xml",
 )
+const DEFAULT_CONTENT_TYPE = :html
 
 const VIEWS_FOLDER = "views"
 const LAYOUTS_FOLDER = "layouts"
@@ -38,18 +35,12 @@ function respond_with(response_type::Symbol, args...; kargs...)
     respond_with_json(args...; kargs...)
   end
 end
-function respond(args...; kargs...)
-  respond_with(response_type(), args...; kargs...)
-end
 function respond_with(response_type::Symbol, err::T) where {T<:Exception}
   if lowercase(string(response_type)) == "html"
     error_404(err.msg)
   elseif lowercase(string(response_type)) == "json"
     respond(Dict(:json => JSON.json(err)), 404, Dict{AbstractString,AbstractString}("Content-Type" => "application/json"))
   end
-end
-function respond(err::T) where {T<:Exception}
-  respond_with(response_type(), err)
 end
 
 
@@ -61,6 +52,9 @@ Invokes the HTML renderer of the underlying configured templating library.
 function html(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
   HTMLTemplateEngine.html(resource, action, layout; parse_vars(vars)...)
 end
+function html(view::String, layout::String, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
+  HTMLTemplateEngine.html(view, layout; parse_vars(vars)...)
+end
 
 
 """
@@ -68,8 +62,11 @@ end
 
 Invokes the HTML renderer of the underlying configured templating library and wraps it into a `HttpServer.Response`.
 """
-function respond_with_html(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
+function respond_with_html(resource::Symbol, action::Symbol, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
   html(resource, action, layout, check_nulls; vars...) |> respond
+end
+function respond_with_html(view::String, layout::String, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
+  html(view, layout, check_nulls; vars...) |> respond
 end
 
 
@@ -150,9 +147,10 @@ function respond(body::Dict{Symbol,T}, code::Int = 200, headers = Dict{AbstractS
 
   Response(code, headers, sbody)
 end
-function respond(body::String, content_type::Union{Symbol,String})
-  content_type = isa(content_type, Symbol) ? CONTENT_TYPES[content_type] : content_type
-  Response(200, Dict{AbstractString,AbstractString}("Content-Type" => content_type), body)
+# function respond(body::String, content_type::Union{Symbol,String})
+function respond(body::String, content_type::Symbol) :: Response
+  # content_type = isa(content_type, Symbol) ? CONTENT_TYPES[content_type] : content_type
+  Response(200, Dict{AbstractString,AbstractString}("Content-Type" => CONTENT_TYPES[content_type]), body)
 end
 function respond(response::Tuple, headers = Dict{AbstractString,AbstractString}()) :: Response
   respond(response[1], response[2], headers)
@@ -168,6 +166,12 @@ function respond(body::String, params::Dict{Symbol,T})::Response where {T}
 end
 function respond(body::String) :: Response
   respond(Response(body))
+end
+function respond(args...; kargs...) :: Response
+  respond_with(response_type(), args...; kargs...)
+end
+function respond(err::T)::Response where {T<:Exception}
+  respond_with(response_type(), err)
 end
 
 

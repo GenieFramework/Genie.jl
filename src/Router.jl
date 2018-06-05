@@ -481,7 +481,7 @@ function match_routes(req::Request, res::Response, session::Union{Sessions.Sessi
             end
   end
 
-  App.config.log_router && Logger.log("Router: No route matched - defaulting 404", :err)
+  App.config.log_router && Logger.log("Router: No route matched - defaulting to 404", :err)
 
   # serve_error_file(404, "Not found", params.collection)
   error_404(req.resource)
@@ -790,7 +790,7 @@ end
 Returns the content-type of the current request-response cycle.
 """
 function response_type(params::Dict{Symbol,T})::Symbol where {T}
-  haskey(params, :response_type) ? params[:response_type] : collect(keys(Renderer.CONTENT_TYPES))[1]
+  haskey(params, :response_type) ? params[:response_type] : Renderer.DEFAULT_CONTENT_TYPE
 end
 function response_type(params::Params) :: Symbol
   response_type(params.collection)
@@ -970,26 +970,30 @@ end
 Serves the error file correspoding to `error_code` and current environment.
 """
 function serve_error_file(error_code::Int, error_message::String = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
-  if is_dev()
-    error_page =  open(Genie.DOC_ROOT_PATH * "/error-$(error_code).html") do f
-                    readstring(f)
-                  end
+  try
+    if is_dev()
+      error_page =  open(Genie.DOC_ROOT_PATH * "/error-$(error_code).html") do f
+                      readstring(f)
+                    end
 
-    if error_code == 500
-      error_message = error_message * "\n\n\n" *
-                      """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                             $("\n" ^ 3)""" *
-                      """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(params))                 $("\n" ^ 3)""" *
-                      """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Router.named_routes()))  $("\n" ^ 3)""" *
-                      """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$ENV                                       $("\n" ^ 1)"""
+      if error_code == 500
+        error_message = error_message * "\n\n\n" *
+                        """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                             $("\n" ^ 3)""" *
+                        """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(params))                 $("\n" ^ 3)""" *
+                        """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Router.named_routes()))  $("\n" ^ 3)""" *
+                        """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$ENV                                       $("\n" ^ 1)"""
+      end
+
+      error_page = replace(error_page, "<error_message/>", escapeHTML(error_message))
+
+      Response(error_code, Dict{AbstractString,AbstractString}(), error_page)
+    else
+      f = file_path(URI("/error-$(error_code).html").path)
+
+      Response(error_code, file_headers(f), replace(open(readstring, f), "<error_message/>", error_message))
     end
-
-    error_page = replace(error_page, "<error_message/>", escapeHTML(error_message))
-
-    Response(error_code, Dict{AbstractString,AbstractString}(), error_page)
-  else
-    f = file_path(URI("/error-$(error_code).html").path)
-
-    Response(error_code, file_headers(f), replace(open(readstring, f), "<error_message/>", error_message))
+  catch ex
+    Response(error_code, "Error $error_code: $error_message")
   end
 end
 

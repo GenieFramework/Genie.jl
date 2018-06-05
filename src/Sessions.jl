@@ -1,6 +1,6 @@
 module Sessions
 
-using Genie, SHA, HttpServer, Cookies, App, Helpers, Router
+using Genie, SHA, HttpServer, Cookies, App, Helpers, Router, Logger
 
 mutable struct Session
   id::String
@@ -10,11 +10,9 @@ Session(id::String) = Session(id, Dict{Symbol,Any}())
 
 export Session
 
-if IS_IN_APP
-  const session_adapter_name = string(App.config.session_storage) * "SessionAdapter"
-  eval(parse("using $session_adapter_name"))
-  const SessionAdapter = eval(parse(session_adapter_name))
-end
+const session_adapter_name = string(App.config.session_storage) * "SessionAdapter"
+eval(parse("using $session_adapter_name"))
+const SessionAdapter = eval(parse(session_adapter_name))
 
 
 """

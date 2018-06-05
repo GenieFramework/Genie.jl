@@ -12,7 +12,7 @@ end
 using Genie, YAML, Macros, Logger, Inflector, Util
 SEARCHLIGHT_ON && eval(:(using SearchLight, Validation))
 
-IS_IN_APP && (isdefined(:config) || const config = Genie.config)
+isdefined(:config) || const config = Genie.config
 
 
 """
@@ -105,10 +105,17 @@ end
 Wrapper around /config/secrets.jl SECRET_TOKEN `const`.
 """
 function secret_token() :: String
-  isdefined(App, :SECRET_TOKEN) ||
-    throw("SECRET_TOKEN not configured - please make sure that you have a valid secrets.jl file. You can generate a new secrets.jl file with a random SECRET_TOKEN using Genie.REPL.write_secrets_file() or use the included /app/config/secrets.jl.example file as a model.")
+  if isdefined(App, :SECRET_TOKEN)
+    SECRET_TOKEN
+  else
+    warn("SECRET_TOKEN not configured - please make sure that you have a valid secrets.jl file.
+          You can generate a new secrets.jl file with a random SECRET_TOKEN using Genie.REPL.write_secrets_file()
+          or use the included /app/config/secrets.jl.example file as a model.")
+    st = Genie.REPL.secret_token()
+    eval(App, parse("""const SECRET_TOKEN = "$st" """))
 
-  SECRET_TOKEN
+    st
+  end
 end
 
 if IS_IN_APP
