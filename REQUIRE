@@ -9,7 +9,6 @@ HttpServer
 JSON
 Lumberjack
 MbedTLS
-Memoize
 Millboard
 Nettle
 OhMyREPL

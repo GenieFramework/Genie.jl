@@ -1,6 +1,6 @@
 module Router
 
-using HttpServer, URIParser, Genie, AppServer, Memoize, Sessions, HttpCommon
+using HttpServer, URIParser, Genie, AppServer, Sessions, HttpCommon
 using Millboard, Genie.Configuration, App, Input, Logger, Util, Renderer, WebSockets, JSON
 if is_dev()
   @eval using Revise
