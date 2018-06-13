@@ -3,7 +3,7 @@ Handles input coming through HttpServer requests.
 """
 module Input
 
-using HttpCommon, URIParser
+using HttpCommon, URIParser, HTTP
 
 export post, files, HttpInput, HttpPostData, HttpFiles, HttpFile
 
@@ -36,7 +36,7 @@ end
 
 ###
 
-function all(request::Request) :: HttpInput
+function all(request::HTTP.Request) :: HttpInput
   input::HttpInput = HttpInput()
 
   post_from_request!(request, input)
@@ -44,13 +44,13 @@ function all(request::Request) :: HttpInput
   input
 end
 
-function post(request::Request)
+function post(request::HTTP.Request)
   input::HttpInput = all(request)
 
   input.post
 end
 
-function files(request::Request)
+function files(request::HTTP.Request)
   input::HttpInput = all(request)
 
   input.files
@@ -58,10 +58,12 @@ end
 
 ###
 
-function post_from_request!(request::Request, input::HttpInput)
-  if  searchindex(get(request.headers, "Content-Type", ""), "application/x-www-form-urlencoded") != 0 
+function post_from_request!(request::HTTP.Request, input::HttpInput)
+  headers = Dict(request.headers)
+
+  if  searchindex(get(headers, "Content-Type", ""), "application/x-www-form-urlencoded") != 0
     post_url_encoded!(request.data, input.post)
-  elseif searchindex(get(request.headers, "Content-Type", ""), "multipart/form-data") != 0
+  elseif searchindex(get(headers, "Content-Type", ""), "multipart/form-data") != 0
     post_multipart!(request, input.post, input.files)
   end
 end
@@ -74,8 +76,9 @@ function post_url_encoded!(http_data::Array{UInt8, 1}, post_data::HttpPostData)
   end
 end
 
-function post_multipart!(request::Request, post_data::HttpPostData, files::HttpFiles)
-  boundary::String = request.headers["Content-Type"][(searchindex(request.headers["Content-Type"], "boundary=") + 9):end]
+function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::HttpFiles)
+  headers = Dict(request.headers)
+  boundary::String = headers["Content-Type"][(searchindex(request.headers["Content-Type"], "boundary=") + 9):end]
 
   boundary_length::Int = length(boundary)
 

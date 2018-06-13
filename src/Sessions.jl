@@ -1,6 +1,6 @@
 module Sessions
 
-using Genie, SHA, HttpServer, Cookies, App, Helpers, Router, Logger
+using Genie, SHA, HTTP, Genie.Cookies, Genie.Logger
 
 mutable struct Session
   id::String
@@ -10,8 +10,9 @@ Session(id::String) = Session(id, Dict{Symbol,Any}())
 
 export Session
 
-const session_adapter_name = string(App.config.session_storage) * "SessionAdapter"
-eval(parse("using $session_adapter_name"))
+const session_adapter_name = string(Genie.config.session_storage) * "SessionAdapter"
+include("session_adapters/$session_adapter_name.jl")
+eval(parse("using .$session_adapter_name"))
 const SessionAdapter = eval(parse(session_adapter_name))
 
 
@@ -24,28 +25,28 @@ Generates a unique session id.
 """
 function id() :: String
   try
-    App.SECRET_TOKEN * ":" * bytes2hex(sha1(string(Dates.now()))) * ":" * string(rand()) * ":" * string(hash(Genie)) |> sha256 |> bytes2hex
+    Genie.SECRET_TOKEN * ":" * bytes2hex(sha1(string(Dates.now()))) * ":" * string(rand()) * ":" * string(hash(Genie)) |> sha256 |> bytes2hex
   catch ex
     Logger.log("Session error", :err)
     Logger.log("$(@__FILE__):$(@__LINE__)", :err)
     error("Can't compute session id - please make sure SECRET_TOKEN is defined in config/secrets.jl")
   end
 end
-function id(req::Request) :: String
-  ! isnull(Cookies.get(req, App.config.session_key_name)) &&
-    ! isempty(Base.get(Cookies.get(req, App.config.session_key_name))) &&
-      return Base.get(Cookies.get(req, App.config.session_key_name))
+function id(req::HTTP.Request) :: String
+  ! isnull(Cookies.get(req, Genie.config.session_key_name)) &&
+    ! isempty(Base.get(Cookies.get(req, Genie.config.session_key_name))) &&
+      return Base.get(Cookies.get(req, Genie.config.session_key_name))
 
   id()
 end
-function id(req::Request, res::Response) :: String
-  ! isnull(Cookies.get(res, App.config.session_key_name)) &&
-    ! isempty(Base.get(Cookies.get(res, App.config.session_key_name))) &&
-      return Base.get(Cookies.get(res, App.config.session_key_name))
+function id(req::HTTP.Request, res::HTTP.Response) :: String
+  ! isnull(Cookies.get(res, Genie.config.session_key_name)) &&
+    ! isempty(Base.get(Cookies.get(res, Genie.config.session_key_name))) &&
+      return Base.get(Cookies.get(res, Genie.config.session_key_name))
 
-  ! isnull(Cookies.get(req, App.config.session_key_name)) &&
-    ! isempty(Base.get(Cookies.get(req, App.config.session_key_name))) &&
-      return Base.get(Cookies.get(req, App.config.session_key_name))
+  ! isnull(Cookies.get(req, Genie.config.session_key_name)) &&
+    ! isempty(Base.get(Cookies.get(req, Genie.config.session_key_name))) &&
+      return Base.get(Cookies.get(req, Genie.config.session_key_name))
 
   id()
 end
@@ -57,13 +58,13 @@ end
 
 Initiates a session.
 """
-function start(session_id::String, req::Request, res::Response; options = Dict{String,String}()) :: Session
+function start(session_id::String, req::HTTP.Request, res::HTTP.Response; options = Dict{String,String}()) :: Session
   options = merge(Dict("Path" => "/", "HttpOnly" => "", "Expires" => "0"), options)
-  Cookies.set!(res, App.config.session_key_name, session_id, options)
+  Cookies.set!(res, Genie.config.session_key_name, session_id, options)
 
   load(session_id)
 end
-function start(req::Request, res::Response) :: Session
+function start(req::HTTP.Request, res::HTTP.Response) :: Session
   start(id(req, res), req, res)
 end
 
@@ -150,6 +151,26 @@ function load(session_id::String) :: Session
     return Session(session_id)
   else
     return Base.get(session)
+  end
+end
+
+
+"""
+    session() :: Sessions.Session
+    session(params::Dict{Symbol,Any}) :: Sessions.Session
+
+Returns the `Session` object associated with the current HTTP request.
+"""
+function session() :: Sessions.Session
+  session(Router._params_())
+end
+function session(params::Dict{Symbol,Any}) :: Sessions.Session
+  if haskey(params, Genie.PARAMS_SESSION_KEY)
+    return params[Genie.PARAMS_SESSION_KEY]
+  else
+    msg = "Invalid params Dict -- must have $(Genie.PARAMS_SESSION_KEY) key"
+    Logger.log(msg, :err)
+    error(msg)
   end
 end
 

@@ -3,15 +3,18 @@ module Renderer
 export respond, json, redirect_to, html, flax, include_asset, has_requested, css_asset, js_asset
 export respond_with_json, respond_with_html, respond_with
 
-using Genie, Util, JSON, Genie.Configuration, HttpServer, App, Router, Logger, Macros
+using Genie, Genie.Util, JSON, Genie.Configuration, HTTP, Genie.Logger, Genie.Macros
 
-eval(:(using $(App.config.html_template_engine), $(App.config.json_template_engine)))
-eval(:(const HTMLTemplateEngine = $(App.config.html_template_engine)))
-eval(:(const JSONTemplateEngine = $(App.config.json_template_engine)))
+eval(:(include("$(Genie.config.html_template_engine).jl")))
+Genie.config.html_template_engine != Genie.config.json_template_engine && eval(:(include("$(Genie.config.json_template_engine).jl")))
+
+eval(:(using .$(Genie.config.html_template_engine), .$(Genie.config.json_template_engine)))
+eval(:(const HTMLTemplateEngine = $(Genie.config.html_template_engine)))
+eval(:(const JSONTemplateEngine = $(Genie.config.json_template_engine)))
 
 export HTMLTemplateEngine, JSONTemplateEngine
 
-const DEFAULT_LAYOUT_FILE = App.config.renderer_default_layout_file
+const DEFAULT_LAYOUT_FILE = Genie.config.renderer_default_layout_file
 
 const CONTENT_TYPES = Dict{Symbol,String}(
   :html   => "text/html",
@@ -21,9 +24,6 @@ const CONTENT_TYPES = Dict{Symbol,String}(
   :xml    => "text/xml",
 )
 const DEFAULT_CONTENT_TYPE = :html
-
-const VIEWS_FOLDER = "views"
-const LAYOUTS_FOLDER = "layouts"
 
 
 """
@@ -37,7 +37,7 @@ function respond_with(response_type::Symbol, args...; kargs...)
 end
 function respond_with(response_type::Symbol, err::T) where {T<:Exception}
   if lowercase(string(response_type)) == "html"
-    error_404(err.msg)
+    Genie.Router.error_404(err.msg)
   elseif lowercase(string(response_type)) == "json"
     respond(Dict(:json => JSON.json(err)), 404, Dict{AbstractString,AbstractString}("Content-Type" => "application/json"))
   end
@@ -62,10 +62,10 @@ end
 
 Invokes the HTML renderer of the underlying configured templating library and wraps it into a `HttpServer.Response`.
 """
-function respond_with_html(resource::Symbol, action::Symbol, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
+function respond_with_html(resource::Symbol, action::Symbol, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: HTTP.Response
   html(resource, action, layout, check_nulls; vars...) |> respond
 end
-function respond_with_html(view::String, layout::String, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
+function respond_with_html(view::String, layout::String, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: HTTP.Response
   html(view, layout, check_nulls; vars...) |> respond
 end
 
@@ -100,12 +100,12 @@ end
 
 Sets redirect headers and prepares the `Response`.
 """
-function redirect_to(location::String, code = 302, headers = Dict{AbstractString,AbstractString}()) :: Response
+function redirect_to(location::String, code = 302, headers = Dict{AbstractString,AbstractString}()) :: HTTP.Response
   headers["Location"] = location
   respond(Dict{Symbol,AbstractString}(:plain => "Redirecting you to $location"), code, headers)
 end
-function redirect_to(named_route::Symbol, code = 302, headers = Dict{AbstractString,AbstractString}()) :: Response
-  redirect_to(link_to(named_route), code, headers)
+function redirect_to(named_route::Symbol, code = 302, headers = Dict{AbstractString,AbstractString}()) :: HTTP.Response
+  redirect_to(Genie.Router.link_to(named_route), code, headers)
 end
 
 
@@ -124,7 +124,7 @@ end
 
 Constructs a `Response` corresponding to the content-type of the request.
 """
-function respond(body::Dict{Symbol,T}, code::Int = 200, headers = Dict{AbstractString,AbstractString}())::Response where {T}
+function respond(body::Dict{Symbol,T}, code::Int = 200, headers = Dict{AbstractString,AbstractString}())::HTTP.Response where {T}
   sbody::String =   if haskey(body, :json)
                       headers["Content-Type"] = CONTENT_TYPES[:json]
                       body[:json]
@@ -138,40 +138,38 @@ function respond(body::Dict{Symbol,T}, code::Int = 200, headers = Dict{AbstractS
                       headers["Content-Type"] = CONTENT_TYPES[:plain]
                       body[:plain]
                     else
-                      Logger.log("Unsupported Content-Type", :err)
-                      Logger.log(body)
-                      Logger.@location
+                      Genie.Logger.log("Unsupported Content-Type", :err)
+                      Genie.Logger.log(body)
+                      Genie.Logger.@location
 
                       error("Unsupported Content-Type")
                     end
 
-  Response(code, headers, sbody)
+                    HTTP.Response(code, [h for h in headers], body = sbody)
 end
-# function respond(body::String, content_type::Union{Symbol,String})
-function respond(body::String, content_type::Symbol) :: Response
-  # content_type = isa(content_type, Symbol) ? CONTENT_TYPES[content_type] : content_type
-  Response(200, Dict{AbstractString,AbstractString}("Content-Type" => CONTENT_TYPES[content_type]), body)
+function respond(body::String, content_type::Symbol) :: HTTP.Response
+  HTTP.Response(200, ["Content-Type" => CONTENT_TYPES[content_type]], body = body)
 end
-function respond(response::Tuple, headers = Dict{AbstractString,AbstractString}()) :: Response
-  respond(response[1], response[2], headers)
+function respond(response::Tuple, headers = Dict{AbstractString,AbstractString}()) :: HTTP.Response
+  respond(response[1], response[2], [h for h in headers])
 end
-function respond(response::Response) :: Response
+function respond(response::HTTP.Response) :: HTTP.Response
   response
 end
-function respond(body::String, params::Dict{Symbol,T})::Response where {T}
+function respond(body::String, params::Dict{Symbol,T})::HTTP.Response where {T}
   r = params[:RESPONSE]
   r.data = body
 
   r |> respond
 end
-function respond(body::String) :: Response
-  respond(Response(body))
+function respond(body::String) :: HTTP.Response
+  respond(HTTP.Response(body))
 end
-function respond(args...; kargs...) :: Response
-  respond_with(response_type(), args...; kargs...)
+function respond(args...; kargs...) :: HTTP.Response
+  respond_with(Genie.Router.response_type(), args...; kargs...)
 end
-function respond(err::T)::Response where {T<:Exception}
-  respond_with(response_type(), err)
+function respond(err::T)::HTTP.Response where {T<:Exception}
+  respond_with(Genie.Router.response_type(), err)
 end
 
 
@@ -186,38 +184,38 @@ end
 
 
 """
-    include_asset(asset_type::Symbol, file_name::String; fingerprinted = App.config.assets_fingerprinted) :: String
+    include_asset(asset_type::Symbol, file_name::String; fingerprinted = Genie.config.assets_fingerprinted) :: String
 
 Returns the path to an asset. `asset_type` can be one of `:js`, `:css`. `file_name` should not include the extension.
 `fingerprinted` is a `Bool` indicated wheter or not fingerprinted (unique hash) should be added to the asset's filename (used in production to invalidate caches).
 """
-function include_asset(asset_type::Symbol, file_name::String; fingerprinted::Bool = App.config.assets_fingerprinted) :: String
-  suffix = fingerprinted ? "-" * App.ASSET_FINGERPRINT * ".$(asset_type)" : ".$(asset_type)"
+function include_asset(asset_type::Symbol, file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
+  suffix = fingerprinted ? "-" * Genie.ASSET_FINGERPRINT * ".$(asset_type)" : ".$(asset_type)"
   "/$asset_type/$(file_name)$(suffix)"
 end
-function include_asset(asset_type::Symbol, file_name::Symbol; fingerprinted::Bool = App.config.assets_fingerprinted) :: String
+function include_asset(asset_type::Symbol, file_name::Symbol; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
   include_asset(asset_type, string(file_name), fingerprinted = fingerprinted)
 end
 
 
 """
-    css_asset(file_name::String; fingerprinted::Bool = App.config.assets_fingerprinted) :: String
+    css_asset(file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
 
 Path to a css asset. `file_name` should not include the extension.
 `fingerprinted` is a `Bool` indicated wheter or not fingerprinted (unique hash) should be added to the asset's filename (used in production to invalidate caches).
 """
-function css_asset(file_name::String; fingerprinted::Bool = App.config.assets_fingerprinted) :: String
+function css_asset(file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
   include_asset(:css, file_name, fingerprinted = fingerprinted)
 end
 
 
 """
-    js_asset(file_name::String; fingerprinted::Bool = App.config.assets_fingerprinted) :: String
+    js_asset(file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
 
 Path to a js asset. `file_name` should not include the extension.
 `fingerprinted` is a `Bool` indicated wheter or not fingerprinted (unique hash) should be added to the asset's filename (used in production to invalidate caches).
 """
-function js_asset(file_name::String; fingerprinted::Bool = App.config.assets_fingerprinted) :: String
+function js_asset(file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
   include_asset(:js, file_name, fingerprinted = fingerprinted)
 end
 

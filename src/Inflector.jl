@@ -3,7 +3,7 @@ Handles the functionality for applying various gramatical rules.
 """
 module Inflector
 
-using Genie, App
+using Genie
 
 const vowels = ["a", "e", "i", "o", "u"]
 
@@ -104,7 +104,7 @@ end
 Returns a `vector` of words with irregular singular or plural forms.
 """
 function irregulars() :: Vector{Tuple{String,String}}
-  vcat(IRREGULAR_NOUNS, App.config.inflector_irregulars)
+  vcat(IRREGULAR_NOUNS, Genie.config.inflector_irregulars)
 end
 
 

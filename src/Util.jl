@@ -1,6 +1,7 @@
 module Util
 
-using Genie, Logger, App
+using Nullables
+using Genie, Genie.Logger
 
 export expand_nullable, _!!, _!_, get_nested_field, get_deepest_module, DynamicField, psst, time_to_unixtimestamp, reload
 
@@ -56,10 +57,10 @@ end
 
 Returns `value` if it is not `null` - otherwise `default`.
 """
-function expand_nullable{T}(value::T) :: T
+function expand_nullable(value::T)::T where T
   value
 end
-function expand_nullable{T}(value::Nullable{T}, default::T) :: T
+function expand_nullable(value::Nullable{T}, default::T)::T where T
   if isnull(value)
     default
   else
@@ -73,7 +74,7 @@ end
 
 Shortcut for `Base.get(value)`.
 """
-function _!!{T}(value::Nullable{T}) :: T
+function _!!(value::Nullable{T})::T where T
   Base.get(value)
 end
 
@@ -83,7 +84,7 @@ end
 
 Shortcut for `expand_nullable(value, default)`.
 """
-function _!_{T}(value::Nullable{T}, default::T) :: T
+function _!_(value::Nullable{T}, default::T)::T where T
   expand_nullable(value, default)
 end
 
@@ -140,7 +141,7 @@ end
 
 
 """
-    get_deepest_module(path::String, depth::Int = 1, parent::Union{Module,Void} = nothing) :: Module
+    get_deepest_module(path::String, depth::Int = 1, parent::Module) :: Module
 
 Returns the deepest nested `module` in a `path` of form `Module.Module.Module`.
 """
@@ -163,31 +164,21 @@ end
 Invokes `f` while supressing all debugging output for the duration of the invocation.
 """
 function psst(f::Function)
-  App.config.suppress_output = true
+  Genie.config.suppress_output = true
   result = f()
-  App.config.suppress_output = false
+  Genie.config.suppress_output = false
 
   result
 end
 
 
 """
-    kill(t::Task) :: Void
+    kill(t::Task) :: Nothing
 
 Kills `Task` `t` by forcing it to throw an `InterruptException`.
 """
-function kill(t::Task) :: Void
+function kill(t::Task) :: Nothing
   Base.throwto(t, InterruptException())
-end
-
-
-"""
-    package_added(pkg_name::String) :: Bool
-
-Checks if the Julia package `pkg_name` has already been added.
-"""
-function package_added(pkg_name::String) :: Bool
-  isdir(Pkg.dir(pkg_name))
 end
 
 

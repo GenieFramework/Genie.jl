@@ -1,20 +1,20 @@
 module FileCacheAdapter
 
-using Genie, Logger, App
+using Genie, Genie.Logger
 
 
 """
 The subfolder under the cache folder where the cache should be stored.
 """
-const CACHE_FOLDER = IS_IN_APP ? App.config.cache_folder : tempdir()
+const CACHE_FOLDER = Genie.config.cache_folder
 
 
 """
-    to_cache(key::Union{String,Symbol}, content::Any; dir = "") :: Void
+    to_cache(key::Union{String,Symbol}, content::Any; dir = "") :: Nothing
 
 Persists `content` onto the file system under the `key` key.
 """
-function to_cache(key::Union{String,Symbol}, content::Any; dir = "") :: Void
+function to_cache(key::Union{String,Symbol}, content::Any; dir = "") :: Nothing
   open(cache_path(string(key), dir = dir), "w") do io
     serialize(io, content)
   end
@@ -33,7 +33,7 @@ function from_cache(key::Union{String,Symbol}, expiration::Int; dir = "") :: Nul
 
   ( ! isfile(file_path) || stat(file_path).ctime + expiration < time() ) && return Nullable()
 
-  App.config.log_cache && Logger.log("Found file system cache for $key at $file_path", :info)
+  Genie.config.log_cache && Logger.log("Found file system cache for $key at $file_path", :info)
 
   output = open(file_path) do io
     deserialize(io)
@@ -44,11 +44,11 @@ end
 
 
 """
-    purge(key::Union{String,Symbol}) :: Void
+    purge(key::Union{String,Symbol}) :: Nothing
 
 Removes the cache data stored under the `key` key.
 """
-function purge(key::Union{String,Symbol}; dir = "") :: Void
+function purge(key::Union{String,Symbol}; dir = "") :: Nothing
   rm(cache_path(string(key), dir = dir))
 
   nothing
@@ -56,11 +56,11 @@ end
 
 
 """
-    purge_all() :: Void
+    purge_all() :: Nothing
 
 Removes all cached data.
 """
-function purge_all(; dir = "") :: Void
+function purge_all(; dir = "") :: Nothing
   rm(cache_path("", dir = dir), recursive = true)
   mkpath(cache_path("", dir = dir))
   open(joinpath(cache_path("", dir = dir), ".gitkeep"), "w") do f

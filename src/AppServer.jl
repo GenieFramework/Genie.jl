@@ -3,12 +3,7 @@ Handles HttpServer related functionality, manages requests and responses and the
 """
 module AppServer
 
-using HttpServer, Router, Genie, Millboard, Logger, Sessions, Genie.Configuration, MbedTLS, WebSockets, Channels, App, URIParser
-
-struct WebServer
-  task::Task
-  server::HttpServer.Server
-end
+using Revise, HTTP, Genie.Router, Genie, Millboard, Genie.Logger, Genie.Sessions, Genie.Configuration, MbedTLS, WebSockets, Genie.Channels, URIParser
 
 
 """
@@ -23,100 +18,87 @@ julia> AppServer.startup()
 Listening on 0.0.0.0:8000...
 ```
 """
-function startup(port::Int = 8000) :: WebServer
-  http = setup_http_handler()
-  App.config.websocket_server && (wsh = setup_ws_handler())
-  App.config.lookup_ip && (http.events["connect"] = (http_client) -> handle_connect(http_client))
-
-  server = App.config.websocket_server ? Server(http, wsh) : Server(http)
-  server_task = @async run(server, port)
-
-  if App.config.run_as_server
-    while true
-      sleep(1_000_000)
-    end
-  end
-
-  WebServer(server_task, server)
-end
-
-
-"""
-"""
-function setup_http_handler() :: HttpHandler
-  HttpHandler() do req::Request, res::Response
-    try
-      ip::IPv4 = App.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
-      nworkers() == 1 ? handle_request(req, res, ip) : @fetch handle_request(req, res, ip)
-    catch ex
-      Logger.log(string(ex), :critical)
-      Logger.log(sprint(io->Base.show_backtrace(io, catch_backtrace() )), :critical)
-      Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
-
-      message = Configuration.is_prod() ?
-                  "The error has been logged and we'll look into it ASAP." :
-                  string(ex, " in $(@__FILE__):$(@__LINE__)", "\n\n", sprint(io->Base.show_backtrace(io, catch_backtrace())))
-
-      Router.serve_error_file(500, message, Router.@params)
-    end
+function startup(port::Int = 8000, host = "127.0.0.1")
+  @async HTTP.listen(host, port) do req::HTTP.Request
+    setup_http_handler(req, HTTP.Response())
   end
 end
 
 
 """
 """
-function setup_ws_handler() :: WebSocketHandler
-  WebSocketHandler() do req::Request, ws_client::WebSockets.WebSocket
-    while true
-      response =  try
-                    msg = read(ws_client)
-                    ip::IPv4 = App.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
+function setup_http_handler(req::HTTP.Request, res::HTTP.Response)
+  try
+    # ip::IPv4 = Genie.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
+    nworkers() == 1 ?
+      handle_request(req, res, ip"255.255.255.255") :
+      @fetch handle_request(req, res, ip"255.255.255.255")
+  catch ex
+    Genie.Logger.log(string(ex), :critical)
+    Genie.Logger.log(sprint(io->Base.show_backtrace(io, catch_backtrace() )), :critical)
+    Genie.Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
 
-                    nworkers() == 1 ? handle_ws_request(req, String(msg), ws_client, ip) : @fetch handle_ws_request(req, String(msg), ws_client, ip)
-                  catch ex
-                    if typeof(ex) == WebSockets.WebSocketClosedError
-                      Channels.unsubscribe_client(ws_client)
+    message = Genie.Configuration.is_prod() ?
+                "The error has been logged and we'll look into it ASAP." :
+                string(ex, " in $(@__FILE__):$(@__LINE__)", "\n\n", sprint(io->Base.show_backtrace(io, catch_backtrace())))
 
-                      break
-                    end
+    Genie.Router.serve_error_file(500, message, Genie.Router.@params)
+  end
+end
 
-                    try
-                      Logger.log(string(ex), :critical)
-                      Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
 
-                      Configuration.is_prod() ? "The error has been logged and we'll look into it ASAP." : string(ex)
-                    catch exx
-                      print_with_color(:red, "One can not simply log an error")
-                    end
+"""
+"""
+function setup_ws_handler(req::HTTP.Request, ws_client::WebSockets.WebSocket)
+  while true
+    response =  try
+                  msg = read(ws_client)
+                  ip::IPv4 = Genie.config.lookup_ip ? task_local_storage(:ip) : ip"255.255.255.255"
+
+                  nworkers() == 1 ? handle_ws_request(req, String(msg), ws_client, ip) : @fetch handle_ws_request(req, String(msg), ws_client, ip)
+                catch ex
+                  if typeof(ex) == WebSockets.WebSocketClosedError
+                    Genie.Channels.unsubscribe_client(ws_client)
 
                     break
                   end
 
-      try
-        write(ws_client, response)
-      catch socket_exception
-        Channels.unsubscribe_client(ws_client)
+                  try
+                    Genie.Logger.log(string(ex), :critical)
+                    Genie.Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
 
-        break
-      end
+                    Genie.Configuration.is_prod() ? "The error has been logged and we'll look into it ASAP." : string(ex)
+                  catch exx
+                    print_with_color(:red, "One can not simply log an error")
+                  end
+
+                  break
+                end
+
+    try
+      write(ws_client, response)
+    catch socket_exception
+      Genie.Channels.unsubscribe_client(ws_client)
+
+      break
     end
   end
 end
 
 
 """
-    handle_connect(client::HttpServer.Client) :: Void
+    handle_connect(client::HttpServer.Client) :: Nothing
 
 Connection callback for HttpServer. Stores the Request IP in the current task's local storage.
 """
-function handle_connect(client::HttpServer.Client) :: Void
+function handle_connect(client::HTTP.Client) :: Nothing
   try
     ip, port = getsockname(isa(client.sock, MbedTLS.SSLContext) ? client.sock.bio : client.sock)
     task_local_storage(:ip, ip)
   catch ex
-    Logger.log("Failed getting IP address of request", :err)
-    Logger.log(string(ex), :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+    Genie.Logger.log("Failed getting IP address of request", :err)
+    Genie.Logger.log(string(ex), :err)
+    Genie.Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
     task_local_storage(:ip, ip"255.255.255.255")
   end
@@ -130,34 +112,34 @@ function handle_connect(client::HttpServer.Client) :: Void
 
 HttpServer handler function - invoked when the server gets a request.
 """
-function handle_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: Response
-  App.config.log_requests && log_request(req)
-  App.config.server_signature != "" && sign_response!(res)
+function handle_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = ip"0.0.0.0") :: HTTP.Response
+  Genie.config.log_requests && log_request(req)
+  Genie.config.server_signature != "" && sign_response!(res)
 
-  app_response::Response = set_headers!(req, res, Router.route_request(req, res, ip))
+  app_response::HTTP.Response = set_headers!(req, res, Genie.Router.route_request(req, res, ip))
 
-  App.config.log_responses && log_response(req, app_response)
+  Genie.config.log_responses && log_response(req, app_response)
 
   app_response
 end
 
 
-function set_headers!(req::Request, res::Response, app_response::Response) :: Response
-  if req.method == OPTIONS
-    App.config.cors_headers["Access-Control-Allow-Origin"] = strip(App.config.cors_headers["Access-Control-Allow-Origin"])
+function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.Response) :: HTTP.Response
+  if req.method == Genie.Router.OPTIONS
+    Genie.config.cors_headers["Access-Control-Allow-Origin"] = strip(Genie.config.cors_headers["Access-Control-Allow-Origin"])
 
-    ! isempty(App.config.cors_allowed_origins) &&
-      in(req.headers["Origin"], App.config.cors_allowed_origins) &&
-      (App.config.cors_headers["Access-Control-Allow-Origin"] == "" ||
-        App.config.cors_headers["Access-Control-Allow-Origin"] == "*") &&
-      (App.config.cors_headers["Access-Control-Allow-Origin"] = req.headers["Origin"])
+    ! isempty(Genie.config.cors_allowed_origins) &&
+      in(req.headers["Origin"], Genie.config.cors_allowed_origins) &&
+      (Genie.config.cors_headers["Access-Control-Allow-Origin"] == "" ||
+        Genie.config.cors_headers["Access-Control-Allow-Origin"] == "*") &&
+      (Genie.config.cors_headers["Access-Control-Allow-Origin"] = req.headers["Origin"])
 
-    app_response.headers = merge(res.headers, App.config.cors_headers)
+    app_response.headers = merge(res.headers, Genie.config.cors_headers)
   end
 
-  app_response.headers = merge(res.headers, app_response.headers)
+  app_response.headers = [d for d in merge(Dict(res.headers), Dict(app_response.headers))]
 
-  app_response.cookies = merge(res.cookies, app_response.cookies)
+  # app_response.cookies = merge(res.cookies, app_response.cookies)
 
   app_response
 end
@@ -168,37 +150,36 @@ end
 
 HttpServer handler function - invoked when the server gets a request.
 """
-function handle_ws_request(req::Request, msg::String, ws_client::WebSockets.WebSocket, ip::IPv4 = ip"0.0.0.0") :: String
-  App.config.log_requests && log_request(req)
-
-  Router.route_ws_request(req, msg, ws_client, ip)
+function handle_ws_request(req::HTTP.Request, msg::String, ws_client::WebSockets.WebSocket, ip::IPv4 = ip"0.0.0.0") :: String
+  Genie.config.log_requests && log_request(req)
+  Genie.Router.route_ws_request(req, msg, ws_client, ip)
 end
 
 
 """
     sign_response!(res::Response) :: Response
 
-Adds a signature header to the response using the value in `App.config.server_signature`.
-If `App.config.server_signature` is empty, the header is not added.
+Adds a signature header to the response using the value in `Genie.config.server_signature`.
+If `Genie.config.server_signature` is empty, the header is not added.
 """
-function sign_response!(res::Response) :: Response
-  if ! isempty(App.config.server_signature)
-    res.headers["Server"] = App.config.server_signature
-  end
+function sign_response!(res::HTTP.Response) :: HTTP.Response
+  headers = Dict(res.headers)
+  isempty(Genie.config.server_signature) || (headers["Server"] = Genie.config.server_signature)
 
+  res.headers = [k for k in headers]
   res
 end
 
 
 """
-    log_request(req::Request) :: Void
+    log_request(req::Request) :: Nothing
 
 Logs information about the request.
 """
-function log_request(req::Request) :: Void
-  if Router.is_static_file(req.resource)
-    App.config.log_resources && log_request_response(req)
-  elseif App.config.log_responses
+function log_request(req::HTTP.Request) :: Nothing
+  if Genie.Router.is_static_file(req.target)
+    Genie.config.log_resources && log_request_response(req)
+  elseif Genie.config.log_responses
     log_request_response(req)
   end
 
@@ -207,14 +188,14 @@ end
 
 
 """
-    log_response(req::Request, res::Response) :: Void
+    log_response(req::Request, res::Response) :: Nothing
 
 Logs information about the response.
 """
-function log_response(req::Request, res::Response) :: Void
-  if Router.is_static_file(req.resource)
-    App.config.log_resources && log_request_response(res)
-  elseif App.config.log_responses
+function log_response(req::HTTP.Request, res::HTTP.Response) :: Nothing
+  if Genie.Router.is_static_file(req.target)
+    Genie.config.log_resources && log_request_response(res)
+  elseif Genie.config.log_responses
     log_request_response(res)
   end
 
@@ -223,30 +204,35 @@ end
 
 
 """
-    log_request_response(req_res::Union{Request,Response}) :: Void
+    log_request_response(req_res::Union{Request,Response}) :: Nothing
 
 Helper function that logs `Request` or `Response` objects.
 """
-function log_request_response(req_res::Union{Request,Response}) :: Void
+function log_request_response(req_res::Union{HTTP.Request,HTTP.Response}) :: Nothing
   req_data = Dict{String,String}()
   response_is_error = false
 
   for f in fieldnames(req_res)
-    f = string(f)
-    v = getfield(req_res, Symbol(f))
+    try
+      f = string(f)
+      v = getfield(req_res, Symbol(f))
 
-    f == "status" && (req_res.status == 404 || req_res.status == 500) && (response_is_error = true)
+      f == "status" && (req_res.status == 404 || req_res.status == 500) && (response_is_error = true)
 
-    req_data[f] = if f == "data" && ! isempty(v)
-                    mapreduce(x -> string(Char(Int(x))), *, v) |> Logger.truncate_logged_output
-                  elseif isa(v, Dict) && App.config.log_formatted
-                    Millboard.table(parse_inner_dict(v)) |> string
-                  else
-                    string(v) |> Logger.truncate_logged_output
-                  end
+      req_data[f] = if f == "data" && ! isempty(v)
+                      mapreduce(x -> string(Char(Int(x))), *, v) |> Genie.Logger.truncate_logged_output
+                    elseif isa(v, Dict) && Genie.config.log_formatted
+                      Millboard.table(parse_inner_dict(v)) |> string
+                    else
+                      string(v) |> Genie.Logger.truncate_logged_output
+                    end
+    catch ex
+      Genie.Logger.log(ex, :err)
+    end
   end
 
-  Logger.log(string(req_res) * "\n" * string(App.config.log_formatted ? Millboard.table(req_data) : req_data), response_is_error ? :err : :debug, showst = false)
+  Genie.Logger.log(Dict(req_res.headers))
+  Genie.Logger.log(string(req_res) * "\n" * string(Genie.config.log_formatted ? Millboard.table(req_data) : req_data), response_is_error ? :err : :debug, showst = false)
 
   nothing
 end
@@ -261,28 +247,21 @@ function parse_inner_dict{K,V}(d::Dict{K,V}) :: Dict{String,String}
   r = Dict{String,String}()
   for (k, v) in d
     k = string(k)
-    if k == "Cookie" && App.config.log_verbosity == Configuration.LOG_LEVEL_VERBOSITY_VERBOSE
+    if k == "Cookie" && Genie.config.log_verbosity == Genie.Configuration.LOG_LEVEL_VERBOSITY_VERBOSE
       cookie = Dict{String,String}()
       cookies = split(v, ";")
       for c in cookies
         cookie_part = split(c, "=")
-        cookie[cookie_part[1]] = cookie_part[2] |> Logger.truncate_logged_output
+        cookie[cookie_part[1]] = cookie_part[2] |> Genie.Logger.truncate_logged_output
       end
 
-      r[k] = (App.config.log_formatted ? Millboard.table(cookie) : cookie) |> string
+      r[k] = (Genie.config.log_formatted ? Millboard.table(cookie) : cookie) |> string
     else
-      r[k] = Logger.truncate_logged_output(string(v))
+      r[k] = Genie.Logger.truncate_logged_output(string(v))
     end
   end
 
   r
-end
-
-
-"""
-"""
-function shutdown(w::WebServer) :: Void
-  close(w.server)
 end
 
 end

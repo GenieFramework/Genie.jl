@@ -3,52 +3,57 @@ Loads dependencies and bootstraps a Genie app.
 """
 module Genie
 
-push!(LOAD_PATH, joinpath(Pkg.dir("Genie"), "src"))
+push!(LOAD_PATH, @__DIR__)
 
-include(joinpath(Pkg.dir("Genie"), "src", "configuration.jl"))
+include(joinpath(@__DIR__, "Configuration.jl"))
+include(joinpath(@__DIR__, "constants.jl"))
 
-include(joinpath(Pkg.dir("Genie"), "src", "constants.jl"))
-if haskey(ENV, "GENIE_ENV") && isfile(abspath(joinpath(ENV_PATH, ENV["GENIE_ENV"] * ".jl")))
-  isdefined(:config) || include(abspath(joinpath(ENV_PATH, ENV["GENIE_ENV"] * ".jl")))
-  isfile(abspath(joinpath(CONFIG_PATH, "app.jl"))) && include(abspath(joinpath(CONFIG_PATH, "app.jl")))
+const config = Configuration.Settings(app_env = Configuration.DEV)
 
-  const IS_IN_APP = true
-else
-  const IS_IN_APP = false
-  const config = Configuration.Settings(app_env = Configuration.DEV)
-end
+using Revise, SearchLight
 
-const SEARCHLIGHT_ON = isdir(Pkg.dir("SearchLight")) && IS_IN_APP ? true : false
+isfile(joinpath(CONFIG_PATH, "plugins.jl")) && include(joinpath(CONFIG_PATH, "plugins.jl"))
 
-export IS_IN_APP, SEARCHLIGHT_ON
-
-
-isfile(abspath(joinpath(CONFIG_PATH, "plugins.jl"))) && include(abspath(joinpath(CONFIG_PATH, "plugins.jl")))
-
-push!(LOAD_PATH,  joinpath(Pkg.dir("Genie"), "src", "cache_adapters"),
-                  joinpath(Pkg.dir("Genie"), "src", "session_adapters"),
+push!(LOAD_PATH,  joinpath(@__DIR__, "cache_adapters"),
+                  joinpath(@__DIR__, "session_adapters"),
                   RESOURCES_PATH, HELPERS_PATH)
 
-include(joinpath(Pkg.dir("Genie"), "src", "genie_types.jl"))
-include(joinpath(Pkg.dir("Genie"), "src", "file_templates.jl"))
-include(joinpath(Pkg.dir("Genie"), "src", "generator.jl"))
-include(joinpath(Pkg.dir("Genie"), "src", "REPL.jl"))
+include(joinpath(@__DIR__, "genie_types.jl"))
 
-using Macros, Logger, App, Commands, AppServer, Millboard, Renderer
+include("Macros.jl")
+include("Logger.jl")
+include("Inflector.jl")
+include("Util.jl")
+include("FileTemplates.jl")
+include("Generator.jl")
+include("Tester.jl")
+include("Toolbox.jl")
+include("Encryption.jl")
+include("Cookies.jl")
+include("Sessions.jl")
+include("Input.jl")
+include("Flax.jl")
+include("Renderer.jl")
+include("Router.jl")
+include("Helpers.jl")
+include("Channels.jl")
+include("AppServer.jl")
+include("Commands.jl")
+include("Cache.jl")
 
-SEARCHLIGHT_ON && eval(:(using SearchLight))
+using .Macros, .Logger
+using .Inflector, .Util
+using .FileTemplates, .Generator, .Tester, .Toolbox, .Encryption, .Cookies, .Sessions, .Input, .Renderer, .Router, .Helpers, .AppServer, .Commands
+using .Flax, .AppServer
 
-if IS_IN_APP
-  @eval parse("@dependencies")
-  include(joinpath(Pkg.dir("Genie"), "src", "deprecations.jl"))
-end
+include(joinpath(@__DIR__, "REPL.jl"))
 
 """
-    run() :: Void
+    run() :: Nothing
 
 Runs the Genie app by parsing the command line args and invoking the corresponding actions.
 """
-function run() :: Void
+function run() :: Nothing
   Commands.execute(Genie.config)
 
   nothing
@@ -56,11 +61,11 @@ end
 
 
 """
-    new_app(path = "."; db_support = false, skip_dependencies = false, autostart = true) :: Void
+    new_app(path = "."; db_support = false, skip_dependencies = false, autostart = true) :: Nothing
 
 Scaffolds a new Genie app.
 """
-function new_app(path = "."; db_support = false, skip_dependencies = false, autostart = true) :: Void
+function new_app(path = "."; db_support = false, skip_dependencies = false, autostart = true) :: Nothing
   REPL.new_app(path, db_support, skip_dependencies, autostart)
 end
 
