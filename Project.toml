@@ -1,6 +1,4 @@
 name = "Genie"
-uuid = "46d59946-6bdb-11e8-1123-15568b84ec54"
-version = "0.7.0"
 author = ["Adrian Salceanu <e@essenciary.com>"]
 
 [deps]
