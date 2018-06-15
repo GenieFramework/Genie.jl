@@ -1,14 +1,12 @@
-using Distributed
-
 """
     bootstrap_genie() :: Nothing
 
 Bootstraps the Genie framework setting up paths and workers. Invoked automatically.
 """
-function bootstrap_genie() :: Nothing
+function bootstrap() :: Nothing
   dirname(@__FILE__) |> cd
   printstyled("""
-  _____         _
+   _____         _
   |   __|___ ___|_|___
   |  |  | -_|   | | -_|
   |_____|___|_|_|_|___|
@@ -25,19 +23,27 @@ function bootstrap_genie() :: Nothing
 
   nworkers() < parse(Int, ENV["NWORKERS"]) && addprocs(parse(Int, ENV["NWORKERS"]) - nworkers())
 
-  @everywhere push!(LOAD_PATH, joinpath("lib"), abspath(pwd()))
+  @everywhere push!(LOAD_PATH, pwd(), "src")
 end
 
-@everywhere bootstrap_genie()
-@everywhere import Genie, App
-using App
-App.@dependencies
+@everywhere using Revise
+@everywhere using Distributed
 
+@everywhere bootstrap()
+@everywhere import Genie
+
+@everywhere include(joinpath("src", "App.jl"))
+@everywhere using .App
+
+@everywhere App.bootstrap()
 @everywhere Genie.run()
+
 
 try
   using OhMyREPL
 
   OhMyREPL.input_prompt!( "genie>", :blue)
   OhMyREPL.output_prompt!("genie>", :cyan)
+catch
+
 end
