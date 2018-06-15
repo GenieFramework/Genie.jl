@@ -19,6 +19,8 @@ end
 
 const Channel = GenieChannel
 
+using Millboard
+
 
 """
     genietype_to_print{T<:GenieType}(m::T) :: String

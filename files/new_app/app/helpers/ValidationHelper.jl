@@ -1,7 +1,7 @@
 module ValidationHelper
 
-using Genie, Helpers, App
-SEARCHLIGHT_ON && eval(:(using Validation))
+using Genie, Genie.Helpers
+using SearchLight.Validation
 
 export output_errors
 

@@ -1,0 +1,4 @@
+[deps]
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+MySQL = "39abe10b-433b-5dbd-92d4-e302a9df00cd"
+Nullables = "4d1e1d77-625e-5b40-9113-a560ec7a8ecd"

@@ -3,7 +3,7 @@ Functionality for handling the defautl conent of the various Genie files (migrat
 """
 module FileTemplates
 
-using Inflector
+using Genie.Inflector
 
 
 """
@@ -15,7 +15,7 @@ function new_task(module_name::String) :: String
   """
   module $module_name
 
-  using Genie, App, Toolbox
+  using Genie, Genie.Toolbox
 
 
   \"\"\"
@@ -38,10 +38,7 @@ Default content for a new Genie controller.
 function new_controller(controller_name::String) :: String
   """
   module $(controller_name)Controller
-
-  using App
-  @dependencies
-
+  # Build something great
   end
   """
 end
@@ -56,8 +53,7 @@ function new_channel(channel_name::String) :: String
   """
   module $(channel_name)Channel
 
-  using Channels, App
-  @dependencies
+  using Genie.Channels, Genie.Router
 
 
   function subscribe()
@@ -101,7 +97,7 @@ Default content for a new test file.
 """
 function new_test(plural_name::String, singular_name::String) :: String
   """
-  using Genie, App, App.$(plural_name)
+  using Genie, App.$(plural_name)
 
   ### Your tests here
   @test 1 == 1

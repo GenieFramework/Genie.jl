@@ -1,0 +1,142 @@
+[[Base64]]
+uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
+
+[[BinaryProvider]]
+deps = ["Compat", "Libdl", "SHA"]
+git-tree-sha1 = "9b40439f35dd21b87a559fccb2833377fc56517d"
+uuid = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
+version = "0.3.0"
+
+[[Compat]]
+deps = ["Base64", "Dates", "DelimitedFiles", "Distributed", "InteractiveUtils", "IterativeEigensolvers", "LibGit2", "Libdl", "LinearAlgebra", "Markdown", "Mmap", "Pkg", "Printf", "REPL", "Random", "Serialization", "SharedArrays", "Sockets", "SparseArrays", "SuiteSparse", "Test", "UUIDs", "Unicode"]
+git-tree-sha1 = "4049fa166ff47bf2b9190eb4be0de478088fe0c9"
+uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
+version = "0.68.0"
+
+[[DataStreams]]
+deps = ["Compat", "Missings", "NamedTuples", "WeakRefStrings"]
+git-tree-sha1 = "62d1a39a3e9634eceb7413151b48cbc95521a059"
+uuid = "9a8bc11e-79be-5b39-94d7-1ccc349a1a85"
+version = "0.3.6"
+
+[[Dates]]
+uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
+
+[[DecFP]]
+deps = ["BinaryProvider", "Compat"]
+git-tree-sha1 = "60b5119fcb6a71c73df4d15a8abbbc9ad5f2d288"
+uuid = "55939f99-70c6-5e9b-8bb0-5071ed7d61fd"
+version = "0.4.3"
+
+[[DelimitedFiles]]
+uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+
+[[Distributed]]
+uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
+
+[[HTTP]]
+deps = ["Base64", "Dates", "Distributed", "IniFile", "MbedTLS", "Sockets", "Test"]
+git-tree-sha1 = "f1dd8a2e46970b318e2637aed47a21af033e3998"
+uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+version = "0.6.12"
+
+[[IniFile]]
+deps = ["Compat"]
+git-tree-sha1 = "b86089c325a4287f7fc0a8240cbe2d591b1455c5"
+uuid = "83e8ac13-25f8-5344-8a64-a9f2b223428f"
+version = "0.4.0"
+
+[[InteractiveUtils]]
+uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
+
+[[IterativeEigensolvers]]
+uuid = "de555fa4-b82f-55e7-8b71-53f60bbc027d"
+
+[[LibGit2]]
+uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
+
+[[Libdl]]
+uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+
+[[LinearAlgebra]]
+uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+
+[[Markdown]]
+uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
+
+[[MbedTLS]]
+deps = ["BinaryProvider", "Compat", "Sockets"]
+git-tree-sha1 = "08997c97ca92924bc459b675ac3cfec1b0a3385c"
+uuid = "739be429-bea8-5141-9913-cc70e7f3736d"
+version = "0.5.11"
+
+[[Missings]]
+deps = ["Compat"]
+git-tree-sha1 = "4b7feda2672b8163c95738533671afb4493b6d03"
+uuid = "e1d29d7a-bbdc-5cf2-9ac0-f12de2c33e28"
+version = "0.2.9"
+
+[[Mmap]]
+uuid = "a63ad114-7e13-5084-954f-fe012c677804"
+
+[[MySQL]]
+deps = ["BinaryProvider", "Compat", "DataStreams", "DecFP", "Missings"]
+git-tree-sha1 = "340a4fc4b1de08c1f7b21e9418e4bf459176be4f"
+uuid = "39abe10b-433b-5dbd-92d4-e302a9df00cd"
+version = "0.5.2"
+
+[[NamedTuples]]
+git-tree-sha1 = "6374851ad4b15f2a20ac20637d38c550531fa684"
+uuid = "73a701b4-84e1-5df0-88ff-1968ee2ee8dc"
+version = "4.0.2"
+
+[[Nullables]]
+deps = ["Compat"]
+git-tree-sha1 = "23258f849603ad4fed3ce7dbcb8c0658920fa5ef"
+uuid = "4d1e1d77-625e-5b40-9113-a560ec7a8ecd"
+version = "0.0.5"
+
+[[Pkg]]
+uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+
+[[Printf]]
+uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+
+[[REPL]]
+uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
+
+[[Random]]
+uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+
+[[SHA]]
+uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
+
+[[Serialization]]
+uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
+
+[[SharedArrays]]
+uuid = "1a1011a3-84de-559e-8e89-a11a2f7dc383"
+
+[[Sockets]]
+uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
+
+[[SparseArrays]]
+uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+
+[[SuiteSparse]]
+uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
+
+[[Test]]
+uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[[UUIDs]]
+uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
+
+[[Unicode]]
+uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
+
+[[WeakRefStrings]]
+deps = ["Compat", "Missings"]
+git-tree-sha1 = "bb0464e62baf3a0767340fbb51fed584159ad9b7"
+uuid = "ea10d353-3f73-51f8-a26c-33c1cb351aa5"
+version = "0.4.7"

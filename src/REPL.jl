@@ -1,13 +1,9 @@
 module REPL
 
-using SHA, Logger, Genie.Configuration, Genie, Genie.Generator, Tester, Toolbox, App, Util
-SEARCHLIGHT_ON && eval(:(using SearchLight, SearchLight.Generator, Migration))
+using Revise, SHA, Genie.Logger, Genie.Configuration, Genie, Genie.Generator, Genie.Tester, Genie.Toolbox, Genie.Util
+using SearchLight, SearchLight.Generator, SearchLight.Migration
 
-if is_dev()
-  @eval using Revise
-end
-
-const JULIA_PATH = joinpath(JULIA_HOME, "julia")
+const JULIA_PATH = joinpath(Sys.BINDIR, "julia")
 
 
 """
@@ -21,12 +17,12 @@ end
 
 
 """
-    function new_app(path = "."; db_support = false, skip_dependencies = false) :: Void
+    function new_app(path = "."; db_support = false, skip_dependencies = false) :: Nothing
 
 Creates a new Genie app at the indicated path.
 """
-function new_app(path = "."; db_support = false, skip_dependencies = false, autostart = true) :: Void
-  cp(joinpath(Pkg.dir("Genie"), "files", "new_app"), abspath(path))
+function new_app(path = "."; db_support = false, skip_dependencies = true, autostart = true) :: Nothing
+  cp(joinpath(@__DIR__, "../", "files", "new_app"), abspath(path))
 
   chmod(joinpath(path, "bin", "server"), 0o700)
   chmod(joinpath(path, "bin", "repl"), 0o700)
@@ -36,8 +32,6 @@ function new_app(path = "."; db_support = false, skip_dependencies = false, auto
   end
 
   Logger.log("Done! New app created at $(abspath(path))", :info)
-
-  skip_dependencies || add_dependencies(db_support = db_support)
 
   is_windows() && setup_windows_bin_files(path)
 
@@ -51,11 +45,11 @@ end
 
 
 """
-    run_repl_app() :: Void
+    run_repl_app() :: Nothing
 
 Runs a new Genie REPL app within the current thread.
 """
-function run_repl_app(path = ".") :: Void
+function run_repl_app(path = ".") :: Nothing
   cd(abspath(path))
 
   run(`$JULIA_PATH -L $(abspath("genie.jl")) --color=yes --depwarn=no -q`)
@@ -79,119 +73,91 @@ end
 
 
 """
-    add_dependencies(; db_support = false) :: Void
-
-Attempts to install Genie's dependencies - packages that are not part of METADATA.
-"""
-function add_dependencies(; db_support = false) :: Void
-  Logger.log("Looking for dependencies", :info)
-
-  Logger.log("Checking for Flax rendering engine support", :info)
-  Util.package_added("Flax") || Pkg.clone("https://github.com/essenciary/Flax.jl")
-
-  if db_support
-    Logger.log("Checking for DBI support", :info)
-    Util.package_added("DBI") || Pkg.clone("https://github.com/JuliaDB/DBI.jl")
-
-    Logger.log("Checking for PostgreSQL support", :info)
-    Util.package_added("PostgreSQL") || Pkg.clone("https://github.com/JuliaDB/PostgreSQL.jl")
-
-    Logger.log("Checking for SearchLight ORM support", :info)
-    Util.package_added("SearchLight") || Pkg.clone("https://github.com/essenciary/SearchLight.jl")
-  end
-
-  Logger.log("Finished adding dependencies", :info)
-
-  nothing
-end
-
-
-"""
-    new_model(model_name::String) :: Void
+    new_model(model_name::String) :: Nothing
 
 Creates a new `model` file.
 """
-function new_model(model_name::String) :: Void
+function new_model(model_name::String) :: Nothing
   SearchLight.Generator.new_model(Dict{String,Any}("model:new" => model_name))
-  App.load_resources()
+  Genie.App.load_resources()
 
   nothing
 end
 
 
 """
-    new_controller(controller_name::String) :: Void
+    new_controller(controller_name::String) :: Nothing
 
 Creates a new `controller` file.
 """
-function new_controller(controller_name::String) :: Void
+function new_controller(controller_name::String) :: Nothing
   Genie.Generator.new_controller(Dict{String,Any}("controller:new" => controller_name))
-  App.load_resources()
+  Genie.App.load_resources()
 
   nothing
 end
 
 
 """
-    new_channel(channel_name::String) :: Void
+    new_channel(channel_name::String) :: Nothing
 
 Creates a new `channel` file.
 """
-function new_channel(channel_name::String) :: Void
+function new_channel(channel_name::String) :: Nothing
   Genie.Generator.new_channel(Dict{String,Any}("channel:new" => channel_name))
-  App.load_resources()
+  Genie.App.load_resources()
 
   nothing
 end
 
 
 """
-    new_resource(resource_name::String) :: Void
+    new_resource(resource_name::String) :: Nothing
 
 Creates all the files associated with a new resource.
 """
-function new_resource(resource_name::String) :: Void
+function new_resource(resource_name::String) :: Nothing
   Genie.Generator.new_resource(Dict{String,Any}("resource:new" => resource_name))
-  App.load_resources()
+  Genie.App.load_resources()
 
   nothing
 end
 
 
 """
-    new_migration(migration_name::String) :: Void
+    new_migration(migration_name::String) :: Nothing
 
 Creates a new migration file.
 """
-function new_migration(migration_name::String) :: Void
+function new_migration(migration_name::String) :: Nothing
   SearchLight.Generator.new_migration(Dict{String,Any}("migration:new" => migration_name))
 end
 
 
 """
 """
-function new_table_migration(migration_name::String) :: Void
+function new_table_migration(migration_name::String) :: Nothing
   SearchLight.Generator.new_table_migration(Dict{String,Any}("migration:new" => migration_name))
 end
 
 
 """
-    new_task(task_name::String) :: Void
+    new_task(task_name::String) :: Nothing
 
 Creates a new `Task` file.
 """
-function new_task(task_name::String) :: Void
+function new_task(task_name::String) :: Nothing
   endswith(task_name, "Task") || (task_name = task_name * "Task")
-  Toolbox.new(Dict{String,Any}("task:new" => task_name), App.config)
+  Toolbox.new(Dict{String,Any}("task:new" => task_name), Genie.config)
 end
 
 
 """
-    write_secrets_file() :: Void
+    write_secrets_file() :: Nothing
 
 Generates a valid secrets.jl file with a random SECRET_TOKEN.
 """
-function write_secrets_file() :: Void
+function write_secrets_file() :: Nothing
   open(joinpath(Genie.CONFIG_PATH, "secrets.jl"), "w") do f
     write(f, """const SECRET_TOKEN = "$(secret_token())" """)
   end
@@ -203,9 +169,9 @@ end
 
 
 """
-    reload_app() :: Void
+    reload_app() :: Nothing
 """
-function reload_app() :: Void
+function reload_app() :: Nothing
   Logger.log("Attempting to reload the Genie's core modules. If you get unexpected errors or things don't work as expected, simply exit this Julia session and start a new one to fully reload Genie.", :warn)
 
   is_dev() && Revise.revise(App)

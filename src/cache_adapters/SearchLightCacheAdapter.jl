@@ -25,11 +25,11 @@ end
 
 
 """
-    to_cache(key::Union{String,Symbol}, content::Any; dir = "") :: Void
+    to_cache(key::Union{String,Symbol}, content::Any; dir = "") :: Nothing
 
 Persists `content` onto the DB under the `key` key.
 """
-function to_cache(key::Union{String,Symbol}, content::Any; dir = "") :: Void
+function to_cache(key::Union{String,Symbol}, content::Any; dir = "") :: Nothing
   try
     io = IOBuffer()
     serialize(io, content)
@@ -78,11 +78,11 @@ end
 
 
 """
-    purge(key::Union{String,Symbol}) :: Void
+    purge(key::Union{String,Symbol}) :: Nothing
 
 Removes the cache data stored under the `key` key.
 """
-function purge(key::Union{String,Symbol}; dir = "") :: Void
+function purge(key::Union{String,Symbol}; dir = "") :: Nothing
   cache_info = SearchLight.find_one_by!!(StorageCache, :name, key)
   SearchLight.delete(cache_info)
 
@@ -91,11 +91,11 @@ end
 
 
 """
-    purge_all() :: Void
+    purge_all() :: Nothing
 
 Removes all cached data.
 """
-function purge_all(; dir = "") :: Void
+function purge_all(; dir = "") :: Nothing
   SearchLight.delete_all(StorageCache, truncate = true, reset_sequence = true)
 
   nothing

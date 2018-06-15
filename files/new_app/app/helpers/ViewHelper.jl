@@ -1,6 +1,6 @@
 module ViewHelper
 
-using Genie, Helpers, App
+using Genie, Genie.Helpers
 
 export output_flash
 

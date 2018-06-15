@@ -3,19 +3,16 @@ Generates various Genie files.
 """
 module Generator
 
-using Genie, Logger, Genie.FileTemplates, Inflector, Genie.Configuration, App
-SEARCHLIGHT_ON && eval(:(using SearchLight, Migration))
+using Revise, Genie, Genie.Logger, Genie.FileTemplates, Genie.Inflector, Genie.Configuration #, Genie.App
+using SearchLight, SearchLight.Migration
 
-if is_dev()
-  @eval using Revise
-end
 
 """
-    new_controller(cmd_args::Dict{String,Any}) :: Void
+    new_controller(cmd_args::Dict{String,Any}) :: Nothing
 
 Generates a new Genie controller file and persists it to the resources folder.
 """
-function new_controller(cmd_args::Dict{String,Any}) :: Void
+function new_controller(cmd_args::Dict{String,Any}) :: Nothing
   resource_name = cmd_args["controller:new"]
   Inflector.is_singular(resource_name) && (resource_name = Inflector.to_plural(resource_name) |> Base.get)
   resource_name = ucfirst(resource_name)
@@ -30,11 +27,11 @@ end
 
 
 """
-    new_channel(cmd_args::Dict{String,Any}) :: Void
+    new_channel(cmd_args::Dict{String,Any}) :: Nothing
 
 Generates a new Genie channel file and persists it to the resources folder.
 """
-function new_channel(cmd_args::Dict{String,Any}) :: Void
+function new_channel(cmd_args::Dict{String,Any}) :: Nothing
   resource_name = ucfirst(cmd_args["channel:new"])
   if Inflector.is_singular(resource_name)
     resource_name = Inflector.to_plural(resource_name) |> Base.get
@@ -50,15 +47,15 @@ end
 
 
 """
-    new_resource(cmd_args::Dict{String,Any}, config::Settings) :: Void
-    new_resource(resource_name::Union{String,Symbol}) :: Void
+    new_resource(cmd_args::Dict{String,Any}, config::Settings) :: Nothing
+    new_resource(resource_name::Union{String,Symbol}) :: Nothing
 
 Generates all the files associated with a new resource and persists them to the resources folder.
 """
-function new_resource(cmd_args::Dict{String,Any}) :: Void
+function new_resource(cmd_args::Dict{String,Any}) :: Nothing
   resource_name = ucfirst(cmd_args["resource:new"])
 
-  SEARCHLIGHT_ON && SearchLight.Generator.new_resource(resource_name)
+  SearchLight.Generator.new_resource(resource_name)
 
   if Inflector.is_singular(resource_name)
     resource_name = Inflector.to_plural(resource_name) |> Base.get
@@ -80,7 +77,7 @@ function new_resource(cmd_args::Dict{String,Any}) :: Void
 
   nothing
 end
-function new_resource(resource_name::Union{String,Symbol}) :: Void
+function new_resource(resource_name::Union{String,Symbol}) :: Nothing
   new_resource(Dict{String,Any}("resource:new" => string(resource_name)))
 end
 
@@ -143,7 +140,7 @@ function write_resource_file(resource_path::String, file_name::String, resource_
     Logger.log(ex, :err)
   end
 
-  App.load_resources()
+  Genie.App.load_resources()
 
   true
 end
@@ -173,5 +170,6 @@ end
 function channel_file_name(resource_name::Union{String,Symbol})
   string(resource_name) * Genie.GENIE_CHANNEL_FILE_POSTFIX
 end
+
 
 end

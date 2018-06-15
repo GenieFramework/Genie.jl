@@ -252,7 +252,7 @@ module Generator
 
 using Migration, Authentication, Logger, Genie, Router
 
-function setup() :: Void
+function setup() :: Nothing
   Logger.log("Creating migrations")
   Migration.new("create_table_users", Authentication.FileTemplates.users_migration())
   Migration.new("create_table_roles", Authentication.FileTemplates.roles_migration())
@@ -281,22 +281,22 @@ function setup() :: Void
 
   Logger.log("Copying files")
   try
-    cp(joinpath(Pkg.dir("Genie"), "files", "authentication", "app", "layouts", "login.flax.html"), joinpath(Genie.APP_PATH, "layouts", "login.flax.html"))
+    cp(joinpath(@__DIR__, "../", "files", "authentication", "app", "layouts", "login.flax.html"), joinpath(Genie.APP_PATH, "layouts", "login.flax.html"))
   catch ex
     Logger.log("Destination $(joinpath(Genie.APP_PATH, "layouts", "login.flax.html")) already exists. Skipping.", :warn)
   end
   try
-    cp(joinpath(Pkg.dir("Genie"), "files", "authentication", "app", "resources", "roles", "model.jl"), joinpath(Genie.APP_PATH, "resources", "roles", "model.jl"))
+    cp(joinpath(@__DIR__, "../", "files", "authentication", "app", "resources", "roles", "model.jl"), joinpath(Genie.APP_PATH, "resources", "roles", "model.jl"))
   catch ex
     Logger.log("Destination $(joinpath(Genie.APP_PATH, "resources", "roles", "model.jl")) already exists. Skipping.", :warn)
   end
   try
-    cp(joinpath(Pkg.dir("Genie"), "files", "authentication", "app", "resources", "users", "model.jl"), joinpath(Genie.APP_PATH, "resources", "users", "model.jl"))
+    cp(joinpath(@__DIR__, "../", "files", "authentication", "app", "resources", "users", "model.jl"), joinpath(Genie.APP_PATH, "resources", "users", "model.jl"))
   catch ex
     Logger.log("Destination $(joinpath(Genie.APP_PATH, "resources", "users", "model.jl")) already exists. Skipping.", :warn)
   end
   try
-    cp(joinpath(Pkg.dir("Genie"), "files", "authentication", "app", "resources", "user_sessions", "controller.jl"), joinpath(Genie.APP_PATH, "resources", "user_sessions", "controller.jl"))
+    cp(joinpath(@__DIR__, "../", "files", "authentication", "app", "resources", "user_sessions", "controller.jl"), joinpath(Genie.APP_PATH, "resources", "user_sessions", "controller.jl"))
   catch ex
     Logger.log("Destination $(joinpath(Genie.APP_PATH, "resources", "user_sessions", "controller.jl")) already exists. Skipping.", :warn)
   end

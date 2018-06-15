@@ -3,7 +3,7 @@ Easy to enable caching functionality for Genie - works with pluggable cache adap
 """
 module Cache
 
-using Genie, SHA, Logger, App
+using Genie, SHA, Genie.Logger
 
 export cache_key, with_cache, @cache_key
 
@@ -11,14 +11,15 @@ export cache_key, with_cache, @cache_key
 """
 Default period of time until the cache is expired.
 """
-const CACHE_DURATION  = IS_IN_APP ? App.config.cache_duration : 600
+const CACHE_DURATION  = Genie.config.cache_duration
 
 
 """
 Underlying module that handles persistance and retrieval of cached data.
 """
-const CACHE_ADAPTER_NAME = IS_IN_APP ? App.config.cache_adapter  : :FileCacheAdapter
-eval(parse("using $(CACHE_ADAPTER_NAME)"))
+const CACHE_ADAPTER_NAME = Genie.config.cache_adapter
+eval(parse("""include("cache_adapters/$CACHE_ADAPTER_NAME.jl")"""))
+eval(parse("using .$(CACHE_ADAPTER_NAME)"))
 const CACHE_ADAPTER = eval(parse("$CACHE_ADAPTER_NAME"))
 
 
@@ -36,7 +37,7 @@ function with_cache(f::Function, key::Union{String,Symbol}, expiration::Int = CA
   cached_data = CACHE_ADAPTER.from_cache(cache_key(key), expiration, dir = dir)
 
   if isnull(cached_data)
-    App.config.log_cache && Logger.log("Missed cache for $key", :warn)
+    Genie.config.log_cache && Logger.log("Missed cache for $key", :warn)
 
     output = f()
     CACHE_ADAPTER.to_cache(cache_key(key), output, dir = dir)
@@ -44,28 +45,28 @@ function with_cache(f::Function, key::Union{String,Symbol}, expiration::Int = CA
     return output
   end
 
-  App.config.log_cache && Logger.log("Hit cache for $(cache_key(key))", :info)
+  Genie.config.log_cache && Logger.log("Hit cache for $(cache_key(key))", :info)
 
   Base.get(cached_data)
 end
 
 
 """
-    purge(key::Union{String,Symbol}) :: Void
+    purge(key::Union{String,Symbol}) :: Nothing
 
 Removes the cache data stored under the `key` key.
 """
-function purge(key::Union{String,Symbol}; dir = "") :: Void
+function purge(key::Union{String,Symbol}; dir = "") :: Nothing
   CACHE_ADAPTER.purge(cache_key(key), dir = dir)
 end
 
 
 """
-    function purge_all() :: Void
+    function purge_all() :: Nothing
 
 Removes all cached data.
 """
-function purge_all(; dir = "") :: Void
+function purge_all(; dir = "") :: Nothing
   CACHE_ADAPTER.purge_all(dir = dir)
 end
 
