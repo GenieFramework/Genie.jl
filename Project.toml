@@ -1,5 +1,7 @@
 name = "Genie"
 author = ["Adrian Salceanu <e@essenciary.com>"]
+uuid = "9d5d904e-70e4-11e8-0b48-5f0ea05fe568"
+version = "0.7.0"
 
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
