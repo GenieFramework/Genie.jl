@@ -1,3 +1,8 @@
+authors = ["Adrian Salceanu <e@essenciary.com>"]
+name = "Genie"
+uuid = "c6d403a6-72ea-11e8-200d-7174a1fd4b3d"
+version = "0.1.0"
+
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
