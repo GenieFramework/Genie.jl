@@ -3,7 +3,8 @@ Functionality for dealing with HTTP cookies.
 """
 module Cookies
 
-using HTTP, HttpCommon, Genie, Genie.Encryption
+using HTTP, HttpCommon, Nullables
+using Genie, Genie.Encryption
 
 
 """

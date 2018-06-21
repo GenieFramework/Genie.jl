@@ -3,7 +3,7 @@ Provides Genie with encryption and decryption capabilities.
 """
 module Encryption
 
-using Genie, Genie.App, Nettle
+using Genie, Nettle
 
 const ENCRYPTION_METHOD = "AES256"
 

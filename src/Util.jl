@@ -193,7 +193,7 @@ function reload_modules(dir::String, md::Module = current_module()) :: Bool
 
   for file in readdir(dir)
     if isfile(joinpath(dir, file)) && endswith(file, ".jl") && isdefined(Symbol(file[1:end-3]))
-      eval(md, :(reload("$($file[1:end-3])")) )
+      Core.eval(md, :(reload("$($file[1:end-3])")) )
       status = true
     end
   end

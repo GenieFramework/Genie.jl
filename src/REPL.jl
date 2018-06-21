@@ -1,6 +1,7 @@
 module REPL
 
-using Revise, SHA, Genie.Logger, Genie.Configuration, Genie, Genie.Generator, Genie.Tester, Genie.Toolbox, Genie.Util
+using Revise, SHA, Dates
+using Genie, Genie.Logger, Genie.Configuration, Genie.Generator, Genie.Tester, Genie.Util
 using SearchLight, SearchLight.Generator, SearchLight.Migration
 
 const JULIA_PATH = joinpath(Sys.BINDIR, "julia")
@@ -148,7 +149,7 @@ Creates a new `Task` file.
 """
 function new_task(task_name::String) :: Nothing
   endswith(task_name, "Task") || (task_name = task_name * "Task")
-  Toolbox.new(Dict{String,Any}("task:new" => task_name), Genie.config)
+  Genie.Toolbox.new(Dict{String,Any}("task:new" => task_name), Genie.config)
 end
 
 

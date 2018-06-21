@@ -250,7 +250,7 @@ File generation functionality for the Authentication module.
 """
 module Generator
 
-using Migration, Authentication, Logger, Genie, Router
+using SearchLight.Migration, Genie.Authentication, Genie.Logger, Genie, Genie.Router
 
 function setup() :: Nothing
   Logger.log("Creating migrations")

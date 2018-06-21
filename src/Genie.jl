@@ -27,7 +27,7 @@ include("Util.jl")
 include("FileTemplates.jl")
 include("Generator.jl")
 include("Tester.jl")
-include("Toolbox.jl")
+# include("Toolbox.jl")
 include("Encryption.jl")
 include("Cookies.jl")
 include("Sessions.jl")
@@ -36,14 +36,14 @@ include("Flax.jl")
 include("Renderer.jl")
 include("Router.jl")
 include("Helpers.jl")
-include("Channels.jl")
+include("WebChannels.jl")
 include("AppServer.jl")
 include("Commands.jl")
 include("Cache.jl")
 
 using .Macros, .Logger
 using .Inflector, .Util
-using .FileTemplates, .Generator, .Tester, .Toolbox, .Encryption, .Cookies, .Sessions, .Input, .Renderer, .Router, .Helpers, .AppServer, .Commands
+using .FileTemplates, .Generator, .Tester, .Encryption, .Cookies, .Sessions, .Input, .Renderer, .Router, .Helpers, .AppServer, .Commands
 using .Flax, .AppServer
 
 include(joinpath(@__DIR__, "REPL.jl"))

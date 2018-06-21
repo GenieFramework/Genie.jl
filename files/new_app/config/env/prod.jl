@@ -3,8 +3,6 @@ using Genie.Configuration
 const config =  Settings(
                   output_length       = 0,
                   suppress_output     = false,
-                  log_requests        = false,
-                  log_responses       = false,
                   log_router          = false,
                   log_formatted       = false,
                   log_cache           = false,

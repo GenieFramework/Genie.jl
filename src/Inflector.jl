@@ -3,6 +3,7 @@ Handles the functionality for applying various gramatical rules.
 """
 module Inflector
 
+using Nullables, Unicode
 using Genie
 
 const vowels = ["a", "e", "i", "o", "u"]
@@ -70,7 +71,7 @@ end
 Generates `SnakeCase` form of `word` from `underscore_case`.
 """
 function from_underscores(word::String) :: String
-  mapreduce(x -> ucfirst(x), *, split(word, "_"))
+  mapreduce(x -> uppercasefirst(x), *, split(word, "_"))
 end
 
 

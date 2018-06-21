@@ -3,12 +3,10 @@ App level functionality -- loading and managing app-wide components like configs
 """
 module App
 
-using Revise, Genie, Genie.Configuration, Reexport
+using Revise, YAML
+using Genie, Genie.Configuration, Genie.Logger
 
 const ASSET_FINGERPRINT = ""
-
-using Genie, YAML, Genie.Logger
-# using SearchLight, SearchLight.Validation
 
 
 """
@@ -20,12 +18,16 @@ function load_libs(root_dir = Genie.LIB_PATH) :: Nothing
   push!(LOAD_PATH, root_dir)
   for (root, dirs, files) in walkdir(root_dir, topdown = true)
     for dir in dirs
-      push!(LOAD_PATH, joinpath(root, dir))
+      p = joinpath(root, dir)
+      in(p, LOAD_PATH) || push!(LOAD_PATH, p)
     end
   end
   for (root, dirs, files) in walkdir(root_dir, topdown = false)
     for file in files
-      endswith(file, ".jl") && eval("@reexport using $(file[1:end-3])" |> parse)
+      if endswith(file, ".jl")
+        mname = file[1:end-3]
+        isdefined(@__MODULE__, Symbol(mname)) || Core.eval(@__MODULE__, "using $mname" |> Meta.parse)
+      end
     end
   end
 
@@ -42,13 +44,34 @@ function load_resources(root_dir = Genie.RESOURCES_PATH) :: Nothing
   push!(LOAD_PATH, root_dir)
   for (root, dirs, files) in walkdir(root_dir, topdown = false)
     for dir in dirs
-      push!(LOAD_PATH, joinpath(root, dir))
+      p = joinpath(root, dir)
+      in(p, LOAD_PATH) || push!(LOAD_PATH, joinpath(root, dir))
     end
   end
   for (root, dirs, files) in walkdir(root_dir, topdown = false)
     for file in files
-      Genie.Logger.log("Loading $file", :debug)
-      endswith(file, ".jl") && ! endswith(file, ".json.jl") && file[1] == uppercase(file[1]) && eval("using $(file[1:end-3])" |> parse)
+      if  endswith(file, ".jl") &&
+          ! endswith(file, ".json.jl") &&
+          file[1] == uppercase(file[1])
+            Core.eval(@__MODULE__, "using $(file[1:end-3])" |> Meta.parse)
+      end
+    end
+  end
+
+  nothing
+end
+
+
+function load_helpers(root_dir = Genie.HELPERS_PATH) :: Nothing
+  push!(LOAD_PATH, root_dir)
+  for (root, dirs, files) in walkdir(root_dir)
+    for file in files
+      if  endswith(file, ".jl") &&
+          file[1] == uppercase(file[1])
+            include(joinpath(root_dir, file))
+            Core.eval(@__MODULE__, "using .$(file[1:end-3])" |> Meta.parse)
+            is_dev() && Revise.track(joinpath(root_dir, file))
+      end
     end
   end
 
@@ -101,8 +124,10 @@ function load_initializers() :: Nothing
     f = readdir(dir)
     for i in f
       fi = joinpath(dir, i)
-      endswith(fi, ".jl") && include(fi)
-      is_dev() && Revise.track(fi)
+      if endswith(fi, ".jl")
+        include(fi)
+        is_dev() && Revise.track(fi)
+      end
     end
   end
 
@@ -117,8 +142,10 @@ Loads the routes file.
 """
 function load_routes_definitions(fail_on_error = is_dev()) :: Nothing
   try
-    include(Genie.ROUTES_FILE_NAME)
-    is_dev() && Revise.track(Genie.ROUTES_FILE_NAME)
+    if isfile(Genie.ROUTES_FILE_NAME)
+      include(Genie.ROUTES_FILE_NAME)
+      is_dev() && Revise.track(Genie.ROUTES_FILE_NAME)
+    end
   catch ex
     Genie.Logger.log(ex, :err)
 
@@ -136,8 +163,10 @@ Loads the channels file.
 """
 function load_channels_definitions(fail_on_error = false) :: Nothing
   try
-    include(Genie.CHANNELS_FILE_NAME)
-    is_dev() && Revise.track(Genie.CHANNELS_FILE_NAME)
+    if isfile(Genie.CHANNELS_FILE_NAME)
+      include(Genie.CHANNELS_FILE_NAME)
+      is_dev() && Revise.track(Genie.CHANNELS_FILE_NAME)
+    end
   catch ex
     Genie.Logger.log(ex, :warn)
 
@@ -161,7 +190,7 @@ function secret_token() :: String
           You can generate a new secrets.jl file with a random SECRET_TOKEN using Genie.REPL.write_secrets_file()
           or use the included /app/config/secrets.jl.example file as a model.")
     st = Genie.REPL.secret_token()
-    eval(App, parse("""const SECRET_TOKEN = "$st" """))
+    Core.eval(App, Meta.parse("""const SECRET_TOKEN = "$st" """))
 
     st
   end
@@ -173,36 +202,39 @@ function bootstrap()
     isfile(joinpath(Genie.CONFIG_PATH, "global.jl")) && include(joinpath(Genie.CONFIG_PATH, "global.jl"))
     include(joinpath(Genie.ENV_PATH, ENV["GENIE_ENV"] * ".jl"))
   else
-    @eval config = Configuration.Settings(app_env = Configuration.DEV)
+    eval(@__MODULE__, Meta.parse("config = Configuration.Settings(app_env = Configuration.DEV)"))
+  end
+end
+
+
+function load() :: Nothing
+  bootstrap()
+  load_configurations()
+  load_initializers()
+  load_helpers()
+
+  try
+    load_libs()
+  catch ex
+    Genie.Logger.log(ex, :err)
   end
 
-  eval(Genie, parse("const App = $(App)"))
-  eval(Genie, parse("const config = App.config"))
-  eval(Genie, parse("""const SECRET_TOKEN = "$(App.secret_token())" """))
-  eval(Genie, parse("""const ASSET_FINGERPRINT = "$(App.ASSET_FINGERPRINT)" """))
-end
+  try
+    load_resources()
+  catch ex
+    Genie.Logger.log(ex, :err)
+  end
 
+  try
+    load_libs()
+  catch ex
+    Genie.Logger.log(ex, :err)
+  end
 
-load_configurations()
-load_initializers()
+  load_routes_definitions()
+  load_channels_definitions()
 
-try
-  load_libs()
-catch ex
-  Genie.Logger.log(ex, :err)
+  nothing
 end
-try
-  load_resources()
-catch ex
-  Genie.Logger.log(ex, :err)
-end
-try
-  load_libs()
-catch ex
-  Genie.Logger.log(ex, :err)
-end
-
-load_routes_definitions()
-load_channels_definitions()
 
 end
