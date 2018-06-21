@@ -161,14 +161,14 @@ end
 
 Loads the channels file.
 """
-function load_channels_definitions(fail_on_error = false) :: Nothing
+function load_channels_definitions(fail_on_error = is_dev()) :: Nothing
   try
     if isfile(Genie.CHANNELS_FILE_NAME)
       include(Genie.CHANNELS_FILE_NAME)
       is_dev() && Revise.track(Genie.CHANNELS_FILE_NAME)
     end
   catch ex
-    Genie.Logger.log(ex, :warn)
+    Genie.Logger.log(ex, :err)
 
     fail_on_error && rethrow(ex)
   end

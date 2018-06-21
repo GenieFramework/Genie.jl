@@ -32,9 +32,10 @@ end
 
 @everywhere begin
   bootstrap()
-  using Genie, App
+  using Genie, App, Toolbox
 
   eval(Genie, Meta.parse("const App = $(@__MODULE__).App"))
+  eval(Genie, Meta.parse("const Toolbox = $(@__MODULE__).Toolbox"))
   App.load()
 
   eval(Genie, Meta.parse("const config = App.config"))
