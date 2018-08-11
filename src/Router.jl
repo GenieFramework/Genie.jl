@@ -1,15 +1,14 @@
 module Router
 
-using HttpServer, URIParser, Genie, AppServer, Sessions, HttpCommon
-using Millboard, Genie.Configuration, App, Input, Logger, Util, Renderer, WebSockets, JSON
+using HTTP, URIParser, Genie, Genie.Sessions, HttpCommon, HttpServer, Nullables
+using Millboard, Genie.Configuration, Genie.Input, Genie.Logger, Genie.Util, Genie.Renderer, WebSockets, JSON
 if is_dev()
   @eval using Revise
 end
-IS_IN_APP && @eval parse("@dependencies")
 
 import HttpServer.mimetypes
 
-include(joinpath(Pkg.dir("Genie"), "src", "router_converters.jl"))
+include(joinpath(@__DIR__, "router_converters.jl"))
 
 export route, routes, channel, channels
 export GET, POST, PUT, PATCH, DELETE, OPTIONS
@@ -70,29 +69,29 @@ Params() = Params(Dict{Symbol,Any}())
 
 First step in handling a request: sets up @params collection, handles query vars, negotiates content, starts and persists sessions.
 """
-function route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: Response
+function route_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = ip"0.0.0.0") :: HTTP.Response
   params = Params()
   params.collection[:request_ipv4] = ip
 
-  extract_get_params(URI(to_uri(req.resource)), params)
+  extract_get_params(URI(to_uri(req.target)), params)
   res = negotiate_content(req, res, params)
 
   req.method == OPTIONS && return preflight_response()
 
-  if is_static_file(req.resource)
-    App.config.server_handle_static_files && return serve_static_file(req.resource)
-    return serve_error_file(404, "File not found: $(req.resource)", params.collection)
+  if is_static_file(req.target)
+    Genie.config.server_handle_static_files && return serve_static_file(req.target)
+    return serve_error_file(404, "File not found: $(req.target)", params.collection)
   end
 
   is_dev() && Revise.revise()
 
-  session = App.config.session_auto_start ? Sessions.start(req, res) : nothing
+  session = Genie.config.session_auto_start ? Sessions.start(req, res) : nothing
 
-  controller_response::Response = match_routes(req, res, session, params)
+  controller_response::HTTP.Response = match_routes(req, res, session, params)
 
-  ! in(response_type(params), sessionless) && App.config.session_auto_start && Sessions.persist(session)
+  ! in(response_type(params), sessionless) && Genie.config.session_auto_start && Sessions.persist(session)
 
-  print_with_color(:green, "[$(Dates.now())] -- $(URI(to_uri(req.resource))) -- Done\n\n")
+  print_with_color(:green, "[$(Dates.now())] -- $(URI(to_uri(req.target))) -- Done\n\n")
 
   controller_response
 end
@@ -103,20 +102,20 @@ end
 
 First step in handling a web socket request: sets up @params collection, handles query vars, starts and persists sessions.
 """
-function route_ws_request(req::Request, msg::String, ws_client::WebSockets.WebSocket, ip::IPv4 = ip"0.0.0.0") :: String
+function route_ws_request(req::HTTP.Request, msg::String, ws_client::WebSockets.WebSocket, ip::IPv4 = ip"0.0.0.0") :: String
   params = Params()
   params.collection[:request_ipv4] = ip
   params.collection[Genie.PARAMS_WS_CLIENT] = ws_client
 
-  extract_get_params(URI(req.resource), params)
+  extract_get_params(URI(req.target), params)
 
   is_dev() && Revise.revise()
 
-  session = App.config.session_auto_start ? Sessions.load(Sessions.id(req)) : nothing
+  session = Genie.config.session_auto_start ? Sessions.load(Sessions.id(req)) : nothing
 
   channel_response::String = match_channels(req, msg, ws_client, params, session)
 
-  print_with_color(:cyan, "[$(Dates.now())] -- $(URI(req.resource)) -- Done\n\n")
+  print_with_color(:cyan, "[$(Dates.now())] -- $(URI(req.target)) -- Done\n\n")
 
   channel_response
 end
@@ -127,26 +126,29 @@ end
 
 Computes the content-type of the `Response`, based on the information in the `Request`.
 """
-function negotiate_content(req::Request, res::Response, params::Params) :: Response
+function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Params) :: HTTP.Response
+  headers = Dict(res.headers)
+
   function set_negotiated_content()
-    params.collection[:response_type] = collect(keys(Renderer.CONTENT_TYPES))[1]
-    res.headers["Content-Type"] = Renderer.CONTENT_TYPES[params.collection[:response_type]]
+    params.collection[:response_type] = :html
+    push!(res.headers, "Content-Type" => Genie.Renderer.CONTENT_TYPES[params.collection[:response_type]])
 
     true
   end
 
-  if haskey(params.collection, :response_type) && in(Symbol(params.collection[:response_type]), collect(keys(Renderer.CONTENT_TYPES)) )
+  if haskey(params.collection, :response_type) && in(Symbol(params.collection[:response_type]), collect(keys(Genie.Renderer.CONTENT_TYPES)) )
     params.collection[:response_type] = Symbol(params.collection[:response_type])
-    res.headers["Content-Type"] = Renderer.CONTENT_TYPES[params.collection[:response_type]]
+    headers["Content-Type"] = Genie.Renderer.CONTENT_TYPES[params.collection[:response_type]]
 
+    res.headers = [k for k in headers]
     return res
   end
 
-  negotiation_header = haskey(req.headers, "Accept") ? "Accept" : ( haskey(req.headers, "Content-Type") ? "Content-Type" : "" )
+  negotiation_header = haskey(headers, "Accept") ? "Accept" : ( haskey(headers, "Content-Type") ? "Content-Type" : "" )
 
   isempty(negotiation_header) && set_negotiated_content() && return res
 
-  accept_parts = split(req.headers[negotiation_header], ";")
+  accept_parts = split(headers[negotiation_header], ";")
 
   isempty(accept_parts) && set_negotiated_content() && return res
 
@@ -157,10 +159,11 @@ function negotiate_content(req::Request, res::Response, params::Params) :: Respo
   for mime in accept_order_parts
     if contains(mime, "/")
       content_type = split(mime, "/")[2] |> lowercase |> Symbol
-      if haskey(Renderer.CONTENT_TYPES, content_type)
+      if haskey(Genie.Renderer.CONTENT_TYPES, content_type)
         params.collection[:response_type] = content_type
-        res.headers["Content-Type"] = Renderer.CONTENT_TYPES[params.collection[:response_type]]
+        headers["Content-Type"] = Genie.Renderer.CONTENT_TYPES[params.collection[:response_type]]
 
+        res.headers = [k for k in headers]
         return res
       end
     end
@@ -171,8 +174,8 @@ end
 
 
 """
-    route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_route, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Route
-    route(path::String, action::Function; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_route, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Route
+    route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Route
+    route(path::String, action::Function; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Route
 
 Used for defining Genie routes.
 """
@@ -184,19 +187,19 @@ function route(path::String, action::Function; method = GET, with::Dict = Dict{S
 
   named = named == :__anonymous_route ? route_name(r) : named
 
-  if is_dev() && haskey(_routes, named)
-    Logger.log(
-      "Conflicting routes names - multiple routes are sharing the same name. Use the 'named' option to assign them different identifiers.\n" *
-      "Route " * string(_routes[named]) * "\n" * "is now overwritten by " * string(r), :warn)
-  end
+  # if is_dev() && haskey(_routes, named)
+  #   Genie.Logger.log(
+  #     "Conflicting routes names - multiple routes are sharing the same name. Use the 'named' option to assign them different identifiers.\n" *
+  #     "Route " * string(_routes[named]) * "\n" * "is now overwritten by " * string(r), :warn)
+  # end
 
   _routes[named] = r
 end
 
 
 """
-    channel(action::Function, path::String; with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_channel, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Channel
-    channel(path::String, action::Function; with::Dict = Dict{Symbol,Any}(), named::Symbol = :\__anonymous_channel, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Channel
+    channel(action::Function, path::String; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Channel
+    channel(path::String, action::Function; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Channel
 
 Used for defining Genie channels.
 """
@@ -260,11 +263,11 @@ end
 
 
 """
-    print_named_routes() :: Void
+    print_named_routes() :: Nothing
 
 Prints a table of the routes and their names to standard output.
 """
-function print_named_routes() :: Void
+function print_named_routes() :: Nothing
   Millboard.table(named_routes()) |> println
 end
 
@@ -310,11 +313,11 @@ end
 
 
 """
-    print_routes() :: Void
+    print_routes() :: Nothing
 
 Prints a table of the defined routes to standard output.
 """
-function print_routes() :: Void
+function print_routes() :: Nothing
   Millboard.table(routes()) |> println
 end
 
@@ -337,7 +340,7 @@ function to_link!!(route_name::Symbol, d::Dict{Symbol,T})::String where {T}
   route = try
             get_route!!(route_name)
           catch ex
-            Logger.log("Route not found", :err)
+            Logger.log("Route not found $route_name", :err)
             Logger.log(string(ex), :err)
             Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
@@ -359,7 +362,7 @@ function to_link!!(route_name::Symbol, d::Dict{Symbol,T})::String where {T}
   query_vars = String[]
   if haskey(d, :_preserve_query)
     delete!(d, :_preserve_query)
-    query = URI(task_local_storage(:__params)[:REQUEST].resource).query
+    query = URI(task_local_storage(:__params)[:REQUEST].target).query
     query != "" && (query_vars = split(query , "&" ))
   end
 
@@ -379,9 +382,9 @@ function to_link(route_name::Symbol; route_params...) :: String
   try
     to_link!!(route_name, route_params_to_dict(route_params))
   catch ex
-    Logger.log("Route not found", :err)
-    Logger.log(string(ex), :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+    Genie.Logger.log("Route not found", :err)
+    Genie.Logger.log(string(ex), :err)
+    Genie.Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
     ""
   end
@@ -402,7 +405,7 @@ end
 
 """
 """
-function action_controller_params(action::Function, params::Params) :: Void
+function action_controller_params(action::Function, params::Params) :: Nothing
   params.collection[:action_controller] = action |> string |> Symbol
   params.collection[:action] = Base.function_name(action)
   params.collection[:controller] = (action |> typeof).name.module |> string |> Symbol
@@ -435,22 +438,22 @@ end
 
 Matches the invoked URL to the corresponding route, sets up the execution environment and invokes the controller method.
 """
-function match_routes(req::Request, res::Response, session::Union{Sessions.Session,Void}, params::Params) :: Response
+function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Genie.Sessions.Session,Nothing}, params::Params) :: HTTP.Response
   for r in routes()
     r.method != req.method && (! haskey(params.collection, :_method) || ( haskey(params.collection, :_method) && params.collection[:_method] != r.method )) && continue
 
-    App.config.log_router && Logger.log("Router: Checking against " * r.path)
+    Genie.config.log_router && Logger.log("Router: Checking against " * r.path)
 
     parsed_route, param_names, param_types = parse_route(r.path)
 
-    uri = URI(to_uri(req.resource))
+    uri = URI(to_uri(req.target))
     regex_route = Regex("^" * parsed_route * "\$")
 
     (! ismatch(regex_route, uri.path)) && continue
-    App.config.log_router && Logger.log("Router: Matched route " * uri.path)
+    Genie.config.log_router && Logger.log("Router: Matched route " * uri.path)
 
     (! extract_uri_params(uri.path, regex_route, param_names, param_types, params)) && continue
-    App.config.log_router && Logger.log("Router: Matched type of route " * uri.path)
+    Genie.config.log_router && Logger.log("Router: Matched type of route " * uri.path)
 
     extract_post_params(req, params)
     extract_extra_params(r.with, params)
@@ -481,10 +484,10 @@ function match_routes(req::Request, res::Response, session::Union{Sessions.Sessi
             end
   end
 
-  App.config.log_router && Logger.log("Router: No route matched - defaulting to 404", :err)
+  Genie.config.log_router && Logger.log("Router: No route matched - defaulting to 404", :err)
 
   # serve_error_file(404, "Not found", params.collection)
-  error_404(req.resource)
+  error_404(req.target)
 end
 
 
@@ -493,9 +496,9 @@ end
 
 Matches the invoked URL to the corresponding channel, sets up the execution environment and invokes the channel controller method.
 """
-function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSocket, params::Params, session::Union{Sessions.Session,Void}) :: String
+function match_channels(req::HTTP.Request, msg::String, ws_client::WebSockets.WebSocket, params::Params, session::Union{Sessions.Session,Nothing}) :: String
   for c in channels()
-    App.config.log_router && Logger.log("Channels: Checking against " * c.path)
+    Genie.config.log_router && Logger.log("Channels: Checking against " * c.path)
 
     parsed_channel, param_names, param_types = parse_channel(c.path)
 
@@ -513,10 +516,10 @@ function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSock
     regex_channel = Regex("^" * parsed_channel * "\$")
 
     (! ismatch(regex_channel, uri)) && continue
-    App.config.log_router && Logger.log("Channels: Matched channel " * uri)
+    Genie.config.log_router && Logger.log("Channels: Matched channel " * uri)
 
     extract_uri_params(uri, regex_channel, param_names, param_types, params) || continue
-    App.config.log_router && Logger.log("Router: Matched type of channel " * uri)
+    Genie.config.log_router && Logger.log("Router: Matched type of channel " * uri)
 
     extract_extra_params(c.with, params)
     action_controller_params(c.action, params)
@@ -546,7 +549,7 @@ function match_channels(req::Request, msg::String, ws_client::WebSockets.WebSock
               end
   end
 
-  App.log_router && Logger.log("Channel: No route matched - defaulting 404", :err)
+  Genie.config.log_router && Logger.log("Channel: No route matched - defaulting 404", :err)
   string("404 - Not found")
 end
 
@@ -659,11 +662,11 @@ end
 
 
 """
-    extract_extra_params(extra_params::Dict, params::Params) :: Void
+    extract_extra_params(extra_params::Dict, params::Params) :: Nothing
 
 Parses extra params present in the route's definition and sets them into the `params` `Dict`.
 """
-function extract_extra_params(extra_params::Dict, params::Params) :: Void
+function extract_extra_params(extra_params::Dict, params::Params) :: Nothing
   isempty(extra_params) && return nothing
 
   for (k, v) in extra_params
@@ -675,11 +678,11 @@ end
 
 
 """
-    extract_post_params(req::Request, params::Params) :: Void
+    extract_post_params(req::Request, params::Params) :: Nothing
 
 Parses POST variables and adds the to the `params` `Dict`.
 """
-function extract_post_params(req::Request, params::Params) :: Void
+function extract_post_params(req::HTTP.Request, params::Params) :: Nothing
   for (k, v) in Input.post(req)
     v = replace(v, "+", " ")
     nested_keys(k, v, params)
@@ -691,11 +694,11 @@ end
 
 
 """
-    nested_keys(k::String, v, params::Params) :: Void
+    nested_keys(k::String, v, params::Params) :: Nothing
 
 Utility function to process nested keys and set them up in `params`.
 """
-function nested_keys(k::String, v, params::Params) :: Void
+function nested_keys(k::String, v, params::Params) :: Nothing
   if contains(k, ".")
     parts = split(k, ".", limit = 2)
     nested_val_key = Symbol(parts[1])
@@ -716,18 +719,18 @@ end
 
 Populates `params` with default environment vars.
 """
-function setup_base_params(req::Request, res::Union{Response,Void}, params::Dict{Symbol,Any}, session::Union{Sessions.Session,Void}) :: Dict{Symbol,Any}
+function setup_base_params(req::HTTP.Request, res::Union{HTTP.Response,Nothing}, params::Dict{Symbol,Any}, session::Union{Genie.Sessions.Session,Nothing}) :: Dict{Symbol,Any}
   params[Genie.PARAMS_REQUEST_KEY]   = req
   params[Genie.PARAMS_RESPONSE_KEY]  = res
   params[Genie.PARAMS_SESSION_KEY]   = session
-  params[Genie.PARAMS_FLASH_KEY]     = App.config.session_auto_start ?
+  params[Genie.PARAMS_FLASH_KEY]     = Genie.config.session_auto_start ?
                                        begin
-                                        s = Sessions.get(session, Genie.PARAMS_FLASH_KEY)
+                                        s = Genie.Sessions.get(session, Genie.PARAMS_FLASH_KEY)
                                         if isnull(s)
                                           ""
                                         else
                                           ss = Base.get(s)
-                                          Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
+                                          Genie.Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
                                           ss
                                         end
                                        end : ""
@@ -741,19 +744,19 @@ end
 
 Converts the result of invoking the controller action to a `Response`.
 """
-function to_response(action_result) :: Response
-  isa(action_result, Response) && return action_result
+function to_response(action_result) :: HTTP.Response
+  isa(action_result, HTTP.Response) && return action_result
 
   return  try
             if isa(action_result, Tuple)
-              Response(action_result...)
+              HTTP.Response(action_result...)
             else
-              Response(string(action_result))
+              HTTP.Response(string(action_result))
             end
           catch ex
-            Logger.log("Can't convert $action_result to HttpServer.Response", :err)
-            Logger.log(string(ex), :err)
-            Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+            Genie.Logger.log("Can't convert $action_result to HttpServer.Response", :err)
+            Genie.Logger.log(string(ex), :err)
+            Genie.Logger.log("$(@__FILE__):$(@__LINE__)", :err)
 
             rethrow(ex)
           end
@@ -779,7 +782,7 @@ function _params_()
   task_local_storage(:__params)
 end
 function _params_(key::Union{String,Symbol})
-  task_local_storage(:__params)[$key]
+  task_local_storage(:__params)[key]
 end
 
 
@@ -790,7 +793,7 @@ end
 Returns the content-type of the current request-response cycle.
 """
 function response_type(params::Dict{Symbol,T})::Symbol where {T}
-  haskey(params, :response_type) ? params[:response_type] : Renderer.DEFAULT_CONTENT_TYPE
+  haskey(params, :response_type) ? params[:response_type] : Genie.Renderer.DEFAULT_CONTENT_TYPE
 end
 function response_type(params::Params) :: Symbol
   response_type(params.collection)
@@ -815,7 +818,7 @@ end
 
 Returns the default 500 error page.
 """
-function serve_error_file_500(ex::Exception, params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
+function serve_error_file_500(ex::Exception, params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: HTTP.Response
   serve_error_file( 500,
                     string(ex) *
                     "<br/><br/>" *
@@ -827,62 +830,14 @@ end
 
 
 """
-    routes_available() :: Bool
-
-Checkes if the routes file is available.
-"""
-function routes_available() :: Bool
-  ! IS_IN_APP && return false
-  ! isfile(Genie.ROUTES_FILE_NAME) && return false
-
-  true
-end
-
-
-"""
-    load_routes_definitions() :: Void
-
-Loads the routes file.
-"""
-function load_routes_definitions() :: Void
-  ! routes_available() && return nothing
-
-  include(Genie.ROUTES_FILE_NAME)
-  is_dev() && Revise.track(Genie.ROUTES_FILE_NAME)
-
-  nothing
-end
-
-
-"""
-    append_to_routes_file(content::String) :: Void
+    append_to_routes_file(content::String) :: Nothing
 
 Appends `content` to the app's route file.
 """
-function append_to_routes_file(content::String) :: Void
+function append_to_routes_file(content::String) :: Nothing
   open(Genie.ROUTES_FILE_NAME, "a") do io
     write(io, "\n" * content)
   end
-
-  nothing
-end
-
-
-"""
-    load_channels_definitions() :: Void
-
-Loads the channels file.
-"""
-function load_channels_definitions() :: Void
-  ! IS_IN_APP && return nothing
-
-  channels_defs = abspath(joinpath("config", "channels.jl"))
-  ! isfile(channels_defs) && return nothing
-
-  # empty!(_channels)
-  include(channels_defs)
-
-  is_dev() && Revise.track(channels_defs)
 
   nothing
 end
@@ -928,7 +883,7 @@ end
 
 Reads the static file and returns the content as a `Response`.
 """
-function serve_static_file(resource::String) :: Response
+function serve_static_file(resource::String) :: HTTP.Response
   startswith(resource, "/") || (resource = "/$resource")
   resource_path = try
                     URI(resource).path
@@ -938,7 +893,7 @@ function serve_static_file(resource::String) :: Response
   f = file_path(resource_path)
 
   if isfile(f)
-    Response(200, file_headers(f), open(read, f))
+    HTTP.Response(200, file_headers(f), open(read, f))
   else
     error_404(resource)
   end
@@ -946,7 +901,7 @@ end
 
 
 function preflight_response()
-  Response(200, App.config.cors_headers, "Success")
+  HTTP.Response(200, Genie.config.cors_headers, "Success")
 end
 
 
@@ -969,9 +924,9 @@ end
 
 Serves the error file correspoding to `error_code` and current environment.
 """
-function serve_error_file(error_code::Int, error_message::String = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
+function serve_error_file(error_code::Int, error_message::String = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: HTTP.Response
   try
-    if is_dev()
+    if Genie.Configuration.is_dev()
       error_page =  open(Genie.DOC_ROOT_PATH * "/error-$(error_code).html") do f
                       readstring(f)
                     end
@@ -986,14 +941,14 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
 
       error_page = replace(error_page, "<error_message/>", escapeHTML(error_message))
 
-      Response(error_code, Dict{AbstractString,AbstractString}(), error_page)
+      HTTP.Response(error_code, Dict{AbstractString,AbstractString}(), error_page)
     else
       f = file_path(URI("/error-$(error_code).html").path)
 
-      Response(error_code, file_headers(f), replace(open(readstring, f), "<error_message/>", error_message))
+      HTTP.Response(error_code, file_headers(f), replace(open(readstring, f), "<error_message/>", error_message))
     end
   catch ex
-    Response(error_code, "Error $error_code: $error_message")
+    HTTP.Response(error_code, "Error $error_code: $error_message")
   end
 end
 
@@ -1004,7 +959,7 @@ end
 Returns the path to a resource file. If `within_doc_root` it will automatically prepend the document root to `resource`.
 """
 function file_path(resource::String; within_doc_root = true) :: String
-  abspath(joinpath(within_doc_root ? App.config.server_document_root : "", resource[(startswith(resource, "/") ? 2 : 1):end]))
+  abspath(joinpath(within_doc_root ? Genie.config.server_document_root : "", resource[(startswith(resource, "/") ? 2 : 1):end]))
 end
 
 
@@ -1032,11 +987,6 @@ Returns the file headers of `f`.
 file_headers(f) :: Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}("Content-Type" => get(mimetypes, file_extension(f), "application/octet-stream"))
 
 ormatch(r::RegexMatch, x) = r.match
-ormatch(r::Void, x) = x
-
-if IS_IN_APP
-  load_routes_definitions()
-  load_channels_definitions()
-end
+ormatch(r::Nothing, x) = x
 
 end

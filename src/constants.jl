@@ -20,6 +20,7 @@ const GENIE_CONTROLLER_FILE_POSTFIX     = "Controller.jl"
 const GENIE_CHANNEL_FILE_POSTFIX        = "Channel.jl"
 
 const ROUTES_FILE_NAME  = joinpath(CONFIG_PATH, "routes.jl")
+const CHANNELS_FILE_NAME  = joinpath(CONFIG_PATH, "channels.jl")
 
 const PARAMS_REQUEST_KEY    = :REQUEST
 const PARAMS_RESPONSE_KEY   = :RESPONSE
@@ -33,3 +34,6 @@ const TEST_FILE_IDENTIFIER = "_test.jl"
 # Used to store log info during app bootstrap, when the logger itself is not available.
 # The queue is automatically emptied by the logger upon load.
 const GENIE_LOG_QUEUE = Vector{Tuple{String,Symbol}}()
+
+const VIEWS_FOLDER = "views"
+const LAYOUTS_FOLDER = "layouts"

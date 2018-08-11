@@ -1,10 +1,9 @@
 module UserSessionsController
 
-using Genie, SearchLight, App, Authentication
-@dependencies
+using Genie, SearchLight, Genie.Authentication, Genie.Flax, Nullables
 
 function show_login()
-  Flax.include_template("/Users/adrian/Dropbox/Projects/todo_mvc/app/layouts/login.flax.html", partial = false)
+  Genie.Flax.include_template("/Users/adrian/Dropbox/Projects/todo_mvc/app/layouts/login.flax.html", partial = false)
 end
 
 function login()

@@ -3,31 +3,29 @@ Handles command line arguments for the genie.jl script.
 """
 module Commands
 
-using ArgParse, Genie.Configuration, Genie, Genie.Generator, Tester, Toolbox, App, Logger, AppServer
-SEARCHLIGHT_ON && eval(:(using SearchLight, Migration))
+using ArgParse, Genie.Configuration, Genie, Genie.Generator, Genie.Tester, Genie.Toolbox, Genie.Logger, Genie.AppServer
+using SearchLight, SearchLight.Migration
 
 """
-    execute(config::Settings) :: Void
+    execute(config::Settings) :: Nothing
 
 Runs the requested Genie app command, based on the `args` passed to the script.
 """
-function execute(config::Settings) :: Void
+function execute(config::Settings) :: Nothing
   parsed_args = parse_commandline_args()::Dict{String,Any}
 
-  App.config.app_env = ENV["GENIE_ENV"]
-  App.config.server_port = parse(Int, parsed_args["server:port"])
-  App.config.server_workers_count = (sw = parse(Int, parsed_args["server:workers"])) > 0 ? sw : config.server_workers_count
+  Genie.config.app_env = ENV["GENIE_ENV"]
+  Genie.config.server_port = parse(Int, parsed_args["server:port"])
+  Genie.config.server_workers_count = (sw = parse(Int, parsed_args["server:workers"])) > 0 ? sw : config.server_workers_count
 
   if called_command(parsed_args, "db:init")
-    no_searchlight("Can not initialise DB as the SearchLight ORM is not available") ||
-      SearchLight.create_migrations_table(App.config.db_migrations_table_name)
+    SearchLight.create_migrations_table(Genie.config.db_migrations_table_name)
 
   elseif parsed_args["app:new"] != nothing
     Genie.REPL.new_app(parsed_args["app:new"])
 
   elseif parsed_args["model:new"] != nothing
-    no_searchlight("Can not initialise DB as the SearchLight ORM is not available") ||
-      SearchLight.Generator.new_model(parsed_args)
+    SearchLight.Generator.new_model(parsed_args)
 
   elseif parsed_args["controller:new"] != nothing
     Genie.Generator.new_controller(parsed_args)
@@ -37,37 +35,28 @@ function execute(config::Settings) :: Void
 
   elseif parsed_args["resource:new"] != nothing
     Genie.Generator.new_resource(parsed_args)
-    no_searchlight("The corresponding model files were not created as the SearchLight ORM is not available") ||
-      SearchLight.Generator.new_resource(parsed_pargs)
+    SearchLight.Generator.new_resource(parsed_pargs)
 
   elseif called_command(parsed_args, "migration:status") || called_command(parsed_args, "migration:list")
-    no_searchlight(NO_MIGRATION_MSG) ||
-      Migration.status()
+    Migration.status()
   elseif parsed_args["migration:new"] != nothing
-    no_searchlight(NO_MIGRATION_MSG) ||
-      Migration.new(parsed_args, config)
+    Migration.new(parsed_args, config)
 
   elseif called_command(parsed_args, "migration:allup")
-    no_searchlight(NO_MIGRATION_MSG) ||
-      Migration.all_up()
+    Migration.all_up()
 
   elseif called_command(parsed_args, "migration:up")
-    no_searchlight(NO_MIGRATION_MSG) ||
-      Migration.last_up()
+    Migration.last_up()
   elseif parsed_args["migration:up"] != nothing
-    no_searchlight(NO_MIGRATION_MSG) ||
-      Migration.up_by_module_name(parsed_args["migration:up"])
+    Migration.up_by_module_name(parsed_args["migration:up"])
 
   elseif called_command(parsed_args, "migration:alldown")
-    no_searchlight(NO_MIGRATION_MSG) ||
-      Migration.all_down()
+    Migration.all_down()
 
   elseif called_command(parsed_args, "migration:down")
-    no_searchlight(NO_MIGRATION_MSG) ||
-      Migration.last_down()
+    Migration.last_down()
   elseif parsed_args["migration:down"] != nothing
-    no_searchlight(NO_MIGRATION_MSG) ||
-      Migration.down_by_module_name(parsed_args["db:migration:down"])
+    Migration.down_by_module_name(parsed_args["db:migration:down"])
 
   elseif called_command(parsed_args, "task:list")
     Toolbox.print_tasks()
@@ -83,8 +72,8 @@ function execute(config::Settings) :: Void
     error("Not implemented!")
 
   elseif called_command(parsed_args, "s") || called_command(parsed_args, "server:start")
-    App.config.run_as_server = true
-    AppServer.startup(App.config.server_port)
+    Genie.config.run_as_server = true
+    AppServer.startup(Genie.config.server_port)
 
   end
 
@@ -186,18 +175,5 @@ Checks whether or not a certain command was invoked by looking at the command li
 function called_command(args::Dict{String,Any}, key::String) :: Bool
     args[key] == "true" || args["s"] == key
 end
-
-
-"""
-"""
-function no_searchlight(error_message)
-  if SEARCHLIGHT_ON
-    false
-  else
-    Logger.log(error_message, :err)
-    true
-  end
-end
-const NO_MIGRATION_MSG = "Can not use migrations as the SearchLight ORM is not available"
 
 end

@@ -15,7 +15,7 @@ Checks if the user authenticated on the current session (its role) is authorized
 """
 function is_authorized(ability::Symbol, params::Dict{Symbol,Any}) :: Bool
   Authentication.is_authenticated(session(params)) || return false
-  user_role = expand_nullable( expand_nullable(current_user(session(params)), User()).role, :user )
+  user_role = expand_nullable(expand_nullable(current_user(session(params)), User()).role, :user)
   role_has_ability(user_role, ability, params)
 end
 

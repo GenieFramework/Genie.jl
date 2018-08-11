@@ -1,15 +1,14 @@
 module Tester
 
-using Genie, App, Util, Genie.Configuration, Logger
-SEARCHLIGHT_ON && eval(:(using Migration))
+using Genie, Genie.Util, Genie.Configuration, Genie.Logger, SearchLight.Migration
 
 
 """
-    bootstrap_tests(cmd_args::String, config::Settings) :: Void
+    bootstrap_tests(cmd_args::String, config::Settings) :: Nothing
 
 Sets up testing environment, includes test files, etc.
 """
-function bootstrap_tests(cmd_args::String = "", config::Settings = App.config, resource::String = "") :: Void
+function bootstrap_tests(cmd_args::String = "", config::Settings = Genie.config, resource::String = "") :: Nothing
   current_env = config.app_env
 
   set_test_env()
@@ -23,19 +22,19 @@ function bootstrap_tests(cmd_args::String = "", config::Settings = App.config, r
     end
   end
 
-  App.config.app_env = current_env
-  Logger.log("Switched app to >> $(uppercase(App.config.app_env)) << env", :debug)
+  Genie.config.app_env = current_env
+  Logger.log("Switched app to >> $(uppercase(Genie.config.app_env)) << env", :debug)
 
   nothing
 end
 
 
 """
-    reset_db() :: Void
+    reset_db() :: Nothing
 
 Prepares the test env DB running all migrations up.
 """
-function reset_db() :: Void
+function reset_db() :: Nothing
   Migration.all_down()
   Migration.all_up()
 
@@ -44,37 +43,37 @@ end
 
 
 """
-    run_all_tests(cmd_args::String, config::Settings) :: Void
+    run_all_tests(cmd_args::String, config::Settings) :: Nothing
 
 Runs all existing tests.
 """
-function run_all_tests(cmd_args::String = "", config::Settings = App.config) :: Void
+function run_all_tests(cmd_args::String = "", config::Settings = Genie.config) :: Nothing
   bootstrap_tests(cmd_args, config)
 
   nothing
 end
 
 
-function run_tests() :: Void
+function run_tests() :: Nothing
   run_all_tests()
 end
-function run_tests(resource_name::Symbol) :: Void
-  bootstrap_tests("", App.config, string(resource_name) |> lowercase)
+function run_tests(resource_name::Symbol) :: Nothing
+  bootstrap_tests("", Genie.config, string(resource_name) |> lowercase)
 end
 
 
 """
-    set_test_env() :: Void
+    set_test_env() :: Nothing
 
 Switches Genie to the test env for the duration of the current execution.
 """
-function set_test_env() :: Void
+function set_test_env() :: Nothing
   # if ! is_test()
   #   Logger.log("You're attempting to run your test suite outside the TEST environment. This can lead to losing your production or development data, depending on your current/default environment.", :err, showst = false)
   # end
-  if App.config.tests_force_test_env
-    # Logger.log("Automatically switching to TEST environment to avoid data corruption. If you want to force running your test in a different environment, switch the `tests_force_test_env` variable to `false` in your env's config file.", :debug)
-    App.config.app_env = TEST
+  if Genie.config.tests_force_test_env
+    # Logger.log("Automatically switching to TEST environment to aNothing data corruption. If you want to force running your test in a different environment, switch the `tests_force_test_env` variable to `false` in your env's config file.", :debug)
+    Genie.config.app_env = TEST
     Logger.log("Switched app to >> $(uppercase(App.config.app_env)) << env", :debug)
 
     ! is_test() && error("Could not switch env")

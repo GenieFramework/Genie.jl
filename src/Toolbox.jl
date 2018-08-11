@@ -2,7 +2,7 @@ module Toolbox
 
 import Base.string
 
-using Genie, Util, Millboard, Genie.FileTemplates, Genie.Configuration, Logger, Inflector, App
+using Revise, Genie, Genie.Util, Millboard, Genie.FileTemplates, Genie.Configuration, Genie.Logger, Genie.Inflector
 
 export TaskResult, VoidTaskResult, check_valid_task
 
@@ -73,11 +73,11 @@ end
 
 
 """
-    print_tasks() :: Void
+    print_tasks() :: Nothing
 
 Prints a list of all the registered Genie tasks to the standard output.
 """
-function print_tasks() :: Void
+function print_tasks() :: Nothing
   output = ""
   arr_output = []
   for t in all_tasks()
@@ -98,14 +98,12 @@ Returns a vector of all registered Genie tasks.
 function tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
   tasks = TaskInfo[]
 
-  tasks_folder = abspath(App.config.tasks_folder)
-  f = readdir(tasks_folder)
+  f = readdir(Genie.config.tasks_folder)
   for i in f
     if ( endswith(i, "Task.jl") )
-      push!(LOAD_PATH, tasks_folder)
-
-      module_name = Util.file_name_without_extension(i) |> Symbol
-      eval(:(using $(module_name)))
+      module_name = Genie.Util.file_name_without_extension(i) |> Symbol
+      include(joinpath(Genie.config.tasks_folder, i))
+      eval(:(using .$(module_name)))
       ti = TaskInfo(i, module_name, task_docs(module_name))
 
       if ( filter_type_name == Symbol() ) push!(tasks, ti)
@@ -137,12 +135,12 @@ end
 
 
 """
-    new(cmd_args::Dict{String,Any}, config::Settings) :: Void
-    new(task_name::String, config::Settings = App.config) :: Void
+    new(cmd_args::Dict{String,Any}, config::Settings) :: Nothing
+    new(task_name::String, config::Settings = App.config) :: Nothing
 
 Generates a new Genie task file.
 """
-function new(cmd_args::Dict{String,Any}, config::Settings = App.config) :: Void
+function new(cmd_args::Dict{String,Any}, config::Settings = Genie.config) :: Nothing
   tfn = task_file_name(cmd_args, config)
 
   if ispath(tfn)
@@ -157,7 +155,7 @@ function new(cmd_args::Dict{String,Any}, config::Settings = App.config) :: Void
 
   nothing
 end
-function new(task_name::String, config::Settings = App.config) :: Void
+function new(task_name::String, config::Settings = Genie.config) :: Nothing
   new(Dict{String,Any}("task:new" => valid_task_name(task_name)), config)
 end
 
@@ -167,7 +165,7 @@ end
 
 Computes the name of a Genie task based on the command line input.
 """
-function task_file_name(cmd_args::Dict{String,Any}, config::Settings = App.config) :: String
+function task_file_name(cmd_args::Dict{String,Any}, config::Settings = Genie.config) :: String
   joinpath(config.tasks_folder, cmd_args["task:new"] * ".jl")
 end
 

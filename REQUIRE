@@ -1,16 +1,17 @@
-julia 0.6
+julia 0.7
 
 ArgParse
 DataStructures
 DateParser
 Gumbo
 HttpCommon
-HttpServer
+HTTP
 JSON
 Lumberjack
 MbedTLS
 Millboard
 Nettle
+Nullables
 OhMyREPL
 Reexport
 Revise

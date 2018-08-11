@@ -4,14 +4,14 @@ mutable struct Role <: AbstractModel
   _table_name::String
   _id::String
 
-  id::Nullable{SearchLight.DbId}
+  id::SearchLight.DbId
   name::Symbol
 
   has_one::Vector{SearchLight.SQLRelation}
   on_dehydration::Function
 
   Role(;
-    id = Nullable{SearchLight.DbId}(),
+    id = SearchLight.DbId(),
     name = :user,
     has_one = [SearchLight.SQLRelation(User)],
     on_dehydration = Roles.dehydrate
