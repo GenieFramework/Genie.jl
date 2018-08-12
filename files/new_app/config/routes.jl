@@ -1,5 +1,5 @@
-using Router
+using Genie.Router
 
 route("/") do
-  Router.serve_static_file("/welcome.html")
+  Genie.Router.serve_static_file("/welcome.html")
 end

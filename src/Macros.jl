@@ -36,7 +36,7 @@ The `Gallium` debugger is automatically also included.
 
 # Examples
 ```julia
-julia> @ifdevtools :(println("dev mode")) |> eval
+julia> @ifdevtools :(println("dev mode")) |> Core.eval
 dev mode
 ```
 """

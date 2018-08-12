@@ -1,10 +1,8 @@
 module Router
 
-using HTTP, URIParser, Genie, Genie.Sessions, HttpCommon, HttpServer, Nullables
-using Millboard, Genie.Configuration, Genie.Input, Genie.Logger, Genie.Util, Genie.Renderer, WebSockets, JSON
-if is_dev()
-  @eval using Revise
-end
+using Revise
+using HTTP, URIParser, HttpCommon, HttpServer, Nullables, Sockets, Millboard, WebSockets, JSON, Dates
+using Genie, Genie.Sessions, Genie.Configuration, Genie.Input, Genie.Logger, Genie.Util, Genie.Renderer
 
 import HttpServer.mimetypes
 
@@ -102,7 +100,7 @@ end
 
 First step in handling a web socket request: sets up @params collection, handles query vars, starts and persists sessions.
 """
-function route_ws_request(req::HTTP.Request, msg::String, ws_client::WebSockets.WebSocket, ip::IPv4 = ip"0.0.0.0") :: String
+function route_ws_request(req, msg::String, ws_client, ip::IPv4 = ip"0.0.0.0") :: String
   params = Params()
   params.collection[:request_ipv4] = ip
   params.collection[Genie.PARAMS_WS_CLIENT] = ws_client
@@ -187,12 +185,6 @@ function route(path::String, action::Function; method = GET, with::Dict = Dict{S
 
   named = named == :__anonymous_route ? route_name(r) : named
 
-  # if is_dev() && haskey(_routes, named)
-  #   Genie.Logger.log(
-  #     "Conflicting routes names - multiple routes are sharing the same name. Use the 'named' option to assign them different identifiers.\n" *
-  #     "Route " * string(_routes[named]) * "\n" * "is now overwritten by " * string(r), :warn)
-  # end
-
   _routes[named] = r
 end
 
@@ -209,12 +201,6 @@ end
 function channel(path::String, action::Function; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Channel
   c = Channel(path = path, action = action, with = with, before = before, after = after)
   named = named == :__anonymous_channel ? channel_name(c) : named
-
-  if is_dev() && haskey(_channels, named)
-    Logger.log(
-      "Conflicting channel names - multiple channels are sharing the same name. Use the 'named' option to assign them different identifiers.\n" *
-      "Channel " * string(_channels[named]) * "\n" * "is now overwritten by " * string(channel_parts, extra_channel_parts), :warn)
-  end
 
   _channels[named] = c
 end
@@ -449,7 +435,7 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
     uri = URI(to_uri(req.target))
     regex_route = Regex("^" * parsed_route * "\$")
 
-    (! ismatch(regex_route, uri.path)) && continue
+    (! occursin(regex_route, uri.path)) && continue
     Genie.config.log_router && Logger.log("Router: Matched route " * uri.path)
 
     (! extract_uri_params(uri.path, regex_route, param_names, param_types, params)) && continue
@@ -496,7 +482,7 @@ end
 
 Matches the invoked URL to the corresponding channel, sets up the execution environment and invokes the channel controller method.
 """
-function match_channels(req::HTTP.Request, msg::String, ws_client::WebSockets.WebSocket, params::Params, session::Union{Sessions.Session,Nothing}) :: String
+function match_channels(req, msg::String, ws_client, params::Params, session::Union{Sessions.Session,Nothing}) :: String
   for c in channels()
     Genie.config.log_router && Logger.log("Channels: Checking against " * c.path)
 
@@ -515,7 +501,7 @@ function match_channels(req::HTTP.Request, msg::String, ws_client::WebSockets.We
 
     regex_channel = Regex("^" * parsed_channel * "\$")
 
-    (! ismatch(regex_channel, uri)) && continue
+    (! occursin(regex_channel, uri)) && continue
     Genie.config.log_router && Logger.log("Channels: Matched channel " * uri)
 
     extract_uri_params(uri, regex_channel, param_names, param_types, params) || continue
@@ -560,8 +546,8 @@ end
 Parses a route and extracts its named parms and types.
 """
 function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
-  parts = AbstractString[]
-  param_names = AbstractString[]
+  parts = String[]
+  param_names = String[]
   param_types = Any[]
 
   for rp in split(route, "/", keep = false)
@@ -591,8 +577,8 @@ end
 Parses a channel and extracts its named parms and types.
 """
 function parse_channel(channel::String) :: Tuple{String,Vector{String},Vector{Any}}
-  parts = AbstractString[]
-  param_names = AbstractString[]
+  parts = String[]
+  param_names = String[]
   param_types = Any[]
 
   for rp in split(channel, "/", keep = false)
@@ -684,7 +670,7 @@ Parses POST variables and adds the to the `params` `Dict`.
 """
 function extract_post_params(req::HTTP.Request, params::Params) :: Nothing
   for (k, v) in Input.post(req)
-    v = replace(v, "+", " ")
+    v = replace(v, "+"=>" ")
     nested_keys(k, v, params)
     params.collection[Symbol(k)] = v
   end
@@ -893,7 +879,7 @@ function serve_static_file(resource::String) :: HTTP.Response
   f = file_path(resource_path)
 
   if isfile(f)
-    HTTP.Response(200, file_headers(f), open(read, f))
+    HTTP.Response(200, file_headers(f), body = read(f, String))
   else
     error_404(resource)
   end
@@ -901,7 +887,7 @@ end
 
 
 function preflight_response()
-  HTTP.Response(200, Genie.config.cors_headers, "Success")
+  HTTP.Response(200, Genie.config.cors_headers, body = "Success")
 end
 
 
@@ -928,7 +914,7 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
   try
     if Genie.Configuration.is_dev()
       error_page =  open(Genie.DOC_ROOT_PATH * "/error-$(error_code).html") do f
-                      readstring(f)
+                      read(f, String)
                     end
 
       if error_code == 500
@@ -939,16 +925,16 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
                         """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$ENV                                       $("\n" ^ 1)"""
       end
 
-      error_page = replace(error_page, "<error_message/>", escapeHTML(error_message))
+      error_page = replace(error_page, "<error_message/>"=>escapeHTML(error_message))
 
-      HTTP.Response(error_code, Dict{AbstractString,AbstractString}(), error_page)
+      HTTP.Response(error_code, [], body = error_page)
     else
       f = file_path(URI("/error-$(error_code).html").path)
 
-      HTTP.Response(error_code, file_headers(f), replace(open(readstring, f), "<error_message/>", error_message))
+      HTTP.Response(error_code, file_headers(f), body = replace(open(readstring, f), "<error_message/>"=>error_message))
     end
   catch ex
-    HTTP.Response(error_code, "Error $error_code: $error_message")
+    HTTP.Response(error_code, [], body = "Error $error_code: $error_message")
   end
 end
 
@@ -968,7 +954,7 @@ end
 
 Returns a proper URI path from a string `x`.
 """
-pathify(x) :: String = replace(string(x), " ", "-") |> lowercase |> URIParser.escape
+pathify(x) :: String = replace(string(x), " "=>"-") |> lowercase |> URIParser.escape
 
 
 """
@@ -984,7 +970,9 @@ file_extension(f) :: String = ormatch(match(r"(?<=\.)[^\.\\/]*$", f), "")
 
 Returns the file headers of `f`.
 """
-file_headers(f) :: Dict{AbstractString,AbstractString} = Dict{AbstractString,AbstractString}("Content-Type" => get(mimetypes, file_extension(f), "application/octet-stream"))
+function file_headers(f) :: Vector{Pair{String,String}}
+  ["Content-Type" => get(mimetypes, file_extension(f), "application/octet-stream")]
+end
 
 ormatch(r::RegexMatch, x) = r.match
 ormatch(r::Nothing, x) = x

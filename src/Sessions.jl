@@ -1,6 +1,7 @@
 module Sessions
 
-using Genie, SHA, HTTP, Genie.Cookies, Genie.Logger
+using SHA, HTTP, Dates
+using Genie, Genie.Cookies, Genie.Logger
 
 mutable struct Session
   id::String
@@ -12,8 +13,8 @@ export Session
 
 const session_adapter_name = string(Genie.config.session_storage) * "SessionAdapter"
 include("session_adapters/$session_adapter_name.jl")
-eval(parse("using .$session_adapter_name"))
-const SessionAdapter = eval(parse(session_adapter_name))
+Core.eval(@__MODULE__, parse("using .$session_adapter_name"))
+const SessionAdapter = Core.eval(@__MODULE__, parse(session_adapter_name))
 
 
 """

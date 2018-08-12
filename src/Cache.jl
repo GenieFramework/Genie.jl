@@ -18,9 +18,9 @@ const CACHE_DURATION  = Genie.config.cache_duration
 Underlying module that handles persistance and retrieval of cached data.
 """
 const CACHE_ADAPTER_NAME = Genie.config.cache_adapter
-eval(parse("""include("cache_adapters/$CACHE_ADAPTER_NAME.jl")"""))
-eval(parse("using .$(CACHE_ADAPTER_NAME)"))
-const CACHE_ADAPTER = eval(parse("$CACHE_ADAPTER_NAME"))
+Core.eval(@__MODULE__, parse("""include("cache_adapters/$CACHE_ADAPTER_NAME.jl")"""))
+Core.eval(@__MODULE__, parse("using .$(CACHE_ADAPTER_NAME)"))
+const CACHE_ADAPTER = Core.eval(@__MODULE__, parse("$CACHE_ADAPTER_NAME"))
 
 
 """

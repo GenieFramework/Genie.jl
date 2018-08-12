@@ -96,11 +96,6 @@ mutable struct Settings
   cache_table::String
 
   log_router::Bool
-  # log_db::Bool
-  # log_queries::Bool
-  log_requests::Bool
-  log_responses::Bool
-  log_resources::Bool
   log_level::Symbol
   log_verbosity::Symbol
   log_formatted::Bool
@@ -167,9 +162,6 @@ mutable struct Settings
             cache_table       = "storage_caches",
 
             log_router    = false,
-            log_requests  = true,
-            log_responses = true,
-            log_resources = false,
             log_level     = :debug,
             log_verbosity = LOG_LEVEL_VERBOSITY_VERBOSE,
             log_formatted = true,
@@ -212,7 +204,7 @@ mutable struct Settings
                   log_folder,
                   cache_folder, cache_adapter, cache_duration, cache_table,
                   log_router,
-                  log_requests, log_responses, log_resources, log_level, log_verbosity, log_formatted, log_cache, log_views,
+                  log_level, log_verbosity, log_formatted, log_cache, log_views,
                   assets_path, assets_serve, assets_fingerprinted,
                   tests_force_test_env,
                   session_auto_start, session_key_name, session_storage, session_folder, session_table,

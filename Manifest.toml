@@ -303,10 +303,8 @@ uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 
 [[SearchLight]]
 deps = ["DataFrames", "DataStructures", "DateParser", "Dates", "Faker", "IterableTables", "JSON", "Lumberjack", "MbedTLS", "Millboard", "Reexport", "SHA", "YAML"]
-git-tree-sha1 = "7812d3b5034923d97c57aa930a6d6b62122e5211"
-repo-rev = ""
 repo-url = "https://github.com/essenciary/SearchLight.jl"
-uuid = "f259e60a-6c35-11e8-02dd-29bf44a5f321"
+uuid = "340e8cb6-72eb-11e8-37ce-c97ebeb32050"
 version = "0.0.0"
 
 [[Serialization]]

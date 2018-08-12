@@ -21,7 +21,7 @@ function new_task(module_name::String) :: String
   \"\"\"
   Description of the task here
   \"\"\"
-  function run_task!()
+  function run_task()
     # Build something great
   end
 
@@ -53,11 +53,11 @@ function new_channel(channel_name::String) :: String
   """
   module $(channel_name)Channel
 
-  using Genie.Channels
+  using Genie.WebChannels, Genie.Router
 
 
   function subscribe()
-    Channels.subscribe(wsclient(@params), :$(lowercase(channel_name)))
+    WebChannels.subscribe(wsclient(@params), :$(lowercase(channel_name)))
     "OK"
   end
 

@@ -4,9 +4,9 @@ const WEBSOCKETS_SERVER = false;
 
 if ( WEBSOCKETS_SERVER ) {
   require("./channels.js");
-  Channels.load_channels();
+  WebChannels.load_channels();
 
-  Channels.messageHandlers.push(function(event){
+  WebChannels.messageHandlers.push(function(event){
     console.log(event.data);
   });
 }

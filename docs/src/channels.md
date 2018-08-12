@@ -1,5 +1,5 @@
 ```@meta
-CurrentModule = Channels
+CurrentModule = WebChannels
 ```
 
 ```@contents

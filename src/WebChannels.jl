@@ -1,14 +1,15 @@
 """
 Handles WebSockets communication logic.
 """
-module Channels
+module WebChannels
 
-using WebSockets, JSON, Genie.Logger
+using HTTP, JSON, Distributed
+using Genie.Logger
 
-const ClientId =                          Int
+const ClientId =                          UInt64
 const ChannelId =                         String
-const ChannelClient =                     Dict{Symbol, Union{WebSockets.WebSocket,Vector{ChannelId}}}
-const ChannelClientsCollection =          Dict{ClientId,ChannelClient} # { ws.id => { :client => ws, :channels => ["foo", "bar", "baz"] } }
+const ChannelClient =                     Dict{Symbol, Union{HTTP.WebSockets.WebSocket,Vector{ChannelId}}}
+const ChannelClientsCollection =          Dict{ClientId,ChannelClient} # { id(ws) => { :client => ws, :channels => ["foo", "bar", "baz"] } }
 const ChannelSubscriptionsCollection =    Dict{ChannelId,Vector{ClientId}}  # { "foo" => ["4", "12"] }
 const MessagePayload =                    Union{Nothing,Dict}
 
@@ -28,19 +29,24 @@ const SUBSCRIPTIONS = ChannelSubscriptionsCollection()
 
 Subscribes a web socket client `ws` to `channel`.
 """
-function subscribe(ws::WebSockets.WebSocket, channel::ChannelId) :: Nothing
-  if haskey(CLIENTS, ws.id)
-    ! in(channel, CLIENTS[ws.id][:channels]) && push!(CLIENTS[ws.id][:channels], channel)
+function subscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelId) :: Nothing
+  if haskey(CLIENTS, id(ws))
+    ! in(channel, CLIENTS[id(ws)][:channels]) && push!(CLIENTS[id(ws)][:channels], channel)
   else
-    CLIENTS[ws.id] = Dict(
+    CLIENTS[id(ws)] = Dict(
                           :client => ws,
                           :channels => ChannelId[channel]
                           )
   end
 
-  push_subscription(ws.id, channel)
+  push_subscription(id(ws), channel)
 
   nothing
+end
+
+
+function id(ws::HTTP.WebSockets.WebSocket)
+  hash(ws)
 end
 
 
@@ -49,12 +55,12 @@ end
 
 Unsubscribes a web socket client `ws` from `channel`.
 """
-function unsubscribe(ws::WebSockets.WebSocket, channel::ChannelId) :: Nothing
-  if haskey(CLIENTS, ws.id)
-    delete!(CLIENTS[ws.id][:channels], channel)
+function unsubscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelId) :: Nothing
+  if haskey(CLIENTS, id(ws))
+    delete!(CLIENTS[id(ws)][:channels], channel)
   end
 
-  pop_subscription(ws.id, channel)
+  pop_subscription(id(ws), channel)
 
   nothing
 end
@@ -66,15 +72,15 @@ end
 Unsubscribes a web socket client `ws` from all the channels.
 """
 function unsubscribe_client(client::ClientId) :: Nothing
-  unsubscribe_client(Channels.CLIENTS[client][:client])
+  unsubscribe_client(CLIENTS[client][:client])
 end
-function unsubscribe_client(ws::WebSockets.WebSocket) :: Nothing
-  if haskey(CLIENTS, ws.id)
-    for channel_id in CLIENTS[ws.id][:channels]
-      pop_subscription(ws.id, channel_id)
+function unsubscribe_client(ws::HTTP.WebSockets.WebSocket) :: Nothing
+  if haskey(CLIENTS, id(ws))
+    for channel_id in CLIENTS[id(ws)][:channels]
+      pop_subscription(id(ws), channel_id)
     end
 
-    delete!(CLIENTS, ws.id)
+    delete!(CLIENTS, id(ws))
   end
 
   nothing
@@ -137,7 +143,7 @@ Pushes `msg` (and `payload`) to all the clients subscribed to the channels in `c
 function broadcast(channels::Union{ChannelId,Vector{ChannelId}}, msg::String) :: Nothing
   isa(channels, Array) || (channels = ChannelId[channels])
 
-  @parallel for channel in channels
+  @distributed for channel in channels
     for client in SUBSCRIPTIONS[channel]
       ws_write_message(client, msg)
     end
@@ -145,10 +151,12 @@ function broadcast(channels::Union{ChannelId,Vector{ChannelId}}, msg::String) ::
 
   nothing
 end
-function broadcast{U,T}(channels::Union{ChannelId,Vector{ChannelId}}, msg::String, payload::Dict{U,T}) :: Nothing
+function broadcast(channels::Union{ChannelId,Vector{ChannelId}}, msg::String, payload::Dict{U,T})::Nothing where {U,T}
   isa(channels, Array) || (channels = ChannelId[channels])
 
-  @parallel for channel in channels
+  @distributed for channel in channels
+    in(channel, keys(SUBSCRIPTIONS)) || continue
+
     for client in SUBSCRIPTIONS[channel]
       try
         ws_write_message(client, ChannelMessage(channel, client, msg, payload) |> JSON.json)
@@ -174,7 +182,7 @@ Pushes `msg` (and `payload`) to all the clients subscribed to all the channels.
 function broadcast(msg::String) :: Nothing
   broadcast(collect(keys(SUBSCRIPTIONS)), msg)
 end
-function broadcast{U,T}(msg::String, payload::Dict{U,T}) :: Nothing
+function broadcast(msg::String, payload::Dict{U,T})::Nothing where {U,T}
   broadcast(collect(keys(SUBSCRIPTIONS)), msg, payload)
 end
 
@@ -188,7 +196,7 @@ Pushes `msg` (and `payload`) to `channel`.
 function message(channel::ChannelId, msg::String) :: Nothing
   broadcast(ChannelId[channel], msg)
 end
-function message{U,T}(channel::ChannelId, msg::String, payload::Dict{U,T}) :: Nothing
+function message(channel::ChannelId, msg::String, payload::Dict{U,T})::Nothing where {U,T}
   broadcast(ChannelId[channel], msg, payload)
 end
 

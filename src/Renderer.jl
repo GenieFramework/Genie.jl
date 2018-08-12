@@ -3,10 +3,11 @@ module Renderer
 export respond, json, redirect_to, html, flax, include_asset, has_requested, css_asset, js_asset
 export respond_with_json, respond_with_html, respond_with
 
-using Genie, Genie.Util, JSON, Genie.Configuration, HTTP, Genie.Logger, Genie.Macros
+using Nullables, JSON, HTTP
+using Genie, Genie.Util, Genie.Configuration, Genie.Logger, Genie.Macros
 
 eval(:(include("$(Genie.config.html_template_engine).jl")))
-Genie.config.html_template_engine != Genie.config.json_template_engine && eval(:(include("$(Genie.config.json_template_engine).jl")))
+Genie.config.html_template_engine != Genie.config.json_template_engine && Core.eval(:(include("$(Genie.config.json_template_engine).jl")))
 
 eval(:(using .$(Genie.config.html_template_engine), .$(Genie.config.json_template_engine)))
 eval(:(const HTMLTemplateEngine = $(Genie.config.html_template_engine)))

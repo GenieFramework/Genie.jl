@@ -14,13 +14,13 @@ Generates a new Genie controller file and persists it to the resources folder.
 """
 function new_controller(cmd_args::Dict{String,Any}) :: Nothing
   resource_name = cmd_args["controller:new"]
-  Inflector.is_singular(resource_name) && (resource_name = Inflector.to_plural(resource_name) |> Base.get)
-  resource_name = ucfirst(resource_name)
+  Genie.Inflector.is_singular(resource_name) && (resource_name = Inflector.to_plural(resource_name) |> Base.get)
+  resource_name = uppercasefirst(resource_name)
 
   resource_path = setup_resource_path(resource_name)
   cfn = controller_file_name(resource_name)
   write_resource_file(resource_path, cfn, resource_name, :controller) &&
-    Logger.log("New controller created at $(joinpath(resource_path, cfn))")
+    Genie.Logger.log("New controller created at $(joinpath(resource_path, cfn))")
 
   nothing
 end
@@ -32,9 +32,9 @@ end
 Generates a new Genie channel file and persists it to the resources folder.
 """
 function new_channel(cmd_args::Dict{String,Any}) :: Nothing
-  resource_name = ucfirst(cmd_args["channel:new"])
-  if Inflector.is_singular(resource_name)
-    resource_name = Inflector.to_plural(resource_name) |> Base.get
+  resource_name = uppercasefirst(cmd_args["channel:new"])
+  if Genie.Inflector.is_singular(resource_name)
+    resource_name = Genie.Inflector.to_plural(resource_name) |> Base.get
   end
 
   resource_path = setup_resource_path(resource_name)
@@ -53,18 +53,18 @@ end
 Generates all the files associated with a new resource and persists them to the resources folder.
 """
 function new_resource(cmd_args::Dict{String,Any}) :: Nothing
-  resource_name = ucfirst(cmd_args["resource:new"])
+  resource_name = uppercasefirst(cmd_args["resource:new"])
 
   SearchLight.Generator.new_resource(resource_name)
 
-  if Inflector.is_singular(resource_name)
-    resource_name = Inflector.to_plural(resource_name) |> Base.get
+  if Genie.Inflector.is_singular(resource_name)
+    resource_name = Genie.Inflector.to_plural(resource_name) |> Base.get
   end
 
   resource_path = setup_resource_path(resource_name)
   for (resource_file, resource_type) in [(controller_file_name(resource_name), :controller), (channel_file_name(resource_name), :channel), (Genie.GENIE_AUTHORIZATOR_FILE_NAME, :authorizer)]
     write_resource_file(resource_path, resource_file, resource_name, resource_type) &&
-      Logger.log("New $resource_file created at $(joinpath(resource_path, resource_file))")
+      Genie.Logger.log("New $resource_file created at $(joinpath(resource_path, resource_file))")
   end
 
   views_path = joinpath(resource_path, "views")
@@ -73,7 +73,7 @@ function new_resource(cmd_args::Dict{String,Any}) :: Nothing
   ! isdir(Genie.TEST_PATH_UNIT) && mkpath(Genie.TEST_PATH_UNIT)
   test_file = resource_name * Genie.TEST_FILE_IDENTIFIER |> lowercase
   write_resource_file(Genie.TEST_PATH_UNIT, test_file, resource_name, :test) &&
-    Logger.log("New $test_file created at $(joinpath(Genie.TEST_PATH_UNIT, test_file))")
+    Genie.Logger.log("New $test_file created at $(joinpath(Genie.TEST_PATH_UNIT, test_file))")
 
   nothing
 end

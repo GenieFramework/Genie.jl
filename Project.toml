@@ -1,3 +1,8 @@
+authors = ["Adrian Salceanu <e@essenciary.com>"]
+name = "Genie"
+uuid = "c6d403a6-72ea-11e8-200d-7174a1fd4b3d"
+version = "0.1.0"
+
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
@@ -18,7 +23,9 @@ OhMyREPL = "5fb14364-9ced-5910-84b2-373655c76a03"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
-SearchLight = "f259e60a-6c35-11e8-02dd-29bf44a5f321"
+SearchLight = "340e8cb6-72eb-11e8-37ce-c97ebeb32050"
+Sockets = "6462fe0b-24de-5631-8697-dd941f90decc"
 URIParser = "30578b45-9adc-5946-b283-645ec420af67"
+Unicode = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 WebSockets = "104b5d7c-a370-577a-8038-80a2059c5097"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"

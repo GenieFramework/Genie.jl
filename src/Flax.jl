@@ -7,7 +7,7 @@ using Revise, Genie, Gumbo, Genie.Logger, Genie.Configuration, SHA, Reexport, JS
 @reexport using HttpCommon
 
 export HTMLString, JSONString
-export doctype, var_dump, include_template, @vars, @yield, el, foreachvar, @foreach
+export doctype, var_dump, include_template, @vars, @yield, el, foreachvar, @foreach, foreachstr
 
 import Base.string
 
@@ -50,9 +50,9 @@ Cleans up the template before rendering (ex by removing empty nodes).
 function prepare_template(s::String) :: String
   s
 end
-function prepare_template{T}(v::Vector{T}) :: String
+function prepare_template(v::Vector{T})::String where {T}
   filter!(v) do (x)
-    ! isa(x, Void)
+    ! isa(x, Nothing)
   end
   join(v)
 end
@@ -74,7 +74,7 @@ end
 
 
 function normalize_element(elem::String)
-  replace(string(lowercase(elem)), "_", "-")
+  replace(string(lowercase(elem)), "_"=>"-")
 end
 
 
@@ -154,9 +154,9 @@ function _include_template(path::String; partial = true, func_name = "") :: Stri
 
   if _extension == MARKDOWN_FILE_EXT # .md
     build_path = joinpath(Genie.BUILD_PATH, MD_BUILD_NAME, md_build_name(path))
-    isfile(build_path) && ! build_is_stale(path, build_path) && return readstring(build_path)
+    isfile(build_path) && ! build_is_stale(path, build_path) && return read(build_path, String)
 
-    md_html = Markdown.parse(include_string(string('"', readstring(path), '"'))) |> Markdown.html
+    md_html = Markdown.parse(include_string(string('"', read(path, String), '"'))) |> Markdown.html
     open(joinpath(Genie.BUILD_PATH, MD_BUILD_NAME, md_build_name(path)), "w") do io
       write(io, md_html)
     end
@@ -165,34 +165,23 @@ function _include_template(path::String; partial = true, func_name = "") :: Stri
   end
 
   f_name = func_name != "" ? Symbol(func_name) : Symbol(function_name(path))
-  try
-    build_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl")
-
-    stale_build = build_is_stale(path, build_path)
-
-    isdefined(Genie.Renderer.Flax, f_name) && ! stale_build && return getfield(Genie.Renderer.Flax, f_name)()
-
-    if ! stale_build
-      include(joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl"))
-      return eval("$(f_name)()" |> parse)
+  f_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl")
+  f_stale = build_is_stale(path, f_path)
+  if f_stale || ! isdefined(@__MODULE__, f_name)
+    if f_stale
+      Logger.log("Building view $path", :debug)
+      @time build_module(html_to_flax(path, partial = partial), path)
     end
-
-    build_module(html_to_flax(path, partial = partial), path)
-    f = include(joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl"))
-    return eval("$(f_name)()" |> parse)
-
-  catch ex
-    Genie.Logger.log("$(@__FILE__):$(@__LINE__)", :err)
-
-    rethrow(ex)
+    include(joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl"))
   end
+  Base.invokelatest(getfield(@__MODULE__, f_name))
 end
 
 
 """
 """
 function md_build_name(path::String) :: String
-  replace(path, "/", "_")
+  replace(path, "/"=>"_")
 end
 
 
@@ -232,9 +221,9 @@ end
 function html(view::String, layout::String = "<% @yield %>"; vars...) :: Dict{Symbol,String}
   try
     task_local_storage(:__vars, Dict{Symbol,Any}(vars))
-    task_local_storage(:__yield, eval(parse(parse_string(view))))
+    task_local_storage(:__yield, Core.eval(@__MODULE__, parse(parse_string(view))))
 
-    Dict{Symbol,AbstractString}(:html => eval(parse(parse_string(layout, partial = false))) |> string |> doc)
+    Dict{Symbol,AbstractString}(:html => Core.eval(@__MODULE__, parse(parse_string(layout, partial = false))) |> string |> doc)
   catch ex
     Logger.log(string(ex), :err)
     Logger.log("$(@__FILE__):$(@__LINE__)", :err)
@@ -331,14 +320,9 @@ end
 Converts a HTML document to a Flax document.
 """
 function html_to_flax(file_path::String; partial = true) :: String
-  code = ""
-  # code =  """module $(m_name(file_path)) \n"""
-  # code *= """using Genie, Genie.Flax, Genie.Router\n"""
-  # code *= """export $(function_name(file_path)) \n"""
-  code *= """function $(function_name(file_path))() \n"""
+  code = """function $(function_name(file_path))() \n"""
   code *= parse_template(file_path, partial = partial)
   code *= """\nend \n"""
-  # code *= """\nend"""
 
   code
 end
@@ -349,6 +333,7 @@ end
 function build_module(content::String, path::String) :: Bool
   module_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl")
   open(module_path, "w") do io
+    write(io, "# $path \n\n")
     write(io, content)
   end
 
@@ -400,7 +385,7 @@ Parses a Gumbo tree structure into a `string` of Flax code.
 function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", depth::Int = 0; partial = true) :: String
   if isa(elem, HTMLElement)
 
-    tag_name = replace(lowercase(string(tag(elem))), "-", "_")
+    tag_name = replace(lowercase(string(tag(elem))), "-"=>"_")
     invalid_tag = partial && (tag_name == "html" || tag_name == "head" || tag_name == "body")
 
     if tag_name == "script" && in("type", collect(keys(attrs(elem))))
@@ -419,7 +404,7 @@ function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", dept
         x = v
 
         if startswith(v, "<\$") && endswith(v, "\$>")
-          v = (replace(replace(replace(v, "<\$", ""), "\$>", ""), "'", "\"") |> strip)
+          v = (replace(replace(replace(v, "<\$"=>""), "\$>"=>""), "'"=>"\"") |> strip)
           x = v
           v = "\$($v)"
         end
@@ -462,7 +447,6 @@ function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", dept
     end
 
   elseif isa(elem, HTMLText)
-    # content = replace(elem.text, r"<:(.*):>", (x) -> replace(replace(x, "<:", ""), ":>", "") |> strip |> string)
     output *= repeat("\t", depth) * "\"$(elem.text |> strip |> string)\""
   end
 
@@ -479,10 +463,8 @@ function parse_tags(line::Tuple{Int64,String}) :: String
   parse_tags(line[2])
 end
 function parse_tags(code::String) :: String
-  # code = replace(code, "<%", """<script type="julia/eval">""")
-  code = replace(code, "<%", "\$(")
-  # replace(code, "%>", strip_close_tag ? "" : """</script>""")
-  replace(code, "%>", ")")
+  code = replace(code, "<%"=>"""<script type="julia/eval">""")
+  replace(code, "%>"=>"""</script>""")
 end
 
 
@@ -511,11 +493,11 @@ end
 
 
 """
-    register_elements() :: Void
+    register_elements() :: Nothing
 
 Generated functions that represent Flax functions definitions corresponding to HTML elements.
 """
-function register_elements() :: Void
+function register_elements() :: Nothing
   for elem in NORMAL_ELEMENTS
     register_normal_element(elem)
   end
@@ -538,28 +520,28 @@ end
 """
 """
 function register_normal_element(elem::Symbol)
-  """
+  Core.eval(@__MODULE__, """
     function $elem(f::Function = ()->"", attrs::Pair{Symbol,String}...) :: HTMLString
       \"\"\"\$(normal_element(f, "$(string(elem))", Pair{Symbol,String}[attrs...]))\"\"\"
     end
-  """ |> parse |> eval
+  """ |> Meta.parse)
 
-  """
+  Core.eval(@__MODULE__, """
     function $elem(attrs::Pair{Symbol,String}...) :: HTMLString
       \"\"\"\$(normal_element("$(string(elem))", Pair{Symbol,String}[attrs...]))\"\"\"
     end
-  """ |> parse |> eval
+  """ |> Meta.parse)
 end
 
 
 """
 """
 function register_void_element(elem::Symbol)
-  """
+  Core.eval(@__MODULE__, """
     function $elem(attrs::Pair{Symbol,String}...) :: HTMLString
       \"\"\"\$(void_element("$(string(elem))", Pair{Symbol,String}[attrs...]))\"\"\"
     end
-  """ |> parse |> eval
+  """ |> Meta.parse)
 end
 
 push!(LOAD_PATH,  abspath(Genie.HELPERS_PATH))
@@ -573,6 +555,14 @@ macro foreach(f, arr)
     mapreduce(*, $arr) do _s
       $f(_s)
     end
+  end
+end
+
+
+function foreachstr(f, arr)
+  isempty(arr) && return ""
+  mapreduce(*, arr) do _s
+    f(_s)
   end
 end
 
@@ -613,7 +603,7 @@ function var_dump(var, html = true) :: String
   show(iobuffer, var)
   content = takebuf_string(iobuffer)
 
-  html ? replace(replace("<code>$content</code>", "\n", "<br>"), " ", "&nbsp;") : content
+  html ? replace(replace("<code>$content</code>", "\n"=>"<br>"), " "=>"&nbsp;") : content
 end
 
 macro vars()
@@ -640,11 +630,11 @@ end
 Sets up the build folder and the build module file for generating the compiled views.
 """
 function prepare_build(subfolder) :: Bool
-  rm(subfolder, force = true, recursive = true)
+  # rm(joinpath(Genie.BUILD_PATH, subfolder), force = true, recursive = true)
 
   build_path = joinpath(Genie.BUILD_PATH, subfolder)
   isdir(build_path) || mkpath(build_path)
-  push!(LOAD_PATH, build_path)
+  # push!(LOAD_PATH, build_path)
 
   true
 end

@@ -28,10 +28,16 @@ end
 Runs the Genie task named `task_name`.
 """
 function run_task(task_name::Union{String,Symbol}; params...)
-  @time Base.invokelatest(import_task(string(task_name)).run_task!, params)
+  @time Base.invokelatest(import_task(string(task_name)).run_task, params)
 end
 function run_task(task::Module; params...)
-  @time task.run_task!(params)
+  @time task.run_task(params)
+end
+function run_task(task_name::Union{String,Symbol})
+  @time Base.invokelatest(import_task(string(task_name)).run_task)
+end
+function run_task(task::Module)
+  @time task.run_task()
 end
 
 
@@ -45,11 +51,12 @@ function import_task(task_name::String) :: Module
   tasks = all_tasks(filter_type_name = Symbol(task_name))
 
   if isempty(tasks)
-    Logger.log("Task not found", :err)
+    Genie.Logger.log("Task not found", :err)
     return
   end
 
-  eval(tasks[1].module_name)
+  Core.eval(@__MODULE__, tasks[1].module_name)
+  is_dev() && Revise.track(joinpath(Genie.TASKS_PATH, tasks[1].file_name))
 end
 
 
@@ -64,8 +71,8 @@ end
 Attempts to convert a potentially invalid (partial) `task_name` into a valid one.
 """
 function valid_task_name(task_name::String) :: String
-  task_name = replace(task_name, " ", "_")
-  task_name = Inflector.from_underscores(task_name)
+  task_name = replace(task_name, " "=>"_")
+  task_name = Genie.Inflector.from_underscores(task_name)
   endswith(task_name, TASK_SUFFIX) || (task_name = task_name * TASK_SUFFIX)
 
   task_name
@@ -103,7 +110,7 @@ function tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
     if ( endswith(i, "Task.jl") )
       module_name = Genie.Util.file_name_without_extension(i) |> Symbol
       include(joinpath(Genie.config.tasks_folder, i))
-      eval(:(using .$(module_name)))
+      Core.eval(@__MODULE__, :(using .$(module_name)))
       ti = TaskInfo(i, module_name, task_docs(module_name))
 
       if ( filter_type_name == Symbol() ) push!(tasks, ti)
@@ -120,15 +127,16 @@ const all_tasks = tasks
 """
     task_docs(module_name::Module) :: String
 
-Retrieves the docstring of the run_task! method and returns it at a string.
+Retrieves the docstring of the run_task method and returns it as a string.
 """
 function task_docs(module_name::Symbol) :: String
   try
-    docs = Base.doc(Base.Docs.Binding(getfield(current_module(), module_name), :run_task!)) |> string
-    startswith(docs, "No documentation found") && (docs = "No documentation found -- add docstring to `$(module_name).run_task!()` to see it here.")
+    docs = Base.doc(Base.Docs.Binding(getfield(@__MODULE__, module_name), :run_task)) |> string
+    startswith(docs, "No documentation found") && (docs = "No documentation found -- add docstring to `$(module_name).run_task()` to see it here.")
 
     docs
-  catch
+  catch ex
+    Logger.log(ex, :err)
     ""
   end
 end
@@ -176,7 +184,7 @@ end
 Computes the name of a Genie task based on the command line input.
 """
 function task_module_name(underscored_task_name::String) :: String
-  mapreduce( x -> ucfirst(x), *, split(replace(underscored_task_name, ".jl", ""), "_") )
+  mapreduce( x -> uppercasefirst(x), *, split(replace(underscored_task_name, ".jl"=>""), "_") )
 end
 
 

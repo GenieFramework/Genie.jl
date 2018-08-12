@@ -3,7 +3,7 @@ Various utility functions for using across models, controllers and views.
 """
 module Helpers
 
-using Genie, Genie.Router, URIParser, Genie.Logger, HTTP, WebSockets, Genie.Flax
+using Genie, Genie.Router, URIParser, Genie.Logger, HTTP, Genie.Flax
 
 export request, response, flash, wsclient, flash_has_message
 
@@ -98,7 +98,7 @@ end
 
 Returns the `WebSocket` object associated with the current WS request.
 """
-function wsclient(params::Dict{Symbol,Any}) :: WebSockets.WebSocket
+function wsclient(params::Dict{Symbol,Any}) :: HTTP.WebSockets.WebSocket
   if haskey(params, Genie.PARAMS_WS_CLIENT)
     return params[Genie.PARAMS_WS_CLIENT]
   else
@@ -110,15 +110,15 @@ end
 
 
 """
-    include_helpers() :: Void
+    include_helpers() :: Nothing
 
 Loads helpers and makes them available in the view layer.
 """
-function include_helpers() :: Void
+function include_helpers() :: Nothing
   for h in readdir(Genie.HELPERS_PATH)
     if isfile(joinpath(Genie.HELPERS_PATH, h)) && endswith(h, "Helper.jl")
-      eval(Genie.Flax, """include("$(joinpath(Genie.HELPERS_PATH, h))")""" |> parse)
-      eval(Genie.Flax, """@reexport using .$(replace(h, r"\.jl$", ""))""" |> parse)
+      Core.eval(Genie.Flax, """include("$(joinpath(Genie.HELPERS_PATH, h))")""" |> Meta.parse)
+      Core.eval(Genie.Flax, """@reexport using .$(replace(h, r"\.jl$"=>""))""" |> Meta.parse)
     end
   end
 
