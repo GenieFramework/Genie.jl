@@ -10,8 +10,8 @@ export request, response, flash, wsclient, flash_has_message
 
 
 """
-    request() :: HttpServer.Request
-    request(params::Dict{Symbol,Any}) :: HttpServer.Request
+    request() :: HTTP.Request
+    request(params::Dict{Symbol,Any}) :: HTTP.Request
 
 Returns the `Request` object associated with the current HTTP request.
 """
@@ -30,8 +30,8 @@ end
 
 
 """
-    response() :: HttpServer.Response
-    response(params::Dict{Symbol,Any}) :: HttpServer.Response
+    response() :: HTTP.Response
+    response(params::Dict{Symbol,Any}) :: HTTP.Response
 
 Returns the `Response` object associated with the current HTTP request.
 """

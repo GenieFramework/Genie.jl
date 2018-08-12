@@ -1,5 +1,5 @@
 """
-Handles HttpServer related functionality, manages requests and responses and their logging.
+Handles Http server related functionality, manages requests and responses and their logging.
 """
 module AppServer
 
@@ -8,7 +8,7 @@ using Genie, Genie.Router, Genie.Logger, Genie.Sessions, Genie.Configuration, Ge
 
 
 """
-    startup(port::Int = 8000) :: HttpServer.Server
+    startup(port::Int = 8000)
 
 Starts the web server on the configurated port.
 Automatically invoked when Genie is started with the `s` or the `server:start` command line params.
@@ -68,7 +68,7 @@ end
 """
     handle_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: Response
 
-HttpServer handler function - invoked when the server gets a request.
+Http server handler function - invoked when the server gets a request.
 """
 function handle_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = ip"0.0.0.0") :: HTTP.Response
   Genie.config.server_signature != "" && sign_response!(res)
@@ -100,7 +100,7 @@ end
 """
     handle_ws_request(req::Request, client::Client, ip::IPv4 = ip"0.0.0.0") :: String
 
-HttpServer handler function - invoked when the server gets a request.
+Http server handler function - invoked when the server gets a request.
 """
 function handle_ws_request(req, msg::String, ws_client, ip::IPv4 = ip"0.0.0.0") :: String
   msg == "" && return "" # keep alive

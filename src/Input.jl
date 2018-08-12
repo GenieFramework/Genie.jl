@@ -1,5 +1,5 @@
 """
-Handles input coming through HttpServer requests.
+Handles input coming through Http server requests.
 """
 module Input
 

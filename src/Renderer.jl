@@ -61,7 +61,7 @@ end
 """
     respond_with_html(resource::Symbol, action::Symbol, layout::Symbol = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
 
-Invokes the HTML renderer of the underlying configured templating library and wraps it into a `HttpServer.Response`.
+Invokes the HTML renderer of the underlying configured templating library and wraps it into a `HTTP.Response`.
 """
 function respond_with_html(resource::Symbol, action::Symbol, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: HTTP.Response
   html(resource, action, layout, check_nulls; vars...) |> respond
@@ -89,7 +89,7 @@ end
 """
     respond_with_json(resource::Symbol, action::Symbol, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
 
-Invokes the JSON renderer of the underlying configured templating library and wraps it into a `HttpServer.Response`.
+Invokes the JSON renderer of the underlying configured templating library and wraps it into a `HTTP.Response`.
 """
 function respond_with_json(resource::Union{Symbol,String}, action::Union{Symbol,String}, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
   json(resource, action, check_nulls; vars...) |> respond
