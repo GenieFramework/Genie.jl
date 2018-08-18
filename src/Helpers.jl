@@ -115,6 +115,8 @@ end
 Loads helpers and makes them available in the view layer.
 """
 function include_helpers() :: Nothing
+  isdir(Genie.HELPERS_PATH) || return nothing
+  
   for h in readdir(Genie.HELPERS_PATH)
     if isfile(joinpath(Genie.HELPERS_PATH, h)) && endswith(h, "Helper.jl")
       Core.eval(Genie.Flax, """include("$(joinpath(Genie.HELPERS_PATH, h))")""" |> Meta.parse)

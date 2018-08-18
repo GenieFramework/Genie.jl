@@ -3,11 +3,12 @@ Provides logging functionality for Genie apps.
 """
 module Logger
 
-using Lumberjack, Millboard, Dates
+using Memento, Millboard, Dates
 using Genie
 
-# color mappings for logging levels -- to be used in STDOUT printing
-const colors = Dict{String,Symbol}("info" => :gray, "warn" => :yellow, "debug" => :green, "err" => :red, "error" => :red, "critical" => :magenta)
+
+const LOGGERS = Dict{Symbol,Memento.Logger}()
+
 
 """
     log(message, level = "info"; showst::Bool = true) :: Nothing
@@ -20,79 +21,26 @@ If `level` is `error` or `critical` it will also dump the stacktrace onto STDOUT
 
 # Examples
 ```julia
-julia> Logger.log("hello")
-
-2016-12-21T18:38:09.105 - info: hello
-
-
-julia> Logger.log("hello", "warn")
-
-2016-12-21T18:38:22.461 - warn: hello
-
-
-julia> Logger.log("hello", "debug")
-
-2016-12-21T18:38:32.292 - debug: hello
-
-
-julia> Logger.log("hello", "err")
-
-2016-12-21T18:38:38.403 - err: hello
 ```
 """
-function log(message, level::Any = "info"; showst = false) :: Nothing
+function log(message, level::Union{String,Symbol} = "info"; showst = false) :: Nothing
   message = string(message)
   level = string(level)
   level == "err" && (level = "error")
 
-  if ! (@isdefined Genie) || ! Genie.config.suppress_output
-    println()
-    Lumberjack.log(string(level), string(message))
-    println()
+  for (logger_name, logger) in LOGGERS
+    Core.eval(@__MODULE__, Meta.parse("$level($logger, \"$message\")"))
   end
 
-  if (level == "critical" || level == "error") && showst
+  if (level == "error") && showst
     println()
     stacktrace()
   end
 
   nothing
 end
-function log(message::String, level::Symbol; showst::Bool = false) :: Nothing
+function log(message::String, level::Union{String,Symbol}; showst::Bool = false) :: Nothing
   log(message, level == :err ? "error" : string(level), showst = showst)
-end
-
-
-"""
-    self_log(message, level::Union{String,Symbol}) :: Nothing
-
-Basic logging function that does not rely on external logging modules (such as `Lumberjack`).
-
-# Examples
-```julia
-julia> Logger.self_log("hello", :err)
-
-err 2016-12-21T18:49:00.286
-hello
-
-julia> Logger.self_log("hello", :info)
-
-info 2016-12-21T18:49:05.068
-hello
-
-julia> Logger.self_log("hello", :debug)
-
-debug 2016-12-21T18:49:11.123
-hello
-```
-"""
-function self_log(message, level::Union{String,Symbol}) :: Nothing
-  println()
-  print_with_color(colors[string(level)], (string(level), " ", string(Dates.now()), "\n")...)
-  print_with_color(colors[string(level)], string(message))
-  println()
-
-  nothing
 end
 
 
@@ -113,12 +61,8 @@ julia> Logger.truncate_logged_output("abc " ^ 10)
 "abc abc ab..."
 ```
 """
-function truncate_logged_output(output::AbstractString) :: String
-  if length(output) > Genie.config.output_length
-    output = output[1:Genie.config.output_length] * "..."
-  end
-
-  output
+function truncate_logged_output(output::String) :: String
+  length(output) > Genie.config.output_length && output[1:Genie.config.output_length] * "..."
 end
 
 
@@ -129,9 +73,13 @@ Sets up default app loggers (STDOUT and per env file loggers) defferring to the 
 Automatically invoked.
 """
 function setup_loggers() :: Bool
-  configure(; modes=["debug", "info", "notice", "warn", "err", "critical", "alert", "emerg"])
-  add_truck(LumberjackTruck(stdout, nothing, Dict{Any,Any}(:is_colorized => true)), "console")
-  add_truck(LumberjackTruck("$(joinpath(Genie.LOG_PATH, Genie.config.app_env)).log", nothing, Dict{Any,Any}(:is_colorized => true)), "file-logger")
+  push!(LOGGERS, :stdout_logger => Memento.config!(Genie.config.log_level |> string; fmt="[{date}|{level}]: {msg}"))
+
+  file_logger = getlogger(@__MODULE__)
+  setlevel!(file_logger, Genie.config.log_level |> string)
+  push!(file_logger, DefaultHandler("$(joinpath(Genie.LOG_PATH, Genie.config.app_env)).log",
+                                    DefaultFormatter("[{date}|{level}]: {msg}")))
+  push!(LOGGERS, :file_logger => file_logger)
 
   true
 end
@@ -145,12 +93,14 @@ when the logger itself is not available. Once the logger is ready, the queue is 
 messages are logged.
 Automatically invoked.
 """
-function empty_log_queue() :: Vector{Tuple{String,Symbol}}
+function empty_log_queue() :: Nothing
   for log_message in Genie.GENIE_LOG_QUEUE
     log(log_message...)
   end
 
   empty!(Genie.GENIE_LOG_QUEUE)
+
+  nothing
 end
 
 

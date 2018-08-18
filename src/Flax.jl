@@ -221,9 +221,9 @@ end
 function html(view::String, layout::String = "<% @yield %>"; vars...) :: Dict{Symbol,String}
   try
     task_local_storage(:__vars, Dict{Symbol,Any}(vars))
-    task_local_storage(:__yield, Core.eval(@__MODULE__, parse(parse_string(view))))
+    task_local_storage(:__yield, Core.eval(@__MODULE__, Meta.parse(parse_string(view))))
 
-    Dict{Symbol,AbstractString}(:html => Core.eval(@__MODULE__, parse(parse_string(layout, partial = false))) |> string |> doc)
+    Dict{Symbol,AbstractString}(:html => Core.eval(@__MODULE__, Meta.parse(parse_string(layout, partial = false))) |> string |> doc)
   catch ex
     Logger.log(string(ex), :err)
     Logger.log("$(@__FILE__):$(@__LINE__)", :err)

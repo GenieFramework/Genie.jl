@@ -30,14 +30,11 @@ end
 Decrypts `s` (a `string` previously encrypted by Genie).
 """
 function decrypt(s::String) :: String
-  # (key32, iv16) = encryption_sauce()
-  # decryptor = Decryptor(ENCRYPTION_METHOD, key32)
-  # deciphertext = Nettle.decrypt(decryptor, :CBC, iv16, s |> hex2bytes)
+  (key32, iv16) = encryption_sauce()
+  decryptor = Decryptor(ENCRYPTION_METHOD, key32)
+  deciphertext = Nettle.decrypt(decryptor, :CBC, iv16, s |> hex2bytes)
 
-  # String(trim_padding_PKCS5(deciphertext))
-end
-function decrypt(s::String) :: String
-  error("Decryption disabled -- pending Nettle upgrade")
+  String(trim_padding_PKCS5(deciphertext))
 end
 # function decrypt(s::String) :: String
 #   error("Decryption disabled -- pending Nettle upgrade")
