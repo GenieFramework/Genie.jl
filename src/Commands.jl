@@ -3,8 +3,7 @@ Handles command line arguments for the genie.jl script.
 """
 module Commands
 
-using ArgParse, Genie.Configuration, Genie, Genie.Generator, Genie.Tester, Genie.Logger, Genie.AppServer
-using SearchLight, SearchLight.Migration
+using ArgParse, Genie.Configuration, Genie, Genie.Generator, Genie.Tester, Genie.Loggers, Genie.AppServer
 
 """
     execute(config::Settings) :: Nothing
@@ -16,7 +15,6 @@ function execute(config::Settings) :: Nothing
 
   Genie.config.app_env = ENV["GENIE_ENV"]
   Genie.config.server_port = parse(Int, parsed_args["server:port"])
-  Genie.config.server_workers_count = (sw = parse(Int, parsed_args["server:workers"])) > 0 ? sw : config.server_workers_count
 
   if called_command(parsed_args, "s") || called_command(parsed_args, "server:start")
     Genie.config.run_as_server = true

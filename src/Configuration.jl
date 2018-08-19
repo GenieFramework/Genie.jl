@@ -174,7 +174,7 @@ mutable struct Settings
 
             tests_force_test_env = true,
 
-            session_auto_start  = false,
+            session_auto_start  = true,
             session_key_name    = "__GENIESID",
             session_storage     = :File,
             session_folder      = joinpath("session"),

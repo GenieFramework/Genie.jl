@@ -10,7 +10,7 @@ include(joinpath(@__DIR__, "constants.jl"))
 
 const config = Configuration.Settings(app_env = Configuration.DEV)
 
-using Revise, SearchLight
+using Revise
 
 isfile(joinpath(CONFIG_PATH, "plugins.jl")) && include(joinpath(CONFIG_PATH, "plugins.jl"))
 
@@ -21,7 +21,7 @@ push!(LOAD_PATH,  joinpath(@__DIR__, "cache_adapters"),
 include(joinpath(@__DIR__, "genie_types.jl"))
 
 include("Macros.jl")
-include("Logger.jl")
+include("Loggers.jl")
 include("Inflector.jl")
 include("Util.jl")
 include("FileTemplates.jl")
@@ -41,7 +41,7 @@ include("AppServer.jl")
 include("Commands.jl")
 include("Cache.jl")
 
-using .Macros, .Logger
+using .Macros, .Loggers
 using .Inflector, .Util
 using .FileTemplates, .Generator, .Tester, .Encryption, .Cookies, .Sessions, .Input, .Renderer, .Router, .Helpers, .AppServer, .Commands
 using .Flax, .AppServer
@@ -65,8 +65,8 @@ end
 
 Scaffolds a new Genie app.
 """
-function new_app(path = "."; db_support = false, skip_dependencies = false, autostart = true) :: Nothing
-  REPL.new_app(path, db_support, skip_dependencies, autostart)
+function new_app(path = "."; db_support = false, skip_dependencies = false, autostart = false) :: Nothing
+  REPL.new_app(path, db_support = db_support, skip_dependencies = skip_dependencies, autostart = autostart)
 end
 
 end

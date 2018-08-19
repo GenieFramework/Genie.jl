@@ -2,7 +2,7 @@ module Toolbox
 
 import Base.string
 
-using Revise, Genie, Genie.Util, Millboard, Genie.FileTemplates, Genie.Configuration, Genie.Logger, Genie.Inflector
+using Revise, Genie, Genie.Util, Millboard, Genie.FileTemplates, Genie.Configuration, Genie.Loggers, Genie.Inflector
 
 export TaskResult, VoidTaskResult, check_valid_task
 
@@ -33,12 +33,6 @@ end
 function run_task(task::Module; params...)
   @time task.run_task(params)
 end
-function run_task(task_name::Union{String,Symbol})
-  @time Base.invokelatest(import_task(string(task_name)).run_task)
-end
-function run_task(task::Module)
-  @time task.run_task()
-end
 
 
 """
@@ -51,7 +45,7 @@ function import_task(task_name::String) :: Module
   tasks = all_tasks(filter_type_name = Symbol(task_name))
 
   if isempty(tasks)
-    Genie.Logger.log("Task not found", :err)
+    log("Task not found", :err)
     return
   end
 
@@ -136,7 +130,7 @@ function task_docs(module_name::Symbol) :: String
 
     docs
   catch ex
-    Logger.log(ex, :err)
+    log(ex, :err)
     ""
   end
 end
@@ -159,7 +153,7 @@ function new(cmd_args::Dict{String,Any}, config::Settings = Genie.config) :: Not
   write(f, Genie.FileTemplates.new_task(task_module_name(cmd_args["task:new"])))
   close(f)
 
-  Logger.log("New task created at $tfn")
+  log("New task created at $tfn")
 
   nothing
 end

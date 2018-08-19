@@ -3,10 +3,27 @@ App level functionality -- loading and managing app-wide components like configs
 """
 module App
 
-using Revise, YAML
-using Genie, Genie.Configuration, Genie.Logger
+using Revise
+using YAML
+using Genie
 
 const ASSET_FINGERPRINT = ""
+
+function bootstrap()
+  if haskey(ENV, "GENIE_ENV") && isfile(joinpath(Genie.ENV_PATH, ENV["GENIE_ENV"] * ".jl"))
+    isfile(joinpath(Genie.CONFIG_PATH, "global.jl")) && include(joinpath(Genie.CONFIG_PATH, "global.jl"))
+    include(joinpath(Genie.ENV_PATH, ENV["GENIE_ENV"] * ".jl"))
+  else
+    eval(@__MODULE__, Meta.parse("config = Configuration.Settings(app_env = Configuration.DEV)"))
+  end
+end
+
+end
+
+
+### Main
+
+using Genie.Loggers, Genie.Configuration
 
 
 """
@@ -16,18 +33,10 @@ Recursively adds subfolders of lib to LOAD_PATH.
 """
 function load_libs(root_dir = Genie.LIB_PATH) :: Nothing
   push!(LOAD_PATH, root_dir)
-  for (root, dirs, files) in walkdir(root_dir, topdown = true)
+  for (root, dirs, files) in walkdir(root_dir)
     for dir in dirs
       p = joinpath(root, dir)
       in(p, LOAD_PATH) || push!(LOAD_PATH, p)
-    end
-  end
-  for (root, dirs, files) in walkdir(root_dir, topdown = false)
-    for file in files
-      if endswith(file, ".jl")
-        mname = file[1:end-3]
-        isdefined(@__MODULE__, Symbol(mname)) || Core.eval(@__MODULE__, "using $mname" |> Meta.parse)
-      end
     end
   end
 
@@ -42,19 +51,11 @@ Recursively adds subfolders of resources to LOAD_PATH.
 """
 function load_resources(root_dir = Genie.RESOURCES_PATH) :: Nothing
   push!(LOAD_PATH, root_dir)
-  for (root, dirs, files) in walkdir(root_dir, topdown = false)
+
+  for (root, dirs, files) in walkdir(root_dir)
     for dir in dirs
       p = joinpath(root, dir)
       in(p, LOAD_PATH) || push!(LOAD_PATH, joinpath(root, dir))
-    end
-  end
-  for (root, dirs, files) in walkdir(root_dir, topdown = false)
-    for file in files
-      if  endswith(file, ".jl") &&
-          ! endswith(file, ".json.jl") &&
-          file[1] == uppercase(file[1])
-            Core.eval(@__MODULE__, "using $(file[1:end-3])" |> Meta.parse)
-      end
     end
   end
 
@@ -64,14 +65,11 @@ end
 
 function load_helpers(root_dir = Genie.HELPERS_PATH) :: Nothing
   push!(LOAD_PATH, root_dir)
+
   for (root, dirs, files) in walkdir(root_dir)
-    for file in files
-      if  endswith(file, ".jl") &&
-          file[1] == uppercase(file[1])
-            include(joinpath(root_dir, file))
-            Core.eval(@__MODULE__, "using .$(file[1:end-3])" |> Meta.parse)
-            is_dev() && Revise.track(joinpath(root_dir, file))
-      end
+    for dir in dirs
+      p = joinpath(root, dir)
+      in(p, LOAD_PATH) || push!(LOAD_PATH, joinpath(root, dir))
     end
   end
 
@@ -147,7 +145,7 @@ function load_routes_definitions(fail_on_error = is_dev()) :: Nothing
       is_dev() && Revise.track(Genie.ROUTES_FILE_NAME)
     end
   catch ex
-    Genie.Logger.log(ex, :err)
+    log(ex, :warn)
 
     fail_on_error && rethrow(ex)
   end
@@ -168,7 +166,7 @@ function load_channels_definitions(fail_on_error = is_dev()) :: Nothing
       is_dev() && Revise.track(Genie.CHANNELS_FILE_NAME)
     end
   catch ex
-    Genie.Logger.log(ex, :err)
+    log(ex, :err)
 
     fail_on_error && rethrow(ex)
   end
@@ -197,18 +195,11 @@ function secret_token() :: String
 end
 
 
-function bootstrap()
-  if haskey(ENV, "GENIE_ENV") && isfile(joinpath(Genie.ENV_PATH, ENV["GENIE_ENV"] * ".jl"))
-    isfile(joinpath(Genie.CONFIG_PATH, "global.jl")) && include(joinpath(Genie.CONFIG_PATH, "global.jl"))
-    include(joinpath(Genie.ENV_PATH, ENV["GENIE_ENV"] * ".jl"))
-  else
-    eval(@__MODULE__, Meta.parse("config = Configuration.Settings(app_env = Configuration.DEV)"))
-  end
-end
-
-
 function load() :: Nothing
-  bootstrap()
+  App.bootstrap()
+
+  Loggers.empty_log_queue()
+
   load_configurations()
   load_initializers()
   load_helpers()
@@ -216,25 +207,23 @@ function load() :: Nothing
   try
     load_libs()
   catch ex
-    Genie.Logger.log(ex, :err)
+    log(ex, :warn)
   end
 
   try
     load_resources()
   catch ex
-    Genie.Logger.log(ex, :err)
+    log(ex, :warn)
   end
 
   try
     load_libs()
   catch ex
-    Genie.Logger.log(ex, :err)
+    log(ex, :warn)
   end
 
   load_routes_definitions()
   load_channels_definitions()
 
   nothing
-end
-
 end

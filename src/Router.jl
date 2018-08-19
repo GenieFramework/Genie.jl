@@ -1,11 +1,10 @@
 module Router
 
 using Revise
-using HTTP, URIParser, HttpCommon, HttpServer, Nullables, Sockets, Millboard, WebSockets, JSON, Dates
-using Genie, Genie.Sessions, Genie.Configuration, Genie.Input, Genie.Logger, Genie.Util, Genie.Renderer
+using HTTP, URIParser, HttpCommon, Nullables, Sockets, Millboard, WebSockets, JSON, Dates
+using Genie, Genie.Sessions, Genie.Configuration, Genie.Input, Genie.Loggers, Genie.Util, Genie.Renderer
 
-import HttpServer.mimetypes
-
+include(joinpath(@__DIR__, "mimetypes.jl"))
 include(joinpath(@__DIR__, "router_converters.jl"))
 
 export route, routes, channel, channels
@@ -89,7 +88,7 @@ function route_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = ip"0.0.
 
   ! in(response_type(params), sessionless) && Genie.config.session_auto_start && Sessions.persist(session)
 
-  print_with_color(:green, "[$(Dates.now())] -- $(URI(to_uri(req.target))) -- Done\n\n")
+  printstyled("[$(Dates.now())] -- $(URI(to_uri(req.target))) -- Done\n\n", :green)
 
   controller_response
 end
@@ -213,7 +212,7 @@ Computes the name of a route.
 """
 function route_name(params::Route) :: Symbol
   route_parts = String[lowercase(params.method)]
-  for uri_part in split(params.path, "/", keep = false)
+  for uri_part in split(params.path, "/", keepempty = false)
     startswith(uri_part, ":") && continue # we ignore named params
     push!(route_parts, lowercase(uri_part))
   end
@@ -326,9 +325,9 @@ function to_link!!(route_name::Symbol, d::Dict{Symbol,T})::String where {T}
   route = try
             get_route!!(route_name)
           catch ex
-            Logger.log("Route not found $route_name", :err)
-            Logger.log(string(ex), :err)
-            Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+            log("Route not found $route_name", :err)
+            log(string(ex), :err)
+            log("$(@__FILE__):$(@__LINE__)", :err)
 
             rethrow(ex)
           end
@@ -368,9 +367,9 @@ function to_link(route_name::Symbol; route_params...) :: String
   try
     to_link!!(route_name, route_params_to_dict(route_params))
   catch ex
-    Genie.Logger.log("Route not found", :err)
-    Genie.Logger.log(string(ex), :err)
-    Genie.Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+    log("Route not found", :err)
+    log(string(ex), :err)
+    log("$(@__FILE__):$(@__LINE__)", :err)
 
     ""
   end
@@ -393,7 +392,7 @@ end
 """
 function action_controller_params(action::Function, params::Params) :: Nothing
   params.collection[:action_controller] = action |> string |> Symbol
-  params.collection[:action] = Base.function_name(action)
+  params.collection[:action] = nameof(action)
   params.collection[:controller] = (action |> typeof).name.module |> string |> Symbol
 
   nothing
@@ -408,9 +407,9 @@ function run_hook(controller::Module, hook_type::Symbol) :: Bool
   try
     getfield(controller, hook_type)()
   catch ex
-    Logger.log("Failed invoking $hook_type", :err)
-    Logger.log(string(ex), :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+    log("Failed invoking $hook_type", :err)
+    log(string(ex), :err)
+    log("$(@__FILE__):$(@__LINE__)", :err)
 
     rethrow(ex)
   end
@@ -428,7 +427,7 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
   for r in routes()
     r.method != req.method && (! haskey(params.collection, :_method) || ( haskey(params.collection, :_method) && params.collection[:_method] != r.method )) && continue
 
-    Genie.config.log_router && Logger.log("Router: Checking against " * r.path)
+    Genie.config.log_router && log("Router: Checking against " * r.path)
 
     parsed_route, param_names, param_types = parse_route(r.path)
 
@@ -436,10 +435,10 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
     regex_route = Regex("^" * parsed_route * "\$")
 
     (! occursin(regex_route, uri.path)) && continue
-    Genie.config.log_router && Logger.log("Router: Matched route " * uri.path)
+    Genie.config.log_router && log("Router: Matched route " * uri.path)
 
     (! extract_uri_params(uri.path, regex_route, param_names, param_types, params)) && continue
-    Genie.config.log_router && Logger.log("Router: Matched type of route " * uri.path)
+    Genie.config.log_router && log("Router: Matched type of route " * uri.path)
 
     extract_post_params(req, params)
     extract_extra_params(r.with, params)
@@ -462,15 +461,15 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
 
               result
             catch ex
-              Logger.log("Failed invoking controller", :err)
-              Logger.log(string(ex), :err)
-              Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+              log("Failed invoking controller", :err)
+              log(string(ex), :err)
+              log("$(@__FILE__):$(@__LINE__)", :err)
 
               (isdefined(controller, RESCUE_HOOK) && return to_response(getfield(controller, RESCUE_HOOK)(ex))) || rethrow(ex)
             end
   end
 
-  Genie.config.log_router && Logger.log("Router: No route matched - defaulting to 404", :err)
+  Genie.config.log_router && log("Router: No route matched - defaulting to 404", :err)
 
   # serve_error_file(404, "Not found", params.collection)
   error_404(req.target)
@@ -484,7 +483,7 @@ Matches the invoked URL to the corresponding channel, sets up the execution envi
 """
 function match_channels(req, msg::String, ws_client, params::Params, session::Union{Sessions.Session,Nothing}) :: String
   for c in channels()
-    Genie.config.log_router && Logger.log("Channels: Checking against " * c.path)
+    Genie.config.log_router && log("Channels: Checking against " * c.path)
 
     parsed_channel, param_names, param_types = parse_channel(c.path)
 
@@ -502,10 +501,10 @@ function match_channels(req, msg::String, ws_client, params::Params, session::Un
     regex_channel = Regex("^" * parsed_channel * "\$")
 
     (! occursin(regex_channel, uri)) && continue
-    Genie.config.log_router && Logger.log("Channels: Matched channel " * uri)
+    Genie.config.log_router && log("Channels: Matched channel " * uri)
 
     extract_uri_params(uri, regex_channel, param_names, param_types, params) || continue
-    Genie.config.log_router && Logger.log("Router: Matched type of channel " * uri)
+    Genie.config.log_router && log("Router: Matched type of channel " * uri)
 
     extract_extra_params(c.with, params)
     action_controller_params(c.action, params)
@@ -527,15 +526,15 @@ function match_channels(req, msg::String, ws_client, params::Params, session::Un
               catch ex
                 is_dev() && rethrow(ex)
 
-                Logger.log("Failed invoking channel", :err)
-                Logger.log(string(ex), :err)
-                Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+                log("Failed invoking channel", :err)
+                log(string(ex), :err)
+                log("$(@__FILE__):$(@__LINE__)", :err)
 
                 (isdefined(controller, RESCUE_HOOK) && return string(getfield(controller, RESCUE_HOOK)())) || string(ex)
               end
   end
 
-  Genie.config.log_router && Logger.log("Channel: No route matched - defaulting 404", :err)
+  Genie.config.log_router && log("Channel: No route matched - defaulting 404", :err)
   string("404 - Not found")
 end
 
@@ -614,9 +613,9 @@ function extract_uri_params(uri::String, regex_route::Regex, param_names::Vector
     try
       params.collection[Symbol(param_name)] = convert(param_types[i], matches[param_name])
     catch ex
-      Logger.log("Failed to match URI params between $(param_types[i])::$(typeof(param_types[i])) and $(matches[param_name])::$(typeof(matches[param_name]))", :err)
-      Logger.log(string(ex), :err)
-      Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+      log("Failed to match URI params between $(param_types[i])::$(typeof(param_types[i])) and $(matches[param_name])::$(typeof(matches[param_name]))", :err)
+      log(string(ex), :err)
+      log("$(@__FILE__):$(@__LINE__)", :err)
 
       return false
     end
@@ -740,9 +739,9 @@ function to_response(action_result) :: HTTP.Response
               HTTP.Response(string(action_result))
             end
           catch ex
-            Genie.Logger.log("Can't convert $action_result to HttpServer.Response", :err)
-            Genie.Logger.log(string(ex), :err)
-            Genie.Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+            log("Can't convert $action_result to HttpServer.Response", :err)
+            log(string(ex), :err)
+            log("$(@__FILE__):$(@__LINE__)", :err)
 
             rethrow(ex)
           end

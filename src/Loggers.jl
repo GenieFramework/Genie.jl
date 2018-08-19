@@ -1,13 +1,13 @@
 """
 Provides logging functionality for Genie apps.
 """
-module Logger
+module Loggers
 
 using Memento, Millboard, Dates
 using Genie
 
-
-const LOGGERS = Dict{Symbol,Memento.Logger}()
+import Base.log
+export log
 
 
 """
@@ -23,24 +23,29 @@ If `level` is `error` or `critical` it will also dump the stacktrace onto STDOUT
 ```julia
 ```
 """
-function log(message, level::Union{String,Symbol} = "info"; showst = false) :: Nothing
+function log(message::Union{String,Symbol,Number,Exception}, level::Union{String,Symbol} = "info") :: Nothing
   message = string(message)
   level = string(level)
-  level == "err" && (level = "error")
 
-  for (logger_name, logger) in LOGGERS
-    Core.eval(@__MODULE__, Meta.parse("$level($logger, \"$message\")"))
+  if level == "err"
+    level = "error"
+  elseif level == "debug"
+    level = "info"
   end
 
-  if (level == "error") && showst
-    println()
-    stacktrace()
+  root_logger = Memento.config!(Genie.config.log_level |> string; fmt="[{date}|{level}]: {msg}")
+
+  if isfile(log_path())
+    file_logger = getlogger(@__MODULE__)
+    setlevel!(file_logger, Genie.config.log_level |> string)
+    push!(file_logger, DefaultHandler(log_path(), DefaultFormatter("[{date}|{level}]: {msg}")))
+
+    Base.invoke(Core.eval(@__MODULE__, Meta.parse("Memento.$level")), Tuple{typeof(file_logger),typeof(message)}, file_logger, message)
+  else
+    Base.invoke(Core.eval(@__MODULE__, Meta.parse("Memento.$level")), Tuple{typeof(root_logger),typeof(message)}, root_logger, message)
   end
 
   nothing
-end
-function log(message::String, level::Union{String,Symbol}; showst::Bool = false) :: Nothing
-  log(message, level == :err ? "error" : string(level), showst = showst)
 end
 
 
@@ -57,7 +62,7 @@ julia> Genie.config.output_length
 julia> Genie.config.output_length = 10
 10
 
-julia> Logger.truncate_logged_output("abc " ^ 10)
+julia> Loggers.truncate_logged_output("abc " ^ 10)
 "abc abc ab..."
 ```
 """
@@ -66,22 +71,14 @@ function truncate_logged_output(output::String) :: String
 end
 
 
-"""
-    setup_loggers() :: Bool
-
-Sets up default app loggers (STDOUT and per env file loggers) defferring to the `Lumberjack` module.
-Automatically invoked.
-"""
-function setup_loggers() :: Bool
-  push!(LOGGERS, :stdout_logger => Memento.config!(Genie.config.log_level |> string; fmt="[{date}|{level}]: {msg}"))
-
-  file_logger = getlogger(@__MODULE__)
-  setlevel!(file_logger, Genie.config.log_level |> string)
-  push!(file_logger, DefaultHandler("$(joinpath(Genie.LOG_PATH, Genie.config.app_env)).log",
-                                    DefaultFormatter("[{date}|{level}]: {msg}")))
-  push!(LOGGERS, :file_logger => file_logger)
-
-  true
+function log_path(path = Genie.LOG_PATH) :: String
+  "$(joinpath(path, Genie.config.app_env)).log"
+end
+function log_path!(path = Genie.LOG_PATH) :: String
+  if ! isfile(log_path(path))
+    mkpath(path)
+    touch(log_path(path))
+  end
 end
 
 
@@ -110,10 +107,10 @@ end
 Provides a macro that injects the FILE and the LINE where the logger was invoked.
 """
 macro location()
-  :(Logger.log(" in $(@__FILE__):$(@__LINE__)", :err))
+  :(log(" in $(@__FILE__):$(@__LINE__)", :err))
 end
 
-setup_loggers()
-empty_log_queue()
+# setup_loggers()
+# empty_log_queue()
 
 end

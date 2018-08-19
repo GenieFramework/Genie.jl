@@ -1,6 +1,6 @@
 module SearchLightSessionAdapter
 
-using Sessions, Genie, Logger, Genie.Configuration, App, Migration, JSON, SearchLight
+using Sessions, Genie, Loggers, Genie.Configuration, App, Migration, JSON, SearchLight, Nullables
 
 type StorageSession <: AbstractModel
   ### internals
@@ -30,9 +30,9 @@ function write(session::Sessions.Session) :: Sessions.Session
   try
     SearchLight.update_by_or_create!!(StorageSession(name = session.id, val = JSON.json(session.data)), :name)
   catch ex
-    Logger.log("Error when serializing session in $(@__FILE__):$(@__LINE__)", :err)
-    Logger.log(string(ex), :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+    log("Error when serializing session in $(@__FILE__):$(@__LINE__)", :err)
+    log(string(ex), :err)
+    log("$(@__FILE__):$(@__LINE__)", :err)
 
     rethrow(ex)
   end
@@ -54,9 +54,9 @@ function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
 
     return isnull(session) ? Nullable{Sessions.Session}() : Nullable{Sessions.Session}(session)
   catch ex
-    Logger.log("Can't read session", :err)
-    Logger.log(string(ex), :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+    log("Can't read session", :err)
+    log(string(ex), :err)
+    log("$(@__FILE__):$(@__LINE__)", :err)
 
     return Nullable{Sessions.Session}(write(Sessions.Session(session_id)))
   end

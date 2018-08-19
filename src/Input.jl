@@ -61,9 +61,11 @@ end
 function post_from_request!(request::HTTP.Request, input::HttpInput)
   headers = Dict(request.headers)
 
-  if  searchindex(get(headers, "Content-Type", ""), "application/x-www-form-urlencoded") != 0
+  # if searchindex(get(headers, "Content-Type", ""), "application/x-www-form-urlencoded") != 0
+  if first(something(findfirst("application/x-www-form-urlencoded", get(headers, "Content-Type", "")), 0:-1)) != 0
     post_url_encoded!(request.data, input.post)
-  elseif searchindex(get(headers, "Content-Type", ""), "multipart/form-data") != 0
+  # elseif searchindex(get(headers, "Content-Type", ""), "multipart/form-data") != 0
+  elseif first(something(findfirst("multipart/form-data", get(headers, "Content-Type", "")), 0:-1)) != 0
     post_multipart!(request, input.post, input.files)
   end
 end

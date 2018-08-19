@@ -1,6 +1,6 @@
 module SearchLightCacheAdapter
 
-using Genie, Logger, App, SearchLight, Util
+using Genie, Loggers, App, SearchLight, Util
 
 
 type StorageCache <: AbstractModel
@@ -36,9 +36,9 @@ function to_cache(key::Union{String,Symbol}, content::Any; dir = "") :: Nothing
 
     SearchLight.update_by_or_create!!(StorageCache(name = key, val = base64encode(io.data), expires_at = time_to_unixtimestamp()), :name)
   catch ex
-    Logger.log("Error when serializing cache in $(@__FILE__):$(@__LINE__)", :err)
-    Logger.log(string(ex), :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+    log("Error when serializing cache in $(@__FILE__):$(@__LINE__)", :err)
+    log(string(ex), :err)
+    log("$(@__FILE__):$(@__LINE__)", :err)
 
     rethrow(ex)
   end
@@ -56,7 +56,7 @@ function from_cache(key::Union{String,Symbol}, expiration::Int; dir = "") :: Nul
   try
     cache_info = SearchLight.find_one_by!!(StorageCache, :name, key)
 
-    App.config.log_cache && Logger.log("Found cache for $key", :info)
+    App.config.log_cache && log("Found cache for $key", :info)
 
     cache_info.expires_at + expiration < time_to_unixtimestamp() && return Nullable()
 
@@ -68,9 +68,9 @@ function from_cache(key::Union{String,Symbol}, expiration::Int; dir = "") :: Nul
 
     Nullable(cache)
   catch ex
-    Logger.log("Can't read cache", :err)
-    Logger.log(string(ex), :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+    log("Can't read cache", :err)
+    log(string(ex), :err)
+    log("$(@__FILE__):$(@__LINE__)", :err)
 
     Nullable()
   end

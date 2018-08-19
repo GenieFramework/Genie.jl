@@ -3,7 +3,7 @@ Various utility functions for using across models, controllers and views.
 """
 module Helpers
 
-using Genie, Genie.Router, URIParser, Genie.Logger, HTTP, Genie.Flax
+using Genie, Genie.Router, URIParser, Genie.Loggers, HTTP, Genie.Flax
 
 export request, response, flash, wsclient, flash_has_message
 
@@ -23,7 +23,7 @@ function request(params::Dict{Symbol,Any}) :: HTTP.Request
     return params[Genie.PARAMS_REQUEST_KEY]
   else
     msg = "Invalid params Dict -- must have $(Genie.PARAMS_REQUEST_KEY) key"
-    Genie.Logger.log(msg, :err)
+    log(msg, :err)
     error(msg)
   end
 end
@@ -43,7 +43,7 @@ function response(params::Dict{Symbol,Any}) :: HTTP.Response
     return params[Genie.PARAMS_RESPONSE_KEY]
   else
     msg = "Invalid params Dict -- must have $(Genie.PARAMS_RESPONSE_KEY) key"
-    Genie.Logger.log(msg, :err)
+    log(msg, :err)
     error(msg)
   end
 end
@@ -62,7 +62,7 @@ function flash(params::Dict{Symbol,Any})
     return params[Genie.PARAMS_FLASH_KEY]
   else
     msg = "Invalid params Dict -- must have $(Genie.PARAMS_FLASH_KEY) key"
-    Genie.Logger.log(msg, :err)
+    log(msg, :err)
     error(msg)
   end
 end
@@ -103,7 +103,7 @@ function wsclient(params::Dict{Symbol,Any}) :: HTTP.WebSockets.WebSocket
     return params[Genie.PARAMS_WS_CLIENT]
   else
     msg = "Invalid params Dict -- must have $(Genie.PARAMS_WS_CLIENT) key"
-    Genie.Logger.log(msg, :err)
+    log(msg, :err)
     error(msg)
   end
 end
@@ -116,7 +116,7 @@ Loads helpers and makes them available in the view layer.
 """
 function include_helpers() :: Nothing
   isdir(Genie.HELPERS_PATH) || return nothing
-  
+
   for h in readdir(Genie.HELPERS_PATH)
     if isfile(joinpath(Genie.HELPERS_PATH, h)) && endswith(h, "Helper.jl")
       Core.eval(Genie.Flax, """include("$(joinpath(Genie.HELPERS_PATH, h))")""" |> Meta.parse)
@@ -126,6 +126,6 @@ function include_helpers() :: Nothing
 
   nothing
 end
-include_helpers()
+# include_helpers()
 
 end

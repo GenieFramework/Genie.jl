@@ -1,7 +1,7 @@
 module Sessions
 
-using SHA, HTTP, Dates
-using Genie, Genie.Cookies, Genie.Logger
+using SHA, HTTP, Dates, Nullables
+using Genie, Genie.Cookies, Genie.Loggers
 
 mutable struct Session
   id::String
@@ -28,8 +28,8 @@ function id() :: String
   try
     Genie.SECRET_TOKEN * ":" * bytes2hex(sha1(string(Dates.now()))) * ":" * string(rand()) * ":" * string(hash(Genie)) |> sha256 |> bytes2hex
   catch ex
-    Logger.log("Session error", :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+    log("Session error", :err)
+    log("$(@__FILE__):$(@__LINE__)", :err)
     error("Can't compute session id - please make sure SECRET_TOKEN is defined in config/secrets.jl")
   end
 end
@@ -60,7 +60,7 @@ end
 Initiates a session.
 """
 function start(session_id::String, req::HTTP.Request, res::HTTP.Response; options = Dict{String,String}()) :: Session
-  options = merge(Dict("Path" => "/", "HttpOnly" => "", "Expires" => "0"), options)
+  options = merge(Dict("Path" => "/", "HttpOnly" => true, "Expires" => Dates.today()), options)
   Cookies.set!(res, Genie.config.session_key_name, session_id, options)
 
   load(session_id)
@@ -170,7 +170,7 @@ function session(params::Dict{Symbol,Any}) :: Sessions.Session
     return params[Genie.PARAMS_SESSION_KEY]
   else
     msg = "Invalid params Dict -- must have $(Genie.PARAMS_SESSION_KEY) key"
-    Logger.log(msg, :err)
+    log(msg, :err)
     error(msg)
   end
 end

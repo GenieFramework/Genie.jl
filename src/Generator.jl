@@ -3,8 +3,7 @@ Generates various Genie files.
 """
 module Generator
 
-using Revise, Genie, Genie.Logger, Genie.FileTemplates, Genie.Inflector, Genie.Configuration #, Genie.App
-using SearchLight, SearchLight.Migration
+using Revise, Genie, Genie.Loggers, Genie.FileTemplates, Genie.Inflector, Genie.Configuration #, Genie.App
 
 
 """
@@ -20,7 +19,7 @@ function new_controller(cmd_args::Dict{String,Any}) :: Nothing
   resource_path = setup_resource_path(resource_name)
   cfn = controller_file_name(resource_name)
   write_resource_file(resource_path, cfn, resource_name, :controller) &&
-    Genie.Logger.log("New controller created at $(joinpath(resource_path, cfn))")
+    log("New controller created at $(joinpath(resource_path, cfn))")
 
   nothing
 end
@@ -40,7 +39,7 @@ function new_channel(cmd_args::Dict{String,Any}) :: Nothing
   resource_path = setup_resource_path(resource_name)
   cfn = channel_file_name(resource_name)
   write_resource_file(resource_path, cfn, resource_name, :channel) &&
-    Logger.log("New channel created at $(joinpath(resource_path, cfn))")
+    log("New channel created at $(joinpath(resource_path, cfn))")
 
   nothing
 end
@@ -64,7 +63,7 @@ function new_resource(cmd_args::Dict{String,Any}) :: Nothing
   resource_path = setup_resource_path(resource_name)
   for (resource_file, resource_type) in [(controller_file_name(resource_name), :controller), (channel_file_name(resource_name), :channel), (Genie.GENIE_AUTHORIZATOR_FILE_NAME, :authorizer)]
     write_resource_file(resource_path, resource_file, resource_name, resource_type) &&
-      Genie.Logger.log("New $resource_file created at $(joinpath(resource_path, resource_file))")
+      log("New $resource_file created at $(joinpath(resource_path, resource_file))")
   end
 
   views_path = joinpath(resource_path, "views")
@@ -73,7 +72,7 @@ function new_resource(cmd_args::Dict{String,Any}) :: Nothing
   ! isdir(Genie.TEST_PATH_UNIT) && mkpath(Genie.TEST_PATH_UNIT)
   test_file = resource_name * Genie.TEST_FILE_IDENTIFIER |> lowercase
   write_resource_file(Genie.TEST_PATH_UNIT, test_file, resource_name, :test) &&
-    Genie.Logger.log("New $test_file created at $(joinpath(Genie.TEST_PATH_UNIT, test_file))")
+    log("New $test_file created at $(joinpath(Genie.TEST_PATH_UNIT, test_file))")
 
   nothing
 end
@@ -88,8 +87,7 @@ end
 Computes and creates the directories structure needed to persist a new resource.
 """
 function setup_resource_path(resource_name::String) :: String
-  resources_dir = Genie.RESOURCES_PATH
-  resource_path = joinpath(resources_dir, lowercase(resource_name))
+  resource_path = joinpath(Genie.RESOURCES_PATH, lowercase(resource_name))
 
   if ! isdir(resource_path)
     mkpath(resource_path)
@@ -137,7 +135,7 @@ function write_resource_file(resource_path::String, file_name::String, resource_
       error("Not supported, $file_name")
     end
   catch ex
-    Logger.log(ex, :err)
+    log(ex, :warn)
   end
 
   Genie.App.load_resources()
@@ -150,7 +148,7 @@ end
 """
 function resource_does_not_exist(resource_path::String, file_name::String) :: Bool
   if isfile(joinpath(resource_path, file_name))
-    Logger.log("File already exists, $(joinpath(resource_path, file_name)) - skipping", :err)
+    log("File already exists, $(joinpath(resource_path, file_name)) - skipping", :warn)
     return false
   end
 

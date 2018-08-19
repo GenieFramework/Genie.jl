@@ -1,6 +1,6 @@
 module UserSessionsController
 
-using Genie, SearchLight, Genie.Authentication, Genie.Flax, Nullables
+using Genie, SearchLight, Genie.Authentication, Genie.Flax, Nullables, Genie.Loggers
 
 function show_login()
   Genie.Flax.include_template("/Users/adrian/Dropbox/Projects/todo_mvc/app/layouts/login.flax.html", partial = false)
@@ -21,7 +21,7 @@ function do_login(email::String, password::String, session::Sessions.Session) ::
   users = SearchLight.find(User, SQLQuery(where = [SQLWhere(:email, email), SQLWhere(:password, sha256(password) |> bytes2hex)]))
 
   if isempty(users)
-    Logger.log("Failed login: Can't find user")
+    log("Failed login: Can't find user")
     return Nullable()
   end
   user = users[1]

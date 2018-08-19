@@ -3,7 +3,8 @@ Compiled templating language for Genie.
 """
 module Flax
 
-using Revise, Genie, Gumbo, Genie.Logger, Genie.Configuration, SHA, Reexport, JSON, DataStructures, Revise
+using Revise, Gumbo, SHA, Reexport, JSON, DataStructures, Markdown
+using Genie, Genie.Loggers, Genie.Configuration
 @reexport using HttpCommon
 
 export HTMLString, JSONString
@@ -131,7 +132,7 @@ Includes a template inside another.
 """
 function include_template(path::String; partial = true, func_name = "") :: String
   if Genie.config.log_views
-    Logger.log("Including $path", :info)
+    log("Including $path", :info)
     @time _include_template(path, partial = partial, func_name = func_name)
   else
     _include_template(path, partial = partial, func_name = func_name)
@@ -169,7 +170,7 @@ function _include_template(path::String; partial = true, func_name = "") :: Stri
   f_stale = build_is_stale(path, f_path)
   if f_stale || ! isdefined(@__MODULE__, f_name)
     if f_stale
-      Logger.log("Building view $path", :debug)
+      log("Building view $path", :debug)
       @time build_module(html_to_flax(path, partial = partial), path)
     end
     include(joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl"))
@@ -194,7 +195,7 @@ function build_is_stale(file_path::String, build_path::String) :: Bool
   build_mtime = stat(build_path).mtime
   status = file_mtime > build_mtime
 
-  Genie.config.log_views && status && Logger.log("🚨  Flax view $file_path build $build_path is stale")
+  Genie.config.log_views && status && log("🚨  Flax view $file_path build $build_path is stale")
 
   status
 end
@@ -212,8 +213,8 @@ function html(resource::Union{Symbol,String}, action::Union{Symbol,String}, layo
 
     Dict{Symbol,AbstractString}(:html => include_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false) |> string |> doc)
   catch ex
-    Logger.log(string(ex), :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+    log(string(ex), :err)
+    log("$(@__FILE__):$(@__LINE__)", :err)
 
     rethrow(ex)
   end
@@ -225,8 +226,8 @@ function html(view::String, layout::String = "<% @yield %>"; vars...) :: Dict{Sy
 
     Dict{Symbol,AbstractString}(:html => Core.eval(@__MODULE__, Meta.parse(parse_string(layout, partial = false))) |> string |> doc)
   catch ex
-    Logger.log(string(ex), :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+    log(string(ex), :err)
+    log("$(@__FILE__):$(@__LINE__)", :err)
 
     rethrow(ex)
   end
@@ -249,8 +250,8 @@ function flax(resource::Union{Symbol,String}, action::Union{Symbol,String}, layo
     if isa(julia_action_template_func, Function)
       task_local_storage(:__yield, julia_action_template_func())
     else
-      Logger.log(err_msg, :err)
-      Logger.log("$(@__FILE__):$(@__LINE__)")
+      log(err_msg, :err)
+      log("$(@__FILE__):$(@__LINE__)")
 
       throw(err_msg)
     end
@@ -258,14 +259,14 @@ function flax(resource::Union{Symbol,String}, action::Union{Symbol,String}, layo
     return  if isa(julia_layout_template_func, Function)
               Dict{Symbol,AbstractString}(:html => julia_layout_template_func() |> string |> doc)
             else
-              Logger.log(err_msg, :err)
-              Logger.log("$(@__FILE__):$(@__LINE__)")
+              log(err_msg, :err)
+              log("$(@__FILE__):$(@__LINE__)")
 
               throw(err_msg)
             end
   catch ex
-    Logger.log(string(ex), :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+    log(string(ex), :err)
+    log("$(@__FILE__):$(@__LINE__)", :err)
 
     rethrow(ex)
   end
@@ -283,9 +284,9 @@ function json(resource::Union{Symbol,String}, action::Union{Symbol,String}; vars
 
     return Dict{Symbol,AbstractString}(:json => (joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action) * JSON_FILE_EXT) |> include) |> JSON.json)
   catch ex
-    Logger.log("Error generating JSON view", :err)
-    Logger.log(string(ex), :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+    log("Error generating JSON view", :err)
+    log(string(ex), :err)
+    log("$(@__FILE__):$(@__LINE__)", :err)
 
     rethrow(ex)
   end
@@ -638,7 +639,13 @@ function prepare_build(subfolder) :: Bool
 
   true
 end
-prepare_build(BUILD_NAME)
-prepare_build(MD_BUILD_NAME)
+
+
+"""
+"""
+function create_build_folders()
+  prepare_build(BUILD_NAME)
+  prepare_build(MD_BUILD_NAME)
+end
 
 end

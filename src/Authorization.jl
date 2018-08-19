@@ -3,7 +3,7 @@ Deals with authorization functionality, roles, ACL.
 """
 module Authorization
 
-using Genie, SearchLight, Authentication, Helpers, App, Util, Logger
+using Genie, SearchLight, Authentication, Helpers, App, Util, Loggers
 
 export is_authorized, with_authorization
 
@@ -46,9 +46,9 @@ function role_has_ability(role::Symbol, ability::Symbol, params::Dict{Symbol,Any
             (ability == :any || # no ability required, just the right kind of role
               haskey(params[Genie.PARAMS_ACL_KEY][string(role)], string(ability)) ) # role has ability
   catch ex
-    Logger.log("Invalid ACL", :err)
-    Logger.log(string(ex), :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+    log("Invalid ACL", :err)
+    log(string(ex), :err)
+    log("$(@__FILE__):$(@__LINE__)", :err)
 
     return false
   end

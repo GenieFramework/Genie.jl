@@ -4,7 +4,7 @@ Handles WebSockets communication logic.
 module WebChannels
 
 using HTTP, JSON, Distributed
-using Genie.Logger
+using Genie.Loggers
 
 const ClientId =                          UInt64
 const ChannelId =                         String
@@ -161,8 +161,8 @@ function broadcast(channels::Union{ChannelId,Vector{ChannelId}}, msg::String, pa
       try
         ws_write_message(client, ChannelMessage(channel, client, msg, payload) |> JSON.json)
       catch ex
-        Logger.log(string(ex), :err)
-        Logger.log("$(@__FILE__):$(@__LINE__)")
+        log(string(ex), :err)
+        log("$(@__FILE__):$(@__LINE__)")
 
         rethrow(ex)
       end

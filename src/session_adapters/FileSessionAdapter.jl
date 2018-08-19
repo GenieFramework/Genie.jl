@@ -1,6 +1,8 @@
 module FileSessionAdapter
 
-using Genie.Sessions, Genie, Genie.Logger, Genie.Configuration
+using Nullables
+using Genie.Sessions, Genie, Genie.Loggers, Genie.Configuration
+using Serialization
 
 const SESSION_FOLDER = Genie.config.session_folder
 
@@ -15,9 +17,9 @@ function write(session::Sessions.Session) :: Sessions.Session
       serialize(io, session)
     end
   catch ex
-    Logger.log("Error when serializing session $(escape_string(session)) in $(@__FILE__):$(@__LINE__)", :err)
-    Logger.log(string(ex), :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+    log("Error when serializing session $(escape_string(session)) in $(@__FILE__):$(@__LINE__)", :err)
+    log(string(ex), :err)
+    log("$(@__FILE__):$(@__LINE__)", :err)
 
     rethrow(ex)
   end
@@ -36,9 +38,9 @@ function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
   try
     isfile(joinpath(SESSION_FOLDER, session_id)) || return Nullable{Sessions.Session}(write(Session(session_id)))
   catch ex
-    Logger.log("Can't check session file", :err)
-    Logger.log(string(ex), :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+    log("Can't check session file", :err)
+    log(string(ex), :err)
+    log("$(@__FILE__):$(@__LINE__)", :err)
 
     Nullable{Sessions.Session}(write(Session(session_id)))
   end
@@ -50,9 +52,9 @@ function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
 
     Nullable{Sessions.Session}(session)
   catch ex
-    Logger.log("Can't read session", :err)
-    Logger.log(string(ex), :err)
-    Logger.log("$(@__FILE__):$(@__LINE__)", :err)
+    log("Can't read session", :err)
+    log(string(ex), :err)
+    log("$(@__FILE__):$(@__LINE__)", :err)
 
     Nullable{Sessions.Session}(write(Session(session_id)))
   end

@@ -1,8 +1,7 @@
 module REPL
 
 using Revise, SHA, Dates
-using Genie, Genie.Logger, Genie.Configuration, Genie.Generator, Genie.Tester, Genie.Util
-using SearchLight, SearchLight.Generator, SearchLight.Migration
+using Genie, Genie.Loggers, Genie.Configuration, Genie.Generator, Genie.Tester, Genie.Util
 
 const JULIA_PATH = joinpath(Sys.BINDIR, "julia")
 
@@ -22,7 +21,7 @@ end
 
 Creates a new Genie app at the indicated path.
 """
-function new_app(path = "."; db_support = false, skip_dependencies = true, autostart = true) :: Nothing
+function new_app(path = "."; db_support = false, skip_dependencies = true, autostart = falsem) :: Nothing
   cp(joinpath(@__DIR__, "../", "files", "new_app"), abspath(path))
 
   chmod(joinpath(path, "bin", "server"), 0o700)
@@ -32,13 +31,13 @@ function new_app(path = "."; db_support = false, skip_dependencies = true, autos
     write(f, """const SECRET_TOKEN = "$(secret_token())" """)
   end
 
-  Logger.log("Done! New app created at $(abspath(path))", :info)
+  log("Done! New app created at $(abspath(path))", :info)
 
-  is_windows() && setup_windows_bin_files(path)
+  Sys.iswindows() && setup_windows_bin_files(path)
 
   autostart || return nothing
 
-  Logger.log("Starting your brand new Genie app - hang tight!", :info)
+  log("Starting your brand new Genie app - hang tight!", :info)
   run_repl_app(path)
 
   nothing
@@ -163,7 +162,7 @@ function write_secrets_file() :: Nothing
     write(f, """const SECRET_TOKEN = "$(secret_token())" """)
   end
 
-  Logger.log("Generated secrets.jl file in $(Genie.CONFIG_PATH)", :info)
+  log("Generated secrets.jl file in $(Genie.CONFIG_PATH)", :info)
 
   nothing
 end
@@ -173,14 +172,14 @@ end
     reload_app() :: Nothing
 """
 function reload_app() :: Nothing
-  Logger.log("Attempting to reload the Genie's core modules. If you get unexpected errors or things don't work as expected, simply exit this Julia session and start a new one to fully reload Genie.", :warn)
+  log("Attempting to reload the Genie's core modules. If you get unexpected errors or things don't work as expected, simply exit this Julia session and start a new one to fully reload Genie.", :warn)
 
   is_dev() && Revise.revise(App)
 
   App.load_configurations()
   App.load_initializers()
 
-  Logger.log("The app was reloaded.", :info)
+  log("The app was reloaded.", :info)
 
   nothing
 end

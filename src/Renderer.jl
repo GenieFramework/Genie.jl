@@ -4,7 +4,7 @@ export respond, json, redirect_to, html, flax, include_asset, has_requested, css
 export respond_with_json, respond_with_html, respond_with
 
 using Nullables, JSON, HTTP
-using Genie, Genie.Util, Genie.Configuration, Genie.Logger, Genie.Macros
+using Genie, Genie.Util, Genie.Configuration, Genie.Loggers, Genie.Macros
 
 eval(:(include("$(Genie.config.html_template_engine).jl")))
 Genie.config.html_template_engine != Genie.config.json_template_engine && Core.eval(:(include("$(Genie.config.json_template_engine).jl")))
@@ -50,11 +50,11 @@ end
 
 Invokes the HTML renderer of the underlying configured templating library.
 """
-function html(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
-  HTMLTemplateEngine.html(resource, action, layout; parse_vars(vars)...)
+function html(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE; vars...) :: Dict{Symbol,String}
+  HTMLTemplateEngine.html(resource, action, layout; vars...)
 end
-function html(view::String, layout::String, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
-  HTMLTemplateEngine.html(view, layout; parse_vars(vars)...)
+function html(view::String, layout::String; vars...) :: Dict{Symbol,String}
+  HTMLTemplateEngine.html(view, layout; vars...)
 end
 
 
@@ -63,16 +63,16 @@ end
 
 Invokes the HTML renderer of the underlying configured templating library and wraps it into a `HTTP.Response`.
 """
-function respond_with_html(resource::Symbol, action::Symbol, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: HTTP.Response
-  html(resource, action, layout, check_nulls; vars...) |> respond
+function respond_with_html(resource::Symbol, action::Symbol, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE; vars...) :: HTTP.Response
+  html(resource, action, layout; vars...) |> respond
 end
-function respond_with_html(view::String, layout::String, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: HTTP.Response
-  html(view, layout, check_nulls; vars...) |> respond
+function respond_with_html(view::String, layout::String; vars...) :: HTTP.Response
+  html(view, layout; vars...) |> respond
 end
 
 
-function flax(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
-  HTMLTemplateEngine.flax(resource, action, layout; parse_vars(vars)...)
+function flax(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE; vars...) :: Dict{Symbol,String}
+  HTMLTemplateEngine.flax(resource, action, layout; vars...)
 end
 
 
@@ -81,8 +81,8 @@ end
 
 Invokes the JSON renderer of the underlying configured templating library.
 """
-function json(resource::Union{Symbol,String}, action::Union{Symbol,String}, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Dict{Symbol,String}
-  JSONTemplateEngine.json(resource, action; parse_vars(vars)...)
+function json(resource::Union{Symbol,String}, action::Union{Symbol,String}; vars...) :: Dict{Symbol,String}
+  JSONTemplateEngine.json(resource, action; vars...)
 end
 
 
@@ -91,8 +91,8 @@ end
 
 Invokes the JSON renderer of the underlying configured templating library and wraps it into a `HTTP.Response`.
 """
-function respond_with_json(resource::Union{Symbol,String}, action::Union{Symbol,String}, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
-  json(resource, action, check_nulls; vars...) |> respond
+function respond_with_json(resource::Union{Symbol,String}, action::Union{Symbol,String}; vars...) :: Response
+  json(resource, action; vars...) |> respond
 end
 
 
@@ -139,9 +139,9 @@ function respond(body::Dict{Symbol,T}, code::Int = 200, headers = Dict{AbstractS
                       headers["Content-Type"] = CONTENT_TYPES[:plain]
                       body[:plain]
                     else
-                      Genie.Logger.log("Unsupported Content-Type", :err)
-                      Genie.Logger.log(body)
-                      Genie.Logger.@location
+                      log("Unsupported Content-Type", :err)
+                      log(body)
+                      Loggers.@location
 
                       error("Unsupported Content-Type")
                     end
@@ -218,32 +218,6 @@ Path to a js asset. `file_name` should not include the extension.
 """
 function js_asset(file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
   include_asset(:js, file_name, fingerprinted = fingerprinted)
-end
-
-
-function parse_vars(vars)
-  pos_counter = 1
-  for pair in vars
-    if pair[1] != :check_nulls
-      pos_counter += 1
-      continue
-    end
-
-    for p in pair[2]
-      if ! isa(p[2], Nullable)
-        push!(vars, p[1] => p[2])
-        continue
-      end
-
-      if isnull(p[2])
-        return error_404()
-      else
-        push!(vars, p[1] => Base.get(p[2]))
-      end
-    end
-  end
-
-  vars
 end
 
 

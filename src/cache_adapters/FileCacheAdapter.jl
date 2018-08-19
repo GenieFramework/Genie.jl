@@ -1,6 +1,6 @@
 module FileCacheAdapter
 
-using Genie, Genie.Logger
+using Genie, Genie.Loggers
 
 
 """
@@ -33,7 +33,7 @@ function from_cache(key::Union{String,Symbol}, expiration::Int; dir = "") :: Nul
 
   ( ! isfile(file_path) || stat(file_path).ctime + expiration < time() ) && return Nullable()
 
-  Genie.config.log_cache && Logger.log("Found file system cache for $key at $file_path", :info)
+  Genie.config.log_cache && log("Found file system cache for $key at $file_path", :info)
 
   output = open(file_path) do io
     deserialize(io)

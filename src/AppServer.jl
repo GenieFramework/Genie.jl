@@ -4,7 +4,7 @@ Handles Http server related functionality, manages requests and responses and th
 module AppServer
 
 using Revise, HTTP, HTTP.IOExtras, HTTP.Sockets, Millboard, MbedTLS, WebSockets, URIParser, Sockets, Distributed
-using Genie, Genie.Router, Genie.Logger, Genie.Sessions, Genie.Configuration, Genie.WebChannels
+using Genie, Genie.Router, Genie.Loggers, Genie.Sessions, Genie.Configuration, Genie.WebChannels
 
 
 """
@@ -25,6 +25,8 @@ function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1)
   end, devnull)
   @async HTTP.Servers.serve(web_server, host, port)
 
+  log("Web server running at $host:$port")
+
   if Genie.config.websocket_server
     @async HTTP.listen(host, ws_port) do req
       if HTTP.WebSockets.is_upgrade(req.message)
@@ -32,6 +34,7 @@ function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1)
           setup_ws_handler(req.message, ws)
         end
       end
+      log("WebSockets server running at $host:$ws_port")
     end
   end
 end
@@ -43,9 +46,9 @@ function setup_http_handler(req, res)
   try
     @fetch handle_request(req, res)
   catch ex
-    Genie.Logger.log(string(ex), :critical)
-    Genie.Logger.log(sprint(io->Base.show_backtrace(io, catch_backtrace() )), :critical)
-    Genie.Logger.log("$(@__FILE__):$(@__LINE__)", :critical)
+    log(string(ex), :critical)
+    log(sprint(io->Base.show_backtrace(io, catch_backtrace() )), :critical)
+    log("$(@__FILE__):$(@__LINE__)", :critical)
 
     message = Genie.Configuration.is_prod() ?
                 "The error has been logged and we'll look into it ASAP." :

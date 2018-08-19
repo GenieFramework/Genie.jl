@@ -1,6 +1,6 @@
 module Tester
 
-using Genie, Genie.Util, Genie.Configuration, Genie.Logger, SearchLight.Migration
+using Genie, Genie.Util, Genie.Configuration, Genie.Loggers
 
 
 """
@@ -23,7 +23,7 @@ function bootstrap_tests(cmd_args::String = "", config::Settings = Genie.config,
   end
 
   Genie.config.app_env = current_env
-  Logger.log("Switched app to >> $(uppercase(Genie.config.app_env)) << env", :debug)
+  log("Switched app to >> $(uppercase(Genie.config.app_env)) << env", :debug)
 
   nothing
 end
@@ -68,13 +68,9 @@ end
 Switches Genie to the test env for the duration of the current execution.
 """
 function set_test_env() :: Nothing
-  # if ! is_test()
-  #   Logger.log("You're attempting to run your test suite outside the TEST environment. This can lead to losing your production or development data, depending on your current/default environment.", :err, showst = false)
-  # end
   if Genie.config.tests_force_test_env
-    # Logger.log("Automatically switching to TEST environment to aNothing data corruption. If you want to force running your test in a different environment, switch the `tests_force_test_env` variable to `false` in your env's config file.", :debug)
     Genie.config.app_env = TEST
-    Logger.log("Switched app to >> $(uppercase(App.config.app_env)) << env", :debug)
+    log("Switched app to >> $(uppercase(App.config.app_env)) << env", :debug)
 
     ! is_test() && error("Could not switch env")
   end
