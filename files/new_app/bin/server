@@ -1,2 +1,2 @@
 #!/bin/sh
-julia --color=yes --depwarn=no -q -L genie.jl -- s "$@"
+julia --color=yes --depwarn=no -q -i -- genie.jl s "$@"
