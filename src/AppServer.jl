@@ -44,7 +44,12 @@ end
 """
 function setup_http_handler(req, res)
   try
-    @fetch handle_request(req, res)
+    response = @fetch handle_request(req, res)
+    if response.status >= 500 && response.status < 600
+      error(response)
+    end
+
+    response
   catch ex
     log(string(ex), :critical)
     log(sprint(io->Base.show_backtrace(io, catch_backtrace() )), :critical)

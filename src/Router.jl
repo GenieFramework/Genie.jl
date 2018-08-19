@@ -461,15 +461,15 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
 
               result
             catch ex
-              log("Failed invoking controller", :err)
-              log(string(ex), :err)
-              log("$(@__FILE__):$(@__LINE__)", :err)
+              log("Failed invoking controller", :warn)
+              log(string(ex), :warn)
+              log("$(@__FILE__):$(@__LINE__)", :warn)
 
               (isdefined(controller, RESCUE_HOOK) && return to_response(getfield(controller, RESCUE_HOOK)(ex))) || rethrow(ex)
             end
   end
 
-  Genie.config.log_router && log("Router: No route matched - defaulting to 404", :err)
+  Genie.config.log_router && log("Router: No route matched - defaulting to 404", :warn)
 
   # serve_error_file(404, "Not found", params.collection)
   error_404(req.target)

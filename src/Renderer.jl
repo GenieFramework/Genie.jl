@@ -1,7 +1,7 @@
 module Renderer
 
 export respond, json, redirect_to, html, flax, include_asset, has_requested, css_asset, js_asset
-export respond_with_json, respond_with_html, respond_with
+export respond_with_json, respond_with_html, respond_with, html!, json!, http_error, error!
 
 using Nullables, JSON, HTTP
 using Genie, Genie.Util, Genie.Configuration, Genie.Loggers, Genie.Macros
@@ -69,6 +69,7 @@ end
 function respond_with_html(view::String, layout::String; vars...) :: HTTP.Response
   html(view, layout; vars...) |> respond
 end
+const html! = respond_with_html
 
 
 function flax(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE; vars...) :: Dict{Symbol,String}
@@ -86,6 +87,7 @@ function json(resource::Union{Symbol,String}, action::Union{Symbol,String}; vars
 end
 
 
+
 """
     respond_with_json(resource::Symbol, action::Symbol, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
 
@@ -94,6 +96,7 @@ Invokes the JSON renderer of the underlying configured templating library and wr
 function respond_with_json(resource::Union{Symbol,String}, action::Union{Symbol,String}; vars...) :: Response
   json(resource, action; vars...) |> respond
 end
+const json! = respond_with_json
 
 
 """
@@ -179,9 +182,10 @@ end
 
 Constructs an error `Response`.
 """
-function http_error(status_code; id = "resource_not_found", code = "404-0001", title = "Not found", detail = "The requested resource was not found")
-  respond(detail, status_code, Dict{AbstractString,AbstractString}())
+function http_error(status_code; id = "", code = "", title = "", msg = "")
+  respond(msg, status_code, Dict{AbstractString,AbstractString}())
 end
+const error! = http_error
 
 
 """

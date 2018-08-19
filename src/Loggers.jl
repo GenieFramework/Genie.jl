@@ -27,8 +27,8 @@ function log(message::Union{String,Symbol,Number,Exception}, level::Union{String
   message = string(message)
   level = string(level)
 
-  if level == "err"
-    level = "error"
+  if level == "err" || level == "critical"
+    level = "warn"
   elseif level == "debug"
     level = "info"
   end
