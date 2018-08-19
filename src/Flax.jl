@@ -211,7 +211,7 @@ function html(resource::Union{Symbol,String}, action::Union{Symbol,String}, layo
     task_local_storage(:__vars, Dict{Symbol,Any}(vars))
     task_local_storage(:__yield, include_template(joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action))))
 
-    Dict{Symbol,AbstractString}(:html => include_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false) |> string |> doc)
+    Dict{Symbol,String}(:html => include_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false) |> string |> doc)
   catch ex
     log(string(ex), :err)
     log("$(@__FILE__):$(@__LINE__)", :err)
@@ -224,7 +224,7 @@ function html(view::String, layout::String = "<% @yield %>"; vars...) :: Dict{Sy
     task_local_storage(:__vars, Dict{Symbol,Any}(vars))
     task_local_storage(:__yield, Core.eval(@__MODULE__, Meta.parse(parse_string(view))))
 
-    Dict{Symbol,AbstractString}(:html => Core.eval(@__MODULE__, Meta.parse(parse_string(layout, partial = false))) |> string |> doc)
+    Dict{Symbol,String}(:html => Core.eval(@__MODULE__, Meta.parse(parse_string(layout, partial = false))) |> string |> doc)
   catch ex
     log(string(ex), :err)
     log("$(@__FILE__):$(@__LINE__)", :err)
@@ -257,7 +257,7 @@ function flax(resource::Union{Symbol,String}, action::Union{Symbol,String}, layo
     end
 
     return  if isa(julia_layout_template_func, Function)
-              Dict{Symbol,AbstractString}(:html => julia_layout_template_func() |> string |> doc)
+              Dict{Symbol,String}(:html => julia_layout_template_func() |> string |> doc)
             else
               log(err_msg, :err)
               log("$(@__FILE__):$(@__LINE__)")
@@ -282,7 +282,7 @@ function json(resource::Union{Symbol,String}, action::Union{Symbol,String}; vars
   try
     task_local_storage(:__vars, Dict{Symbol,Any}(vars))
 
-    return Dict{Symbol,AbstractString}(:json => (joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action) * JSON_FILE_EXT) |> include) |> JSON.json)
+    return Dict{Symbol,String}(:json => (joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action) * JSON_FILE_EXT) |> include) |> JSON.json)
   catch ex
     log("Error generating JSON view", :err)
     log(string(ex), :err)

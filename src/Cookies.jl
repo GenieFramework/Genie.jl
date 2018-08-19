@@ -43,7 +43,7 @@ end
 
 """
     set!(res::Response, key::Union{String,Symbol}, value::Any, attributes::Dict) :: Dict{String,HttpCommon.Cookie}
-    set!(res::Response, key::Union{AbstractString,Symbol}, value::Any) :: Dict{String,HttpCommon.Cookie}
+    set!(res::Response, key::Union{String,Symbol}, value::Any) :: Dict{String,HttpCommon.Cookie}
 
 Sets `value` under the `key` label on the `Cookie`.
 """
@@ -56,7 +56,7 @@ function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attribu
 
   HTTP.Cookies.readsetcookies("", "")
 end
-function set!(res::HTTP.Response, key::Union{AbstractString,Symbol}, value::Any) :: Dict{String,HttpCommon.Cookie}
+function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any) :: Dict{String,HttpCommon.Cookie}
   set!(res, key, value, Dict())
 end
 

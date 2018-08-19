@@ -50,7 +50,7 @@ end
 
 
 """
-    truncate_logged_output(output::AbstractString) :: String
+    truncate_logged_output(output::String) :: String
 
 Truncates (shortens) output based on `output_length` settings and appends "..." -- to be used for limiting the output length when logging.
 

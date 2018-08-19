@@ -40,7 +40,7 @@ function respond_with(response_type::Symbol, err::T) where {T<:Exception}
   if lowercase(string(response_type)) == "html"
     Genie.Router.error_404(err.msg)
   elseif lowercase(string(response_type)) == "json"
-    respond(Dict(:json => JSON.json(err)), 404, Dict{AbstractString,AbstractString}("Content-Type" => "application/json"))
+    respond(Dict(:json => JSON.json(err)), 404, Dict{String,String}("Content-Type" => "application/json"))
   end
 end
 
@@ -100,15 +100,15 @@ const json! = respond_with_json
 
 
 """
-    redirect_to(location::String, code::Int = 302, headers = Dict{AbstractString,AbstractString}()) :: Response
+    redirect_to(location::String, code::Int = 302, headers = Dict{String,String}()) :: Response
 
 Sets redirect headers and prepares the `Response`.
 """
-function redirect_to(location::String, code = 302, headers = Dict{AbstractString,AbstractString}()) :: HTTP.Response
+function redirect_to(location::String, code = 302, headers = Dict{String,String}()) :: HTTP.Response
   headers["Location"] = location
-  respond(Dict{Symbol,AbstractString}(:plain => "Redirecting you to $location"), code, headers)
+  respond(Dict{Symbol,String}(:plain => "Redirecting you to $location"), code, headers)
 end
-function redirect_to(named_route::Symbol, code = 302, headers = Dict{AbstractString,AbstractString}()) :: HTTP.Response
+function redirect_to(named_route::Symbol, code = 302, headers = Dict{String,String}()) :: HTTP.Response
   redirect_to(Genie.Router.link_to(named_route), code, headers)
 end
 
@@ -124,11 +124,11 @@ end
 
 
 """
-    respond{T}(body::Dict{Symbol,T}, code::Int = 200, headers = Dict{AbstractString,AbstractString}()) :: Response
+    respond{T}(body::Dict{Symbol,T}, code::Int = 200, headers = Dict{String,String}()) :: Response
 
 Constructs a `Response` corresponding to the content-type of the request.
 """
-function respond(body::Dict{Symbol,T}, code::Int = 200, headers = Dict{AbstractString,AbstractString}())::HTTP.Response where {T}
+function respond(body::Dict{Symbol,T}, code::Int = 200, headers = Dict{String,String}())::HTTP.Response where {T}
   sbody::String =   if haskey(body, :json)
                       headers["Content-Type"] = CONTENT_TYPES[:json]
                       body[:json]
@@ -183,7 +183,7 @@ end
 Constructs an error `Response`.
 """
 function http_error(status_code; id = "", code = "", title = "", msg = "")
-  respond(msg, status_code, Dict{AbstractString,AbstractString}())
+  respond(msg, status_code, Dict{String,String}())
 end
 const error! = http_error
 

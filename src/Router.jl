@@ -965,7 +965,7 @@ file_extension(f) :: String = ormatch(match(r"(?<=\.)[^\.\\/]*$", f), "")
 
 
 """
-    file_headers(f) :: Dict{AbstractString,AbstractString}
+    file_headers(f) :: Dict{String,String}
 
 Returns the file headers of `f`.
 """
