@@ -63,9 +63,9 @@ version = "1.0.0"
 
 [[DataFrames]]
 deps = ["CategoricalArrays", "CodecZlib", "Compat", "DataStreams", "Dates", "InteractiveUtils", "LinearAlgebra", "Missings", "Pkg", "Printf", "Random", "Reexport", "SortingAlgorithms", "Statistics", "StatsBase", "Test", "TranscodingStreams", "Unicode", "WeakRefStrings"]
-git-tree-sha1 = "fff8b03ab91c5c0d6a26e8f9c666bdd439a092c9"
+git-tree-sha1 = "31cca86a48add8d5cdd9457c4f75ee5577ef3488"
 uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-version = "0.13.0"
+version = "0.13.1"
 
 [[DataStreams]]
 deps = ["Dates", "Missings", "Test", "WeakRefStrings"]
@@ -84,12 +84,6 @@ deps = ["Dates", "InteractiveUtils", "LinearAlgebra", "Random", "Test"]
 git-tree-sha1 = "4fedccda7e5111354c7dcc832c7da83ff7258765"
 uuid = "e7dc6d0d-1eca-5fa6-8ad6-5aecde8b7ea5"
 version = "0.4.5"
-
-[[DateParser]]
-deps = ["TimeZones"]
-git-tree-sha1 = "ba05c12c1fa2496f78760a62da0d67d29035d9e2"
-uuid = "c513aa4d-7626-5656-a882-4604be010eff"
-version = "0.1.1"
 
 [[Dates]]
 deps = ["Printf"]
@@ -217,10 +211,10 @@ uuid = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
 version = "0.3.1"
 
 [[LibExpat]]
-deps = ["Compat"]
-git-tree-sha1 = "8ba2ca1635ec1755bcf1432c9a2aa6c91a3fb4fd"
+deps = ["Compat", "Pkg"]
+git-tree-sha1 = "fde352ec13479e2f90e57939da2440fb78c5e388"
 uuid = "522f3ed2-3f36-55e3-b6df-e94fee9b0c07"
-version = "0.4.2"
+version = "0.5.0"
 
 [[LibGit2]]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
@@ -246,12 +240,6 @@ uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
-
-[[Lumberjack]]
-deps = ["Compat", "JSON", "Mocking", "StackTraces"]
-git-tree-sha1 = "f1a2279ff2d20133958feab65ca953e75a207caf"
-uuid = "ff7a09a4-2bbe-5ce1-96cb-a4b0cacc22b1"
-version = "2.1.1"
 
 [[Markdown]]
 deps = ["Base64"]
@@ -361,9 +349,9 @@ version = "0.5.2"
 
 [[Revise]]
 deps = ["Distributed", "FileWatching", "InteractiveUtils", "LibGit2", "OrderedCollections", "Pkg", "REPL", "Random", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "0a98de1780c326498d62a635ebf72654de2c4b24"
+git-tree-sha1 = "6aa02109d5ec63e6105e24b6b78f8f2cceea5518"
 uuid = "295af30f-e4ad-537b-8983-00126c2a3abe"
-version = "0.6.9"
+version = "0.7.1"
 
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
@@ -375,8 +363,8 @@ uuid = "0aa819cd-b072-5ff4-a722-6bc24af294d9"
 version = "0.6.0"
 
 [[SearchLight]]
-deps = ["Crayons", "DataFrames", "DataStreams", "DataStructures", "DateParser", "Dates", "Distributed", "IterableTables", "JSON", "LibPQ", "Lumberjack", "MbedTLS", "Millboard", "MySQL", "NamedTuples", "Nullables", "OhMyREPL", "Reexport", "Revise", "SHA", "SQLite", "Unicode", "YAML"]
-git-tree-sha1 = "8357cb99b317d149c57b0953967194378e67dfe5"
+deps = ["Codecs", "Crayons", "DataFrames", "DataStreams", "DataStructures", "Dates", "Distributed", "IterableTables", "JSON", "LibPQ", "MbedTLS", "Memento", "Millboard", "MySQL", "NamedTuples", "Nullables", "OhMyREPL", "Reexport", "Revise", "SHA", "SQLite", "Unicode", "YAML"]
+git-tree-sha1 = "0ab988a03bbe0fdce1242feba3b03ae5de5a1bed"
 repo-rev = "master"
 repo-url = "https://github.com/essenciary/SearchLight.jl"
 uuid = "340e8cb6-72eb-11e8-37ce-c97ebeb32050"
@@ -407,11 +395,6 @@ deps = ["BinDeps", "BinaryProvider", "Compat", "Libdl"]
 git-tree-sha1 = "d12f8917be3782f4b800ba16003b8d0d4858c2e5"
 uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
 version = "0.7.0"
-
-[[StackTraces]]
-git-tree-sha1 = "6d2e45507b6480790740c54203336bc668bb1f60"
-uuid = "670d9266-7b14-5e98-a133-3b8c27ea9ed4"
-version = "0.1.1"
 
 [[Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
@@ -484,9 +467,9 @@ uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [[WeakRefStrings]]
 deps = ["Missings", "Random", "Test"]
-git-tree-sha1 = "1c28233e41ef8351c86ef42ddd50604b48238ed3"
+git-tree-sha1 = "d4631352d65840254d33ab703e2de3d9768cdb77"
 uuid = "ea10d353-3f73-51f8-a26c-33c1cb351aa5"
-version = "0.5.1"
+version = "0.5.2"
 
 [[WebSockets]]
 deps = ["Base64", "Dates", "Distributed", "HTTP", "MbedTLS", "Pkg", "Random", "Sockets", "Test"]
