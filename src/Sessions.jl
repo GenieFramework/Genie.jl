@@ -25,6 +25,18 @@ const SessionAdapter = Core.eval(@__MODULE__, parse(session_adapter_name))
 Generates a unique session id.
 """
 function id() :: String
+  if ! isdefined(Genie, :SECRET_TOKEN)
+    log("Session error", :warn)
+    log("$(@__FILE__):$(@__LINE__)", :warn)
+
+    if ! Genie.Configuration.is_prod()
+      log("Generating temporary session id", :warn)
+      Core.eval(Genie, :(const SECRET_TOKEN = $(Genie.REPL.secret_token())))
+    else
+      error("Can't compute session id - please make sure SECRET_TOKEN is defined in config/secrets.jl")
+    end
+  end
+
   try
     Genie.SECRET_TOKEN * ":" * bytes2hex(sha1(string(Dates.now()))) * ":" * string(rand()) * ":" * string(hash(Genie)) |> sha256 |> bytes2hex
   catch ex

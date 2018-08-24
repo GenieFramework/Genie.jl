@@ -54,7 +54,11 @@ Generates all the files associated with a new resource and persists them to the 
 function new_resource(cmd_args::Dict{String,Any}) :: Nothing
   resource_name = uppercasefirst(cmd_args["resource:new"])
 
-  SearchLight.Generator.new_resource(resource_name)
+  try
+    SearchLight.Generator.new_resource(resource_name)
+  catch ex
+    log("Skipping SearchLight", :warn)
+  end
 
   if Genie.Inflector.is_singular(resource_name)
     resource_name = Genie.Inflector.to_plural(resource_name) |> Base.get
@@ -138,7 +142,11 @@ function write_resource_file(resource_path::String, file_name::String, resource_
     log(ex, :warn)
   end
 
-  Genie.App.load_resources()
+  try
+    Genie.App.load_resources()
+  catch ex
+    log("Not in app, skipping autoload", :warn)
+  end
 
   true
 end

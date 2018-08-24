@@ -40,6 +40,7 @@ const MD_BUILD_NAME = "MarkdownViews"
 
 
 task_local_storage(:__vars, Dict{Symbol,Any}())
+task_local_storage(:__yield, "")
 
 
 """
@@ -144,14 +145,14 @@ function _include_template(path::String; partial = true, func_name = "") :: Stri
     _path, _extension = relpath(path), "." * split(path, ".")[end]
   else
     for file_extension in SUPPORTED_HTML_OUTPUT_FILE_FORMATS
-      if isfile(relpath(path * file_extension))
-        _path, _extension = relpath(path * file_extension), file_extension
+      if isfile(abspath(path * file_extension))
+        _path, _extension = abspath(path * file_extension), file_extension
         break
       end
     end
   end
 
-  _path == "" ? error("File not found $path in $(@__FILE__):$(@__LINE__)") : path = _path
+  _path == "" ? error("File not found $(abspath(path)) in $(@__FILE__):$(@__LINE__)") : path = _path
 
   if _extension == MARKDOWN_FILE_EXT # .md
     build_path = joinpath(Genie.BUILD_PATH, MD_BUILD_NAME, md_build_name(path))
@@ -617,7 +618,16 @@ macro vars(key, value)
   :(task_local_storage(:__vars)[$key] = $value)
 end
 macro yield()
-  :(task_local_storage(:__yield))
+  quote
+    try
+      task_local_storage(:__yield)
+    catch
+      task_local_storage(:__yield, "")
+    end
+  end
+end
+macro yield(value)
+  :(task_local_storage(:__yield, $value))
 end
 
 function el(; vars...)
@@ -631,11 +641,8 @@ end
 Sets up the build folder and the build module file for generating the compiled views.
 """
 function prepare_build(subfolder) :: Bool
-  # rm(joinpath(Genie.BUILD_PATH, subfolder), force = true, recursive = true)
-
   build_path = joinpath(Genie.BUILD_PATH, subfolder)
   isdir(build_path) || mkpath(build_path)
-  # push!(LOAD_PATH, build_path)
 
   true
 end

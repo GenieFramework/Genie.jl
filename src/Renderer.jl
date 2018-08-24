@@ -72,6 +72,14 @@ end
 const html! = respond_with_html
 
 
+function html!(output::String) :: HTTP.Response
+  respond(output)
+end
+function html!(output::HTML{String}) :: HTTP.Response
+  respond(output.content)
+end
+
+
 function flax(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE; vars...) :: Dict{Symbol,String}
   HTMLTemplateEngine.flax(resource, action, layout; vars...)
 end

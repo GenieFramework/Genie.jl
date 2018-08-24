@@ -118,7 +118,11 @@ Creates all the files associated with a new resource.
 """
 function new_resource(resource_name::String) :: Nothing
   Genie.Generator.new_resource(Dict{String,Any}("resource:new" => resource_name))
-  Genie.App.load_resources()
+  try
+    Genie.App.load_resources()
+  catch ex
+    log("Not in app, skipping autoload", :warn)
+  end
 
   nothing
 end
@@ -180,6 +184,25 @@ function reload_app() :: Nothing
   App.load_initializers()
 
   log("The app was reloaded.", :info)
+
+  nothing
+end
+
+
+"""
+    load_resources(dir = Genie.RESOURCES_PATH) :: Nothing
+
+Recursively adds subfolders of resources to LOAD_PATH.
+"""
+function load_resources(root_dir) :: Nothing
+  push!(LOAD_PATH, root_dir)
+
+  for (root, dirs, files) in walkdir(root_dir)
+    for dir in dirs
+      p = joinpath(root, dir)
+      in(p, LOAD_PATH) || push!(LOAD_PATH, joinpath(root, dir))
+    end
+  end
 
   nothing
 end

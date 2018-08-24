@@ -17,11 +17,11 @@ function write(session::Sessions.Session) :: Sessions.Session
       serialize(io, session)
     end
   catch ex
-    log("Error when serializing session $(escape_string(session)) in $(@__FILE__):$(@__LINE__)", :err)
+    log("Error when serializing session in $(@__FILE__):$(@__LINE__)", :err)
     log(string(ex), :err)
     log("$(@__FILE__):$(@__LINE__)", :err)
 
-    rethrow(ex)
+    Genie.Configuration.is_prod() && rethrow(ex)
   end
 
   session

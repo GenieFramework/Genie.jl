@@ -188,7 +188,7 @@ function secret_token() :: String
           You can generate a new secrets.jl file with a random SECRET_TOKEN using Genie.REPL.write_secrets_file()
           or use the included /app/config/secrets.jl.example file as a model.")
     st = Genie.REPL.secret_token()
-    Core.eval(App, Meta.parse("""const SECRET_TOKEN = "$st" """))
+    Core.eval(Genie, Meta.parse("""const SECRET_TOKEN = "$st" """))
 
     st
   end
