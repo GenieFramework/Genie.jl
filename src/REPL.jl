@@ -21,7 +21,7 @@ end
 
 Creates a new Genie app at the indicated path.
 """
-function new_app(path = "."; db_support = false, skip_dependencies = true, autostart = falsem) :: Nothing
+function new_app(path = "."; db_support = false, skip_dependencies = true, autostart = false) :: Nothing
   cp(joinpath(@__DIR__, "../", "files", "new_app"), abspath(path))
 
   chmod(joinpath(path, "bin", "server"), 0o700)
