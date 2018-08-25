@@ -88,7 +88,7 @@ function route_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = ip"0.0.
 
   ! in(response_type(params), sessionless) && Genie.config.session_auto_start && Sessions.persist(session)
 
-  printstyled("[$(Dates.now())] -- $(URI(to_uri(req.target))) -- Done\n\n", :green)
+  log("[$(Dates.now())] -- $(URI(to_uri(req.target))) -- Done\n\n")
 
   controller_response
 end

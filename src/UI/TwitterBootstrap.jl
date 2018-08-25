@@ -4,8 +4,16 @@ module Layout
 
 using Genie, Genie.Flax
 
-function merge_attributes(elem_attrs::Vector{Pair{Symbol,String}}, attrs::Pair{Symbol,String}...) :: Dict{Symbol,String}
+function merge_attributes(elem_attrs::Vector{Pair{Symbol,Any}}, attrs::Pair{Symbol,Any}...) :: Dict{Symbol,Any}
   attributes = Dict(attrs...)
+
+  for (k,v) in attributes
+    if startswith(string(k), "data_")
+      attributes[Symbol(replace(string(k), r"^data_" => "data-"))] = get!(attributes, k, "")
+      delete!(attributes, k)
+    end
+  end
+
   for (k,v) in elem_attrs
     attributes[k] = get!(attributes, k, "") * " $v" |> strip
   end
@@ -14,7 +22,7 @@ function merge_attributes(elem_attrs::Vector{Pair{Symbol,String}}, attrs::Pair{S
 end
 
 
-function breakdowns_to_css_classes(elem::Union{Symbol,String}, breakdowns::Vector{Pair{Symbol,Union{Int,Symbol}}})
+function breakdowns_to_css_classes(elem::Union{Symbol,String}, breakdowns::Vector{Pair{Symbol,Union{Int,Symbol,String}}})
   classes = String["$elem"]
 
   for (k,v) in breakdowns
@@ -29,50 +37,52 @@ function breakdowns_to_css_classes(elem::Union{Symbol,String}, breakdowns::Vecto
 end
 
 
-function container(children::Function = ()->"", attrs::Pair{Symbol,String}...; fluid = false)
-  Flax.div(children, merge_attributes([:class => fluid ? "container-fluid" : "container"], attrs...)...)
-end
-function container(attrs::Pair{Symbol,String}...; fluid = false)
-  container(()->"", attrs..., fluid = fluid)
+function container(children::Union{Function,String,Vector{String}} = ""; fluid::Bool = false, attrs...)
+  Flax.div(children; merge_attributes(Pair{Symbol,Any}[:class => fluid ? "container-fluid" : "container"], Pair{Symbol,Any}[attrs...]...)...)
 end
 
 
-function row(children::Function = ()->"", attrs::Pair{Symbol,String}...; alignitems::Symbol = Symbol(""), justifycontent::Symbol = Symbol(""), nogutters::Bool = false)
+function row(children::Union{Function,String,Vector{String}} = ""; alignitems::Union{String,Symbol} = "", justifycontent::Union{String,Symbol} = "", nogutters::Bool = false, attrs...)
   classes = String["row"]
-  if alignitems != Symbol("")
-    allowed_values = [:start, :center, :end]
-    in(alignitems, allowed_values) || log("alignitems should be one of $(string(allowed_values))", :warn)
+  alignitems = string(alignitems)
+
+  if alignitems != ""
+    allowed_values = ["start", "center", "end"]
+    in(alignitems, allowed_values) || log("alignitems should be one of $allowed_values", :warn)
     push!(classes, "align-items-$alignitems")
   end
-  if justifycontent != Symbol("")
-    allowed_values = [:start, :center, :end, :around, :between]
-    in(justifycontent, allowed_values) || log("alignitems should be one of $(string(allowed_values))", :warn)
+
+  if justifycontent != ""
+    allowed_values = ["start", "center", "end", "around", "between"]
+    in(justifycontent, allowed_values) || log("alignitems should be one of $allowed_values", :warn)
     push!(classes, "align-items-$justifycontent")
   end
+
   nogutters && push!(classes, "no-gutters")
-  Flax.div(children, merge_attributes([:class => join(unique!(classes), " ")], attrs...)...)
-end
-function row(attrs::Pair{Symbol,String}...; alignitems::Symbol = Symbol(""), justifycontent::Symbol = Symbol(""), nogutters::Bool = false)
-  row(()->"", attrs..., alignitems = alignitems, justifycontent = justifycontent, nogutters = nogutters)
+
+  Flax.div(children; merge_attributes(Pair{Symbol,Any}[:class => join(unique!(classes), " ")], Pair{Symbol,Any}[attrs...]...)...)
 end
 
 
-function col(children::Function = ()->"", attrs::Pair{Symbol,String}...; breakdowns::Vector{Pair{Symbol,Union{Int,Symbol}}} = Pair{Symbol,Union{Int,Symbol}}[], alignself::Symbol = Symbol(""))
+function col(children::Union{Function,String,Vector{String}} = "";
+              breakdowns::Vector{Pair{Symbol,Union{Int,Symbol,String}}} = Pair{Symbol,Union{Int,Symbol,String}}[],
+              alignself::Union{String,Symbol} = "", attrs...)
   classes = String["col"]
-  if alignself != Symbol("")
-    allowed_values = [:start, :center, :end]
-    in(alignself, allowed_values) || log("alignself should be one of $(string(allowed_values))", :warn)
+
+  if alignself != ""
+    allowed_values = ["start", "center", "end"]
+    in(alignself, allowed_values) || log("alignself should be one of $allowed_values)", :warn)
     push!(classes, "align-self-$alignself")
   end
+
   push!(classes, breakdowns_to_css_classes("col", breakdowns))
 
-  Flax.div(children, merge_attributes([:class => join(unique!(classes), " ")], attrs...)...)
+  Flax.div(children; merge_attributes(Pair{Symbol,Any}[:class => join(unique!(classes), " ")], Pair{Symbol,Any}[attrs...]...)...)
 end
-function col(attrs::Pair{Symbol,String}...; breakdowns::Vector{Pair{Symbol,Union{Int,Symbol}}} = Pair{Symbol,Union{Int,Symbol}}[], alignself::Symbol = Symbol(""))
-  col(()->"", attrs..., breakdowns = breakdowns, alignself = alignself)
-end
-function colbreak(attrs::Pair{Symbol,String}...)
-  Flax.div(merge_attributes([:class => "w-100"], attrs...)...)
+
+
+function colbreak(attrs...)
+  Flax.div(; merge_attributes(Pair{Symbol,Any}[:class => "w-100"], Pair{Symbol,Any}[attrs...]...)...)
 end
 
 

@@ -65,9 +65,10 @@ end
 
 Parses HTML attributes.
 """
-function attributes(attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: Vector{String}
+function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()) :: Vector{String}
   a = String[]
   for (k,v) in attrs
+    startswith(string(k), "data_") && (k = replace(string(k), r"^data_" => "data-"))
     push!(a, "$(k)=\"$(v)\"")
   end
 
@@ -85,13 +86,20 @@ end
 
 Generates a regular HTML element in the form <...></...>
 """
-function normal_element(f::Function, elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: HTMLString
+function normal_element(f::Function, elem::String, attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()) :: HTMLString
   a = attributes(attrs)
   elem = normalize_element(elem)
 
   "<$(elem * (! isempty(a) ? (" " * join(a, " ")) : ""))>$(prepare_template(f()))</$(elem)>"
 end
-function normal_element(elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: HTMLString
+function normal_element(children::Union{String,Vector{String}}, elem::String, attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()) :: HTMLString
+  children = join(children)
+  a = attributes(attrs)
+  elem = normalize_element(elem)
+
+  "<$(elem * (! isempty(a) ? (" " * join(a, " ")) : ""))>$(prepare_template(children))</$(elem)>"
+end
+function normal_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()) :: HTMLString
   a = attributes(attrs)
   elem = normalize_element(elem)
 
@@ -104,7 +112,7 @@ end
 
 Generates a void HTML element in the form <...>
 """
-function void_element(elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: HTMLString
+function void_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()) :: HTMLString
   a = attributes(attrs)
   elem = normalize_element(elem)
 
@@ -207,7 +215,7 @@ end
 
 Renders a HTML view corresponding to a resource and a controller action.
 """
-function html(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String}; vars...) :: Dict{Symbol,String}
+function html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
   try
     task_local_storage(:__vars, Dict{Symbol,Any}(vars))
     task_local_storage(:__yield, include_template(joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action))))
@@ -223,9 +231,18 @@ end
 function html(view::String, layout::String = "<% @yield %>"; vars...) :: Dict{Symbol,String}
   try
     task_local_storage(:__vars, Dict{Symbol,Any}(vars))
-    task_local_storage(:__yield, Core.eval(@__MODULE__, Meta.parse(parse_string(view))))
 
-    Dict{Symbol,String}(:html => Core.eval(@__MODULE__, Meta.parse(parse_string(layout, partial = false))) |> string |> doc)
+    if ispath(view)
+      task_local_storage(:__yield, include_template(view))
+    else
+      task_local_storage(:__yield, Core.eval(@__MODULE__, Meta.parse(parse_string(view))))
+    end
+
+    if ispath(layout)
+      Dict{Symbol,String}(:html => include_template(layout, partial = false) |> string |> doc)
+    else
+      Dict{Symbol,String}(:html => Core.eval(@__MODULE__, Meta.parse(parse_string(layout, partial = false))) |> string |> doc)
+    end
   catch ex
     log(string(ex), :err)
     log("$(@__FILE__):$(@__LINE__)", :err)
@@ -398,7 +415,6 @@ function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", dept
       end
 
     else
-      # output *= (repeat("\t", depth) * (invalid_tag ? "" : "Flax.$(tag_name)("))
       output *= repeat("\t", depth) * ( ! invalid_tag ? "Flax.$(tag_name)(" : "Flax.skip_element(" )
 
       attributes = String[]
@@ -413,21 +429,20 @@ function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", dept
 
         if in(Symbol(lowercase(k)), BOOL_ATTRIBUTES)
           if x == true || x == "true" || x == :true || x == ":true" || x == ""
-            push!(attributes, ":$(Symbol(k)) => \"$k\"") # boolean attributes can have the same value as the attribute -- or be empty
+            push!(attributes, "$k = \"$k\"") # boolean attributes can have the same value as the attribute -- or be empty
           end
         else
-          push!(attributes, """Symbol("$k") => "$v" """)
+          startswith(string(k), "data-") && (k = replace(string(k), r"^data-" => "data_"))
+          push!(attributes, """$k = "$v" """)
         end
       end
 
-      # output *= invalid_tag ? "" : join(attributes, ", ") * ") "
       output *= join(attributes, ", ") * ") "
 
       inner = ""
       if ! isempty(children(elem))
         children_count = size(children(elem))[1]
 
-        # output *= invalid_tag ? "" : "do;[\n"
         output *= "do;[\n"
 
         idx = 0
@@ -443,7 +458,6 @@ function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", dept
         end
         isempty(inner) || (output *= inner * "\n" * repeat("\t", depth))
 
-        # output *= invalid_tag ? "" : "]end\n"
         output *= "]end\n"
       end
     end
@@ -523,14 +537,13 @@ end
 """
 function register_normal_element(elem::Symbol)
   Core.eval(@__MODULE__, """
-    function $elem(f::Function = ()->"", attrs::Pair{Symbol,String}...) :: HTMLString
-      \"\"\"\$(normal_element(f, "$(string(elem))", Pair{Symbol,String}[attrs...]))\"\"\"
+    function $elem(f::Function; attrs...) :: HTMLString
+      \"\"\"\$(normal_element(f, "$(string(elem))", Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
-
   Core.eval(@__MODULE__, """
-    function $elem(attrs::Pair{Symbol,String}...) :: HTMLString
-      \"\"\"\$(normal_element("$(string(elem))", Pair{Symbol,String}[attrs...]))\"\"\"
+    function $elem(children::Union{String,Vector{String}} = ""; attrs...) :: HTMLString
+      \"\"\"\$(normal_element(children, "$(string(elem))", Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
 end
@@ -540,8 +553,8 @@ end
 """
 function register_void_element(elem::Symbol)
   Core.eval(@__MODULE__, """
-    function $elem(attrs::Pair{Symbol,String}...) :: HTMLString
-      \"\"\"\$(void_element("$(string(elem))", Pair{Symbol,String}[attrs...]))\"\"\"
+    function $elem(; attrs...) :: HTMLString
+      \"\"\"\$(void_element("$(string(elem))", Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
 end
