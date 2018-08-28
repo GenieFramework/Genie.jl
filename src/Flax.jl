@@ -11,10 +11,11 @@ export HTMLString, JSONString
 export doctype, var_dump, include_template, @vars, @yield, el, foreachvar, @foreach, foreachstr
 
 import Base.string
+import Base.show
 
 const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :article, :aside, :footer,
                           :header, :h1, :h2, :h3, :h4, :h5, :h6, :hgroup, :nav, :section,
-                          :dd, :div, :dl, :dt, :figcaption, :figure, :li, :main, :ol, :p, :pre, :ul, :span,
+                          :dd, :div, :d, :dl, :dt, :figcaption, :figure, :li, :main, :ol, :p, :pre, :ul, :span,
                           :a, :abbr, :b, :bdi, :bdo, :cite, :code, :data, :dfn, :em, :i, :kbd, :mark,
                           :q, :rp, :rt, :rtc, :ruby, :s, :samp, :small, :spam, :strong, :sub, :sup, :time,
                           :u, :var, :wrb, :audio, :map, :void, :embed, :object, :canvas, :noscript, :script,
@@ -43,6 +44,18 @@ task_local_storage(:__vars, Dict{Symbol,Any}())
 task_local_storage(:__yield, "")
 
 
+# """
+# """
+# function show(io::IO, m::MIME"text/html", elem::HTMLString)
+#   write(io, m, elem)
+# end
+#
+#
+# function string(elem::HTMLString)
+#   String(elem)
+# end
+
+
 """
     prepare_template(s::String)
     prepare_template{T}(v::Vector{T})
@@ -69,6 +82,8 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
   a = String[]
   for (k,v) in attrs
     startswith(string(k), "data_") && (k = replace(string(k), r"^data_" => "data-"))
+    string(k) == "typ" && (k = "type")
+
     push!(a, "$(k)=\"$(v)\"")
   end
 
@@ -77,6 +92,7 @@ end
 
 
 function normalize_element(elem::String)
+  elem == "d" && (elem = "div")
   replace(string(lowercase(elem)), "_"=>"-")
 end
 
