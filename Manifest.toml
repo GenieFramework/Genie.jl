@@ -21,15 +21,9 @@ version = "0.8.10"
 
 [[BinaryProvider]]
 deps = ["Libdl", "Pkg", "SHA", "Test"]
-git-tree-sha1 = "ffbf89cc49b073cffdb91381b7ee60557a03ec96"
+git-tree-sha1 = "b530fbeb6f41ab5a83fbe3db1fcbe879334bcd2d"
 uuid = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
-version = "0.4.1"
-
-[[BufferedStreams]]
-deps = ["Compat", "Pkg", "Test"]
-git-tree-sha1 = "5d55b9486590fdda5905c275bb21ce1f0754020f"
-uuid = "e1450e63-4bb3-523b-b2a4-4ffa8c0fd77d"
-version = "1.0.0"
+version = "0.4.2"
 
 [[CategoricalArrays]]
 deps = ["Compat", "Future", "JSON", "Missings", "Printf", "Reexport"]
@@ -51,9 +45,9 @@ version = "0.5.0"
 
 [[Compat]]
 deps = ["Base64", "Dates", "DelimitedFiles", "Distributed", "InteractiveUtils", "LibGit2", "Libdl", "LinearAlgebra", "Markdown", "Mmap", "Pkg", "Printf", "REPL", "Random", "Serialization", "SharedArrays", "Sockets", "SparseArrays", "Statistics", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "277d3807440d9793421354b6680911fc95d91a84"
+git-tree-sha1 = "ae262fa91da6a74e8937add6b613f58cd56cdad4"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
-version = "1.0.1"
+version = "1.1.0"
 
 [[Crayons]]
 deps = ["Pkg", "Test"]
@@ -75,9 +69,9 @@ version = "0.4.0"
 
 [[DataStructures]]
 deps = ["InteractiveUtils", "REPL", "Random", "Serialization", "Test"]
-git-tree-sha1 = "6e72a9098f5774601c8c8d6a4511a68270594910"
+git-tree-sha1 = "2afbbd0294306b0b74a753c196be50b35edb625c"
 uuid = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-version = "0.11.0"
+version = "0.11.1"
 
 [[DataValues]]
 deps = ["Dates", "InteractiveUtils", "LinearAlgebra", "Random", "Test"]
@@ -140,18 +134,6 @@ git-tree-sha1 = "8a0f75e8b09df01d9f1ba9ad3fbf8b4983595d20"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 version = "0.6.14"
 
-[[HTTPClient]]
-deps = ["Compat", "LibCURL"]
-git-tree-sha1 = "161d5776ae8e585ac0b8c20fb81f17ab755b3671"
-uuid = "0862f596-cf2d-50af-8ef4-f2be67dfa83f"
-version = "0.2.1"
-
-[[Homebrew]]
-deps = ["BinDeps", "InteractiveUtils", "JSON", "Libdl", "Test", "Unicode"]
-git-tree-sha1 = "5582ec74f735cf8d12e562a2e65c47f34063bd51"
-uuid = "d9be37ee-ecc9-5288-90f1-b9ca67657a75"
-version = "0.7.0"
-
 [[HttpCommon]]
 deps = ["Dates", "Nullables", "Pkg", "Test", "URIParser"]
 git-tree-sha1 = "46313284237aa6ca67a6bce6d6fbd323d19cff59"
@@ -193,10 +175,10 @@ uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 version = "0.19.0"
 
 [[LayerDicts]]
-deps = ["Compat"]
-git-tree-sha1 = "d8e6435d3aa9e239bce6cad441278d46f4f13f21"
+deps = ["Compat", "Pkg"]
+git-tree-sha1 = "23900caa7030f922c1883f338f94e91ed713d78b"
 uuid = "6f188dcb-512c-564b-bc01-e0f76e72f166"
-version = "0.1.1"
+version = "0.1.2"
 
 [[LegacyStrings]]
 deps = ["Compat"]
@@ -204,35 +186,17 @@ git-tree-sha1 = "7cfb0bf378fab9ec57b393e3c56a419d6afab876"
 uuid = "1b4a561d-cfcb-5daf-8433-43fcf8b4bea3"
 version = "0.4.0"
 
-[[LibCURL]]
-deps = ["BinaryProvider", "Compat", "Libdl", "Pkg"]
-git-tree-sha1 = "f7c4fd37291207ec6bd4b7b9abfc512d4bb8b88e"
-uuid = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
-version = "0.3.1"
-
-[[LibExpat]]
-deps = ["Compat", "Pkg"]
-git-tree-sha1 = "fde352ec13479e2f90e57939da2440fb78c5e388"
-uuid = "522f3ed2-3f36-55e3-b6df-e94fee9b0c07"
-version = "0.5.0"
-
 [[LibGit2]]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
 
 [[LibPQ]]
-deps = ["BinDeps", "Compat", "DataStreams", "Decimals", "DocStringExtensions", "Homebrew", "IterTools", "LayerDicts", "Libdl", "Memento", "Missings", "OffsetArrays", "TimeZones"]
-git-tree-sha1 = "37a3cac79667e2401f986da46f65e0419e0bf542"
+deps = ["BinaryProvider", "Compat", "DataStreams", "Decimals", "DocStringExtensions", "InteractiveUtils", "IterTools", "LayerDicts", "Libdl", "Memento", "Missings", "OffsetArrays", "Pkg", "TimeZones"]
+git-tree-sha1 = "7f81b0b440b325a50e4cbda3333290efcc282cd6"
 uuid = "194296ae-ab2e-5f79-8cd4-7183a0a5a0d1"
-version = "0.3.0"
+version = "0.4.0"
 
 [[Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
-
-[[Libz]]
-deps = ["BufferedStreams", "Random", "Test"]
-git-tree-sha1 = "d405194ffc0293c3519d4f7251ce51baac9cc871"
-uuid = "2ec943e9-cfe8-584d-b93d-64dcb6d567b7"
-version = "1.0.0"
 
 [[LinearAlgebra]]
 deps = ["Libdl"]
@@ -252,10 +216,10 @@ uuid = "739be429-bea8-5141-9913-cc70e7f3736d"
 version = "0.6.0"
 
 [[Memento]]
-deps = ["Compat", "JSON", "Nullables", "Syslogs"]
-git-tree-sha1 = "fb72f98eb7752f00e32f593c74f2e566ebf7061b"
+deps = ["Compat", "JSON", "Libdl", "Nullables", "Pkg", "Syslogs", "Test", "TimeZones"]
+git-tree-sha1 = "c4ade3575bcc2c180cfa14cf8b3b63eebca51629"
 uuid = "f28f55f0-a522-5efc-85c2-fe41dfb9b2d9"
-version = "0.9.0"
+version = "0.10.0"
 
 [[Millboard]]
 deps = ["Compat"]
@@ -274,9 +238,9 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [[Mocking]]
 deps = ["Compat", "Dates", "Pkg"]
-git-tree-sha1 = "accf54905788bc0ba63fd106302a21e8065c1db3"
+git-tree-sha1 = "4bf69aaf823b119b034e091e16b18311aa191663"
 uuid = "78c3b35d-d492-501b-9361-3d52fe80e533"
-version = "0.5.6"
+version = "0.5.7"
 
 [[MySQL]]
 deps = ["BinaryProvider", "DataStreams", "Dates", "DecFP", "Libdl", "Missings", "Pkg", "Test"]
@@ -290,16 +254,16 @@ uuid = "73a701b4-84e1-5df0-88ff-1968ee2ee8dc"
 version = "4.0.2"
 
 [[Nettle]]
-deps = ["BinDeps", "Compat", "Homebrew", "Libdl", "WinRPM"]
-git-tree-sha1 = "77e89762d1b57b7b7cefd109a5a8d7c10c3ebe2e"
+deps = ["BinDeps", "BinaryProvider", "Libdl", "Pkg", "Test"]
+git-tree-sha1 = "f57e8e907faab4f55f9f164313a633509ac83e2c"
 uuid = "49dea1ee-f6fa-5aa6-9a11-8816cee7d4b9"
-version = "0.3.0"
+version = "0.4.0"
 
 [[Nullables]]
 deps = ["Compat", "Pkg"]
-git-tree-sha1 = "7777136d2169f07b9674a9d8dbd550d99fd250b8"
+git-tree-sha1 = "ae1a63457e14554df2159b0b028f48536125092d"
 uuid = "4d1e1d77-625e-5b40-9113-a560ec7a8ecd"
-version = "0.0.7"
+version = "0.0.8"
 
 [[OffsetArrays]]
 deps = ["DelimitedFiles", "Test"]
@@ -335,6 +299,12 @@ uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 deps = ["Serialization"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
+[[Reactive]]
+deps = ["DataStructures", "Distributed", "Pkg", "Test"]
+git-tree-sha1 = "0d386bcb2648bb2d0445cc1363547b211bb7490b"
+uuid = "a223df75-4e93-5b7c-acf9-bdd599c0f4de"
+version = "0.8.0"
+
 [[Reexport]]
 deps = ["Pkg"]
 git-tree-sha1 = "7b1d07f411bc8ddb7977ec7f377b97b158514fe0"
@@ -349,9 +319,9 @@ version = "0.5.2"
 
 [[Revise]]
 deps = ["Distributed", "FileWatching", "InteractiveUtils", "LibGit2", "OrderedCollections", "Pkg", "REPL", "Random", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "6aa02109d5ec63e6105e24b6b78f8f2cceea5518"
+git-tree-sha1 = "26329918f4338170c0053db711668e6cfc9d9b4a"
 uuid = "295af30f-e4ad-537b-8983-00126c2a3abe"
-version = "0.7.1"
+version = "0.7.4"
 
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
@@ -364,7 +334,7 @@ version = "0.6.0"
 
 [[SearchLight]]
 deps = ["Codecs", "Crayons", "DataFrames", "DataStreams", "DataStructures", "Dates", "Distributed", "IterableTables", "JSON", "LibPQ", "MbedTLS", "Memento", "Millboard", "MySQL", "NamedTuples", "Nullables", "OhMyREPL", "Reexport", "Revise", "SHA", "SQLite", "Unicode", "YAML"]
-git-tree-sha1 = "0ab988a03bbe0fdce1242feba3b03ae5de5a1bed"
+git-tree-sha1 = "a209710986c77fc4adb0d19716541e09a4d60fab"
 repo-rev = "master"
 repo-url = "https://github.com/essenciary/SearchLight.jl"
 uuid = "340e8cb6-72eb-11e8-37ce-c97ebeb32050"
@@ -448,9 +418,9 @@ version = "0.5.2"
 
 [[TranscodingStreams]]
 deps = ["DelimitedFiles", "Pkg", "Random", "Test"]
-git-tree-sha1 = "a27b3a1b9c1120ef67b4647b80c61a16c09b9218"
+git-tree-sha1 = "a34a2d588e2d2825602bf14a24216d5c8b0921ec"
 uuid = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
-version = "0.8.0"
+version = "0.8.1"
 
 [[URIParser]]
 deps = ["Test", "Unicode"]
@@ -477,14 +447,8 @@ git-tree-sha1 = "ba1baf9b1943d3d6e3f1379c04de2760f4f9da78"
 uuid = "104b5d7c-a370-577a-8038-80a2059c5097"
 version = "1.0.0"
 
-[[WinRPM]]
-deps = ["BinDeps", "Compat", "HTTPClient", "LibExpat", "Libdl", "Libz", "SHA", "URIParser"]
-git-tree-sha1 = "023faa2430b4ad3f9cf073c03cf100d80630fb6d"
-uuid = "c17dfb99-b4f7-5aad-8812-456da1ad7187"
-version = "0.4.0"
-
 [[YAML]]
 deps = ["Codecs", "Compat", "Pkg"]
-git-tree-sha1 = "95effabc52004d0cae08b00aee1d25c88a64c2c8"
+git-tree-sha1 = "075f53ae1e9444d3c244faf13a9eaa03b79e78bf"
 uuid = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
-version = "0.3.0"
+version = "0.3.1"

@@ -3,15 +3,17 @@ Compiled templating language for Genie.
 """
 module Flax
 
-using Revise, Gumbo, SHA, Reexport, JSON, DataStructures, Markdown
+using Revise, Gumbo, SHA, Reexport, JSON, DataStructures, Markdown, Reactive
 using Genie, Genie.Loggers, Genie.Configuration
 @reexport using HttpCommon
 
-export HTMLString, JSONString
-export doctype, var_dump, include_template, @vars, @yield, el, foreachvar, @foreach, foreachstr
+export HTMLString, JSONString, JSString, SyncBinding, DataSyncBinding, ComputedSyncBinding, MethodSyncBinding
+export doctype, var_dump, include_template, @vars, @yield, el, foreachvar, @foreach, foreachstr, binding, syncid
 
 import Base.string
 import Base.show
+import Base.==
+import Base.hash
 
 const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :article, :aside, :footer,
                           :header, :h1, :h2, :h3, :h4, :h5, :h6, :hgroup, :nav, :section,
@@ -40,8 +42,7 @@ const BUILD_NAME    = "FlaxViews"
 const MD_BUILD_NAME = "MarkdownViews"
 
 
-const SYNCABLE = Dict{String,Union{Function,String,Number}}()
-const SYNCPREFIX = "p__"
+const DATAPREFIX = "d__"
 const COMPUTEDPREFIX = "c__"
 const METHODPREFIX = "m__"
 
@@ -62,14 +63,64 @@ task_local_storage(:__yield, "")
 # end
 
 
-function syncid(x; computed = true, method = false) :: String
-  "$(method ? METHODPREFIX : (computed ? COMPUTEDPREFIX : SYNCPREFIX))$x"
+mutable struct SyncBinding{T}
+  typ::Symbol # one of :data, :computed, :method
+  sync::Bool
+  key::String
+  data::T
+end
+SyncBinding(data::T; sync = true, typ = :computed, key = syncid(typ, data)) where {T} = SyncBinding(typ, sync, key, data)
+
+DataSyncBinding(data::T; sync = false, key = syncid(:data, data)) where {T} = SyncBinding(extract(data), typ = :data, sync = sync, key = key)
+DataSyncBinding(x::SyncBinding) = DataSyncBinding(x.data, sync = x.sync)
+
+ComputedSyncBinding(data::T; sync = true, key = syncid(:computed, data)) where {T} = SyncBinding(data, typ = :computed, sync = sync, key = key)
+ComputedSyncBinding(x::SyncBinding) = ComputedSyncBinding(x.data, sync = x.sync)
+
+MethodSyncBinding(data::T; sync = true, key = syncid(:method, data)) where {T} = SyncBinding(data, typ = :method, sync = sync, key = key)
+MethodSyncBinding(x::SyncBinding) = MethodSyncBinding(x.data, sync = x.sync)
+
+string(x::SyncBinding) = x.key
+hash(x::SyncBinding) = hash(x.typ) + hash(x.key)
+(==)(x::SyncBinding, y::SyncBinding) = hash(x) == hash(y)
+
+
+const SYNCABLE = SyncBinding[]
+
+
+syncid(x::SyncBinding) = x.key
+const binding = syncid
+
+function syncid(typ::Symbol, data::T)::String where {T}
+  "$(typ == :method ? METHODPREFIX : (typ == :computed ? COMPUTEDPREFIX : DATAPREFIX))$(data)"
 end
 const syncref = syncid
 
 
-function sync(k, v; computed = true, method = false)
-  SYNCABLE[syncid(k, computed = computed, method = method)] = v
+function sync!(x::SyncBinding)
+  if in(x, SYNCABLE)
+    replace!(SYNCABLE, SYNCABLE[findfirst(s -> s == x, SYNCABLE)] => x)
+  else
+    push!(SYNCABLE, x)
+  end
+
+  SYNCABLE
+end
+
+
+function extract(data)
+  if isa(data, Function)
+    data()
+  elseif isa(data, Signal)
+    value(data)
+  else
+    data
+  end
+end
+
+
+function invoke_sync_callbacks(params)
+
 end
 
 
@@ -103,22 +154,25 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
     # synced properties
     if startswith(string(k), "sync!")
       k = replace(string(k), r"^sync!" => "v-bind:")
-      SYNCABLE[syncid(v)] = v
-      SYNCABLE[syncid(v, computed = false)] = v()
-      v = syncid(v)
+      sync!(ComputedSyncBinding(v)) # register computed property
+      sync!(DataSyncBinding(v)) # register data property
+
+      v = ComputedSyncBinding(v).key
     end
 
     # synced events
     if startswith(string(k), "syncon!")
       k = replace(string(k), r"^syncon!" => "v-on:")
-      SYNCABLE[syncid(v, method = true)] = v
-      v = syncid(v, method = true)
+      sync!(MethodSyncBinding(v))
+      v = MethodSyncBinding(v).key
     end
 
     # client side bindings
     if occursin("!", string(k))
       parts = split(string(k), "!")
       k = "v-" * join(parts, ":")
+
+      isa(v, SyncBinding) && sync!(v)
     end
 
     # keywords

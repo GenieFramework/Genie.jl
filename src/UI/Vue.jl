@@ -1,14 +1,21 @@
 module Vue
 
-using Genie, Genie.Flax
+using Genie, Genie.Flax, Genie.Router
 
 function cdninclude()
   Flax.script(src="https://cdn.jsdelivr.net/npm/vue@2.5.17/dist/vue.js")
 end
 
 
-function injectapp(appid, methods::Dict{String,Union{Function,String,Number}} = Flax.SYNCABLE)
-  cdninclude() *
+function setupchannels()
+  Router.channel("/sync/invoke") do
+    Flax.invoke_sync_callbacks(Router.@params(:payload))
+  end
+end
+
+
+function injectapp(appid, syncables::Vector{SyncBinding} = Flax.SYNCABLE)
+  cdninclude() * "\n\n" *
   Flax.script("""
     var getFromServer = function (val = '', invoke = '') {
       i = prompt('Invoking on server ' + invoke, val);
@@ -20,20 +27,20 @@ function injectapp(appid, methods::Dict{String,Union{Function,String,Number}} = 
     var gvm = new Vue({
       el: '$appid',
       data: {
-        $(join(["$k: '$v'" for (k,v) in methods if startswith(k, Flax.SYNCPREFIX)], ", \n"))
+        $(join(["$(s.key): '$(s.data)'" for s in syncables if s.typ == :data], ", \n"))
       },
       computed: {
-        $(join([""" $k: {
+        $(join([""" $(s.key): {
                       get: function () {
-                        return this.$(replace(k, Flax.COMPUTEDPREFIX => Flax.SYNCPREFIX));
+                        return this.$(replace(s.key, Flax.COMPUTEDPREFIX => Flax.DATAPREFIX));
                       },
                       set: function (newVal) {
-                        this.$(replace(k, Flax.COMPUTEDPREFIX => Flax.SYNCPREFIX)) = getFromServer(newVal, '$v');
+                        this.$(replace(s.key, Flax.COMPUTEDPREFIX => Flax.DATAPREFIX)) = $(s.sync ? "getFromServer(newVal, '$(s.data)')" : "newVal");
                       }
-                    }""" for (k,v) in methods if startswith(k, Flax.COMPUTEDPREFIX)], ", \n"))
+                    }""" for s in syncables if s.typ == :computed], ", \n"))
       },
       methods: {
-        $(join(["$k: function (event) { getFromServer(event.target.value, '$v'); }" for (k,v) in methods if startswith(k, Flax.METHODPREFIX)], ", \n"))
+        $(join(["$(s.key): function (event) { $(s.sync ? "getFromServer(event.target.value, '$(s.data)')" : Flax.extract(s.data)); }" for s in syncables if s.typ == :method], ", \n"))
       }
     });
   """)
