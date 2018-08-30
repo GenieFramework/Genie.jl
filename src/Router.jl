@@ -112,7 +112,7 @@ function route_ws_request(req, msg::String, ws_client, ip::IPv4 = ip"0.0.0.0") :
 
   channel_response::String = match_channels(req, msg, ws_client, params, session)
 
-  print_with_color(:cyan, "[$(Dates.now())] -- $(URI(req.target)) -- Done\n\n")
+  printstyled("[$(Dates.now())] -- $(URI(req.target)) -- Done\n\n", color = :cyan)
 
   channel_response
 end

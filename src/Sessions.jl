@@ -13,8 +13,8 @@ export Session
 
 const session_adapter_name = string(Genie.config.session_storage) * "SessionAdapter"
 include("session_adapters/$session_adapter_name.jl")
-Core.eval(@__MODULE__, parse("using .$session_adapter_name"))
-const SessionAdapter = Core.eval(@__MODULE__, parse(session_adapter_name))
+Core.eval(@__MODULE__, Meta.parse("using .$session_adapter_name"))
+const SessionAdapter = Core.eval(@__MODULE__, Meta.parse(session_adapter_name))
 
 
 """

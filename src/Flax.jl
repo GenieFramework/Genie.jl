@@ -40,6 +40,12 @@ const BUILD_NAME    = "FlaxViews"
 const MD_BUILD_NAME = "MarkdownViews"
 
 
+const SYNCABLE = Dict{String,Union{Function,String,Number}}()
+const SYNCPREFIX = "p__"
+const COMPUTEDPREFIX = "c__"
+const METHODPREFIX = "m__"
+
+
 task_local_storage(:__vars, Dict{Symbol,Any}())
 task_local_storage(:__yield, "")
 
@@ -54,6 +60,17 @@ task_local_storage(:__yield, "")
 # function string(elem::HTMLString)
 #   String(elem)
 # end
+
+
+function syncid(x; computed = true, method = false) :: String
+  "$(method ? METHODPREFIX : (computed ? COMPUTEDPREFIX : SYNCPREFIX))$x"
+end
+const syncref = syncid
+
+
+function sync(k, v; computed = true, method = false)
+  SYNCABLE[syncid(k, computed = computed, method = method)] = v
+end
 
 
 """
@@ -82,6 +99,29 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
   a = String[]
   for (k,v) in attrs
     startswith(string(k), "data_") && (k = replace(string(k), r"^data_" => "data-"))
+
+    # synced properties
+    if startswith(string(k), "sync!")
+      k = replace(string(k), r"^sync!" => "v-bind:")
+      SYNCABLE[syncid(v)] = v
+      SYNCABLE[syncid(v, computed = false)] = v()
+      v = syncid(v)
+    end
+
+    # synced events
+    if startswith(string(k), "syncon!")
+      k = replace(string(k), r"^syncon!" => "v-on:")
+      SYNCABLE[syncid(v, method = true)] = v
+      v = syncid(v, method = true)
+    end
+
+    # client side bindings
+    if occursin("!", string(k))
+      parts = split(string(k), "!")
+      k = "v-" * join(parts, ":")
+    end
+
+    # keywords
     string(k) == "typ" && (k = "type")
 
     push!(a, "$(k)=\"$(v)\"")
@@ -103,23 +143,17 @@ end
 Generates a regular HTML element in the form <...></...>
 """
 function normal_element(f::Function, elem::String, attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()) :: HTMLString
-  a = attributes(attrs)
-  elem = normalize_element(elem)
-
-  "<$(elem * (! isempty(a) ? (" " * join(a, " ")) : ""))>$(prepare_template(f()))</$(elem)>"
+  normal_element(f(), elem, attrs...)
 end
 function normal_element(children::Union{String,Vector{String}}, elem::String, attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()) :: HTMLString
   children = join(children)
   a = attributes(attrs)
   elem = normalize_element(elem)
 
-  "<$(elem * (! isempty(a) ? (" " * join(a, " ")) : ""))>$(prepare_template(children))</$(elem)>"
+  "<$(elem * (! isempty(a) ? (" " * join(a, " ")) : ""))>$(prepare_template(children))</$elem>"
 end
 function normal_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()) :: HTMLString
-  a = attributes(attrs)
-  elem = normalize_element(elem)
-
-  "<$(elem * (! isempty(a) ? (" " * join(a, " ")) : ""))></$(elem)>"
+  normal_element("", elem, attrs...)
 end
 
 

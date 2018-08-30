@@ -42,12 +42,13 @@ include("Cache.jl")
 
 include(joinpath("UI", "TwitterBootstrap.jl"))
 include(joinpath("UI", "Predix.jl"))
+include(joinpath("UI", "Vue.jl"))
 
 using .Macros, .Loggers
 using .Inflector, .Util
 using .FileTemplates, .Generator, .Tester, .Encryption, .Cookies, .Sessions, .Input, .Renderer, .Router, .Helpers, .AppServer, .Commands
 using .Flax, .AppServer
-using .TwitterBootstrap, .Predix
+using .TwitterBootstrap, .Predix, .Vue
 
 include(joinpath(@__DIR__, "REPL.jl"))
 
