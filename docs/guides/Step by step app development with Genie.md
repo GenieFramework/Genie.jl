@@ -19,7 +19,7 @@ The first thing that we need to do is to setup the file structure of our app. Ge
 The only requirement to get things started is installing Genie itself:
 ```julia
 julia> using Pkg
-julia> Pkg.clone("htts://github.com/essenciary/Genie.jl") # Soon to be Pkg.add("Genie")
+julia> Pkg.clone("https://github.com/essenciary/Genie.jl") # Soon to be Pkg.add("Genie")
 julia> using Genie
 ```
 
