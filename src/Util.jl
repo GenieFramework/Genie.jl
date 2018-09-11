@@ -5,8 +5,6 @@ using Genie, Genie.Loggers
 
 export expand_nullable, _!!, _!_, get_nested_field, get_deepest_module, DynamicField, psst, time_to_unixtimestamp, reload
 
-import Base.reload
-
 mutable struct DynamicField{T}
   field::T
 end
