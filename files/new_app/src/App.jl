@@ -14,6 +14,7 @@ function bootstrap()
     isfile(joinpath(Genie.CONFIG_PATH, "global.jl")) && include(joinpath(Genie.CONFIG_PATH, "global.jl"))
     include(joinpath(Genie.ENV_PATH, ENV["GENIE_ENV"] * ".jl"))
   else
+    ENV["GENIE_ENV"] = Configuration.DEV
     eval(@__MODULE__, Meta.parse("config = Configuration.Settings(app_env = Configuration.DEV)"))
   end
 end

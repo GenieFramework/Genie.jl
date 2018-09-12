@@ -1,5 +1,6 @@
 using Genie.Router
+import Genie.Router: route, serve_static_file
 
 route("/") do
-  Genie.Router.serve_static_file("/welcome.html")
+  serve_static_file("/welcome.html")
 end

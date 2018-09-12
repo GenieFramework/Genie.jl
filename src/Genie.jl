@@ -8,7 +8,7 @@ push!(LOAD_PATH, @__DIR__)
 include(joinpath(@__DIR__, "Configuration.jl"))
 include(joinpath(@__DIR__, "constants.jl"))
 
-const config = Configuration.Settings(app_env = Configuration.DEV)
+config = Configuration.Settings(app_env = Configuration.DEV)
 
 using Revise
 

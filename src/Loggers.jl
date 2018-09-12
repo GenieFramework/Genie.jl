@@ -83,10 +83,10 @@ end
 
 function log_path(path = Genie.LOG_PATH) :: String
   try
-    "$(joinpath(path, Genie.config.app_env)).log"
+    "$(joinpath(path, haskey(ENV, "GENIE_ENV") ? ENV["GENIE_ENV"] : "dev")).log"
   catch ex
-    string(ex)
-    println("...")
+    string(ex) |> println
+    # println("...")
     "$(joinpath(path, "dev")).log"
   end
 end

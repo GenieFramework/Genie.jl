@@ -7,7 +7,7 @@ using Genie, Genie.Sessions, Genie.Configuration, Genie.Input, Genie.Loggers, Ge
 include(joinpath(@__DIR__, "mimetypes.jl"))
 include(joinpath(@__DIR__, "router_converters.jl"))
 
-export route, routes, channel, channels
+export route, routes, channel, channels, serve_static_file
 export GET, POST, PUT, PATCH, DELETE, OPTIONS
 export to_link!!, to_link, link_to!!, link_to, response_type, @params
 export error_404, error_500

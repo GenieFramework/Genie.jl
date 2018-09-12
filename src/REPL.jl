@@ -72,11 +72,9 @@ end
 """
 """
 function load_app(path = "."; autostart = false) :: Nothing
-  include(joinpath(path, "genie.jl"))
-  Revise.revise()
-  if autostart
-    Genie.AppServer.startup()
-  end
+  Core.eval(Main, Meta.parse("""include(joinpath("$path", "genie.jl"))"""))
+  Core.eval(Main, Meta.parse("Revise.revise()"))
+  Core.eval(Main, Meta.parse("$autostart && Genie.AppServer.startup()"))
 
   nothing
 end
