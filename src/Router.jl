@@ -228,7 +228,7 @@ Computes the name of a channel.
 """
 function channel_name(params::Channel) :: Symbol
   channel_parts = String[]
-  for uri_part in split(params.path, "/", keep = false)
+  for uri_part in split(params.path, "/", keepempty = false)
     startswith(uri_part, ":") && continue # we ignore named params
     push!(channel_parts, lowercase(uri_part))
   end
@@ -549,7 +549,7 @@ function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
   param_names = String[]
   param_types = Any[]
 
-  for rp in split(route, "/", keep = false)
+  for rp in split(route, "/", keepempty = false)
     if startswith(rp, ":")
       param_type =  if contains(rp, "::")
                       x = split(rp, "::")
@@ -580,7 +580,7 @@ function parse_channel(channel::String) :: Tuple{String,Vector{String},Vector{An
   param_names = String[]
   param_types = Any[]
 
-  for rp in split(channel, "/", keep = false)
+  for rp in split(channel, "/", keepempty = false)
     if startswith(rp, ":")
       param_type =  if contains(rp, "::")
                       x = split(rp, "::")

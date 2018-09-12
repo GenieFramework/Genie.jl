@@ -69,9 +69,9 @@ version = "0.4.0"
 
 [[DataStructures]]
 deps = ["InteractiveUtils", "REPL", "Random", "Serialization", "Test"]
-git-tree-sha1 = "2afbbd0294306b0b74a753c196be50b35edb625c"
+git-tree-sha1 = "5162c360c52e9265e0bfafb71415c31f746f7e04"
 uuid = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-version = "0.11.1"
+version = "0.12.0"
 
 [[DataValues]]
 deps = ["Dates", "InteractiveUtils", "LinearAlgebra", "Random", "Test"]
@@ -104,10 +104,10 @@ deps = ["LinearAlgebra", "Random", "Serialization", "Sockets"]
 uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[DocStringExtensions]]
-deps = ["Compat"]
-git-tree-sha1 = "a2ab006ff561a57eb858cee5314445b16c2fd2dd"
+deps = ["LibGit2", "Markdown", "Pkg", "Test"]
+git-tree-sha1 = "a016e0bfe98a748c4488e2248c2ef4c67d6fdd35"
 uuid = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
-version = "0.4.6"
+version = "0.5.0"
 
 [[EzXML]]
 deps = ["BinaryProvider", "Libdl", "Pkg", "Printf", "Test"]
@@ -123,10 +123,10 @@ deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[Gumbo]]
-deps = ["AbstractTrees", "BinaryProvider", "Libdl", "Pkg", "SHA", "Test"]
-git-tree-sha1 = "9129bb34e8ec20cbe78b6d7be6d67f5a711d3b0f"
+deps = ["AbstractTrees", "BinaryProvider", "Libdl", "Pkg", "Test"]
+git-tree-sha1 = "b16b6c5127e8c6be3084e6658c5fb5dd1f97d7fd"
 uuid = "708ec375-b3d6-5a57-a7ce-8257bf98657a"
-version = "0.5.0"
+version = "0.5.1"
 
 [[HTTP]]
 deps = ["Base64", "Dates", "Distributed", "IniFile", "MbedTLS", "Sockets", "Test"]
@@ -228,10 +228,10 @@ uuid = "39ec1447-df44-5f4c-beaa-866f30b4d3b2"
 version = "0.2.0"
 
 [[Missings]]
-deps = ["Compat"]
-git-tree-sha1 = "866fb034899be6055dcb6cb1a70fbda379bb0b55"
+deps = ["Dates", "InteractiveUtils", "SparseArrays", "Test"]
+git-tree-sha1 = "196528fa1df03df435025f52f9c1ff8356f94738"
 uuid = "e1d29d7a-bbdc-5cf2-9ac0-f12de2c33e28"
-version = "0.2.10"
+version = "0.3.0"
 
 [[Mmap]]
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
@@ -247,11 +247,6 @@ deps = ["BinaryProvider", "DataStreams", "Dates", "DecFP", "Libdl", "Missings", 
 git-tree-sha1 = "2f14118e79226c5c8f827e13c83de1368b59fede"
 uuid = "39abe10b-433b-5dbd-92d4-e302a9df00cd"
 version = "0.6.0"
-
-[[NamedTuples]]
-git-tree-sha1 = "6374851ad4b15f2a20ac20637d38c550531fa684"
-uuid = "73a701b4-84e1-5df0-88ff-1968ee2ee8dc"
-version = "4.0.2"
 
 [[Nettle]]
 deps = ["BinDeps", "BinaryProvider", "Libdl", "Pkg", "Test"]
@@ -301,9 +296,9 @@ uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[Reactive]]
 deps = ["DataStructures", "Distributed", "Pkg", "Test"]
-git-tree-sha1 = "0d386bcb2648bb2d0445cc1363547b211bb7490b"
+git-tree-sha1 = "3df2dd92990196089943473e742039050dbf7271"
 uuid = "a223df75-4e93-5b7c-acf9-bdd599c0f4de"
-version = "0.8.0"
+version = "0.8.1"
 
 [[Reexport]]
 deps = ["Pkg"]
@@ -319,9 +314,9 @@ version = "0.5.2"
 
 [[Revise]]
 deps = ["Distributed", "FileWatching", "InteractiveUtils", "LibGit2", "OrderedCollections", "Pkg", "REPL", "Random", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "26329918f4338170c0053db711668e6cfc9d9b4a"
+git-tree-sha1 = "48ad8dcdacf24185eb1bc4253a17dc39e1485079"
 uuid = "295af30f-e4ad-537b-8983-00126c2a3abe"
-version = "0.7.4"
+version = "0.7.10"
 
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
@@ -333,8 +328,8 @@ uuid = "0aa819cd-b072-5ff4-a722-6bc24af294d9"
 version = "0.6.0"
 
 [[SearchLight]]
-deps = ["Codecs", "Crayons", "DataFrames", "DataStreams", "DataStructures", "Dates", "Distributed", "IterableTables", "JSON", "LibPQ", "MbedTLS", "Memento", "Millboard", "MySQL", "NamedTuples", "Nullables", "OhMyREPL", "Reexport", "Revise", "SHA", "SQLite", "Unicode", "YAML"]
-git-tree-sha1 = "a209710986c77fc4adb0d19716541e09a4d60fab"
+deps = ["Codecs", "Crayons", "DataFrames", "DataStreams", "DataStructures", "Dates", "Distributed", "IterableTables", "JSON", "LibPQ", "MbedTLS", "Memento", "Millboard", "MySQL", "Nullables", "OhMyREPL", "Reexport", "Revise", "SHA", "SQLite", "Unicode", "YAML"]
+git-tree-sha1 = "0b3d646e7f64ae17c5a70517ee9066031b58649f"
 repo-rev = "master"
 repo-url = "https://github.com/essenciary/SearchLight.jl"
 uuid = "340e8cb6-72eb-11e8-37ce-c97ebeb32050"
@@ -389,10 +384,10 @@ uuid = "3783bdb8-4a98-5b6b-af9a-565f29a5fe9c"
 version = "0.3.1"
 
 [[TableTraitsUtils]]
-deps = ["DataValues", "IteratorInterfaceExtensions", "Missings", "TableTraits", "Test"]
-git-tree-sha1 = "3955d1954124f3f81f28f9ed1cba4f691e03ef44"
+deps = ["DataValues", "IteratorInterfaceExtensions", "Missings", "Pkg", "TableTraits", "Test"]
+git-tree-sha1 = "a355f1882d64881a11f853e64dcc353975c4df6e"
 uuid = "382cd787-c1b6-5bf2-a167-d5b971a19bda"
-version = "0.2.1"
+version = "0.3.1"
 
 [[Test]]
 deps = ["Distributed", "InteractiveUtils", "Logging", "Random"]
@@ -449,6 +444,6 @@ version = "1.0.0"
 
 [[YAML]]
 deps = ["Codecs", "Compat", "Pkg"]
-git-tree-sha1 = "075f53ae1e9444d3c244faf13a9eaa03b79e78bf"
+git-tree-sha1 = "3bde77cee95cce0c0b9b18813d85e18e8ed4f415"
 uuid = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
-version = "0.3.1"
+version = "0.3.2"

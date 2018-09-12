@@ -1,6 +1,6 @@
 module REPL
 
-using Revise, SHA, Dates
+using Revise, SHA, Dates, Pkg
 using Genie, Genie.Loggers, Genie.Configuration, Genie.Generator, Genie.Tester, Genie.Util
 
 const JULIA_PATH = joinpath(Sys.BINDIR, "julia")
@@ -21,7 +21,7 @@ end
 
 Creates a new Genie app at the indicated path.
 """
-function new_app(path = "."; db_support = false, skip_dependencies = true, autostart = false) :: Nothing
+function new_app(path = "."; db_support = false, skip_dependencies = true, autostart = true) :: Nothing
   cp(joinpath(@__DIR__, "../", "files", "new_app"), abspath(path))
 
   chmod(joinpath(path, "bin", "server"), 0o700)
@@ -35,10 +35,22 @@ function new_app(path = "."; db_support = false, skip_dependencies = true, autos
 
   Sys.iswindows() && setup_windows_bin_files(path)
 
-  autostart || return nothing
+  log("Changing active directory to $path")
+  cd(path)
 
-  log("Starting your brand new Genie app - hang tight!", :info)
-  run_repl_app(path)
+  log("Installing app dependencies")
+  pkg"activate ."
+  pkg"instantiate"
+
+  if autostart
+    log("Starting your brand new Genie app - hang tight!", :info)
+    load_app(autostart = true)
+  else
+    log("Your new Genie app is ready!
+        Run \njulia> Genie.REPL.load_app() \nto load the app's environment
+        and then \njulia> Genie.AppServer.startup() \nto start the web server on port 8000.")
+    return nothing
+  end
 
   nothing
 end
@@ -53,6 +65,20 @@ function run_repl_app(path = ".") :: Nothing
   cd(abspath(path))
 
   run(`$JULIA_PATH -L $(abspath("genie.jl")) --color=yes --depwarn=no -q`)
+
+  nothing
+end
+
+
+"""
+"""
+function load_app(path = "."; autostart = false) :: Nothing
+  try
+    include(joinpath(path, "genie.jl"))
+    autostart && Genie.AppServer.startup()
+  catch ex
+    log(ex)
+  end
 
   nothing
 end

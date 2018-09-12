@@ -184,9 +184,9 @@ function secret_token() :: String
   if @isdefined SECRET_TOKEN
     SECRET_TOKEN
   else
-    warn("SECRET_TOKEN not configured - please make sure that you have a valid secrets.jl file.
+    log("SECRET_TOKEN not configured - please make sure that you have a valid secrets.jl file.
           You can generate a new secrets.jl file with a random SECRET_TOKEN using Genie.REPL.write_secrets_file()
-          or use the included /app/config/secrets.jl.example file as a model.")
+          or use the included /app/config/secrets.jl.example file as a model.", :warn)
     st = Genie.REPL.secret_token()
     Core.eval(Genie, Meta.parse("""const SECRET_TOKEN = "$st" """))
 
