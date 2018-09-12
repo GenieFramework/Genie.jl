@@ -198,6 +198,7 @@ end
 function load() :: Nothing
   App.bootstrap()
 
+  Loggers.log_path!()
   Loggers.empty_log_queue()
 
   load_configurations()

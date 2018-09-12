@@ -31,18 +31,28 @@ function log(message::Union{String,Symbol,Number,Exception}, level::Union{String
     level = "warn"
   elseif level == "debug"
     level = "info"
+  else
+    level = "info"
   end
 
-  root_logger = Memento.config!(Genie.config.log_level |> string; fmt="[{date}|{level}]: {msg}")
+  root_logger = try
+    Memento.config!(level |> string; fmt="[{date}|{level}]: {msg}")
+  catch ex
+    Memento.config(string(level))
+  end
 
-  if isfile(log_path())
-    file_logger = getlogger(@__MODULE__)
-    setlevel!(file_logger, Genie.config.log_level |> string)
-    push!(file_logger, DefaultHandler(log_path(), DefaultFormatter("[{date}|{level}]: {msg}")))
+  try
+    if isfile(log_path())
+      file_logger = getlogger(@__MODULE__)
+      setlevel!(file_logger, Genie.config.log_level |> string)
+      push!(file_logger, DefaultHandler(log_path(), DefaultFormatter("[{date}|{level}]: {msg}")))
 
-    Base.invoke(Core.eval(@__MODULE__, Meta.parse("Memento.$level")), Tuple{typeof(file_logger),typeof(message)}, file_logger, message)
-  else
-    Base.invoke(Core.eval(@__MODULE__, Meta.parse("Memento.$level")), Tuple{typeof(root_logger),typeof(message)}, root_logger, message)
+      Base.invoke(Core.eval(@__MODULE__, Meta.parse("Memento.$level")), Tuple{typeof(file_logger),typeof(message)}, file_logger, message)
+    else
+      Base.invoke(Core.eval(@__MODULE__, Meta.parse("Memento.$level")), Tuple{typeof(root_logger),typeof(message)}, root_logger, message)
+    end
+  catch ex
+    println(string(ex))
   end
 
   nothing
@@ -72,7 +82,13 @@ end
 
 
 function log_path(path = Genie.LOG_PATH) :: String
-  "$(joinpath(path, Genie.config.app_env)).log"
+  try
+    "$(joinpath(path, Genie.config.app_env)).log"
+  catch ex
+    string(ex)
+    println("...")
+    "$(joinpath(path, "dev")).log"
+  end
 end
 function log_path!(path = Genie.LOG_PATH) :: String
   if ! isfile(log_path(path))

@@ -32,9 +32,10 @@ end
 
 bootstrap()
 
-using Genie
 include(joinpath("src", "App.jl")); using .App
 include(joinpath("src", "Toolbox.jl")); using .Toolbox
+
+using Genie
 
 Core.eval(Genie, Meta.parse("push!(LOAD_PATH, joinpath(\"$(pwd())\", \"src\"))"))
 Core.eval(Genie, Meta.parse("const ROOT_PATH = \"$(pwd())\""))
@@ -49,11 +50,6 @@ Core.eval(Genie, Meta.parse("""const ASSET_FINGERPRINT = "$(App.ASSET_FINGERPRIN
 
 Genie.run()
 
-try
-  using OhMyREPL
-
-  OhMyREPL.input_prompt!( "genie>", :blue)
-  OhMyREPL.output_prompt!("genie>", :cyan)
-catch
-
-end
+using OhMyREPL
+OhMyREPL.input_prompt!( "genie>", :blue)
+OhMyREPL.output_prompt!("genie>", :cyan)
