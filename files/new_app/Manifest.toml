@@ -123,8 +123,8 @@ deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[Genie]]
-deps = ["ArgParse", "DataStructures", "Dates", "Distributed", "Gumbo", "HTTP", "HttpCommon", "JSON", "Markdown", "MbedTLS", "Memento", "Millboard", "Nettle", "Nullables", "Reactive", "Reexport", "Revise", "SHA", "SearchLight", "Serialization", "Sockets", "URIParser", "Unicode", "WebSockets", "YAML"]
-git-tree-sha1 = "385a1dab4d090290ce8b4fdc69fc69a89099aee3"
+deps = ["ArgParse", "DataStructures", "Dates", "Distributed", "Gumbo", "HTTP", "HttpCommon", "JSON", "Markdown", "MbedTLS", "Memento", "Millboard", "Nettle", "Nullables", "OhMyREPL", "Pkg", "Reactive", "Reexport", "Revise", "SHA", "SearchLight", "Serialization", "Sockets", "URIParser", "Unicode", "WebSockets", "YAML"]
+git-tree-sha1 = "e6c193741321a89047290f2f7ee64f20ff016397"
 repo-rev = "master"
 repo-url = "https://github.com/essenciary/Genie.jl"
 uuid = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
@@ -337,7 +337,7 @@ version = "0.6.0"
 
 [[SearchLight]]
 deps = ["Codecs", "Crayons", "DataFrames", "DataStreams", "DataStructures", "Dates", "Distributed", "IterableTables", "JSON", "LibPQ", "MbedTLS", "Memento", "Millboard", "MySQL", "Nullables", "OhMyREPL", "Reexport", "Revise", "SHA", "SQLite", "Unicode", "YAML"]
-git-tree-sha1 = "0b3d646e7f64ae17c5a70517ee9066031b58649f"
+git-tree-sha1 = "9b326cc467ec59cf832bdd5c9800da2c38dfd278"
 repo-rev = "master"
 repo-url = "https://github.com/essenciary/SearchLight.jl"
 uuid = "340e8cb6-72eb-11e8-37ce-c97ebeb32050"
