@@ -95,6 +95,8 @@ function log_path!(path = Genie.LOG_PATH) :: String
     mkpath(path)
     touch(log_path(path))
   end
+
+  log_path(path)
 end
 
 
