@@ -75,7 +75,10 @@ end
 function load_app(path = "."; autostart = false) :: Nothing
   try
     include(joinpath(path, "genie.jl"))
-    autostart && Genie.AppServer.startup()
+    if autostart
+      log("Starting up the web server on default port $(Genie.config.server_port)")
+      Genie.AppServer.startup()
+    end
   catch ex
     log(ex)
   end
