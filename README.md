@@ -13,7 +13,7 @@ This is a recent development (mid September 2018) so more testing is needed.
 
 # Getting started
 
-## Getting Genie
+## Installing Genie
 In a Julia session switch to `pkg>` mode to add `Genie`:
 ```julia
 julia>] # switch to pkg> mode
