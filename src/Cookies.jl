@@ -48,9 +48,9 @@ end
 Sets `value` under the `key` label on the `Cookie`.
 """
 function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attributes::Dict) :: Vector{HTTP.Cookies.Cookie}
-  normalized_attrs = typeof(attributes)()
+  normalized_attrs = Dict{Symbol,Any}()
   for (k,v) in attributes
-    normalized_attrs[lowercase(string(k))] = v
+    normalized_attrs[Symbol(lowercase(string(k)))] = v
   end
   HTTP.Cookie(string(key), string(value) |> Genie.Encryption.encrypt; normalized_attrs...)
 

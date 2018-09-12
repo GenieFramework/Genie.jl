@@ -911,11 +911,14 @@ Serves the error file correspoding to `error_code` and current environment.
 """
 function serve_error_file(error_code::Int, error_message::String = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: HTTP.Response
   try
-    if Genie.Configuration.is_dev()
-      error_page =  open(Genie.DOC_ROOT_PATH * "/error-$(error_code).html") do f
-                      read(f, String)
-                    end
+    error_page_file = isfile(joinpath(Genie.DOC_ROOT_PATH, "error-$(error_code).html")) ?
+                        joinpath(Genie.DOC_ROOT_PATH, "error-$(error_code).html") :
+                          joinpath(@__DIR__, "..", "files", "static", "error-$(error_code).html")
+    error_page =  open(error_page_file) do f
+                    read(f, String)
+                  end
 
+    if Genie.Configuration.is_dev()
       if error_code == 500
         error_message = error_message * "\n\n\n" *
                         """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                             $("\n" ^ 3)""" *
