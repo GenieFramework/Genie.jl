@@ -8,42 +8,57 @@
 Genie is a full-stack MVC web framework that provides a streamlined and efficient workflow for developing modern web applications. It builds on Julia's strengths (high-level, high-performance, dynamic, JIT compiled), exposing a rich API and a powerful toolset for productive web development.
 
 ## Current status
-Genie is undergoing massive refactoring to fully support Julia v0.7/1.0 and move onto the HTTP stack.
-Expect that things will break oftenly before being stable.
+Genie is now compatible with Julia v1.0 (and it's the only version of Julia supported anymore).
+This is a recent development (mid September 2018) so more testing is needed.
 
-
-## Quick start
-In a Julia session clone `Genie` and its dependencies:
+## Adding Genie
+In a Julia session switch to `pkg>` mode to add `Genie`:
 ```julia
-julia> Pkg.clone("https://github.com/essenciary/Genie.jl")
+julia>] # switch to pkg> mode
+pkg> add https://github.com/essenciary/Genie.jl
 ```
 
-Bring it into scope:
+Alternatively, you can achieve the above using the `Pkg` API:
+```julia
+julia> using Pkg
+julia> pkg"add https://github.com/essenciary/Genie.jl"
+```
+
+When finished, make sure that you're back to the Julian prompt (`julia>`)
+and bring `Genie` into scope:
 ```julia
 julia> using Genie
 ```
 
+## Using Genie in an interactive environment (Jupyter/IJulia, REPL, etc)
+Genie can be used for ad-hoc exploratory programming, to quickly whip up a web server
+and expose your Julia functions.
+
+---
+
+## Creating a Genie app (project)
+
 Create a new app:
 ```julia
 julia> Genie.REPL.new_app("your_cool_new_app")
-
-info: Done! New app created at /path/to/your_cool_new_app
 ```
 
-Genie will automatically load the new app into the REPL and start an interactive `genie>` session.
+Genie will
+* create the app,
+* install all the dependencies,
+* automatically load the new app into the REPL,
+* start an interactive `genie>` session,
+* and start the web server on the default port (8000)
 
-Edit `/path/to/your_cool_new_app/config/routes.jl` and append:
+At this point you can confirm that everything worked as expected by visiting http://localhost:8000 in your favourite web browser. You should see Genie's welcome page.
+
+Next, type:
 
 ```julia
-route("/hello") do
-  "Hello - Welcome to Genie!"
-end
-```
-
-Start the web server:
-```julia
-genie> AppServer.startup()
-Listening on 0.0.0.0:8000...
+julia> import Genie.Router: route
+julia> route("/hello") do
+        "Hello - Welcome to Genie!"
+       end
 ```
 
 Visit `http://localhost:8000/hello` for a warm welcome!

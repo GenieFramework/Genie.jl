@@ -198,10 +198,11 @@ end
 function load() :: Nothing
   App.bootstrap()
 
+  load_configurations()
+
   Loggers.log_path!()
   Loggers.empty_log_queue()
 
-  load_configurations()
   load_initializers()
   load_helpers()
 
