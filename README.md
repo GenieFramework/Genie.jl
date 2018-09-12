@@ -62,7 +62,7 @@ julia> route("/hello/world", hello_world)
 ```
 Obviously, the functions can be defined anywhere (in any other module) as long as they are accessible in the current scope.
 
-You can now visit "http://localhost/hello/world" in the browser.
+You can now visit "http://localhost:8000/hello/world" in the browser.
 
 Of course we can access GET params:
 ```julia
@@ -72,20 +72,24 @@ julia> route("/echo/:message") do
        end
 ```
 
+Accessing http://localhost:8000/echo/ciao should echo "ciao".
+
 And we can even match by their types:
 ```julia
 julia> route("/sum/:x::Int/:y::Int") do
          @params(:x) + @params(:y)
        end
 ```
-By default, GET params are parsed as `String` (more exactly, `SubString{String}`).
-If type constraints are added, Genie will attempt to convert the `String` to the indicated type.
+By default, GET params are extracted as `SubString` (more exactly, `SubString{String}`).
+If type constraints are added, Genie will attempt to convert the `SubString` to the indicated type.
 
 For the above to work, we also need to tell Genie how to perform the conversion:
 ```julia
 julia> import Base.convert
 julia> convert(::Type{Int}, s::SubString{String}) = parse(Int, s)
 ```
+
+Now if we access http://localhost:8000/sum/2/3 we should see `5`
 
 ---
 
