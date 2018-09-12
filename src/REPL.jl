@@ -44,12 +44,11 @@ function new_app(path = "."; db_support = false, skip_dependencies = true, autos
 
   if autostart
     log("Starting your brand new Genie app - hang tight!", :info)
-    load_app(autostart = true)
+    load_app(path, autostart = autostart)
   else
     log("Your new Genie app is ready!
         Run \njulia> Genie.REPL.load_app() \nto load the app's environment
         and then \njulia> Genie.AppServer.startup() \nto start the web server on port 8000.")
-    return nothing
   end
 
   nothing
