@@ -25,18 +25,6 @@ git-tree-sha1 = "b530fbeb6f41ab5a83fbe3db1fcbe879334bcd2d"
 uuid = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
 version = "0.4.2"
 
-[[CategoricalArrays]]
-deps = ["Compat", "Future", "JSON", "Missings", "Printf", "Reexport"]
-git-tree-sha1 = "8009a507e2e3db040d6854a82ce959fb5971cb37"
-uuid = "324d7699-5711-5eae-9e2f-1d82baa6b597"
-version = "0.3.13"
-
-[[CodecZlib]]
-deps = ["BinaryProvider", "Libdl", "Pkg", "Test", "TranscodingStreams"]
-git-tree-sha1 = "83cb3d65c37ea1364c2d5bf7bcea41843ba645dc"
-uuid = "944b1d66-785c-5afd-91f1-9de20f533193"
-version = "0.5.0"
-
 [[Codecs]]
 deps = ["Test"]
 git-tree-sha1 = "70885e5e038cba1c4c17a84ad6c40756e10a4fb5"
@@ -55,45 +43,15 @@ git-tree-sha1 = "3017c662a988bcb8a3f43306a793617c6524d476"
 uuid = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
 version = "1.0.0"
 
-[[DataFrames]]
-deps = ["CategoricalArrays", "CodecZlib", "Compat", "DataStreams", "Dates", "InteractiveUtils", "LinearAlgebra", "Missings", "Pkg", "Printf", "Random", "Reexport", "SortingAlgorithms", "Statistics", "StatsBase", "Test", "TranscodingStreams", "Unicode", "WeakRefStrings"]
-git-tree-sha1 = "31cca86a48add8d5cdd9457c4f75ee5577ef3488"
-uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-version = "0.13.1"
-
-[[DataStreams]]
-deps = ["Dates", "Missings", "Test", "WeakRefStrings"]
-git-tree-sha1 = "c54fb051465fb0741caa57972b67bd21ce2f39c7"
-uuid = "9a8bc11e-79be-5b39-94d7-1ccc349a1a85"
-version = "0.4.0"
-
 [[DataStructures]]
 deps = ["InteractiveUtils", "REPL", "Random", "Serialization", "Test"]
 git-tree-sha1 = "5162c360c52e9265e0bfafb71415c31f746f7e04"
 uuid = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 version = "0.12.0"
 
-[[DataValues]]
-deps = ["Dates", "InteractiveUtils", "LinearAlgebra", "Random", "Test"]
-git-tree-sha1 = "4fedccda7e5111354c7dcc832c7da83ff7258765"
-uuid = "e7dc6d0d-1eca-5fa6-8ad6-5aecde8b7ea5"
-version = "0.4.5"
-
 [[Dates]]
 deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
-
-[[DecFP]]
-deps = ["BinaryProvider", "Compat", "Libdl", "SpecialFunctions"]
-git-tree-sha1 = "5c783376875e7f7757d574945a97c3afb56ae2c5"
-uuid = "55939f99-70c6-5e9b-8bb0-5071ed7d61fd"
-version = "0.4.6"
-
-[[Decimals]]
-deps = ["Compat"]
-git-tree-sha1 = "6eba63c98f87e99dc15b1715cd996a8368ca4df0"
-uuid = "abce61dc-4473-55a0-ba07-351d65e31d42"
-version = "0.3.0"
 
 [[DelimitedFiles]]
 deps = ["Mmap"]
@@ -103,12 +61,6 @@ uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 deps = ["LinearAlgebra", "Random", "Serialization", "Sockets"]
 uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
-[[DocStringExtensions]]
-deps = ["LibGit2", "Markdown", "Pkg", "Test"]
-git-tree-sha1 = "a016e0bfe98a748c4488e2248c2ef4c67d6fdd35"
-uuid = "ffbed154-4ef7-542d-bbb7-c09d3a79fcae"
-version = "0.5.0"
-
 [[EzXML]]
 deps = ["BinaryProvider", "Libdl", "Pkg", "Printf", "Test"]
 git-tree-sha1 = "0080045a5ce51180a704d67074c0f15a41b9427a"
@@ -117,10 +69,6 @@ version = "0.8.0"
 
 [[FileWatching]]
 uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
-
-[[Future]]
-deps = ["Random"]
-uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[Gumbo]]
 deps = ["AbstractTrees", "BinaryProvider", "Libdl", "Pkg", "Test"]
@@ -150,50 +98,14 @@ version = "0.5.0"
 deps = ["LinearAlgebra", "Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 
-[[IterTools]]
-deps = ["Pkg", "SparseArrays", "Test"]
-git-tree-sha1 = "ed0787e62dc46b8d8c7c3db54391d71e0da5fefd"
-uuid = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
-version = "1.0.0"
-
-[[IterableTables]]
-deps = ["DataValues", "IteratorInterfaceExtensions", "Requires", "TableTraits", "TableTraitsUtils", "Test"]
-git-tree-sha1 = "6390a469cf0c28d475fdd43c6496a8c8614ef530"
-uuid = "1c8ee90f-4401-5389-894e-7a04a3dc0f4d"
-version = "0.8.3"
-
-[[IteratorInterfaceExtensions]]
-deps = ["Test"]
-git-tree-sha1 = "5484e5ede2a4137b9643f4d646e8e7b87b794415"
-uuid = "82899510-4779-5014-852e-03e436cf321d"
-version = "0.1.1"
-
 [[JSON]]
 deps = ["Dates", "Distributed", "Mmap", "Pkg", "Sockets", "Test", "Unicode"]
 git-tree-sha1 = "fec8e4d433072731466d37ed0061b3ba7f70eeb9"
 uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 version = "0.19.0"
 
-[[LayerDicts]]
-deps = ["Compat", "Pkg"]
-git-tree-sha1 = "23900caa7030f922c1883f338f94e91ed713d78b"
-uuid = "6f188dcb-512c-564b-bc01-e0f76e72f166"
-version = "0.1.2"
-
-[[LegacyStrings]]
-deps = ["Compat"]
-git-tree-sha1 = "7cfb0bf378fab9ec57b393e3c56a419d6afab876"
-uuid = "1b4a561d-cfcb-5daf-8433-43fcf8b4bea3"
-version = "0.4.0"
-
 [[LibGit2]]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
-
-[[LibPQ]]
-deps = ["BinaryProvider", "Compat", "DataStreams", "Decimals", "DocStringExtensions", "InteractiveUtils", "IterTools", "LayerDicts", "Libdl", "Memento", "Missings", "OffsetArrays", "Pkg", "TimeZones"]
-git-tree-sha1 = "7f81b0b440b325a50e4cbda3333290efcc282cd6"
-uuid = "194296ae-ab2e-5f79-8cd4-7183a0a5a0d1"
-version = "0.4.0"
 
 [[Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
@@ -227,12 +139,6 @@ git-tree-sha1 = "21622ffb05343e51bc5b95c3576a71b26183809d"
 uuid = "39ec1447-df44-5f4c-beaa-866f30b4d3b2"
 version = "0.2.0"
 
-[[Missings]]
-deps = ["Dates", "InteractiveUtils", "SparseArrays", "Test"]
-git-tree-sha1 = "196528fa1df03df435025f52f9c1ff8356f94738"
-uuid = "e1d29d7a-bbdc-5cf2-9ac0-f12de2c33e28"
-version = "0.3.0"
-
 [[Mmap]]
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
@@ -241,12 +147,6 @@ deps = ["Compat", "Dates", "Pkg"]
 git-tree-sha1 = "4bf69aaf823b119b034e091e16b18311aa191663"
 uuid = "78c3b35d-d492-501b-9361-3d52fe80e533"
 version = "0.5.7"
-
-[[MySQL]]
-deps = ["BinaryProvider", "DataStreams", "Dates", "DecFP", "Libdl", "Missings", "Pkg", "Test"]
-git-tree-sha1 = "2f14118e79226c5c8f827e13c83de1368b59fede"
-uuid = "39abe10b-433b-5dbd-92d4-e302a9df00cd"
-version = "0.6.0"
 
 [[Nettle]]
 deps = ["BinDeps", "BinaryProvider", "Libdl", "Pkg", "Test"]
@@ -259,12 +159,6 @@ deps = ["Compat", "Pkg"]
 git-tree-sha1 = "ae1a63457e14554df2159b0b028f48536125092d"
 uuid = "4d1e1d77-625e-5b40-9113-a560ec7a8ecd"
 version = "0.0.8"
-
-[[OffsetArrays]]
-deps = ["DelimitedFiles", "Test"]
-git-tree-sha1 = "f8cd140824f74f2948ff8660bc2292e16d29c1b7"
-uuid = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
-version = "0.8.1"
 
 [[OhMyREPL]]
 deps = ["Crayons", "InteractiveUtils", "Markdown", "Pkg", "Printf", "REPL", "Test", "Tokenize"]
@@ -306,12 +200,6 @@ git-tree-sha1 = "7b1d07f411bc8ddb7977ec7f377b97b158514fe0"
 uuid = "189a3867-3050-52da-a836-e630ba90ab69"
 version = "0.2.0"
 
-[[Requires]]
-deps = ["Test"]
-git-tree-sha1 = "f6fbf4ba64d295e146e49e021207993b6b48c7d1"
-uuid = "ae029012-a4dd-5104-9daa-d747884805df"
-version = "0.5.2"
-
 [[Revise]]
 deps = ["Distributed", "FileWatching", "InteractiveUtils", "LibGit2", "OrderedCollections", "Pkg", "REPL", "Random", "Test", "UUIDs", "Unicode"]
 git-tree-sha1 = "48ad8dcdacf24185eb1bc4253a17dc39e1485079"
@@ -320,20 +208,6 @@ version = "0.7.10"
 
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
-
-[[SQLite]]
-deps = ["BinaryProvider", "DataFrames", "DataStreams", "Dates", "LegacyStrings", "Libdl", "Missings", "Pkg", "Random", "Serialization", "Test", "WeakRefStrings"]
-git-tree-sha1 = "ea667fe0f4b9d002612482665ab9be320f1c26df"
-uuid = "0aa819cd-b072-5ff4-a722-6bc24af294d9"
-version = "0.6.0"
-
-[[SearchLight]]
-deps = ["Codecs", "Crayons", "DataFrames", "DataStreams", "DataStructures", "Dates", "Distributed", "IterableTables", "JSON", "LibPQ", "MbedTLS", "Memento", "Millboard", "MySQL", "Nullables", "OhMyREPL", "Reexport", "Revise", "SHA", "SQLite", "Unicode", "YAML"]
-git-tree-sha1 = "0b3d646e7f64ae17c5a70517ee9066031b58649f"
-repo-rev = "master"
-repo-url = "https://github.com/essenciary/SearchLight.jl"
-uuid = "340e8cb6-72eb-11e8-37ce-c97ebeb32050"
-version = "0.1.0"
 
 [[Serialization]]
 uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
@@ -345,49 +219,19 @@ uuid = "1a1011a3-84de-559e-8e89-a11a2f7dc383"
 [[Sockets]]
 uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
 
-[[SortingAlgorithms]]
-deps = ["DataStructures", "Random", "Test"]
-git-tree-sha1 = "03f5898c9959f8115e30bc7226ada7d0df554ddd"
-uuid = "a2af1166-a08f-5f64-846c-94a0d3cef48c"
-version = "0.3.1"
-
 [[SparseArrays]]
 deps = ["LinearAlgebra", "Random"]
 uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
-[[SpecialFunctions]]
-deps = ["BinDeps", "BinaryProvider", "Compat", "Libdl"]
-git-tree-sha1 = "d12f8917be3782f4b800ba16003b8d0d4858c2e5"
-uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
-version = "0.7.0"
-
 [[Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
-
-[[StatsBase]]
-deps = ["DataStructures", "LinearAlgebra", "Missings", "Printf", "Random", "SortingAlgorithms", "SparseArrays", "Statistics", "Test"]
-git-tree-sha1 = "723193a13e8078cec6dcd0b8fe245c8bfd81690e"
-uuid = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-version = "0.25.0"
 
 [[Syslogs]]
 deps = ["Compat", "Nullables"]
 git-tree-sha1 = "d3e512a044cc8873c741d88758f8e1888c7c47d3"
 uuid = "cea106d9-e007-5e6c-ad93-58fe2094e9c4"
 version = "0.2.0"
-
-[[TableTraits]]
-deps = ["IteratorInterfaceExtensions", "Test"]
-git-tree-sha1 = "afee1fb3bc99c28eb4533ff0f22e33f6effcec18"
-uuid = "3783bdb8-4a98-5b6b-af9a-565f29a5fe9c"
-version = "0.3.1"
-
-[[TableTraitsUtils]]
-deps = ["DataValues", "IteratorInterfaceExtensions", "Missings", "Pkg", "TableTraits", "Test"]
-git-tree-sha1 = "a355f1882d64881a11f853e64dcc353975c4df6e"
-uuid = "382cd787-c1b6-5bf2-a167-d5b971a19bda"
-version = "0.3.1"
 
 [[Test]]
 deps = ["Distributed", "InteractiveUtils", "Logging", "Random"]
@@ -411,12 +255,6 @@ git-tree-sha1 = "4a9fefb5c5c831c6fc06fcc5d2ae7399918bb587"
 uuid = "0796e94c-ce3b-5d07-9a54-7f471281c624"
 version = "0.5.2"
 
-[[TranscodingStreams]]
-deps = ["DelimitedFiles", "Pkg", "Random", "Test"]
-git-tree-sha1 = "a34a2d588e2d2825602bf14a24216d5c8b0921ec"
-uuid = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
-version = "0.8.1"
-
 [[URIParser]]
 deps = ["Test", "Unicode"]
 git-tree-sha1 = "6ddf8244220dfda2f17539fa8c9de20d6c575b69"
@@ -429,12 +267,6 @@ uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [[Unicode]]
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
-
-[[WeakRefStrings]]
-deps = ["Missings", "Random", "Test"]
-git-tree-sha1 = "d4631352d65840254d33ab703e2de3d9768cdb77"
-uuid = "ea10d353-3f73-51f8-a26c-33c1cb351aa5"
-version = "0.5.2"
 
 [[WebSockets]]
 deps = ["Base64", "Dates", "Distributed", "HTTP", "MbedTLS", "Pkg", "Random", "Sockets", "Test"]
