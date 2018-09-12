@@ -1,2 +1,3 @@
-files/*
-docs/*
+files/* linguist-vendored
+docs/* linguist-vendored
+*.jl.html linguist-language=HTML
