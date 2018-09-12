@@ -7,7 +7,7 @@
 ### The highly productive Julia web framework
 Genie is a full-stack MVC web framework that provides a streamlined and efficient workflow for developing modern web applications. It builds on Julia's strengths (high-level, high-performance, dynamic, JIT compiled), exposing a rich API and a powerful toolset for productive web development.
 
-## Current status
+### Current status
 Genie is now compatible with Julia v1.0 (and it's the only version of Julia supported anymore).
 This is a recent development (mid September 2018) so more testing is needed.
 
