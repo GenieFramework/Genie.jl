@@ -154,7 +154,7 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Params
   isempty(accept_order_parts) && set_negotiated_content() && return res
 
   for mime in accept_order_parts
-    if contains(mime, "/")
+    if occursin("/", mime)
       content_type = split(mime, "/")[2] |> lowercase |> Symbol
       if haskey(Genie.Renderer.CONTENT_TYPES, content_type)
         params.collection[:response_type] = content_type
@@ -551,10 +551,10 @@ function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
 
   for rp in split(route, "/", keepempty = false)
     if startswith(rp, ":")
-      param_type =  if contains(rp, "::")
+      param_type =  if occursin("::", rp)
                       x = split(rp, "::")
                       rp = x[1]
-                      getfield(current_module(), Symbol(x[2]))
+                      getfield(@__MODULE__, Symbol(x[2]))
                     else
                       Any
                     end
@@ -582,10 +582,10 @@ function parse_channel(channel::String) :: Tuple{String,Vector{String},Vector{An
 
   for rp in split(channel, "/", keepempty = false)
     if startswith(rp, ":")
-      param_type =  if contains(rp, "::")
+      param_type =  if occursin("::", rp)
                       x = split(rp, "::")
                       rp = x[1]
-                      getfield(current_module(), Symbol(x[2]))
+                      getfield(@__MODULE__, Symbol(x[2]))
                     else
                       Any
                     end
@@ -684,7 +684,7 @@ end
 Utility function to process nested keys and set them up in `params`.
 """
 function nested_keys(k::String, v, params::Params) :: Nothing
-  if contains(k, ".")
+  if occursin(".", k)
     parts = split(k, ".", limit = 2)
     nested_val_key = Symbol(parts[1])
     if haskey(params.collection, nested_val_key) && isa(params.collection[nested_val_key], Dict)
