@@ -43,12 +43,6 @@ git-tree-sha1 = "3017c662a988bcb8a3f43306a793617c6524d476"
 uuid = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
 version = "1.0.0"
 
-[[DataStreams]]
-deps = ["Dates", "Missings", "Pkg", "Test", "WeakRefStrings"]
-git-tree-sha1 = "69c72a1beb4fc79490c361635664e13c8e4a9548"
-uuid = "9a8bc11e-79be-5b39-94d7-1ccc349a1a85"
-version = "0.4.1"
-
 [[DataStructures]]
 deps = ["InteractiveUtils", "REPL", "Random", "Serialization", "Test"]
 git-tree-sha1 = "5162c360c52e9265e0bfafb71415c31f746f7e04"
@@ -58,12 +52,6 @@ version = "0.12.0"
 [[Dates]]
 deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
-
-[[DecFP]]
-deps = ["BinaryProvider", "Compat", "Libdl", "SpecialFunctions"]
-git-tree-sha1 = "5c783376875e7f7757d574945a97c3afb56ae2c5"
-uuid = "55939f99-70c6-5e9b-8bb0-5071ed7d61fd"
-version = "0.4.6"
 
 [[DelimitedFiles]]
 deps = ["Mmap"]
@@ -84,7 +72,7 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[Genie]]
 deps = ["ArgParse", "DataStructures", "Dates", "Distributed", "Gumbo", "HTTP", "HttpCommon", "JSON", "Markdown", "MbedTLS", "Memento", "Millboard", "Nettle", "Nullables", "OhMyREPL", "Pkg", "Reactive", "Reexport", "Revise", "SHA", "Serialization", "Sockets", "URIParser", "Unicode", "WebSockets", "YAML"]
-git-tree-sha1 = "c1260f21865a6a11128cd2a0adbf9cb1e06a1573"
+git-tree-sha1 = "fa17f58aaa79b72cef3571e4bbd83e387b435ac6"
 repo-rev = "master"
 repo-url = "https://github.com/essenciary/Genie.jl"
 uuid = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
@@ -159,12 +147,6 @@ git-tree-sha1 = "21622ffb05343e51bc5b95c3576a71b26183809d"
 uuid = "39ec1447-df44-5f4c-beaa-866f30b4d3b2"
 version = "0.2.0"
 
-[[Missings]]
-deps = ["Dates", "InteractiveUtils", "SparseArrays", "Test"]
-git-tree-sha1 = "196528fa1df03df435025f52f9c1ff8356f94738"
-uuid = "e1d29d7a-bbdc-5cf2-9ac0-f12de2c33e28"
-version = "0.3.0"
-
 [[Mmap]]
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
@@ -173,12 +155,6 @@ deps = ["Compat", "Dates", "Pkg"]
 git-tree-sha1 = "4bf69aaf823b119b034e091e16b18311aa191663"
 uuid = "78c3b35d-d492-501b-9361-3d52fe80e533"
 version = "0.5.7"
-
-[[MySQL]]
-deps = ["BinaryProvider", "DataStreams", "Dates", "DecFP", "Libdl", "Missings", "Pkg", "Test"]
-git-tree-sha1 = "2f14118e79226c5c8f827e13c83de1368b59fede"
-uuid = "39abe10b-433b-5dbd-92d4-e302a9df00cd"
-version = "0.6.0"
 
 [[Nettle]]
 deps = ["BinDeps", "BinaryProvider", "Libdl", "Pkg", "Test"]
@@ -255,12 +231,6 @@ uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
 deps = ["LinearAlgebra", "Random"]
 uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
-[[SpecialFunctions]]
-deps = ["BinDeps", "BinaryProvider", "Compat", "Libdl"]
-git-tree-sha1 = "d12f8917be3782f4b800ba16003b8d0d4858c2e5"
-uuid = "276daf66-3868-5448-9aa4-cd146d93841b"
-version = "0.7.0"
-
 [[Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
@@ -305,12 +275,6 @@ uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [[Unicode]]
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
-
-[[WeakRefStrings]]
-deps = ["Missings", "Random", "Test"]
-git-tree-sha1 = "d4631352d65840254d33ab703e2de3d9768cdb77"
-uuid = "ea10d353-3f73-51f8-a26c-33c1cb351aa5"
-version = "0.5.2"
 
 [[WebSockets]]
 deps = ["Base64", "Dates", "Distributed", "HTTP", "MbedTLS", "Pkg", "Random", "Sockets", "Test"]
