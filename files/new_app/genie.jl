@@ -37,8 +37,8 @@ include(joinpath("src", "Toolbox.jl")); using .Toolbox
 
 using Genie
 
-Core.eval(Genie, Meta.parse("push!(LOAD_PATH, joinpath(\"$(pwd())\", \"src\"))"))
-Core.eval(Genie, Meta.parse("const ROOT_PATH = \"$(pwd())\""))
+Core.eval(Genie, Meta.parse("""push!(LOAD_PATH, joinpath($(repr(pwd())), "src"))"""))
+Core.eval(Genie, Meta.parse("""const ROOT_PATH = $(repr(pwd())) """))
 Core.eval(Genie, Meta.parse("const App = $(@__MODULE__).App"))
 Core.eval(Genie, Meta.parse("const Toolbox = $(@__MODULE__).Toolbox"))
 
