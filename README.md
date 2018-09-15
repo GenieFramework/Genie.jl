@@ -118,7 +118,7 @@ julia> edit("config/routes.jl")
 ```
 
 Append this at the bottom of the `routes.jl` file and save it:
-```
+```julia
 route("/hello") do
   "Welcome to Genie!"
 end
@@ -128,35 +128,51 @@ Visit `http://localhost:8000/hello` for a warm welcome!
 
 ### Loading an app
 
-At any time, you can load an existing Genie app into the Julia REPL.
-From the command line you can start a Genie interactive session by using
+At any time, you can load and serve an existing Genie app.
 
-##### MacOS / Linux / *nix
+##### Julia's REPL
+First, make sure that you're in the root dir of the app (there should be a `genie.jl` file there, that's what bootstraps the app).
+
+Then run
+```julia
+julia> using Genie
+julia> Genie.REPL.load_app()
 ```
+
+The app's environment will now be loaded.
+
+In order to start the web server execute
+```julia
+julia> Genie.AppServer.startup()
+```
+
+##### MacOS / Linux
+You can start an interactive REPL in your app's environment by executing `bin/repl` in the os shell.
+```sh
 $ bin/repl
+```
+The app's environment will now be loaded.
+
+In order to start the web server execute
+```julia
+julia> Genie.AppServer.startup()
 ```
 
 If, instead, you want to directly start the server, use
-```
+```sh
 $ bin/server
 ```
 
 ##### Windows
-On Windows, `repl.bat` and `server.bat` are provided inside the `bin/` folder. Just double click them to start an interactive REPL session or a server session, respectively.
+On Windows it's similar to the macOS and Linux, but dedicated Windows scripts, `repl.bat` and `server.bat` are provided inside the `bin/` folder.
+Double click them or execute them in the os shell to start an interactive REPL session or a server session, respectively.
 
 ##### Juno / Jupyter / other Julia environment
-
+First, make sure that you `cd` into your app's root folder (there should be a `genie.jl` file there, that's what bootstraps the app).
 ```julia
 using Genie
-Genie.REPL.run_repl_app()
+Genie.REPL.load_app()
 ```
-
-or simply
-
-```julia
-include("genie.jl")
-```
-
 
 ## Next steps
 If you want to learn more about Genie you can
