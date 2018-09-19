@@ -258,9 +258,10 @@ using BooksController
 route("/bgbooks", BooksController.billgatesbooks)
 ```
 
-That's all! If you now visit `http://localhost:8000/bgbooks` you'll see Bill's Gates list of recommended books for 2017.
+That's all! If you now visit `http://localhost:8000/bgbooks` you'll see Bill's Gates list of recommended books.
 
 ### Adding views
+Coming soon
 
 ---
 
