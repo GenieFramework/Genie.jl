@@ -143,7 +143,7 @@ function write_resource_file(resource_path::String, file_name::String, resource_
   end
 
   try
-    Genie.App.load_resources()
+    Main.load_resources()
   catch ex
     log("Not in app, skipping autoload", :warn)
   end

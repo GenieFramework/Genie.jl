@@ -93,7 +93,7 @@ Now if we access http://localhost:8000/sum/2/3 we should see `5`
 
 ---
 
-## Creating a Genie app (project)
+## Working with Genie apps (projects)
 
 Working with Genie in an interactive environment can be useful -- but usually we want to persist our application and reload it between sessions. One way to achieve that is to save it as an IJulia notebook and rerun the cells. However, you can get the most of Genie by working with Genie apps. A Genie app is an MVC web application which promotes the convention-over-configuration principle. Which means that by working with a few predefined files, within the Genie app structure, Genie can lift a lot of weight and massively improve development productivity. This includes automatic module loading and reloading, dedicated configuration files, logging, environments, code generators, and more.
 
@@ -119,6 +119,7 @@ julia> edit("config/routes.jl")
 
 Append this at the bottom of the `routes.jl` file and save it:
 ```julia
+# config/routes.jl
 route("/hello") do
   "Welcome to Genie!"
 end
@@ -173,6 +174,97 @@ First, make sure that you `cd` into your app's root folder (there should be a `g
 using Genie
 Genie.REPL.load_app()
 ```
+
+### Loading your Julia code into the Genie app
+If you have an existing Julia application or standalone codebase which you'd like to expose over the web through your Genie app, the easiest thing to do is to drop the files into the `lib/` folder. The `lib/` folder is automatically added by Genie to the `LOAD_PATH`.
+
+You can also add folders under `lib/`, they will be recursively added to `LOAD_PATH`. Beware though that this only happens when the Genie app is initially loaded. Hence, an app restart might be required.
+
+Once you module is added to `lib/` it will become available in your app's environment. For example, say we have a file `lib/MyLib.jl`:
+```julia
+# lib/MyLib.jl
+module MyLib
+
+using Dates
+
+function isitfriday()
+  Dates.dayofweek(Dates.now()) == Dates.Friday
+end
+
+end
+```
+
+Then we can reference it in `config/routes.jl` as follows:
+```julia
+# config/routes.jl
+import Genie.Router: route
+using MyLib
+
+route("/friday") do
+  MyLib.isitfriday() ? "Yes, it's Friday!" : "No, not yet :("
+end
+```
+
+## Working with resources
+Adding your code to the `routes.jl` file or placing it into the `lib/` folder works great for small projects, where you want to quickly publish some features on the web. But for any larger projects we're better off we're better off using Genie's MVC structure. By employing the Module View Controller design pattern we can break our code in modules with clear responsabilities. Modular code is easier to write, test and maintain.
+
+A Genie app is structured around the concept of "resources". A resource represents a business entity (something like a user, or a product, or an account) and maps to a bundle of files (controller, model, views, etc).
+
+Resources live under `app/resources/`. For example, if we have a web app about "books", a "books/" folder would be placed in `app/resources/` and would contain all the files for publishing books on the web.
+
+### Using Controllers
+Controllers are used to orchestrate interactions between client requests, models (DB access), and views (response rendering). In a standard workflow a route points to a method in the controller -- which is responsible for building and sending the response.
+
+Let's add a "books" controller. We could do it by hand -- but Genie comes with handy generators which will happily do the boring work for us.
+
+#### Generate the Controller
+Let's generate our `BooksController`:
+```julia
+genie> Genie.REPL.new_controller("Books")
+[2018-09-19 22:41:17|info]: New controller created at app/resources/books/BooksController.jl
+```
+
+Great! Let's edit `BooksController.jl` and add something to it. For example, a function which returns somf of Bill Gate's recommended books would be nice. Make sure that `BooksController.jl` looks like this:
+```julia
+# app/resources/books/BooksController.jl
+module BooksController
+
+const BillGatesBooks = Book[
+  Book("The Best We Could Do", "Thi Bui"),
+  Book("Evicted: Poverty and Profit in the American City", "Matthew Desmond"),
+  Book("Believe Me: A Memoir of Love, Death, and Jazz Chickens", "Eddie Izzard"),
+  Book("The Sympathizer", "Viet Thanh Nguyen"),
+  Book("Energy and Civilization, A History", "Vaclav Smil")
+]
+
+function billgatesbooks()
+  response = "
+    <h1>This is Bill's Gates list of recommended books for 2017</h1>
+    <ul>
+      $( mapreduce(b -> "<li>$(b.title) by $(b.author)", *, BillGatesBooks) )
+    </ul>
+  "
+end
+
+end
+```
+
+That should be clear enough -- just a plain Julia module. Now, let's expose our `billgatesbooks`. We need to add a new route which points to it:
+```julia
+# config/routes.jl
+using Genie.Router
+import Genie.Router: route
+
+using BooksController
+
+route("/bgbooks", BooksController.billgatesbooks)
+```
+
+That's all! If you now visit `http://localhost:8000/bgbooks` you'll see Bill's Gates list of recommended books for 2017.
+
+### Adding views
+
+---
 
 ## Next steps
 If you want to learn more about Genie you can

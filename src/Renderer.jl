@@ -51,10 +51,10 @@ end
 Invokes the HTML renderer of the underlying configured templating library.
 """
 function html(resource::Symbol, action::Symbol, layout::Symbol = DEFAULT_LAYOUT_FILE; vars...) :: Dict{Symbol,String}
-  HTMLTemplateEngine.html(resource, action, layout; vars...)
+  HTMLTemplateEngine.render_html(resource, action, layout; vars...)
 end
 function html(view::String, layout::String; vars...) :: Dict{Symbol,String}
-  HTMLTemplateEngine.html(view, layout; vars...)
+  HTMLTemplateEngine.render_html(view, layout; vars...)
 end
 
 
@@ -78,7 +78,7 @@ end
 
 
 function flax(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE; vars...) :: Dict{Symbol,String}
-  HTMLTemplateEngine.flax(resource, action, layout; vars...)
+  HTMLTemplateEngine.render_flax(resource, action, layout; vars...)
 end
 
 
@@ -88,7 +88,7 @@ end
 Invokes the JSON renderer of the underlying configured templating library.
 """
 function json(resource::Union{Symbol,String}, action::Union{Symbol,String}; vars...) :: Dict{Symbol,String}
-  JSONTemplateEngine.json(resource, action; vars...)
+  JSONTemplateEngine.render_json(resource, action; vars...)
 end
 
 

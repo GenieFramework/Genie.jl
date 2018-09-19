@@ -91,7 +91,7 @@ end
 Returns wether or not `word` is a plural.
 """
 function is_plural(word::String) :: Bool
-  word = normalize_string(word, casefold = true)
+  word = Unicode.normalize(word, casefold = true)
   irr_word = irregular(word)
   (! isnull(irr_word) && word != Base.get(irr_word)[1]) ||
     (! isnull(irr_word) && word == Base.get(irr_word)[2]) ||
@@ -115,7 +115,7 @@ end
 Wether or not `word` has an irregular singular or plural form.
 """
 function irregular(word::String) :: Nullable{Tuple{String,String}}
-  word = normalize_string(word, casefold = true)
+  word = Unicode.normalize(word, casefold = true)
 
   for (k, v) in IRREGULAR_NOUNS
     (word == k || word == v) && return Nullable{Tuple{String,String}}( (k,v) )

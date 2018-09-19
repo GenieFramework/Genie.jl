@@ -101,7 +101,7 @@ Creates a new `model` file.
 """
 function new_model(model_name::String) :: Nothing
   SearchLight.Generator.new_model(Dict{String,Any}("model:new" => model_name))
-  Genie.App.load_resources()
+  Main.load_resources()
 
   nothing
 end
@@ -114,7 +114,7 @@ Creates a new `controller` file.
 """
 function new_controller(controller_name::String) :: Nothing
   Genie.Generator.new_controller(Dict{String,Any}("controller:new" => controller_name))
-  Genie.App.load_resources()
+  Main.load_resources()
 
   nothing
 end
@@ -127,7 +127,7 @@ Creates a new `channel` file.
 """
 function new_channel(channel_name::String) :: Nothing
   Genie.Generator.new_channel(Dict{String,Any}("channel:new" => channel_name))
-  Genie.App.load_resources()
+  Main.load_resources()
 
   nothing
 end
@@ -141,7 +141,7 @@ Creates all the files associated with a new resource.
 function new_resource(resource_name::String) :: Nothing
   Genie.Generator.new_resource(Dict{String,Any}("resource:new" => resource_name))
   try
-    Genie.App.load_resources()
+    Main.load_resources()
   catch ex
     log("Not in app, skipping autoload", :warn)
   end
@@ -202,8 +202,8 @@ function reload_app() :: Nothing
 
   is_dev() && Revise.revise(App)
 
-  App.load_configurations()
-  App.load_initializers()
+  Main.load_configurations()
+  Main.load_initializers()
 
   log("The app was reloaded.", :info)
 

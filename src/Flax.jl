@@ -51,18 +51,6 @@ task_local_storage(:__vars, Dict{Symbol,Any}())
 task_local_storage(:__yield, "")
 
 
-# """
-# """
-# function show(io::IO, m::MIME"text/html", elem::HTMLString)
-#   write(io, m, elem)
-# end
-#
-#
-# function string(elem::HTMLString)
-#   String(elem)
-# end
-
-
 mutable struct SyncBinding{T}
   typ::Symbol # one of :data, :computed, :method
   sync::Bool
@@ -196,17 +184,20 @@ end
 
 Generates a regular HTML element in the form <...></...>
 """
-function normal_element(f::Function, elem::String, attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()) :: HTMLString
+function normal_element(f::Function, elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   normal_element(f(), elem, attrs...)
 end
-function normal_element(children::Union{String,Vector{String}}, elem::String, attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()) :: HTMLString
+function normal_element(children::Union{String,Vector{String}}, elem::String, attrs::Pair{Symbol,Any}) :: HTMLString
+  normal_element(children, elem, Pair{Symbol,Any}[attrs])
+end
+function normal_element(children::Union{String,Vector{String}}, elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   children = join(children)
   a = attributes(attrs)
   elem = normalize_element(elem)
 
   "<$(elem * (! isempty(a) ? (" " * join(a, " ")) : ""))>$(prepare_template(children))</$elem>"
 end
-function normal_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()) :: HTMLString
+function normal_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   normal_element("", elem, attrs...)
 end
 
@@ -216,7 +207,7 @@ end
 
 Generates a void HTML element in the form <...>
 """
-function void_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()) :: HTMLString
+function void_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   a = attributes(attrs)
   elem = normalize_element(elem)
 
@@ -315,11 +306,11 @@ end
 
 
 """
-    html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
+    render_html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
 
 Renders a HTML view corresponding to a resource and a controller action.
 """
-function html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
+function render_html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
   try
     task_local_storage(:__vars, Dict{Symbol,Any}(vars))
     task_local_storage(:__yield, include_template(joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action))))
@@ -332,7 +323,7 @@ function html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict
     rethrow(ex)
   end
 end
-function html(view::String, layout::String = "<% @yield %>"; vars...) :: Dict{Symbol,String}
+function render_html(view::String, layout::String = "<% @yield %>"; vars...) :: Dict{Symbol,String}
   try
     task_local_storage(:__vars, Dict{Symbol,Any}(vars))
 
@@ -357,11 +348,11 @@ end
 
 
 """
-    flax(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
+    render_flax(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
 
 Renders a Flax view corresponding to a resource and a controller action.
 """
-function flax(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String}; vars...) :: Dict{Symbol,String}
+function render_flax(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String}; vars...) :: Dict{Symbol,String}
   err_msg = "The Flax view must return a function"
   try
     julia_action_template_func = joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action) * FILE_EXT) |> include
@@ -400,7 +391,7 @@ end
 
 Renders a JSON view corresponding to a resource and a controller action.
 """
-function json(resource::Union{Symbol,String}, action::Union{Symbol,String}; vars...) :: Dict{Symbol,String}
+function render_json(resource::Union{Symbol,String}, action::Union{Symbol,String}; vars...) :: Dict{Symbol,String}
   try
     task_local_storage(:__vars, Dict{Symbol,Any}(vars))
 
@@ -455,6 +446,7 @@ end
 """
 function build_module(content::String, path::String) :: Bool
   module_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl")
+  isdir(joinpath(Genie.BUILD_PATH, BUILD_NAME)) || mkpath(joinpath(Genie.BUILD_PATH, BUILD_NAME))
   open(module_path, "w") do io
     write(io, "# $path \n\n")
     write(io, content)
