@@ -197,7 +197,7 @@ end
 Then we can reference it in `config/routes.jl` as follows:
 ```julia
 # config/routes.jl
-import Genie.Router: route
+using Genie.Router
 using MyLib
 
 route("/friday") do
@@ -221,7 +221,7 @@ Let's add a "books" controller. We could do it by hand -- but Genie comes with h
 Let's generate our `BooksController`:
 ```julia
 genie> Genie.REPL.new_controller("Books")
-[2018-09-19 22:41:17|info]: New controller created at app/resources/books/BooksController.jl
+[info]: New controller created at app/resources/books/BooksController.jl
 ```
 
 Great! Let's edit `BooksController.jl` and add something to it. For example, a function which returns somf of Bill Gate's recommended books would be nice. Make sure that `BooksController.jl` looks like this:
@@ -253,8 +253,6 @@ That should be clear enough -- just a plain Julia module. Now, let's expose our 
 ```julia
 # config/routes.jl
 using Genie.Router
-import Genie.Router: route
-
 using BooksController
 
 route("/bgbooks", BooksController.billgatesbooks)
