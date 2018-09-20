@@ -29,11 +29,11 @@ const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :pa
 const BOOL_ATTRIBUTES = [:checked, :disabled, :selected]
 
 const FILE_EXT      = ".flax.jl"
-const TEMPLATE_EXT  = ".flax.html"
+const TEMPLATE_EXT  = [".flax.html", ".jl.html"]
 const JSON_FILE_EXT = ".json.jl"
-const MARKDOWN_FILE_EXT = ".md"
+const MARKDOWN_FILE_EXT = [".md", ".jl.md"]
 
-const SUPPORTED_HTML_OUTPUT_FILE_FORMATS = [TEMPLATE_EXT, MARKDOWN_FILE_EXT]
+const SUPPORTED_HTML_OUTPUT_FILE_FORMATS = [TEMPLATE_EXT...]
 
 const HTMLString = String
 const JSONString = String
@@ -236,12 +236,16 @@ Includes a template inside another.
 """
 function include_template(path::String; partial = true, func_name = "") :: String
   if Genie.config.log_views
-    log("Including $path", :info)
+    log("Including $path")
     @time _include_template(path, partial = partial, func_name = func_name)
   else
     _include_template(path, partial = partial, func_name = func_name)
   end
 end
+
+
+"""
+"""
 function _include_template(path::String; partial = true, func_name = "") :: String
   _path, _extension = "", ""
   if isfile(abspath(path))
@@ -255,38 +259,50 @@ function _include_template(path::String; partial = true, func_name = "") :: Stri
     end
   end
 
-  _path == "" ? error("File not found $(abspath(path)) in $(@__FILE__):$(@__LINE__)") : path = _path
+  isempty(_path) ? error("File not found $(abspath(path)) in $(@__FILE__):$(@__LINE__)") : path = _path
 
-  if _extension == MARKDOWN_FILE_EXT # .md
-    build_path = joinpath(Genie.BUILD_PATH, MD_BUILD_NAME, md_build_name(path))
-    isfile(build_path) && ! build_is_stale(path, build_path) && return read(build_path, String)
+  if _extension in MARKDOWN_FILE_EXT # .md
+    # build_path = joinpath(Genie.BUILD_PATH, MD_BUILD_NAME, md_build_name(path))
+    # isfile(build_path) && ! build_is_stale(path, build_path) && return read(build_path, String)
+    ## isfile(build_path) && ! build_is_stale(path, build_path) && return include_template(build_path, partial = partial, func_name = func_name)
 
-    md_html = Markdown.parse(include_string(string('"', read(path, String), '"'))) |> Markdown.html
-    open(joinpath(Genie.BUILD_PATH, MD_BUILD_NAME, md_build_name(path)), "w") do io
-      write(io, md_html)
-    end
+    file_content = read(path, String)
+    md_html = Markdown.parse(include_string(@__MODULE__, string('"', file_content, '"'))) |> Markdown.html
+    # md_html = Markdown.parse(file_content) |> Markdown.html
+
+    # isdir(joinpath(Genie.BUILD_PATH, MD_BUILD_NAME)) || create_build_folders()
+    # open(joinpath(Genie.BUILD_PATH, MD_BUILD_NAME, md_build_name(path)), "w") do io
+    #   write(io, md_html)
+    # end
 
     return md_html
   end
 
-  f_name = func_name != "" ? Symbol(func_name) : Symbol(function_name(path))
+
+  f_name = isempty(func_name) ? Symbol(function_name(path)) : Symbol(func_name)
   f_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl")
   f_stale = build_is_stale(path, f_path)
+
   if f_stale || ! isdefined(@__MODULE__, f_name)
     if f_stale
-      log("Building view $path", :debug)
+      log("Building view $path")
       @time build_module(html_to_flax(path, partial = partial), path)
     end
     include(joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl"))
   end
-  Base.invokelatest(getfield(@__MODULE__, f_name))
+
+  try
+    Base.invokelatest(getfield(@__MODULE__, f_name))
+  catch ex
+    log("$ex at $(@__FILE__):$(@__LINE__)", :err)
+  end
 end
 
 
 """
 """
 function md_build_name(path::String) :: String
-  replace(path, "/"=>"_")
+  replace(path, "/"=>"_") # * ".jl.html"
 end
 
 
@@ -317,8 +333,8 @@ function render_html(resource::Symbol, action::Symbol, layout::Symbol; vars...) 
 
     Dict{Symbol,String}(:html => include_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false) |> string |> doc)
   catch ex
-    log(string(ex), :err)
-    log("$(@__FILE__):$(@__LINE__)", :err)
+    log(string(ex))
+    log("$(@__FILE__):$(@__LINE__)")
 
     rethrow(ex)
   end
@@ -664,7 +680,7 @@ macro foreach(f, arr)
   quote
     isempty($arr) && return ""
     mapreduce(*, $arr) do _s
-      $f(_s)
+      $f(_s) * "\n"
     end
   end
 end

@@ -229,6 +229,11 @@ Great! Let's edit `BooksController.jl` and add something to it. For example, a f
 # app/resources/books/BooksController.jl
 module BooksController
 
+struct Book
+  title::String
+  author::String
+end
+
 const BillGatesBooks = Book[
   Book("The Best We Could Do", "Thi Bui"),
   Book("Evicted: Poverty and Profit in the American City", "Matthew Desmond"),
@@ -239,7 +244,7 @@ const BillGatesBooks = Book[
 
 function billgatesbooks()
   response = "
-    <h1>This is Bill's Gates list of recommended books for 2017</h1>
+    <h1>Bill's Gates list of recommended books</h1>
     <ul>
       $( mapreduce(b -> "<li>$(b.title) by $(b.author)", *, BillGatesBooks) )
     </ul>
@@ -249,7 +254,7 @@ end
 end
 ```
 
-That should be clear enough -- just a plain Julia module. Now, let's expose our `billgatesbooks`. We need to add a new route which points to it:
+That should be clear enough -- just a plain Julia module. Now, let's expose our `billgatesbooks` method on the web. We need to add a new route which points to it:
 ```julia
 # config/routes.jl
 using Genie.Router
@@ -261,7 +266,201 @@ route("/bgbooks", BooksController.billgatesbooks)
 That's all! If you now visit `http://localhost:8000/bgbooks` you'll see Bill's Gates list of recommended books.
 
 ### Adding views
-Coming soon
+However, putting HTML into the controllers is a bad idea: that should stay in the view files. Let's refactor our code to use views.
+
+The views used for rendering a resource should be placed inside a "views/" folder, within that resource's own folder. So in our case, we will add an `app/resources/books/views/` folder. Just go ahead and do it, Genie does not provide a generator for this simple task.
+
+#### Naming views
+Usually each controller method will have its own rendering logic -- hence, its own view file. Thus, it's a good practice to name the view files just like the methods, so we can keep track of where they're used.
+
+At the moment, Genie supports HTML and Markdown view files. Their type is identified by file extension so that's an important part. The HTML views use a ".jl.html" extension while the Markdown files go with ".jl.md".
+
+#### HTML views
+All right then, let's add our first view file for the `BooksController.billgatesbooks` method. Let's add an HTML view. With Julia:
+```julia
+julia> touch("app/resources/books/views/billgatesbooks.jl.html")
+```
+
+Genie supports a special type of HTML view, where we can embed Julia code. These are high performance compiled views. They are not parsed as strings: instead, the HTML is converted to native Julia rendering code which is cached to the file system and loaded like any other Julia file. Hence, the first time you load a view or ofter you change one, you might notice a certain delay -- it's the time needed to generate and compile the view. On next runs (especially in production) it's blazing fast!
+
+Now all we need to do is to move the HTML code out of the controller and into the view:
+```html
+<!-- billgatesbooks.jl.html -->
+<h1>Bill's Gates list of recommended books</h1>
+<ul>
+   <%
+      @foreach(@vars(:books)) do book
+         "<li>$(book.title) by $(book.author)"
+      end
+   %>
+</ul>
+```
+
+As you can see, it's just plain HTML with embedded Julia. We can add Julia code either by using the `<% ... %>` code block tags. Or by plain string interpolation with `$(...)`. It is very important to keep in mind that Genie views work by rendering a HTML string. Thus, your Julia code _must return a string_ as the result, so that the output of your computation comes up on the page.
+
+Genie provides a series of helpers, like the above used `@foreach` macro.
+
+Also, very important, please notice the `@vars` macro. This is used to access variables which are passed from the controller into the view. We'll see how to do this right now.
+
+#### Rendering views
+We now need to refactor our controller to use the view, passing in the expected variables. We will use the `html!` method which renders and outputs the response. Update the definition of the `billgatesbooks` function to be as follows:
+```julia
+# BooksController.jl
+function billgatesbooks()
+  html!(:books, :billgatesbooks, books = BillGatesBooks)
+end
+```
+
+The `html!` function takes as its arguments:
+* `:books` is the name of the resource (which effectively indicates in which `views` folder Genie should look for the view file)
+* `:billgatesbooks` is the name of the view file. We don't need to pass the extension, Genie will figure it out
+* and finally, we pass the values we want to expose in the view, as keyword arguments. In this scenario, the `books` keyword argument -- which will be available in the view file under `@args(:books)`.
+
+That's it -- our refactored app should be ready!
+
+#### Markdown views
+Markdown views work similar to HTML views -- employing the same embedded Julia functionality. Here is how you can add a Markdown view for our `billgatesbooks` function.
+
+First, create the corresponding view file, using the `.jl.md` extension. Maybe with:
+```julia
+julia> touch("app/resources/books/views/billgatesbooks.jl.md")
+```
+
+Now edit the file and make sure it looks like this:
+```md
+<!-- app/resources/books/views/billgatesbooks.jl.md -->
+# Bill's Gates list of recommended books
+$(
+   @foreach(@vars(:books)) do book
+      "* $(book.title) by $(book.author)"
+   end
+)
+```
+
+Notice that Markdown views do not support the embedded Julia tags `<% ... %>`. Only string interpolation `$(...)` is accepted.
+
+If you reload the page now, however, Genie will still load the HTML view. The reason is that, _if we have only one view file_, Genie will manage. But if there's more than one, the framework won't know which one to pick. It won't error out but will pick the preferred one, which is the HTML version.
+
+It's a simple change in the `BookiesController`: we have to explicitly tell Genie which file to load, extension and all:
+```julia
+# BooksController.jl
+function billgatesbooks()
+  html!(:books, Symbol("billgatesbooks.jl.md"), books = BillGatesBooks)
+end
+```
+
+** Please keep in mind that Markdown files are not compiled, nor cached, so the performance _will_ be affected. **
+
+Here is the `@time` output for rendering the HTML view:
+```julia
+[info]: Including app/resources/books/views/billgatesbooks.jl.html
+  0.000405 seconds (838 allocations: 53.828 KiB)
+```
+
+And here is the `@time` output for the Markdown view:
+```julia
+[info]: Including app/resources/books/views/billgatesbooks.jl.md
+  0.214844 seconds (281.36 k allocations: 13.841 MiB)
+```
+
+### Rendering JSON
+A very common use case for web apps is to serve as backends for RESTful APIs. For this cases, JSON is the preferred data format. You'll be happy to hear that Genie has built in support for JSON responses.
+
+Let's add an endpoint for our API -- which will render Bill Gate's books as JSON.
+
+We can start in the `routes.jl` file, by appending this:
+```julia
+route("/api/v1/bgbooks", BooksController.API.billgatesbooks)
+```
+
+Next, in `BooksController.jl`, append the extra logic (it should look like this):
+```julia
+# BooksController.jl
+module BooksController
+
+using Genie.Renderer
+
+struct Book
+  title::String
+  author::String
+end
+
+const BillGatesBooks = Book[
+  Book("The Best We Could Do", "Thi Bui"),
+  Book("Evicted: Poverty and Profit in the American City", "Matthew Desmond"),
+  Book("Believe Me: A Memoir of Love, Death, and Jazz Chickens", "Eddie Izzard"),
+  Book("The Sympathizer!", "Viet Thanh Nguyen"),
+  Book("Energy and Civilization, A History", "Vaclav Smil")
+]
+
+function billgatesbooks()
+  html!(:books, Symbol("billgatesbooks.jl.html"), books = BillGatesBooks)
+end
+
+
+module API
+
+using ..BooksController
+using JSON
+
+function billgatesbooks()
+  JSON.json(BooksController.BillGatesBooks)
+end
+
+end
+
+end
+```
+
+Keep in mind that you're free to organize the code as you see fit -- not necessarily like this. It's just one way to do it.
+
+If you go to `http://localhost:8000/api/v1/bgbooks` it should already work.
+
+Not a bad start, but we can do better. First, the mime type of the response is not right. By default Genie will return `text/html`. We need `application/json`. That's easy to fix though, we can just use Genie's `respond` method. The `API` submodule should look like this:
+```julia
+module API
+
+using ..BooksController
+using Genie.Renderer
+using JSON
+
+function billgatesbooks()
+  respond(JSON.json(BooksController.BillGatesBooks), "application/json")
+end
+
+end
+```
+
+If you reload the "page", you'll get a proper JSON response. Great!
+
+However, we have just committed one of the cardinal sins of API development. We have just forever coupled our internal data structure to its external representation. This will make future refactoring very complicated and error prone. The solution is to, again, use views, to fully control how we render our data -- and decouple the data structure from its rendering on the web.
+
+#### JSON views
+Genie has support for JSON views -- these are plain Julia files which have the ".json.jl" extension. Let's add one in our `views/` folder:
+```julia
+julia> touch("app/resources/books/views/billgatesbooks.json.jl")
+```
+
+We can now create a proper response. Put this in the newly created view file:
+```julia
+# app/resources/books/views/billgatesbooks.json.jl
+Dict(
+  "Bill's Gates list of recommended books" => @vars(:books)
+)
+```
+
+Final step, instructing `BooksController` to render the view:
+```julia
+function billgatesbooks()
+  json!(:books, :billgatesbooks, books = BooksController.BillGatesBooks)
+end
+```
+This should hold no surprises -- the `json!` function is similar to the `html!` one we've seen before.
+
+That's all -- everything should work!
+
+## Accessing databases with SeachLight models
+... Coming up ... 
 
 ---
 

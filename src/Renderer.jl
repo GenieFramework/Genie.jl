@@ -98,7 +98,7 @@ end
 
 Invokes the JSON renderer of the underlying configured templating library and wraps it into a `HTTP.Response`.
 """
-function respond_with_json(resource::Union{Symbol,String}, action::Union{Symbol,String}; vars...) :: Response
+function respond_with_json(resource::Union{Symbol,String}, action::Union{Symbol,String}; vars...) :: HTTP.Response
   json(resource, action; vars...) |> respond
 end
 const json! = respond_with_json
@@ -159,6 +159,9 @@ end
 function respond(body::String, content_type::Symbol) :: HTTP.Response
   HTTP.Response(200, ["Content-Type" => CONTENT_TYPES[content_type]], body = body)
 end
+function respond(body::String, content_type::String) :: HTTP.Response
+  HTTP.Response(200, ["Content-Type" => content_type], body = body)
+end
 function respond(response::Tuple, headers = Dict{AbstractString,AbstractString}()) :: HTTP.Response
   respond(response[1], response[2], [h for h in headers])
 end
@@ -187,7 +190,7 @@ end
 
 Constructs an error `Response`.
 """
-function http_error(status_code; id = "", code = "", title = "", msg = "")
+function http_error(status_code; id = "", code = "", title = "", msg = "") :: HTTP.Response
   respond(msg, status_code, Dict{String,String}())
 end
 const error! = http_error

@@ -30,7 +30,7 @@ function id() :: String
     log("$(@__FILE__):$(@__LINE__)", :warn)
 
     if ! Genie.Configuration.is_prod()
-      log("Generating temporary session id", :warn)
+      log("Generating temporary secret token", :warn)
       Core.eval(Genie, :(const SECRET_TOKEN = $(Genie.REPL.secret_token())))
     else
       error("Can't compute session id - please make sure SECRET_TOKEN is defined in config/secrets.jl")
