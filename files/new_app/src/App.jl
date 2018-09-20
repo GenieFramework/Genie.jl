@@ -207,23 +207,8 @@ function load() :: Nothing
   load_initializers()
   load_helpers()
 
-  try
-    load_libs()
-  catch ex
-    log(ex, :warn)
-  end
-
-  try
-    load_resources()
-  catch ex
-    log(ex, :warn)
-  end
-
-  try
-    load_libs()
-  catch ex
-    log(ex, :warn)
-  end
+  load_libs()
+  load_resources()
 
   load_routes_definitions()
   load_channels_definitions()
