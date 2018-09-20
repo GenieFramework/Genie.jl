@@ -1,3 +1,4 @@
+cd(@__DIR__)
 using Pkg
 pkg"activate ."
 
