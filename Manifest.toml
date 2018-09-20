@@ -167,10 +167,10 @@ uuid = "5fb14364-9ced-5910-84b2-373655c76a03"
 version = "0.3.0"
 
 [[OrderedCollections]]
-deps = ["Random", "Serialization", "Test"]
-git-tree-sha1 = "cc23c786049328c93138da14e7020a464d707a23"
+deps = ["Pkg", "Random", "Serialization", "Test"]
+git-tree-sha1 = "41da1edba028376b58520ca01d9a41e29f855d55"
 uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
-version = "0.1.0"
+version = "1.0.1"
 
 [[Pkg]]
 deps = ["Dates", "LibGit2", "Markdown", "Printf", "REPL", "Random", "SHA", "UUIDs"]
