@@ -244,7 +244,7 @@ const BillGatesBooks = Book[
 
 function billgatesbooks()
   response = "
-    <h1>Bill's Gates list of recommended books</h1>
+    <h1>Bill Gates' list of recommended books</h1>
     <ul>
       $( mapreduce(b -> "<li>$(b.title) by $(b.author)", *, BillGatesBooks) )
     </ul>
@@ -263,7 +263,7 @@ using BooksController
 route("/bgbooks", BooksController.billgatesbooks)
 ```
 
-That's all! If you now visit `http://localhost:8000/bgbooks` you'll see Bill's Gates list of recommended books.
+That's all! If you now visit `http://localhost:8000/bgbooks` you'll see Bill Gates' list of recommended books.
 
 ### Adding views
 However, putting HTML into the controllers is a bad idea: that should stay in the view files. Let's refactor our code to use views.
@@ -286,7 +286,7 @@ Genie supports a special type of HTML view, where we can embed Julia code. These
 Now all we need to do is to move the HTML code out of the controller and into the view:
 ```html
 <!-- billgatesbooks.jl.html -->
-<h1>Bill's Gates list of recommended books</h1>
+<h1>Bill Gates' top $( length(@vars(:books)) ) recommended books</h1>
 <ul>
    <%
       @foreach(@vars(:books)) do book
@@ -296,7 +296,9 @@ Now all we need to do is to move the HTML code out of the controller and into th
 </ul>
 ```
 
-As you can see, it's just plain HTML with embedded Julia. We can add Julia code either by using the `<% ... %>` code block tags. Or by plain string interpolation with `$(...)`. It is very important to keep in mind that Genie views work by rendering a HTML string. Thus, your Julia code _must return a string_ as the result, so that the output of your computation comes up on the page.
+As you can see, it's just plain HTML with embedded Julia. We can add Julia code by using the `<% ... %>` code block tags -- these should be used for more complex, multiline expressions. Or by plain string interpolation with `$(...)` -- for simple values outputting.
+
+It is very important to keep in mind that Genie views work by rendering a HTML string. Thus, your Julia code _must return a string_ as the result, so that the output of your computation comes up on the page.
 
 Genie provides a series of helpers, like the above used `@foreach` macro.
 
@@ -329,7 +331,7 @@ julia> touch("app/resources/books/views/billgatesbooks.jl.md")
 Now edit the file and make sure it looks like this:
 ```md
 <!-- app/resources/books/views/billgatesbooks.jl.md -->
-# Bill's Gates list of recommended books
+# Bill Gates' $( length(@vars(:books)) ) recommended books
 $(
    @foreach(@vars(:books)) do book
       "* $(book.title) by $(book.author)"
@@ -337,7 +339,7 @@ $(
 )
 ```
 
-Notice that Markdown views do not support the embedded Julia tags `<% ... %>`. Only string interpolation `$(...)` is accepted.
+Notice that Markdown views do not support the embedded Julia tags `<% ... %>`. Only string interpolation `$(...)` is accepted and it works across multiple lines.
 
 If you reload the page now, however, Genie will still load the HTML view. The reason is that, _if we have only one view file_, Genie will manage. But if there's more than one, the framework won't know which one to pick. It won't error out but will pick the preferred one, which is the HTML version.
 
@@ -425,7 +427,7 @@ end
 Reload the page and you'll see the new heading.
 
 #### @yield
-There is a special instruction in the layouts: `@yield`. It outputs the content of the view. So basically where this macro is present, Genie will output the HTML resulting from rendering the view. 
+There is a special instruction in the layouts: `@yield`. It outputs the content of the view. So basically where this macro is present, Genie will output the HTML resulting from rendering the view.
 
 
 ### Rendering JSON
@@ -510,7 +512,7 @@ We can now create a proper response. Put this in the newly created view file:
 ```julia
 # app/resources/books/views/billgatesbooks.json.jl
 Dict(
-  "Bill's Gates list of recommended books" => @vars(:books)
+  "Bill Gates' list of recommended books" => @vars(:books)
 )
 ```
 
