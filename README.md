@@ -363,12 +363,77 @@ And here is the `@time` output for the Markdown view:
   0.214844 seconds (281.36 k allocations: 13.841 MiB)
 ```
 
+#### Taking advantage of layouts
+Genie's views are rendered within a layout file. Layouts are meant to render the theme of the website -- the elements which are common on all the pages. It can include visible elements, like the main menu or the footer. But also maybe the `<head>` tag or the assets tags (`<link>` and `<script>` tags for loading CSS and JavaScript files).
+
+Every Genie app has a main layout file which is used by default -- it can be found in `app/layouts/` and it's called `app.jl.html`. It looks like this:
+```html
+<!-- app/layouts/app.jl.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Genie :: The highly productive Julia web framework</title>
+    <!-- link rel="stylesheet" href="/css/application.css" / -->
+  </head>
+  <body>
+    <%
+      @yield
+    %>
+    <!-- script src="/js/application.js"></script -->
+  </body>
+</html>
+```
+
+We can edit it. For example, add this right under the `<body>` tag:
+```html
+<h1>Welcome to top books</h1>
+```
+
+If you reload the page at `http://localhost:8000/bgbooks` you will see the new heading.
+
+But we don't have to stick to the default; we can add additional layouts. Let's suppose that we have for example an admin area which should have a completely different theme. We can add a dedicated layout for that:
+```julia
+julia> touch("app/layouts/admin.jl.html")
+```
+
+Now edit it and make it look like this:
+```html
+<!-- app/layouts/admin.jl.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Genie Admin</title>
+  </head>
+  <body>
+    <h1>Books admin</h1>
+    <%
+      @yield
+    %>
+  </body>
+</html>
+```
+
+Finally, we must instruct our `BooksController` to use it. The `html!` function takes a third, optional argument, for the layout (a symbol too). Update the ... function to look like this:
+```julia
+# BooksController.jl
+function billgatesbooks()
+  html!(:books, :billgatesbooks, :admin, books = BillGatesBooks)
+end
+```
+
+Reload the page and you'll see the new heading.
+
+#### @yield
+There is a special instruction in the layouts: `@yield`. It outputs the content of the view. So basically where this macro is present, Genie will output the HTML resulting from rendering the view. 
+
+
 ### Rendering JSON
 A very common use case for web apps is to serve as backends for RESTful APIs. For this cases, JSON is the preferred data format. You'll be happy to hear that Genie has built in support for JSON responses.
 
 Let's add an endpoint for our API -- which will render Bill Gate's books as JSON.
 
-We can start in the `routes.jl` file, by appending this:
+We can start in the `routes.jl` file, by appending this
 ```julia
 route("/api/v1/bgbooks", BooksController.API.billgatesbooks)
 ```
@@ -459,8 +524,10 @@ This should hold no surprises -- the `json!` function is similar to the `html!` 
 
 That's all -- everything should work!
 
+A word of warning: the two `billgatesbooks` are very similar, up to the point where the code can't be considered DRY. There are better ways of implementing this in Genie, using a single method and branching the response based entirely on the request. But for now, let's keep it simple.
+
 ## Accessing databases with SeachLight models
-... Coming up ... 
+... Coming up ...
 
 ---
 
