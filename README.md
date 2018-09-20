@@ -175,7 +175,7 @@ using Genie
 Genie.REPL.load_app()
 ```
 
-### Loading your Julia code into the Genie app
+## Adding your Julia libraries to a Genie app
 If you have an existing Julia application or standalone codebase which you'd like to expose over the web through your Genie app, the easiest thing to do is to drop the files into the `lib/` folder. The `lib/` folder is automatically added by Genie to the `LOAD_PATH`.
 
 You can also add folders under `lib/`, they will be recursively added to `LOAD_PATH`. Beware though that this only happens when the Genie app is initially loaded. Hence, an app restart might be required.
