@@ -254,7 +254,17 @@ end
 end
 ```
 
-That should be clear enough -- just a plain Julia module. Now, let's expose our `billgatesbooks` method on the web. We need to add a new route which points to it:
+That should be clear enough -- just a plain Julia module.
+
+##### Checkpoint
+Before exposing it on the web, we can test it in the REPL:
+```julia
+julia> BooksController.billgatesbooks()
+```
+Make sure it works as expected.
+
+##### Setup the route
+Now, let's expose our `billgatesbooks` method on the web. We need to add a new route which points to it:
 ```julia
 # config/routes.jl
 using Genie.Router
@@ -311,6 +321,11 @@ We now need to refactor our controller to use the view, passing in the expected 
 function billgatesbooks()
   html!(:books, :billgatesbooks, books = BillGatesBooks)
 end
+```
+
+We also need to add `Genie.Router` as a dependency, to get access to the `html!` method. So add this at the top of the `BooksController` module:
+```julia
+using Genie.Renderer
 ```
 
 The `html!` function takes as its arguments:
@@ -528,20 +543,16 @@ That's all -- everything should work!
 
 A word of warning: the two `billgatesbooks` are very similar, up to the point where the code can't be considered DRY. There are better ways of implementing this in Genie, using a single method and branching the response based entirely on the request. But for now, let's keep it simple.
 
-## Accessing databases with SeachLight models
-... Coming up ...
-
 ---
 
-## Next steps
-If you want to learn more about Genie you can
-* check out the API docs (out of date -- updates coming soon)
-  * [Genie Web Framework](http://geniejl.readthedocs.io/en/latest/build/)
-  * [SearchLight ORM](http://searchlightjl.readthedocs.io/en/latest/build/)
-  * [Flax Templates](http://flaxjl.readthedocs.io/en/latest/build/)
-* read the guides (coming soon)
-* take a look at the slides for the Genie presentation at the 2017 JuliaCon [JuliaCon 2017 Genie Slides](https://github.com/essenciary/JuliaCon-2017-Slides/tree/master/v1.1)
-* visit [genieframework.com](http://genieframework.com) for more resources
+## Accessing databases with SeachLight models
+Due to the stateless nature of web requests, web apps can be made more powerful and feature-rich by coupling them with a database. The database is used for persisting and retrieving the data between user sessions. Genie has excellent support for working with relational database through its tight integration with SearchLight, a Julia ORM. The Genie + SearchLight combo can be used to productively develop the so called CRUD based apps (CRUD stands for Create-Read-Update-Delete and describes the data workflow in the apps).
+
+Let's begin by adding SearchLight to our Genie app. All Genie apps manage their dependencies in their own environment, through their `Project.toml` and `Manifest.toml` files. So you need to make sure that you're in `pkg> ` mode
+
+... to be continued ...
+
+---
 
 
 ## Acknowledgements
