@@ -42,58 +42,8 @@ const BUILD_NAME    = "FlaxViews"
 const MD_BUILD_NAME = "MarkdownViews"
 
 
-const DATAPREFIX = "d__"
-const COMPUTEDPREFIX = "c__"
-const METHODPREFIX = "m__"
-
-
 task_local_storage(:__vars, Dict{Symbol,Any}())
 task_local_storage(:__yield, "")
-
-
-mutable struct SyncBinding{T}
-  typ::Symbol # one of :data, :computed, :method
-  sync::Bool
-  key::String
-  data::T
-end
-SyncBinding(data::T; sync = true, typ = :computed, key = syncid(typ, data)) where {T} = SyncBinding(typ, sync, key, data)
-
-DataSyncBinding(data::T; sync = false, key = syncid(:data, data)) where {T} = SyncBinding(extract(data), typ = :data, sync = sync, key = key)
-DataSyncBinding(x::SyncBinding) = DataSyncBinding(x.data, sync = x.sync)
-
-ComputedSyncBinding(data::T; sync = true, key = syncid(:computed, data)) where {T} = SyncBinding(data, typ = :computed, sync = sync, key = key)
-ComputedSyncBinding(x::SyncBinding) = ComputedSyncBinding(x.data, sync = x.sync)
-
-MethodSyncBinding(data::T; sync = true, key = syncid(:method, data)) where {T} = SyncBinding(data, typ = :method, sync = sync, key = key)
-MethodSyncBinding(x::SyncBinding) = MethodSyncBinding(x.data, sync = x.sync)
-
-string(x::SyncBinding) = x.key
-hash(x::SyncBinding) = hash(x.typ) + hash(x.key)
-(==)(x::SyncBinding, y::SyncBinding) = hash(x) == hash(y)
-
-
-const SYNCABLE = SyncBinding[]
-
-
-syncid(x::SyncBinding) = x.key
-const binding = syncid
-
-function syncid(typ::Symbol, data::T)::String where {T}
-  "$(typ == :method ? METHODPREFIX : (typ == :computed ? COMPUTEDPREFIX : DATAPREFIX))$(data)"
-end
-const syncref = syncid
-
-
-function sync!(x::SyncBinding)
-  if in(x, SYNCABLE)
-    replace!(SYNCABLE, SYNCABLE[findfirst(s -> s == x, SYNCABLE)] => x)
-  else
-    push!(SYNCABLE, x)
-  end
-
-  SYNCABLE
-end
 
 
 function extract(data)
@@ -104,11 +54,6 @@ function extract(data)
   else
     data
   end
-end
-
-
-function invoke_sync_callbacks(params)
-
 end
 
 
@@ -137,31 +82,8 @@ Parses HTML attributes.
 function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()) :: Vector{String}
   a = String[]
   for (k,v) in attrs
+    # data attrs
     startswith(string(k), "data_") && (k = replace(string(k), r"^data_" => "data-"))
-
-    # synced properties
-    if startswith(string(k), "sync!")
-      k = replace(string(k), r"^sync!" => "v-bind:")
-      sync!(ComputedSyncBinding(v)) # register computed property
-      sync!(DataSyncBinding(v)) # register data property
-
-      v = ComputedSyncBinding(v).key
-    end
-
-    # synced events
-    if startswith(string(k), "syncon!")
-      k = replace(string(k), r"^syncon!" => "v-on:")
-      sync!(MethodSyncBinding(v))
-      v = MethodSyncBinding(v).key
-    end
-
-    # client side bindings
-    if occursin("!", string(k))
-      parts = split(string(k), "!")
-      k = "v-" * join(parts, ":")
-
-      isa(v, SyncBinding) && sync!(v)
-    end
 
     # keywords
     string(k) == "typ" && (k = "type")
@@ -478,14 +400,16 @@ end
 Reads `file_path` template from disk.
 """
 function read_template_file(file_path::String) :: String
-  html = String[]
-  open(file_path) do f
-    for line in enumerate(eachline(f))
-      push!(html, parse_tags(line))
-    end
-  end
+  # html = String[]
+  # open(file_path) do f
+  #   for line in enumerate(eachline(f))
+  #     push!(html, parse_tags(line))
+  #   end
+  # end
+  #
+  # join(html, "\n")
 
-  join(html, "\n")
+  read(file_path, String)
 end
 
 
