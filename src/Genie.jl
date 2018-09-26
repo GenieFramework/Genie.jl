@@ -42,7 +42,6 @@ include("Cache.jl")
 
 include(joinpath("UI", "TwitterBootstrap.jl"))
 include(joinpath("UI", "Predix.jl"))
-include(joinpath("UI", "Vue.jl"))
 
 using .Macros, .Loggers
 using .Inflector, .Util
