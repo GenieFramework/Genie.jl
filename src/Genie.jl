@@ -47,7 +47,7 @@ using .Macros, .Loggers
 using .Inflector, .Util
 using .FileTemplates, .Generator, .Tester, .Encryption, .Cookies, .Sessions, .Input, .Renderer, .Router, .Helpers, .AppServer, .Commands
 using .Flax, .AppServer
-using .TwitterBootstrap, .Predix, .Vue
+using .TwitterBootstrap, .Predix
 
 include(joinpath(@__DIR__, "REPL.jl"))
 
