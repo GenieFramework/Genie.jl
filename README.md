@@ -546,11 +546,229 @@ A word of warning: the two `billgatesbooks` are very similar, up to the point wh
 ---
 
 ## Accessing databases with SeachLight models
-Due to the stateless nature of web requests, web apps can be made more powerful and feature-rich by coupling them with a database. The database is used for persisting and retrieving the data between user sessions. Genie has excellent support for working with relational database through its tight integration with SearchLight, a Julia ORM. The Genie + SearchLight combo can be used to productively develop the so called CRUD based apps (CRUD stands for Create-Read-Update-Delete and describes the data workflow in the apps).
+You can get the most out of Genie and develop high-class-kick-butt web apps by pairing it with its twin brother, SearchLight. Genie has excellent support for working with relational databases through its tight integration with SearchLight, a native Julia ORM, which was initially developed as part of Genie itself. The Genie + SearchLight combo can be used to productively develop CRUD based apps (CRUD stands for Create-Read-Update-Delete and describes the data workflow in the apps).
 
-Let's begin by adding SearchLight to our Genie app. All Genie apps manage their dependencies in their own environment, through their `Project.toml` and `Manifest.toml` files. So you need to make sure that you're in `pkg> ` mode
+SearchLight represents the "M" part in Genie's MVC architecture.
 
-... to be continued ...
+Let's begin by adding SearchLight to our Genie app. All Genie apps manage their dependencies in their own environment, through their `Project.toml` and `Manifest.toml` files. So you need to make sure that you're in `pkg> ` shell mode first and that our books up project is loaded. You do this by running `pkg> activate .` in the root folder of the app. Next, we add SearchLight:
+```julia
+pkg> add https://github.com/essenciary/SearchLight.jl
+```
+
+### Setup the database connection
+As I was saying, Genie is made to integrate with SearchLight -- thus, in the "config/" folder there's a DB configuration file already waiting for us: "config/database.yml". Update the top part of the file to look like this:
+```yaml
+env: dev
+
+dev:
+  adapter: SQLite
+  database: db/books.sqlite
+  config:
+```
+
+Now we can ask SearchLight to load it up like this:
+```julia
+julia> SearchLight.Configuration.load_db_connection()
+Dict{String,Any} with 3 entries:
+  "config"   => nothing
+  "database" => "db/books.sqlite"
+  "adapter"  => "SQLite"
+```
+
+Let's just go ahead and try it out by connecting to the DB:
+```julia
+julia> SearchLight.Configuration.load_db_connection() |> SearchLight.Database.connect!
+SQLite.DB("db/books.sqlite")
+```
+
+Awesome! If all went well you should have a `books.sqlite` database in the "db/" folder.
+
+### Managing the database schema with SearchLight migrations
+Database migrations provide a way to reliably, consistently and repeatedly apply (and undo) schema transformations. They are basically specialised scripts for adding, removing and altering DB tables -- these scripts are placed under version control and are managed by a dedicated system which knows which scripts have been run and which not, and is able to run them in the correct order.
+
+SearchLight needs its own DB table to keep track of the state of the migrations so let's set it up:
+```julia
+julia> SearchLight.db_init()
+[info | SearchLight.Loggers]: SQL QUERY: CREATE TABLE `schema_migrations` (
+    `version` varchar(30) NOT NULL DEFAULT '',
+    PRIMARY KEY (`version`)
+  )
+[info | SearchLight.Loggers]: Created table schema_migrations
+```
+
+### Creating our Book model
+SearchLight, just like Genie, uses the convention-over-configuration design pattern. It prefers for things to be setup in a certain way and provides sensible defaults, versus having to define everything in extensive configuration files. And fortunately, we don't even have to remember what these conventions are, as SearchLight also comes with an extensive set of generators. Lets ask SearchLight to create our model:
+```julia
+julia> SearchLight.Generator.new_resource("Book")
+[info | SearchLight.Loggers]: New model created at /Users/adrian/Dropbox/Projects/testapp/app/resources/books/Books.jl
+[info | SearchLight.Loggers]: New table migration created at /Users/adrian/Dropbox/Projects/testapp/db/migrations/2018100120160530_create_table_books.jl
+[info | SearchLight.Loggers]: New validator created at /Users/adrian/Dropbox/Projects/testapp/app/resources/books/BooksValidator.jl
+[info | SearchLight.Loggers]: New unit test created at /Users/adrian/Dropbox/Projects/testapp/test/unit/books_test.jl
+[warn | SearchLight.Loggers]: Can't write to app info
+```
+
+SearchLight has created the `Books.jl` model, the \*2018100120160530_create_table_books.jl migration file, the `BooksValidator.jl` model validator and the `books_test.jl` test file. Don't worry about the warning, that's meant for SearchLight apps.
+
+#### Writing the table migration
+Lets begin by writing the migration to create our books table. SearchLight provides a powerful DSL for writing migrations. Each migration file needs to define two methods: `up` which applies the changes -- and `down` which undoes the effects of the `up` method. So in our `up` method we want to create the table -- and in `down` we want to drop the table.
+
+The naming convention for tables in SearchLight is that the table name should be pluralized ("books") -- because a table contains multiple books. But don't worry, the migration file should already be pre-populated with the correct table name.
+
+Edit the `db/migrations/*_create_table_books.jl` file and make it look like this:
+```julia
+module CreateTableBooks
+
+import SearchLight.Migrations: create_table, column, primary_key, add_index, drop_table
+
+function up()
+  create_table(:books) do
+    [
+      primary_key()
+      column(:title, :string)
+      column(:author, :string)
+    ]
+  end
+
+  add_index(:books, :title)
+  add_index(:books, :author)
+end
+
+function down()
+  drop_table(:books)
+end
+
+end
+```
+
+The DSL is pretty readable: in the `up` function we call `create_table` and pass an array of columns: a primary key, a `title` column and an `author` column. We also add two indices. The `down` method invokes the `drop_table` function to delete the table.
+
+#### Running the migration
+We can see what SearchLight knows about our migrations with:
+```julia
+julia> SearchLight.Migration.status()
+|   |                  Module name & status  |
+|   |                             File name  |
+|---|----------------------------------------|
+|   |                 CreateTableBooks: DOWN |
+| 1 | 2018100120160530_create_table_books.jl |
+```
+
+So our migration is in the down state -- meaning that it's `up` method has not been run. We can easily fix this:
+```julia
+julia> SearchLight.Migration.last_up()
+[info | SearchLight.Loggers]: SQL QUERY: CREATE TABLE books (id INTEGER PRIMARY KEY , title VARCHAR , author VARCHAR )
+[info | SearchLight.Loggers]: SQL QUERY: CREATE  INDEX books__idx_title ON books (title)
+[info | SearchLight.Loggers]: SQL QUERY: CREATE  INDEX books__idx_author ON books (author)
+[info | SearchLight.Loggers]: Executed migration CreateTableBooks up
+```
+
+If we recheck the status, the migration is up:
+```julia
+julia> SearchLight.Migration.status()
+|   |                  Module name & status  |
+|   |                             File name  |
+|---|----------------------------------------|
+|   |                   CreateTableBooks: UP |
+| 1 | 2018100120160530_create_table_books.jl |
+```
+Our table is ready!
+
+#### Defining the model
+Now it's time to edit our model file at "app/resources/books/Books.jl". Another convention is SearchLight is that we're using the pluralized name ("Books") for the module -- because it's for managing multiple books. And within it we define a type, called Book -- which represents an item and maps a row in the underlying database.
+
+The `Books.jl` file should look like this:
+```julia
+module Books
+
+using SearchLight, Nullables, SearchLight.Validation, BooksValidator
+
+export Book
+
+mutable struct Book <: AbstractModel
+  ### INTERNALS
+  _table_name::String
+  _id::String
+  _serializable::Vector{Symbol}
+
+  ### FIELDS
+  id::DbId
+  title::String
+  author::String
+
+  ### constructor
+  Book(;
+    ### FIELDS
+    id = DbId(),
+    title = "",
+    author = ""
+  ) = new("books", "id", Symbol[],
+          id, title, author
+          )
+end
+
+end
+```
+
+Pretty straightforward stuff: we define a new `mutable struct` which maps our previous `Book` type except that it has a few special fields used by SearchLight. We also define a default keyword constructor as SearchLight needs it.
+
+#### Using our model
+To make things more interesting, we should import our current books into the database. Add this function to the `Books.jl` module, under the type definition:
+```julia
+function seed()
+  BillGatesBooks = [
+    ("The Best We Could Do", "Thi Bui"),
+    ("Evicted: Poverty and Profit in the American City", "Matthew Desmond"),
+    ("Believe Me: A Memoir of Love, Death, and Jazz Chickens", "Eddie Izzard"),
+    ("The Sympathizer!", "Viet Thanh Nguyen"),
+    ("Energy and Civilization, A History", "Vaclav Smil")
+  ]
+  for b in BillGatesBooks
+    Book(title = b[1], author = b[2]) |> SearchLight.save!
+  end
+end
+```
+
+Now, to try things out. Genie takes care of loading all our resource files for us when we load the app. Also, Genie comes with a special file called an initializer, which can automatically load the database configuration and setup SearchLight. Just edit "config/initializers/searchlight.jl" and uncomment the code.
+
+Great, now we can start a new REPL with our app:
+```
+pkg> activate .
+julia> using Genie
+julia> Genie.REPL.load_app()
+```
+
+Everything should be loaded now:
+```julia
+genie> using Books
+genie> Books.seed()
+```
+There should be a list of queries showing how the data is inserted in the DB. If you want to make sure, just ask SearchLight to retrieve them:
+```julia
+genie> SearchLight.all(Book)
+genie> 5-element Array{Book,1}:
+
+Book
+|    KEY |                                    VALUE |
+|--------|------------------------------------------|
+| author |                                  Thi Bui |
+|     id | Nullable{Union{Int32, Int64, String}}(1) |
+|  title |                     The Best We Could Do |
+
+Book
+|    KEY |                                            VALUE |
+|--------|--------------------------------------------------|
+| author |                                  Matthew Desmond |
+|     id |         Nullable{Union{Int32, Int64, String}}(2) |
+|  title | Evicted: Poverty and Profit in the American City |
+
+# output truncated
+```
+All good!
+
+The last thing is to update our controller to use the model. Make sure that `app/resources/books/BooksController.jl` reads like this:
+```julia
+
+```
 
 ---
 

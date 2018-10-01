@@ -400,16 +400,15 @@ end
 Reads `file_path` template from disk.
 """
 function read_template_file(file_path::String) :: String
-  # html = String[]
-  # open(file_path) do f
-  #   for line in enumerate(eachline(f))
-  #     push!(html, parse_tags(line))
-  #   end
-  # end
-  #
-  # join(html, "\n")
+  html = String[]
+  open(file_path) do f
+    for line in enumerate(eachline(f))
+      push!(html, parse_tags(line))
+    end
+  end
 
-  read(file_path, String)
+  join(html, "\n")
+  # read(file_path, String)
 end
 
 
