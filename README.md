@@ -767,8 +767,38 @@ All good!
 
 The last thing is to update our controller to use the model. Make sure that `app/resources/books/BooksController.jl` reads like this:
 ```julia
+module BooksController
 
+using Genie.Renderer, SearchLight, Books
+
+function billgatesbooks()
+  html!(:books, :billgatesbooks, books = SearchLight.all(Book))
+end
+
+module API
+
+using ..BooksController
+using Genie.Renderer
+using JSON
+
+function billgatesbooks()
+  json!(:books, :billgatesbooks, books = SearchLight.all(Book))
+end
+
+end
+
+end
 ```
+
+Now if we just start the server we'll see the list of books served from the database.
+
+Let's add a new book to see how it works:
+```julia
+newbook = Book(title = "Leonardo da Vinci", author = "Walter Isaacson")
+SearchLight.save!(newbook)
+```
+
+If you reload the page at http://localhost:8000/bgbooks the new book should show up.
 
 ---
 
