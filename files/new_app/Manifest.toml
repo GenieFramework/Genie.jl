@@ -21,9 +21,9 @@ version = "0.8.10"
 
 [[BinaryProvider]]
 deps = ["Libdl", "Pkg", "SHA", "Test"]
-git-tree-sha1 = "b530fbeb6f41ab5a83fbe3db1fcbe879334bcd2d"
+git-tree-sha1 = "48c147e63431adbcee69bc40b04c3f0fec0a4982"
 uuid = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
-version = "0.4.2"
+version = "0.5.0"
 
 [[Codecs]]
 deps = ["Test"]
@@ -33,9 +33,9 @@ version = "0.5.0"
 
 [[Compat]]
 deps = ["Base64", "Dates", "DelimitedFiles", "Distributed", "InteractiveUtils", "LibGit2", "Libdl", "LinearAlgebra", "Markdown", "Mmap", "Pkg", "Printf", "REPL", "Random", "Serialization", "SharedArrays", "Sockets", "SparseArrays", "Statistics", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "ae262fa91da6a74e8937add6b613f58cd56cdad4"
+git-tree-sha1 = "ff2595695fc4f14427358ce2593f867085c45dcb"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
-version = "1.1.0"
+version = "1.2.0"
 
 [[Crayons]]
 deps = ["Pkg", "Test"]
@@ -44,10 +44,10 @@ uuid = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
 version = "1.0.0"
 
 [[DataStructures]]
-deps = ["InteractiveUtils", "REPL", "Random", "Serialization", "Test"]
-git-tree-sha1 = "5162c360c52e9265e0bfafb71415c31f746f7e04"
+deps = ["InteractiveUtils", "OrderedCollections", "REPL", "Random", "Serialization", "Test"]
+git-tree-sha1 = "8fc6e166e24fda04b2b648d4260cdad241788c54"
 uuid = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
-version = "0.12.0"
+version = "0.14.0"
 
 [[Dates]]
 deps = ["Printf"]
@@ -72,7 +72,7 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[Genie]]
 deps = ["ArgParse", "Dates", "Distributed", "Gumbo", "HTTP", "HttpCommon", "JSON", "Markdown", "MbedTLS", "Memento", "Millboard", "Nettle", "Nullables", "OhMyREPL", "OrderedCollections", "Pkg", "Reactive", "Reexport", "Revise", "SHA", "Serialization", "Sockets", "URIParser", "Unicode", "WebSockets", "YAML"]
-git-tree-sha1 = "79976c5a1b5716e0185897187d8f6876421b47d8"
+git-tree-sha1 = "7e6a8d71f853624082f5ede81fcfaef613d47e3f"
 repo-rev = "master"
 repo-url = "https://github.com/essenciary/Genie.jl"
 uuid = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
@@ -86,9 +86,9 @@ version = "0.5.1"
 
 [[HTTP]]
 deps = ["Base64", "Dates", "Distributed", "IniFile", "MbedTLS", "Sockets", "Test"]
-git-tree-sha1 = "8a0f75e8b09df01d9f1ba9ad3fbf8b4983595d20"
+git-tree-sha1 = "b881f69331e85642be315c63d05ed65d6fc8a05b"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-version = "0.6.14"
+version = "0.7.1"
 
 [[HttpCommon]]
 deps = ["Dates", "Nullables", "Pkg", "Test", "URIParser"]
@@ -130,10 +130,10 @@ deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[MbedTLS]]
-deps = ["BinaryProvider", "Compat", "Libdl", "Pkg", "Sockets"]
-git-tree-sha1 = "17d5a81dbb1e682d4ff707c01f0afe5948068fa6"
+deps = ["BinaryProvider", "Libdl", "Pkg", "Random", "Sockets", "Test"]
+git-tree-sha1 = "3775d205b09b624aa06d39012a8920ba99cb3b8b"
 uuid = "739be429-bea8-5141-9913-cc70e7f3736d"
-version = "0.6.0"
+version = "0.6.3"
 
 [[Memento]]
 deps = ["Compat", "JSON", "Libdl", "Nullables", "Pkg", "Syslogs", "Test", "TimeZones"]
@@ -176,9 +176,9 @@ version = "0.3.0"
 
 [[OrderedCollections]]
 deps = ["Pkg", "Random", "Serialization", "Test"]
-git-tree-sha1 = "41da1edba028376b58520ca01d9a41e29f855d55"
+git-tree-sha1 = "85619a3f3e17bb4761fe1b1fd47f0e979f964d5b"
 uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
-version = "1.0.1"
+version = "1.0.2"
 
 [[Pkg]]
 deps = ["Dates", "LibGit2", "Markdown", "Printf", "REPL", "Random", "SHA", "UUIDs"]
@@ -198,9 +198,9 @@ uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[Reactive]]
 deps = ["DataStructures", "Distributed", "Pkg", "Test"]
-git-tree-sha1 = "3df2dd92990196089943473e742039050dbf7271"
+git-tree-sha1 = "2384e3bda9dcd16750ff605fdf817e18cfdd9bae"
 uuid = "a223df75-4e93-5b7c-acf9-bdd599c0f4de"
-version = "0.8.1"
+version = "0.8.2"
 
 [[Reexport]]
 deps = ["Pkg"]
@@ -278,9 +278,9 @@ uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [[WebSockets]]
 deps = ["Base64", "Dates", "Distributed", "HTTP", "MbedTLS", "Pkg", "Random", "Sockets", "Test"]
-git-tree-sha1 = "3c6ecaf54a03e05ce3edb77a3da4e793bfe59a8e"
+git-tree-sha1 = "ba1baf9b1943d3d6e3f1379c04de2760f4f9da78"
 uuid = "104b5d7c-a370-577a-8038-80a2059c5097"
-version = "1.0.1"
+version = "1.0.0"
 
 [[YAML]]
 deps = ["Codecs", "Compat", "Pkg"]
