@@ -70,6 +70,14 @@ version = "0.9.0"
 [[FileWatching]]
 uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
+[[Genie]]
+deps = ["ArgParse", "Dates", "Distributed", "Gumbo", "HTTP", "HttpCommon", "JSON", "Markdown", "MbedTLS", "Memento", "Millboard", "Nettle", "Nullables", "OhMyREPL", "OrderedCollections", "Pkg", "Reactive", "Reexport", "Revise", "SHA", "Serialization", "Sockets", "URIParser", "Unicode", "WebSockets", "YAML"]
+git-tree-sha1 = "e7d933aeba8e18df60f622765c2c057d278c262e"
+repo-rev = "master"
+repo-url = "https://github.com/essenciary/Genie.jl"
+uuid = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
+version = "0.1.0"
+
 [[Gumbo]]
 deps = ["AbstractTrees", "BinaryProvider", "Libdl", "Pkg", "Test"]
 git-tree-sha1 = "b16b6c5127e8c6be3084e6658c5fb5dd1f97d7fd"
