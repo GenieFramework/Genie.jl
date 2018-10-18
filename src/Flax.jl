@@ -654,7 +654,7 @@ Utility function for dumping a variable.
 function var_dump(var, html = true) :: String
   iobuffer = IOBuffer()
   show(iobuffer, var)
-  content = takebuf_string(iobuffer)
+  content = String(take!(iobuffer))
 
   html ? replace(replace("<code>$content</code>", "\n"=>"<br>"), " "=>"&nbsp;") : content
 end
