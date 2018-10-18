@@ -678,6 +678,7 @@ Now it's time to edit our model file at "app/resources/books/Books.jl". Another 
 
 The `Books.jl` file should look like this:
 ```julia
+# Books.jl
 module Books
 
 using SearchLight, Nullables, SearchLight.Validation, BooksValidator
@@ -714,6 +715,7 @@ Pretty straightforward stuff: we define a new `mutable struct` which maps our pr
 #### Using our model
 To make things more interesting, we should import our current books into the database. Add this function to the `Books.jl` module, under the type definition:
 ```julia
+# Books.jl
 function seed()
   BillGatesBooks = [
     ("The Best We Could Do", "Thi Bui"),
@@ -767,6 +769,7 @@ All good!
 
 The last thing is to update our controller to use the model. Make sure that `app/resources/books/BooksController.jl` reads like this:
 ```julia
+# BooksController.jl
 module BooksController
 
 using Genie.Renderer, SearchLight, Books
@@ -815,6 +818,7 @@ The first one will be used to display the page with the new book form. The secon
 
 Now, to add the methods in `BooksController`. Add these definition under the `billgatesbooks` function (make sure you add them in `BooksController`, not in `BooksController.API`):
 ```julia
+# BooksController.jl
 function new()
   html!(:books, :new)
 end
@@ -831,6 +835,7 @@ julia> touch("app/resources/books/views/new.jl.html")
 ```
 Make sure that it's this content:
 ```html
+<!-- app/resources/books/views/new.jl.html -->
 <h2>Add a new book recommended by Bill Gates</h2>
 <p>
   For inspiration you can visit <a href="https://www.gatesnotes.com/Books" target="_blank">Bill Gates' website</a>
@@ -843,10 +848,45 @@ Make sure that it's this content:
 ```
 Notice that the form's action calls the `link_to` method, passing in the name of the route to generate the URL, resulting in the following HTML: `<form method="POST" action="/bgbooks/create">`.
 
-Let's try it out. Input something and submit the form. 
+We should also update the `BooksController.create` method to do something useful with the form data. Let's make it create a new book, persist it to the database and redirect to the list of books. Here is the code:
+```julia
+# BooksController.jl
+using Genie.Router
+
+function create()
+  Book(title = @params(:book_title), author = @params(:book_author)) |> save && redirect_to(:get_bgbooks)
+end
+```
+A few things are worth pointing out in this snippet:
+1 again, we're accessing the `@params` collection to extract the request data, in this case passing in the names of our form's inputs as parameters. We need to bring `Genie.Router` into scope in order to access `@params`;
+2 we're using the `redirect_to` method to perform a HTTP redirect. As the argument we're passing in the name of the route, just like we did with the form's action. However, we didn't set any route to use this name. It turns out that Genie gives default names to all the routes. We can use these -- but a word of notice: these names are generating using the properties of the route, so if the route changes it's possible that the name will change too. In order to get info about the defined routes you can use the `Router.named_routes` function:
+```julia
+genie> Router.named_routes()
+genie> Dict{Symbol,Any} with 6 entries:
+  :get_bgbooks        => Route("GET", "/bgbooks", billgatesbooks, Dict{Symbol,Any}(), Function[], Function[])
+  :get_bgbooks_new    => Route("GET", "/bgbooks/new", new, Dict{Symbol,Any}(), Function[], Function[])
+  :get                => Route("GET", "/", (), Dict{Symbol,Any}(), Function[], Function[])
+  :get_api_v1_bgbooks => Route("GET", "/api/v1/bgbooks", billgatesbooks, Dict{Symbol,Any}(), Function[], Function[])
+  :create_book        => Route("POST", "/bgbooks/create", create, Dict{Symbol,Any}(), Function[], Function[])
+  :get_friday         => Route("GET", "/friday", (), Dict{Symbol,Any}(), Function[], Function[])
+```
+
+Let's try it out. Input something and submit the form. If everything goes well a new book will be persisted to the database -- and it will be added at the bottom of the list of books.
 
 ---
 
+## Adding data integrity rules with ModelValidators
+TODO
+
+## Caching our responses
+TODO
+
+## Using WebSockets and WebChannels
+TODO
+
+## Setting up an admin area
+
+---
 
 ## Acknowledgements
 * Genie uses a multitude of packages that have been kindly contributed by the Julia community.
