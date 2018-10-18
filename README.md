@@ -802,6 +802,37 @@ If you reload the page at http://localhost:8000/bgbooks the new book should show
 
 ---
 
+## Handling forms
+Now, the problem is that Bill Gates reads -- a lot! It would be much easier if we would allow our users to add a few books themselves, to give us a hand. But since, obviously, we're not going to give them access to our Julia REPL, we should setup a webpage with a form. Let's do it.
+
+We'll start by adding the new routes:
+```julia
+# routes.jl
+route("/bgbooks/new", BooksController.new)
+route("/bgbooks/create", BooksController.create, method = POST, named = :create_book)
+```
+The first one will be used to display the page with the new book form. The second will be the target page for submitting our form - this page will accept the form's payload. Please note that it's configured to match `POST` requests and that we gave it a name. We'll use the name in our form so that Genie will dynamically generate the correct link. This way we'll make sure that our form will always submit to the right URL, even if we change the route (as long as we don't change the name).
+
+Now, to add the methods in `BooksController`. Add these definition under the `billgatesbooks` function (make sure you add them in `BooksController`, not in `BooksController.API`):
+```julia
+function new()
+  html!(:books, :new)
+end
+
+function create()
+  # code here
+end
+```
+The `new` method should be clear: we'll just render a view file called `new`. As for `create`, for now it's just a placeholder.
+
+Finally, to add our view. Add a blank file called `new.jl.html` in `app/resources/books/views`. Using Julia:
+```julia
+julia> touch("app/resources/books/views/new.jl.html")
+```
+
+
+---
+
 
 ## Acknowledgements
 * Genie uses a multitude of packages that have been kindly contributed by the Julia community.
