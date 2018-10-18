@@ -112,6 +112,9 @@ end
 function normal_element(children::Union{String,Vector{String}}, elem::String, attrs::Pair{Symbol,Any}) :: HTMLString
   normal_element(children, elem, Pair{Symbol,Any}[attrs])
 end
+function normal_element(children::Union{String,Vector{String}}, elem::String, attrs...) :: HTMLString
+  normal_element(children, elem, Vector{Pair{Symbol,Any}}(attrs...))
+end
 function normal_element(children::Union{String,Vector{String}}, elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   children = join(children)
   a = attributes(attrs)
