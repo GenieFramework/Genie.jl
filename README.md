@@ -863,7 +863,7 @@ A few things are worth pointing out in this snippet:
 In order to get info about the defined routes you can use the `Router.named_routes` function:
 ```julia
 genie> Router.named_routes()
-genie> Dict{Symbol,Any} with 6 entries:
+genie> Dict{Symbol,Genie.Router.Route} with 6 entries:
   :get_bgbooks        => Route("GET", "/bgbooks", billgatesbooks, Dict{Symbol,Any}(), Function[], Function[])
   :get_bgbooks_new    => Route("GET", "/bgbooks/new", new, Dict{Symbol,Any}(), Function[], Function[])
   :get                => Route("GET", "/", (), Dict{Symbol,Any}(), Function[], Function[])
