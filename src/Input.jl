@@ -63,7 +63,7 @@ function post_from_request!(request::HTTP.Request, input::HttpInput)
 
   # if searchindex(get(headers, "Content-Type", ""), "application/x-www-form-urlencoded") != 0
   if first(something(findfirst("application/x-www-form-urlencoded", get(headers, "Content-Type", "")), 0:-1)) != 0
-    post_url_encoded!(request.data, input.post)
+    post_url_encoded!(request.body, input.post)
   # elseif searchindex(get(headers, "Content-Type", ""), "multipart/form-data") != 0
   elseif first(something(findfirst("multipart/form-data", get(headers, "Content-Type", "")), 0:-1)) != 0
     post_multipart!(request, input.post, input.files)
@@ -87,7 +87,7 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
   if boundary_length > 0
     form_parts::Array{HttpFormPart} = HttpFormPart[]
 
-    get_mutliform_parts!(request.data, form_parts, boundary, boundary_length)
+    get_mutliform_parts!(request.body, form_parts, boundary, boundary_length)
 
     ### Process form parts
     ### (This could potentially be done within get_mutliform_parts! - but then it would be even bigger than it is now)
@@ -111,7 +111,7 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
                 hasFile = true
               end
             elseif getkey(values, "name", nothing) != nothing
-              post_data[values["name"]] = String(part.data)
+              post_data[values["name"]] = String(part.body)
             end
           elseif field == "Content-Type"
             (file.mime, mime) = first(values)
@@ -119,7 +119,7 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
         end # for
 
         if hasFile
-          file.data = part.data
+          file.body = part.body
 
           files[fileFieldName] = file
 
@@ -224,7 +224,7 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
       part = HttpFormPart()
     else
       if captureAsData
-        push!(part.data, byte)
+        push!(part.body, byte)
       else
         ## Check for CR
 

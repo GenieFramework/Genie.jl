@@ -829,7 +829,21 @@ Finally, to add our view. Add a blank file called `new.jl.html` in `app/resource
 ```julia
 julia> touch("app/resources/books/views/new.jl.html")
 ```
+Make sure that it's this content:
+```html
+<h2>Add a new book recommended by Bill Gates</h2>
+<p>
+  For inspiration you can visit <a href="https://www.gatesnotes.com/Books" target="_blank">Bill Gates' website</a>
+</p>
+<form action="$(Genie.Router.link_to(:create_book))" method="POST">
+  <input type="text" name="book_title" placeholder="Book title" /><br />
+  <input type="text" name="book_author" placeholder="Book author" /><br />
+  <input type="submit" value="Add book" />
+</form>
+```
+Notice that the form's action calls the `link_to` method, passing in the name of the route to generate the URL, resulting in the following HTML: `<form method="POST" action="/bgbooks/create">`.
 
+Let's try it out. Input something and submit the form. 
 
 ---
 
