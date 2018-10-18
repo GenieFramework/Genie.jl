@@ -859,7 +859,8 @@ end
 ```
 A few things are worth pointing out in this snippet:
 * again, we're accessing the `@params` collection to extract the request data, in this case passing in the names of our form's inputs as parameters. We need to bring `Genie.Router` into scope in order to access `@params`;
-* we're using the `redirect_to` method to perform a HTTP redirect. As the argument we're passing in the name of the route, just like we did with the form's action. However, we didn't set any route to use this name. It turns out that Genie gives default names to all the routes. We can use these -- but a word of notice: these names are generated using the properties of the route, so if the route changes it's possible that the name will change too. In order to get info about the defined routes you can use the `Router.named_routes` function:
+* we're using the `redirect_to` method to perform a HTTP redirect. As the argument we're passing in the name of the route, just like we did with the form's action. However, we didn't set any route to use this name. It turns out that Genie gives default names to all the routes. We can use these -- but a word of notice: these names are generated using the properties of the route, so if the route changes it's possible that the name will change too. So either make sure your route stays unchanged -- or explicitly name your routes.
+In order to get info about the defined routes you can use the `Router.named_routes` function:
 ```julia
 genie> Router.named_routes()
 genie> Dict{Symbol,Any} with 6 entries:
