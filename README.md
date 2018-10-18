@@ -206,7 +206,7 @@ end
 ```
 
 ## Working with resources
-Adding your code to the `routes.jl` file or placing it into the `lib/` folder works great for small projects, where you want to quickly publish some features on the web. But for any larger projects we're better off we're better off using Genie's MVC structure. By employing the Module View Controller design pattern we can break our code in modules with clear responsabilities. Modular code is easier to write, test and maintain.
+Adding your code to the `routes.jl` file or placing it into the `lib/` folder works great for small projects, where you want to quickly publish some features on the web. But for any larger projects we're better off using Genie's MVC structure. By employing the Module View Controller design pattern we can break our code in modules with clear responsabilities. Modular code is easier to write, test and maintain.
 
 A Genie app is structured around the concept of "resources". A resource represents a business entity (something like a user, or a product, or an account) and maps to a bundle of files (controller, model, views, etc).
 
@@ -431,7 +431,7 @@ Now edit it and make it look like this:
 </html>
 ```
 
-Finally, we must instruct our `BooksController` to use it. The `html!` function takes a third, optional argument, for the layout (a symbol too). Update the ... function to look like this:
+Finally, we must instruct our `BooksController` to use it. The `html!` function takes a third, optional argument, for the layout (a symbol too). Update the `billgatesbooks` function to look like this:
 ```julia
 # BooksController.jl
 function billgatesbooks()
@@ -550,7 +550,7 @@ You can get the most out of Genie and develop high-class-kick-butt web apps by p
 
 SearchLight represents the "M" part in Genie's MVC architecture.
 
-Let's begin by adding SearchLight to our Genie app. All Genie apps manage their dependencies in their own environment, through their `Project.toml` and `Manifest.toml` files. So you need to make sure that you're in `pkg> ` shell mode first and that our books up project is loaded. You do this by running `pkg> activate .` in the root folder of the app. Next, we add SearchLight:
+Let's begin by adding SearchLight to our Genie app. All Genie apps manage their dependencies in their own environment, through their `Project.toml` and `Manifest.toml` files. So you need to make sure that you're in `pkg> ` shell mode first and that our books project is loaded. You do this by running `pkg> activate .` in the root folder of the app. Next, we add SearchLight:
 ```julia
 pkg> add https://github.com/essenciary/SearchLight.jl
 ```
@@ -653,7 +653,7 @@ julia> SearchLight.Migration.status()
 | 1 | 2018100120160530_create_table_books.jl |
 ```
 
-So our migration is in the down state -- meaning that it's `up` method has not been run. We can easily fix this:
+So our migration is in the down state -- meaning that its `up` method has not been run. We can easily fix this:
 ```julia
 julia> SearchLight.Migration.last_up()
 [info | SearchLight.Loggers]: SQL QUERY: CREATE TABLE books (id INTEGER PRIMARY KEY , title VARCHAR , author VARCHAR )
@@ -674,7 +674,7 @@ julia> SearchLight.Migration.status()
 Our table is ready!
 
 #### Defining the model
-Now it's time to edit our model file at "app/resources/books/Books.jl". Another convention is SearchLight is that we're using the pluralized name ("Books") for the module -- because it's for managing multiple books. And within it we define a type, called Book -- which represents an item and maps a row in the underlying database.
+Now it's time to edit our model file at "app/resources/books/Books.jl". Another convention in SearchLight is that we're using the pluralized name ("Books") for the module -- because it's for managing multiple books. And within it we define a type, called `Book` -- which represents an item and maps to a row in the underlying database.
 
 The `Books.jl` file should look like this:
 ```julia
@@ -710,7 +710,7 @@ end
 end
 ```
 
-Pretty straightforward stuff: we define a new `mutable struct` which maps our previous `Book` type except that it has a few special fields used by SearchLight. We also define a default keyword constructor as SearchLight needs it.
+Pretty straightforward stuff: we define a new `mutable struct` which matches our previous `Book` type except that it has a few special fields used by SearchLight. We also define a default keyword constructor as SearchLight needs it.
 
 #### Using our model
 To make things more interesting, we should import our current books into the database. Add this function to the `Books.jl` module, under the type definition:
@@ -814,7 +814,7 @@ We'll start by adding the new routes:
 route("/bgbooks/new", BooksController.new)
 route("/bgbooks/create", BooksController.create, method = POST, named = :create_book)
 ```
-The first one will be used to display the page with the new book form. The second will be the target page for submitting our form - this page will accept the form's payload. Please note that it's configured to match `POST` requests and that we gave it a name. We'll use the name in our form so that Genie will dynamically generate the correct link. This way we'll make sure that our form will always submit to the right URL, even if we change the route (as long as we don't change the name).
+The first route will be used to display the page with the new book form. The second will be the target page for submitting our form - this page will accept the form's payload. Please note that it's configured to match `POST` requests and that we gave it a name. We'll use the name in our form so that Genie will dynamically generate the correct link. This way we'll make sure that our form will always submit to the right URL, even if we change the route (as long as we don't change the name).
 
 Now, to add the methods in `BooksController`. Add these definition under the `billgatesbooks` function (make sure you add them in `BooksController`, not in `BooksController.API`):
 ```julia
@@ -833,7 +833,7 @@ Finally, to add our view. Add a blank file called `new.jl.html` in `app/resource
 ```julia
 julia> touch("app/resources/books/views/new.jl.html")
 ```
-Make sure that it's this content:
+Make sure that it has this content:
 ```html
 <!-- app/resources/books/views/new.jl.html -->
 <h2>Add a new book recommended by Bill Gates</h2>
@@ -858,8 +858,8 @@ function create()
 end
 ```
 A few things are worth pointing out in this snippet:
-1 again, we're accessing the `@params` collection to extract the request data, in this case passing in the names of our form's inputs as parameters. We need to bring `Genie.Router` into scope in order to access `@params`;
-2 we're using the `redirect_to` method to perform a HTTP redirect. As the argument we're passing in the name of the route, just like we did with the form's action. However, we didn't set any route to use this name. It turns out that Genie gives default names to all the routes. We can use these -- but a word of notice: these names are generating using the properties of the route, so if the route changes it's possible that the name will change too. In order to get info about the defined routes you can use the `Router.named_routes` function:
+* again, we're accessing the `@params` collection to extract the request data, in this case passing in the names of our form's inputs as parameters. We need to bring `Genie.Router` into scope in order to access `@params`;
+* we're using the `redirect_to` method to perform a HTTP redirect. As the argument we're passing in the name of the route, just like we did with the form's action. However, we didn't set any route to use this name. It turns out that Genie gives default names to all the routes. We can use these -- but a word of notice: these names are generating using the properties of the route, so if the route changes it's possible that the name will change too. In order to get info about the defined routes you can use the `Router.named_routes` function:
 ```julia
 genie> Router.named_routes()
 genie> Dict{Symbol,Any} with 6 entries:
