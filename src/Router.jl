@@ -242,7 +242,7 @@ end
 
 The list of the defined named routes.
 """
-function named_routes() :: Dict{Symbol,Any}
+function named_routes() :: Dict{Symbol,Route}
   _routes
 end
 
