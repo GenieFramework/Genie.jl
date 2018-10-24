@@ -224,7 +224,7 @@ function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpF
       part = HttpFormPart()
     else
       if captureAsData
-        push!(part.body, byte)
+        push!(part.data, byte)
       else
         ## Check for CR
 
