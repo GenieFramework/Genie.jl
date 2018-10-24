@@ -80,7 +80,7 @@ end
 
 function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::HttpFiles)
   headers = Dict(request.headers)
-  boundary::String = headers["Content-Type"][(searchindex(request.headers["Content-Type"], "boundary=") + 9):end]
+  boundary::String = headers["Content-Type"][(findfirst("boundary=", headers["Content-Type"])[end] + 1):end]
 
   boundary_length::Int = length(boundary)
 
