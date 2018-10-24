@@ -5,10 +5,10 @@ uuid = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
 version = "0.2.0"
 
 [[ArgParse]]
-deps = ["Compat", "Test", "TextWrap"]
-git-tree-sha1 = "295c309124b8385cca4d26b2669b17f9d44d8269"
+deps = ["Compat", "Pkg", "Test", "TextWrap"]
+git-tree-sha1 = "37159c768f28ae52ef9af1e70669d25a68ba7d61"
 uuid = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
-version = "0.6.0"
+version = "0.6.1"
 
 [[Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
@@ -123,9 +123,9 @@ uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[MbedTLS]]
 deps = ["BinaryProvider", "Libdl", "Pkg", "Random", "Sockets", "Test"]
-git-tree-sha1 = "3775d205b09b624aa06d39012a8920ba99cb3b8b"
+git-tree-sha1 = "4b890362c0c2fdb14a575ce927f1f4eeac6dda9f"
 uuid = "739be429-bea8-5141-9913-cc70e7f3736d"
-version = "0.6.3"
+version = "0.6.4"
 
 [[Memento]]
 deps = ["Compat", "JSON", "Libdl", "Nullables", "Pkg", "Syslogs", "Test", "TimeZones"]
@@ -245,9 +245,9 @@ version = "0.3.0"
 
 [[TimeZones]]
 deps = ["Compat", "EzXML", "Mocking", "Nullables", "Pkg"]
-git-tree-sha1 = "aa592cc6012a3452ae74a83e5cf95a04b5b032c2"
+git-tree-sha1 = "43aec3094d7f88d77e01681722dfc93ef43907c5"
 uuid = "f269a46b-ccf7-5d73-abea-4c690281aa53"
-version = "0.8.0"
+version = "0.8.1"
 
 [[Tokenize]]
 deps = ["Printf", "Test"]
