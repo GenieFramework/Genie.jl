@@ -43,11 +43,10 @@ end
 
 """
     set!(res::Response, key::Union{String,Symbol}, value::Any, attributes::Dict) :: Dict{String,HttpCommon.Cookie}
-    set!(res::Response, key::Union{String,Symbol}, value::Any) :: Dict{String,HttpCommon.Cookie}
 
 Sets `value` under the `key` label on the `Cookie`.
 """
-function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attributes::Dict) :: Vector{HTTP.Cookies.Cookie}
+function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attributes::Dict = Dict()) :: Vector{HTTP.Cookies.Cookie}
   normalized_attrs = Dict{Symbol,Any}()
   for (k,v) in attributes
     normalized_attrs[Symbol(lowercase(string(k)))] = v
@@ -55,9 +54,6 @@ function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attribu
   HTTP.Cookie(string(key), string(value) |> Genie.Encryption.encrypt; normalized_attrs...)
 
   HTTP.Cookies.readsetcookies("", "")
-end
-function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any) :: Dict{String,HttpCommon.Cookie}
-  set!(res, key, value, Dict())
 end
 
 
