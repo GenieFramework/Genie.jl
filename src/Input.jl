@@ -111,7 +111,7 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
                 hasFile = true
               end
             elseif getkey(values, "name", nothing) != nothing
-              post_data[values["name"]] = String(part.body)
+              post_data[values["name"]] = String(part.data)
             end
           elseif field == "Content-Type"
             (file.mime, mime) = first(values)
@@ -119,7 +119,7 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
         end # for
 
         if hasFile
-          file.body = part.body
+          file.data = part.data
 
           files[fileFieldName] = file
 
