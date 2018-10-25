@@ -119,7 +119,7 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
         end # for
 
         if hasFile
-          file.body = part.data
+          file.data = part.data
 
           files[fileFieldName] = file
 
