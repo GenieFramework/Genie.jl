@@ -51,7 +51,7 @@ You can now start the web server using
 julia> Genie.AppServer.startup()
 ```
 
-Finally, now navigate to "http://localhost:8000" -- you should see the message "Hi there!".
+Finally, now navigate to "http://localhost:8000" – you should see the message "Hi there!".
 
 We can define more complex URIs which can also map to previously defined functions:
 ```julia
@@ -95,7 +95,7 @@ Now if we access http://localhost:8000/sum/2/3 we should see `5`
 
 ## Working with Genie apps (projects)
 
-Working with Genie in an interactive environment can be useful -- but usually we want to persist our application and reload it between sessions. One way to achieve that is to save it as an IJulia notebook and rerun the cells. However, you can get the most of Genie by working with Genie apps. A Genie app is an MVC web application which promotes the convention-over-configuration principle. Which means that by working with a few predefined files, within the Genie app structure, Genie can lift a lot of weight and massively improve development productivity. This includes automatic module loading and reloading, dedicated configuration files, logging, environments, code generators, and more.
+Working with Genie in an interactive environment can be useful – but usually we want to persist our application and reload it between sessions. One way to achieve that is to save it as an IJulia notebook and rerun the cells. However, you can get the most of Genie by working with Genie apps. A Genie app is an MVC web application which promotes the convention-over-configuration principle. Which means that by working with a few predefined files, within the Genie app structure, Genie can lift a lot of weight and massively improve development productivity. This includes automatic module loading and reloading, dedicated configuration files, logging, environments, code generators, and more.
 
 In order to create a new app, run:
 ```julia
@@ -213,9 +213,9 @@ A Genie app is structured around the concept of "resources". A resource represen
 Resources live under `app/resources/`. For example, if we have a web app about "books", a "books/" folder would be placed in `app/resources/` and would contain all the files for publishing books on the web.
 
 ### Using Controllers
-Controllers are used to orchestrate interactions between client requests, models (DB access), and views (response rendering). In a standard workflow a route points to a method in the controller -- which is responsible for building and sending the response.
+Controllers are used to orchestrate interactions between client requests, models (DB access), and views (response rendering). In a standard workflow a route points to a method in the controller – which is responsible for building and sending the response.
 
-Let's add a "books" controller. We could do it by hand -- but Genie comes with handy generators which will happily do the boring work for us.
+Let's add a "books" controller. We could do it by hand – but Genie comes with handy generators which will happily do the boring work for us.
 
 #### Generate the Controller
 Let's generate our `BooksController`:
@@ -224,7 +224,7 @@ genie> Genie.REPL.new_controller("Books")
 [info]: New controller created at app/resources/books/BooksController.jl
 ```
 
-Great! Let's edit `BooksController.jl` and add something to it. For example, a function which returns somf of Bill Gate's recommended books would be nice. Make sure that `BooksController.jl` looks like this:
+Great! Let's edit `BooksController.jl` and add something to it. For example, a function which returns somf of Bill Gates' recommended books would be nice. Make sure that `BooksController.jl` looks like this:
 ```julia
 # app/resources/books/BooksController.jl
 module BooksController
@@ -254,7 +254,7 @@ end
 end
 ```
 
-That should be clear enough -- just a plain Julia module.
+That should be clear enough – just a plain Julia module.
 
 ##### Checkpoint
 Before exposing it on the web, we can test it in the REPL:
@@ -281,7 +281,7 @@ However, putting HTML into the controllers is a bad idea: that should stay in th
 The views used for rendering a resource should be placed inside a "views/" folder, within that resource's own folder. So in our case, we will add an `app/resources/books/views/` folder. Just go ahead and do it, Genie does not provide a generator for this simple task.
 
 #### Naming views
-Usually each controller method will have its own rendering logic -- hence, its own view file. Thus, it's a good practice to name the view files just like the methods, so we can keep track of where they're used.
+Usually each controller method will have its own rendering logic – hence, its own view file. Thus, it's a good practice to name the view files just like the methods, so we can keep track of where they're used.
 
 At the moment, Genie supports HTML and Markdown view files. Their type is identified by file extension so that's an important part. The HTML views use a ".jl.html" extension while the Markdown files go with ".jl.md".
 
@@ -291,7 +291,7 @@ All right then, let's add our first view file for the `BooksController.billgates
 julia> touch("app/resources/books/views/billgatesbooks.jl.html")
 ```
 
-Genie supports a special type of HTML view, where we can embed Julia code. These are high performance compiled views. They are not parsed as strings: instead, the HTML is converted to native Julia rendering code which is cached to the file system and loaded like any other Julia file. Hence, the first time you load a view or ofter you change one, you might notice a certain delay -- it's the time needed to generate and compile the view. On next runs (especially in production) it's blazing fast!
+Genie supports a special type of HTML view, where we can embed Julia code. These are high performance compiled views. They are not parsed as strings: instead, the HTML is converted to native Julia rendering code which is cached to the file system and loaded like any other Julia file. Hence, the first time you load a view or ofter you change one, you might notice a certain delay – it's the time needed to generate and compile the view. On next runs (especially in production) it's blazing fast!
 
 Now all we need to do is to move the HTML code out of the controller and into the view:
 ```html
@@ -306,7 +306,7 @@ Now all we need to do is to move the HTML code out of the controller and into th
 </ul>
 ```
 
-As you can see, it's just plain HTML with embedded Julia. We can add Julia code by using the `<% ... %>` code block tags -- these should be used for more complex, multiline expressions. Or by plain string interpolation with `$(...)` -- for simple values outputting.
+As you can see, it's just plain HTML with embedded Julia. We can add Julia code by using the `<% ... %>` code block tags – these should be used for more complex, multiline expressions. Or by plain string interpolation with `$(...)` – for simple values outputting.
 
 It is very important to keep in mind that Genie views work by rendering a HTML string. Thus, your Julia code _must return a string_ as the result, so that the output of your computation comes up on the page.
 
@@ -331,12 +331,12 @@ using Genie.Renderer
 The `html!` function takes as its arguments:
 * `:books` is the name of the resource (which effectively indicates in which `views` folder Genie should look for the view file)
 * `:billgatesbooks` is the name of the view file. We don't need to pass the extension, Genie will figure it out
-* and finally, we pass the values we want to expose in the view, as keyword arguments. In this scenario, the `books` keyword argument -- which will be available in the view file under `@args(:books)`.
+* and finally, we pass the values we want to expose in the view, as keyword arguments. In this scenario, the `books` keyword argument – which will be available in the view file under `@args(:books)`.
 
-That's it -- our refactored app should be ready!
+That's it – our refactored app should be ready!
 
 #### Markdown views
-Markdown views work similar to HTML views -- employing the same embedded Julia functionality. Here is how you can add a Markdown view for our `billgatesbooks` function.
+Markdown views work similar to HTML views – employing the same embedded Julia functionality. Here is how you can add a Markdown view for our `billgatesbooks` function.
 
 First, create the corresponding view file, using the `.jl.md` extension. Maybe with:
 ```julia
@@ -381,9 +381,9 @@ And here is the `@time` output for the Markdown view:
 ```
 
 #### Taking advantage of layouts
-Genie's views are rendered within a layout file. Layouts are meant to render the theme of the website -- the elements which are common on all the pages. It can include visible elements, like the main menu or the footer. But also maybe the `<head>` tag or the assets tags (`<link>` and `<script>` tags for loading CSS and JavaScript files).
+Genie's views are rendered within a layout file. Layouts are meant to render the theme of the website – the elements which are common on all the pages. It can include visible elements, like the main menu or the footer. But also maybe the `<head>` tag or the assets tags (`<link>` and `<script>` tags for loading CSS and JavaScript files).
 
-Every Genie app has a main layout file which is used by default -- it can be found in `app/layouts/` and it's called `app.jl.html`. It looks like this:
+Every Genie app has a main layout file which is used by default – it can be found in `app/layouts/` and it's called `app.jl.html`. It looks like this:
 ```html
 <!-- app/layouts/app.jl.html -->
 <!DOCTYPE html>
@@ -448,7 +448,7 @@ There is a special instruction in the layouts: `@yield`. It outputs the content 
 ### Rendering JSON
 A very common use case for web apps is to serve as backends for RESTful APIs. For this cases, JSON is the preferred data format. You'll be happy to hear that Genie has built in support for JSON responses.
 
-Let's add an endpoint for our API -- which will render Bill Gate's books as JSON.
+Let's add an endpoint for our API – which will render Bill Gates' books as JSON.
 
 We can start in the `routes.jl` file, by appending this
 ```julia
@@ -494,7 +494,7 @@ end
 end
 ```
 
-Keep in mind that you're free to organize the code as you see fit -- not necessarily like this. It's just one way to do it.
+Keep in mind that you're free to organize the code as you see fit – not necessarily like this. It's just one way to do it.
 
 If you go to `http://localhost:8000/api/v1/bgbooks` it should already work.
 
@@ -515,10 +515,10 @@ end
 
 If you reload the "page", you'll get a proper JSON response. Great!
 
-However, we have just committed one of the cardinal sins of API development. We have just forever coupled our internal data structure to its external representation. This will make future refactoring very complicated and error prone. The solution is to, again, use views, to fully control how we render our data -- and decouple the data structure from its rendering on the web.
+However, we have just committed one of the cardinal sins of API development. We have just forever coupled our internal data structure to its external representation. This will make future refactoring very complicated and error prone. The solution is to, again, use views, to fully control how we render our data – and decouple the data structure from its rendering on the web.
 
 #### JSON views
-Genie has support for JSON views -- these are plain Julia files which have the ".json.jl" extension. Let's add one in our `views/` folder:
+Genie has support for JSON views – these are plain Julia files which have the ".json.jl" extension. Let's add one in our `views/` folder:
 ```julia
 julia> touch("app/resources/books/views/billgatesbooks.json.jl")
 ```
@@ -537,9 +537,9 @@ function billgatesbooks()
   json!(:books, :billgatesbooks, books = BooksController.BillGatesBooks)
 end
 ```
-This should hold no surprises -- the `json!` function is similar to the `html!` one we've seen before.
+This should hold no surprises – the `json!` function is similar to the `html!` one we've seen before.
 
-That's all -- everything should work!
+That's all – everything should work!
 
 A word of warning: the two `billgatesbooks` are very similar, up to the point where the code can't be considered DRY. There are better ways of implementing this in Genie, using a single method and branching the response based entirely on the request. But for now, let's keep it simple.
 
@@ -556,7 +556,7 @@ pkg> add https://github.com/essenciary/SearchLight.jl
 ```
 
 ### Setup the database connection
-As I was saying, Genie is made to integrate with SearchLight -- thus, in the "config/" folder there's a DB configuration file already waiting for us: "config/database.yml". Update the top part of the file to look like this:
+As I was saying, Genie is made to integrate with SearchLight – thus, in the "config/" folder there's a DB configuration file already waiting for us: "config/database.yml". Update the top part of the file to look like this:
 ```yaml
 env: dev
 
@@ -584,7 +584,7 @@ SQLite.DB("db/books.sqlite")
 Awesome! If all went well you should have a `books.sqlite` database in the "db/" folder.
 
 ### Managing the database schema with SearchLight migrations
-Database migrations provide a way to reliably, consistently and repeatedly apply (and undo) schema transformations. They are basically specialised scripts for adding, removing and altering DB tables -- these scripts are placed under version control and are managed by a dedicated system which knows which scripts have been run and which not, and is able to run them in the correct order.
+Database migrations provide a way to reliably, consistently and repeatedly apply (and undo) schema transformations. They are basically specialised scripts for adding, removing and altering DB tables – these scripts are placed under version control and are managed by a dedicated system which knows which scripts have been run and which not, and is able to run them in the correct order.
 
 SearchLight needs its own DB table to keep track of the state of the migrations so let's set it up:
 ```julia
@@ -610,9 +610,9 @@ julia> SearchLight.Generator.new_resource("Book")
 SearchLight has created the `Books.jl` model, the \*2018100120160530_create_table_books.jl migration file, the `BooksValidator.jl` model validator and the `books_test.jl` test file. Don't worry about the warning, that's meant for SearchLight apps.
 
 #### Writing the table migration
-Lets begin by writing the migration to create our books table. SearchLight provides a powerful DSL for writing migrations. Each migration file needs to define two methods: `up` which applies the changes -- and `down` which undoes the effects of the `up` method. So in our `up` method we want to create the table -- and in `down` we want to drop the table.
+Lets begin by writing the migration to create our books table. SearchLight provides a powerful DSL for writing migrations. Each migration file needs to define two methods: `up` which applies the changes – and `down` which undoes the effects of the `up` method. So in our `up` method we want to create the table – and in `down` we want to drop the table.
 
-The naming convention for tables in SearchLight is that the table name should be pluralized ("books") -- because a table contains multiple books. But don't worry, the migration file should already be pre-populated with the correct table name.
+The naming convention for tables in SearchLight is that the table name should be pluralized ("books") – because a table contains multiple books. But don't worry, the migration file should already be pre-populated with the correct table name.
 
 Edit the `db/migrations/*_create_table_books.jl` file and make it look like this:
 ```julia
@@ -653,7 +653,7 @@ julia> SearchLight.Migration.status()
 | 1 | 2018100120160530_create_table_books.jl |
 ```
 
-So our migration is in the down state -- meaning that its `up` method has not been run. We can easily fix this:
+So our migration is in the down state – meaning that its `up` method has not been run. We can easily fix this:
 ```julia
 julia> SearchLight.Migration.last_up()
 [info | SearchLight.Loggers]: SQL QUERY: CREATE TABLE books (id INTEGER PRIMARY KEY , title VARCHAR , author VARCHAR )
@@ -674,7 +674,7 @@ julia> SearchLight.Migration.status()
 Our table is ready!
 
 #### Defining the model
-Now it's time to edit our model file at "app/resources/books/Books.jl". Another convention in SearchLight is that we're using the pluralized name ("Books") for the module -- because it's for managing multiple books. And within it we define a type, called `Book` -- which represents an item and maps to a row in the underlying database.
+Now it's time to edit our model file at "app/resources/books/Books.jl". Another convention in SearchLight is that we're using the pluralized name ("Books") for the module – because it's for managing multiple books. And within it we define a type, called `Book` – which represents an item and maps to a row in the underlying database.
 
 The `Books.jl` file should look like this:
 ```julia
@@ -806,7 +806,7 @@ If you reload the page at http://localhost:8000/bgbooks the new book should show
 ---
 
 ## Handling forms
-Now, the problem is that Bill Gates reads -- a lot! It would be much easier if we would allow our users to add a few books themselves, to give us a hand. But since, obviously, we're not going to give them access to our Julia REPL, we should setup a webpage with a form. Let's do it.
+Now, the problem is that Bill Gates reads – a lot! It would be much easier if we would allow our users to add a few books themselves, to give us a hand. But since, obviously, we're not going to give them access to our Julia REPL, we should setup a webpage with a form. Let's do it.
 
 We'll start by adding the new routes:
 ```julia
@@ -859,7 +859,7 @@ end
 ```
 A few things are worth pointing out in this snippet:
 * again, we're accessing the `@params` collection to extract the request data, in this case passing in the names of our form's inputs as parameters. We need to bring `Genie.Router` into scope in order to access `@params`;
-* we're using the `redirect_to` method to perform a HTTP redirect. As the argument we're passing in the name of the route, just like we did with the form's action. However, we didn't set any route to use this name. It turns out that Genie gives default names to all the routes. We can use these -- but a word of notice: these names are generated using the properties of the route, so if the route changes it's possible that the name will change too. So either make sure your route stays unchanged -- or explicitly name your routes.
+* we're using the `redirect_to` method to perform a HTTP redirect. As the argument we're passing in the name of the route, just like we did with the form's action. However, we didn't set any route to use this name. It turns out that Genie gives default names to all the routes. We can use these – but a word of notice: these names are generated using the properties of the route, so if the route changes it's possible that the name will change too. So either make sure your route stays unchanged – or explicitly name your routes.
 In order to get info about the defined routes you can use the `Router.named_routes` function:
 ```julia
 genie> Router.named_routes()
@@ -872,7 +872,7 @@ genie> Dict{Symbol,Genie.Router.Route} with 6 entries:
   :get_friday         => Route("GET", "/friday", (), Dict{Symbol,Any}(), Function[], Function[])
 ```
 
-Let's try it out. Input something and submit the form. If everything goes well a new book will be persisted to the database -- and it will be added at the bottom of the list of books.
+Let's try it out. Input something and submit the form. If everything goes well a new book will be persisted to the database – and it will be added at the bottom of the list of books.
 
 ---
 
