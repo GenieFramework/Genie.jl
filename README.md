@@ -208,8 +208,12 @@ end
 ## Working with resources
 Adding your code to the `routes.jl` file or placing it into the `lib/` folder works great for small projects, where you want to quickly publish some features on the web. But for any larger projects we're better off using Genie's MVC structure. By employing the Module View Controller design pattern we can break our code in modules with clear responsabilities. Modular code is easier to write, test and maintain.
 
+---
+
 #### Check the code
 The code for the example app being built in the upcoming paragraphs can be accessed at: https://github.com/essenciary/Genie-Searchlight-example-app
+
+---
 
 A Genie app is structured around the concept of "resources". A resource represents a business entity (something like a user, or a product, or an account) and maps to a bundle of files (controller, model, views, etc).
 
