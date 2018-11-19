@@ -575,6 +575,7 @@ dev:
 
 Now we can ask SearchLight to load it up like this:
 ```julia
+julia> using SearchLight
 julia> SearchLight.Configuration.load_db_connection()
 Dict{String,Any} with 3 entries:
   "config"   => nothing
