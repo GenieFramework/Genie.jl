@@ -16,7 +16,6 @@ function execute(config::Settings) :: Nothing
   Genie.config.app_env = ENV["GENIE_ENV"]
   Genie.config.server_port = parse(Int, parsed_args["server:port"])
   if haskey(parsed_args, "server:host") && parsed_args["server:host"] != nothing
-      @show "haskey1"
       Genie.config.server_host = parsed_args["server:host"]
   end
 
