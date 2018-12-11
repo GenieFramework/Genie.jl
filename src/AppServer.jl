@@ -19,7 +19,7 @@ julia> AppServer.startup()
 Listening on 0.0.0.0:8000...
 ```
 """
-function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1, async = true)
+function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1, async = !Genie.config.run_as_server)
   web_server = HTTP.Servers.Server((req) -> begin
     setup_http_handler(req, req.response)
   end, devnull)
