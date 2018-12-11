@@ -19,11 +19,16 @@ julia> AppServer.startup()
 Listening on 0.0.0.0:8000...
 ```
 """
-function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1)
+function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1, async = true)
   web_server = HTTP.Servers.Server((req) -> begin
     setup_http_handler(req, req.response)
   end, devnull)
-  @async HTTP.Servers.serve(web_server, host, port)
+
+  if async
+    @async HTTP.Servers.serve(web_server, host, port)
+  else
+    HTTP.Servers.serve(web_server, host, port)
+  end
 
   log("Web server running at $host:$port")
 

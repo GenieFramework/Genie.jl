@@ -92,7 +92,6 @@ function json(resource::Union{Symbol,String}, action::Union{Symbol,String}; vars
 end
 
 
-
 """
     respond_with_json(resource::Symbol, action::Symbol, check_nulls::Vector{Pair{Symbol,Nullable}} = Vector{Pair{Symbol,Nullable}}(); vars...) :: Response
 
@@ -102,6 +101,14 @@ function respond_with_json(resource::Union{Symbol,String}, action::Union{Symbol,
   json(resource, action; vars...) |> respond
 end
 const json! = respond_with_json
+
+
+function json!(output::String) :: HTTP.Response
+  respond(output, :json)
+end
+function json!(output::Any) :: HTTP.Response
+  JSON.json(output) |> json!
+end
 
 
 """
