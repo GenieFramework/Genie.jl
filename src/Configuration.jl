@@ -72,6 +72,7 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 """
 mutable struct Settings
   server_port::Int
+  server_host::String
   server_workers_count::Int
   server_document_root::String
   server_handle_static_files::Bool
@@ -131,6 +132,7 @@ mutable struct Settings
 
   Settings(;
             server_port                 = 8000, # default port for binding the web server
+            server_host                 = "0.0.0.0",
             server_workers_count        = 1,
             server_document_root        = "public",
             server_handle_static_files  = true,
@@ -196,7 +198,8 @@ mutable struct Settings
             renderer_default_layout_file = :app,
         ) =
               new(
-                  server_port, server_workers_count, server_document_root, server_handle_static_files, server_signature,
+                  server_port, server_host,
+                  server_workers_count, server_document_root, server_handle_static_files, server_signature,
                   app_env,
                   cors_headers, cors_allowed_origins,
                   suppress_output, output_length,

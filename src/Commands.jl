@@ -15,10 +15,13 @@ function execute(config::Settings) :: Nothing
 
   Genie.config.app_env = ENV["GENIE_ENV"]
   Genie.config.server_port = parse(Int, parsed_args["server:port"])
+  if haskey(parsed_args, "server:host") && parsed_args["server:host"] != nothing
+      Genie.config.server_host = parsed_args["server:host"]
+  end
 
   if called_command(parsed_args, "s") || called_command(parsed_args, "server:start")
     Genie.config.run_as_server = true
-    AppServer.startup(Genie.config.server_port)
+    AppServer.startup(Genie.config.server_port, Genie.config.server_host)
   end
 
   nothing
@@ -47,6 +50,9 @@ function parse_commandline_args() :: Dict{String,Any}
         "--server:port", "-p"
             help = "HTTP server port"
             default = "8000"
+        "--server:host", "-l"
+            help = "Host IP to listen on"
+            # default = "" #This is by default open (0.0.0.0), set to 127.0.0.1 for only localhost
     end
 
     parse_args(settings)
