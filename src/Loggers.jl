@@ -3,12 +3,13 @@ Provides logging functionality for Genie apps.
 """
 module Loggers
 
-using Memento, Millboard, Dates
+using Dates
 using Genie
 
 import Base.log
 export log
 
+global _isLoggingConfigured = false
 
 """
     log(message, level = "info"; showst::Bool = true) :: Nothing
@@ -27,30 +28,24 @@ function log(message::Union{String,Symbol,Number,Exception}, level::Union{String
   message = string(message)
   level = string(level)
 
-  if level == "err" || level == "critical"
-    level = "warn"
-  elseif level == "debug"
-    level = "info"
-  else
-    level = "info"
-  end
-
-  root_logger = try
-    Memento.config!(level |> string; fmt="[{date}|{level}]: {msg}")
-  catch ex
-    Memento.config(string(level))
+  global _isLoggingConfigured
+  if !_isLoggingConfigured
+      @info "Configuring logger"
+      _isLoggingConfigured = true
   end
 
   try
-    if isfile(log_path())
-      file_logger = getlogger(@__MODULE__)
-      setlevel!(file_logger, Genie.config.log_level |> string)
-      push!(file_logger, DefaultHandler(log_path(), DefaultFormatter("[{date}|{level}]: {msg}")))
-
-      Base.invoke(Core.eval(@__MODULE__, Meta.parse("Memento.$level")), Tuple{typeof(file_logger),typeof(message)}, file_logger, message)
-    else
-      Base.invoke(Core.eval(@__MODULE__, Meta.parse("Memento.$level")), Tuple{typeof(root_logger),typeof(message)}, root_logger, message)
+    # Exception parsing
+    if message isa Exception
+        # Process out the stacktrace for a formatted exception
+        io = IOBuffer()
+        showerror(io, message, catch_backtrace())
+        message = String(take!(io))
     end
+    level == "debug" && @debug message
+    level == "info" && @info message
+    level == "warn" && @warn message
+    (level == "error" || level == "critical") && @error message
   catch ex
     println(string(ex))
   end
