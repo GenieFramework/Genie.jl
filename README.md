@@ -8,8 +8,7 @@
 Genie is a full-stack MVC web framework that provides a streamlined and efficient workflow for developing modern web applications. It builds on Julia's strengths (high-level, high-performance, dynamic, JIT compiled), exposing a rich API and a powerful toolset for productive web development.
 
 ### Current status
-Genie is now compatible with Julia v1.0 (and it's the only version of Julia supported anymore).
-This is a recent development (mid September 2018) so more testing is needed.
+Genie is compatible with Julia v1.0 and up.
 
 # Getting started
 
@@ -90,6 +89,31 @@ julia> convert(::Type{Int}, s::SubString{String}) = parse(Int, s)
 ```
 
 Now if we access http://localhost:8000/sum/2/3 we should see `5`
+
+---
+
+## Developing a simple REST API backend
+
+Genie makes it very easy to quickly set up a REST API backend. All it takes is a few lines of code:
+
+```julia
+using Genie
+import Genie.Router: route
+import Genie.Renderer: json!
+
+Genie.config.run_as_server = true
+
+route("/") do
+  (:message => "Hi there!") |> json!
+end
+
+Genie.AppServer.startup()
+```
+
+The key bit here is `Genie.config.run_as_server = true`. This will start the server synchronously so the `startup()` function won't return. This endpoint can be run directly from the command line - if say, you save the code in a `rest.jl` file:
+```bash
+$ julia rest.jl
+```
 
 ---
 
@@ -739,7 +763,7 @@ end
 ```
 
 #### Autoloading the DB configuration
-Now, to try things out. Genie takes care of loading all our resource files for us when we load the app. Also, Genie comes with a special file called an initializer, which can automatically load the database configuration and setup SearchLight. Just edit "config/initializers/searchlight.jl" and uncomment the code. It should look like this: 
+Now, to try things out. Genie takes care of loading all our resource files for us when we load the app. Also, Genie comes with a special file called an initializer, which can automatically load the database configuration and setup SearchLight. Just edit "config/initializers/searchlight.jl" and uncomment the code. It should look like this:
 ```julia
 using SearchLight, SearchLight.QueryBuilder
 
