@@ -55,7 +55,7 @@ Initialize the logging.
 function initialize_logging()::Nothing
   global _isloggingconfigured
   if !_isloggingconfigured
-    @info "Configuring a global logger to log level: $(Genie.config.log_level)"
+    @info "Configuring a global logger to log level: '$(Genie.config.log_level)'. Message after this will be filtered, you can change this in your config file for your environment."
     # Default to stderr.
     #TODO: Can set to write to a stream here with the first parameter if file logging should be done.
     # Personally I just keep everything working on console so that console loggers like Splunk and Kibana can just capture them
