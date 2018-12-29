@@ -733,13 +733,16 @@ function to_response(action_result) :: HTTP.Response
   isa(action_result, HTTP.Response) && return action_result
 
   return  try
+            if action_result == nothing
+              error("Route handler returned nothing. Please ensure a valid action result is returned.")
+            end
             if isa(action_result, Tuple)
               HTTP.Response(action_result...)
             else
               HTTP.Response(string(action_result))
             end
           catch ex
-            log("Can't convert $action_result to HttpServer.Response", :err)
+            log("Can't convert $(action_result != nothing ? action_result : "nothing") to HttpServer.Response", :err)
             log(string(ex), :err)
             log("$(@__FILE__):$(@__LINE__)", :err)
 

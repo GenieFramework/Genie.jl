@@ -90,16 +90,10 @@ function log(message::Union{String,Symbol,Number,Exception}, level::Union{String
   end
 
   try
-    # Special backtrace parsing and logging if it's an exception
-    if message isa Exception
-      # Process out the stacktrace for a formatted exception
-      showerror(stderr, message, catch_backtrace())
-    else
-      level == "debug" && @debug message
-      level == "info" && @info message
-      level == "warn" && @warn message
-      (level == "error" || level == "critical") && @error message
-    end
+    level == "debug" && @debug message
+    level == "info" && @info message
+    level == "warn" && @warn message
+    (level == "error" || level == "err" || level == "critical") && @error message
   catch ex
     @info string(ex)
   end
