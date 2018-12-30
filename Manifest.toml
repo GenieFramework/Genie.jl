@@ -139,6 +139,14 @@ git-tree-sha1 = "21622ffb05343e51bc5b95c3576a71b26183809d"
 uuid = "39ec1447-df44-5f4c-beaa-866f30b4d3b2"
 version = "0.2.0"
 
+[[MiniLogging]]
+deps = ["Test"]
+git-tree-sha1 = "513c120974551966ec66c9b9fc003d39ca9496cd"
+repo-rev = "master"
+repo-url = "https://github.com/essenciary/MiniLogging.jl"
+uuid = "5d5e4fec-0af4-11e9-03ef-99b6f4db81c2"
+version = "0.1.0"
+
 [[Mmap]]
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
@@ -162,9 +170,9 @@ version = "0.0.8"
 
 [[OhMyREPL]]
 deps = ["Crayons", "Logging", "Markdown", "Pkg", "Printf", "REPL", "Test", "Tokenize"]
-git-tree-sha1 = "33e70d910da8a2af6cc8f0b7fb25f56192c8d714"
+git-tree-sha1 = "c8f653694c608ea901c29622d809ef67df8ea1e2"
 uuid = "5fb14364-9ced-5910-84b2-373655c76a03"
-version = "0.4.0"
+version = "0.4.1"
 
 [[OrderedCollections]]
 deps = ["Random", "Serialization", "Test"]
@@ -190,9 +198,9 @@ uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[Reactive]]
 deps = ["DataStructures", "Distributed", "Test"]
-git-tree-sha1 = "2384e3bda9dcd16750ff605fdf817e18cfdd9bae"
+git-tree-sha1 = "5862d915387ebb954016f50a88e34f79a9e5fcd2"
 uuid = "a223df75-4e93-5b7c-acf9-bdd599c0f4de"
-version = "0.8.2"
+version = "0.8.3"
 
 [[Reexport]]
 deps = ["Pkg"]
@@ -202,9 +210,9 @@ version = "0.2.0"
 
 [[Revise]]
 deps = ["Distributed", "FileWatching", "InteractiveUtils", "LibGit2", "OrderedCollections", "Pkg", "REPL", "Random", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "4e928d40d3effdb7fb7375a53048f24e172e6df4"
+git-tree-sha1 = "aced27858d5b4e89134004420a2c5f72b2a6e1e4"
 uuid = "295af30f-e4ad-537b-8983-00126c2a3abe"
-version = "0.7.13"
+version = "0.7.15"
 
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
@@ -270,9 +278,9 @@ uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [[WebSockets]]
 deps = ["Base64", "Dates", "Distributed", "HTTP", "Logging", "MbedTLS", "Random", "Sockets", "Test"]
-git-tree-sha1 = "c898a35f93bb010d8e44932c1a736e22c6343f9c"
+git-tree-sha1 = "00f7fcc595907021cd7a60e4f0b58fb1c7b088ea"
 uuid = "104b5d7c-a370-577a-8038-80a2059c5097"
-version = "1.1.0"
+version = "1.1.1"
 
 [[YAML]]
 deps = ["Codecs", "Compat"]

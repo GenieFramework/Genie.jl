@@ -3,12 +3,13 @@ Provides logging functionality for Genie apps.
 """
 module Loggers
 
-using Memento, Millboard, Dates
+using MiniLogging, Millboard, Dates
 using Genie
 
 import Base.log
 export log
 
+basic_config(Genie.config.log_level, file_name::String; date_format::String="%Y-%m-%d %H:%M:%S", file_mode::String="a")
 
 """
     log(message, level = "info"; showst::Bool = true) :: Nothing
