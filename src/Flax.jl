@@ -3,7 +3,7 @@ Compiled templating language for Genie.
 """
 module Flax
 
-using Revise, Gumbo, SHA, Reexport, JSON, OrderedCollections, Markdown, Reactive
+using Revise, Gumbo, SHA, Reexport, JSON, OrderedCollections, Markdown
 using Genie, Genie.Loggers, Genie.Configuration
 @reexport using HttpCommon
 

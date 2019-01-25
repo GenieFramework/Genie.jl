@@ -171,15 +171,15 @@ mutable struct Settings
             log_views     = true,
 
             assets_path           = "/",
-            assets_serve          =  true,
+            assets_serve          = true,
             assets_fingerprinted  = false,
 
             tests_force_test_env = true,
 
-            session_auto_start  = true,
+            session_auto_start  = false,
             session_key_name    = "__GENIESID",
             session_storage     = :File,
-            session_folder      = joinpath("session"),
+            session_folder      = "session",
             session_table       = "storage_sessions",
 
             inflector_irregulars = Tuple{String,String}[],

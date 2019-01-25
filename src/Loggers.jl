@@ -3,7 +3,7 @@ Provides logging functionality for Genie apps.
 """
 module Loggers
 
-using Memento, Millboard, Dates
+using Millboard, Dates
 using Genie
 
 import Base.log
@@ -24,6 +24,8 @@ If `level` is `error` or `critical` it will also dump the stacktrace onto STDOUT
 ```
 """
 function log(message::Union{String,Symbol,Number,Exception}, level::Union{String,Symbol} = "info") :: Nothing
+  return 
+
   message = string(message)
   level = string(level)
 
