@@ -51,6 +51,12 @@ git-tree-sha1 = "ec61a16eed883ad0cfa002d7489b3ce6d039bb9a"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
 version = "1.4.0"
 
+[[Crayons]]
+deps = ["Test"]
+git-tree-sha1 = "3017c662a988bcb8a3f43306a793617c6524d476"
+uuid = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
+version = "1.0.0"
+
 [[DataFrames]]
 deps = ["CategoricalArrays", "CodecZlib", "Compat", "DataStreams", "Dates", "InteractiveUtils", "IteratorInterfaceExtensions", "LinearAlgebra", "Missings", "Printf", "Random", "Reexport", "SortingAlgorithms", "Statistics", "StatsBase", "TableTraits", "Tables", "Test", "TranscodingStreams", "Unicode", "WeakRefStrings"]
 git-tree-sha1 = "af5c8a233b838076947ef0c8f882f732ad578112"
@@ -119,8 +125,10 @@ deps = ["Random"]
 uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[Genie]]
-deps = ["ArgParse", "Dates", "Distributed", "Gumbo", "HTTP", "HttpCommon", "JSON", "Markdown", "MbedTLS", "Millboard", "Nettle", "Nullables", "OrderedCollections", "Pkg", "Reexport", "Revise", "SHA", "Serialization", "Sockets", "URIParser", "Unicode", "WebSockets", "YAML"]
-path = "/Users/adrian/.julia/dev/Genie"
+deps = ["ArgParse", "Dates", "Distributed", "Gumbo", "HTTP", "HttpCommon", "JSON", "Markdown", "MbedTLS", "Millboard", "Nettle", "Nullables", "OhMyREPL", "OrderedCollections", "Pkg", "Reexport", "Revise", "SHA", "Serialization", "Sockets", "URIParser", "Unicode", "WebSockets", "YAML"]
+git-tree-sha1 = "a4a59dce5cdb46d63f7b98bc077269ae5f789a6e"
+repo-rev = "master"
+repo-url = "https://github.com/essenciary/Genie.jl"
 uuid = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
 version = "0.1.0"
 
@@ -132,9 +140,9 @@ version = "0.5.1"
 
 [[HTTP]]
 deps = ["Base64", "Dates", "Distributed", "IniFile", "MbedTLS", "Sockets", "Test"]
-git-tree-sha1 = "8a0f75e8b09df01d9f1ba9ad3fbf8b4983595d20"
+git-tree-sha1 = "b881f69331e85642be315c63d05ed65d6fc8a05b"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-version = "0.6.14"
+version = "0.7.1"
 
 [[HttpCommon]]
 deps = ["Dates", "Nullables", "Test", "URIParser"]
@@ -268,6 +276,12 @@ git-tree-sha1 = "7d1442cb06fbfbc4fea936c3c56b38daffd22d3b"
 uuid = "6fe1bfb0-de20-5000-8ca7-80f57d26f881"
 version = "0.9.1"
 
+[[OhMyREPL]]
+deps = ["Crayons", "Logging", "Markdown", "Pkg", "Printf", "REPL", "Test", "Tokenize"]
+git-tree-sha1 = "c8f653694c608ea901c29622d809ef67df8ea1e2"
+uuid = "5fb14364-9ced-5910-84b2-373655c76a03"
+version = "0.4.1"
+
 [[OrderedCollections]]
 deps = ["Random", "Serialization", "Test"]
 git-tree-sha1 = "85619a3f3e17bb4761fe1b1fd47f0e979f964d5b"
@@ -318,8 +332,10 @@ uuid = "0aa819cd-b072-5ff4-a722-6bc24af294d9"
 version = "0.7.0"
 
 [[SearchLight]]
-deps = ["Codecs", "DataFrames", "DataStreams", "Dates", "Distributed", "IterableTables", "JSON", "LibPQ", "MbedTLS", "Millboard", "MySQL", "Nullables", "OrderedCollections", "Reexport", "Revise", "SHA", "SQLite", "Unicode", "YAML"]
-path = "/Users/adrian/.julia/dev/SearchLight"
+deps = ["Codecs", "DataFrames", "DataStreams", "Dates", "Distributed", "IterableTables", "JSON", "LibPQ", "MbedTLS", "Millboard", "MySQL", "Nullables", "OhMyREPL", "OrderedCollections", "Reexport", "Revise", "SHA", "SQLite", "Unicode", "YAML"]
+git-tree-sha1 = "e08b99f27db86cf68e01efa6da7cea8da41ce365"
+repo-rev = "master"
+repo-url = "https://github.com/essenciary/SearchLight.jl"
 uuid = "340e8cb6-72eb-11e8-37ce-c97ebeb32050"
 version = "0.1.0"
 
@@ -399,6 +415,12 @@ git-tree-sha1 = "5437144a2bbb5b661783ad34b0d19d5696845b25"
 uuid = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 version = "0.8.5"
 
+[[Tokenize]]
+deps = ["Printf", "Test"]
+git-tree-sha1 = "3e83f60b74911d3042d3550884ca2776386a02b8"
+uuid = "0796e94c-ce3b-5d07-9a54-7f471281c624"
+version = "0.5.3"
+
 [[TranscodingStreams]]
 deps = ["Pkg", "Random", "Test"]
 git-tree-sha1 = "a34a2d588e2d2825602bf14a24216d5c8b0921ec"
@@ -425,10 +447,10 @@ uuid = "ea10d353-3f73-51f8-a26c-33c1cb351aa5"
 version = "0.5.4"
 
 [[WebSockets]]
-deps = ["Base64", "Dates", "Distributed", "HTTP", "MbedTLS", "Pkg", "Random", "Sockets", "Test"]
-git-tree-sha1 = "f23986a5f20ed2ed68b462e0fdec20d6a4468757"
+deps = ["Base64", "Dates", "Distributed", "HTTP", "Logging", "MbedTLS", "Random", "Sockets", "Test"]
+git-tree-sha1 = "86d48ad45a897278723b060134d26545e19d0ac2"
 uuid = "104b5d7c-a370-577a-8038-80a2059c5097"
-version = "1.0.3"
+version = "1.2.0"
 
 [[YAML]]
 deps = ["Codecs", "Compat"]
