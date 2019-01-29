@@ -1,13 +1,26 @@
 """
-Provides logging functionality for Genie apps.
+Provides logging functionality for SearchLight apps.
 """
 module Loggers
 
-using Millboard, Dates
+using Millboard, Dates, MiniLogging
 using Genie
 
 import Base.log
 export log
+
+
+"""
+Map Genie log levels to MiniLogging levels
+"""
+const LOG_LEVEL_MAPPING = Dict(
+  :debug    => MiniLogging.DEBUG,
+  :info     => MiniLogging.INFO,
+  :warn     => MiniLogging.WARN,
+  :error    => MiniLogging.ERROR,
+  :err      => MiniLogging.ERROR,
+  :critical => MiniLogging.CRITICAL
+)
 
 
 """
@@ -23,38 +36,32 @@ If `level` is `error` or `critical` it will also dump the stacktrace onto STDOUT
 ```julia
 ```
 """
-function log(message::Union{String,Symbol,Number,Exception}, level::Union{String,Symbol} = "info") :: Nothing
-  return 
-
+function log(message::Union{String,Symbol,Number,Exception}, level::Union{String,Symbol} = :debug; showst = false) :: Nothing
   message = string(message)
   level = string(level)
 
-  if level == "err" || level == "critical"
-    level = "warn"
-  elseif level == "debug"
-    level = "info"
+  basic_config(LOG_LEVEL_MAPPING[Genie.config.log_level], log_path())
+  length(get_logger().handlers) == 1 && push!(get_logger().handlers, MiniLogging.Handler(stderr, "%Y-%m-%d %H:%M:%S"))
+
+  loggo = get_logger()
+
+  if level == "debug"
+    MiniLogging.@debug(loggo, message)
+  elseif level == "info"
+    MiniLogging.@info(loggo, message)
+  elseif level == "warn"
+    MiniLogging.@warn(loggo, message)
+  elseif level == "error" || level == "err"
+    MiniLogging.@error(loggo, message)
+  elseif level == "critical"
+    MiniLogging.@critical(loggo, message)
   else
-    level = "info"
+    MiniLogging.@debug(loggo, message)
   end
 
-  root_logger = try
-    Memento.config!(level |> string; fmt="[{date}|{level}]: {msg}")
-  catch ex
-    Memento.config(string(level))
-  end
-
-  try
-    if isfile(log_path())
-      file_logger = getlogger(@__MODULE__)
-      setlevel!(file_logger, Genie.config.log_level |> string)
-      push!(file_logger, DefaultHandler(log_path(), DefaultFormatter("[{date}|{level}]: {msg}")))
-
-      Base.invoke(Core.eval(@__MODULE__, Meta.parse("Memento.$level")), Tuple{typeof(file_logger),typeof(message)}, file_logger, message)
-    else
-      Base.invoke(Core.eval(@__MODULE__, Meta.parse("Memento.$level")), Tuple{typeof(root_logger),typeof(message)}, root_logger, message)
-    end
-  catch ex
-    println(string(ex))
+  if (level == "error") && showst
+    println()
+    stacktrace()
   end
 
   nothing
@@ -83,41 +90,19 @@ function truncate_logged_output(output::String) :: String
 end
 
 
-function log_path(path = Genie.LOG_PATH) :: String
-  try
-    "$(joinpath(path, haskey(ENV, "GENIE_ENV") ? ENV["GENIE_ENV"] : "dev")).log"
-  catch ex
-    string(ex) |> println
-    # println("...")
-    "$(joinpath(path, "dev")).log"
-  end
-end
-function log_path!(path = Genie.LOG_PATH) :: String
-  if ! isfile(log_path(path))
-    mkpath(path)
-    touch(log_path(path))
-  end
-
-  log_path(path)
-end
-
-
 """
-    empty_log_queue() :: Vector{Tuple{String,Symbol}}
+    setup_loggers()
 
-The Genie log queue is used to push log messages in the early phases of framework bootstrap,
-when the logger itself is not available. Once the logger is ready, the queue is emptied and the
-messages are logged.
+Sets up default app loggers (STDOUT and per env file loggers) defferring to the logging module.
 Automatically invoked.
 """
-function empty_log_queue() :: Nothing
-  for log_message in Genie.GENIE_LOG_QUEUE
-    log(log_message...)
-  end
+function setup_loggers()
 
-  empty!(Genie.GENIE_LOG_QUEUE)
+end
 
-  nothing
+
+function log_path()
+  "$(joinpath(Genie.LOG_PATH, Genie.config.app_env)).log"
 end
 
 
@@ -130,7 +115,11 @@ macro location()
   :(log(" in $(@__FILE__):$(@__LINE__)", :err))
 end
 
-# setup_loggers()
-# empty_log_queue()
+function initlogfile()
+  dirname(log_path()) |> mkpath
+  touch(log_path())
+end
+
+initlogfile()
 
 end

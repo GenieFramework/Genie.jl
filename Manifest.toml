@@ -123,6 +123,12 @@ git-tree-sha1 = "21622ffb05343e51bc5b95c3576a71b26183809d"
 uuid = "39ec1447-df44-5f4c-beaa-866f30b4d3b2"
 version = "0.2.0"
 
+[[MiniLogging]]
+deps = ["Test"]
+git-tree-sha1 = "4f2f5ca0663afa0172db23bbdd99e683dd17fb0e"
+uuid = "f59402ec-0262-5707-a561-770af94bc5a6"
+version = "0.2.0"
+
 [[Mmap]]
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
