@@ -201,8 +201,8 @@ function load() :: Nothing
 
   load_configurations()
 
-  Loggers.log_path!()
-  Loggers.empty_log_queue()
+  Genie.Loggers.log_path!()
+  Genie.Loggers.empty_log_queue()
 
   load_initializers()
   load_helpers()
