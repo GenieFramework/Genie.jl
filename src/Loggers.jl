@@ -104,6 +104,10 @@ end
 function log_path()
   "$(joinpath(Genie.LOG_PATH, Genie.config.app_env)).log"
 end
+function log_path!()
+  initlogfile()
+  log_path()
+end
 
 
 """
@@ -119,6 +123,26 @@ function initlogfile()
   dirname(log_path()) |> mkpath
   touch(log_path())
 end
+
+
+"""
+    empty_log_queue() :: Vector{Tuple{String,Symbol}}
+
+The Genie log queue is used to push log messages in the early phases of framework bootstrap,
+when the logger itself is not available. Once the logger is ready, the queue is emptied and the
+messages are logged.
+Automatically invoked.
+"""
+function empty_log_queue() :: Nothing
+  for log_message in Genie.GENIE_LOG_QUEUE
+    log(log_message...)
+  end
+
+  empty!(Genie.GENIE_LOG_QUEUE)
+
+  nothing
+end
+
 
 initlogfile()
 
