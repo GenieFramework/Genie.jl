@@ -50,7 +50,3 @@ Core.eval(Genie, Meta.parse("""const SECRET_TOKEN = "$(secret_token())" """))
 Core.eval(Genie, Meta.parse("""const ASSET_FINGERPRINT = "$(App.ASSET_FINGERPRINT)" """))
 
 Genie.run()
-
-using OhMyREPL
-OhMyREPL.input_prompt!( "genie>", :blue)
-OhMyREPL.output_prompt!("genie>", :cyan)
