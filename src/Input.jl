@@ -87,10 +87,10 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
   if boundary_length > 0
     form_parts::Array{HttpFormPart} = HttpFormPart[]
 
-    get_mutliform_parts!(request.body, form_parts, boundary, boundary_length)
+    get_multiform_parts!(request.body, form_parts, boundary, boundary_length)
 
     ### Process form parts
-    ### (This could potentially be done within get_mutliform_parts! - but then it would be even bigger than it is now)
+    ### (This could potentially be done within get_multiform_parts! - but then it would be even bigger than it is now)
 
     if length(form_parts) > 0
       for part::HttpFormPart in form_parts
@@ -134,7 +134,7 @@ end
 
 ###
 
-function get_mutliform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpFormPart}, boundary, boundaryLength::Int64 = length(boundary))
+function get_multiform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpFormPart}, boundary, boundaryLength::Int64 = length(boundary))
   ### Go through each byte of data, parsing it into POST data and files.
 
   # The loop is perhaps slightly ambitious, as I wanted to be able to parse all the data
