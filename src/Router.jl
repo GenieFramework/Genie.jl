@@ -33,7 +33,8 @@ const request_mappings = Dict(
   :javascript => "application/javascript",
   :form       => "application/x-www-form-urlencoded",
   :multipart  => "multipart/form-data",
-  :file       => "application/octet-stream"
+  :file       => "application/octet-stream",
+  :xml        => "application/xml"
 )
 
 
