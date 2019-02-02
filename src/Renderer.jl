@@ -18,11 +18,13 @@ export HTMLTemplateEngine, JSONTemplateEngine
 const DEFAULT_LAYOUT_FILE = Genie.config.renderer_default_layout_file
 
 const CONTENT_TYPES = Dict{Symbol,String}(
-  :html   => "text/html",
-  :plain  => "text/plain",
-  :json   => "application/json",
-  :js     => "text/javascript",
-  :xml    => "text/xml",
+  :html       => "text/html",
+  :plain      => "text/plain",
+  :text       => "text/plain",
+  :json       => "application/json",
+  :js         => "application/javascript",
+  :javascript => "application/javascript",
+  :xml        => "text/xml",
 )
 const DEFAULT_CONTENT_TYPE = :html
 

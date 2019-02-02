@@ -25,6 +25,17 @@ const RESCUE_HOOK  = :rescue_hook
 
 const sessionless = Symbol[:json]
 
+const request_mappings = Dict(
+  :text       => "text/plain",
+  :html       => "text/html",
+  :json       => "application/json",
+  :js         => "application/javascript",
+  :javascript => "application/javascript",
+  :form       => "application/x-www-form-urlencoded",
+  :multipart  => "multipart/form-data",
+  :file       => "application/octet-stream"
+)
+
 
 mutable struct Route
   method::String
@@ -127,8 +138,8 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Params
   headers = Dict(res.headers)
 
   function set_negotiated_content()
-    params.collection[:response_type] = :html
-    push!(res.headers, "Content-Type" => Genie.Renderer.CONTENT_TYPES[params.collection[:response_type]])
+    params.collection[:response_type] = request_type(req)
+    push!(res.headers, "Content-Type" => get(Genie.Renderer.CONTENT_TYPES, params.collection[:response_type], "text/html"))
 
     true
   end
@@ -138,6 +149,7 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Params
     headers["Content-Type"] = Genie.Renderer.CONTENT_TYPES[params.collection[:response_type]]
 
     res.headers = [k for k in headers]
+
     return res
   end
 
@@ -442,6 +454,7 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
 
     extract_post_params(req, params)
     extract_extra_params(r.with, params)
+    extract_request_params(req, params)
     action_controller_params(r.action, params)
 
     res = negotiate_content(req, res, params)
@@ -542,7 +555,7 @@ end
 """
     parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
 
-Parses a route and extracts its named parms and types.
+Parses a route and extracts its named params and types.
 """
 function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
   parts = String[]
@@ -559,7 +572,7 @@ function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
                       Any
                     end
       param_name = rp[2:end]
-      rp = """(?P<$param_name>[\\w\\-]+)"""
+      rp = """(?P<$param_name>[\\w\\-\\.\\+\\,\\s\\%]+)"""
       push!(param_names, param_name)
       push!(param_types, param_type)
     end
@@ -628,6 +641,13 @@ end
 
 
 """
+"""
+macro converter(f)
+  Base.eval(Genie.Router, f)
+end
+
+
+"""
     extract_get_params(uri::URI, params::Params) :: Bool
 
 Extracts query vars and adds them to the execution `params` `Dict`.
@@ -675,6 +695,83 @@ function extract_post_params(req::HTTP.Request, params::Params) :: Nothing
   end
 
   nothing
+end
+
+
+"""
+"""
+function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
+  req.method != POST && return nothing
+
+  params.collection[Genie.PARAMS_RAW_PAYLOAD] = String(req.body)
+
+  if request_type_is(req, :json) && content_length(req) > 0
+    try
+      params.collection[Genie.PARAMS_JSON_PAYLOAD] = JSON.parse(params.collection[Genie.PARAMS_RAW_PAYLOAD])
+    catch ex
+      is_dev() && log(ex, :error)
+      params.collection[Genie.PARAMS_JSON_PAYLOAD] = nothing
+    end
+  else
+    params.collection[Genie.PARAMS_JSON_PAYLOAD] = nothing
+  end
+
+  if request_type_is(req, :text) && content_length(req) > 0
+    params.collection[Genie.PARAMS_TEXT_PAYLOAD] = params.collection[Genie.PARAMS_RAW_PAYLOAD]
+  else
+    params.collection[Genie.PARAMS_TEXT_PAYLOAD] = nothing
+  end
+
+  nothing
+end
+
+
+"""
+"""
+function content_type(req::HTTP.Request) :: String
+  get(Dict(req.headers), "Content-Type", "")
+end
+function content_type() :: String
+  content_type(_params_(Genie.PARAMS_REQUEST_KEY))
+end
+
+
+"""
+"""
+function content_length(req::HTTP.Request) :: Int
+  parse(Int, get(Dict(req.headers), "Content-Length", "0"))
+end
+function content_length() :: Int
+  content_length(_params_(Genie.PARAMS_REQUEST_KEY))
+end
+
+
+"""
+"""
+function request_type_is(req::HTTP.Request, request_type::Symbol) :: Bool
+  ! in(request_type, keys(request_mappings) |> collect) && error("Unknown request type $request_type - expected one of $(keys(request_mappings) |> collect).")
+
+  occursin(request_mappings[request_type], content_type(req)) && return true
+  false
+end
+function request_type_is(request_type::Symbol) :: Bool
+  request_type_is(_params_(Genie.PARAMS_REQUEST_KEY), request_type)
+end
+
+
+"""
+"""
+function request_type(req::HTTP.Request) :: Symbol
+  for (k,v) in request_mappings
+    if occursin(v, content_type(req))
+      return k
+    end
+  end
+
+  return :unknown
+end
+function request_type() :: Symbol
+  request_type(_params_(Genie.PARAMS_REQUEST_KEY))
 end
 
 
@@ -735,6 +832,8 @@ function to_response(action_result) :: HTTP.Response
   return  try
             if isa(action_result, Tuple)
               HTTP.Response(action_result...)
+            elseif isa(action_result, Nothing)
+              HTTP.Response("")
             else
               HTTP.Response(string(action_result))
             end
@@ -768,6 +867,13 @@ function _params_()
 end
 function _params_(key::Union{String,Symbol})
   task_local_storage(:__params)[key]
+end
+
+
+"""
+"""
+macro request()
+  :(@params(Genie.PARAMS_REQUEST_KEY))
 end
 
 
@@ -848,7 +954,7 @@ function to_uri(resource::String) :: URI
     URI(resource)
   catch ex
     qp = URIParser.query_params(resource) |> keys |> collect
-    escaped_resource = join(map( x -> ( startswith(x, "/") ? escape_resource_path(x) : URIParser.escape(x) ) * "=" * URIParser.escape(URIParser.query_params(resource)[x]), qp ), "&")
+    escaped_resource = join(map( x -> ( startswith(x, "/") ? escape_resource_path(string(x)) : URIParser.escape(string(x)) ) * "=" * URIParser.escape(URIParser.query_params(resource)[string(x)]), qp ), "&")
 
     URI(escaped_resource)
   end
@@ -929,14 +1035,14 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
 
       error_page = replace(error_page, "<error_message/>"=>escapeHTML(error_message))
 
-      HTTP.Response(error_code, [], body = error_page)
+      HTTP.Response(error_code, ["Content-Type"=>"text/html"], body = error_page)
     else
       f = file_path(URI("/error-$(error_code).html").path)
 
-      HTTP.Response(error_code, file_headers(f), body = replace(open(readstring, f), "<error_message/>"=>error_message))
+      HTTP.Response(error_code, ["Content-Type"=>"text/html"], body = replace(open(readstring, f), "<error_message/>"=>error_message))
     end
   catch ex
-    HTTP.Response(error_code, [], body = "Error $error_code: $error_message")
+    HTTP.Response(error_code, ["Content-Type"=>"text/html"], body = "Error $error_code: $error_message")
   end
 end
 

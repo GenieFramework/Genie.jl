@@ -40,8 +40,12 @@ function log(message::Union{String,Symbol,Number,Exception}, level::Union{String
   message = string(message)
   level = string(level)
 
-  basic_config(LOG_LEVEL_MAPPING[Genie.config.log_level], log_path())
-  length(get_logger().handlers) == 1 && push!(get_logger().handlers, MiniLogging.Handler(stderr, "%Y-%m-%d %H:%M:%S"))
+  try
+    basic_config(LOG_LEVEL_MAPPING[Genie.config.log_level], log_path())
+    length(get_logger().handlers) == 1 && push!(get_logger().handlers, MiniLogging.Handler(stderr, "%Y-%m-%d %H:%M:%S"))
+  catch ex
+    basic_config(LOG_LEVEL_MAPPING[Genie.config.log_level])
+  end
 
   loggo = get_logger()
 
