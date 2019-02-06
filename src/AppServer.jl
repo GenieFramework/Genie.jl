@@ -20,14 +20,14 @@ Listening on 0.0.0.0:8000...
 ```
 """
 function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1, async = ! Genie.config.run_as_server, verbose = false, ratelimit = 100//1)
-  web_server = HTTP.Servers.Server(req -> begin
-    setup_http_handler(req)
-  end, devnull)
-
   if async
-    @async HTTP.Servers.serve(web_server, host, port, verbose = verbose)
+    @async HTTP.serve(parse(IPAddr, host), port, verbose = verbose, rate_limit = ratelimit) do req::HTTP.Request
+      setup_http_handler(req)
+    end
   else
-    HTTP.Servers.serve(web_server, host, port, verbose = verbose)
+    HTTP.serve(parse(IPAddr, host), port, verbose = verbose, rate_limit = ratelimit) do req::HTTP.Request
+      setup_http_handler(req)
+    end
   end
 
   log("Web server running at $host:$port")
@@ -42,8 +42,6 @@ function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1, async
       log("WebSockets server running at $host:$ws_port")
     end
   end
-
-  web_server
 end
 
 
