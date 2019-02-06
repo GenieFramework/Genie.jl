@@ -19,18 +19,22 @@ julia> AppServer.startup()
 Listening on 0.0.0.0:8000...
 ```
 """
-function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1, async = ! Genie.config.run_as_server, verbose = false, ratelimit = 100//1)
-  if async
-    @async HTTP.serve(parse(IPAddr, host), port, verbose = verbose, rate_limit = ratelimit) do req::HTTP.Request
-      setup_http_handler(req)
-    end
-  else
+function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1, async = ! Genie.config.run_as_server, verbose = false, ratelimit = 1_000//1)
+  command = () -> begin
     HTTP.serve(parse(IPAddr, host), port, verbose = verbose, rate_limit = ratelimit) do req::HTTP.Request
       setup_http_handler(req)
     end
   end
 
-  log("Web server running at $host:$port")
+  if async
+    log("Web Server starting at $host:$port")
+    @async command()
+    log("Web Server running at $host:$port")
+  else
+    log("Web Server starting at $host:$port")
+    command()
+    log("Web Server stopped")
+  end
 
   if Genie.config.websocket_server
     @async HTTP.listen(host, ws_port) do req
@@ -39,7 +43,7 @@ function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1, async
           setup_ws_handler(req.message, ws)
         end
       end
-      log("WebSockets server running at $host:$ws_port")
+      log("Web Sockets server running at $host:$ws_port")
     end
   end
 end
