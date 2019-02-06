@@ -19,15 +19,15 @@ julia> AppServer.startup()
 Listening on 0.0.0.0:8000...
 ```
 """
-function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1, async = !Genie.config.run_as_server)
-  web_server = HTTP.Servers.Server((req) -> begin
-    setup_http_handler(req, req.response)
+function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1, async = ! Genie.config.run_as_server, debugserver = false)
+  web_server = HTTP.Servers.Server(req -> begin
+    setup_http_handler(req)
   end, devnull)
 
   if async
-    @async HTTP.Servers.serve(web_server, host, port)
+    @async HTTP.Servers.serve(web_server, host, port, verbose = debugserver)
   else
-    HTTP.Servers.serve(web_server, host, port)
+    HTTP.Servers.serve(web_server, host, port, verbose = debugserver)
   end
 
   log("Web server running at $host:$port")
@@ -42,22 +42,22 @@ function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1, async
       log("WebSockets server running at $host:$ws_port")
     end
   end
+
+  web_server
 end
 
 
 """
 """
-function setup_http_handler(req, res)
+function setup_http_handler(req, res = req.response)
   try
     response = @fetch handle_request(req, res)
-    if response.status >= 500 && response.status < 600
-      error(response)
-    end
+    response.status >= 500 && response.status < 600 && error(response)
 
     response
   catch ex
     log(string(ex), :critical)
-    log(sprint(io->Base.show_backtrace(io, catch_backtrace() )), :critical)
+    log(sprint(io -> Base.show_backtrace(io, catch_backtrace())), :critical)
     log("$(@__FILE__):$(@__LINE__)", :critical)
 
     message = Genie.Configuration.is_prod() ?
@@ -83,7 +83,7 @@ end
 
 Http server handler function - invoked when the server gets a request.
 """
-function handle_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = ip"0.0.0.0") :: HTTP.Response
+function handle_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = ip"127.0.0.1") :: HTTP.Response
   Genie.config.server_signature != "" && sign_response!(res)
   set_headers!(req, res, Genie.Router.route_request(req, res, ip))
 end
@@ -133,6 +133,14 @@ function sign_response!(res::HTTP.Response) :: HTTP.Response
 
   res.headers = [k for k in headers]
   res
+end
+
+"""
+"""
+function stopserver(s::HTTP.Servers.Server) :: Nothing
+  HTTP.close(s)
+
+  nothing
 end
 
 end
