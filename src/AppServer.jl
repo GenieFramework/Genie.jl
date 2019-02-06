@@ -25,9 +25,9 @@ function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1, async
   end, devnull)
 
   if async
-    @async HTTP.serve(web_server, host, port, verbose = verbose)
+    @async HTTP.Servers.serve(web_server, host, port, verbose = verbose)
   else
-    HTTP.serve(web_server, host, port, verbose = verbose)
+    HTTP.Servers.serve(web_server, host, port, verbose = verbose)
   end
 
   log("Web server running at $host:$port")
