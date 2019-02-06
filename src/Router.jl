@@ -1,7 +1,7 @@
 module Router
 
 using Revise
-using HTTP, URIParser, HttpCommon, Nullables, Sockets, Millboard, WebSockets, JSON, Dates
+using HTTP, URIParser, HttpCommon, Nullables, Sockets, Millboard, JSON, Dates
 using Genie, Genie.Sessions, Genie.Configuration, Genie.Input, Genie.Loggers, Genie.Util, Genie.Renderer
 
 include(joinpath(@__DIR__, "mimetypes.jl"))
@@ -106,7 +106,7 @@ end
 
 
 """
-    route_ws_request(req::Request, msg::String, ws_client::WebSockets.WebSocket, ip::IPv4 = ip"0.0.0.0") :: String
+    route_ws_request(req::Request, msg::String, ws_client::HTTP.WebSockets.WebSocket, ip::IPv4 = ip"0.0.0.0") :: String
 
 First step in handling a web socket request: sets up @params collection, handles query vars, starts and persists sessions.
 """
@@ -490,7 +490,7 @@ end
 
 
 """
-    match_channels(req::Request, msg::String, ws_client::WebSockets.WebSocket, params::Params, session::Sessions.Session) :: String
+    match_channels(req::Request, msg::String, ws_client::HTTP.WebSockets.WebSocket, params::Params, session::Sessions.Session) :: String
 
 Matches the invoked URL to the corresponding channel, sets up the execution environment and invokes the channel controller method.
 """

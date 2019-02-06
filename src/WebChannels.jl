@@ -25,7 +25,7 @@ const SUBSCRIPTIONS = ChannelSubscriptionsCollection()
 
 
 """
-    subscribe(ws::WebSockets.WebSocket, channel::ChannelId) :: Nothing
+    subscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelId) :: Nothing
 
 Subscribes a web socket client `ws` to `channel`.
 """
@@ -51,7 +51,7 @@ end
 
 
 """
-    unsubscribe(ws::WebSockets.WebSocket, channel::ChannelId) :: Nothing
+    unsubscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelId) :: Nothing
 
 Unsubscribes a web socket client `ws` from `channel`.
 """
@@ -67,7 +67,7 @@ end
 
 
 """
-    unsubscribe_client(ws::WebSockets.WebSocket) :: Nothing
+    unsubscribe_client(ws::HTTP.WebSockets.WebSocket) :: Nothing
 
 Unsubscribes a web socket client `ws` from all the channels.
 """

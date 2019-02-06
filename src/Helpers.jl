@@ -94,7 +94,7 @@ end
 
 
 """
-    wsclient(params::Dict{Symbol,Any}) :: WebSockets.WebSocket
+    wsclient(params::Dict{Symbol,Any}) :: HTTP.WebSockets.WebSocket
 
 Returns the `WebSocket` object associated with the current WS request.
 """

@@ -3,7 +3,7 @@ Handles Http server related functionality, manages requests and responses and th
 """
 module AppServer
 
-using Revise, HTTP, HTTP.IOExtras, HTTP.Sockets, Millboard, MbedTLS, WebSockets, URIParser, Sockets, Distributed
+using Revise, HTTP, HTTP.IOExtras, HTTP.Sockets, Millboard, MbedTLS, URIParser, Sockets, Distributed
 using Genie, Genie.Router, Genie.Loggers, Genie.Sessions, Genie.Configuration, Genie.WebChannels
 
 
@@ -19,15 +19,15 @@ julia> AppServer.startup()
 Listening on 0.0.0.0:8000...
 ```
 """
-function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1, async = ! Genie.config.run_as_server, debugserver = false)
+function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1, async = ! Genie.config.run_as_server, verbose = false, ratelimit = 100//1)
   web_server = HTTP.Servers.Server(req -> begin
     setup_http_handler(req)
   end, devnull)
 
   if async
-    @async HTTP.Servers.serve(web_server, host, port, verbose = debugserver)
+    @async HTTP.serve(web_server, host, port, verbose = verbose)
   else
-    HTTP.Servers.serve(web_server, host, port, verbose = debugserver)
+    HTTP.serve(web_server, host, port, verbose = verbose)
   end
 
   log("Web server running at $host:$port")
