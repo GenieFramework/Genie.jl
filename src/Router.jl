@@ -709,7 +709,8 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
     try
       params.collection[Genie.PARAMS_JSON_PAYLOAD] = JSON.parse(params.collection[Genie.PARAMS_RAW_PAYLOAD])
     catch ex
-      is_dev() && log(ex, :error)
+      log(ex, :error)
+      log("Setting @params(:JSON_PAYLOAD) to Nothing", :warn)
       params.collection[Genie.PARAMS_JSON_PAYLOAD] = nothing
     end
   else

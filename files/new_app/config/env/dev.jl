@@ -9,7 +9,6 @@ const config =  Settings(
                   log_views               = true,
                   assets_path             = "/",
                   cache_duration          = 0,
-                  flax_compile_templates  = false,
                   websocket_server        = false,
                   session_auto_start      = false
                 )
