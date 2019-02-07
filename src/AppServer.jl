@@ -19,7 +19,9 @@ julia> AppServer.startup()
 Listening on 0.0.0.0:8000...
 ```
 """
-function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1, async = ! Genie.config.run_as_server, verbose = false, ratelimit = 1_000//1)
+function startup(port::Int = 8000, host::String = "127.0.0.1";
+                  ws_port::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
+                  verbose::Bool = false, ratelimit::Rational{Int} = 1_000//1)
   if Genie.config.websocket_server
     @async HTTP.listen(host, ws_port) do req
       if HTTP.WebSockets.is_upgrade(req.message)
@@ -28,7 +30,7 @@ function startup(port::Int = 8000, host = "127.0.0.1"; ws_port = port + 1, async
         end
       end
     end
-    
+
     log("Web Sockets server running at $host:$ws_port")
   end
 
@@ -52,7 +54,7 @@ end
 
 """
 """
-function setup_http_handler(req, res = req.response)
+function setup_http_handler(req::HTTP.Request, res::HTTP.Response = HTTP.Response()) :: HTTP.Response
   try
     response = @fetch handle_request(req, res)
     response.status >= 500 && response.status < 600 && error(response)
@@ -74,10 +76,12 @@ end
 
 """
 """
-function setup_ws_handler(req, ws_client)
+function setup_ws_handler(req, ws_client) :: Nothing
   while ! eof(ws_client)
     write(ws_client, String(@fetch handle_ws_request(req, String(readavailable(ws_client)), ws_client)))
   end
+
+  nothing
 end
 
 
@@ -118,7 +122,7 @@ end
 
 Http server handler function - invoked when the server gets a request.
 """
-function handle_ws_request(req, msg::String, ws_client, ip::IPv4 = ip"0.0.0.0") :: String
+function handle_ws_request(req::HTTP.Request, msg::String, ws_client, ip::IPv4 = ip"0.0.0.0") :: String
   msg == "" && return "" # keep alive
   Genie.Router.route_ws_request(req, msg, ws_client, ip)
 end
