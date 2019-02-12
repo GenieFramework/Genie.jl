@@ -70,6 +70,7 @@ function prepare_template(v::Vector{T})::String where {T}
   filter!(v) do (x)
     ! isa(x, Nothing)
   end
+
   join(v)
 end
 
@@ -87,6 +88,7 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
 
     # keywords
     string(k) == "typ" && (k = "type")
+    startswith(string(k), "_") && (k = string(k)[2:end])
 
     push!(a, "$(k)=\"$(v)\"")
   end
@@ -95,6 +97,8 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
 end
 
 
+"""
+"""
 function normalize_element(elem::String)
   elem == "d" && (elem = "div")
   replace(string(lowercase(elem)), "_"=>"-")
