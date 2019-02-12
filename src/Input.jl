@@ -38,8 +38,9 @@ end
 
 function all(request::HTTP.Request) :: HttpInput
   input::HttpInput = HttpInput()
-
   post_from_request!(request, input)
+
+  # @show input
 
   input
 end
@@ -61,24 +62,24 @@ end
 function post_from_request!(request::HTTP.Request, input::HttpInput)
   headers = Dict(request.headers)
 
-  # if searchindex(get(headers, "Content-Type", ""), "application/x-www-form-urlencoded") != 0
   if first(something(findfirst("application/x-www-form-urlencoded", get(headers, "Content-Type", "")), 0:-1)) != 0
     post_url_encoded!(request.body, input.post)
-  # elseif searchindex(get(headers, "Content-Type", ""), "multipart/form-data") != 0
   elseif first(something(findfirst("multipart/form-data", get(headers, "Content-Type", "")), 0:-1)) != 0
     post_multipart!(request, input.post, input.files)
   end
+
+  nothing
 end
 
 function post_url_encoded!(http_data::Array{UInt8, 1}, post_data::HttpPostData)
-  params::Dict{String, String} = query_params(String(http_data))
+  params::Dict{String,String} = query_params(String(http_data))
 
   for (key::String, value::String) in params
     post_data[key] = value
   end
 end
 
-function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::HttpFiles)
+function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::HttpFiles) :: Nothing
   headers = Dict(request.headers)
   boundary::String = headers["Content-Type"][(findfirst("boundary=", headers["Content-Type"])[end] + 1):end]
 
@@ -90,7 +91,6 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
     get_multiform_parts!(request.body, form_parts, boundary, boundary_length)
 
     ### Process form parts
-    ### (This could potentially be done within get_multiform_parts! - but then it would be even bigger than it is now)
 
     if length(form_parts) > 0
       for part::HttpFormPart in form_parts
@@ -98,7 +98,9 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
         file::HttpFile = HttpFile()
         fileFieldName::String = ""
 
-        for (field::String, values::Dict{String, String}) in part.headers
+        # @show part.headers
+
+        for (field::String, values::Dict{String,String}) in part.headers
           if field == "Content-Disposition" && getkey(values, "form-data", nothing) != nothing
 
             # Check to see whether this part is a file upload
@@ -118,6 +120,8 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
           end
         end # for
 
+        # @show file
+
         if hasFile
           file.data = part.data
 
@@ -130,6 +134,9 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
       end # for
     end # if
   end
+
+  # @show files
+  nothing
 end
 
 ###

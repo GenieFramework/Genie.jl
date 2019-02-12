@@ -688,11 +688,15 @@ end
 Parses POST variables and adds the to the `params` `Dict`.
 """
 function extract_post_params(req::HTTP.Request, params::Params) :: Nothing
-  for (k, v) in Input.post(req)
+  input = Input.all(req)
+
+  for (k, v) in input.post
     v = replace(v, "+"=>" ")
     nested_keys(k, v, params)
     params.collection[Symbol(k)] = v
   end
+
+  params.collection[Genie.PARAMS_FILES] = input.files
 
   nothing
 end
