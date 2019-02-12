@@ -83,12 +83,10 @@ Parses HTML attributes.
 function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()) :: Vector{String}
   a = String[]
   for (k,v) in attrs
-    # data attrs
-    startswith(string(k), "data_") && (k = replace(string(k), r"^data_" => "data-"))
-
-    # keywords
-    string(k) == "typ" && (k = "type")
-    startswith(string(k), "_") && (k = string(k)[2:end])
+    sk = string(k)
+    sk == "typ" && (k = "type")
+    startswith(sk, "_") && (k = sk = sk[2:end])
+    k = replace(sk, "_"=>"-")
 
     push!(a, "$(k)=\"$(v)\"")
   end
