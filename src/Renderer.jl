@@ -55,7 +55,7 @@ Invokes the HTML renderer of the underlying configured templating library.
 function html(resource::Symbol, action::Symbol, layout::Symbol = DEFAULT_LAYOUT_FILE; vars...) :: Dict{Symbol,String}
   HTMLTemplateEngine.render_html(resource, action, layout; vars...)
 end
-function html(view::String, layout::String; vars...) :: Dict{Symbol,String}
+function html(view::String, layout::String = "<? @yield ?>"; vars...) :: Dict{Symbol,String}
   HTMLTemplateEngine.render_html(view, layout; vars...)
 end
 
