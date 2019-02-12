@@ -15,8 +15,8 @@ mutable struct HttpFile
   HttpFile() = new("", "", UInt8[])
 end
 
-const HttpPostData  = Dict{String, String}
-const HttpFiles     = Dict{String, HttpFile}
+const HttpPostData  = Dict{String,String}
+const HttpFiles     = Dict{String,HttpFile}
 
 mutable struct HttpInput
   post::HttpPostData
@@ -28,10 +28,10 @@ end
 ###
 
 mutable struct HttpFormPart
-  headers::Dict{String, Dict{String, String}}
+  headers::Dict{String, Dict{String,String}}
   data::Array{UInt8}
 
-  HttpFormPart() = new(Dict{String, Dict{String, String}}(), UInt8[])
+  HttpFormPart() = new(Dict{String,Dict{String,String}}(), UInt8[])
 end
 
 ###
@@ -39,8 +39,6 @@ end
 function all(request::HTTP.Request) :: HttpInput
   input::HttpInput = HttpInput()
   post_from_request!(request, input)
-
-  # @show input
 
   input
 end
@@ -141,11 +139,8 @@ end
 
 ###
 
-function get_multiform_parts!(http_data::Array{UInt8, 1}, formParts::Array{HttpFormPart}, boundary, boundaryLength::Int64 = length(boundary))
+function get_multiform_parts!(http_data::Vector{UInt8}, formParts::Array{HttpFormPart}, boundary, boundaryLength::Int64 = length(boundary))
   ### Go through each byte of data, parsing it into POST data and files.
-
-  # The loop is perhaps slightly ambitious, as I wanted to be able to parse all the data
-  # in one pass - rather than one pass for boundaries, another for headers, etc.
 
   # According to the spec, the boundary chosen by the client must be a unique string
   # i.e. there should be no conflicts with the data within - so it should be safe to just do a basic string search.
@@ -290,7 +285,7 @@ end
 function parse_seicolon_fields(dataString::String)
   dataString = dataString * ";"
 
-  data = Dict{String, String}()
+  data = Dict{String,String}()
 
   prevCharacter::Char = 0x00
   inSingleQuotes::Bool = false
