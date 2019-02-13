@@ -104,4 +104,28 @@ function new_test(plural_name::String, singular_name::String) :: String
   """
 end
 
+
+"""
+"""
+function appmodule(path::String)
+  appname = split(path, "/", keepempty = false)[end] |> String |> Inflector.from_underscores
+
+  content = """
+  module $appname
+
+  Base.eval(Main, :(const UserApp = $appname))
+
+  include("genie.jl")
+
+  Base.eval(Main, :(const Genie = $appname.Genie))
+  Base.eval(Main, :(using Genie))
+
+  using Genie, Genie.Router, Genie.Renderer, Genie.AppServer
+
+  end
+  """
+
+  (appname, content)
+end
+
 end

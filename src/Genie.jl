@@ -47,7 +47,6 @@ using .Macros, .Loggers
 using .Inflector, .Util
 using .FileTemplates, .Generator, .Tester, .Encryption, .Cookies, .Sessions, .Input, .Renderer, .Router, .Helpers, .AppServer, .Commands
 using .Flax, .AppServer
-using .TwitterBootstrap, .Predix
 
 include(joinpath(@__DIR__, "REPL.jl"))
 
@@ -68,8 +67,9 @@ end
 
 Scaffolds a new Genie app.
 """
-function new_app(path = "."; db_support = false, skip_dependencies = false, autostart = false) :: Nothing
-  REPL.new_app(path, db_support = db_support, skip_dependencies = skip_dependencies, autostart = autostart)
+function new_app(path = "."; db_support = false, autostart = true) :: Nothing
+  REPL.new_app(path, db_support = db_support, autostart = autostart)
 end
+const newapp = new_app
 
 end

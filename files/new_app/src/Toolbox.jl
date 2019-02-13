@@ -50,7 +50,7 @@ function import_task(task_name::String) :: Module
   end
 
   Core.eval(@__MODULE__, tasks[1].module_name)
-  is_dev() && Revise.track(joinpath(Genie.TASKS_PATH, tasks[1].file_name))
+  is_dev() && Revise.track(@__MODULE__, joinpath(Genie.TASKS_PATH, tasks[1].file_name))
 end
 
 

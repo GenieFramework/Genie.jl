@@ -1,7 +1,7 @@
 module REPL
 
 using Revise, SHA, Dates, Pkg
-using Genie, Genie.Loggers, Genie.Configuration, Genie.Generator, Genie.Tester, Genie.Util
+using Genie, Genie.Loggers, Genie.Configuration, Genie.Generator, Genie.Tester, Genie.Util, Genie.FileTemplates
 
 const JULIA_PATH = joinpath(Sys.BINDIR, "julia")
 
@@ -14,6 +14,7 @@ Generates a random secret token to be used for configuring the SECRET_TOKEN cons
 function secret_token() :: String
   sha256("$(randn()) $(Dates.now())") |> bytes2hex
 end
+const secrettoken = secret_token
 
 
 """
@@ -21,7 +22,7 @@ end
 
 Creates a new Genie app at the indicated path.
 """
-function new_app(path::String; db_support = false, skip_dependencies = true, autostart = true) :: Nothing
+function new_app(path::String; db_support = false, autostart = true) :: Nothing
   cp(joinpath(@__DIR__, "../", "files", "new_app"), abspath(path))
 
   chmod(joinpath(path, "bin", "server"), 0o700)
@@ -29,6 +30,14 @@ function new_app(path::String; db_support = false, skip_dependencies = true, aut
 
   open(joinpath(path, "config", "secrets.jl"), "w") do f
     write(f, """const SECRET_TOKEN = "$(secret_token())" """)
+  end
+
+  moduleinfo = FileTemplates.appmodule(path)
+  open(joinpath(path, moduleinfo[1] * ".jl"), "w") do f
+    write(f, moduleinfo[2])
+  end
+  open(joinpath(path, "bootstrap.jl"), "w") do f
+    write(f, """include("$(moduleinfo[1]).jl")""")
   end
 
   log("Done! New app created at $(abspath(path))", :info)
@@ -53,6 +62,7 @@ function new_app(path::String; db_support = false, skip_dependencies = true, aut
 
   nothing
 end
+const newapp = new_app
 
 
 """
@@ -72,12 +82,17 @@ end
 """
 """
 function load_app(path = "."; autostart = false) :: Nothing
-  Core.eval(Main, Meta.parse("""include(joinpath("$path", "genie.jl"))"""))
+  Core.eval(Main, Meta.parse("using Revise"))
+  Core.eval(Main, Meta.parse("""include(joinpath("$path", "bootstrap.jl"))"""))
   Core.eval(Main, Meta.parse("Revise.revise()"))
-  Core.eval(Main, Meta.parse("$autostart && Genie.AppServer.startup()"))
+  Core.eval(Main, Meta.parse("using Genie"))
+
+  Core.eval(Main.UserApp, Meta.parse("Revise.revise()"))
+  Core.eval(Main.UserApp, Meta.parse("$autostart && Genie.AppServer.startup()"))
 
   nothing
 end
+const loadapp = load_app
 
 
 """
@@ -101,10 +116,11 @@ Creates a new `model` file.
 """
 function new_model(model_name::String) :: Nothing
   SearchLight.Generator.new_model(Dict{String,Any}("model:new" => model_name))
-  Main.load_resources()
+  Main.UserApp.load_resources()
 
   nothing
 end
+const newmodel = new_model
 
 
 """
@@ -114,10 +130,11 @@ Creates a new `controller` file.
 """
 function new_controller(controller_name::String) :: Nothing
   Genie.Generator.new_controller(Dict{String,Any}("controller:new" => controller_name))
-  Main.load_resources()
+  Main.UserApp.load_resources()
 
   nothing
 end
+const newcontroller = new_controller
 
 
 """
@@ -127,7 +144,7 @@ Creates a new `channel` file.
 """
 function new_channel(channel_name::String) :: Nothing
   Genie.Generator.new_channel(Dict{String,Any}("channel:new" => channel_name))
-  Main.load_resources()
+  Main.UserApp.load_resources()
 
   nothing
 end
@@ -141,13 +158,14 @@ Creates all the files associated with a new resource.
 function new_resource(resource_name::String) :: Nothing
   Genie.Generator.new_resource(Dict{String,Any}("resource:new" => resource_name))
   try
-    Main.load_resources()
+    Main.UserApp.load_resources()
   catch ex
     log("Not in app, skipping autoload", :warn)
   end
 
   nothing
 end
+const newchannel = new_channel
 
 
 """
@@ -158,6 +176,7 @@ Creates a new migration file.
 function new_migration(migration_name::String) :: Nothing
   SearchLight.Generator.new_migration(Dict{String,Any}("migration:new" => migration_name))
 end
+const newmigration = new_migration
 
 
 """
@@ -176,6 +195,7 @@ function new_task(task_name::String) :: Nothing
   endswith(task_name, "Task") || (task_name = task_name * "Task")
   Genie.Toolbox.new(Dict{String,Any}("task:new" => task_name), Genie.config)
 end
+const newtask = new_task
 
 
 """
@@ -202,13 +222,14 @@ function reload_app() :: Nothing
 
   is_dev() && Revise.revise(App)
 
-  Main.load_configurations()
-  Main.load_initializers()
+  Main.UserApp.load_configurations()
+  Main.UserApp.load_initializers()
 
   log("The app was reloaded.", :info)
 
   nothing
 end
+const reloadapp = reload_app
 
 
 """
@@ -228,5 +249,6 @@ function load_resources(root_dir) :: Nothing
 
   nothing
 end
+const loadresources = load_resources
 
 end
