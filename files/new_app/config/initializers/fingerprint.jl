@@ -1,0 +1,1 @@
+const ASSET_FINGERPRINT = ""
