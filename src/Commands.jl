@@ -52,7 +52,6 @@ function parse_commandline_args() :: Dict{String,Any}
             default = "8000"
         "--server:host", "-l"
             help = "Host IP to listen on"
-            # default = "" #This is by default open (0.0.0.0), set to 127.0.0.1 for only localhost
     end
 
     parse_args(settings)

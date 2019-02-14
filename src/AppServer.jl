@@ -16,12 +16,13 @@ Automatically invoked when Genie is started with the `s` or the `server:start` c
 # Examples
 ```julia
 julia> AppServer.startup()
-Listening on 0.0.0.0:8000...
+Listening on 127.0.0.1:8000...
 ```
 """
-function startup(port::Int = 8000, host::String = "127.0.0.1";
+function startup(port::Int = 8000, host::String = Genie.config.server_host;
                   ws_port::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
-                  verbose::Bool = false, ratelimit::Rational{Int} = 1_000//1)
+                  verbose::Bool = false, ratelimit::Rational{Int} = 10_000//1)
+
   if Genie.config.websocket_server
     @async HTTP.listen(host, ws_port) do req
       if HTTP.WebSockets.is_upgrade(req.message)
@@ -86,11 +87,11 @@ end
 
 
 """
-    handle_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: Response
+    handle_request(req::Request, res::Response, ip::IPv4 = Genie.config.server_host) :: Response
 
 Http server handler function - invoked when the server gets a request.
 """
-function handle_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = ip"127.0.0.1") :: HTTP.Response
+function handle_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = IPv4(Genie.config.server_host)) :: HTTP.Response
   Genie.config.server_signature != "" && sign_response!(res)
   set_headers!(req, res, Genie.Router.route_request(req, res, ip))
 end
@@ -118,11 +119,11 @@ end
 
 
 """
-    handle_ws_request(req::Request, client::Client, ip::IPv4 = ip"0.0.0.0") :: String
+    handle_ws_request(req::Request, client::Client, ip::IPv4 = Genie.config.server_host) :: String
 
 Http server handler function - invoked when the server gets a request.
 """
-function handle_ws_request(req::HTTP.Request, msg::String, ws_client, ip::IPv4 = ip"0.0.0.0") :: String
+function handle_ws_request(req::HTTP.Request, msg::String, ws_client, ip::IPv4 = IPv4(Genie.config.server_host)) :: String
   msg == "" && return "" # keep alive
   Genie.Router.route_ws_request(req, msg, ws_client, ip)
 end

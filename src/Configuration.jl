@@ -132,7 +132,7 @@ mutable struct Settings
 
   Settings(;
             server_port                 = 8000, # default port for binding the web server
-            server_host                 = "0.0.0.0",
+            server_host                 = "127.0.0.1",
             server_workers_count        = 1,
             server_document_root        = "public",
             server_handle_static_files  = true,

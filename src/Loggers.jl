@@ -37,7 +37,7 @@ If `level` is `error` or `critical` it will also dump the stacktrace onto STDOUT
 ```
 """
 function log(message::Union{String,Symbol,Number,Exception}, level::Union{String,Symbol} = :debug; showst = false) :: Nothing
-  message = string(message)
+  message = string(" ", message)
   level = string(level)
 
   try

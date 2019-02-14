@@ -73,11 +73,11 @@ Params() = Params(Dict{Symbol,Any}())
 
 
 """
-    route_request(req::Request, res::Response, ip::IPv4 = ip"0.0.0.0") :: Response
+    route_request(req::Request, res::Response, ip::IPv4 = Genie.config.server_host) :: Response
 
 First step in handling a request: sets up @params collection, handles query vars, negotiates content, starts and persists sessions.
 """
-function route_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = ip"0.0.0.0") :: HTTP.Response
+function route_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = IPv4(Genie.config.server_host)) :: HTTP.Response
   params = Params()
   params.collection[:request_ipv4] = ip
 
@@ -99,18 +99,18 @@ function route_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = ip"0.0.
 
   ! in(response_type(params), sessionless) && Genie.config.session_auto_start && Sessions.persist(session)
 
-  log("[$(Dates.now())] -- $(URI(to_uri(req.target))) -- Done\n\n")
+  log("$(req.target) $(controller_response.status)\n", (controller_response.status < 400 ? :info : :error))
 
   controller_response
 end
 
 
 """
-    route_ws_request(req::Request, msg::String, ws_client::HTTP.WebSockets.WebSocket, ip::IPv4 = ip"0.0.0.0") :: String
+    route_ws_request(req::Request, msg::String, ws_client::HTTP.WebSockets.WebSocket, ip::IPv4 = Genie.config.server_host) :: String
 
 First step in handling a web socket request: sets up @params collection, handles query vars, starts and persists sessions.
 """
-function route_ws_request(req, msg::String, ws_client, ip::IPv4 = ip"0.0.0.0") :: String
+function route_ws_request(req, msg::String, ws_client, ip::IPv4 = IPv4(Genie.config.server_host)) :: String
   params = Params()
   params.collection[:request_ipv4] = ip
   params.collection[Genie.PARAMS_WS_CLIENT] = ws_client
@@ -123,7 +123,7 @@ function route_ws_request(req, msg::String, ws_client, ip::IPv4 = ip"0.0.0.0") :
 
   channel_response::String = match_channels(req, msg, ws_client, params, session)
 
-  printstyled("[$(Dates.now())] -- $(URI(req.target)) -- Done\n\n", color = :cyan)
+  printstyled("$(req.target) $(controller_response.status)\n", color = :cyan)
 
   channel_response
 end
@@ -266,7 +266,7 @@ Prints a table of the routes and their names to standard output.
 """
 function print_named_routes() :: Nothing
   Millboard.table(named_routes()) |> println
-  
+
   nothing
 end
 
@@ -318,7 +318,7 @@ Prints a table of the defined routes to standard output.
 """
 function print_routes() :: Nothing
   Millboard.table(routes()) |> println
-  
+
   nothing
 end
 
