@@ -266,6 +266,8 @@ Prints a table of the routes and their names to standard output.
 """
 function print_named_routes() :: Nothing
   Millboard.table(named_routes()) |> println
+  
+  nothing
 end
 
 
@@ -316,6 +318,8 @@ Prints a table of the defined routes to standard output.
 """
 function print_routes() :: Nothing
   Millboard.table(routes()) |> println
+  
+  nothing
 end
 
 
