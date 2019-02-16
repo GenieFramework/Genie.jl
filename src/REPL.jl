@@ -37,7 +37,18 @@ function new_app(path::String; db_support = false, autostart = true) :: Nothing
     write(f, moduleinfo[2])
   end
   open(joinpath(path, "bootstrap.jl"), "w") do f
-    write(f, """include("$(moduleinfo[1]).jl")""")
+    write(f,
+    """
+      cd(@__DIR__)
+      using Pkg
+      pkg"activate ."
+
+      function main()
+        include("$(moduleinfo[1]).jl")
+      end
+
+      main()
+    """)
   end
 
   log("Done! New app created at $(abspath(path))", :info)
@@ -63,20 +74,6 @@ function new_app(path::String; db_support = false, autostart = true) :: Nothing
   nothing
 end
 const newapp = new_app
-
-
-"""
-    run_repl_app() :: Nothing
-
-Runs a new Genie REPL app within the current thread.
-"""
-function run_repl_app(path = ".") :: Nothing
-  cd(abspath(path))
-
-  run(`$JULIA_PATH -L $(abspath("genie.jl")) --color=yes --depwarn=no -q`)
-
-  nothing
-end
 
 
 """
@@ -220,7 +217,7 @@ end
 function reload_app() :: Nothing
   log("Attempting to reload the Genie's core modules. If you get unexpected errors or things don't work as expected, simply exit this Julia session and start a new one to fully reload Genie.", :warn)
 
-  is_dev() && Revise.revise(App)
+  Revise.revise(App)
 
   Main.UserApp.load_configurations()
   Main.UserApp.load_initializers()

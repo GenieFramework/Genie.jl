@@ -21,7 +21,7 @@ Listening on 127.0.0.1:8000...
 """
 function startup(port::Int = 8000, host::String = Genie.config.server_host;
                   ws_port::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
-                  verbose::Bool = false, ratelimit::Rational{Int} = 10_000//1)
+                  verbose::Bool = false, ratelimit::Rational{Int} = 100_000//1)
 
   if Genie.config.websocket_server
     @async HTTP.listen(host, ws_port) do req
@@ -40,6 +40,8 @@ function startup(port::Int = 8000, host::String = Genie.config.server_host;
       setup_http_handler(req)
     end
   end
+
+  printstyled("Ready\n", color = :green)
 
   if async
     log("Web Server starting at $host:$port")

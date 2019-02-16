@@ -91,7 +91,7 @@ function route_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = IPv4(Ge
     return serve_error_file(404, "File not found: $(req.target)", params.collection)
   end
 
-  is_dev() && Revise.revise()
+  Revise.revise()
 
   session = Genie.config.session_auto_start ? Sessions.start(req, res) : nothing
 
@@ -117,7 +117,7 @@ function route_ws_request(req, msg::String, ws_client, ip::IPv4 = IPv4(Genie.con
 
   extract_get_params(URI(req.target), params)
 
-  is_dev() && Revise.revise()
+  Revise.revise()
 
   session = Genie.config.session_auto_start ? Sessions.load(Sessions.id(req)) : nothing
 
@@ -1062,8 +1062,10 @@ end
 Returns the path to a resource file. If `within_doc_root` it will automatically prepend the document root to `resource`.
 """
 function file_path(resource::String; within_doc_root = true) :: String
-  abspath(joinpath(within_doc_root ? Genie.config.server_document_root : "", resource[(startswith(resource, "/") ? 2 : 1):end]))
+  # abspath(joinpath(within_doc_root ? Genie.config.server_document_root : "", resource[(startswith(resource, "/") ? 2 : 1):end]))
+  joinpath(within_doc_root ? Genie.config.server_document_root : "", resource[(startswith(resource, "/") ? 2 : 1):end])
 end
+const filepath = file_path
 
 
 """
@@ -1080,6 +1082,7 @@ pathify(x) :: String = replace(string(x), " "=>"-") |> lowercase |> URIParser.es
 Returns the file extesion of `f`.
 """
 file_extension(f) :: String = ormatch(match(r"(?<=\.)[^\.\\/]*$", f), "")
+const fileextension = file_extension
 
 
 """

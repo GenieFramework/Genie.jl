@@ -1,7 +1,3 @@
-cd(@__DIR__)
-using Pkg
-pkg"activate ."
-
 using Revise
 
 """
@@ -38,14 +34,18 @@ include(joinpath("src", "Toolbox.jl")); using .Toolbox
 
 using Genie
 
-Core.eval(Genie, Meta.parse("""push!(LOAD_PATH, joinpath($(repr(pwd())), "src"))"""))
-Core.eval(Genie, Meta.parse("const App = $(@__MODULE__).App"))
-Core.eval(Genie, Meta.parse("const Toolbox = $(@__MODULE__).Toolbox"))
+function main()
+  Core.eval(Genie, Meta.parse("""push!(LOAD_PATH, joinpath($(repr(pwd())), "src"))"""))
+  Core.eval(Genie, Meta.parse("const App = $(@__MODULE__).App"))
+  Core.eval(Genie, Meta.parse("const Toolbox = $(@__MODULE__).Toolbox"))
 
-load()
+  load()
 
-Core.eval(Genie, Meta.parse("config = App.config"))
-Core.eval(Genie, Meta.parse("""const SECRET_TOKEN = "$(secret_token())" """))
-Core.eval(Genie, Meta.parse("""const ASSET_FINGERPRINT = "$(App.ASSET_FINGERPRINT)" """))
+  Core.eval(Genie, Meta.parse("config = App.config"))
+  Core.eval(Genie, Meta.parse("""const SECRET_TOKEN = "$(secret_token())" """))
+  Core.eval(Genie, Meta.parse("""const ASSET_FINGERPRINT = "$(App.ASSET_FINGERPRINT)" """))
 
-Genie.run()
+  Genie.run()
+end
+
+main()

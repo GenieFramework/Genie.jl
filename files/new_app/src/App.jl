@@ -98,13 +98,13 @@ function load_configurations() :: Nothing
   loggers_path = abspath("$(Genie.CONFIG_PATH)/loggers.jl")
   if isfile(loggers_path)
     include(loggers_path)
-    is_dev() && Revise.track(@__MODULE__, loggers_path)
+    Revise.track(@__MODULE__, loggers_path)
   end
 
   secrets_path = abspath("$(Genie.CONFIG_PATH)/secrets.jl")
   if isfile(secrets_path)
     include(secrets_path)
-    is_dev() && Revise.track(@__MODULE__, secrets_path)
+    Revise.track(@__MODULE__, secrets_path)
   end
 
   nothing
@@ -125,7 +125,7 @@ function load_initializers() :: Nothing
       fi = joinpath(dir, i)
       if endswith(fi, ".jl")
         include(fi)
-        is_dev() && Revise.track(@__MODULE__, fi)
+        Revise.track(@__MODULE__, fi)
       end
     end
   end
@@ -143,7 +143,7 @@ function load_routes_definitions(fail_on_error = is_dev()) :: Nothing
   try
     if isfile(Genie.ROUTES_FILE_NAME)
       include(Genie.ROUTES_FILE_NAME)
-      is_dev() && Revise.track(@__MODULE__, Genie.ROUTES_FILE_NAME)
+      Revise.track(@__MODULE__, Genie.ROUTES_FILE_NAME)
     end
   catch ex
     log(ex, :warn)
@@ -164,7 +164,7 @@ function load_channels_definitions(fail_on_error = is_dev()) :: Nothing
   try
     if isfile(Genie.CHANNELS_FILE_NAME)
       include(Genie.CHANNELS_FILE_NAME)
-      is_dev() && Revise.track(@__MODULE__, Genie.CHANNELS_FILE_NAME)
+      Revise.track(@__MODULE__, Genie.CHANNELS_FILE_NAME)
     end
   catch ex
     log(ex, :err)
