@@ -82,6 +82,7 @@ Parses HTML attributes.
 """
 function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()) :: String
   a = IOBuffer()
+
   for (k,v) in attrs
     sk = string(k)
     sk == "typ" && (k = "type")
@@ -134,10 +135,7 @@ end
 Generates a void HTML element in the form <...>
 """
 function void_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
-  a = attributes(attrs)
-  elem = normalize_element(elem)
-
-  "<$(elem * (! isempty(a) ? (" " * join(a, " ")) : ""))>"
+  string("<", normalize_element(elem), " ", attributes(attrs), ">")
 end
 
 
