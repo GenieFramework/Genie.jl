@@ -5,7 +5,6 @@ using HTTP, URIParser, HttpCommon, Nullables, Sockets, Millboard, JSON, Dates
 using Genie, Genie.Sessions, Genie.Configuration, Genie.Input, Genie.Loggers, Genie.Util, Genie.Renderer
 
 include(joinpath(@__DIR__, "mimetypes.jl"))
-include(joinpath(@__DIR__, "router_converters.jl"))
 
 export route, routes, channel, channels, serve_static_file
 export GET, POST, PUT, PATCH, DELETE, OPTIONS
@@ -443,18 +442,14 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
   for r in routes()
     r.method != req.method && (! haskey(params.collection, :_method) || ( haskey(params.collection, :_method) && params.collection[:_method] != r.method )) && continue
 
-    Genie.config.log_router && log("Router: Checking against " * r.path)
-
     parsed_route, param_names, param_types = parse_route(r.path)
 
     uri = URI(to_uri(req.target))
     regex_route = Regex("^" * parsed_route * "\$")
 
-    (! occursin(regex_route, uri.path)) && continue
-    Genie.config.log_router && log("Router: Matched route " * uri.path)
+    occursin(regex_route, uri.path) || continue
 
-    (! extract_uri_params(uri.path, regex_route, param_names, param_types, params)) && continue
-    Genie.config.log_router && log("Router: Matched type of route " * uri.path)
+    extract_uri_params(uri.path, regex_route, param_names, param_types, params) || continue
 
     extract_post_params(req, params)
     extract_extra_params(r.with, params)
@@ -470,11 +465,11 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
     controller = (r.action |> typeof).name.module
 
     return  try
-              map(x->x(), r.before)
+              map(x -> x(), r.before)
               run_hook(controller, BEFORE_HOOK)
               result =  (is_dev() ? Base.invokelatest(r.action) : (r.action)()) |> to_response
               run_hook(controller, AFTER_HOOK)
-              map(x->x(), r.after)
+              map(x -> x(), r.after)
 
               result
             catch ex
@@ -486,9 +481,6 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
             end
   end
 
-  Genie.config.log_router && log("Router: No route matched - defaulting to 404", :warn)
-
-  # serve_error_file(404, "Not found", params.collection)
   error_404(req.target)
 end
 
@@ -500,8 +492,6 @@ Matches the invoked URL to the corresponding channel, sets up the execution envi
 """
 function match_channels(req, msg::String, ws_client, params::Params, session::Union{Sessions.Session,Nothing}) :: String
   for c in channels()
-    Genie.config.log_router && log("Channels: Checking against " * c.path)
-
     parsed_channel, param_names, param_types = parse_channel(c.path)
 
     payload::Dict{String,Any} = try
@@ -518,10 +508,8 @@ function match_channels(req, msg::String, ws_client, params::Params, session::Un
     regex_channel = Regex("^" * parsed_channel * "\$")
 
     (! occursin(regex_channel, uri)) && continue
-    Genie.config.log_router && log("Channels: Matched channel " * uri)
 
     extract_uri_params(uri, regex_channel, param_names, param_types, params) || continue
-    Genie.config.log_router && log("Router: Matched type of channel " * uri)
 
     extract_extra_params(c.with, params)
     action_controller_params(c.action, params)
@@ -533,11 +521,11 @@ function match_channels(req, msg::String, ws_client, params::Params, session::Un
     controller = (c.action |> typeof).name.module
 
      return   try
-                map(x->x(), c.before)
+                map(x -> x(), c.before)
                 run_hook(controller, BEFORE_HOOK)
                 result = (is_dev() ? Base.invokelatest(c.action) : (c.action)()) |> string
                 run_hook(controller, AFTER_HOOK)
-                map(x->x(), c.after)
+                map(x -> x(), c.after)
 
                 result
               catch ex
@@ -551,7 +539,6 @@ function match_channels(req, msg::String, ws_client, params::Params, session::Un
               end
   end
 
-  Genie.config.log_router && log("Channel: No route matched - defaulting 404", :err)
   string("404 - Not found")
 end
 

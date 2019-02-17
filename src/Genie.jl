@@ -40,9 +40,6 @@ include("AppServer.jl")
 include("Commands.jl")
 include("Cache.jl")
 
-include(joinpath("UI", "TwitterBootstrap.jl"))
-include(joinpath("UI", "Predix.jl"))
-
 using .Macros, .Loggers
 using .Inflector, .Util
 using .FileTemplates, .Generator, .Tester, .Encryption, .Cookies, .Sessions, .Input, .Renderer, .Router, .Helpers, .AppServer, .Commands
