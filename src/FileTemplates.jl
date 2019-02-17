@@ -11,7 +11,7 @@ using Genie.Inflector
 
 Default content for a new Genie task.
 """
-function new_task(module_name::String) :: String
+function newtask(module_name::String) :: String
   """
   module $module_name
 
@@ -28,28 +28,30 @@ function new_task(module_name::String) :: String
   end
   """
 end
+const new_task = newtask
 
 
 """
-    new_controller(controller_name::String) :: String
+    newcontroller(controller_name::String) :: String
 
 Default content for a new Genie controller.
 """
-function new_controller(controller_name::String) :: String
+function newcontroller(controller_name::String) :: String
   """
   module $(controller_name)Controller
   # Build something great
   end
   """
 end
+const new_controller = newcontroller
 
 
 """
-    new_channel(channel_name::String) :: String
+    newchannel(channel_name::String) :: String
 
 Default content for a new Genie channel.
 """
-function new_channel(channel_name::String) :: String
+function newchannel(channel_name::String) :: String
   """
   module $(channel_name)Channel
 
@@ -64,38 +66,15 @@ function new_channel(channel_name::String) :: String
   end
   """
 end
+const new_channel = newchannel
 
 
 """
-    new_authorizer() :: String
-
-Default content for a new Genie ACL YAML file.
-"""
-function new_authorizer() :: String
-  """
-  admin:
-    create: all
-    edit: all
-    delete: all
-    list: all
-  editor:
-    edit: all
-    list: all
-  writer:
-    create: all
-    edit: own
-    delete: own
-    list: own
-  """
-end
-
-
-"""
-    new_test(plural_name::String, singular_name::String) :: String
+    newtest(plural_name::String, singular_name::String) :: String
 
 Default content for a new test file.
 """
-function new_test(plural_name::String, singular_name::String) :: String
+function newtest(plural_name::String, singular_name::String) :: String
   """
   using Genie, App.$(plural_name)
 
@@ -103,6 +82,7 @@ function new_test(plural_name::String, singular_name::String) :: String
   @test 1 == 1
   """
 end
+const new_test = newtest
 
 
 """

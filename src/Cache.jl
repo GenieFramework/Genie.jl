@@ -5,7 +5,7 @@ module Cache
 
 using Genie, SHA, Genie.Loggers, Nullables
 
-export cache_key, with_cache, @cache_key
+export cachekey, withcache, @cachekey
 
 
 """
@@ -31,24 +31,25 @@ if the cache has not expired, the cached result is returned skipping the functio
 The optional `dir` param is used to designate the folder where the cache will be stored (within the configured cache folder).
 If `condition` is `false` caching will be skipped.
 """
-function with_cache(f::Function, key::Union{String,Symbol}, expiration::Int = CACHE_DURATION; dir = "", condition::Bool = true)
+function withcache(f::Function, key::Union{String,Symbol}, expiration::Int = CACHE_DURATION; dir::String = "", condition::Bool = true)
   ( expiration == 0 || ! condition ) && return f()
 
-  cached_data = CACHE_ADAPTER.from_cache(cache_key(key), expiration, dir = dir)
+  cached_data = CACHE_ADAPTER.fromcache(cachekey(key), expiration, dir = dir)
 
   if isnull(cached_data)
     Genie.config.log_cache && log("Missed cache for $key", :warn)
 
     output = f()
-    CACHE_ADAPTER.to_cache(cache_key(key), output, dir = dir)
+    CACHE_ADAPTER.tocache(cachekey(key), output, dir = dir)
 
     return output
   end
 
-  Genie.config.log_cache && log("Hit cache for $(cache_key(key))", :info)
+  Genie.config.log_cache && log("Hit cache for $(cachekey(key))", :info)
 
   Base.get(cached_data)
 end
+const with_cache = withcache
 
 
 """
@@ -56,44 +57,45 @@ end
 
 Removes the cache data stored under the `key` key.
 """
-function purge(key::Union{String,Symbol}; dir = "") :: Nothing
-  CACHE_ADAPTER.purge(cache_key(key), dir = dir)
+function purge(key::Union{String,Symbol}; dir::String = "") :: Nothing
+  CACHE_ADAPTER.purge(cachekey(key), dir = dir)
 end
 
 
 """
-    function purge_all() :: Nothing
+    function purgeall() :: Nothing
 
 Removes all cached data.
 """
-function purge_all(; dir = "") :: Nothing
-  CACHE_ADAPTER.purge_all(dir = dir)
+function purgeall(; dir = "") :: Nothing
+  CACHE_ADAPTER.purgeall(dir = dir)
 end
+const purge_all = purgeall
 
 
 """
-    cache_key(args...) :: String
+    cachekey(args...) :: String
 
 Computes a unique cache key based on `args`. Used to generate unique `key`s for storing data in cache.
 """
-function cache_key(args...) :: String
-  key = ""
+function cachekey(args...) :: String
+  key = IOBuffer()
   for a in args
-    key *= string(a)
+    print(key, string(a))
   end
 
-  bytes2hex(sha1(key))
+  bytes2hex(sha1(String(take!(key))))
 end
 
 
 """
-    macro cache_key()
+    macro cachekey()
 
 Generate a unique and repeatable cache key.
 The key is generated using file path and line number, so editing code can invalidate the cache.
 """
-macro cache_key()
-  :(cache_key(esc(@__FILE__), esc(@__LINE__)))
+macro cachekey()
+  :(cachekey(esc(@__FILE__), esc(@__LINE__)))
 end
 
 end

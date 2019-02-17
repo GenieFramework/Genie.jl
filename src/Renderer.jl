@@ -55,7 +55,7 @@ Invokes the HTML renderer of the underlying configured templating library.
 function html(resource::Symbol, action::Symbol, layout::Symbol = DEFAULT_LAYOUT_FILE; vars...) :: Dict{Symbol,String}
   HTMLTemplateEngine.render_html(resource, action, layout; vars...)
 end
-function html(view::String, layout::String = "<? @yield ?>"; vars...) :: Dict{Symbol,String}
+function html(view::String, layout::String = "<% @yield %>"; vars...) :: Dict{Symbol,String}
   HTMLTemplateEngine.render_html(view, layout; vars...)
 end
 
@@ -68,15 +68,15 @@ Invokes the HTML renderer of the underlying configured templating library and wr
 function respond_with_html(resource::Symbol, action::Symbol, layout::Symbol = DEFAULT_LAYOUT_FILE; vars...) :: HTTP.Response
   html(resource, action, layout; vars...) |> respond
 end
-function respond_with_html(view::String, layout::String; vars...) :: HTTP.Response
+function respond_with_html(view::String, layout::String = "<% @yield %>"; vars...) :: HTTP.Response
   html(view, layout; vars...) |> respond
 end
 const html! = respond_with_html
 
 
-function html!(output::String) :: HTTP.Response
-  respond(output)
-end
+# function html!(output::String) :: HTTP.Response
+#   respond(output)
+# end
 
 
 function flax(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE; vars...) :: Dict{Symbol,String}

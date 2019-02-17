@@ -3,7 +3,7 @@ Generates various Genie files.
 """
 module Generator
 
-using Revise, Genie, Genie.Loggers, Genie.FileTemplates, Genie.Inflector, Genie.Configuration #, Genie.App
+using Revise, Genie, Genie.Loggers, Genie.FileTemplates, Genie.Inflector, Genie.Configuration 
 
 
 """

@@ -14,7 +14,7 @@ Retrieves a value stored on the cookie as `key` from the `Respose` object.
 """
 function get(res::HTTP.Response, key::Union{String,Symbol}; encrypted::Bool = true) :: Nullable{String}
   if haskey(Dict(res.headers), "Set-Cookie")
-    cookies = to_dict(res)
+    cookies = todict(res)
     if haskey(cookies, string(key))
       value = cookies[string(key)]
       encrypted && (value = Genie.Encryption.decrypt(value))
@@ -76,7 +76,7 @@ end
 
 Sets `value` under the `key` label on the `Cookie`.
 """
-function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attributes::Dict = Dict(); encrypted = true) :: HTTP.Response
+function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attributes::Dict = Dict(); encrypted::Bool = true) :: HTTP.Response
   normalized_attrs = Dict{Symbol,Any}()
   for (k,v) in attributes
     normalized_attrs[Symbol(lowercase(string(k)))] = v
@@ -99,11 +99,11 @@ end
 
 
 """
-    to_dict(req::Request) :: Dict{String,String}
+    todict(req::Request) :: Dict{String,String}
 
 Extracts the `Cookie` and `Set-Cookie` data from the `Request` and `Response` objects and converts it into a dict.
 """
-function to_dict(r::Union{HTTP.Request,HTTP.Response}) :: Dict{String,String}
+function todict(r::Union{HTTP.Request,HTTP.Response}) :: Dict{String,String}
   d = Dict{String,String}()
   headers = Dict(r.headers)
 
@@ -123,5 +123,6 @@ function to_dict(r::Union{HTTP.Request,HTTP.Response}) :: Dict{String,String}
 
   d
 end
+const to_dict = todict
 
 end

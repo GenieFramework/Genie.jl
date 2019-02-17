@@ -80,18 +80,18 @@ end
 
 Parses HTML attributes.
 """
-function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()) :: Vector{String}
-  a = String[]
+function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()) :: String
+  a = IOBuffer()
   for (k,v) in attrs
     sk = string(k)
     sk == "typ" && (k = "type")
     startswith(sk, "_") && (k = sk = sk[2:end])
     k = replace(sk, "_"=>"-")
 
-    push!(a, "$(k)=\"$(v)\"")
+    print(a, "$(k)=\"$(v)\" ")
   end
 
-  a
+  String(take!(a))
 end
 
 
@@ -119,10 +119,9 @@ function normal_element(children::Union{String,Vector{String}}, elem::String, at
 end
 function normal_element(children::Union{String,Vector{String}}, elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   children = join(children)
-  a = attributes(attrs)
   elem = normalize_element(elem)
 
-  "<$(elem * (! isempty(a) ? (" " * join(a, " ")) : ""))>$(prepare_template(children))</$elem>"
+  string("<", elem, " ", attributes(attrs), ">", prepare_template(children), "</", elem, ">")
 end
 function normal_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   normal_element("", elem, attrs...)
@@ -297,6 +296,7 @@ Renders a Flax view corresponding to a resource and a controller action.
 """
 function render_flax(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String}; vars...) :: Dict{Symbol,String}
   err_msg = "The Flax view must return a function"
+
   try
     julia_action_template_func = joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action) * FILE_EXT) |> include
     julia_layout_template_func = joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout) * FILE_EXT) |> include
@@ -377,11 +377,9 @@ end
 Converts a HTML document to a Flax document.
 """
 function html_to_flax(file_path::String; partial = true) :: String
-  code = """function $(function_name(file_path))() \n"""
-  code *= parse_template(file_path, partial = partial)
-  code *= """\nend \n"""
-
-  code
+  string("function $(function_name(file_path))() \n",
+          parse_template(file_path, partial = partial),
+          "\nend \n")
 end
 
 
@@ -405,15 +403,14 @@ end
 Reads `file_path` template from disk.
 """
 function read_template_file(file_path::String) :: String
-  html = String[]
+  io = IOBuffer()
   open(file_path) do f
     for line in enumerate(eachline(f))
-      push!(html, parse_tags(line))
+      print(io, parse_tags(line), "\n")
     end
   end
 
-  join(html, "\n")
-  # read(file_path, String)
+  String(take!(io))
 end
 
 
@@ -442,6 +439,8 @@ end
 Parses a Gumbo tree structure into a `string` of Flax code.
 """
 function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", depth::Int = 0; partial = true) :: String
+  io = IOBuffer()
+
   if isa(elem, HTMLElement)
 
     tag_name = replace(lowercase(string(tag(elem))), "-"=>"_")
@@ -450,14 +449,14 @@ function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", dept
     if tag_name == "script" && in("type", collect(keys(attrs(elem))))
       if attrs(elem)["type"] == "julia/eval"
         if ! isempty(children(elem))
-          output *= repeat("\t", depth) * string(children(elem)[1].text) * "\n"
+          print(io, repeat("\t", depth), string(children(elem)[1].text), "\n")
         end
       end
 
     else
-      output *= repeat("\t", depth) * ( ! invalid_tag ? "Flax.$(tag_name)(" : "Flax.skip_element(" )
+      print(io, repeat("\t", depth), ( ! invalid_tag ? "Flax.$(tag_name)(" : "Flax.skip_element(" ))
 
-      attributes = String[]
+      attributes = IOBuffer()
       for (k,v) in attrs(elem)
         x = v
 
@@ -469,21 +468,23 @@ function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", dept
 
         if in(Symbol(lowercase(k)), BOOL_ATTRIBUTES)
           if x == true || x == "true" || x == :true || x == ":true" || x == ""
-            push!(attributes, "$k = \"$k\"") # boolean attributes can have the same value as the attribute -- or be empty
+            # push!(attributes, "$k = \"$k\"") # boolean attributes can have the same value as the attribute -- or be empty
+            print(attributes, "$k = \"$k\"", ", ") # boolean attributes can have the same value as the attribute -- or be empty
           end
         else
-          startswith(string(k), "data-") && (k = replace(string(k), r"^data-" => "data_"))
-          push!(attributes, """$k = "$v" """)
+          print(attributes, """$(replace(lowercase(string(k)), "-"=>"_")) = "$v" """, ", ")
         end
       end
 
-      output *= join(attributes, ", ") * ") "
+      attributes_string = String(take!(attributes))
+      endswith(attributes_string, ", ") && (attributes_string = attributes_string[1:end-2])
+      print(io, attributes_string, ") ")
 
       inner = ""
       if ! isempty(children(elem))
         children_count = size(children(elem))[1]
 
-        output *= "do;[\n"
+        print(io, "do;[\n")
 
         idx = 0
         for child in children(elem)
@@ -496,17 +497,17 @@ function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", dept
             end
           end
         end
-        isempty(inner) || (output *= inner * "\n" * repeat("\t", depth))
+        isempty(inner) || (print(io, inner, "\n", repeat("\t", depth)))
 
-        output *= "]end\n"
+        print(io, "]end\n")
       end
     end
 
   elseif isa(elem, HTMLText)
-    output *= repeat("\t", depth) * "\"$(elem.text |> strip |> string)\""
+    print(io, repeat("\t", depth), "\"$(elem.text |> strip |> string)\"")
   end
 
-  output
+  String(take!(io))
 end
 
 

@@ -19,7 +19,7 @@ const LOG_LEVEL_VERBOSITY_MINIMAL = :minimal
 
 # defaults
 const IN_REPL = false
-const GENIE_VERSION = v"0.7"
+const GENIE_VERSION = v"0.8.1"
 
 
 """

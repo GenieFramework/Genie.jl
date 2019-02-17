@@ -10,13 +10,7 @@ using Genie, Genie.Router, Genie.Loggers, Genie.Sessions, Genie.Configuration, G
 """
     startup(port::Int = 8000)
 
-Starts the web server on the configurated port.
-Automatically invoked when Genie is started with the `s` or the `server:start` command line params.
-
-# Examples
-```julia
-julia> AppServer.startup()
-Listening on 127.0.0.1:8000...
+Starts the web server on the configured port.
 ```
 """
 function startup(port::Int = 8000, host::String = Genie.config.server_host;
@@ -143,14 +137,6 @@ function sign_response!(res::HTTP.Response) :: HTTP.Response
 
   res.headers = [k for k in headers]
   res
-end
-
-"""
-"""
-function stopserver(s::HTTP.Servers.Server) :: Nothing
-  HTTP.close(s)
-
-  nothing
 end
 
 end
