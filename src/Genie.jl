@@ -60,13 +60,30 @@ end
 
 
 """
-    new_app(path = "."; db_support = false, skip_dependencies = false, autostart = true) :: Nothing
+    newapp(path = "."; db_support = false, skip_dependencies = false, autostart = true) :: Nothing
 
 Scaffolds a new Genie app.
 """
-function new_app(path = "."; db_support = false, autostart = true) :: Nothing
-  REPL.new_app(path, db_support = db_support, autostart = autostart)
+function newapp(path = "."; db_support = false, autostart = true) :: Nothing
+  REPL.newapp(path, db_support = db_support, autostart = autostart)
 end
-const newapp = new_app
+const new_app = newapp
+
+
+"""
+"""
+function loadapp(path = "."; autostart = false) :: Nothing
+  REPL.loadapp(path, autostart = autostart)
+end
+
+
+"""
+"""
+function startup(port::Int = 8000, host::String = Genie.config.server_host;
+                  ws_port::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
+                  verbose::Bool = false, ratelimit::Rational{Int} = 10_000//1)
+  AppServer.startup(port, host, ws_port = ws_port, async = async, verbose = verbose, ratelimit = ratelimit)
+end
+const startapp = startup
 
 end

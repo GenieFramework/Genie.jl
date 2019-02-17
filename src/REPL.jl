@@ -14,15 +14,14 @@ Generates a random secret token to be used for configuring the SECRET_TOKEN cons
 function secret_token() :: String
   sha256("$(randn()) $(Dates.now())") |> bytes2hex
 end
-const secrettoken = secret_token
 
 
 """
-    function new_app(path = "."; db_support = false, skip_dependencies = false) :: Nothing
+    function newapp(path = "."; db_support = false, skip_dependencies = false) :: Nothing
 
 Creates a new Genie app at the indicated path.
 """
-function new_app(path::String; db_support = false, autostart = true) :: Nothing
+function newapp(path::String; db_support = false, autostart = true) :: Nothing
   cp(joinpath(@__DIR__, "../", "files", "new_app"), abspath(path))
 
   chmod(joinpath(path, "bin", "server"), 0o700)
@@ -73,12 +72,12 @@ function new_app(path::String; db_support = false, autostart = true) :: Nothing
 
   nothing
 end
-const newapp = new_app
+const new_app = newapp
 
 
 """
 """
-function load_app(path = "."; autostart = false) :: Nothing
+function loadapp(path = "."; autostart = false) :: Nothing
   Core.eval(Main, Meta.parse("using Revise"))
   Core.eval(Main, Meta.parse("""include(joinpath("$path", "bootstrap.jl"))"""))
   Core.eval(Main, Meta.parse("Revise.revise()"))
@@ -89,7 +88,7 @@ function load_app(path = "."; autostart = false) :: Nothing
 
   nothing
 end
-const loadapp = load_app
+const load_app = loadapp
 
 
 """
@@ -111,40 +110,41 @@ end
 
 Creates a new `model` file.
 """
-function new_model(model_name::String) :: Nothing
+function newmodel(model_name::String) :: Nothing
   SearchLight.Generator.new_model(Dict{String,Any}("model:new" => model_name))
   Main.UserApp.load_resources()
 
   nothing
 end
-const newmodel = new_model
+const new_model = newmodel
 
 
 """
-    new_controller(controller_name::String) :: Nothing
+    newcontroller(controller_name::String) :: Nothing
 
 Creates a new `controller` file.
 """
-function new_controller(controller_name::String) :: Nothing
+function newcontroller(controller_name::String) :: Nothing
   Genie.Generator.new_controller(Dict{String,Any}("controller:new" => controller_name))
   Main.UserApp.load_resources()
 
   nothing
 end
-const newcontroller = new_controller
+const new_controller = newcontroller
 
 
 """
-    new_channel(channel_name::String) :: Nothing
+    newchannel(channel_name::String) :: Nothing
 
 Creates a new `channel` file.
 """
-function new_channel(channel_name::String) :: Nothing
+function newchannel(channel_name::String) :: Nothing
   Genie.Generator.new_channel(Dict{String,Any}("channel:new" => channel_name))
   Main.UserApp.load_resources()
 
   nothing
 end
+const new_channel = newchannel
 
 
 """
@@ -152,7 +152,7 @@ end
 
 Creates all the files associated with a new resource.
 """
-function new_resource(resource_name::String) :: Nothing
+function newresource(resource_name::String) :: Nothing
   Genie.Generator.new_resource(Dict{String,Any}("resource:new" => resource_name))
   try
     Main.UserApp.load_resources()
@@ -162,18 +162,18 @@ function new_resource(resource_name::String) :: Nothing
 
   nothing
 end
-const newchannel = new_channel
+const new_resource = newresource
 
 
 """
-    new_migration(migration_name::String) :: Nothing
+    newmigration(migration_name::String) :: Nothing
 
 Creates a new migration file.
 """
-function new_migration(migration_name::String) :: Nothing
+function newmigration(migration_name::String) :: Nothing
   SearchLight.Generator.new_migration(Dict{String,Any}("migration:new" => migration_name))
 end
-const newmigration = new_migration
+const new_migration = newmigration
 
 
 """
@@ -184,15 +184,15 @@ end
 
 
 """
-    new_task(task_name::String) :: Nothing
+    newtask(task_name::String) :: Nothing
 
 Creates a new `Task` file.
 """
-function new_task(task_name::String) :: Nothing
+function newtask(task_name::String) :: Nothing
   endswith(task_name, "Task") || (task_name = task_name * "Task")
   Genie.Toolbox.new(Dict{String,Any}("task:new" => task_name), Genie.config)
 end
-const newtask = new_task
+const new_task = newtask
 
 
 """
@@ -212,9 +212,9 @@ end
 
 
 """
-    reload_app() :: Nothing
+    reloadapp() :: Nothing
 """
-function reload_app() :: Nothing
+function reloadapp() :: Nothing
   log("Attempting to reload the Genie's core modules. If you get unexpected errors or things don't work as expected, simply exit this Julia session and start a new one to fully reload Genie.", :warn)
 
   Revise.revise(App)
@@ -226,15 +226,15 @@ function reload_app() :: Nothing
 
   nothing
 end
-const reloadapp = reload_app
+const reload_app = reloadapp
 
 
 """
-    load_resources(dir = Genie.RESOURCES_PATH) :: Nothing
+    loadresources(dir = Genie.RESOURCES_PATH) :: Nothing
 
 Recursively adds subfolders of resources to LOAD_PATH.
 """
-function load_resources(root_dir) :: Nothing
+function loadresources(root_dir) :: Nothing
   push!(LOAD_PATH, root_dir)
 
   for (root, dirs, files) in walkdir(root_dir)
@@ -246,6 +246,6 @@ function load_resources(root_dir) :: Nothing
 
   nothing
 end
-const loadresources = load_resources
+const load_resources = loadresources
 
 end
