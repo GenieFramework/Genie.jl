@@ -12,9 +12,6 @@ const LAYOUTS_PATH    = joinpath(APP_PATH, "layouts")
 const TASKS_PATH      = "tasks"
 const BUILD_PATH      = "build"
 
-const GENIE_AUTHORIZATOR_FILE_NAME      = "authorization.yml"
-const GENIE_DB_CONFIG_FILE_NAME         = "database.yml"
-
 const GENIE_CONTROLLER_FILE_POSTFIX     = "Controller.jl"
 const GENIE_CHANNEL_FILE_POSTFIX        = "Channel.jl"
 
@@ -25,7 +22,6 @@ const PARAMS_REQUEST_KEY    = :REQUEST
 const PARAMS_RESPONSE_KEY   = :RESPONSE
 const PARAMS_SESSION_KEY    = :SESSION
 const PARAMS_FLASH_KEY      = :FLASH
-const PARAMS_ACL_KEY        = :ACL
 const PARAMS_WS_CLIENT      = :WS_CLIENT
 const PARAMS_JSON_PAYLOAD   = :JSON_PAYLOAD
 const PARAMS_TEXT_PAYLOAD   = :TEXT_PAYLOAD

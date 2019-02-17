@@ -79,17 +79,6 @@ end
 
 
 """
-    load_acl(dir::String) :: Dict{Any,Any}
-
-Loads the ACL file associated with the invoked `controller` and returns the rules.
-"""
-function load_acl(dir::String) :: Dict{Any,Any}
-  file_path = joinpath(dir, Genie.GENIE_AUTHORIZATOR_FILE_NAME)
-  isfile(file_path) ? YAML.load(open(file_path)) : Dict{Any,Any}()
-end
-
-
-"""
     load_configurations() :: Nothing
 
 Loads (includes) the framework's configuration files.

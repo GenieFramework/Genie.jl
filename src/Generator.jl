@@ -65,7 +65,7 @@ function new_resource(cmd_args::Dict{String,Any}) :: Nothing
   end
 
   resource_path = setup_resource_path(resource_name)
-  for (resource_file, resource_type) in [(controller_file_name(resource_name), :controller), (channel_file_name(resource_name), :channel), (Genie.GENIE_AUTHORIZATOR_FILE_NAME, :authorizer)]
+  for (resource_file, resource_type) in [(controller_file_name(resource_name), :controller), (channel_file_name(resource_name), :channel)]
     write_resource_file(resource_path, resource_file, resource_name, resource_type) &&
       log("New $resource_file created at $(joinpath(resource_path, resource_file))")
   end
@@ -115,12 +115,6 @@ function write_resource_file(resource_path::String, file_name::String, resource_
       resource_does_not_exist(resource_path, file_name) || return true
       open(joinpath(resource_path, file_name), "w") do f
         write(f, Genie.FileTemplates.new_controller(resource_name))
-      end
-
-    elseif resource_type == :authorizer
-      resource_does_not_exist(resource_path, file_name) || return true
-      open(joinpath(resource_path, file_name), "w") do f
-        write(f, Genie.FileTemplates.new_authorizer())
       end
 
     elseif resource_type == :test
