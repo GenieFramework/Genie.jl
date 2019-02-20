@@ -2,3 +2,7 @@
 2019-02-06 12:59:42:DEBUG:Main:[2019-02-06T12:59:42.455] -- :/jsonpayload -- Done
 
 
+2019-02-20 17:36:36:DEBUG:Main: Web Server starting at 127.0.0.1:8000
+2019-02-20 17:36:37:DEBUG:Main: Web Server running at 127.0.0.1:8000
+2019-02-20 17:36:45:INFO:Main: /jsonpayload 200
+
