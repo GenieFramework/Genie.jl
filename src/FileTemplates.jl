@@ -88,6 +88,7 @@ const new_test = newtest
 """
 """
 function appmodule(path::String)
+  path = replace(path, "-"=>"_") |> strip
   appname = split(path, "/", keepempty = false)[end] |> String |> Inflector.from_underscores
 
   content = """
