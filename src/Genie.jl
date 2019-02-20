@@ -39,6 +39,7 @@ include("WebChannels.jl")
 include("AppServer.jl")
 include("Commands.jl")
 include("Cache.jl")
+include("Responses.jl")
 
 using .Macros, .Loggers
 using .Inflector, .Util

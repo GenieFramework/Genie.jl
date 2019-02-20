@@ -5,7 +5,8 @@ module Configuration
 
 using Genie, YAML
 
-export is_dev, is_prod, is_test, env, cache_enabled, Settings, DEV, PROD, TEST, IN_REPL
+export is_dev, is_prod, is_test, isdev, isprod, istest, env
+export cache_enabled, Settings, DEV, PROD, TEST, IN_REPL
 export LOG_LEVEL_VERBOSITY_VERBOSE, LOG_LEVEL_VERBOSITY_MINIMAL
 
 # app environments
@@ -19,7 +20,7 @@ const LOG_LEVEL_VERBOSITY_MINIMAL = :minimal
 
 # defaults
 const IN_REPL = false
-const GENIE_VERSION = v"0.8.2"
+const GENIE_VERSION = v"0.8.3"
 
 
 """
@@ -41,6 +42,10 @@ false
 is_dev()  :: Bool = (Genie.config.app_env == DEV)
 is_prod() :: Bool = (Genie.config.app_env == PROD)
 is_test() :: Bool = (Genie.config.app_env == TEST)
+
+const isdev = is_dev
+const isprod = is_prod
+const istest = is_test
 
 
 """

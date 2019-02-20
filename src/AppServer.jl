@@ -53,18 +53,15 @@ end
 """
 function setup_http_handler(req::HTTP.Request, res::HTTP.Response = HTTP.Response()) :: HTTP.Response
   try
-    response = @fetch handle_request(req, res)
-    response.status >= 500 && response.status < 600 && error(response)
-
-    response
+    @fetch handle_request(req, res)
   catch ex
-    log(string(ex), :critical)
-    log(sprint(io -> Base.show_backtrace(io, catch_backtrace())), :critical)
-    log("$(@__FILE__):$(@__LINE__)", :critical)
+    error_message = string(sprint(showerror, ex), "\n\n")
+
+    log(error_message, :critical)
 
     message = Genie.Configuration.is_prod() ?
                 "The error has been logged and we'll look into it ASAP." :
-                string(ex, " in $(@__FILE__):$(@__LINE__)", "\n\n", sprint(io->Base.show_backtrace(io, catch_backtrace())))
+                string(error_message, " in $(@__FILE__):$(@__LINE__)", "\n\n")
 
     Genie.Router.serve_error_file(500, message, Genie.Router.@params)
   end
@@ -103,10 +100,10 @@ function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.
         Genie.config.cors_headers["Access-Control-Allow-Origin"] == "*") &&
       (Genie.config.cors_headers["Access-Control-Allow-Origin"] = req.headers["Origin"])
 
-    app_response.headers = merge(res.headers, Genie.config.cors_headers)
+    app_response.headers = [d for d in merge(Dict(res.headers), Genie.config.cors_headers)]
   end
 
-  app_response.headers = [d for d in merge(Dict(res.headers), Dict(app_response.headers))]
+  app_response.headers = vcat(app_response.headers, [d for d in merge(Dict(res.headers), Dict(app_response.headers))]) |> unique
 
   # app_response.cookies = merge(res.cookies, app_response.cookies)
 

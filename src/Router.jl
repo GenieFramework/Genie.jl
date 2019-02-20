@@ -16,7 +16,7 @@ const POST    = "POST"
 const PUT     = "PUT"
 const PATCH   = "PATCH"
 const DELETE  = "DELETE"
-const OPTIONS  = "OPTIONS"
+const OPTIONS = "OPTIONS"
 
 const BEFORE_HOOK  = :before_hook
 const AFTER_HOOK   = :after_hook
@@ -83,18 +83,26 @@ function route_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = IPv4(Ge
   extract_get_params(URI(to_uri(req.target)), params)
   res = negotiate_content(req, res, params)
 
-  req.method == OPTIONS && return preflight_response()
-
   if is_static_file(req.target)
     Genie.config.server_handle_static_files && return serve_static_file(req.target)
-    return serve_error_file(404, "File not found: $(req.target)", params.collection)
+    return error_404(req.target, req)
   end
 
   Revise.revise()
 
   session = Genie.config.session_auto_start ? Sessions.start(req, res) : nothing
 
-  controller_response::HTTP.Response = match_routes(req, res, session, params)
+  controller_response::HTTP.Response = HTTP.Response()
+  try
+    controller_response = match_routes(req, res, session, params)
+  catch ex
+    log(sprint(showerror, ex), :error)
+    log("$(req.target) 500\n", :error)
+
+    rethrow(ex)
+  end
+
+  controller_response.status == 404 && req.method == OPTIONS && return preflight_response()
 
   ! in(response_type(params), sessionless) && Genie.config.session_auto_start && Sessions.persist(session)
 
@@ -440,14 +448,20 @@ Matches the invoked URL to the corresponding route, sets up the execution enviro
 """
 function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Genie.Sessions.Session,Nothing}, params::Params) :: HTTP.Response
   for r in routes()
-    r.method != req.method && (! haskey(params.collection, :_method) || ( haskey(params.collection, :_method) && params.collection[:_method] != r.method )) && continue
+    r.method != req.method && (! haskey(params.collection, :_method) || (haskey(params.collection, :_method) && params.collection[:_method] != r.method) ) && continue
 
     parsed_route, param_names, param_types = parse_route(r.path)
 
     uri = URI(to_uri(req.target))
-    regex_route = Regex("^" * parsed_route * "\$")
+    regex_route = try
+      Regex("^" * parsed_route * "\$")
+    catch
+      log("Invalid route $parsed_route", :error)
 
-    occursin(regex_route, uri.path) || continue
+      continue
+    end
+
+    occursin(regex_route, uri.path) || parsed_route == "/*" || continue
 
     extract_uri_params(uri.path, regex_route, param_names, param_types, params) || continue
 
@@ -473,15 +487,11 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
 
               result
             catch ex
-              log("Failed invoking controller", :warn)
-              log(string(ex), :warn)
-              log("$(@__FILE__):$(@__LINE__)", :warn)
-
               (isdefined(controller, RESCUE_HOOK) && return to_response(getfield(controller, RESCUE_HOOK)(ex))) || rethrow(ex)
             end
   end
 
-  error_404(req.target)
+  error_404(req.target, req)
 end
 
 
@@ -704,7 +714,7 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
     try
       params.collection[Genie.PARAMS_JSON_PAYLOAD] = JSON.parse(params.collection[Genie.PARAMS_RAW_PAYLOAD])
     catch ex
-      log(ex, :error)
+      log(sprint(showerror, ex), :error)
       log("Setting @params(:JSON_PAYLOAD) to Nothing", :warn)
       params.collection[Genie.PARAMS_JSON_PAYLOAD] = nothing
     end
@@ -748,7 +758,7 @@ function request_type_is(req::HTTP.Request, request_type::Symbol) :: Bool
   ! in(request_type, keys(request_mappings) |> collect) && error("Unknown request type $request_type - expected one of $(keys(request_mappings) |> collect).")
 
   occursin(request_mappings[request_type], content_type(req)) && return true
-  
+
   false
 end
 function request_type_is(request_type::Symbol) :: Bool
@@ -995,15 +1005,29 @@ end
 
 """
 """
-function error_404(resource = "")
-  serve_error_file(404, resource)
+function error_404(resource = "", req = HTTP.Request(404, ["Content-Type" => request_mappings[:html]]))
+  @show req
+
+  if request_type_is(req, :json)
+    HTTP.Response(404, ["Content-Type" => request_mappings[:json]], body = """{ "error": "404 - NOT FOUND" }""")
+  elseif request_type_is(req, :text)
+    HTTP.Response(404, ["Content-Type" => request_mappings[:text]], body = "Error: 404 - NOT FOUND")
+  else
+    serve_error_file(404, resource)
+  end
 end
 
 
 """
 """
-function error_500(error_message = "")
-  serve_error_file(500, error_message, @params)
+function error_500(error_message = "", req = HTTP.Request(500, ["Content-Type" => request_mappings[:html]]))
+  if request_type_is(req, :json)
+    HTTP.Response(500, ["Content-Type" => request_mappings[:json]], body = JSON.json(Dict("error" => "500 - $error_message")))
+  elseif request_type_is(req, :text)
+    HTTP.Response(500, ["Content-Type" => request_mappings[:text]], body = "Error: 500 - $error_message")
+  else
+    serve_error_file(500, error_message, @params)
+  end
 end
 
 
@@ -1023,7 +1047,7 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
 
     if Genie.Configuration.is_dev()
       if error_code == 500
-        error_message = error_message * "\n\n\n" *
+        error_message =
                         """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                             $("\n" ^ 3)""" *
                         """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(params))                 $("\n" ^ 3)""" *
                         """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Router.named_routes()))  $("\n" ^ 3)""" *
