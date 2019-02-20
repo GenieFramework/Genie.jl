@@ -748,6 +748,7 @@ function request_type_is(req::HTTP.Request, request_type::Symbol) :: Bool
   ! in(request_type, keys(request_mappings) |> collect) && error("Unknown request type $request_type - expected one of $(keys(request_mappings) |> collect).")
 
   occursin(request_mappings[request_type], content_type(req)) && return true
+  
   false
 end
 function request_type_is(request_type::Symbol) :: Bool

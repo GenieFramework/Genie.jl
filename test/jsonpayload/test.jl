@@ -10,5 +10,6 @@ end
 Genie.AppServer.startup()
 
 HTTP.request("POST", "http://localhost:8000/jsonpayload", [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
+HTTP.request("POST", "http://localhost:8000/jsonpayload", [("Content-Type", "application/json")], """{"greeting":"hello"}""")
 
 exit(0)
