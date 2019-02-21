@@ -33,6 +33,12 @@ end
 function setheaders(headers::Dict) :: HTTP.Response
   setheaders!(getresponse(), headers)
 end
+function setheaders(header::Pair{String,String}) :: HTTP.Response
+  setheaders(Dict(header))
+end
+function setheaders(headers::Vector{Pair{String,String}}) :: HTTP.Response
+  setheaders(Dict(headers...))
+end
 
 
 """

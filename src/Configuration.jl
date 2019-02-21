@@ -3,10 +3,12 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
+const GENIE_VERSION = v"0.8.5"
+
 using Genie, YAML
 
 export is_dev, is_prod, is_test, isdev, isprod, istest, env
-export cache_enabled, Settings, DEV, PROD, TEST, IN_REPL
+export cache_enabled, Settings, DEV, PROD, TEST
 export LOG_LEVEL_VERBOSITY_VERBOSE, LOG_LEVEL_VERBOSITY_MINIMAL
 
 # app environments
@@ -17,10 +19,6 @@ const TEST  = "test"
 # log levels
 const LOG_LEVEL_VERBOSITY_VERBOSE = :verbose
 const LOG_LEVEL_VERBOSITY_MINIMAL = :minimal
-
-# defaults
-const IN_REPL = false
-const GENIE_VERSION = v"0.8.4"
 
 
 """

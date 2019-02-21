@@ -6,7 +6,7 @@ module Macros
 using Genie, Genie.Configuration
 
 export @devtools, @ifdevtools
-export @run_with_time, @unless, @psst, @in_repl, @location_in_file
+export @run_with_time, @unless, @psst, @location_in_file
 
 """
     devtools()
