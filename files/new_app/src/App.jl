@@ -134,7 +134,7 @@ end
 
 Loads the routes file.
 """
-function load_routes_definitions(fail_on_error = is_dev()) :: Nothing
+function load_routes_definitions(fail_on_error = isdev()) :: Nothing
   try
     if isfile(Genie.ROUTES_FILE_NAME)
       include(Genie.ROUTES_FILE_NAME)
@@ -155,7 +155,7 @@ end
 
 Loads the channels file.
 """
-function load_channels_definitions(fail_on_error = is_dev()) :: Nothing
+function load_channels_definitions(fail_on_error = isdev()) :: Nothing
   try
     if isfile(Genie.CHANNELS_FILE_NAME)
       include(Genie.CHANNELS_FILE_NAME)

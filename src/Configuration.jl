@@ -8,6 +8,7 @@ const GENIE_VERSION = v"0.8.6"
 using Genie, YAML
 
 export is_dev, is_prod, is_test, isdev, isprod, istest, env
+export @ifdev, @ifprod, @iftest
 export cache_enabled, Settings, DEV, PROD, TEST
 export LOG_LEVEL_VERBOSITY_VERBOSE, LOG_LEVEL_VERBOSITY_MINIMAL
 
@@ -37,13 +38,23 @@ julia> Configuration.is_prod()
 false
 ```
 """
-is_dev()  :: Bool = (Genie.config.app_env == DEV)
-is_prod() :: Bool = (Genie.config.app_env == PROD)
-is_test() :: Bool = (Genie.config.app_env == TEST)
+is_dev():: Bool  = (Genie.config.app_env == DEV)
+is_prod():: Bool = (Genie.config.app_env == PROD)
+is_test():: Bool = (Genie.config.app_env == TEST)
 
-const isdev = is_dev
+const isdev  = is_dev
 const isprod = is_prod
 const istest = is_test
+
+macro ifdev(e::Expr)
+  isdev() && e
+end
+macro ifprod(e::Expr)
+  isprod() && e
+end
+macro iftest(e::Expr)
+  istest() && e
+end
 
 
 """

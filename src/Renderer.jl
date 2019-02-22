@@ -4,7 +4,7 @@ export respond, json, redirect_to, html, flax, include_asset, has_requested, css
 export respond_with_json, respond_with_html, respond_with, html!, json!, http_error, error!
 
 using Nullables, JSON, HTTP
-using Genie, Genie.Util, Genie.Configuration, Genie.Loggers, Genie.Macros
+using Genie, Genie.Util, Genie.Configuration, Genie.Loggers
 
 eval(:(include("$(Genie.config.html_template_engine).jl")))
 Genie.config.html_template_engine != Genie.config.json_template_engine && Core.eval(:(include("$(Genie.config.json_template_engine).jl")))

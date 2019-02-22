@@ -481,7 +481,7 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
     return  try
               map(x -> x(), r.before)
               run_hook(controller, BEFORE_HOOK)
-              result =  (is_dev() ? Base.invokelatest(r.action) : (r.action)()) |> to_response
+              result =  (isdev() ? Base.invokelatest(r.action) : (r.action)()) |> to_response
               run_hook(controller, AFTER_HOOK)
               map(x -> x(), r.after)
 
@@ -533,13 +533,13 @@ function match_channels(req, msg::String, ws_client, params::Params, session::Un
      return   try
                 map(x -> x(), c.before)
                 run_hook(controller, BEFORE_HOOK)
-                result = (is_dev() ? Base.invokelatest(c.action) : (c.action)()) |> string
+                result = (isdev() ? Base.invokelatest(c.action) : (c.action)()) |> string
                 run_hook(controller, AFTER_HOOK)
                 map(x -> x(), c.after)
 
                 result
               catch ex
-                is_dev() && rethrow(ex)
+                isdev() && rethrow(ex)
 
                 log("Failed invoking channel", :err)
                 log(string(ex), :err)
@@ -1043,7 +1043,7 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
                     read(f, String)
                   end
 
-    if Genie.Configuration.is_dev()
+    if Genie.Configuration.isdev()
       if error_code == 500
         error_message =
                         """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                             $("\n" ^ 3)""" *

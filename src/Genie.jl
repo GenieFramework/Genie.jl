@@ -20,7 +20,6 @@ push!(LOAD_PATH,  joinpath(@__DIR__, "cache_adapters"),
 
 include(joinpath(@__DIR__, "genie_types.jl"))
 
-include("Macros.jl")
 include("Loggers.jl")
 include("Inflector.jl")
 include("Util.jl")
@@ -41,9 +40,10 @@ include("Commands.jl")
 include("Cache.jl")
 include("Responses.jl")
 
-using .Macros, .Loggers
+using .Loggers
 using .Inflector, .Util
-using .FileTemplates, .Generator, .Tester, .Encryption, .Cookies, .Sessions, .Input, .Renderer, .Router, .Helpers, .AppServer, .Commands
+using .FileTemplates, .Generator, .Tester, .Encryption, .Cookies, .Sessions
+using .Input, .Renderer, .Router, .Helpers, .AppServer, .Commands
 using .Flax, .AppServer
 
 include(joinpath(@__DIR__, "REPL.jl"))
