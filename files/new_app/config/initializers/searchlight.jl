@@ -12,9 +12,4 @@ if SearchLight.config.db_config_settings["adapter"] != nothing
   SearchLight.Database.connect()
   SearchLight.load_resources()
 end
-
-Core.eval(Genie.Generator, :(using SearchLight, SearchLight.Migration))
-Core.eval(Genie.Tester, :(using SearchLight, SearchLight.Migration))
-Core.eval(Genie.Commands, :(using SearchLight, SearchLight.Migration))
-Core.eval(Genie.REPL, :(using SearchLight, SearchLight.Generator, SearchLight.Migration))
 =#

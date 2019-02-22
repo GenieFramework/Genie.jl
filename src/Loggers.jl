@@ -1,5 +1,5 @@
 """
-Provides logging functionality for SearchLight apps.
+Provides logging functionality.
 """
 module Loggers
 

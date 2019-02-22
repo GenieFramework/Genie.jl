@@ -3,7 +3,7 @@ Generates various Genie files.
 """
 module Generator
 
-using Revise, Genie, Genie.Loggers, Genie.FileTemplates, Genie.Inflector, Genie.Configuration 
+using Revise, Genie, Genie.Loggers, Genie.FileTemplates, Genie.Inflector, Genie.Configuration
 
 
 """
@@ -53,12 +53,6 @@ Generates all the files associated with a new resource and persists them to the 
 """
 function new_resource(cmd_args::Dict{String,Any}) :: Nothing
   resource_name = uppercasefirst(cmd_args["resource:new"])
-
-  try
-    SearchLight.Generator.new_resource(resource_name)
-  catch ex
-    log("Skipping SearchLight", :warn)
-  end
 
   if Genie.Inflector.is_singular(resource_name)
     resource_name = Genie.Inflector.to_plural(resource_name) |> Base.get

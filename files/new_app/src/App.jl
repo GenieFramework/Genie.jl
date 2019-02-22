@@ -64,6 +64,8 @@ function load_resources(root_dir = Genie.RESOURCES_PATH) :: Nothing
 end
 
 
+"""
+"""
 function load_helpers(root_dir = Genie.HELPERS_PATH) :: Nothing
   push!(LOAD_PATH, root_dir)
 
@@ -114,7 +116,11 @@ function load_initializers() :: Nothing
       fi = joinpath(dir, i)
       if endswith(fi, ".jl")
         include(fi)
-        Revise.track(@__MODULE__, fi)
+        try
+          Revise.track(@__MODULE__, fi)
+        catch
+          log("Failed Revise tracking of $fi", :warn)
+        end
       end
     end
   end
@@ -185,6 +191,95 @@ function secret_token() :: String
 end
 
 
+"""
+    newmodel(model_name::String) :: Nothing
+
+Creates a new `model` file.
+"""
+function newmodel(model_name::String) :: Nothing
+  SearchLight.Generator.new_model(model_name)
+  load_resources()
+
+  nothing
+end
+
+
+"""
+    newcontroller(controller_name::String) :: Nothing
+
+Creates a new `controller` file.
+"""
+function newcontroller(controller_name::String) :: Nothing
+  Genie.Generator.new_controller(Dict{String,Any}("controller:new" => controller_name))
+  load_resources()
+
+  nothing
+end
+
+
+"""
+    newchannel(channel_name::String) :: Nothing
+
+Creates a new `channel` file.
+"""
+function newchannel(channel_name::String) :: Nothing
+  Genie.Generator.new_channel(Dict{String,Any}("channel:new" => channel_name))
+  load_resources()
+
+  nothing
+end
+
+
+"""
+    newresource(resource_name::String) :: Nothing
+
+Creates all the files associated with a new resource.
+"""
+function newresource(resource_name::String) :: Nothing
+  Genie.Generator.new_resource(Dict{String,Any}("resource:new" => resource_name))
+
+  try
+    SearchLight.Generator.new_resource(uppercasefirst(resource_name))
+  catch ex
+    log("Skipping SearchLight", :warn)
+  end
+
+  load_resources()
+
+  nothing
+end
+
+
+"""
+    newmigration(migration_name::String) :: Nothing
+
+Creates a new migration file.
+"""
+function newmigration(migration_name::String) :: Nothing
+  SearchLight.Generator.new_migration(Dict{String,Any}("migration:new" => migration_name))
+end
+
+
+"""
+"""
+function newtablemigration(migration_name::String) :: Nothing
+  SearchLight.Generator.new_table_migration(Dict{String,Any}("migration:new" => migration_name))
+end
+
+
+"""
+    newtask(task_name::String) :: Nothing
+
+Creates a new `Task` file.
+"""
+function newtask(task_name::String) :: Nothing
+  endswith(task_name, "Task") || (task_name = task_name * "Task")
+  Genie.Toolbox.new(Dict{String,Any}("task:new" => task_name), Genie.config)
+end
+
+
+"""
+"""
 function load() :: Nothing
   App.bootstrap()
 
