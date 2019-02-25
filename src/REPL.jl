@@ -96,11 +96,11 @@ const load_app = loadapp
 """
 function setup_windows_bin_files(path = ".")
   open(joinpath(path, "bin", "repl.bat"), "w") do f
-    write(f, "$JULIA_PATH --color=yes --depwarn=no -q -i -- bootstrap.jl %*")
+    write(f, "$JULIA_PATH --color=yes --depwarn=no -q -i -- ../bootstrap.jl %*")
   end
 
   open(joinpath(path, "bin", "server.bat"), "w") do f
-    write(f, "$JULIA_PATH --color=yes --depwarn=no -q -i -- bootstrap.jl s %*")
+    write(f, "$JULIA_PATH --color=yes --depwarn=no -q -i -- ../bootstrap.jl s %*")
   end
 end
 
