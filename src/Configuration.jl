@@ -3,7 +3,7 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
-const GENIE_VERSION = v"0.8.6"
+const GENIE_VERSION = v"0.8.7"
 
 using Genie, YAML
 
@@ -47,13 +47,13 @@ const isprod = is_prod
 const istest = is_test
 
 macro ifdev(e::Expr)
-  isdev() && e
+  isdev() && esc(e)
 end
 macro ifprod(e::Expr)
-  isprod() && e
+  isprod() && esc(e)
 end
 macro iftest(e::Expr)
-  istest() && e
+  istest() && esc(e)
 end
 
 

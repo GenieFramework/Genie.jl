@@ -154,24 +154,25 @@ end
 
 
 """
-    include_template(path::String; partial = true, func_name = "") :: String
+    include_template(path::String; partial = true) :: String
 
 Includes a template inside another.
 """
-function include_template(path::String; partial = true, func_name = "") :: String
+function include_template(path::String; partial = true) :: String
   if Genie.config.log_views
     log("Including $path")
-    @time _include_template(path, partial = partial, func_name = func_name)
+    @time _include_template(path, partial = partial)
   else
-    _include_template(path, partial = partial, func_name = func_name)
+    _include_template(path, partial = partial)
   end
 end
 
 
 """
 """
-function _include_template(path::String; partial = true, func_name = "") :: String
+function view_file_info(path::String) :: Tuple{String,String}
   _path, _extension = "", ""
+
   if isfile(abspath(path))
     _path, _extension = relpath(path), "." * split(path, ".")[end]
   else
@@ -183,27 +184,34 @@ function _include_template(path::String; partial = true, func_name = "") :: Stri
     end
   end
 
+  _path, _extension
+end
+
+
+"""
+"""
+function include_markdown(path::String)
+  Markdown.parse(include_string(@__MODULE__, string('"', read(path, String), '"'))) |> Markdown.html
+end
+
+
+"""
+"""
+function render_markdown(content::Markdown.MD)
+  content |> Markdown.html
+end
+
+
+"""
+"""
+function _include_template(path::String; partial = true) :: String
+  _path, _extension = view_file_info(path)
+
   isempty(_path) ? error("File not found $(abspath(path)) in $(@__FILE__):$(@__LINE__)") : path = _path
 
-  if _extension in MARKDOWN_FILE_EXT # .md
-    # build_path = joinpath(Genie.BUILD_PATH, MD_BUILD_NAME, md_build_name(path))
-    # isfile(build_path) && ! build_is_stale(path, build_path) && return read(build_path, String)
-    ## isfile(build_path) && ! build_is_stale(path, build_path) && return include_template(build_path, partial = partial, func_name = func_name)
+  _extension in MARKDOWN_FILE_EXT && return include_markdown(path)
 
-    file_content = read(path, String)
-    md_html = Markdown.parse(include_string(@__MODULE__, string('"', file_content, '"'))) |> Markdown.html
-    # md_html = Markdown.parse(file_content) |> Markdown.html
-
-    # isdir(joinpath(Genie.BUILD_PATH, MD_BUILD_NAME)) || create_build_folders()
-    # open(joinpath(Genie.BUILD_PATH, MD_BUILD_NAME, md_build_name(path)), "w") do io
-    #   write(io, md_html)
-    # end
-
-    return md_html
-  end
-
-
-  f_name = isempty(func_name) ? Symbol(function_name(path)) : Symbol(func_name)
+  f_name = Symbol(function_name(path))
   f_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl")
   f_stale = build_is_stale(path, f_path)
 
@@ -213,6 +221,33 @@ function _include_template(path::String; partial = true, func_name = "") :: Stri
       @time build_module(html_to_flax(path, partial = partial), path)
     end
     include(joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl"))
+  end
+
+  try
+    Base.invokelatest(getfield(@__MODULE__, f_name))
+  catch ex
+    log("$ex at $(@__FILE__):$(@__LINE__)", :err)
+  end
+end
+
+
+"""
+"""
+function _include_inline_template(content::Union{HTMLString,Markdown.MD}; partial = true) :: String
+  isa(content, Markdown.MD) && return render_markdown(content)
+
+  module_name = m_name(content)
+
+  f_name = Symbol(function_name(content))
+  f_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, module_name * ".jl")
+  f_stale = ! isfile(f_path)
+
+  if f_stale || ! isdefined(@__MODULE__, f_name)
+    if f_stale
+      log("Building view $f_path")
+      @time build_inline_module(module_name, string_to_flax(content, partial = partial))
+    end
+    include(joinpath(Genie.BUILD_PATH, BUILD_NAME, module_name * ".jl"))
   end
 
   try
@@ -270,13 +305,15 @@ function render_html(view::String, layout::String = "<% @yield %>"; vars...) :: 
     if ispath(view)
       task_local_storage(:__yield, include_template(view))
     else
-      task_local_storage(:__yield, Core.eval(@__MODULE__, Meta.parse(parse_string(view))))
+      task_local_storage(:__yield, _include_inline_template(view))
+      # task_local_storage(:__yield, Core.eval(@__MODULE__, Meta.parse(parse_string(view))))
     end
 
     if ispath(layout)
       Dict{Symbol,String}(:html => include_template(layout, partial = false) |> string |> doc)
     else
-      Dict{Symbol,String}(:html => Core.eval(@__MODULE__, Meta.parse(parse_string(layout, partial = false))) |> string |> doc)
+      Dict{Symbol,String}(:html => _include_inline_template(layout, partial = false) |> string |> doc)
+      # Dict{Symbol,String}(:html => Core.eval(@__MODULE__, Meta.parse(parse_string(layout, partial = false))) |> string |> doc)
     end
   catch ex
     log(string(ex), :err)
@@ -381,6 +418,13 @@ function html_to_flax(file_path::String; partial = true) :: String
 end
 
 
+function string_to_flax(content::String; partial = true) :: String
+  string("function $(function_name(content))() \n",
+          parse_string(content, partial = partial),
+          "\nend \n")
+end
+
+
 """
 """
 function build_module(content::String, path::String) :: Bool
@@ -388,6 +432,19 @@ function build_module(content::String, path::String) :: Bool
   isdir(joinpath(Genie.BUILD_PATH, BUILD_NAME)) || mkpath(joinpath(Genie.BUILD_PATH, BUILD_NAME))
   open(module_path, "w") do io
     write(io, "# $path \n\n")
+    write(io, content)
+  end
+
+  true
+end
+
+
+"""
+"""
+function build_inline_module(module_name::String, content::String) :: Bool
+  module_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, module_name * ".jl")
+  isdir(joinpath(Genie.BUILD_PATH, BUILD_NAME)) || mkpath(joinpath(Genie.BUILD_PATH, BUILD_NAME))
+  open(module_path, "w") do io
     write(io, content)
   end
 
@@ -694,6 +751,7 @@ Sets up the build folder and the build module file for generating the compiled v
 """
 function prepare_build(subfolder) :: Bool
   build_path = joinpath(Genie.BUILD_PATH, subfolder)
+  @ifdev rm(build_path, force = true, recursive = true)
   isdir(build_path) || mkpath(build_path)
 
   true
@@ -706,5 +764,8 @@ function create_build_folders()
   prepare_build(BUILD_NAME)
   prepare_build(MD_BUILD_NAME)
 end
+
+
+create_build_folders()
 
 end

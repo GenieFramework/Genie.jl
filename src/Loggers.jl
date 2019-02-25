@@ -41,8 +41,10 @@ function log(message::Union{String,Symbol,Number,Exception}, level::Union{String
   level = string(level)
 
   try
-    basic_config(LOG_LEVEL_MAPPING[Genie.config.log_level], log_path())
-    length(get_logger().handlers) == 1 && push!(get_logger().handlers, MiniLogging.Handler(stderr, "%Y-%m-%d %H:%M:%S"))
+    if isempty(get_logger().handlers)
+      basic_config(LOG_LEVEL_MAPPING[Genie.config.log_level], log_path()) # file logger
+      push!(get_logger().handlers, MiniLogging.Handler(stderr, "%Y-%m-%d %H:%M:%S")) # console logger
+    end
   catch ex
     basic_config(LOG_LEVEL_MAPPING[Genie.config.log_level])
   end
@@ -145,6 +147,11 @@ function empty_log_queue() :: Nothing
   empty!(Genie.GENIE_LOG_QUEUE)
 
   nothing
+end
+
+
+function inner_logger()
+  get_logger()
 end
 
 
