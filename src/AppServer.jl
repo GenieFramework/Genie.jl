@@ -4,7 +4,7 @@ Handles Http server related functionality, manages requests and responses and th
 module AppServer
 
 using Revise, HTTP, HTTP.IOExtras, HTTP.Sockets, Millboard, MbedTLS, URIParser, Sockets, Distributed
-using Genie, Genie.Router, Genie.Loggers, Genie.Sessions, Genie.Configuration, Genie.WebChannels
+using Genie, Genie.Configuration, Genie.Loggers, Genie.Sessions, Genie.Flax, Genie.Router, Genie.WebChannels
 
 
 """
@@ -16,6 +16,12 @@ Starts the web server on the configured port.
 function startup(port::Int = 8000, host::String = Genie.config.server_host;
                   ws_port::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
                   verbose::Bool = false, ratelimit::Rational{Int} = 10_000//1)
+
+  # Create log directory and log file
+  Genie.config.log_to_file && Loggers.initlogfile()
+
+  # Create build folders
+  Genie.config.flax_compile_templates && Flax.create_build_folders()
 
   if Genie.config.websocket_server
     @async HTTP.listen(host, ws_port) do req

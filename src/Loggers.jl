@@ -130,10 +130,11 @@ macro location()
 end
 
 function initlogfile()
-  dirname(log_path()) |> mkpath
-  touch(log_path())
+	lp = log_path()
+	printstyled("Creating log file at $lp")
+  dirname(lp) |> mkpath
+	touch(lp)
 end
-
 
 """
     empty_log_queue() :: Vector{Tuple{String,Symbol}}
@@ -157,8 +158,5 @@ end
 function inner_logger()
   get_logger()
 end
-
-
-Genie.config.log_to_file && initlogfile()
 
 end

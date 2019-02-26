@@ -4,16 +4,7 @@ export respond, json, redirect_to, html, flax, include_asset, has_requested, css
 export respond_with_json, respond_with_html, respond_with, html!, json!, http_error, error!
 
 using Nullables, JSON, HTTP
-using Genie, Genie.Util, Genie.Configuration, Genie.Loggers
-
-eval(:(include("$(Genie.config.html_template_engine).jl")))
-Genie.config.html_template_engine != Genie.config.json_template_engine && Core.eval(:(include("$(Genie.config.json_template_engine).jl")))
-
-eval(:(using .$(Genie.config.html_template_engine), .$(Genie.config.json_template_engine)))
-eval(:(const HTMLTemplateEngine = $(Genie.config.html_template_engine)))
-eval(:(const JSONTemplateEngine = $(Genie.config.json_template_engine)))
-
-export HTMLTemplateEngine, JSONTemplateEngine
+using Genie, Genie.Util, Genie.Configuration, Genie.Loggers, Genie.Flax
 
 const DEFAULT_LAYOUT_FILE = Genie.config.renderer_default_layout_file
 
@@ -53,10 +44,10 @@ end
 Invokes the HTML renderer of the underlying configured templating library.
 """
 function html(resource::Symbol, action::Symbol, layout::Symbol = DEFAULT_LAYOUT_FILE; vars...) :: Dict{Symbol,String}
-  HTMLTemplateEngine.render_html(resource, action, layout; vars...)
+  Flax.render_html(resource, action, layout; vars...)
 end
 function html(view::String, layout::String = "<% @yield %>"; vars...) :: Dict{Symbol,String}
-  HTMLTemplateEngine.render_html(view, layout; vars...)
+  Flax.render_html(view, layout; vars...)
 end
 
 
@@ -80,7 +71,7 @@ const html! = respond_with_html
 
 
 function flax(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE; vars...) :: Dict{Symbol,String}
-  HTMLTemplateEngine.render_flax(resource, action, layout; vars...)
+  Flax.render_flax(resource, action, layout; vars...)
 end
 
 
@@ -90,7 +81,7 @@ end
 Invokes the JSON renderer of the underlying configured templating library.
 """
 function json(resource::Union{Symbol,String}, action::Union{Symbol,String}; vars...) :: Dict{Symbol,String}
-  JSONTemplateEngine.render_json(resource, action; vars...)
+  Flax.render_json(resource, action; vars...)
 end
 
 
