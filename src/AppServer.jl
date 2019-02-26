@@ -41,7 +41,7 @@ function startup(port::Int = 8000, host::String = Genie.config.server_host;
     end
   end
 
-  printstyled("Ready\n", color = :green)
+  @info "Ready!\n"
 
   if async
     log("Web Server starting at $host:$port")

@@ -131,7 +131,7 @@ end
 
 function initlogfile()
 	lp = log_path()
-	printstyled("Creating log file at $(abspath(lp)) \n", color = :cyan)
+	Base.@info "Logging to file at $(abspath(lp)) \n"
   dirname(lp) |> mkpath
 	touch(lp)
 end
