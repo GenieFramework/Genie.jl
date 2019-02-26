@@ -4,7 +4,7 @@ Handles WebSockets communication logic.
 module WebChannels
 
 using HTTP, JSON, Distributed
-using ..Loggers
+using Genie.Loggers
 
 const ClientId =                          UInt64
 const ChannelId =                         String

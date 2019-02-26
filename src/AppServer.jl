@@ -4,7 +4,7 @@ Handles Http server related functionality, manages requests and responses and th
 module AppServer
 
 using Revise, HTTP, HTTP.IOExtras, HTTP.Sockets, Millboard, MbedTLS, URIParser, Sockets, Distributed
-using ..Genie, ..Configuration, ..Loggers, ..Sessions, ..Flax, ..Router, ..WebChannels
+using Genie, Genie.Configuration, Genie.Loggers, Genie.Sessions, Genie.Flax, Genie.Router, Genie.WebChannels
 
 
 """
