@@ -116,6 +116,7 @@ mutable struct Settings
   log_formatted::Bool
   log_cache::Bool
   log_views::Bool
+  log_to_file::Bool
 
   assets_path::String
   assets_serve::Bool
@@ -183,6 +184,7 @@ mutable struct Settings
             log_formatted = true,
             log_cache     = true,
             log_views     = true,
+            log_to_file   = false,
 
             assets_path           = "/",
             assets_serve          = true,
@@ -221,7 +223,7 @@ mutable struct Settings
                   log_folder,
                   cache_folder, cache_adapter, cache_duration, cache_table,
                   log_router,
-                  log_level, log_verbosity, log_formatted, log_cache, log_views,
+                  log_level, log_verbosity, log_formatted, log_cache, log_views, log_to_file,
                   assets_path, assets_serve, assets_fingerprinted,
                   tests_force_test_env,
                   session_auto_start, session_key_name, session_storage, session_folder, session_table,

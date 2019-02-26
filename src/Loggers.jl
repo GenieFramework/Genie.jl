@@ -42,11 +42,15 @@ function log(message::Union{String,Symbol,Number,Exception}, level::Union{String
 
   try
     if isempty(get_logger().handlers)
-      basic_config(LOG_LEVEL_MAPPING[Genie.config.log_level], log_path()) # file logger
-      push!(get_logger().handlers, MiniLogging.Handler(stderr, "%Y-%m-%d %H:%M:%S")) # console logger
+      if Genie.config.log_to_file
+        basic_config(LOG_LEVEL_MAPPING[Genie.config.log_level], log_path()) # file logger
+        push!(get_logger().handlers, MiniLogging.Handler(stderr, "%Y-%m-%d %H:%M:%S")) # console logger
+      else
+        basic_config(LOG_LEVEL_MAPPING[Genie.config.log_level], date_format = "%Y-%m-%d %H:%M:%S")
+      end
     end
   catch ex
-    basic_config(LOG_LEVEL_MAPPING[Genie.config.log_level])
+    basic_config(LOG_LEVEL_MAPPING[Genie.config.log_level], date_format = "%Y-%m-%d %H:%M:%S")
   end
 
   loggo = get_logger()
@@ -155,6 +159,6 @@ function inner_logger()
 end
 
 
-initlogfile()
+Genie.config.log_to_file && initlogfile()
 
 end

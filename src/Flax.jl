@@ -766,6 +766,6 @@ function create_build_folders()
 end
 
 
-create_build_folders()
+Genie.config.flax_compile_templates && create_build_folders()
 
 end
