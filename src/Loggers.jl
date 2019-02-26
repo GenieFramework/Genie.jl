@@ -126,10 +126,14 @@ macro location()
 end
 
 function initlogfile()
-  dirname(log_path()) |> mkpath
-  touch(log_path())
+  logpath = log_path()
+  logdir = dirname(logpath)
+  if !isfile(joinpath(pwd(),logpath))
+    println("Creating log file at $(joinpath(pwd(),logpath))")
+    logdir |> mkpath
+  end
+  touch(logpath)
 end
-
 
 """
     empty_log_queue() :: Vector{Tuple{String,Symbol}}
@@ -153,8 +157,5 @@ end
 function inner_logger()
   get_logger()
 end
-
-
-initlogfile()
 
 end

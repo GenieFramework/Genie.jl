@@ -750,9 +750,12 @@ end
 Sets up the build folder and the build module file for generating the compiled views.
 """
 function prepare_build(subfolder) :: Bool
-  build_path = joinpath(Genie.BUILD_PATH, subfolder)
+  build_path = joinpath(pwd(),Genie.BUILD_PATH, subfolder)
   @ifdev rm(build_path, force = true, recursive = true)
-  isdir(build_path) || mkpath(build_path)
+  if !isdir(build_path)
+    println("Creating build folder at $(build_path)")
+    mkpath(build_path)
+  end
 
   true
 end
@@ -764,8 +767,5 @@ function create_build_folders()
   prepare_build(BUILD_NAME)
   prepare_build(MD_BUILD_NAME)
 end
-
-
-create_build_folders()
 
 end
