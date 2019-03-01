@@ -9,6 +9,7 @@ const config =  Settings(
                   log_router          = false,
                   log_verbosity       = LOG_LEVEL_VERBOSITY_MINIMAL,
                   log_views           = false,
+                  log_to_file         = true, 
                   output_length       = 0,
                   server_handle_static_files = false,
                   session_auto_start  = false,
