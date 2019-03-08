@@ -39,6 +39,7 @@ include("AppServer.jl")
 include("Commands.jl")
 include("Cache.jl")
 include("Responses.jl")
+include("Requests.jl")
 
 using .Loggers
 using .Inflector, .Util

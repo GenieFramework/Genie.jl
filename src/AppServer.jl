@@ -15,7 +15,7 @@ Starts the web server on the configured port.
 """
 function startup(port::Int = 8000, host::String = Genie.config.server_host;
                   ws_port::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
-                  verbose::Bool = false, ratelimit::Rational{Int} = 10_000//1)
+                  verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing)
 
   # Create log directory and log file
   Genie.config.log_to_file && Loggers.initlogfile()
@@ -69,7 +69,7 @@ function setup_http_handler(req::HTTP.Request, res::HTTP.Response = HTTP.Respons
                 "The error has been logged and we'll look into it ASAP." :
                 string(error_message, " in $(@__FILE__):$(@__LINE__)", "\n\n")
 
-    Genie.Router.serve_error_file(500, message, Genie.Router.@params)
+    Genie.Router.error_500(message, req)
   end
 end
 

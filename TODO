@@ -82,25 +82,25 @@ v 0.8
 ✔ make SearchLight a completely separate package -- docs, tests and all
 ✔ make Flax a completely separate package
 
-v 0.8.1
+v 0.8.x
 ☐ refactoring of authorization and authentication. Use hierarchies of types [Admin > User > Guest] and abitities
 ☐ redis cache adapter
 ☐ memcache cache adapter
 ✔ Toolbox tasks with arguments
 ☐ SearchLight ODBC support
 ✔ SearchLight fluent interface (so one can pipe operations select |> from |> ...)
-☐ Guide - "Web application development with Genie"
+☐ README/Guide
 ☐ Tests
 ☐ Complete docstrings and regenerate docs (use DocExtensions)
 ☐ publish packages
 ☐ compiled Flax JSON views
-☐ better error auto-rendering (json and html, 4xx, 5xx)
+✔ better error auto-rendering (json and html, 4xx, 5xx)
 
 v 0.9
 ☐ tests
-☐ upgrade of server stack
+✔ upgrade of server stack
 ☐ custom Genie sysimg: include(joinpath(dirname(JULIA_HOME),"share","julia","build_sysimg.jl")); build_sysimg(force=true)
-☐ use macros to completely remove function invocations that produce no effect based on settings (if they are disabled from settings)
+✔ use macros to completely remove function invocations that produce no effect based on settings (if they are disabled from settings)
 ☐ investigate more opportunities for parallelizing code
 
 v 1.0
@@ -122,64 +122,3 @@ v 1.x
 ☐ reactive plots, tables, lists rendering with Vuejs (reactive UI components)
 ☐ support for mongodb
 ☐ marketplace for Genie apps and plugins (list, search and install apps)
-
-
-Useful packages
----------------
-https://github.com/JockLawrie/AccessControl.jl <--
-https://github.com/zachallaun/ValueDispatch.jl
-https://github.com/invenia/DateParser.jl  <-- extended date time parsing
-https://github.com/JuliaWeb/GitHub.jl
-https://github.com/snotskie/Helpme.jl
-https://github.com/IainNZ/Humanize.jl  <-- Humanize numbers
-https://github.com/Rory-Finnegan/Interfaces.jl
-https://github.com/JuliaLang/JSON.jl
-https://github.com/arypurnomoz/JulieTest.jl
-https://github.com/one-more-minute/Lazy.jl
-https://github.com/zenna/Lens.jl
-https://github.com/JuliaLang/LightXML.jl
-https://github.com/tonyhffong/Lint.jl   <-- for linting
-https://github.com/one-more-minute/MacroTools.jl
-https://github.com/JuliaArchive/Markdown.jl
-https://github.com/kmsquire/Match.jl
-https://github.com/tanmaykm/Memcache.jl
-https://github.com/simonster/Memoize.jl
-https://github.com/IainNZ/MetadataTools.jl
-https://github.com/pzion/Mongo.jl
-https://github.com/aviks/Mongrel2.jl
-https://github.com/JuliaDB/MySQL.jl
-https://github.com/jonasrauber/OSXNotifier.jl
-https://github.com/shashi/Patchwork.jl
-https://github.com/eschnett/Persist.jl
-https://github.com/wavexx/Polyglot.jl
-https://github.com/MichaelHatherly/PrivateModules.jl
-https://github.com/timholy/ProfileView.jl
-https://github.com/timholy/ProgressMeter.jl
-https://github.com/jkaye2012/Redis.jl
-https://github.com/JuliaWeb/Requests.jl
-https://github.com/one-more-minute/Requires.jl
-https://github.com/simonster/Reexport.jl
-https://github.com/JuliaDB/SQLite.jl
-https://github.com/sjkelly/SaveREPL.jl
-https://github.com/JockLawrie/SecureSessions.jl
-https://github.com/mbauman/Sparklines.jl
-https://github.com/invenia/StackTraces.jl
-https://github.com/aviks/Taro.jl
-https://github.com/sunetos/TextPlots.jl
-https://github.com/rohitvarkey/ThreeJS.jl
-https://github.com/quinnj/TimeZones.jl
-https://github.com/randyzwitch/Twitter.jl
-https://github.com/JuliaWeb/URIParser.jl
-https://github.com/Keno/SIUnits.jl
-https://github.com/rened/Watcher.jl
-https://github.com/JuliaWeb/WebSockets.jl
-https://github.com/dcjones/YAML.jl
-https://github.com/JuliaLang/ZMQ.jl
-
-https://github.com/JuliaDB/DBI.jl
-https://github.com/JuliaDB/PostgreSQL.jl
-
-# DeclarativePackages
-https://github.com/rened/DeclarativePackages.jl
-Pkg.add("DeclarativePackages")
-symlink(Pkg.dir("DeclarativePackages")*"/bin/jdp",  "$(homedir())/local/bin/jdp")

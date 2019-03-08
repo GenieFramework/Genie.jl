@@ -279,6 +279,20 @@ end
 
 
 """
+    startup()
+
+Starts the web server.
+```
+"""
+function startup(port::Int = 8000, host::String = Genie.config.server_host;
+                  wsport::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
+                  verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing)
+
+  Genie.AppServer.startup(port, host, ws_port = wsport, async = async, verbose = verbose, ratelimit = ratelimit)
+end
+
+
+"""
 """
 function load() :: Nothing
   App.bootstrap()

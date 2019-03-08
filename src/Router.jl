@@ -80,7 +80,6 @@ function route_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = IPv4(Ge
   params = Params()
   params.collection[:request_ipv4] = ip
 
-  extract_get_params(URI(to_uri(req.target)), params)
   res = negotiate_content(req, res, params)
 
   if is_static_file(req.target)
@@ -448,7 +447,7 @@ Matches the invoked URL to the corresponding route, sets up the execution enviro
 """
 function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Genie.Sessions.Session,Nothing}, params::Params) :: HTTP.Response
   for r in routes()
-    r.method != req.method && (! haskey(params.collection, :_method) || (haskey(params.collection, :_method) && params.collection[:_method] != r.method) ) && continue
+    r.method != req.method && continue
 
     parsed_route, param_names, param_types = parse_route(r.path)
 
@@ -463,16 +462,18 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
 
     occursin(regex_route, uri.path) || parsed_route == "/*" || continue
 
+    params.collection = setup_base_params(req, res, params.collection, session)
+
+    occursin("?", req.target) && extract_get_params(URI(to_uri(req.target)), params)
+
     extract_uri_params(uri.path, regex_route, param_names, param_types, params) || continue
 
-    extract_post_params(req, params)
-    extract_extra_params(r.with, params)
-    extract_request_params(req, params)
+    req.method == POST && extract_post_params(req, params)
+    isempty(r.with) || extract_extra_params(r.with, params)
+    req.method == POST && extract_request_params(req, params)
     action_controller_params(r.action, params)
 
     res = negotiate_content(req, res, params)
-
-    params.collection = setup_base_params(req, res, params.collection, session)
 
     task_local_storage(:__params, params.collection)
 
@@ -519,12 +520,12 @@ function match_channels(req, msg::String, ws_client, params::Params, session::Un
 
     (! occursin(regex_channel, uri)) && continue
 
+    params.collection = setup_base_params(req, nothing, params.collection, session)
+
     extract_uri_params(uri, regex_channel, param_names, param_types, params) || continue
 
-    extract_extra_params(c.with, params)
+    isempty(c.with) || extract_extra_params(c.with, params)
     action_controller_params(c.action, params)
-
-    params.collection = setup_base_params(req, nothing, params.collection, session)
 
     task_local_storage(:__params, params.collection)
 
@@ -539,13 +540,7 @@ function match_channels(req, msg::String, ws_client, params::Params, session::Un
 
                 result
               catch ex
-                isdev() && rethrow(ex)
-
-                log("Failed invoking channel", :err)
-                log(string(ex), :err)
-                log("$(@__FILE__):$(@__LINE__)", :err)
-
-                (isdefined(controller, RESCUE_HOOK) && return string(getfield(controller, RESCUE_HOOK)())) || string(ex)
+                (isdefined(controller, RESCUE_HOOK) && return to_response(getfield(controller, RESCUE_HOOK)(ex))) || rethrow(ex)
               end
   end
 
@@ -659,7 +654,10 @@ function extract_get_params(uri::URI, params::Params) :: Bool
     for query_part in split(uri.query, "&")
       qp = split(query_part, "=")
       (size(qp)[1] == 1) && (push!(qp, ""))
-      params.collection[Symbol(URIParser.unescape(qp[1]))] = URIParser.unescape(qp[2])
+
+      k = Symbol(URIParser.unescape(qp[1]))
+      v = URIParser.unescape(qp[2])
+      params.collection[k] = params.collection[Genie.PARAMS_GET_KEY][k] = v
     end
   end
 
@@ -689,12 +687,16 @@ end
 Parses POST variables and adds the to the `params` `Dict`.
 """
 function extract_post_params(req::HTTP.Request, params::Params) :: Nothing
+  req.method != POST && return nothing
+
   input = Input.all(req)
 
   for (k, v) in input.post
     v = replace(v, "+"=>" ")
     nested_keys(k, v, params)
-    params.collection[Symbol(k)] = v
+
+    k = Symbol(k)
+    params.collection[k] = params.collection[Genie.PARAMS_POST_KEY][k] = v
   end
 
   params.collection[Genie.PARAMS_FILES] = input.files
@@ -720,12 +722,6 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
     end
   else
     params.collection[Genie.PARAMS_JSON_PAYLOAD] = nothing
-  end
-
-  if request_type_is(req, :text) && content_length(req) > 0
-    params.collection[Genie.PARAMS_TEXT_PAYLOAD] = params.collection[Genie.PARAMS_RAW_PAYLOAD]
-  else
-    params.collection[Genie.PARAMS_TEXT_PAYLOAD] = nothing
   end
 
   nothing
@@ -791,6 +787,7 @@ function nested_keys(k::String, v, params::Params) :: Nothing
   if occursin(".", k)
     parts = split(k, ".", limit = 2)
     nested_val_key = Symbol(parts[1])
+
     if haskey(params.collection, nested_val_key) && isa(params.collection[nested_val_key], Dict)
       ! haskey(params.collection[nested_val_key], Symbol(parts[2])) && (params.collection[nested_val_key][Symbol(parts[2])] = v)
     elseif ! haskey(params.collection, nested_val_key)
@@ -823,6 +820,9 @@ function setup_base_params(req::HTTP.Request, res::Union{HTTP.Response,Nothing},
                                           ss
                                         end
                                        end : ""
+
+  params[Genie.PARAMS_POST_KEY]      = Dict{Symbol,Any}()
+  params[Genie.PARAMS_GET_KEY]       = Dict{Symbol,Any}()
 
   params
 end
@@ -1005,7 +1005,7 @@ end
 
 """
 """
-function error_404(resource = "", req = HTTP.Request(404, ["Content-Type" => request_mappings[:html]]))
+function error_404(resource = "", req = HTTP.Request("", "", headers = ["Content-Type" => request_mappings[:html]]))
   if request_type_is(req, :json)
     HTTP.Response(404, ["Content-Type" => request_mappings[:json]], body = """{ "error": "404 - NOT FOUND" }""")
   elseif request_type_is(req, :text)
@@ -1018,7 +1018,7 @@ end
 
 """
 """
-function error_500(error_message = "", req = HTTP.Request(500, ["Content-Type" => request_mappings[:html]]))
+function error_500(error_message = "", req = HTTP.Request("", "", headers = ["Content-Type" => request_mappings[:html]]))
   if request_type_is(req, :json)
     HTTP.Response(500, ["Content-Type" => request_mappings[:json]], body = JSON.json(Dict("error" => "500 - $error_message")))
   elseif request_type_is(req, :text)

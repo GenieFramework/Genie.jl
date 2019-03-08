@@ -9,7 +9,7 @@ export getresponse, getheaders, setheaders, setheaders!, getstatus, setstatus, s
 """
 """
 function getresponse() :: HTTP.Response
-  @params(:RESPONSE)
+  @params(Genie.PARAMS_RESPONSE_KEY)
 end
 
 
