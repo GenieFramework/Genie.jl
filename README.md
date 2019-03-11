@@ -774,10 +774,10 @@ SearchLight, just like Genie, uses the convention-over-configuration design patt
 ```julia
 julia> SearchLight.Generator.new_resource("Book")
 
-[info]: New model created at /Users/adrian/Dropbox/Projects/testapp/app/resources/books/Books.jl
-[info]: New table migration created at /Users/adrian/Dropbox/Projects/testapp/db/migrations/2018100120160530_create_table_books.jl
-[info]: New validator created at /Users/adrian/Dropbox/Projects/testapp/app/resources/books/BooksValidator.jl
-[info]: New unit test created at /Users/adrian/Dropbox/Projects/testapp/test/unit/books_test.jl
+[info]: New model created at /path/to/MyGenieApp/app/resources/books/Books.jl
+[info]: New table migration created at /path/to/MyGenieApp/db/migrations/2018100120160530_create_table_books.jl
+[info]: New validator created at /path/to/MyGenieApp/app/resources/books/BooksValidator.jl
+[info]: New unit test created at /path/to/MyGenieApp/test/unit/books_test.jl
 [warn]: Can't write to app info
 ```
 
@@ -1130,7 +1130,7 @@ Our app looks great -- but the list of books would be so much better if we'd dis
 The first thing we need to do is to modify our table to add a new column, for storing a reference to the name of the cover image. Obviously, we'll use migrations:
 
 ```julia
-julia> TestApp.newmigration("add cover column")
+julia> MyGenieApp.newmigration("add cover column")
 [debug] New table migration created at db/migrations/2019030813344258_add_cover_column.jl
 ```
 
