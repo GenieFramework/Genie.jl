@@ -1309,9 +1309,59 @@ route("/bgbooks/:id::Int/edit", BooksController.edit)
 route("/bgbooks/:id::Int/update", BooksController.update, method = POST, named = :update_book)
 ```
 
-We defined two new routes. The first will display the book object in the form, for editing. While the second will take care of actually updating the database, server side. For both routes we need to pass the id of the book that we want to edit - and we want to contrain it to an `Int`. We express this as the `/:id::Int/` part of the route.
+We defined two new routes. The first will display the book object in the form, for editing. While the second will take care of actually updating the database, server side. For both routes we need to pass the id of the book that we want to edit - and we want to constrain it to an `Int`. We express this as the `/:id::Int/` part of the route.
 
-... TO BE CONTINUED ...
+We also want to:
+
+* reuse the form which we have defined in `app/resources/books/views/new.jl.html`
+* make the form aware of whether it's used to create a new book, or for editing an existing one respond accordingly by setting the correct `action`
+* prefill the inputs with the book's info when editing a book
+
+OK, that's quite a list and this is where things become interesting. This is an important design pattern for CRUD web apps. So, are you ready, cause here is the trick: in order to simplify the rendering of the form, we will always pass a book object into it. When editing a book it will be the book corresponding to the id passed into the route. And when creating a new book, it will be just an empty book object we'll create and then dispose of.
+
+#### Using view partials
+
+First, let's set up the views. In `app/resources/books/views/` please create a new file called `form.jl.html`. Then, from `app/resources/books/views/new.jl.html` cut the `<form>` code. That is, everything between the opening and closing `<form>...</form>` tags. Paste it into the newly created `form.jl.html` file. Now, back to `new.jl.html`, instead of the previous `<form>...</form>` code add:
+
+```julia
+<% @partial "app/resources/books/views/form.jl.html" %>
+```
+
+This line, as the `@partial` macro suggests, includes a view partial, which is a part of a view file, effectively including a view within another view.
+
+You can reload the `new` page to make sure that everything still works: <http://localhost:8000/bgbooks/new>
+
+Now, let's add an Edit option to our list of books. Please go back to our list view file, `billgatesbooks.jl.html`. Here, for each iteration, within the `@foreach` block we'll want to dynamically link to the edit page for the corresponding book.
+
+##### `@foreach` with view partials
+
+However, this `@foreach` which renders a Julia string is very ugly - and we now know how to refactor it, by using a view partial. Let's do it. First, replace the body of the `@foreach` block:
+
+```html
+<!-- app/resources/books/views/billgatesbooks.jl.html -->
+"""<li><img src="$( isempty(book.cover) ? "img/docs.png" : book.cover )" width="100px" /> $(book.title) by $(book.author)"""
+```
+
+with:
+
+```julia
+include_partial("app/resources/books/views/book.jl.html", book = book)
+```
+
+Notice that here we are using the `include_partial` function instead of the `@partial` macro -- and we pass the book value into our view, under the name `book` (will be accessible in `@vars(:book)` inside the view partial).
+
+Next, create the `book.jl.html` in `app/resources/books/views/`, for example with
+
+```julia
+julia> touch("app/resources/books/views/book.jl.html")
+```
+
+Add this content to it:
+
+
+#### View helpers
+
+#### Using Flax elements
 
 ---
 
@@ -1327,7 +1377,33 @@ TODO
 
 TODO
 
+## Using the asset pipeline
+
+TODO
+
 ## Setting up an admin area
+
+TODO
+
+## Configuring Genie apps
+
+TODO
+
+## Publishing Genie apps in production
+
+TODO
+
+## The Genie Docker image
+
+TODO
+
+## Genie Plugins
+
+TODO
+
+## Genie Authentication Plugin
+
+TODO
 
 ---
 

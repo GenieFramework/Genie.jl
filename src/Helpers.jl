@@ -126,6 +126,18 @@ function include_helpers() :: Nothing
 
   nothing
 end
-# include_helpers()
+function include_helpers(helpers::Vector{Symbol}) :: Nothing
+  isdir(Genie.HELPERS_PATH) || return nothing
+
+  for h in helpers
+    Core.eval(Genie.Flax, """include("$(abspath(joinpath(Genie.HELPERS_PATH, string(h, ".jl"))))")""" |> Meta.parse)
+    Core.eval(Genie.Flax, """@reexport using .$(string(h))""" |> Meta.parse)
+  end
+
+  nothing
+end
+function include_helpers(helper::Symbol) :: Nothing
+  include_helpers([helper])
+end
 
 end

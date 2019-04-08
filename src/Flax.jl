@@ -9,6 +9,7 @@ using Genie, Genie.Loggers, Genie.Configuration
 
 export HTMLString, JSONString, JSString, SyncBinding, DataSyncBinding, ComputedSyncBinding, MethodSyncBinding
 export doctype, var_dump, include_template, @vars, @yield, el, foreachvar, @foreach, foreachstr, binding, syncid
+export include_partial, @partial
 
 import Base.string
 import Base.show
@@ -154,17 +155,20 @@ end
 
 
 """
-    include_template(path::String; partial = true) :: String
-
-Includes a template inside another.
 """
-function include_template(path::String; partial = true) :: String
-  if Genie.config.log_views
-    log("Including $path")
-    @time _include_template(path, partial = partial)
-  else
-    _include_template(path, partial = partial)
+function include_partial(path::String; vars...) :: String
+  for (k,v) in vars
+    task_local_storage(:__vars)[k] = v
   end
+
+  include_template(path, partial = true)
+end
+
+
+"""
+"""
+macro partial(path)
+  :(include_partial($(path)))
 end
 
 
@@ -202,14 +206,12 @@ function render_markdown(content::Markdown.MD)
 end
 
 
-"""
-"""
-function _include_template(path::String; partial = true) :: String
+function get_template(path::String; partial = true) :: Function
   _path, _extension = view_file_info(path)
 
   isempty(_path) ? error("File not found $(abspath(path)) in $(@__FILE__):$(@__LINE__)") : path = _path
 
-  _extension in MARKDOWN_FILE_EXT && return include_markdown(path)
+  _extension in MARKDOWN_FILE_EXT && return (() -> include_markdown(path))
 
   f_name = Symbol(function_name(path))
   f_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl")
@@ -220,21 +222,25 @@ function _include_template(path::String; partial = true) :: String
       log("Building view $path")
       @time build_module(html_to_flax(path, partial = partial), path)
     end
-    include(joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl"))
+    return include(joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl"))
   end
 
-  try
-    Base.invokelatest(getfield(@__MODULE__, f_name))
-  catch ex
-    log("$ex at $(@__FILE__):$(@__LINE__)", :err)
-  end
+  getfield(@__MODULE__, f_name)
 end
 
 
 """
 """
-function _include_inline_template(content::Union{HTMLString,Markdown.MD}; partial = true) :: String
-  isa(content, Markdown.MD) && return render_markdown(content)
+function _include_template(path::String; partial = true) :: String
+  get_template(path, partial = partial) |> Base.invokelatest
+end
+const include_template = _include_template
+
+
+"""
+"""
+function get_inline_template(content::Union{HTMLString,Markdown.MD}; partial = true) :: Function
+  isa(content, Markdown.MD) && return (() -> render_markdown(content))
 
   module_name = m_name(content)
 
@@ -247,21 +253,24 @@ function _include_inline_template(content::Union{HTMLString,Markdown.MD}; partia
       log("Building view $f_path")
       @time build_inline_module(module_name, string_to_flax(content, partial = partial))
     end
-    include(joinpath(Genie.BUILD_PATH, BUILD_NAME, module_name * ".jl"))
+    return include(joinpath(Genie.BUILD_PATH, BUILD_NAME, module_name * ".jl"))
   end
 
-  try
-    Base.invokelatest(getfield(@__MODULE__, f_name))
-  catch ex
-    log("$ex at $(@__FILE__):$(@__LINE__)", :err)
-  end
+  getfield(@__MODULE__, f_name)
+end
+
+
+"""
+"""
+function _include_inline_template(content::Union{HTMLString,Markdown.MD}; partial = true) :: String
+  get_inline_template(content, partial = partial) |> Base.invokelatest
 end
 
 
 """
 """
 function md_build_name(path::String) :: String
-  replace(path, "/"=>"_") # * ".jl.html"
+  replace(path, "/"=>"_")
 end
 
 
@@ -280,47 +289,27 @@ function build_is_stale(file_path::String, build_path::String) :: Bool
 end
 
 
-"""
-    render_html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
+function render_template(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: String
+  task_local_storage(:__vars, Dict{Symbol,Any}(vars))
+  task_local_storage(:__yield, include_template(joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action))))
 
-Renders a HTML view corresponding to a resource and a controller action.
+  include_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false)
+end
+function render_template(view::String, layout::String = "<% @yield %>"; vars...)
+  task_local_storage(:__vars, Dict{Symbol,Any}(vars))
+  ispath(view) ? task_local_storage(:__yield, include_template(view)) : task_local_storage(:__yield, _include_inline_template(view))
+
+  ispath(layout) ? include_template(layout, partial = false) : _include_inline_template(layout, partial = false)
+end
+
+
+"""
 """
 function render_html(resource::Symbol, action::Symbol, layout::Symbol; vars...) :: Dict{Symbol,String}
-  try
-    task_local_storage(:__vars, Dict{Symbol,Any}(vars))
-    task_local_storage(:__yield, include_template(joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action))))
-
-    Dict{Symbol,String}(:html => include_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false) |> string |> doc)
-  catch ex
-    log(string(ex))
-    log("$(@__FILE__):$(@__LINE__)")
-
-    rethrow(ex)
-  end
+  Dict{Symbol,String}(:html => render_template(resource, action, layout; vars...) |> string |> doc)
 end
 function render_html(view::String, layout::String = "<% @yield %>"; vars...) :: Dict{Symbol,String}
-  try
-    task_local_storage(:__vars, Dict{Symbol,Any}(vars))
-
-    if ispath(view)
-      task_local_storage(:__yield, include_template(view))
-    else
-      task_local_storage(:__yield, _include_inline_template(view))
-      # task_local_storage(:__yield, Core.eval(@__MODULE__, Meta.parse(parse_string(view))))
-    end
-
-    if ispath(layout)
-      Dict{Symbol,String}(:html => include_template(layout, partial = false) |> string |> doc)
-    else
-      Dict{Symbol,String}(:html => _include_inline_template(layout, partial = false) |> string |> doc)
-      # Dict{Symbol,String}(:html => Core.eval(@__MODULE__, Meta.parse(parse_string(layout, partial = false))) |> string |> doc)
-    end
-  catch ex
-    log(string(ex), :err)
-    log("$(@__FILE__):$(@__LINE__)", :err)
-
-    rethrow(ex)
-  end
+  Dict{Symbol,String}(:html => render_template(view, layout; vars...) |> string |> doc)
 end
 
 
@@ -332,35 +321,25 @@ Renders a Flax view corresponding to a resource and a controller action.
 function render_flax(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String}; vars...) :: Dict{Symbol,String}
   err_msg = "The Flax view must return a function"
 
-  try
-    julia_action_template_func = joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action) * FILE_EXT) |> include
-    julia_layout_template_func = joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout) * FILE_EXT) |> include
+  julia_action_template_func = joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action) * FILE_EXT) |> include
+  julia_layout_template_func = joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout) * FILE_EXT) |> include
 
-    task_local_storage(:__vars, Dict{Symbol,Any}(vars))
+  task_local_storage(:__vars, Dict{Symbol,Any}(vars))
 
-    if isa(julia_action_template_func, Function)
-      task_local_storage(:__yield, julia_action_template_func())
-    else
-      log(err_msg, :err)
-      log("$(@__FILE__):$(@__LINE__)")
+  if isa(julia_action_template_func, Function)
+    task_local_storage(:__yield, julia_action_template_func())
+  else
+    log(err_msg, :err)
+    log("$(@__FILE__):$(@__LINE__)")
 
-      throw(err_msg)
-    end
-
-    return  if isa(julia_layout_template_func, Function)
-              Dict{Symbol,String}(:html => julia_layout_template_func() |> string |> doc)
-            else
-              log(err_msg, :err)
-              log("$(@__FILE__):$(@__LINE__)")
-
-              throw(err_msg)
-            end
-  catch ex
-    log(string(ex), :err)
-    log("$(@__FILE__):$(@__LINE__)", :err)
-
-    rethrow(ex)
+    throw(err_msg)
   end
+
+  return  if isa(julia_layout_template_func, Function)
+            Dict{Symbol,String}(:html => julia_layout_template_func() |> string |> doc)
+          else
+            throw(err_msg)
+          end
 end
 
 
@@ -559,7 +538,8 @@ function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", dept
     end
 
   elseif isa(elem, HTMLText)
-    print(io, repeat("\t", depth), "\"$(elem.text |> strip |> string)\"")
+    content = replace(elem.text |> strip |> string, "\""=>"\\\"")
+    print(io, repeat("\t", depth), "\"$(content)\"")
   end
 
   String(take!(io))

@@ -28,10 +28,10 @@ uuid = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
 version = "0.5.3"
 
 [[CodeTracking]]
-deps = ["Test", "UUIDs"]
-git-tree-sha1 = "12aa4d41c7926afd7a71af5af603a4d8b94292c2"
+deps = ["InteractiveUtils", "Test", "UUIDs"]
+git-tree-sha1 = "7e19dccd5667e0a8d9327ac76966977dbc0df85f"
 uuid = "da1fd8a2-8d9e-5ec2-8556-3022fb5608a2"
-version = "0.3.1"
+version = "0.5.0"
 
 [[Codecs]]
 deps = ["Test"]
@@ -41,9 +41,9 @@ version = "0.5.0"
 
 [[Compat]]
 deps = ["Base64", "Dates", "DelimitedFiles", "Distributed", "InteractiveUtils", "LibGit2", "Libdl", "LinearAlgebra", "Markdown", "Mmap", "Pkg", "Printf", "REPL", "Random", "Serialization", "SharedArrays", "Sockets", "SparseArrays", "Statistics", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "195a3ffcb8b0762684b6821de18f83a16455c6ea"
+git-tree-sha1 = "84aa74986c5b9b898b0d1acaf3258741ee64754f"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
-version = "2.0.0"
+version = "2.1.0"
 
 [[Dates]]
 deps = ["Printf"]

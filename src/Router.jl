@@ -1005,7 +1005,7 @@ end
 
 """
 """
-function error_404(resource = "", req = HTTP.Request("", "", headers = ["Content-Type" => request_mappings[:html]]))
+function error_404(resource = "", req = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]]))
   if request_type_is(req, :json)
     HTTP.Response(404, ["Content-Type" => request_mappings[:json]], body = """{ "error": "404 - NOT FOUND" }""")
   elseif request_type_is(req, :text)
@@ -1018,7 +1018,7 @@ end
 
 """
 """
-function error_500(error_message = "", req = HTTP.Request("", "", headers = ["Content-Type" => request_mappings[:html]]))
+function error_500(error_message = "", req = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]]))
   if request_type_is(req, :json)
     HTTP.Response(500, ["Content-Type" => request_mappings[:json]], body = JSON.json(Dict("error" => "500 - $error_message")))
   elseif request_type_is(req, :text)

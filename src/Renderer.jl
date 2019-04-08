@@ -65,11 +65,6 @@ end
 const html! = respond_with_html
 
 
-# function html!(output::String) :: HTTP.Response
-#   respond(output)
-# end
-
-
 function flax(resource::Union{Symbol,String}, action::Union{Symbol,String}, layout::Union{Symbol,String} = DEFAULT_LAYOUT_FILE; vars...) :: Dict{Symbol,String}
   Flax.render_flax(resource, action, layout; vars...)
 end
@@ -191,7 +186,7 @@ end
 Constructs an error `Response`.
 """
 function http_error(status_code; id = "", code = "", title = "", msg = "") :: HTTP.Response
-  respond(msg, status_code, Dict{String,String}())
+  respond(Dict(Genie.Router.response_type() => msg), status_code, Dict{String,String}())
 end
 const error! = http_error
 
