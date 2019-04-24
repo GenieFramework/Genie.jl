@@ -705,9 +705,9 @@ Good question! The extension of the views is chosen in order to preserve correct
 
 ---
 
-## Accessing databases with SeachLight models
+## Accessing databases with SearchLight models
 
-You can get the most out of Genie and develop high-class-kick-butt web apps by pairing it with its twin brother, SearchLight. SearchLight, a native Julia ORM, provides excellent support for working with relational databases. The Genie + SearchLight combo can be used to productively develop CRUD based apps (CRUD stands for Create-Read-Update-Delete and describes the data workflow in the apps).
+You can get the most out of Genie and develop high-class-kick-butt web apps by pairing it with its twin brother, [SearchLight](https://github.com/essenciary/SearchLight.jl). SearchLight, a native Julia ORM, provides excellent support for working with relational databases. The Genie + SearchLight combo can be used to productively develop CRUD based apps (CRUD stands for Create-Read-Update-Delete and describes the data workflow in the apps).
 
 SearchLight represents the "M" part in Genie's MVC architecture.
 
@@ -1290,7 +1290,7 @@ Great, now let's display the images. Let's start with the HTML view - please edi
 
 Basically here we check if the `cover` property is not empty, and display the actual cover. Otherwise we show a placeholder image. You can check the result at <http://localhost:8000/bgbooks>
 
-As for the JSON view, it already does what we want - you can check that the `cover` property is now outputed, as stored in the database: <http://localhost:8000/api/v1/bgbooks>
+As for the JSON view, it already does what we want - you can check that the `cover` property is now outputted, as stored in the database: <http://localhost:8000/api/v1/bgbooks>
 
 Success, we're done here!
 
@@ -1309,7 +1309,7 @@ route("/bgbooks/:id::Int/edit", BooksController.edit)
 route("/bgbooks/:id::Int/update", BooksController.update, method = POST, named = :update_book)
 ```
 
-We defined two new routes. The first will display the book object in the form, for editing. While the second will take care of actually updating the database, server side. For both routes we need to pass the id of the book that we want to edit - and we want to contrain it to an `Int`. We express this as the `/:id::Int/` part of the route.
+We defined two new routes. The first will display the book object in the form, for editing. While the second will take care of actually updating the database, server side. For both routes we need to pass the id of the book that we want to edit - and we want to constrain it to an `Int`. We express this as the `/:id::Int/` part of the route.
 
 ... TO BE CONTINUED ...
 
