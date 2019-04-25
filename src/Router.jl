@@ -129,8 +129,6 @@ function route_ws_request(req, msg::String, ws_client, ip::IPv4 = IPv4(Genie.con
 
   channel_response::String = match_channels(req, msg, ws_client, params, session)
 
-  println("$(req.target) $(controller_response.status)")
-
   channel_response
 end
 
