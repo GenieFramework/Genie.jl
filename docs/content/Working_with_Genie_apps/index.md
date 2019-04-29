@@ -97,6 +97,12 @@ using Genie
 Genie.loadapp()
 ```
 
+## Frontend assets
+
+Genie seamlessly integrates with your frontend assets (js, css, images, fonts) relying on best technologies and practices (Yarn, Webpack4). More details can be found in following guide:
+
+[Frontend_assets](Frontend_assets.md)
+
 ## Adding your Julia libraries to a Genie app
 
 If you have an existing Julia application or standalone codebase which you'd like to expose over the web through your Genie app, the easiest thing to do is to drop the files into the `lib/` folder. The `lib/` folder is automatically added by Genie to the `LOAD_PATH`.
