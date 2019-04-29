@@ -9,7 +9,6 @@
       @yield
     %>
     <% if Main.UserApp.ENV["GENIE_ENV"] == "dev" %>
-    <script src="/dist/application$(Main.UserApp.ASSET_FINGERPRINT).js"></script>
       <script src="http://localhost:3000/dist/application.js"></script>
     <% else %>
       <script src="/dist/application$(Main.UserApp.ASSET_FINGERPRINT).js"></script>
