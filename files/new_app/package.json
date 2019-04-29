@@ -2,9 +2,9 @@
   "name": "genie-app",
   "version": "1.0.0",
   "description": "A new Genie app",
-  "main": "index.js",
   "author": "Author",
   "license": "MIT",
+  "private": true,
   "dependencies": {
     "bootstrap": "^4.3.1",
     "jquery": "^3.4.0",
