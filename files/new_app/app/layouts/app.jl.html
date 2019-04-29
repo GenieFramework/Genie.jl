@@ -3,13 +3,16 @@
   <head>
     <meta charset="utf-8" />
     <title>Genie :: The highly productive Julia web framework</title>
-    <link rel="stylesheet" href="/css/bootstrap.css" />
-    <link rel="stylesheet" href="/css/application.css" />
   </head>
   <body>
     <%
       @yield
     %>
-    <!-- <script src="/js/application$(Main.UserApp.ASSET_FINGERPRINT).js"></script> -->
+    <% if Main.UserApp.ENV["GENIE_ENV"] == "dev" %>
+    <script src="/dist/application$(Main.UserApp.ASSET_FINGERPRINT).js"></script>
+      <script src="http://localhost:3000/dist/application.js"></script>
+    <% else %>
+      <script src="/dist/application$(Main.UserApp.ASSET_FINGERPRINT).js"></script>
+    <% end %>
   </body>
 </html>
