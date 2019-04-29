@@ -1,4 +1,4 @@
-![Genie Logo](https://dl.dropboxusercontent.com/s/0dbiza50r63cvvc/genie_logo.png)
+![Genie Logo](docs/content/img/genie_logo.png)
 
 [![Stable](https://readthedocs.org/projects/docs/badge/?version=stable)](http://geniejl.readthedocs.io/en/stable/build/)
 [![Latest](https://readthedocs.org/projects/docs/badge/?version=latest)](http://geniejl.readthedocs.io/en/latest/build/)
@@ -12,6 +12,8 @@ Genie is a full-stack MVC web framework that provides a streamlined and efficien
 ### Current status
 
 Genie is compatible with Julia v1.0 and up.
+
+---
 
 # Getting started
 
@@ -50,11 +52,14 @@ Genie can be used for all scenarions from simple ad-hoc programming to a fullsta
 
 [Working with Genie apps (projects)](docs/content/Working_with_Genie_apps.md)
 
-## Using WebSockets and WebChannels
+## TODO
 
-TODO
+In addition to use cases above, Genie will soon support:
 
-## Setting up an admin area
+- Adding data integrity rules with ModelValidators
+- Caching our responses
+- Using WebSockets and WebChannels
+- Setting up an admin area
 
 ---
 
