@@ -5,6 +5,10 @@
   "author": "Author",
   "license": "MIT",
   "private": true,
+  "scripts": {
+    "build": "webpack --mode production",
+    "develop": "webpack-dev-server --hot --mode development"
+  },
   "dependencies": {
     "bootstrap": "^4.3.1",
     "jquery": "^3.4.0",
