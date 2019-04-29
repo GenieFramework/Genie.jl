@@ -49,7 +49,6 @@ This will output minified files to `public/dist` dir of your app, without source
 
 Please run Genie in production mode to serve static assets.
 
-
 ## Considerations
 
 In order to take best advantage of Webpack bundling, it is recommended to serve all static files (images, fonts) via JS `require` calls. Let Webpack optimise bundle.
@@ -63,3 +62,11 @@ button.onclick = () => {
   })
 }
 ```
+
+## Minimal Bootstrap integration
+
+Following Webpack philisophy, it is recommended to only load library dependencies when necessary. Nonetheless for Bootstrap to work, one can do as follows:
+
+- under `app/assets/js/application.js`, add `import "bootstrap";`
+- create new file `app/assets/css/vendor.scss` and add `@import "~bootstrap/scss/bootstrap.scss";`
+- include this new file from `app/assets/js/application.js`, by adding `require("../css/vendor.scss");`
