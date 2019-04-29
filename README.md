@@ -50,7 +50,7 @@ Genie can be used for all scenarions from simple ad-hoc programming to a fullsta
 
 [Developing a simple API backend](docs/content/Simple_API_backend.md)
 
-[Working with Genie apps (projects)](docs/content/Working_with_Genie_apps.md)
+[Working with Genie apps (projects)](docs/content/Working_with_Genie_apps/index.md)
 
 ## TODO
 
