@@ -127,11 +127,7 @@ function route_ws_request(req, msg::String, ws_client, ip::IPv4 = IPv4(Genie.con
 
   session = Genie.config.session_auto_start ? Sessions.load(Sessions.id(req)) : nothing
 
-  channel_response::String = match_channels(req, msg, ws_client, params, session)
-
-  println("$(req.target) $(channel_response.status)")
-
-  channel_response
+  match_channels(req, msg, ws_client, params, session)
 end
 
 
