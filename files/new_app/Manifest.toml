@@ -62,7 +62,7 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[Genie]]
 deps = ["ArgParse", "Dates", "Distributed", "Gumbo", "HTTP", "HttpCommon", "JSON", "Markdown", "MbedTLS", "Millboard", "MiniLogging", "Nettle", "Nullables", "OrderedCollections", "Pkg", "Reexport", "Revise", "SHA", "Serialization", "Sockets", "URIParser", "Unicode", "YAML"]
-git-tree-sha1 = "d55dd1736451661c313c4fdeed6988aaff680e33"
+git-tree-sha1 = "4d6f2776ba56dec63ac5cad0ca3e5659ca3d85c3"
 repo-rev = "master"
 repo-url = "https://github.com/essenciary/Genie.jl"
 uuid = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
