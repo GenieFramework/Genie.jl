@@ -33,6 +33,8 @@ using Genie.Loggers, Genie.Configuration
 Recursively adds subfolders of lib to LOAD_PATH.
 """
 function load_libs(root_dir = Genie.LIB_PATH) :: Nothing
+  isdir(root_dir) || return
+
   push!(LOAD_PATH, root_dir)
   for (root, dirs, files) in walkdir(root_dir)
     for dir in dirs
@@ -51,6 +53,8 @@ end
 Recursively adds subfolders of resources to LOAD_PATH.
 """
 function load_resources(root_dir = Genie.RESOURCES_PATH) :: Nothing
+  isdir(root_dir) || return
+
   push!(LOAD_PATH, root_dir)
 
   for (root, dirs, files) in walkdir(root_dir)
@@ -67,6 +71,8 @@ end
 """
 """
 function load_helpers(root_dir = Genie.HELPERS_PATH) :: Nothing
+  isdir(root_dir) || return
+
   push!(LOAD_PATH, root_dir)
 
   for (root, dirs, files) in walkdir(root_dir)

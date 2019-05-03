@@ -129,7 +129,7 @@ function route_ws_request(req, msg::String, ws_client, ip::IPv4 = IPv4(Genie.con
 
   channel_response::String = match_channels(req, msg, ws_client, params, session)
 
-  println("$(req.target) $(controller_response.status)")
+  println("$(req.target) $(channel_response.status)")
 
   channel_response
 end
@@ -993,19 +993,24 @@ function serve_static_file(resource::String) :: HTTP.Response
   if isfile(f)
     HTTP.Response(200, file_headers(f), body = read(f, String))
   else
-    error_404(resource)
+    bundled_path = joinpath(@__DIR__, "..", "files", "static", resource[2:end])
+    if isfile(bundled_path)
+      HTTP.Response(200, file_headers(bundled_path), body = read(bundled_path, String))
+    else
+      error_404(resource)
+    end
   end
 end
 
 
-function preflight_response()
+function preflight_response() :: HTTP.Response
   HTTP.Response(200, Genie.config.cors_headers, body = "Success")
 end
 
 
 """
 """
-function error_404(resource = "", req = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]]))
+function error_404(resource = "", req = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]])) ::HTTP.Response
   if request_type_is(req, :json)
     HTTP.Response(404, ["Content-Type" => request_mappings[:json]], body = """{ "error": "404 - NOT FOUND" }""")
   elseif request_type_is(req, :text)
@@ -1018,7 +1023,7 @@ end
 
 """
 """
-function error_500(error_message = "", req = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]]))
+function error_500(error_message = "", req = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]])) :: HTTP.Response
   if request_type_is(req, :json)
     HTTP.Response(500, ["Content-Type" => request_mappings[:json]], body = JSON.json(Dict("error" => "500 - $error_message")))
   elseif request_type_is(req, :text)
