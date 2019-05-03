@@ -1324,10 +1324,10 @@ OK, that's quite a list and this is where things become interesting. This is an 
 First, let's set up the views. In `app/resources/books/views/` please create a new file called `form.jl.html`. Then, from `app/resources/books/views/new.jl.html` cut the `<form>` code. That is, everything between the opening and closing `<form>...</form>` tags. Paste it into the newly created `form.jl.html` file. Now, back to `new.jl.html`, instead of the previous `<form>...</form>` code add:
 
 ```julia
-<% @partial "app/resources/books/views/form.jl.html" %>
+<% partial("app/resources/books/views/form.jl.html") %>
 ```
 
-This line, as the `@partial` macro suggests, includes a view partial, which is a part of a view file, effectively including a view within another view.
+This line, as the `partial` function suggests, includes a view partial, which is a part of a view file, effectively including a view within another view.
 
 You can reload the `new` page to make sure that everything still works: <http://localhost:8000/bgbooks/new>
 
@@ -1345,10 +1345,10 @@ However, this `@foreach` which renders a Julia string is very ugly - and we now 
 with:
 
 ```julia
-include_partial("app/resources/books/views/book.jl.html", book = book)
+partial("app/resources/books/views/book.jl.html", book = book)
 ```
 
-Notice that here we are using the `include_partial` function instead of the `@partial` macro -- and we pass the book value into our view, under the name `book` (will be accessible in `@vars(:book)` inside the view partial).
+Notice that we are using the `partial` function and we pass the book value into our view, under the name `book` (will be accessible in `@vars(:book)` inside the view partial).
 
 Next, create the `book.jl.html` in `app/resources/books/views/`, for example with
 

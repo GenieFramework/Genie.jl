@@ -7,9 +7,10 @@ using Revise, Gumbo, SHA, Reexport, JSON, OrderedCollections, Markdown
 using Genie, Genie.Loggers, Genie.Configuration
 @reexport using HttpCommon
 
-export HTMLString, JSONString, JSString, SyncBinding, DataSyncBinding, ComputedSyncBinding, MethodSyncBinding
-export doctype, var_dump, include_template, @vars, @yield, el, foreachvar, @foreach, foreachstr, binding, syncid
-export include_partial, @partial
+export HTMLString, JSONString, JSString
+export doctype, var_dump, @vars, @yield, el
+export foreachvar, @foreach, foreachstr
+export include_partial, partial, template
 
 import Base.string
 import Base.show
@@ -29,12 +30,12 @@ const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :articl
 const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input]
 const BOOL_ATTRIBUTES = [:checked, :disabled, :selected]
 
-const FILE_EXT      = ".flax.jl"
+const FILE_EXT      = [".flax.jl", "html.jl"]
 const TEMPLATE_EXT  = [".flax.html", ".jl.html"]
 const JSON_FILE_EXT = ".json.jl"
 const MARKDOWN_FILE_EXT = [".md", ".jl.md"]
 
-const SUPPORTED_HTML_OUTPUT_FILE_FORMATS = [TEMPLATE_EXT...]
+const SUPPORTED_HTML_OUTPUT_FILE_FORMATS = TEMPLATE_EXT
 
 const HTMLString = String
 const JSONString = String
@@ -163,13 +164,7 @@ function include_partial(path::String; mod::Module = @__MODULE__, vars...) :: St
 
   include_template(path, partial = true, mod = mod)
 end
-
-
-"""
-"""
-macro partial(path)
-  :(include_partial($(path), mod = $(__module__)))
-end
+const partial = include_partial
 
 
 """
@@ -177,12 +172,12 @@ end
 function view_file_info(path::String) :: Tuple{String,String}
   _path, _extension = "", ""
 
-  if isfile(abspath(path))
-    _path, _extension = relpath(path), "." * split(path, ".")[end]
+  if isfile(path)
+    _path, _extension = relpath(path), "." * split(path, ".", limit = 2)[end]
   else
     for file_extension in SUPPORTED_HTML_OUTPUT_FILE_FORMATS
-      if isfile(abspath(path * file_extension))
-        _path, _extension = abspath(path * file_extension), file_extension
+      if isfile(path * file_extension)
+        _path, _extension = path * file_extension, file_extension
         break
       end
     end
@@ -205,11 +200,10 @@ end
 
 
 function get_template(path::String; partial::Bool = true, mod::Module = @__MODULE__) :: Function
-  _path, _extension = view_file_info(path)
+  path, extension = view_file_info(path)
 
-  isempty(_path) ? error("File not found $(abspath(path)) in $(@__FILE__):$(@__LINE__)") : path = _path
-
-  _extension in MARKDOWN_FILE_EXT && return (() -> include_markdown(path, mod = mod))
+  extension in MARKDOWN_FILE_EXT && return (() -> include_markdown(path, mod = mod))
+  extension in FILE_EXT && return Base.include(mod, path)
 
   f_name = Symbol(function_name(path))
   f_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl")
@@ -230,6 +224,7 @@ end
 function include_template(path::String; partial::Bool = true, mod::Module = @__MODULE__) :: String
   get_template(path, partial = partial, mod = mod) |> Base.invokelatest
 end
+const template = include_template
 
 
 """
@@ -513,8 +508,6 @@ end
 
 
 function register_element(elem::Symbol, elem_type::Symbol = :normal)
-  elem_type != :normal && elem_type != :void && error("elem_type must be one of :normal or :void")
-
   elem_type == :normal ? register_normal_element(elem) : register_void_element(elem)
 end
 
