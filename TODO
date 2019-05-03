@@ -83,42 +83,35 @@ v 0.8
 ✔ make Flax a completely separate package
 
 v 0.8.x
-☐ refactoring of authorization and authentication. Use hierarchies of types [Admin > User > Guest] and abitities
-☐ redis cache adapter
-☐ memcache cache adapter
 ✔ Toolbox tasks with arguments
-☐ SearchLight ODBC support
 ✔ SearchLight fluent interface (so one can pipe operations select |> from |> ...)
-☐ README/Guide
-☐ Tests
-☐ Complete docstrings and regenerate docs (use DocExtensions)
-☐ publish packages
-☐ compiled Flax JSON views
 ✔ better error auto-rendering (json and html, 4xx, 5xx)
 
-v 0.9
-☐ tests
+v 0.9.x
 ✔ upgrade of server stack
-☐ custom Genie sysimg: include(joinpath(dirname(JULIA_HOME),"share","julia","build_sysimg.jl")); build_sysimg(force=true)
 ✔ use macros to completely remove function invocations that produce no effect based on settings (if they are disabled from settings)
+☐ refactoring of view layer (scoping)
+☐ backend apps (no asset pipeline)
+☐ plugins architecture (and authentication plugin)
+☐ integration with Interact.jl / WebIO.jl / Plots.jl
+☐ redis cache adapter
+☐ memcache cache adapter
+☐ SearchLight ODBC and Oracle support
+☐ update asset pipeline to webpack 4
+☐ Docker image (with Cockpit?)
+☐ Complete docstrings and regenerate docs (DocExtensions)
+☐ HTTPS for website
+☐ Documentation website
+☐ Tests
 ☐ investigate more opportunities for parallelizing code
-
-v 1.0
-☐ Flax form helpers
-☐ add scaffolding functionality for CRUD
-☐ PredixUI integration
+☐ register packages
+☐ blog on website
 
 v 1.x
-☐ support for plugins
+☐ Flax form helpers
+☐ add scaffolding functionality for CRUD
 ☐ admin plugin (like Django and Rails Admin)
-☐ add a debug port where you can connect through sockets and execute code against a running app
 ☐ localization support - ex: config for errors messages
 ☐ mailers
-☐ registration functionality - with login URLs by email (passwordless login) and regular (user / pass)
-☐ add frontend framework adapters - with Vue.js as default
-☐ add the concept of State to sync app state between client (Vue.js data) and server (Genie state)
-☐ refactor the views to use data from State and generate the reactive Vue.js code on the client
-☐ server side reactivity from State (using Reactive.jl)
-☐ reactive plots, tables, lists rendering with Vuejs (reactive UI components)
-☐ support for mongodb
-☐ marketplace for Genie apps and plugins (list, search and install apps)
+☐ SearchLight: support for mongodb
+☐ marketplace for Genie apps, themes and plugins (list, search and install apps)

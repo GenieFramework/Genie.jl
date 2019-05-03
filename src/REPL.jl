@@ -17,12 +17,31 @@ end
 
 
 """
-    function newapp(path = "."; db_support = false, skip_dependencies = false) :: Nothing
+    newapp(path::String; autostart = true, fullstack = false, dbsupport = false) :: Nothing
 
 Creates a new Genie app at the indicated path.
 """
-function newapp(path::String; db_support = false, autostart = true) :: Nothing
-  cp(joinpath(@__DIR__, "../", "files", "new_app"), abspath(path))
+function newapp(path::String; autostart = true, fullstack = false, dbsupport = false) :: Nothing
+  app_path = abspath(path)
+
+  if fullstack
+    cp(joinpath(@__DIR__, "../", "files", "new_app"), app_path)
+  else
+    mkdir(app_path)
+    for f in ["bin", "config", "log", "src",
+              ".gitattributes", ".gitignore", "bootstrap.jl", "env.jl", "genie.jl",
+              "LICENSE.md", "README.md",
+              "Manifest.toml", "Project.toml"]
+      cp(joinpath(@__DIR__, "../", "files", "new_app", f), joinpath(app_path, f))
+    end
+
+    if dbsupport
+      cp(joinpath(@__DIR__, "../", "files", "new_app", "db"), joinpath(app_path, f))
+    else
+      rm(joinpath(app_path, "config", "database.yml"), force = true)
+      rm(joinpath(app_path, "config", "initializers", "searchlight.jl"), force = true)
+    end
+  end
 
   chmod(joinpath(path, "bin", "server"), 0o700)
   chmod(joinpath(path, "bin", "repl"), 0o700)
@@ -32,7 +51,7 @@ function newapp(path::String; db_support = false, autostart = true) :: Nothing
   end
 
   moduleinfo = FileTemplates.appmodule(path)
-  open(joinpath(path, moduleinfo[1] * ".jl"), "w") do f
+  open(joinpath(path, "src", moduleinfo[1] * ".jl"), "w") do f
     write(f, moduleinfo[2])
   end
   open(joinpath(path, "bootstrap.jl"), "w") do f
@@ -43,7 +62,7 @@ function newapp(path::String; db_support = false, autostart = true) :: Nothing
       pkg"activate ."
 
       function main()
-        include("$(moduleinfo[1]).jl")
+        include(joinpath("src", "$(moduleinfo[1]).jl"))
       end
 
       main()
