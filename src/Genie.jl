@@ -81,12 +81,16 @@ end
 
 
 """
+    startup()
+
+Starts the web server.
+```
 """
 function startup(port::Int = 8000, host::String = Genie.config.server_host;
-                  ws_port::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
-                  verbose::Bool = false, ratelimit::Rational{Int} = 10_000//1)
-  AppServer.startup(port, host, ws_port = ws_port, async = async, verbose = verbose, ratelimit = ratelimit)
+                  wsport::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
+                  verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing)
+
+  AppServer.startup(port, host, ws_port = wsport, async = async, verbose = verbose, ratelimit = ratelimit)
 end
-const startapp = startup
 
 end

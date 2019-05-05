@@ -21,7 +21,7 @@ end
 end
 
 
-### Main
+### Main.UserApp
 
 using Genie.Loggers, Genie.Configuration
 
@@ -32,8 +32,6 @@ using Genie.Loggers, Genie.Configuration
 Recursively adds subfolders of lib to LOAD_PATH.
 """
 function load_libs(root_dir = Genie.LIB_PATH) :: Nothing
-  isdir(root_dir) || return
-
   push!(LOAD_PATH, root_dir)
   for (root, dirs, files) in walkdir(root_dir)
     for dir in dirs
@@ -52,8 +50,6 @@ end
 Recursively adds subfolders of resources to LOAD_PATH.
 """
 function load_resources(root_dir = Genie.RESOURCES_PATH) :: Nothing
-  isdir(root_dir) || return
-
   push!(LOAD_PATH, root_dir)
 
   for (root, dirs, files) in walkdir(root_dir)
@@ -70,8 +66,6 @@ end
 """
 """
 function load_helpers(root_dir = Genie.HELPERS_PATH) :: Nothing
-  isdir(root_dir) || return
-
   push!(LOAD_PATH, root_dir)
 
   for (root, dirs, files) in walkdir(root_dir)
@@ -258,12 +252,7 @@ end
 Starts the web server.
 ```
 """
-function startup(port::Int = 8000, host::String = Genie.config.server_host;
-                  wsport::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
-                  verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing)
-
-  Genie.AppServer.startup(port, host, ws_port = wsport, async = async, verbose = verbose, ratelimit = ratelimit)
-end
+const startup = Genie.startup
 
 
 """
