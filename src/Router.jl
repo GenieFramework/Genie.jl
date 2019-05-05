@@ -1006,7 +1006,7 @@ end
 
 """
 """
-function error_404(resource = "", req = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]])) ::HTTP.Response
+function error_404(resource = "", req = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]])) :: HTTP.Response
   if request_type_is(req, :json)
     HTTP.Response(404, ["Content-Type" => request_mappings[:json]], body = """{ "error": "404 - NOT FOUND" }""")
   elseif request_type_is(req, :text)

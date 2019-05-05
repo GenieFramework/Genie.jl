@@ -4,7 +4,6 @@ App level functionality -- loading and managing app-wide components like configs
 module App
 
 using Revise
-using YAML
 using Genie
 
 const ASSET_FINGERPRINT = ""
