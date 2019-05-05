@@ -3,7 +3,7 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
-const GENIE_VERSION = v"0.9.0"
+const GENIE_VERSION = v"0.9.1"
 
 using Genie, YAML
 
