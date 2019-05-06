@@ -27,8 +27,14 @@ const DEFAULT_CONTENT_TYPE = :html
 function html(resource::Union{Symbol,String}, action::Union{Symbol,String}; layout::Union{Symbol,String} = Genie.config.renderer_default_layout_file, context::Module = @__MODULE__, vars...) :: Dict{Symbol,HTMLString}
   Dict(:html => (Flax.html_renderer(resource, action; layout = layout, mod = context, vars...) |> Base.invokelatest))
 end
+function html(data::String; context::Module = @__MODULE__, vars...) :: Dict{Symbol,HTMLString}
+  Dict(:html => (Flax.html_renderer(data; mod = context, vars...) |> Base.invokelatest))
+end
 function html!(resource::Union{Symbol,String}, action::Union{Symbol,String}; layout::Union{Symbol,String} = Genie.config.renderer_default_layout_file, context::Module = @__MODULE__, vars...) :: HTTP.Response
   html(resource, action; layout = layout, context = context, vars...) |> respond
+end
+function html!(data::String; context::Module = @__MODULE__, vars...) :: HTTP.Response
+  html(data; context = context, vars...) |> respond
 end
 
 ### JSON RENDERING ###

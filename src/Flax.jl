@@ -41,10 +41,11 @@ const HTMLString = String
 const JSONString = String
 
 const BUILD_NAME    = "FlaxViews"
-const MD_BUILD_NAME = "MarkdownViews"
 
 
-task_local_storage(:__vars, Dict{Symbol,Any}())
+init_task_local_storage() = task_local_storage(:__vars, Dict{Symbol,Any}())
+init_task_local_storage()
+
 task_local_storage(:__yield, "")
 
 
@@ -159,7 +160,12 @@ end
 """
 function include_partial(path::String; mod::Module = @__MODULE__, vars...) :: String
   for (k,v) in vars
-    task_local_storage(:__vars)[k] = v
+    try
+      task_local_storage(:__vars)[k] = v
+    catch
+      init_task_local_storage()
+      task_local_storage(:__vars)[k] = v
+    end
   end
 
   include_template(path, partial = true, mod = mod)
@@ -221,17 +227,29 @@ end
 
 """
 """
+function parse_view(data::String; partial = true, mod::Module = @__MODULE__) :: Function
+  path = "Flax_" * string(hash(data))
+
+  func_name = function_name(data) |> Symbol
+  f_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl")
+  f_stale = build_is_stale(f_path, f_path)
+
+  if f_stale || ! isdefined(mod, func_name)
+    f_stale && build_module(string_to_flax(data, partial = partial), path)
+
+    return Base.include(mod, joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl"))
+  end
+
+  getfield(mod, func_name)
+end
+
+
+"""
+"""
 function include_template(path::String; partial::Bool = true, mod::Module = @__MODULE__) :: String
   get_template(path, partial = partial, mod = mod) |> Base.invokelatest
 end
 const template = include_template
-
-
-"""
-"""
-function md_build_name(path::String) :: String
-  replace(path, "/"=>"_")
-end
 
 
 """
@@ -256,6 +274,9 @@ function html_renderer(resource::Union{Symbol,String}, action::Union{Symbol,Stri
   task_local_storage(:__yield, get_template(joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action)), partial = true, mod = mod) |> Base.invokelatest)
 
   get_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false, mod = mod)
+end
+function html_renderer(data::String; mod::Module = @__MODULE__, vars...) :: Function
+  parse_view(data, partial = true, mod = mod)
 end
 
 
@@ -296,15 +317,22 @@ end
 Converts a HTML document to a Flax document.
 """
 function html_to_flax(file_path::String; partial = true) :: String
-  string("function $(function_name(file_path))() \n",
-          parse_template(file_path, partial = partial),
-          "\nend \n")
+  to_flax(file_path, parse_template, partial = partial)
 end
 
 
+"""
+"""
 function string_to_flax(content::String; partial = true) :: String
-  string("function $(function_name(content))() \n",
-          parse_string(content, partial = partial),
+  to_flax(content, parse_string, partial = partial)
+end
+
+
+"""
+"""
+function to_flax(input::String, f::Function; partial = true) :: String
+  string("function $(function_name(input))() \n",
+          f(input, partial = partial),
           "\nend \n")
 end
 
@@ -359,16 +387,21 @@ end
 Parses a HTML file into a `string` of Flax code.
 """
 function parse_template(file_path::String; partial = true) :: String
-  htmldoc = read_template_file(file_path) |> Gumbo.parsehtml
-  parse_tree(htmldoc.root, "", 0, partial = partial)
+  read_template_file(file_path) |> parse
 end
 
 
 """
 """
-function parse_string(s::String; partial = true) :: String
-  htmldoc = parse_tags(s) |> Gumbo.parsehtml
-  parse_tree(htmldoc.root, "", 0, partial = partial)
+function parse_string(data::String; partial = true) :: String
+  parse_tags(data) |> parse
+end
+
+
+"""
+"""
+function parse(input::String; partial = true) :: String
+  parse_tree(Gumbo.parsehtml(input).root, "", 0, partial = partial)
 end
 
 
@@ -545,8 +578,8 @@ push!(LOAD_PATH,  abspath(Genie.HELPERS_PATH))
 """
 macro foreach(f, arr)
   quote
-    isempty($arr) && return ""
-    mapreduce(*, $arr) do _s
+    isempty($(esc(arr))) && return ""
+    mapreduce(*, $(esc(arr))) do _s
       $f(_s) * "\n"
     end
   end
@@ -600,6 +633,9 @@ function var_dump(var, html = true) :: String
   html ? replace(replace("<code>$content</code>", "\n"=>"<br>"), " "=>"&nbsp;") : content
 end
 
+
+"""
+"""
 macro vars()
   :(task_local_storage(:__vars))
 end
@@ -607,8 +643,19 @@ macro vars(key)
   :(task_local_storage(:__vars)[$key])
 end
 macro vars(key, value)
-  :(task_local_storage(:__vars)[$key] = $value)
+  quote
+    try
+      task_local_storage(:__vars)[$key] = $(esc(value))
+    catch
+      init_task_local_storage()
+      task_local_storage(:__vars)[$key] = $(esc(value))
+    end
+  end
 end
+
+
+"""
+"""
 macro yield()
   quote
     try
@@ -648,7 +695,6 @@ end
 """
 function create_build_folders()
   prepare_build(BUILD_NAME)
-  prepare_build(MD_BUILD_NAME)
 end
 
 end
