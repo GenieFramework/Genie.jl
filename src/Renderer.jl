@@ -41,8 +41,14 @@ Invokes the JSON renderer of the underlying configured templating library.
 function json(resource::Union{Symbol,String}, action::Union{Symbol,String}; context::Module = @__MODULE__, vars...) :: Dict{Symbol,JSONString}
   Dict(:json => Flax.json_renderer(resource, action; mod = context, vars...) |> Base.invokelatest)
 end
+function json(data) :: Dict{Symbol,JSONString}
+  Dict(:json => JSON.json(data))
+end
 function json!(resource::Union{Symbol,String}, action::Union{Symbol,String}; context::Module = @__MODULE__, vars...) :: HTTP.Response
   json(resource, action; mod = context, vars...) |> respond
+end
+function json!(data) :: HTTP.Response
+  json(data) |> respond
 end
 
 ### REDIRECT RESPONSES ###
