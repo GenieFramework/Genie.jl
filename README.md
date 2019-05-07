@@ -243,10 +243,10 @@ julia> Genie.loadapp()
 
 The app's environment will now be loaded.
 
-In order to start the web server execute
+In order to start the web server execute 
 
 ```julia
-julia> MyGenieApp.startup()
+julia> Genie.startup()
 ```
 
 #### MacOS / Linux
@@ -262,7 +262,7 @@ The app's environment will now be loaded.
 In order to start the web server execute
 
 ```julia
-julia> MyGenieApp.startup()
+julia> Genie.startup()
 ```
 
 If, instead, if you want to directly start the server, use
