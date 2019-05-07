@@ -227,6 +227,13 @@ Beware that Genie will do its best to generate module names according to Julia's
 
 First, make sure that you're in the root dir of the app, `MyGenieApp`. This is the project's folder and you can tell by the fact that there should be a `bootstrap.jl` file, plus Julia's `Project.toml` and `Manifest.toml` files, amongst others.
 
+If necessary, activate the project's package environment:
+
+```julia
+julia> ]
+pkg> activate . 
+```
+
 Then run
 
 ```julia
