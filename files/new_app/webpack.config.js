@@ -1,125 +1,160 @@
-"use strict";
+'use strict';
 
-const path = require("path");
-const webpack = require("webpack");
-const fs = require("fs");
+const CleanWebpackPlugin = require('clean-webpack-plugin');
+const fs = require('fs-extra');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const path = require('path')
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const TerserJSPlugin = require('terser-webpack-plugin');
+const webpack = require('webpack');
 
-const prod = process.argv.indexOf("-p") !== -1;
-const js_output_template = prod ? "js/[name]-[hash].js" : "js/[name].js";
 
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
-const LiveReloadPlugin = require("webpack-livereload-plugin");
+function recursiveIssuer(m) {
+  if (m.issuer) {
+    return recursiveIssuer(m.issuer);
+  } else if (m.name) {
+    return m.name;
+  } else {
+    return false;
+  }
+}
 
-module.exports = {
-  context: path.join(__dirname, "/app/assets"),
+
+module.exports = (env, argv) => ({
+  context: path.join(__dirname, 'app/assets'),
 
   entry: {
-    application: ["./js/application.js"]
-    // contact: ["./js/contact.js"]
+    application: './js/application.js',
+    // add other entry points here
   },
 
   output: {
-    path: path.join(__dirname, "/public"),
-    filename: js_output_template
+    filename: argv.mode=='development' ? '[name].js' : '[name][hash].js',
+    path: path.resolve(__dirname, 'public/dist'),
+    publicPath: argv.mode=='development' ? 'http://localhost:3000/dist/' : '/dist/'
   },
+
+  devtool: argv.mode=='development' ? 'inline-source-map' : false,
+
+  devServer: argv.mode=='development' ? {
+    compress: true,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers': 'X-Requested-With, content-type, Authorization'
+    },
+    port: 3000,
+    publicPath: "/dist/",
+    proxy: {
+      '/': 'http://localhost:3000'
+    }
+  } : {},
+
+  optimization: argv.mode=='development' ? {} : {
+    minimizer: [
+      new TerserJSPlugin({}),
+      new OptimizeCSSAssetsPlugin({})
+    ],
+    splitChunks: {
+      chunks: 'all'
+    }
+  },
+
+  plugins: [
+    new CleanWebpackPlugin(),
+
+    new MiniCssExtractPlugin(
+      {
+        filename: argv.mode=='development' ? '[name].css' : '[name][hash].css'
+      }
+    ),
+
+    new webpack.ProvidePlugin({
+      $: 'jquery',
+      jQuery: 'jquery',
+      'window.jQuery': 'jquery',
+      // add other modules to automatically load instead of `import` or `require`
+    }),
+
+    function() {
+      // output the fingerprint
+      this.hooks.done.tap('AureliaCLI', function(stats) {
+        let output = 'const ASSET_FINGERPRINT = "' + stats.hash + '"'
+        fs.writeFileSync('config/initializers/fingerprint.jl', output, 'utf8');
+      });
+    }
+  ],
 
   module: {
     rules: [
       {
         test: /\.js$/,
         exclude: /node_modules/,
-        loader: "babel-loader",
-        query: {
-          presets: [
-            ["env", { "modules": false }]
-          ]
+        use: {
+          loader: 'babel-loader',
+          query: {
+            'presets': [
+              [
+                '@babel/preset-env',
+                {
+                  'modules': false
+                }
+              ]
+            ],
+            'plugins': ['@babel/plugin-syntax-dynamic-import']
+          }
         }
       },
+
       {
         test: /\.coffee$/,
-        use: [ "coffee-loader" ]
+        loader: 'coffee-loader'
       },
+
       {
-        test: /\.css$/,
+        test: /\.(sa|sc|c)ss$/,
         exclude: /node_modules/,
-        use: ExtractTextPlugin.extract({
-          // { loader: "style-loader" }, // creates style nodes from JS strings
-          // { loader: "css-loader" } // translates CSS into CommonJS
-          // { loader: "style-loader/url" }, // loads css URL
-          // { loader: "file-loader" } // loads file
-          use: "css-loader",
-          fallback: "style-loader"
-        })
-      },
-      {
-        test: /\.sass$/,
         use: [
-          { loader: "style-loader" }, // creates style nodes from JS strings
-          { loader: "css-loader" }, // translates CSS into CommonJS
-          { loader: "sass-loader"} // compiles Sass to CSS
+          {
+            loader: MiniCssExtractPlugin.loader,
+            options: {
+              hmr: argv.mode=='development',
+            },
+          },
+          'css-loader', // parses CSS into CommonJS
+          {
+            loader: 'postcss-loader',
+            options: {
+              plugins: [
+                require('autoprefixer')({
+                  browsers: ['last 15 versions']
+                })
+              ]
+            }
+          },
+          'sass-loader' // Sass to CSS
         ]
       },
+
       {
-        test: /\.scss$/,
+        test: /\.(png|svg|jpg|gif)$/,
         use: [
-          { loader: "style-loader" }, // creates style nodes from JS strings
-          { loader: "css-loader" }, // translates CSS into CommonJS
-          { loader: "sass-loader"} // compiles Sass to CSS
+          {
+            loader: 'file-loader' // use url-loader if loading via html
+          }
         ]
       },
+
       {
-        test: /\.(woff2?|svg)$/,
-        loader: "url-loader?limit=10000&name=/fonts/[name].[ext]"
-      },
-      {
-        test: /\.(ttf|eot)$/,
-        loader: 'file-loader?name=/fonts/[name].[ext]'
+        test: /\.(woff|woff2|eot|ttf|otf)$/,
+        use: [
+          'file-loader'
+        ]
       }
     ]
   },
 
-  plugins: [
-    new webpack.ProvidePlugin({
-      $: "jquery",
-      jQuery: "jquery",
-      "window.jQuery": "jquery"
-    }),
-
-    new ExtractTextPlugin("css/application.css"),
-
-    new LiveReloadPlugin({
-      port: 44444,
-      appendScriptTag: true
-    }),
-
-    function() {
-      // output the fingerprint
-      this.plugin("done", function(stats) {
-        let output = "const ASSET_FINGERPRINT = \"" + stats.hash + "\""
-        fs.writeFileSync("config/initializers/fingerprint.jl", output, "utf8");
-      });
-    },
-
-    function() {
-      // delete previous outputs
-      this.plugin("compile", function() {
-        let basepath = __dirname + "/public";
-        let paths = ["/javascripts", "/stylesheets"];
-
-        for (let x = 0; x < paths.length; x++) {
-          const asset_path = basepath + paths[x];
-
-          fs.readdir(asset_path, function(err, files) {
-            if (files === undefined) {
-              return;
-            }
-
-            for (let i = 0; i < files.length; i++) {
-              fs.unlinkSync(asset_path + "/" + files[i]);
-            }
-          });
-        }
-      });
-    }
-  ]
-}
+  resolve: {
+    extensions: ['.js', '.json', '.coffee'] // require('file') instead of require('file.coffee')
+  }
+});
