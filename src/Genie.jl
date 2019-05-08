@@ -32,6 +32,7 @@ include("Sessions.jl")
 include("Input.jl")
 include("Flax.jl")
 include("Renderer.jl")
+include("Assets.jl")
 include("Router.jl")
 include("Helpers.jl")
 include("WebChannels.jl")
@@ -44,7 +45,7 @@ include("Requests.jl")
 using .Loggers
 using .Inflector, .Util
 using .FileTemplates, .Generator, .Tester, .Encryption, .Cookies, .Sessions
-using .Input, .Renderer, .Router, .Helpers, .AppServer, .Commands
+using .Input, .Renderer, .Assets, .Router, .Helpers, .AppServer, .Commands
 using .Flax, .AppServer
 
 include(joinpath(@__DIR__, "REPL.jl"))
@@ -62,12 +63,12 @@ end
 
 
 """
-    newapp(path = "."; db_support = false, skip_dependencies = false, autostart = true) :: Nothing
+    newapp(path = "."; autostart = true, fullstack = true, dbsupport = true) :: Nothing
 
 Scaffolds a new Genie app.
 """
-function newapp(path = "."; db_support = false, autostart = true) :: Nothing
-  REPL.newapp(path, db_support = db_support, autostart = autostart)
+function newapp(path = "."; autostart = true, fullstack = true, dbsupport = true) :: Nothing
+  REPL.newapp(path, autostart = autostart, fullstack = fullstack, dbsupport = dbsupport)
 end
 const new_app = newapp
 
@@ -80,12 +81,11 @@ end
 
 
 """
+    startup()
+
+Starts the web server.
+```
 """
-function startup(port::Int = 8000, host::String = Genie.config.server_host;
-                  ws_port::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
-                  verbose::Bool = false, ratelimit::Rational{Int} = 10_000//1)
-  AppServer.startup(port, host, ws_port = ws_port, async = async, verbose = verbose, ratelimit = ratelimit)
-end
-const startapp = startup
+const startup = AppServer.startup
 
 end

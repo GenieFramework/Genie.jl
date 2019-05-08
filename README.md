@@ -23,14 +23,14 @@ In a Julia session switch to `pkg>` mode to add `Genie`:
 
 ```julia
 julia>] # switch to pkg> mode
-pkg> add https://github.com/essenciary/Genie.jl
+pkg> add https://github.com/genieframework/Genie.jl
 ```
 
 Alternatively, you can achieve the above using the `Pkg` API:
 
 ```julia
 julia> using Pkg
-julia> pkg"add https://github.com/essenciary/Genie.jl"
+julia> pkg"add https://github.com/genieframeworky/Genie.jl"
 ```
 
 When finished, make sure that you're back to the Julian prompt (`julia>`)
@@ -39,7 +39,6 @@ and bring `Genie` into scope:
 ```julia
 julia> using Genie
 ```
-
 ---
 
 ## Using Genie
@@ -52,14 +51,19 @@ Genie can be used for all scenarions from simple ad-hoc programming to a fullsta
 
 [Working with Genie apps (projects)](docs/content/Working_with_Genie_apps/index.md)
 
-## TODO
+## Coming soon
 
-In addition to use cases above, Genie will soon support:
+In addition to use cases above, will be coming soon in guides:
 
 - Adding data integrity rules with ModelValidators
 - Caching our responses
 - Using WebSockets and WebChannels
 - Setting up an admin area
+- Configuring Genie apps
+- Publishing Genie apps in production
+- The Genie Docker image
+- Genie Plugins
+- Genie Authentication Plugin
 
 ---
 

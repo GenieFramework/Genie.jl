@@ -4,7 +4,6 @@ App level functionality -- loading and managing app-wide components like configs
 module App
 
 using Revise
-using YAML
 using Genie
 
 const ASSET_FINGERPRINT = ""
@@ -22,7 +21,7 @@ end
 end
 
 
-### Main
+### Main.UserApp
 
 using Genie.Loggers, Genie.Configuration
 
@@ -87,16 +86,10 @@ Loads (includes) the framework's configuration files.
 """
 function load_configurations() :: Nothing
   loggers_path = abspath("$(Genie.CONFIG_PATH)/loggers.jl")
-  if isfile(loggers_path)
-    include(loggers_path)
-    Revise.track(@__MODULE__, loggers_path)
-  end
+  isfile(loggers_path) && Revise.track(@__MODULE__, loggers_path, define = true)
 
   secrets_path = abspath("$(Genie.CONFIG_PATH)/secrets.jl")
-  if isfile(secrets_path)
-    include(secrets_path)
-    Revise.track(@__MODULE__, secrets_path)
-  end
+  isfile(secrets_path) && Revise.track(@__MODULE__, secrets_path, define = true)
 
   nothing
 end
@@ -114,14 +107,7 @@ function load_initializers() :: Nothing
     f = readdir(dir)
     for i in f
       fi = joinpath(dir, i)
-      if endswith(fi, ".jl")
-        include(fi)
-        try
-          Revise.track(@__MODULE__, fi)
-        catch
-          log("Failed Revise tracking of $fi", :warn)
-        end
-      end
+      endswith(fi, ".jl") && Revise.track(@__MODULE__, fi, define = true)
     end
   end
 
@@ -134,17 +120,8 @@ end
 
 Loads the routes file.
 """
-function load_routes_definitions(fail_on_error = isdev()) :: Nothing
-  try
-    if isfile(Genie.ROUTES_FILE_NAME)
-      include(Genie.ROUTES_FILE_NAME)
-      Revise.track(@__MODULE__, Genie.ROUTES_FILE_NAME)
-    end
-  catch ex
-    log(ex, :warn)
-
-    fail_on_error && rethrow(ex)
-  end
+function load_routes_definitions() :: Nothing
+  isfile(Genie.ROUTES_FILE_NAME) && Revise.track(@__MODULE__, Genie.ROUTES_FILE_NAME, define = true)
 
   nothing
 end
@@ -156,16 +133,7 @@ end
 Loads the channels file.
 """
 function load_channels_definitions(fail_on_error = isdev()) :: Nothing
-  try
-    if isfile(Genie.CHANNELS_FILE_NAME)
-      include(Genie.CHANNELS_FILE_NAME)
-      Revise.track(@__MODULE__, Genie.CHANNELS_FILE_NAME)
-    end
-  catch ex
-    log(ex, :err)
-
-    fail_on_error && rethrow(ex)
-  end
+  isfile(Genie.CHANNELS_FILE_NAME) && Revise.track(@__MODULE__, Genie.CHANNELS_FILE_NAME, define = true)
 
   nothing
 end
@@ -284,12 +252,7 @@ end
 Starts the web server.
 ```
 """
-function startup(port::Int = 8000, host::String = Genie.config.server_host;
-                  wsport::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
-                  verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing)
-
-  Genie.AppServer.startup(port, host, ws_port = wsport, async = async, verbose = verbose, ratelimit = ratelimit)
-end
+const startup = Genie.startup
 
 
 """
