@@ -227,7 +227,7 @@ end
 
 """
 """
-function parse_view(data::String; partial = true, mod::Module = @__MODULE__) :: Function
+function parse_view(data::String; partial = false, mod::Module = @__MODULE__) :: Function
   path = "Flax_" * string(hash(data))
 
   func_name = function_name(data) |> Symbol
@@ -276,7 +276,7 @@ function html_renderer(resource::Union{Symbol,String}, action::Union{Symbol,Stri
   get_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false, mod = mod)
 end
 function html_renderer(data::String; mod::Module = @__MODULE__, vars...) :: Function
-  parse_view(data, partial = true, mod = mod)
+  parse_view(data, partial = false, mod = mod)
 end
 
 
@@ -387,14 +387,14 @@ end
 Parses a HTML file into a `string` of Flax code.
 """
 function parse_template(file_path::String; partial = true) :: String
-  read_template_file(file_path) |> parse
+  parse(read_template_file(file_path), partial = partial)
 end
 
 
 """
 """
 function parse_string(data::String; partial = true) :: String
-  parse_tags(data) |> parse
+  parse(parse_tags(data), partial = partial)
 end
 
 

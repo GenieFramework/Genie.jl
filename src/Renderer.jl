@@ -120,17 +120,12 @@ function respond(body::String, params::Dict{Symbol,T})::HTTP.Response where {T}
 
   r |> respond
 end
-function respond(args...; kargs...) :: HTTP.Response
-  respond_with(Genie.Router.response_type(), args...; kargs...)
-end
-function respond(err::T)::HTTP.Response where {T<:Exception}
-  respond_with(Genie.Router.response_type(), err)
+function respond(err::T, content_type::Union{Symbol,String} = Genie.Router.response_type(), code::Int = 500)::HTTP.Response where {T<:Exception}
+  HTTP.Response(code, (isa(content_type, Symbol) ? ["Content-Type" => CONTENT_TYPES[content_type]] : ["Content-Type" => content_type]), body = string(err))
 end
 
-### Dict pre-responses ###
-
-function respond(body::String, content_type::Symbol = :html) :: Dict{Symbol,String}
-  respond(Dict(content_type => body), 200, ["Content-Type" => CONTENT_TYPES[content_type]])
+function respond(body::String, content_type::Union{Symbol,String} = Genie.Router.response_type(), code::Int = 200) :: HTTP.Response
+  HTTP.Response(code, (isa(content_type, Symbol) ? ["Content-Type" => CONTENT_TYPES[content_type]] : ["Content-Type" => content_type]), body = body)
 end
 
 ### ASSETS ###

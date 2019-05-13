@@ -30,7 +30,7 @@ Alternatively, you can achieve the above using the `Pkg` API:
 
 ```julia
 julia> using Pkg
-julia> pkg"add https://github.com/genieframeworky/Genie.jl"
+julia> pkg"add https://github.com/genieframework/Genie.jl"
 ```
 
 When finished, make sure that you're back to the Julian prompt (`julia>`)
@@ -43,7 +43,8 @@ julia> using Genie
 
 ## Using Genie
 
-Genie can be used for all scenarions from simple ad-hoc programming to a fullstack web framework. Below are some use cases each time explained with a simple example.
+Genie can be used for a variety of tasks, from quickly whipping up a web server to full MVC web apps. 
+Use the following resources to dive into each use case.
 
 [Using Genie in an interactive environment (Jupyter/IJulia, REPL, etc)](docs/content/Interactive_environment.md)
 
@@ -56,7 +57,7 @@ Genie can be used for all scenarions from simple ad-hoc programming to a fullsta
 In addition to use cases above, will be coming soon in guides:
 
 - Adding data integrity rules with ModelValidators
-- Caching our responses
+- Caching responses
 - Using WebSockets and WebChannels
 - Setting up an admin area
 - Configuring Genie apps
@@ -70,4 +71,4 @@ In addition to use cases above, will be coming soon in guides:
 ## Acknowledgements
 
 * Genie uses a multitude of packages that have been kindly contributed by the Julia community.
-* The awesome Genie logo was designed by my friend Alvaro Casanova (www.yeahstyledg.com).
+* The awesome Genie logo was designed by Alvaro Casanova (www.yeahstyledg.com).

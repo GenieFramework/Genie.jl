@@ -16,7 +16,7 @@ julia> route("/") do
 You can now start the web server using
 
 ```julia
-julia> Genie.AppServer.startup()
+julia> Genie.startup()
 ```
 
 Finally, now navigate to <http://localhost:8000> – you should see the message "Hi there!".
@@ -45,7 +45,7 @@ julia> route("/echo/:message") do
 
 Accessing <http://localhost:8000/echo/ciao> should echo "ciao".
 
-And we can even match by their types:
+And we can even match by types:
 
 ```julia
 julia> route("/sum/:x::Int/:y::Int") do
