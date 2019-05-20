@@ -10,6 +10,8 @@ include(joinpath(@__DIR__, "constants.jl"))
 
 config = Configuration.Settings(app_env = Configuration.DEV)
 
+export startup
+
 using Revise
 
 isfile(joinpath(CONFIG_PATH, "plugins.jl")) && include(joinpath(CONFIG_PATH, "plugins.jl"))

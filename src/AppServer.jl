@@ -42,13 +42,12 @@ function startup(port::Int = 8000, host::String = Genie.config.server_host;
   end
 
   @info "Ready!\n"
+  log("Web Server starting at http://$host:$port")
 
   if async
-    log("Web Server starting at http://$host:$port")
     @async command()
     log("Web Server running at http://$host:$port")
   else
-    log("Web Server starting at http://$host:$port")
     command()
     log("Web Server stopped")
   end
