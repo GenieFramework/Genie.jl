@@ -43,12 +43,13 @@ include("Commands.jl")
 include("Cache.jl")
 include("Responses.jl")
 include("Requests.jl")
+include("Plugins.jl")
 
 using .Loggers
 using .Inflector, .Util
 using .FileTemplates, .Generator, .Tester, .Encryption, .Cookies, .Sessions
 using .Input, .Renderer, .Assets, .Router, .Helpers, .AppServer, .Commands
-using .Flax, .AppServer
+using .Flax, .AppServer, .Plugins
 
 include(joinpath(@__DIR__, "REPL.jl"))
 
