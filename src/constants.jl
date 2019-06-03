@@ -9,7 +9,7 @@ const LIB_PATH        = "lib"
 const HELPERS_PATH    = joinpath(APP_PATH, "helpers")
 const LOG_PATH        = "log"
 const LAYOUTS_PATH    = joinpath(APP_PATH, "layouts")
-const TASKS_PATH      = "tasks"
+const TASKS_PATH      = "task"
 const BUILD_PATH      = "build"
 const PLUGINS_PATH    = "plugins"
 

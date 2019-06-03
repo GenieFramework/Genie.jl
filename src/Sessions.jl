@@ -72,7 +72,7 @@ end
 Initiates a session.
 """
 function start(session_id::String, req::HTTP.Request, res::HTTP.Response; options = Dict{String,String}()) :: Session
-  options = merge(Dict("Path" => "/", "HttpOnly" => true, "Expires" => Dates.today()), options)
+  options = merge(Dict("Path" => "/", "HttpOnly" => true), options)
   Cookies.set!(res, Genie.config.session_key_name, session_id, options)
 
   load(session_id)
@@ -105,6 +105,14 @@ function get(s::Session, key::Symbol) :: Nullable
           else
             Nullable()
           end
+end
+
+
+"""
+"""
+function get(s::Session, key::Symbol, default::T)::T where T
+  val = get(s, key)
+  isnull(val) ? default : Nullables.get(val)
 end
 
 
@@ -169,19 +177,15 @@ end
 
 
 """
-    session() :: Sessions.Session
     session(params::Dict{Symbol,Any}) :: Sessions.Session
 
 Returns the `Session` object associated with the current HTTP request.
 """
-function session() :: Sessions.Session
-  session(Router._params_())
-end
-function session(params::Dict{Symbol,Any}) :: Sessions.Session
+function session(params) :: Sessions.Session
   if haskey(params, Genie.PARAMS_SESSION_KEY)
     return params[Genie.PARAMS_SESSION_KEY]
   else
-    msg = "Invalid params Dict -- must have $(Genie.PARAMS_SESSION_KEY) key"
+    msg = "Missing @params $(Genie.PARAMS_SESSION_KEY) key"
     log(msg, :err)
     error(msg)
   end

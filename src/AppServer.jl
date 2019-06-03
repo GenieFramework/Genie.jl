@@ -90,7 +90,7 @@ end
 Http server handler function - invoked when the server gets a request.
 """
 function handle_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = IPv4(Genie.config.server_host)) :: HTTP.Response
-  Genie.config.server_signature != "" && sign_response!(res)
+  isempty(Genie.config.server_signature) && sign_response!(res)
   set_headers!(req, res, Genie.Router.route_request(req, res, ip))
 end
 
@@ -109,8 +109,6 @@ function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.
   end
 
   app_response.headers = vcat(app_response.headers, [d for d in merge(Dict(res.headers), Dict(app_response.headers))]) |> unique
-
-  # app_response.cookies = merge(res.cookies, app_response.cookies)
 
   app_response
 end

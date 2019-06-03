@@ -3,7 +3,7 @@ Various utility functions for using across models, controllers and views.
 """
 module Helpers
 
-using Genie, Genie.Router, URIParser, Genie.Loggers, HTTP, Genie.Flax
+using Genie, Genie.Router, URIParser, Genie.Loggers, HTTP, Genie.Flax, Genie.Sessions
 
 export request, response, flash, wsclient, flash_has_message
 
@@ -77,8 +77,8 @@ Stores `value` on the `flash`.
 function flash(value::Any) :: Nothing
   flash(value, Genie.Router._params_())
 end
-function flash(value::Any, params::Dict{Symbol,Any}) :: Nothing
-  Genie.Sessions.set!(session(params), Genie.PARAMS_FLASH_KEY, value)
+function flash(value::Any, params) :: Nothing
+  Sessions.set!(Sessions.session(params), Genie.PARAMS_FLASH_KEY, value)
   params[Genie.PARAMS_FLASH_KEY] = value
 
   nothing
