@@ -85,10 +85,10 @@ end
 Loads (includes) the framework's configuration files.
 """
 function load_configurations() :: Nothing
-  loggers_path = abspath("$(Genie.CONFIG_PATH)/loggers.jl")
+  loggers_path = "$(Genie.CONFIG_PATH)/loggers.jl"
   isfile(loggers_path) && Revise.track(@__MODULE__, loggers_path, define = true)
 
-  secrets_path = abspath("$(Genie.CONFIG_PATH)/secrets.jl")
+  secrets_path = "$(Genie.CONFIG_PATH)/secrets.jl"
   isfile(secrets_path) && Revise.track(@__MODULE__, secrets_path, define = true)
 
   nothing
@@ -101,12 +101,30 @@ end
 Loads (includes) the framework's initializers.
 """
 function load_initializers() :: Nothing
-  dir = abspath(joinpath(Genie.CONFIG_PATH, "initializers"))
+  dir = joinpath(Genie.CONFIG_PATH, "initializers")
 
   if isdir(dir)
     f = readdir(dir)
     for i in f
       fi = joinpath(dir, i)
+      endswith(fi, ".jl") && Revise.track(@__MODULE__, fi, define = true)
+    end
+  end
+
+  nothing
+end
+
+
+"""
+    load_plugins() :: Nothing
+
+Loads (includes) the framework's plugins initializers.
+"""
+function load_plugins() :: Nothing
+  if isdir(Genie.PLUGINS_PATH)
+    f = readdir(Genie.PLUGINS_PATH)
+    for i in f
+      fi = joinpath(Genie.PLUGINS_PATH, i)
       endswith(fi, ".jl") && Revise.track(@__MODULE__, fi, define = true)
     end
   end
@@ -273,6 +291,8 @@ function load() :: Nothing
 
   load_routes_definitions()
   load_channels_definitions()
+
+  load_plugins()
 
   nothing
 end

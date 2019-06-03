@@ -8,6 +8,14 @@ using Genie, Genie.Encryption
 
 
 """
+"""
+function get(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}, default::T; encrypted::Bool = true)::T where T
+  val = get(payload, key, encrypted = encrypted)
+  isnull(val) ? default : parse(T, Nullables.get(val))
+end
+
+
+"""
     get(res::HTTP.Response, key::Union{String,Symbol}) :: Nullable{String}
 
 Retrieves a value stored on the cookie as `key` from the `Respose` object.
@@ -88,9 +96,9 @@ function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attribu
 
   headers = Dict(res.headers)
   if haskey(headers, "Set-Cookie")
-    headers["Set-Cookie"] *= HTTP.Cookies.String(cookie, false)
+    headers["Set-Cookie"] *= "\nSet-Cookie: " * HTTP.Cookies.String(cookie, false) * "; "
   else
-    headers["Set-Cookie"] = HTTP.Cookies.String(cookie, false)
+    headers["Set-Cookie"] = HTTP.Cookies.String(cookie, false) * "; "
   end
   res.headers = [(k => v) for (k,v) in headers]
 
@@ -110,14 +118,22 @@ function todict(r::Union{HTTP.Request,HTTP.Response}) :: Dict{String,String}
   if haskey(headers, "Cookie")
     for cookie in split(headers["Cookie"], ";")
       cookie_parts = split(cookie, "=")
-      d[strip(cookie_parts[1])] = cookie_parts[2]
+      if length(cookie_parts) == 2
+        d[strip(cookie_parts[1])] = cookie_parts[2]
+      else
+        d[strip(cookie_parts[1])] = ""
+      end
     end
   end
 
   if haskey(headers, "Set-Cookie")
     for cookie in split(headers["Set-Cookie"], ";")
       cookie_parts = split(cookie, "=")
-      d[strip(cookie_parts[1])] = cookie_parts[2]
+      if length(cookie_parts) == 2
+        d[strip(cookie_parts[1])] = cookie_parts[2]
+      else
+        d[strip(cookie_parts[1])] = ""
+      end
     end
   end
 
