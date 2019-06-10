@@ -160,6 +160,11 @@ end
 """
 function include_partial(path::String; mod::Module = @__MODULE__, vars...) :: String
   for (k,v) in vars
+    if k == :context && isa(v, Module)
+      (mod = v)
+      continue
+    end
+
     try
       task_local_storage(:__vars)[k] = v
     catch

@@ -112,32 +112,12 @@ end
 """
     include_helpers() :: Nothing
 
-Loads helpers and makes them available in the view layer.
+Deprecated! - Loads helpers and makes them available in the view layer.
 """
-function include_helpers() :: Nothing
-  isdir(Genie.HELPERS_PATH) || return nothing
-
-  for h in readdir(Genie.HELPERS_PATH)
-    if isfile(joinpath(Genie.HELPERS_PATH, h)) && endswith(h, "Helper.jl")
-      Core.eval(Genie.Flax, """include("$(joinpath(Genie.HELPERS_PATH, h))")""" |> Meta.parse)
-      Core.eval(Genie.Flax, """@reexport using .$(replace(h, r"\.jl$"=>""))""" |> Meta.parse)
-    end
-  end
-
-  nothing
-end
-function include_helpers(helpers::Vector{Symbol}) :: Nothing
-  isdir(Genie.HELPERS_PATH) || return nothing
-
-  for h in helpers
-    Core.eval(Genie.Flax, """include("$(joinpath(Genie.HELPERS_PATH, string(h, ".jl")))")""" |> Meta.parse)
-    Core.eval(Genie.Flax, """@reexport using .$(string(h))""" |> Meta.parse)
-  end
-
-  nothing
-end
-function include_helpers(helper::Symbol) :: Nothing
-  include_helpers([helper])
+function include_helpers(_) :: Nothing
+  # Deprecated - helpers are no longer injected, they should be loaded as
+  # any other module, inside your controllers.
+  # The helpers folder is automatically added to LOAD_PATH
 end
 
 end
