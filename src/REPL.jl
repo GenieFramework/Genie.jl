@@ -85,8 +85,8 @@ function newapp(path::String; autostart = true, fullstack = false, dbsupport = f
     load_app(".", autostart = autostart)
   else
     log("Your new Genie app is ready!
-        Run \njulia> Genie.REPL.load_app() \nto load the app's environment
-        and then \njulia> Genie.AppServer.startup() \nto start the web server on port 8000.")
+        Run \njulia> Genie.loadapp() \nto load the app's environment
+        and then \njulia> Genie.startup() \nto start the web server on port 8000.")
   end
 
   nothing
@@ -103,7 +103,7 @@ function loadapp(path = "."; autostart = false) :: Nothing
   Core.eval(Main, Meta.parse("using Genie"))
 
   Core.eval(Main.UserApp, Meta.parse("Revise.revise()"))
-  Core.eval(Main.UserApp, Meta.parse("$autostart && Genie.AppServer.startup()"))
+  Core.eval(Main.UserApp, Meta.parse("$autostart && Genie.startup()"))
 
   nothing
 end

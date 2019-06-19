@@ -1,7 +1,7 @@
 module Plugins
 
 using Genie, Genie.Loggers
-using Pkg
+using Pkg, Markdown
 
 
 const FILES_FOLDER = "files"
@@ -41,9 +41,31 @@ function recursive_copy(path::String, dest::String; only_hidden = true, force = 
 end
 
 
-function scaffold(plugin_name::String, dest::String; force = false)
+function congrats()
+  message = """
+  Congratulations, your plugin is ready!
+  You can use this default installation function in your plugin's module:
+  """
+  print(message)
+
+  doc"""
+  ```julia
+  function install(dest::String)
+    src = abspath(normpath(joinpath(@__DIR__, "..", Genie.Plugins.FILES_FOLDER)))
+
+    for f in readdir(src)
+      isdir(f) || continue
+      Genie.Plugins.install(joinpath(src, f), dest)
+    end
+  end
+  ```
+  """
+end
+
+
+function scaffold(plugin_name::String, dest::String = "."; force = false)
   plugin_name = replace(plugin_name, " "=>"") |> strip |> string
-  dest = normpath(dest)
+  dest = normpath(dest) |> abspath
   ispath(dest) || mkpath(dest)
 
   log("Generating project file", :info)
@@ -52,13 +74,15 @@ function scaffold(plugin_name::String, dest::String; force = false)
   dest = joinpath(dest, plugin_name)
 
   log("Scaffolding file structure", :info)
-  mkdir(joinpath(dest, FILES_FOLDER))
+  mkpath(joinpath(dest, FILES_FOLDER))
 
   for path in FOLDERS
     recursive_copy(path, joinpath(dest, FILES_FOLDER), force = force)
   end
 
-  touch(joinpath(dest, FILES_FOLDER, PLUGINS_FOLDER, lowercase(plugin_name) * ".jl"))
+  initializer_path = joinpath(dest, FILES_FOLDER, PLUGINS_FOLDER, lowercase(plugin_name) * ".jl")
+  log("Creating plugin initializer at $initializer_path", :info)
+  touch(initializer_path)
 
   log("Adding dependencies", :info)
 
@@ -69,6 +93,8 @@ function scaffold(plugin_name::String, dest::String; force = false)
   run(`git init`)
   run(`git add .`)
   run(`git commit -am "initial commit"`)
+
+  congrats()
 end
 
 
