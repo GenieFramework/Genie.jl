@@ -112,7 +112,7 @@ end
 
 
 function log_path()
-  "$(joinpath(Genie.LOG_PATH, Genie.config.app_env)).log"
+  "$(joinpath(Genie.LOG_PATH, ENV["GENIE_ENV"])).log"
 end
 function log_path!()
   initlogfile()

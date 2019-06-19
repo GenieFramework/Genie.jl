@@ -62,11 +62,11 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[Genie]]
 deps = ["ArgParse", "Dates", "Distributed", "Gumbo", "HTTP", "HttpCommon", "JSON", "Markdown", "MbedTLS", "Millboard", "MiniLogging", "Nettle", "Nullables", "OrderedCollections", "Pkg", "Reexport", "Revise", "SHA", "Serialization", "Sockets", "URIParser", "Unicode", "YAML"]
-git-tree-sha1 = "8ec8a2ffc04683fe45b868413d4afe4fcc7b3c19"
+git-tree-sha1 = "4bbc3ecb7a5a2ecd6bb2138340258bcbc3b245dd"
 repo-rev = "master"
 repo-url = "https://github.com/essenciary/Genie.jl"
 uuid = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
-version = "0.9.2"
+version = "0.9.4"
 
 [[Gumbo]]
 deps = ["AbstractTrees", "BinaryProvider", "Libdl", "Test"]
@@ -75,10 +75,10 @@ uuid = "708ec375-b3d6-5a57-a7ce-8257bf98657a"
 version = "0.5.1"
 
 [[HTTP]]
-deps = ["Base64", "Dates", "Distributed", "IniFile", "MbedTLS", "Random", "Sockets", "Test"]
-git-tree-sha1 = "25db0e3f27bd5715814ca7e4ad22025fdcf5cc6e"
+deps = ["Base64", "Dates", "IniFile", "MbedTLS", "Sockets"]
+git-tree-sha1 = "854fad2a2b9cc6678f70ed15a65fc7e572056d39"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-version = "0.8.0"
+version = "0.8.2"
 
 [[HttpCommon]]
 deps = ["Dates", "Nullables", "Test", "URIParser"]
@@ -104,9 +104,9 @@ version = "0.20.0"
 
 [[JuliaInterpreter]]
 deps = ["CodeTracking", "InteractiveUtils", "Random", "UUIDs"]
-git-tree-sha1 = "599cc7c6683e54cd0b3786ee37800db037e22df4"
+git-tree-sha1 = "ed46097f465a091f6b126966015048193791743a"
 uuid = "aa1ae85d-cabe-5617-a682-6adf51b2e16a"
-version = "0.5.2"
+version = "0.6.0"
 
 [[LibGit2]]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
@@ -123,9 +123,9 @@ uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 
 [[LoweredCodeUtils]]
 deps = ["JuliaInterpreter"]
-git-tree-sha1 = "c530b90b64249b525f1e40e71f64d5382c62f073"
+git-tree-sha1 = "dc151afc3125e225267a55e2b5592d0b90fb0e1a"
 uuid = "6f1432cf-f94c-5a45-995e-cdbf5db27b0b"
-version = "0.3.4"
+version = "0.3.5"
 
 [[Markdown]]
 deps = ["Base64"]
@@ -194,9 +194,9 @@ version = "0.2.0"
 
 [[Revise]]
 deps = ["CodeTracking", "Distributed", "FileWatching", "JuliaInterpreter", "LibGit2", "LoweredCodeUtils", "OrderedCollections", "Pkg", "REPL", "UUIDs", "Unicode"]
-git-tree-sha1 = "0148fc4b3392778e09eb75c4971ce75424acd1d1"
+git-tree-sha1 = "09cbf077a36bf58e7d5d2b026bb2af8c92931993"
 uuid = "295af30f-e4ad-537b-8983-00126c2a3abe"
-version = "2.1.5"
+version = "2.1.6"
 
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
