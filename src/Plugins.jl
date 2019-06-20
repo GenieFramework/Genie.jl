@@ -50,12 +50,12 @@ function congrats()
 
   doc"""
   ```julia
-  function install(dest::String)
+  function install(dest::String; force = false)
     src = abspath(normpath(joinpath(@__DIR__, "..", Genie.Plugins.FILES_FOLDER)))
 
     for f in readdir(src)
       isdir(f) || continue
-      Genie.Plugins.install(joinpath(src, f), dest)
+      Genie.Plugins.install(joinpath(src, f), dest, force = force)
     end
   end
   ```
@@ -114,7 +114,7 @@ function install(path::String, dest::String; force = false)
         cp(joinpath(root, f), joinpath(dest_path, f), force = force)
         log("Copied $(joinpath(root, f)) to $(joinpath(dest_path, f))", :info)
       catch ex
-        log("Failed to copy $(joinpath(root, f)) to $(joinpath(dest_path, f))", :err)
+        log("Failed to copy $(joinpath(root, f)) to $(joinpath(dest_path, f))", :debug)
       end
     end
   end
