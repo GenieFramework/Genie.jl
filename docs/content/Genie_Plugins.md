@@ -60,10 +60,14 @@ julia> using HelloPlugin
 julia> HelloPlugin.install(@__DIR__)
 ```
 
+The installation might show a series of errors - these are due to the fact that some of the files and folders already exist so they are not overwritten by the installer.
+
 Restart the app to load the plugin:
 
 ```julia
 julia> exit()
+
+$ cd Greetings/
 
 $ bin/repl
 ```
