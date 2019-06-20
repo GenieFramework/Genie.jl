@@ -11,7 +11,7 @@ The plugins are created by third party Genie/Julia developers. Take this simple 
 
 In order to add the plugin to an existing Genie app you need to:
 
-Add the HelloPlugin package to your Genie app, just like any other Julia Pkg dependency:
+Add the `HelloPlugin` package to your Genie app, just like any other Julia Pkg dependency:
 ```julia
 pkg> add https://github.com/GenieFramework/HelloPlugin.jl
 ```
@@ -25,8 +25,6 @@ Install the plugin (this is a one time operation, when the package is added):
 ```julia
 julia> HelloPlugin.install(@__DIR__)
 ```
-
-Make sure you run this in the Genie app REPL or that you are in a Julia session in the app's root dir. Otherwise pass the app's root dir as the argument for `install(dest::String)`.
 
 ### Running the Plugin
 
