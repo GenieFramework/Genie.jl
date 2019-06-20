@@ -52,6 +52,8 @@ Use the following resources to dive into each use case.
 
 [Working with Genie apps (projects)](docs/content/Working_with_Genie_apps/index.md)
 
+[Using and developing Genie plugins](/docs/content/Genie_Plugins.md)
+
 ## Coming soon
 
 In addition to use cases above, will be coming soon in guides:
