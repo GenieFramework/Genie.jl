@@ -58,7 +58,7 @@ julia> using HelloPlugin
 julia> HelloPlugin.install(@__DIR__)
 ```
 
-The installation might show a series of errors - these are due to the fact that some of the files and folders already exist so they are not overwritten by the installer.
+The installation might show a series of logging messages informing about failure to copy some files or create folders. Normally it's nothing to worry about: these are due to the fact that some of the files and folders already exist in the app so they are not overwritten by the installer.
 
 Restart the app to load the plugin:
 

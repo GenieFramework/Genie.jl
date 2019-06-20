@@ -106,7 +106,7 @@ function install(path::String, dest::String; force = false)
       mkdir(dest_path)
       log("Created dir $dest_path", :info)
     catch ex
-      log("Failed to create dir $dest_path", :err)
+      log("Failed to create dir $dest_path", :debug)
     end
 
     for f in files
