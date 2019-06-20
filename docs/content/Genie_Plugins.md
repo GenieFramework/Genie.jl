@@ -88,9 +88,62 @@ Genie provides an efficient scaffold for bootstraping a new plugin package. All 
 julia> using Genie
 
 julia> Genie.Plugins.scaffold("GenieHelloPlugin") # use the actual name of your plugin
+Generating project file
+Generating project GenieHelloPlugin:
+    GenieHelloPlugin/Project.toml
+    GenieHelloPlugin/src/GenieHelloPlugin.jl
+Scaffolding file structure
+
+Adding dependencies
+  Updating registry at `~/.julia/registries/General`
+  Updating git-repo `https://github.com/JuliaRegistries/General.git`
+  Updating git-repo `https://github.com/genieframework/Genie.jl`
+ Resolving package versions...
+  Updating `~/GenieHelloPlugin/Project.toml`
+  [c43c736e] + Genie v0.9.4 #master (https://github.com/genieframework/Genie.jl)
+  Updating `~/GenieHelloPlugin/Manifest.toml`
+
+Initialized empty Git repository in /Users/adrian/GenieHelloPlugin/.git/
+[master (root-commit) 30533f9] initial commit
+ 11 files changed, 261 insertions(+)
+
+Congratulations, your plugin is ready!
+You can use this default installation function in your plugin's module:
+  function install(dest::String; force = false)
+    src = abspath(normpath(joinpath(@__DIR__, "..", Genie.Plugins.FILES_FOLDER)))
+
+    for f in readdir(src)
+      isdir(f) || continue
+      Genie.Plugins.install(joinpath(src, f), dest, force = force)
+    end
+  end
 ```
 
-The scaffold command will create the file structure of your plugin, including the Julia project, the `.git` repo, and the file structure for integrating with Genie apps.
+The scaffold command will create the file structure of your plugin, including the Julia project, the `.git` repo, and the file structure for integrating with Genie apps:
+
+```
+.
+├── Manifest.toml
+├── Project.toml
+├── files
+│   ├── app
+│   │   ├── assets
+│   │   │   ├── css
+│   │   │   ├── fonts
+│   │   │   └── js
+│   │   ├── helpers
+│   │   ├── layouts
+│   │   └── resources
+│   ├── db
+│   │   ├── migrations
+│   │   └── seeds
+│   ├── lib
+│   ├── plugins
+│   │   └── geniehelloplugin.jl
+│   └── task
+└── src
+    └── GenieHelloPlugin.jl
+```
 
 The core of the functionality shoud go into the `src/GenieHelloPlugin.jl` module. While everything placed within the `files/` folder should be copied into the corresponding folders of the Genie apps installing the plugin. You can add resources, controllers, models, database migrations, views, assets and any other files inside the `files/` folder to be copied.
 
