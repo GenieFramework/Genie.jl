@@ -153,9 +153,9 @@ Because any Genie plugin is a Julia `Pkg` project, you can add any other Julia p
 
 ### The Installation Function
 
-The main module file, present in `src/GenieHelloPlugin.jl` should also expose an `install(path::String)` function, responsible for copying the files of your plugin into the user Genie app. The `path` param is the root of the Genie app where the installation must be performed.
+The main module file, present in `src/GenieHelloPlugin.jl` should also expose an `install(path::String)` function, responsible for copying the files of your plugin into the user Genie app. The `path` param is the root of the Genie app where the installation will be performed.
 
-As copying the plugin's files is a standard by tedious operation, Genie provides some helpers to get you started. The `Genie.Plugins` module provides an `install(path::String, dest::String; force = false)` which can be used for copying the plugin's files to their destination in the app.
+As copying the plugin's files is a standard but tedious operation, Genie provides some helpers to get you started. The `Genie.Plugins` module provides an `install(path::String, dest::String; force = false)` which can be used for copying the plugin's files to their destination in the app.
 
 The scaffolding function will also recommend a default `install(path::String)` that you can use in your module:
 
