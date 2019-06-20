@@ -110,13 +110,13 @@ The scaffolding function will also recommend a default `install(path::String)` t
 
 ```julia
 function install(dest::String)
-    src = abspath(normpath(joinpath(@__DIR__, "..", Genie.Plugins.FILES_FOLDER)))
+  src = abspath(normpath(joinpath(@__DIR__, "..", Genie.Plugins.FILES_FOLDER)))
 
-    for f in readdir(src)
-      isdir(f) || continue
-      Genie.Plugins.install(joinpath(src, f), dest)
-    end
+  for f in readdir(src)
+    isdir(f) || continue
+    Genie.Plugins.install(joinpath(src, f), dest)
   end
-  ```
+end
+```
 
-  You can use it as a starting point - and add any other specific extra logic to it.
+You can use it as a starting point - and add any other specific extra logic to it.
