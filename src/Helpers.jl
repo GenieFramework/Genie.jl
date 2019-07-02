@@ -16,7 +16,7 @@ export request, response, flash, wsclient, flash_has_message
 Returns the `Request` object associated with the current HTTP request.
 """
 function request() :: HTTP.Request
-  request(Genie.Router._params_())
+  request(@params)
 end
 function request(params::Dict{Symbol,Any}) :: HTTP.Request
   if haskey(params, Genie.PARAMS_REQUEST_KEY)
@@ -36,7 +36,7 @@ end
 Returns the `Response` object associated with the current HTTP request.
 """
 function response() :: HTTP.Response
-  response(Genie.Router._params_())
+  response(@params)
 end
 function response(params::Dict{Symbol,Any}) :: HTTP.Response
   if haskey(params, Genie.PARAMS_RESPONSE_KEY)
@@ -55,7 +55,7 @@ end
 Returns the `flash` dict object associated with the current HTTP request.
 """
 function flash()
-  flash(Genie.Router._params_())
+  flash(@params)
 end
 function flash(params::Dict{Symbol,Any})
   if haskey(params, Genie.PARAMS_FLASH_KEY)
@@ -75,7 +75,7 @@ end
 Stores `value` on the `flash`.
 """
 function flash(value::Any) :: Nothing
-  flash(value, Genie.Router._params_())
+  flash(value, @params)
 end
 function flash(value::Any, params) :: Nothing
   Sessions.set!(Sessions.session(params), Genie.PARAMS_FLASH_KEY, value)

@@ -34,27 +34,31 @@ function newapp(path::String; autostart = true, fullstack = false, dbsupport = f
               "Manifest.toml", "Project.toml"]
       cp(joinpath(@__DIR__, "../", "files", "new_app", f), joinpath(app_path, f))
     end
-
-    if dbsupport
-      cp(joinpath(@__DIR__, "../", "files", "new_app", "db"), joinpath(app_path, f))
-    else
-      rm(joinpath(app_path, "config", "database.yml"), force = true)
-      rm(joinpath(app_path, "config", "initializers", "searchlight.jl"), force = true)
-    end
   end
 
-  chmod(joinpath(path, "bin", "server"), 0o700)
-  chmod(joinpath(path, "bin", "repl"), 0o700)
+  if dbsupport
+    fullstack || cp(joinpath(@__DIR__, "../", "files", "new_app", "db"), joinpath(app_path))
+  else
+    rm(joinpath(app_path, "config", "database.yml"), force = true)
+    rm(joinpath(app_path, "config", "initializers", "searchlight.jl"), force = true)
+  end
 
-  open(joinpath(path, "config", "secrets.jl"), "w") do f
+  # chmod(app_path, 0o644, recursive = true)
+
+  chmod(joinpath(app_path, "bin", "server"), 0o700)
+  chmod(joinpath(app_path, "bin", "repl"), 0o700)
+
+  open(joinpath(app_path, "config", "secrets.jl"), "w") do f
     write(f, """const SECRET_TOKEN = "$(secret_token())" """)
   end
 
   moduleinfo = FileTemplates.appmodule(path)
-  open(joinpath(path, "src", moduleinfo[1] * ".jl"), "w") do f
+  open(joinpath(app_path, "src", moduleinfo[1] * ".jl"), "w") do f
     write(f, moduleinfo[2])
   end
-  open(joinpath(path, "bootstrap.jl"), "w") do f
+
+  chmod(joinpath(app_path, "bootstrap.jl"), 0o644)
+  open(joinpath(app_path, "bootstrap.jl"), "w") do f
     write(f,
     """
       cd(@__DIR__)
@@ -71,9 +75,9 @@ function newapp(path::String; autostart = true, fullstack = false, dbsupport = f
 
   log("Done! New app created at $(abspath(path))", :info)
 
-  Sys.iswindows() && setup_windows_bin_files(path)
+  Sys.iswindows() && setup_windows_bin_files(app_path)
 
-  log("Changing active directory to $path")
+  log("Changing active directory to $app_path")
   cd(path)
 
   log("Installing app dependencies")

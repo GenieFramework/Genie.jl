@@ -143,8 +143,8 @@ end
 
 Checks wheter or not `key` exists on the `Session` `s`.
 """
-function is_set(s::Session, key::Symbol) :: Bool
-  haskey(s.data, key)
+function is_set(s::Union{Session,Nothing}, key::Symbol) :: Bool
+  s != nothing && haskey(s.data, key)
 end
 
 
@@ -183,7 +183,10 @@ Returns the `Session` object associated with the current HTTP request.
 """
 function session(params) :: Sessions.Session
   if haskey(params, Genie.PARAMS_SESSION_KEY)
-    return params[Genie.PARAMS_SESSION_KEY]
+    params[Genie.PARAMS_SESSION_KEY] == nothing &&
+      (params[Genie.PARAMS_SESSION_KEY] = start(params[Genie.PARAMS_REQUEST_KEY], params[Genie.PARAMS_RESPONSE_KEY]))
+
+    params[Genie.PARAMS_SESSION_KEY]
   else
     msg = "Missing @params $(Genie.PARAMS_SESSION_KEY) key"
     log(msg, :err)
