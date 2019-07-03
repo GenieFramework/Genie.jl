@@ -68,9 +68,9 @@ version = "0.5.1"
 
 [[HTTP]]
 deps = ["Base64", "Dates", "IniFile", "MbedTLS", "Sockets"]
-git-tree-sha1 = "854fad2a2b9cc6678f70ed15a65fc7e572056d39"
+git-tree-sha1 = "6e59e7ec3c71eda9e0261c98896da5d3d008fa7d"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-version = "0.8.2"
+version = "0.8.3"
 
 [[HttpCommon]]
 deps = ["Dates", "Nullables", "Test", "URIParser"]

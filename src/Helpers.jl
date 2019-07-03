@@ -108,16 +108,4 @@ function wsclient(params::Dict{Symbol,Any}) :: HTTP.WebSockets.WebSocket
   end
 end
 
-
-"""
-    include_helpers() :: Nothing
-
-Deprecated! - Loads helpers and makes them available in the view layer.
-"""
-function include_helpers(_) :: Nothing
-  # Deprecated - helpers are no longer injected, they should be loaded as
-  # any other module, inside your controllers.
-  # The helpers folder is automatically added to LOAD_PATH
-end
-
 end
