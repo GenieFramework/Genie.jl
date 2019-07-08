@@ -70,6 +70,10 @@ mutable struct Params{T}
 end
 Params() = Params(Dict{Symbol,Any}())
 
+Base.Dict(params::Params) = params.collection
+
+Base.getindex(params, keys...) = getindex(Dict(params), keys...)
+
 
 """
     route_request(req::Request, res::Response, ip::IPv4 = Genie.config.server_host) :: Response

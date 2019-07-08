@@ -195,8 +195,8 @@ end
 
 Creates a new `controller` file.
 """
-function newcontroller(controller_name::String) :: Nothing
-  Genie.Generator.new_controller(Dict{String,Any}("controller:new" => controller_name))
+function newcontroller(controller_name::String; pluralize::Bool = true) :: Nothing
+  Genie.Generator.new_controller(Dict{String,Any}("controller:new" => controller_name), pluralize = pluralize)
   load_resources()
 
   nothing
@@ -208,8 +208,8 @@ end
 
 Creates a new `channel` file.
 """
-function newchannel(channel_name::String) :: Nothing
-  Genie.Generator.new_channel(Dict{String,Any}("channel:new" => channel_name))
+function newchannel(channel_name::String; pluralize::Bool = true) :: Nothing
+  Genie.Generator.new_channel(Dict{String,Any}("channel:new" => channel_name), pluralize = pluralize)
   load_resources()
 
   nothing
@@ -221,8 +221,8 @@ end
 
 Creates all the files associated with a new resource.
 """
-function newresource(resource_name::String) :: Nothing
-  Genie.Generator.new_resource(Dict{String,Any}("resource:new" => resource_name))
+function newresource(resource_name::String; pluralize::Bool = true) :: Nothing
+  Genie.Generator.new_resource(Dict{String,Any}("resource:new" => resource_name), pluralize = pluralize)
 
   try
     SearchLight.Generator.new_resource(uppercasefirst(resource_name))

@@ -106,7 +106,7 @@ function install(path::String, dest::String; force = false)
       mkdir(dest_path)
       log("Created dir $dest_path", :info)
     catch ex
-      log("Failed to create dir $dest_path", :debug)
+      log("Did not create dir $dest_path")
     end
 
     for f in files
@@ -114,7 +114,7 @@ function install(path::String, dest::String; force = false)
         cp(joinpath(root, f), joinpath(dest_path, f), force = force)
         log("Copied $(joinpath(root, f)) to $(joinpath(dest_path, f))", :info)
       catch ex
-        log("Failed to copy $(joinpath(root, f)) to $(joinpath(dest_path, f))", :debug)
+        log("Did not copy $(joinpath(root, f)) to $(joinpath(dest_path, f))")
       end
     end
   end
