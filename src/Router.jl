@@ -2,7 +2,7 @@ module Router
 
 using Revise
 using HTTP, URIParser, HttpCommon, Nullables, Sockets, Millboard, JSON, Dates
-using Genie, Genie.Sessions, Genie.Configuration, Genie.Input, Genie.Loggers, Genie.Util, Genie.Renderer
+using Genie, Genie.HTTPUtils, Genie.Sessions, Genie.Configuration, Genie.Input, Genie.Loggers, Genie.Util, Genie.Renderer
 
 include(joinpath(@__DIR__, "mimetypes.jl"))
 
@@ -266,12 +266,34 @@ end
 
 
 """
+    named_channels() :: Dict{Symbol,Any}
+
+The list of the defined named channels.
+"""
+function named_channels() :: Dict{Symbol,Channel}
+  _channels
+end
+
+
+"""
     print_named_routes() :: Nothing
 
 Prints a table of the routes and their names to standard output.
 """
 function print_named_routes() :: Nothing
   Millboard.table(named_routes()) |> println
+
+  nothing
+end
+
+
+"""
+    print_named_channels() :: Nothing
+
+Prints a table of the channels and their names to standard output.
+"""
+function print_named_channels() :: Nothing
+  Millboard.table(named_channels()) |> println
 
   nothing
 end
@@ -287,6 +309,9 @@ function get_route(route_name::Symbol) :: Nullable{Route}
 end
 
 
+# add here
+
+
 """
     get_route!!(route_name::Symbol) :: Route
 
@@ -295,6 +320,9 @@ Gets the `Route` correspoding to `route_name` - errors if the route is not defin
 function get_route!!(route_name::Symbol) :: Route
   get_route(route_name) |> Base.get
 end
+
+
+# add here
 
 
 """
@@ -324,6 +352,18 @@ Prints a table of the defined routes to standard output.
 """
 function print_routes() :: Nothing
   Millboard.table(routes()) |> println
+
+  nothing
+end
+
+
+"""
+    print_channels() :: Nothing
+
+Prints a table of the defined routes to standard output.
+"""
+function print_channels() :: Nothing
+  Millboard.table(channels()) |> println
 
   nothing
 end
@@ -731,7 +771,7 @@ end
 """
 """
 function content_type(req::HTTP.Request) :: String
-  get(Dict(req.headers), "Content-Type", "")
+  get(HTTPUtils.req_headers_to_dict(req), "content-type", "")
 end
 function content_type() :: String
   content_type(_params_(Genie.PARAMS_REQUEST_KEY))
@@ -741,7 +781,7 @@ end
 """
 """
 function content_length(req::HTTP.Request) :: Int
-  parse(Int, get(Dict(req.headers), "Content-Length", "0"))
+  parse(Int, get(HTTPUtils.req_headers_to_dict(req), "content-length", "0"))
 end
 function content_length() :: Int
   content_length(_params_(Genie.PARAMS_REQUEST_KEY))
@@ -968,6 +1008,8 @@ function to_uri(resource::String) :: URI
 end
 
 
+"""
+"""
 function escape_resource_path(resource::String)
   startswith(resource, "/") || return resource
   resource = resource[2:end]
@@ -1003,6 +1045,8 @@ function serve_static_file(resource::String) :: HTTP.Response
 end
 
 
+"""
+"""
 function preflight_response() :: HTTP.Response
   HTTP.Response(200, Genie.config.cors_headers, body = "Success")
 end

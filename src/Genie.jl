@@ -23,6 +23,7 @@ push!(LOAD_PATH,  joinpath(@__DIR__, "cache_adapters"),
 include(joinpath(@__DIR__, "genie_types.jl"))
 
 include("Loggers.jl")
+include("HTTPUtils.jl")
 include("Inflector.jl")
 include("Util.jl")
 include("FileTemplates.jl")
@@ -45,7 +46,7 @@ include("Responses.jl")
 include("Requests.jl")
 include("Plugins.jl")
 
-using .Loggers
+using .Loggers, .HTTPUtils
 using .Inflector, .Util
 using .FileTemplates, .Generator, .Tester, .Encryption, .Cookies, .Sessions
 using .Input, .Renderer, .Assets, .Router, .Helpers, .AppServer, .Commands

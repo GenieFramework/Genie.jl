@@ -30,8 +30,7 @@ function newapp(path::String; autostart = true, fullstack = false, dbsupport = f
     mkdir(app_path)
     for f in ["bin", "config", "log", "src",
               ".gitattributes", ".gitignore", "bootstrap.jl", "env.jl", "genie.jl",
-              "LICENSE.md", "README.md",
-              "Manifest.toml", "Project.toml"]
+              "LICENSE.md", "README.md"]
       cp(joinpath(@__DIR__, "../", "files", "new_app", f), joinpath(app_path, f))
     end
   end
@@ -82,7 +81,11 @@ function newapp(path::String; autostart = true, fullstack = false, dbsupport = f
 
   log("Installing app dependencies")
   pkg"activate ."
-  pkg"instantiate"
+
+  pkg"add Genie"
+  pkg"add JSON"
+  pkg"add Millboard"
+  pkg"add Revise"
 
   if autostart
     log("Starting your brand new Genie app - hang tight!", :info)

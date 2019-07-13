@@ -4,7 +4,7 @@ Functionality for dealing with HTTP cookies.
 module Cookies
 
 using HTTP, Nullables
-using Genie, Genie.Encryption
+using Genie, Genie.Encryption, Genie.HTTPUtils
 
 
 """
@@ -48,7 +48,7 @@ end
 Retrieves a value stored on the cookie as `key` from the `Request` object.
 """
 function get(req::HTTP.Request, key::Union{String,Symbol}; encrypted::Bool = true) :: Nullable{String}
-  if haskey(Dict(req.headers), "Cookie")
+  if haskey(HTTPUtils.req_headers_to_dict(req), "cookie")
     cookies = to_dict(req)
     if haskey(cookies, string(key))
       value = cookies[string(key)]
