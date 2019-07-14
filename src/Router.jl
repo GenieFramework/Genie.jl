@@ -74,6 +74,8 @@ Base.Dict(params::Params) = params.collection
 
 Base.getindex(params, keys...) = getindex(Dict(params), keys...)
 
+ispayload(req::HTTP.Request) = req.method in [POST, PUT, PATCH]
+
 
 """
     route_request(req::Request, res::Response, ip::IPv4 = Genie.config.server_host) :: Response
@@ -508,9 +510,9 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
 
     extract_uri_params(uri.path, regex_route, param_names, param_types, params) || continue
 
-    req.method == POST && extract_post_params(req, params)
+    ispayload(req) && extract_post_params(req, params)
     isempty(r.with) || extract_extra_params(r.with, params)
-    req.method == POST && extract_request_params(req, params)
+    ispayload(req) && extract_request_params(req, params)
     action_controller_params(r.action, params)
 
     res = negotiate_content(req, res, params)
@@ -727,7 +729,7 @@ end
 Parses POST variables and adds the to the `params` `Dict`.
 """
 function extract_post_params(req::HTTP.Request, params::Params) :: Nothing
-  req.method != POST && return nothing
+  ispayload(req) || return nothing
 
   input = Input.all(req)
 
@@ -748,7 +750,7 @@ end
 """
 """
 function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
-  req.method in [POST, PUT, PATCH] || return nothing
+  ispayload(req) || return nothing
 
   params.collection[Genie.PARAMS_RAW_PAYLOAD] = String(req.body)
 
