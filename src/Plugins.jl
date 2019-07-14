@@ -12,9 +12,10 @@ const APP_FOLDER = Genie.APP_PATH
 const path_prefix = joinpath(@__DIR__, "..", FILES_FOLDER, "new_app") |> normpath |> relpath
 const FOLDERS = [ joinpath(path_prefix, APP_FOLDER),
                   joinpath(path_prefix, "db"),
-                  joinpath(path_prefix, "lib"),
+                  joinpath(path_prefix, Genie.LIB_PATH),
                   joinpath(path_prefix, PLUGINS_FOLDER),
-                  joinpath(path_prefix, TASKS_FOLDER) ]
+                  joinpath(path_prefix, TASKS_FOLDER),
+                  joinpath(path_prefix, Genie.DOC_ROOT_PATH) ]
 
 
 function recursive_copy(path::String, dest::String; only_hidden = true, force = false)

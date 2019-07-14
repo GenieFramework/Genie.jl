@@ -8,7 +8,7 @@ using Genie.Loggers
 
 
 const ClientId =                          UInt # web socket hash
-const ChannelName =                       Union{String,Symbol}
+const ChannelName =                       String
 
 mutable struct ChannelClient
   client::HTTP.WebSockets.WebSocket
@@ -100,7 +100,7 @@ end
 Unsubscribes a web socket client `ws` from `channel`.
 """
 function unsubscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelName) :: ChannelClientsCollection
-  haskey(CLIENTS, id(ws)) && delete!(CLIENTS[id(ws)].channels, channel)
+  haskey(CLIENTS, id(ws)) && deleteat!(CLIENTS[id(ws)].channels, CLIENTS[id(ws)].channels .== channel)
   pop_subscription(id(ws), channel)
 
   CLIENTS
@@ -126,9 +126,13 @@ function unsubscribe_client(ws::HTTP.WebSockets.WebSocket) :: ChannelClientsColl
 end
 function unsubscribe_client(client_id::ClientId) :: ChannelClientsCollection
   unsubscribe_client(CLIENTS[client_id].client)
+
+  CLIENTS
 end
 function unsubscribe_client(channel_client::ChannelClient) :: ChannelClientsCollection
   unsubscribe_client(channel_client.client)
+
+  CLIENTS
 end
 
 
@@ -136,11 +140,15 @@ function unsubscribe_disconnected_clients() :: ChannelClientsCollection
   for channel_client in disconnected_clients()
     unsubscribe_client(channel_client)
   end
+
+  CLIENTS
 end
 function unsubscribe_disconnected_clients(channel::ChannelName) :: ChannelClientsCollection
   for channel_client in disconnected_clients(channel)
     unsubscribe(channel_client, channel)
   end
+
+  CLIENTS
 end
 
 
@@ -197,23 +205,29 @@ Pushes `msg` (and `payload`) to all the clients subscribed to the channels in `c
 function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String) :: Bool
   isa(channels, Array) || (channels = ChannelName[channels])
 
-  @sync @distributed for channel in channels
-    for client in SUBSCRIPTIONS[channel]
-      message(client, msg)
+  try
+    for channel in channels
+      for client in SUBSCRIPTIONS[channel]
+        message(client, msg)
+      end
     end
+  catch
   end
 
   true
 end
 function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String, payload::Dict) :: Bool
-  isa(channels, Array) || (channels = ChannelName[channels])
+  isa(channels, Array) || (channels = [channels])
 
-  @sync @distributed for channel in channels
-    in(channel, keys(SUBSCRIPTIONS)) || continue
+  try
+    for channel in channels
+      in(channel, keys(SUBSCRIPTIONS)) || continue
 
-    for client in SUBSCRIPTIONS[channel]
-      message(client, ChannelMessage(channel, client, msg, payload) |> JSON.json)
+      for client in SUBSCRIPTIONS[channel]
+        message(client, ChannelMessage(channel, client, msg, payload) |> JSON.json)
+      end
     end
+  catch
   end
 
   true
@@ -233,10 +247,10 @@ end
 """
 Pushes `msg` (and `payload`) to `channel`.
 """
-function message(channel::ChannelName, msg::String, payload::Union{Dict,Nothing} = nothing) :: Nothing
+function message(channel::ChannelName, msg::String, payload::Union{Dict,Nothing} = nothing) :: Bool
   payload == nothing ?
-    broadcast(ChannelName[channel], msg) :
-    broadcast(ChannelName[channel], msg, payload)
+    broadcast(channel, msg) :
+    broadcast(channel, msg, payload)
 end
 
 

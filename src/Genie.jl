@@ -67,11 +67,11 @@ end
 
 
 """
-    newapp(path = "."; autostart = true, fullstack = true, dbsupport = true) :: Nothing
+    newapp(path = "."; autostart = true, fullstack = false, dbsupport = true) :: Nothing
 
 Scaffolds a new Genie app.
 """
-function newapp(path = "."; autostart = true, fullstack = true, dbsupport = true) :: Nothing
+function newapp(path = "."; autostart = true, fullstack = false, dbsupport = true) :: Nothing
   REPL.newapp(path, autostart = autostart, fullstack = fullstack, dbsupport = dbsupport)
 end
 const new_app = newapp

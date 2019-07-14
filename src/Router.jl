@@ -748,7 +748,7 @@ end
 """
 """
 function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
-  req.method != POST && return nothing
+  req.method in [POST, PUT, PATCH] || return nothing
 
   params.collection[Genie.PARAMS_RAW_PAYLOAD] = String(req.body)
 
@@ -771,7 +771,7 @@ end
 """
 """
 function content_type(req::HTTP.Request) :: String
-  get(HTTPUtils.req_headers_to_dict(req), "content-type", "")
+  get(Genie.HTTPUtils.req_headers_to_dict(req), "content-type", "")
 end
 function content_type() :: String
   content_type(_params_(Genie.PARAMS_REQUEST_KEY))
@@ -781,7 +781,7 @@ end
 """
 """
 function content_length(req::HTTP.Request) :: Int
-  parse(Int, get(HTTPUtils.req_headers_to_dict(req), "content-length", "0"))
+  parse(Int, get(Genie.HTTPUtils.req_headers_to_dict(req), "content-length", "0"))
 end
 function content_length() :: Int
   content_length(_params_(Genie.PARAMS_REQUEST_KEY))
