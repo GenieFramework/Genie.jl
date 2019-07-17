@@ -2,16 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Genie :: The highly productive Julia web framework</title>
+    <title>Genie :: The Highly Productive Julia Web Framework</title>
   </head>
   <body>
     <%
       @yield
     %>
-    <% if Main.UserApp.ENV["GENIE_ENV"] == "dev" %>
-      <script src="http://localhost:3000/dist/application.js"></script>
-    <% else %>
-      <script src="/dist/application$(Main.UserApp.ASSET_FINGERPRINT).js"></script>
+    <% if Genie.config.websocket_server %>
+      <script src="/js/app/channels.js"></script>
     <% end %>
   </body>
 </html>

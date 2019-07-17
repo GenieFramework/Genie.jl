@@ -419,8 +419,15 @@ function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", dept
   io = IOBuffer()
 
   if isa(elem, HTMLElement)
-
     tag_name = replace(lowercase(string(tag(elem))), "-"=>"_")
+
+    if Genie.config.flax_autoregister_webcomponents && ! isdefined(@__MODULE__, Symbol(tag_name))
+      log("Autoregistering HTML element $tag_name", :debug)
+
+      register_element(Symbol(tag_name))
+      print(io, "Genie.Flax.register_element(Symbol(\"$tag_name\")) \n")
+    end
+
     invalid_tag = partial && (tag_name == "html" || tag_name == "head" || tag_name == "body")
 
     if tag_name == "script" && in("type", collect(keys(attrs(elem))))
@@ -504,25 +511,20 @@ end
 
 
 """
-    doctype(doctype::Symbol = :html) :: String
-
 Outputs document's doctype.
 """
-function doctype(doctype::Symbol = :html) :: String
+function doctype(doctype::Symbol = :html) :: HTMLString
   "<!DOCTYPE $doctype>"
 end
 
 
 """
-    doc(html::String) :: String
-    doc(doctype::Symbol, html::String) :: String
-
 Outputs document's doctype.
 """
-function doc(html::String) :: String
+function doc(html::String) :: HTMLString
   doctype() * "\n" * html
 end
-function doc(doctype::Symbol, html::String) :: String
+function doc(doctype::Symbol, html::String) :: HTMLString
   doctype(doctype) * "\n" * html
 end
 
@@ -545,14 +547,14 @@ function register_elements() :: Nothing
 end
 
 
-function register_element(elem::Symbol, elem_type::Symbol = :normal)
+function register_element(elem::Symbol, elem_type::Symbol = :normal) :: Nothing
   elem_type == :normal ? register_normal_element(elem) : register_void_element(elem)
 end
 
 
 """
 """
-function register_normal_element(elem::Symbol)
+function register_normal_element(elem::Symbol) :: Nothing
   Core.eval(@__MODULE__, """
     function $elem(f::Function; attrs...) :: HTMLString
       \"\"\"\$(normal_element(f, "$(string(elem))", Pair{Symbol,Any}[attrs...]))\"\"\"
@@ -563,17 +565,21 @@ function register_normal_element(elem::Symbol)
       \"\"\"\$(normal_element(children, "$(string(elem))", Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
+
+  nothing
 end
 
 
 """
 """
-function register_void_element(elem::Symbol)
+function register_void_element(elem::Symbol) :: Nothing
   Core.eval(@__MODULE__, """
     function $elem(; attrs...) :: HTMLString
       \"\"\"\$(void_element("$(string(elem))", Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
+
+  nothing
 end
 
 push!(LOAD_PATH,  abspath(Genie.HELPERS_PATH))

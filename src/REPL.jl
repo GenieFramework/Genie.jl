@@ -28,15 +28,15 @@ function newapp(path::String; autostart = true, fullstack = false, dbsupport = f
     cp(joinpath(@__DIR__, "../", "files", "new_app"), app_path)
   else
     mkdir(app_path)
-    for f in ["bin", "config", "log", "src",
-              ".gitattributes", ".gitignore", "bootstrap.jl", "env.jl", "genie.jl",
-              "LICENSE.md", "README.md"]
+    for f in ["app", "bin", "config", "lib", "log", "plugins", "public", "src",
+              ".gitattributes", ".gitignore", "bootstrap.jl", "env.jl", "genie.jl"]
       cp(joinpath(@__DIR__, "../", "files", "new_app", f), joinpath(app_path, f))
     end
+    rm(joinpath(app_path, "config", "initializers", "fingerprint.jl"), force = true)
   end
 
   if dbsupport
-    fullstack || cp(joinpath(@__DIR__, "../", "files", "new_app", "db"), joinpath(app_path))
+    fullstack || cp(joinpath(@__DIR__, "../", "files", "new_app", "db"), joinpath(app_path, "db"))
   else
     rm(joinpath(app_path, "config", "database.yml"), force = true)
     rm(joinpath(app_path, "config", "initializers", "searchlight.jl"), force = true)

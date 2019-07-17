@@ -100,6 +100,8 @@ end
 
 
 function install(path::String, dest::String; force = false)
+  isdir(dest) || mkdir(dest)
+
   for (root, dirs, files) in walkdir(path)
     dest_path = joinpath(dest, split(root, "/" * FILES_FOLDER * "/")[end])
 

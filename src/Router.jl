@@ -1096,6 +1096,7 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
 
     if Genie.Configuration.isdev()
       if error_code == 500
+        error_page = replace(error_page, "<error_description/>"=>escapeHTML(error_message))
         error_message =
                         """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                             $("\n" ^ 3)""" *
                         """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(params))                 $("\n" ^ 3)""" *

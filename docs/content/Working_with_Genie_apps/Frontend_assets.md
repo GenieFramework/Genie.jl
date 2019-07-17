@@ -13,7 +13,14 @@ As summary:
 
 ## Requirements
 
-You will need NodeJS as well as Yarn to be installed on system. If using Linux, MacOS your package manager should easily allow this. Windows please download relevant installer from NodeJS project webpage.
+** In order for the Genie app to install the asset pipeline the app needs to be created using the `fullstack = true` option, as in: **
+
+```julia
+julia> Genie.newapp("MyApp", fullstack = true)
+```
+
+
+You will need NodeJS as well as Yarn to be installed on system. If using Linux, macOS your package manager should easily allow this. Windows please download relevant installer from NodeJS project webpage.
 
 ## Installing dependencies
 

@@ -3,7 +3,7 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
-const GENIE_VERSION = v"0.9.6"
+const GENIE_VERSION = v"0.9.7"
 
 using Genie, YAML
 
@@ -136,6 +136,7 @@ mutable struct Settings
   json_template_engine::Symbol
 
   flax_compile_templates::Bool
+  flax_autoregister_webcomponents::Bool
 
   lookup_ip::Bool
 
@@ -204,6 +205,7 @@ mutable struct Settings
             json_template_engine = :Flax,
 
             flax_compile_templates = false,
+            flax_autoregister_webcomponents = true,
 
             lookup_ip = true,
 
@@ -229,7 +231,7 @@ mutable struct Settings
                   session_auto_start, session_key_name, session_storage, session_folder, session_table,
                   inflector_irregulars,
                   html_template_engine, json_template_engine,
-                  flax_compile_templates,
+                  flax_compile_templates, flax_autoregister_webcomponents,
                   lookup_ip,
                   run_as_server,
                   websocket_server,

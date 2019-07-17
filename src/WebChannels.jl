@@ -7,17 +7,17 @@ using HTTP, JSON, Distributed
 using Genie.Loggers
 
 
-const ClientId =                          UInt # web socket hash
-const ChannelName =                       String
+const ClientId = UInt # web socket hash
+const ChannelName = String
 
 mutable struct ChannelClient
   client::HTTP.WebSockets.WebSocket
   channels::Vector{ChannelName}
 end
 
-const ChannelClientsCollection =          Dict{ClientId,ChannelClient} # { id(ws) => { :client => ws, :channels => ["foo", "bar", "baz"] } }
-const ChannelSubscriptionsCollection =    Dict{ChannelName,Vector{ClientId}}  # { "foo" => ["4", "12"] }
-const MessagePayload =                    Union{Nothing,Dict}
+const ChannelClientsCollection = Dict{ClientId,ChannelClient} # { id(ws) => { :client => ws, :channels => ["foo", "bar", "baz"] } }
+const ChannelSubscriptionsCollection = Dict{ChannelName,Vector{ClientId}}  # { "foo" => ["4", "12"] }
+const MessagePayload = Union{Nothing,Dict}
 
 mutable struct ChannelMessage
   channel::ChannelName
@@ -26,8 +26,9 @@ mutable struct ChannelMessage
   payload::MessagePayload
 end
 
-const CLIENTS       = ChannelClientsCollection()
+const CLIENTS = ChannelClientsCollection()
 const SUBSCRIPTIONS = ChannelSubscriptionsCollection()
+
 
 clients() = collect(values(CLIENTS))
 subscriptions() = SUBSCRIPTIONS
@@ -116,9 +117,11 @@ Unsubscribes a web socket client `ws` from all the channels.
 function unsubscribe_client(ws::HTTP.WebSockets.WebSocket) :: ChannelClientsCollection
   if haskey(CLIENTS, id(ws))
     for channel_id in CLIENTS[id(ws)].channels
+      # @show "popping subscription " id(ws)
       pop_subscription(id(ws), channel_id)
     end
 
+    # @show "deleting clients " id(ws)
     delete!(CLIENTS, id(ws))
   end
 

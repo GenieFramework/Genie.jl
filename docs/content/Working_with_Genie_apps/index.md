@@ -227,7 +227,7 @@ end
 
 That should be clear enough. Our controller is just a plain Julia module where we define a `Book` type and set up an array of book objects.
 We then define a function, `billgatesbooks`, which returns a HTML string, with a heading an an unordered list of all the books.
-The plan is to map this function to a route and expose it on the internet.   
+The plan is to map this function to a route and expose it on the internet.
 
 #### Checkpoint
 
@@ -362,7 +362,7 @@ It's a simple change in the `BookiesController`: we have to explicitly tell Geni
 ```julia
 # BooksController.jl
 function billgatesbooks()
-  html!(:books, "billgatesbooks.jl.md", books = BillGatesBooks)
+  html(:books, "billgatesbooks.jl.md", books = BillGatesBooks)
 end
 ```
 
@@ -447,7 +447,7 @@ Update the `billgatesbooks` function to look like this:
 ```julia
 # BooksController.jl
 function billgatesbooks()
-  html!(:books, :billgatesbooks, :admin, books = BillGatesBooks)
+  html(:books, :billgatesbooks, :admin, books = BillGatesBooks)
 end
 ```
 
@@ -492,7 +492,7 @@ const BillGatesBooks = Book[
 ]
 
 function billgatesbooks()
-  html!(:books, Symbol("billgatesbooks.jl.html"), books = BillGatesBooks)
+  html(:books, Symbol("billgatesbooks.jl.html"), books = BillGatesBooks)
 end
 
 
@@ -515,7 +515,7 @@ Keep in mind that you're free to organize the code as you see fit – not necess
 If you go to `http://localhost:8000/api/v1/bgbooks` it should already work.
 
 Not a bad start, but we can do better. First, the MIME type of the response is not right. By default Genie will return `text/html`.
-We need `application/json`. That's easy to fix though, we can just use Genie's `respond` method. The `API` submodule should look like this:
+We need `application/json`. That's easy to fix though, we can just use Genie's `json` method. The `API` submodule should look like this:
 
 ```julia
 module API
@@ -525,7 +525,7 @@ using Genie.Renderer
 using JSON
 
 function billgatesbooks()
-  respond(JSON.json(BooksController.BillGatesBooks), "application/json")
+  json(JSON.json(BooksController.BillGatesBooks))
 end
 
 end
@@ -557,11 +557,11 @@ Final step, instructing `BooksController` to render the view:
 
 ```julia
 function billgatesbooks()
-  json!(:books, :billgatesbooks, books = BooksController.BillGatesBooks)
+  json(:books, :billgatesbooks, books = BooksController.BillGatesBooks)
 end
 ```
 
-This should hold no surprises – the `json!` function is similar to the `html!` one we've seen before.
+This should hold no surprises – the `json` function is similar to the `html` one we've seen before.
 
 That's all – everything should work!
 
@@ -890,7 +890,7 @@ module BooksController
 using Genie.Renderer, SearchLight, Books
 
 function billgatesbooks()
-  html!(:books, :billgatesbooks, books = SearchLight.all(Book))
+  html(:books, :billgatesbooks, books = SearchLight.all(Book))
 end
 
 module API
@@ -901,7 +901,7 @@ using SearchLight, Books
 using JSON
 
 function billgatesbooks()
-  json!(:books, :billgatesbooks, books = SearchLight.all(Book))
+  json(:books, :billgatesbooks, books = SearchLight.all(Book))
 end
 
 end
@@ -960,7 +960,7 @@ Now, to add the methods in `BooksController`. Add these definition under the `bi
 ```julia
 # BooksController.jl
 function new()
-  html!(:books, :new)
+  html(:books, :new)
 end
 
 function create()

@@ -23,14 +23,7 @@ In a Julia session switch to `pkg>` mode to add `Genie`:
 
 ```julia
 julia>] # switch to pkg> mode
-pkg> add https://github.com/genieframework/Genie.jl
-```
-
-Alternatively, you can achieve the above using the `Pkg` API:
-
-```julia
-julia> using Pkg
-julia> pkg"add https://github.com/genieframework/Genie.jl"
+pkg> add Genie
 ```
 
 When finished, make sure that you're back to the Julian prompt (`julia>`)
@@ -43,7 +36,7 @@ julia> using Genie
 
 ## Using Genie
 
-Genie can be used for a variety of tasks, from quickly whipping up a web server to full MVC web apps. 
+Genie can be used for a variety of tasks, from quickly whipping up a web server to full MVC web apps.
 Use the following resources to dive into each use case.
 
 [Using Genie in an interactive environment (Jupyter/IJulia, REPL, etc)](docs/content/Interactive_environment.md)
