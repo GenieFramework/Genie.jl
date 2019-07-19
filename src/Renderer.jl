@@ -2,7 +2,7 @@ module Renderer
 
 export respond, html, html!, json, json!, redirect_to, has_requested
 
-using Nullables, JSON, HTTP, Reexport
+using Nullables, JSON, HTTP, Reexport, Markdown
 using Genie, Genie.Util, Genie.Configuration, Genie.Loggers
 
 @reexport using Genie.Flax
@@ -93,6 +93,21 @@ function json(data; status::Int = 200, headers::HTTPHeaders = HTTPHeaders()) :: 
   WebRenderable(tojson(data), status, headers) |> respond
 end
 const json! = json
+
+### MARKDOWN RENDERING ###
+
+function tomd(resource::ResourcePath, action::ResourcePath;
+                layout::ResourcePath = Genie.config.renderer_default_layout_file, context::Module = @__MODULE__, vars...) :: WebRenderable
+  WebRenderable(Flax.md_renderer(resource, action; layout = layout, mod = context, vars...) |> Base.invokelatest)
+end
+function tomd(data::String; context::Module = @__MODULE__, vars...) :: WebRenderable
+  WebRenderable(Flax.md_renderer(data; mod = context, vars...) |> Base.invokelatest)
+end
+function tomd(restful_resource::WebResource; context::Module = @__MODULE__, vars...) :: WebRenderable
+  WebRenderable(restful_resource.resource, restful_resource.action, layout = restful_resource.layout, context = context, vars...)
+end
+
+### JS RENDERING ###
 
 ### REDIRECT RESPONSES ###
 
