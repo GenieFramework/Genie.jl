@@ -258,18 +258,16 @@ end
 
 
 """
-Send message `msg` to `client`.
-"""
-function message(client::ChannelClient, msg::String) :: Int
-  write(client.client, msg)
-end
-
-
-"""
 Writes `msg` to web socket for `client`.
 """
+function message(ws::HTTP.WebSockets.WebSocket, msg::String) :: Int
+  write(ws, msg)
+end
 function message(client::ClientId, msg::String) :: Int
-  write(CLIENTS[client].client, msg)
+  message(CLIENTS[client].client, msg)
+end
+function message(client::ChannelClient, msg::String) :: Int
+  message(client.client, msg)
 end
 
 end

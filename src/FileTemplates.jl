@@ -55,7 +55,7 @@ function newchannel(channel_name::String) :: String
   """
   module $(channel_name)Channel
 
-  using Genie.WebChannels, Genie.Router
+  using Genie.WebChannels, Genie.Router, Genie.Helpers
 
 
   function subscribe()
