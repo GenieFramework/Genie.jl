@@ -1086,6 +1086,8 @@ end
 Serves the error file correspoding to `error_code` and current environment.
 """
 function serve_error_file(error_code::Int, error_message::String = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: HTTP.Response
+  ERROR_DESCRIPTION_MAX_LENGTH = 1000
+
   try
     error_page_file = isfile(joinpath(Genie.DOC_ROOT_PATH, "error-$(error_code).html")) ?
                         joinpath(Genie.DOC_ROOT_PATH, "error-$(error_code).html") :
@@ -1096,7 +1098,15 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
 
     if Genie.Configuration.isdev()
       if error_code == 500
-        error_page = replace(error_page, "<error_description/>"=>escapeHTML(error_message))
+
+        em =  if length(error_message) > ERROR_DESCRIPTION_MAX_LENGTH
+                error_message = error_message[1:(findfirst("\n", error_message)[1])]
+              else
+                error_message
+              end
+
+        error_page = replace(error_page, "<error_description/>"=>escapeHTML(em))
+
         error_message =
                         """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                             $("\n" ^ 3)""" *
                         """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(params))                 $("\n" ^ 3)""" *
@@ -1124,7 +1134,6 @@ end
 Returns the path to a resource file. If `within_doc_root` it will automatically prepend the document root to `resource`.
 """
 function file_path(resource::String; within_doc_root = true) :: String
-  # abspath(joinpath(within_doc_root ? Genie.config.server_document_root : "", resource[(startswith(resource, "/") ? 2 : 1):end]))
   joinpath(within_doc_root ? Genie.config.server_document_root : "", resource[(startswith(resource, "/") ? 2 : 1):end])
 end
 const filepath = file_path

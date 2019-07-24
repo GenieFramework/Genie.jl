@@ -130,6 +130,18 @@ end
 function normal_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   normal_element("", elem, attrs...)
 end
+function normal_element(elems::Vector, elem::String) :: HTMLString
+  io = IOBuffer()
+
+  for e in elems
+    print(io, normal_element(e, elem), "\n")
+  end
+
+  String(take!(io))
+end
+function normal_element(_::Nothing, __::Any) :: HTMLString
+  ""
+end
 
 
 """
@@ -280,8 +292,16 @@ function html_renderer(resource::Union{Symbol,String}, action::Union{Symbol,Stri
 
   get_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false, mod = mod)
 end
-function html_renderer(data::String; mod::Module = @__MODULE__, vars...) :: Function
-  parse_view(data, partial = false, mod = mod)
+function html_renderer(data::String; mod::Module = @__MODULE__, layout::Union{Symbol,String,Nothing} = nothing, vars...) :: Function
+  task_local_storage(:__vars, Dict{Symbol,Any}(vars))
+  view = parse_view(data, partial = false, mod = mod)
+
+  if layout != nothing
+    task_local_storage(:__yield, view)
+    get_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false, mod = mod)
+  else
+    view
+  end
 end
 
 
