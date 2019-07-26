@@ -14,10 +14,8 @@ const BUILD_PATH      = "build"
 const PLUGINS_PATH    = "plugins"
 
 const GENIE_CONTROLLER_FILE_POSTFIX     = "Controller.jl"
-const GENIE_CHANNEL_FILE_POSTFIX        = "Channel.jl"
 
 const ROUTES_FILE_NAME  = joinpath(CONFIG_PATH, "routes.jl")
-const CHANNELS_FILE_NAME  = joinpath(CONFIG_PATH, "channels.jl")
 
 const PARAMS_REQUEST_KEY    = :REQUEST
 const PARAMS_RESPONSE_KEY   = :RESPONSE

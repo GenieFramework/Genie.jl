@@ -146,18 +146,6 @@ end
 
 
 """
-    load_channels_definitions() :: Nothing
-
-Loads the channels file.
-"""
-function load_channels_definitions(fail_on_error = isdev()) :: Nothing
-  isfile(Genie.CHANNELS_FILE_NAME) && Revise.track(@__MODULE__, Genie.CHANNELS_FILE_NAME, define = true)
-
-  nothing
-end
-
-
-"""
     secret_token() :: String
 
 Wrapper around /config/secrets.jl SECRET_TOKEN `const`.
@@ -197,19 +185,6 @@ Creates a new `controller` file.
 """
 function newcontroller(controller_name::String; pluralize::Bool = true) :: Nothing
   Genie.Generator.new_controller(Dict{String,Any}("controller:new" => controller_name), pluralize = pluralize)
-  load_resources()
-
-  nothing
-end
-
-
-"""
-    newchannel(channel_name::String) :: Nothing
-
-Creates a new `channel` file.
-"""
-function newchannel(channel_name::String; pluralize::Bool = true) :: Nothing
-  Genie.Generator.new_channel(Dict{String,Any}("channel:new" => channel_name), pluralize = pluralize)
   load_resources()
 
   nothing
@@ -290,7 +265,6 @@ function load() :: Nothing
   load_resources()
 
   load_routes_definitions()
-  load_channels_definitions()
 
   load_plugins()
 

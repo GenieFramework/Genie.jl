@@ -47,29 +47,6 @@ const new_controller = newcontroller
 
 
 """
-    newchannel(channel_name::String) :: String
-
-Default content for a new Genie channel.
-"""
-function newchannel(channel_name::String) :: String
-  """
-  module $(channel_name)Channel
-
-  using Genie.WebChannels, Genie.Router, Genie.Helpers
-
-
-  function subscribe()
-    WebChannels.subscribe(wsclient(@params), :$(lowercase(channel_name)))
-    "OK"
-  end
-
-  end
-  """
-end
-const new_channel = newchannel
-
-
-"""
     newtest(plural_name::String, singular_name::String) :: String
 
 Default content for a new test file.

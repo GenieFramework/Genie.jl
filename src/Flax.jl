@@ -134,10 +134,14 @@ function normal_element(elems::Vector, elem::String) :: HTMLString
   io = IOBuffer()
 
   for e in elems
-    print(io, normal_element(e, elem), "\n")
+    if isa(e, Function)
+      print(io, e(), "\n")
+    else
+      print(io, e, "\n")
+    end
   end
 
-  String(take!(io))
+  normal_element(String(take!(io)), elem)
 end
 function normal_element(_::Nothing, __::Any) :: HTMLString
   ""
@@ -294,13 +298,12 @@ function html_renderer(resource::Union{Symbol,String}, action::Union{Symbol,Stri
 end
 function html_renderer(data::String; mod::Module = @__MODULE__, layout::Union{Symbol,String,Nothing} = nothing, vars...) :: Function
   task_local_storage(:__vars, Dict{Symbol,Any}(vars))
-  view = parse_view(data, partial = false, mod = mod)
 
   if layout != nothing
-    task_local_storage(:__yield, view)
+    task_local_storage(:__yield, parse_view(data, partial = true, mod = mod))
     get_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false, mod = mod)
   else
-    view
+    parse_view(data, partial = false, mod = mod)
   end
 end
 
