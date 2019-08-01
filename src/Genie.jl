@@ -24,9 +24,11 @@ include(joinpath(@__DIR__, "genie_types.jl"))
 
 include("Loggers.jl")
 include("HTTPUtils.jl")
+include("App.jl")
 include("Inflector.jl")
 include("Util.jl")
 include("FileTemplates.jl")
+include("Toolbox.jl")
 include("Generator.jl")
 include("Tester.jl")
 include("Encryption.jl")
@@ -47,8 +49,9 @@ include("Requests.jl")
 include("Plugins.jl")
 
 using .Loggers, .HTTPUtils
+using .App
 using .Inflector, .Util
-using .FileTemplates, .Generator, .Tester, .Encryption, .Cookies, .Sessions
+using .FileTemplates, .Toolbox, .Generator, .Tester, .Encryption, .Cookies, .Sessions
 using .Input, .Renderer, .Assets, .Router, .Helpers, .AppServer, .Commands
 using .Flax, .AppServer, .Plugins
 

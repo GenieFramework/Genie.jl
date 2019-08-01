@@ -3,14 +3,14 @@ Compiled templating language for Genie.
 """
 module Flax
 
-using Revise, Gumbo, SHA, Reexport, JSON, OrderedCollections, Markdown
+using Revise, Gumbo, SHA, Reexport, JSON, OrderedCollections, Markdown, YAML
 using Genie, Genie.Loggers, Genie.Configuration
 @reexport using HttpCommon
 
 export HTMLString, JSONString, JSString
 export doctype, var_dump, @vars, @yield, el
 export foreachvar, @foreach, foreachstr
-export include_partial, partial, template
+export partial, template
 
 import Base.string
 import Base.show
@@ -42,22 +42,14 @@ const JSONString = String
 
 const BUILD_NAME    = "FlaxViews"
 
+const MD_SEPARATOR_START = "---\n"
+const MD_SEPARATOR_END   = "---\n"
 
-init_task_local_storage() = task_local_storage(:__vars, Dict{Symbol,Any}())
+
+init_task_local_storage() = (haskey(task_local_storage(), :__vars) || task_local_storage(:__vars, Dict{Symbol,Any}()))
 init_task_local_storage()
 
 task_local_storage(:__yield, "")
-
-
-function extract(data)
-  if isa(data, Function)
-    data()
-  elseif isa(data, Signal)
-    value(data)
-  else
-    data
-  end
-end
 
 
 """
@@ -174,7 +166,7 @@ end
 
 """
 """
-function include_partial(path::String; mod::Module = @__MODULE__, vars...) :: String
+function partial(path::String; mod::Module = @__MODULE__, vars...) :: String
   for (k,v) in vars
     if k == :context && isa(v, Module)
       (mod = v)
@@ -189,9 +181,8 @@ function include_partial(path::String; mod::Module = @__MODULE__, vars...) :: St
     end
   end
 
-  include_template(path, partial = true, mod = mod)
+  template(path, partial = true, mod = mod)
 end
-const partial = include_partial
 
 
 """
@@ -217,27 +208,48 @@ end
 """
 """
 function include_markdown(path::String; mod::Module = @__MODULE__)
-  Markdown.parse(
-    include_string(
-                  mod,
-                  string( '"', read(path, String), '"')
-                  )
-  ) |> Markdown.html
+  md = read(path, String)
+
+  if startswith(md, MD_SEPARATOR_START)
+    close_sep_pos = findfirst(MD_SEPARATOR_END, md[length(MD_SEPARATOR_START)+1:end])
+    metadata = md[length(MD_SEPARATOR_START)+1:close_sep_pos[end]] |> YAML.load
+
+    vars_injection = ""
+    for (k,v) in metadata
+      task_local_storage(:__vars)[Symbol(k)] = v
+      vars_injection *= "\$( @vars($(repr(Symbol(k)))) = $(repr(MIME("text/html"), v)) ) \n"
+    end
+
+    md = md[close_sep_pos[end]+length(MD_SEPARATOR_END)+1:end]
+
+    # TODO: escape 3 quotes
+  end
+
+  content = string( "\"\"\"", md, "\"\"\"")
+
+  vars_injection * (include_string(mod, content) |> Markdown.parse |> Markdown.html)
 end
 
 
 function get_template(path::String; partial::Bool = true, mod::Module = @__MODULE__) :: Function
   path, extension = view_file_info(path)
 
-  extension in MARKDOWN_FILE_EXT && return (() -> include_markdown(path, mod = mod))
-  extension in FILE_EXT && return Base.include(mod, path)
+  extension in FILE_EXT && return (() -> Base.include(mod, path))
 
   f_name = Symbol(function_name(path))
   f_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl")
   f_stale = build_is_stale(path, f_path)
 
   if f_stale || ! isdefined(mod, f_name)
-    f_stale && build_module(html_to_flax(path, partial = partial), path)
+    content = if extension in MARKDOWN_FILE_EXT
+      md = include_markdown(path, mod = mod)
+      @show md
+      string_to_flax(md, partial = partial, f_name = f_name)
+    else
+      html_to_flax(path, partial = partial)
+    end
+
+    f_stale && build_module(content, path)
 
     return Base.include(mod, joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl"))
   end
@@ -267,10 +279,9 @@ end
 
 """
 """
-function include_template(path::String; partial::Bool = true, mod::Module = @__MODULE__) :: String
+function template(path::String; partial::Bool = true, mod::Module = @__MODULE__) :: String
   get_template(path, partial = partial, mod = mod) |> Base.invokelatest
 end
-const template = include_template
 
 
 """
@@ -290,14 +301,26 @@ end
 
 """
 """
+function register_vars(vars...) :: Nothing
+  init_task_local_storage()
+  task_local_storage(:__vars, merge(Dict{Symbol,Any}(vars), task_local_storage(:__vars)))
+
+  nothing
+end
+
+
+"""
+"""
 function html_renderer(resource::Union{Symbol,String}, action::Union{Symbol,String}; layout::Union{Symbol,String} = Genie.config.renderer_default_layout_file, mod::Module = @__MODULE__, vars...) :: Function
-  task_local_storage(:__vars, Dict{Symbol,Any}(vars))
+  register_vars(vars...)
   task_local_storage(:__yield, get_template(joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action)), partial = true, mod = mod) |> Base.invokelatest)
+
+  layout = Base.get(task_local_storage(:__vars), :layout, layout)
 
   get_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false, mod = mod)
 end
 function html_renderer(data::String; mod::Module = @__MODULE__, layout::Union{Symbol,String,Nothing} = nothing, vars...) :: Function
-  task_local_storage(:__vars, Dict{Symbol,Any}(vars))
+  register_vars(vars...)
 
   if layout != nothing
     task_local_storage(:__yield, parse_view(data, partial = true, mod = mod))
@@ -311,7 +334,7 @@ end
 """
 """
 function json_renderer(resource::Union{Symbol,String}, action::Union{Symbol,String}; mod::Module = @__MODULE__, vars...) :: Function
-    task_local_storage(:__vars, Dict{Symbol,Any}(vars))
+  register_vars(vars...)
 
     () -> (Base.include(mod, joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action) * JSON_FILE_EXT)) |> JSON.json)
 end
@@ -351,15 +374,17 @@ end
 
 """
 """
-function string_to_flax(content::String; partial = true) :: String
-  to_flax(content, parse_string, partial = partial)
+function string_to_flax(content::String; partial = true, f_name::Union{Symbol,Nothing} = nothing) :: String
+  to_flax(content, parse_string, partial = partial, f_name = f_name)
 end
 
 
 """
 """
-function to_flax(input::String, f::Function; partial = true) :: String
-  string("function $(function_name(input))() \n",
+function to_flax(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing) :: String
+  f_name = f_name === nothing ? function_name(input) : f_name
+
+  string("function $(f_name)() \n",
           f(input, partial = partial),
           "\nend \n")
 end

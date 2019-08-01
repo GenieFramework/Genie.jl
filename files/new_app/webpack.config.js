@@ -21,7 +21,7 @@ function recursiveIssuer(m) {
 
 
 module.exports = (env, argv) => ({
-  context: path.join(__dirname, 'app/assets'),
+  context: path.join(__dirname, 'assets'),
 
   entry: {
     application: './js/application.js',

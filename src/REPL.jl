@@ -17,46 +17,62 @@ end
 
 
 """
-    newapp(path::String; autostart = true, fullstack = false, dbsupport = false) :: Nothing
-
-Creates a new Genie app at the indicated path.
 """
-function newapp(path::String; autostart = true, fullstack = false, dbsupport = false) :: Nothing
-  app_path = abspath(path)
+function copy_fullstack_app(app_path::String) :: Nothing
+  cp(joinpath(@__DIR__, "../", "files", "new_app"), app_path)
 
-  if fullstack
-    cp(joinpath(@__DIR__, "../", "files", "new_app"), app_path)
-  else
-    mkdir(app_path)
-    for f in ["app", "bin", "config", "lib", "log", "plugins", "public", "src",
-              ".gitattributes", ".gitignore", "bootstrap.jl", "env.jl", "genie.jl"]
-      cp(joinpath(@__DIR__, "../", "files", "new_app", f), joinpath(app_path, f))
-    end
-    rm(joinpath(app_path, "config", "initializers", "fingerprint.jl"), force = true)
+  nothing
+end
+
+
+"""
+"""
+function copy_microstack_app(app_path::String)
+  mkdir(app_path)
+
+  for f in ["bin", "config", "public", "src",
+            ".gitattributes", ".gitignore",
+            "bootstrap.jl", "env.jl", "genie.jl", "routes.jl"]
+    cp(joinpath(@__DIR__, "../", "files", "new_app", f), joinpath(app_path, f))
   end
 
-  if dbsupport
-    fullstack || cp(joinpath(@__DIR__, "../", "files", "new_app", "db"), joinpath(app_path, "db"))
-  else
-    rm(joinpath(app_path, "config", "database.yml"), force = true)
-    rm(joinpath(app_path, "config", "initializers", "searchlight.jl"), force = true)
-  end
+  remove_fingerprint_initializer(app_path)
 
-  # chmod(app_path, 0o644, recursive = true)
+  nothing
+end
 
-  chmod(joinpath(app_path, "bin", "server"), 0o700)
-  chmod(joinpath(app_path, "bin", "repl"), 0o700)
 
+"""
+"""
+function copy_db_support(app_path::String) :: Nothing
+  cp(joinpath(@__DIR__, "../", "files", "new_app", "db"), joinpath(app_path, "db"))
+
+  nothing
+end
+
+
+"""
+"""
+function write_secrets_file(app_path::String) :: Nothing
   open(joinpath(app_path, "config", "secrets.jl"), "w") do f
     write(f, """const SECRET_TOKEN = "$(secret_token())" """)
   end
 
+  nothing
+end
+
+
+"""
+"""
+function write_app_custom_files(path::String, app_path::String) :: Nothing
   moduleinfo = FileTemplates.appmodule(path)
+
   open(joinpath(app_path, "src", moduleinfo[1] * ".jl"), "w") do f
     write(f, moduleinfo[2])
   end
 
   chmod(joinpath(app_path, "bootstrap.jl"), 0o644)
+
   open(joinpath(app_path, "bootstrap.jl"), "w") do f
     write(f,
     """
@@ -66,19 +82,17 @@ function newapp(path::String; autostart = true, fullstack = false, dbsupport = f
 
       function main()
         include(joinpath("src", "$(moduleinfo[1]).jl"))
-      end
-
-      main()
+      end; main()
     """)
   end
 
-  log("Done! New app created at $(abspath(path))", :info)
+  nothing
+end
 
-  Sys.iswindows() && setup_windows_bin_files(app_path)
 
-  log("Changing active directory to $app_path")
-  cd(path)
-
+"""
+"""
+function install_app_dependencies(app_path::String) :: Nothing
   log("Installing app dependencies")
   pkg"activate ."
 
@@ -87,14 +101,70 @@ function newapp(path::String; autostart = true, fullstack = false, dbsupport = f
   pkg"add Millboard"
   pkg"add Revise"
 
+  nothing
+end
+
+
+"""
+"""
+function autostart_app(autostart::Bool) :: Nothing
   if autostart
     log("Starting your brand new Genie app - hang tight!", :info)
-    load_app(".", autostart = autostart)
+    loadapp(".", autostart = autostart)
   else
     log("Your new Genie app is ready!
         Run \njulia> Genie.loadapp() \nto load the app's environment
         and then \njulia> Genie.startup() \nto start the web server on port 8000.")
   end
+
+  nothing
+end
+
+
+"""
+"""
+function remove_fingerprint_initializer(app_path::String) :: Nothing
+  rm(joinpath(app_path, "config", "initializers", "fingerprint.jl"), force = true)
+
+  nothing
+end
+
+
+"""
+"""
+function remove_searchlight_initializer(app_path::String) :: Nothing
+  rm(joinpath(app_path, "config", "initializers", "searchlight.jl"), force = true)
+
+  nothing
+end
+
+
+"""
+    newapp(path::String; autostart = true, fullstack = false, dbsupport = false) :: Nothing
+
+Creates a new Genie app at the indicated path.
+"""
+function newapp(path::String; autostart = true, fullstack = false, dbsupport = false) :: Nothing
+  app_path = abspath(path)
+
+  fullstack ? copy_fullstack_app(app_path) : copy_microstack_app(app_path)
+
+  dbsupport ? (fullstack || copy_db_support(app_path)) : remove_searchlight_initializer(app_path)
+
+  write_secrets_file(app_path)
+
+  write_app_custom_files(path, app_path)
+
+  Sys.iswindows() ? setup_windows_bin_files(app_path) : setup_nix_bin_files(app_path)
+
+  log("Done! New app created at $(abspath(path))", :info)
+
+  log("Changing active directory to $app_path")
+  cd(path)
+
+  install_app_dependencies(app_path)
+
+  autostart_app(autostart)
 
   nothing
 end
@@ -114,13 +184,11 @@ function loadapp(path = "."; autostart = false) :: Nothing
 
   nothing
 end
-const load_app = loadapp
 
 
 """
-
 """
-function setup_windows_bin_files(path = ".")
+function setup_windows_bin_files(path = ".") :: Nothing
   open(joinpath(path, "bin", "repl.bat"), "w") do f
     write(f, "$JULIA_PATH --color=yes --depwarn=no -q -i -- ../bootstrap.jl %*")
   end
@@ -128,6 +196,16 @@ function setup_windows_bin_files(path = ".")
   open(joinpath(path, "bin", "server.bat"), "w") do f
     write(f, "$JULIA_PATH --color=yes --depwarn=no -q -i -- ../bootstrap.jl s %*")
   end
+
+  nothing
+end
+
+
+function setup_nix_bin_files(app_path::String) :: Nothing
+  chmod(joinpath(app_path, "bin", "server"), 0o700)
+  chmod(joinpath(app_path, "bin", "repl"), 0o700)
+
+  nothing
 end
 
 

@@ -76,13 +76,11 @@ function appmodule(path::String)
   function main()
     Base.eval(Main, :(const UserApp = $appname))
 
-    include("../genie.jl")
+    include(joinpath("..", "genie.jl"))
 
     Base.eval(Main, :(const Genie = $appname.Genie))
     Base.eval(Main, :(using Genie))
-  end
-
-  main()
+  end; main()
 
   end
   """

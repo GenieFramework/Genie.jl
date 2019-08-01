@@ -15,7 +15,7 @@ const PLUGINS_PATH    = "plugins"
 
 const GENIE_CONTROLLER_FILE_POSTFIX     = "Controller.jl"
 
-const ROUTES_FILE_NAME  = joinpath(CONFIG_PATH, "routes.jl")
+const ROUTES_FILE_NAME  = "routes.jl"
 
 const PARAMS_REQUEST_KEY    = :REQUEST
 const PARAMS_RESPONSE_KEY   = :RESPONSE

@@ -1,3 +1,7 @@
+cd(@__DIR__)
+using Pkg
+pkg"activate ."
+
 using Revise
 
 """
@@ -25,27 +29,10 @@ function bootstrap() :: Nothing
   push!(LOAD_PATH, pwd(), "src")
 
   nothing
-end
+end; bootstrap()
 
-bootstrap()
+using Genie, Genie.App, Genie.Toolbox
 
-include(joinpath("src", "App.jl")); using .App
-include(joinpath("src", "Toolbox.jl")); using .Toolbox
+Genie.load(context = @__MODULE__)
 
-using Genie
-
-function main()
-  Core.eval(Genie, Meta.parse("""push!(LOAD_PATH, joinpath($(repr(pwd())), "src"))"""))
-  Core.eval(Genie, Meta.parse("const App = $(@__MODULE__).App"))
-  Core.eval(Genie, Meta.parse("const Toolbox = $(@__MODULE__).Toolbox"))
-
-  load()
-
-  Core.eval(Genie, Meta.parse("config = App.config"))
-  Core.eval(Genie, Meta.parse("""const SECRET_TOKEN = "$(secret_token())" """))
-  Core.eval(Genie, Meta.parse("""const ASSET_FINGERPRINT = "$(App.ASSET_FINGERPRINT)" """))
-
-  Genie.run()
-end
-
-main()
+Genie.run()

@@ -34,6 +34,7 @@ mutable struct WebRenderable
   headers::HTTPHeaders
 end
 
+
 WebRenderable(body::String) = WebRenderable(body, DEFAULT_CONTENT_TYPE, 200, HTTPHeaders())
 WebRenderable(body::String, content_type::Symbol) = WebRenderable(body, content_type, 200, HTTPHeaders())
 WebRenderable(; body::String = "", content_type::Symbol = DEFAULT_CONTENT_TYPE,
@@ -45,6 +46,7 @@ function WebRenderable(wr::WebRenderable, status::Int, headers::HTTPHeaders)
   wr
 end
 
+
 """
 """
 function tohtml(resource::ResourcePath, action::ResourcePath;
@@ -52,7 +54,7 @@ function tohtml(resource::ResourcePath, action::ResourcePath;
   WebRenderable(Flax.html_renderer(resource, action; layout = layout, mod = context, vars...) |> Base.invokelatest)
 end
 function tohtml(data::String; context::Module = @__MODULE__, layout::Union{ResourcePath,Nothing} = nothing, vars...) :: WebRenderable
-  WebRenderable(Flax.html_renderer(data; mod = context, layout = layout, vars...)  |> Base.invokelatest)
+  WebRenderable(Flax.html_renderer(data; mod = context, layout = layout, vars...) |> Base.invokelatest)
 end
 function tohtml(restful_resource::WebResource; context::Module = @__MODULE__, vars...) :: WebRenderable
   WebRenderable(restful_resource.resource, restful_resource.action, layout = restful_resource.layout, context = context, vars...)
@@ -99,13 +101,13 @@ end
 
 function tomd(resource::ResourcePath, action::ResourcePath;
                 layout::ResourcePath = Genie.config.renderer_default_layout_file, context::Module = @__MODULE__, vars...) :: WebRenderable
-  WebRenderable(Flax.md_renderer(resource, action; layout = layout, mod = context, vars...) |> Base.invokelatest)
+  WebRenderable(Flax.md_renderer(resource, action; mod = context, vars...) |> Base.invokelatest)
 end
 function tomd(data::String; context::Module = @__MODULE__, vars...) :: WebRenderable
   WebRenderable(Flax.md_renderer(data; mod = context, vars...) |> Base.invokelatest)
 end
 function tomd(restful_resource::WebResource; context::Module = @__MODULE__, vars...) :: WebRenderable
-  WebRenderable(restful_resource.resource, restful_resource.action, layout = restful_resource.layout, context = context, vars...)
+  WebRenderable(restful_resource.resource, restful_resource.action, context = context, vars...)
 end
 
 ### JS RENDERING ###
