@@ -217,7 +217,7 @@ function include_markdown(path::String; mod::Module = @__MODULE__)
     vars_injection = ""
     for (k,v) in metadata
       task_local_storage(:__vars)[Symbol(k)] = v
-      vars_injection *= "\$( @vars($(repr(Symbol(k)))) = $(repr(MIME("text/html"), v)) ) \n"
+      vars_injection *= """@vars($(repr(Symbol(k)))) = $(v)\n"""
     end
 
     md = md[close_sep_pos[end]+length(MD_SEPARATOR_END)+1:end]
@@ -227,7 +227,7 @@ function include_markdown(path::String; mod::Module = @__MODULE__)
 
   content = string( "\"\"\"", md, "\"\"\"")
 
-  vars_injection * (include_string(mod, content) |> Markdown.parse |> Markdown.html)
+  vars_injection, (include_string(mod, content) |> Markdown.parse |> Markdown.html)
 end
 
 
@@ -242,9 +242,8 @@ function get_template(path::String; partial::Bool = true, mod::Module = @__MODUL
 
   if f_stale || ! isdefined(mod, f_name)
     content = if extension in MARKDOWN_FILE_EXT
-      md = include_markdown(path, mod = mod)
-      @show md
-      string_to_flax(md, partial = partial, f_name = f_name)
+      vars_injection, md = include_markdown(path, mod = mod)
+      string_to_flax(md, partial = partial, f_name = f_name, prepend = vars_injection)
     else
       html_to_flax(path, partial = partial)
     end
@@ -374,17 +373,18 @@ end
 
 """
 """
-function string_to_flax(content::String; partial = true, f_name::Union{Symbol,Nothing} = nothing) :: String
-  to_flax(content, parse_string, partial = partial, f_name = f_name)
+function string_to_flax(content::String; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "") :: String
+  to_flax(content, parse_string, partial = partial, f_name = f_name, prepend = prepend)
 end
 
 
 """
 """
-function to_flax(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing) :: String
+function to_flax(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "") :: String
   f_name = f_name === nothing ? function_name(input) : f_name
 
   string("function $(f_name)() \n",
+          prepend,
           f(input, partial = partial),
           "\nend \n")
 end
