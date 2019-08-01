@@ -220,7 +220,7 @@ function include_markdown(path::String; mod::Module = @__MODULE__)
       vars_injection *= """@vars($(repr(Symbol(k)))) = $(v)\n"""
     end
 
-    md = md[close_sep_pos[end]+length(MD_SEPARATOR_END)+1:end]
+    md = replace(md[close_sep_pos[end]+length(MD_SEPARATOR_END)+1:end], "\"\"\""=>"\\\"\\\"\\\"")
 
     # TODO: escape 3 quotes
   end
