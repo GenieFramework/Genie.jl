@@ -4,13 +4,14 @@ pkg"activate ."
 
 using Revise
 
+const ROOT_PATH = pwd()
+
 """
     bootstrap_genie() :: Nothing
 
 Bootstraps the Genie framework setting up paths and workers. Invoked automatically.
 """
 function bootstrap() :: Nothing
-  cd(@__DIR__)
   printstyled("""
    _____         _
   |   __|___ ___|_|___
@@ -29,7 +30,9 @@ function bootstrap() :: Nothing
   push!(LOAD_PATH, pwd(), "src")
 
   nothing
-end; bootstrap()
+end
+
+bootstrap()
 
 using Genie, Genie.App, Genie.Toolbox
 

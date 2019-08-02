@@ -1025,14 +1025,14 @@ end
 
 Reads the static file and returns the content as a `Response`.
 """
-function serve_static_file(resource::String) :: HTTP.Response
+function serve_static_file(resource::String; root = Genie.DOC_ROOT_PATH) :: HTTP.Response
   startswith(resource, "/") || (resource = "/$resource")
   resource_path = try
                     URI(resource).path
                   catch ex
                     resource
                   end
-  f = file_path(resource_path)
+  f = file_path(resource_path, root = root)
 
   if isfile(f)
     HTTP.Response(200, file_headers(f), body = read(f, String))
@@ -1041,6 +1041,7 @@ function serve_static_file(resource::String) :: HTTP.Response
     if isfile(bundled_path)
       HTTP.Response(200, file_headers(bundled_path), body = read(bundled_path, String))
     else
+      @error "404 Not Found $f"
       error_404(resource)
     end
   end
@@ -1133,8 +1134,9 @@ end
 
 Returns the path to a resource file. If `within_doc_root` it will automatically prepend the document root to `resource`.
 """
-function file_path(resource::String; within_doc_root = true) :: String
-  joinpath(within_doc_root ? Genie.config.server_document_root : "", resource[(startswith(resource, "/") ? 2 : 1):end])
+function file_path(resource::String; within_doc_root = true, root = Genie.DOC_ROOT_PATH) :: String
+  within_doc_root = within_doc_root && root == Genie.DOC_ROOT_PATH
+  joinpath(within_doc_root ? Genie.config.server_document_root : root, resource[(startswith(resource, "/") ? 2 : 1):end])
 end
 const filepath = file_path
 

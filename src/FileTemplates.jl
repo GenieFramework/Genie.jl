@@ -21,7 +21,7 @@ function newtask(module_name::String) :: String
   \"\"\"
   Description of the task here
   \"\"\"
-  function run_task()
+  function runtask()
     # Build something great
   end
 

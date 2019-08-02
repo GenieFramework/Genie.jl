@@ -70,6 +70,20 @@ end
 
 
 """
+"""
+function serve(path = DOC_ROOT_PATH, params...; kwparams...)
+  route("/") do
+    serve_static_file("index.html", root = path)
+  end
+  route(".*") do
+    serve_static_file(@params(:REQUEST).target, root = path)
+  end
+
+  Genie.startup(params...; kwparams...)
+end
+
+
+"""
     newapp(path = "."; autostart = true, fullstack = false, dbsupport = true) :: Nothing
 
 Scaffolds a new Genie app.

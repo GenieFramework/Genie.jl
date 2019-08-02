@@ -4,7 +4,7 @@ import Base.string
 
 using Revise, Genie, Genie.Util, Millboard, Genie.FileTemplates, Genie.Configuration, Genie.Loggers, Genie.Inflector
 
-export TaskResult, VoidTaskResult, check_valid_task
+export TaskResult, VoidTaskResult
 
 const TASK_SUFFIX = "Task"
 
@@ -22,36 +22,32 @@ end
 
 
 """
-    run_task(task_name::String; params...)
-    function run_task(task::Module; params)
+    tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
 
-Runs the Genie task named `task_name`.
+Returns a vector of all registered Genie tasks.
 """
-function run_task(task_name::Union{String,Symbol}; params...)
-  @time Base.invokelatest(import_task(string(task_name)).run_task, params)
-end
-function run_task(task::Module; params...)
-  @time task.run_task(params)
-end
+function tasks(context::Module; filter_type_name::Union{Symbol,Nothing} = nothing) :: Vector{TaskInfo}
+  tasks = TaskInfo[]
 
+  f = readdir(joinpath(Main.UserApp.ROOT_PATH, Genie.config.tasks_folder))
 
-"""
-    import_task(task_name::String)
+  for i in f
+    if ( endswith(i, "Task.jl") )
+      module_name = Genie.Util.file_name_without_extension(i) |> Symbol
+      Core.eval(context, :(include(joinpath(Genie.config.tasks_folder, $i))))
+      Core.eval(context, :(using .$(module_name)))
 
-Brings the Genie task `task_name` into scope.
-"""
-function import_task(task_name::String; context = @__MODULE__) :: Module
-  task_name = valid_task_name(task_name)
-  tasks = all_tasks(filter_type_name = Symbol(task_name))
+      ti = TaskInfo(i, module_name, taskdocs(module_name, context = context))
 
-  if isempty(tasks)
-    log("Task not found", :err)
-    return
+      if ( filter_type_name === nothing ) push!(tasks, ti)
+      elseif ( filter_type_name == module_name ) return TaskInfo[ti]
+      end
+    end
   end
 
-  Core.eval(context, tasks[1].module_name)
-  Revise.track(context, joinpath(Genie.TASKS_PATH, tasks[1].file_name))
+  tasks
 end
+const loadtasks = tasks
 
 
 function VoidTaskResult()
@@ -64,7 +60,7 @@ end
 
 Attempts to convert a potentially invalid (partial) `task_name` into a valid one.
 """
-function valid_task_name(task_name::String) :: String
+function validtaskname(task_name::String) :: String
   task_name = replace(task_name, " "=>"_")
   task_name = Genie.Inflector.from_underscores(task_name)
   endswith(task_name, TASK_SUFFIX) || (task_name = task_name * TASK_SUFFIX)
@@ -74,63 +70,33 @@ end
 
 
 """
-    print_tasks() :: Nothing
-
 Prints a list of all the registered Genie tasks to the standard output.
 """
-function print_tasks() :: Nothing
+function printtasks(context::Module) :: Nothing
   output = ""
   arr_output = []
-  for t in all_tasks()
+  for t in tasks(context)
     td = Genie.to_dict(t)
     push!(arr_output, [td["module_name"], td["file_name"], td["description"]])
   end
 
-  Millboard.table(arr_output, :colnames => ["Task name \nFilename \nDescription "], :rownames => []) |> println
+  Millboard.table(arr_output, colnames = ["Task name \nFilename \nDescription "], rownames = []) |> println
 end
-
-
-"""
-    tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
-    all_tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
-
-Returns a vector of all registered Genie tasks.
-"""
-function tasks(; filter_type_name = Symbol(), context = @__MODULE__) :: Vector{TaskInfo}
-  tasks = TaskInfo[]
-
-  f = readdir(Genie.config.tasks_folder)
-  for i in f
-    if ( endswith(i, "Task.jl") )
-      module_name = Genie.Util.file_name_without_extension(i) |> Symbol
-      include(joinpath(Genie.config.tasks_folder, i))
-      Core.eval(context, :(using .$(module_name)))
-      ti = TaskInfo(i, module_name, task_docs(module_name))
-
-      if ( filter_type_name == Symbol() ) push!(tasks, ti)
-      elseif ( filter_type_name == module_name ) return TaskInfo[ti]
-      end
-    end
-  end
-
-  tasks
-end
-const all_tasks = tasks
 
 
 """
     task_docs(module_name::Module) :: String
 
-Retrieves the docstring of the run_task method and returns it as a string.
+Retrieves the docstring of the runtask method and returns it as a string.
 """
-function task_docs(module_name::Symbol; context = @__MODULE__) :: String
+function taskdocs(module_name::Symbol; context = @__MODULE__) :: String
   try
-    docs = Base.doc(Base.Docs.Binding(getfield(context, module_name), :run_task)) |> string
-    startswith(docs, "No documentation found") && (docs = "No documentation found -- add docstring to `$(module_name).run_task()` to see it here.")
+    docs = Base.doc(Base.Docs.Binding(getfield(context, module_name), :runtask)) |> string
+    startswith(docs, "No documentation found") && (docs = "No documentation found -- add docstring to `$(module_name).runtask()` to see it here.")
 
     docs
   catch ex
-    log(ex, :err)
+    @error ex
     ""
   end
 end
@@ -143,14 +109,13 @@ end
 Generates a new Genie task file.
 """
 function new(cmd_args::Dict{String,Any}, config::Settings = Genie.config) :: Nothing
-  tfn = task_file_name(cmd_args, config)
+  tfn = taskfilename(cmd_args, config)
 
-  if ispath(tfn)
-    error("Task file already exists")
-  end
+  isfile(tfn) && error("Task file already exists at $tfn")
+  isdir(tasksdir()) || mkpath(tasksdir())
 
   f = open(tfn, "w")
-  write(f, Genie.FileTemplates.new_task(task_module_name(cmd_args["task:new"])))
+  write(f, Genie.FileTemplates.new_task(taskmodulename(cmd_args["task:new"])))
   close(f)
 
   log("New task created at $tfn")
@@ -158,7 +123,9 @@ function new(cmd_args::Dict{String,Any}, config::Settings = Genie.config) :: Not
   nothing
 end
 function new(task_name::String, config::Settings = Genie.config) :: Nothing
-  new(Dict{String,Any}("task:new" => valid_task_name(task_name)), config)
+  new(Dict{String,Any}("task:new" => validtaskname(task_name)), config)
+
+  nothing
 end
 
 
@@ -167,8 +134,15 @@ end
 
 Computes the name of a Genie task based on the command line input.
 """
-function task_file_name(cmd_args::Dict{String,Any}, config::Settings = Genie.config) :: String
-  joinpath(config.tasks_folder, cmd_args["task:new"] * ".jl")
+function taskfilename(cmd_args::Dict{String,Any}, config::Settings = Genie.config) :: String
+  joinpath(tasksdir(), cmd_args["task:new"] * ".jl")
+end
+
+
+"""
+"""
+function tasksdir() :: String
+  joinpath(Main.UserApp.ROOT_PATH, Genie.config.tasks_folder)
 end
 
 
@@ -177,7 +151,7 @@ end
 
 Computes the name of a Genie task based on the command line input.
 """
-function task_module_name(underscored_task_name::String) :: String
+function taskmodulename(underscored_task_name::String) :: String
   mapreduce( x -> uppercasefirst(x), *, split(replace(underscored_task_name, ".jl"=>""), "_") )
 end
 
@@ -188,7 +162,7 @@ end
 Checks if the name of the task passed as the command line arg is valid task identifier -- if not, attempts to address it, by appending the TASK_SUFFIX suffix.
 Returns the potentially modified `parsed_args` `Dict`.
 """
-function check_valid_task!(parsed_args::Dict{String,Any}) :: Dict{String,Any}
+function isvalidtask!(parsed_args::Dict{String,Any}) :: Dict{String,Any}
   haskey(parsed_args, "task:new") && isa(parsed_args["task:new"], String) && ! endswith(parsed_args["task:new"], TASK_SUFFIX) && (parsed_args["task:new"] *= TASK_SUFFIX)
   haskey(parsed_args, "task:run") && isa(parsed_args["task:run"], String) &&! endswith(parsed_args["task:run"], TASK_SUFFIX) && (parsed_args["task:run"] *= TASK_SUFFIX)
 
