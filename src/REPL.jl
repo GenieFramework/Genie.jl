@@ -18,7 +18,7 @@ end
 
 """
 """
-function copy_fullstack_app(app_path::String) :: Nothing
+function copy_fullstack_app(app_path::String = ".") :: Nothing
   cp(joinpath(@__DIR__, "../", "files", "new_app"), app_path)
 
   nothing
@@ -27,7 +27,7 @@ end
 
 """
 """
-function copy_microstack_app(app_path::String)
+function copy_microstack_app(app_path::String = ".") :: Nothing
   mkdir(app_path)
 
   for f in ["bin", "config", "public", "src",
@@ -44,7 +44,7 @@ end
 
 """
 """
-function copy_db_support(app_path::String) :: Nothing
+function copy_db_support(app_path::String = ".") :: Nothing
   cp(joinpath(@__DIR__, "../", "files", "new_app", "db"), joinpath(app_path, "db"))
 
   nothing
@@ -53,8 +53,18 @@ end
 
 """
 """
-function write_secrets_file(app_path::String) :: Nothing
-  open(joinpath(app_path, "config", "secrets.jl"), "w") do f
+function copy_mvc_support(app_path::String = ".") :: Nothing
+  cp(joinpath(@__DIR__, "../", "files", "new_app", "app"), joinpath(app_path, "app"))
+
+  nothing
+end
+
+
+"""
+Generates a valid secrets.jl file with a random SECRET_TOKEN.
+"""
+function write_secrets_file(app_path::String = ".") :: Nothing
+  open(joinpath(app_path, Genie.CONFIG_PATH, "secrets.jl"), "w") do f
     write(f, """const SECRET_TOKEN = "$(secret_token())" """)
   end
 
@@ -92,7 +102,7 @@ end
 
 """
 """
-function install_app_dependencies(app_path::String) :: Nothing
+function install_app_dependencies(app_path::String = ".") :: Nothing
   log("Installing app dependencies")
   pkg"activate ."
 
@@ -107,7 +117,7 @@ end
 
 """
 """
-function autostart_app(autostart::Bool) :: Nothing
+function autostart_app(autostart::Bool = true) :: Nothing
   if autostart
     log("Starting your brand new Genie app - hang tight!", :info)
     loadapp(".", autostart = autostart)
@@ -123,7 +133,7 @@ end
 
 """
 """
-function remove_fingerprint_initializer(app_path::String) :: Nothing
+function remove_fingerprint_initializer(app_path::String = ".") :: Nothing
   rm(joinpath(app_path, "config", "initializers", "fingerprint.jl"), force = true)
 
   nothing
@@ -132,7 +142,7 @@ end
 
 """
 """
-function remove_searchlight_initializer(app_path::String) :: Nothing
+function remove_searchlight_initializer(app_path::String = ".") :: Nothing
   rm(joinpath(app_path, "config", "initializers", "searchlight.jl"), force = true)
 
   nothing
@@ -144,7 +154,7 @@ end
 
 Creates a new Genie app at the indicated path.
 """
-function newapp(path::String; autostart = true, fullstack = false, dbsupport = false) :: Nothing
+function newapp(path::String = "."; autostart = true, fullstack = false, dbsupport = false) :: Nothing
   app_path = abspath(path)
 
   fullstack ? copy_fullstack_app(app_path) : copy_microstack_app(app_path)
@@ -201,25 +211,9 @@ function setup_windows_bin_files(path = ".") :: Nothing
 end
 
 
-function setup_nix_bin_files(app_path::String) :: Nothing
+function setup_nix_bin_files(app_path::String = ".") :: Nothing
   chmod(joinpath(app_path, "bin", "server"), 0o700)
   chmod(joinpath(app_path, "bin", "repl"), 0o700)
-
-  nothing
-end
-
-
-"""
-    write_secrets_file() :: Nothing
-
-Generates a valid secrets.jl file with a random SECRET_TOKEN.
-"""
-function write_secrets_file() :: Nothing
-  open(joinpath(Genie.CONFIG_PATH, "secrets.jl"), "w") do f
-    write(f, """const SECRET_TOKEN = "$(secret_token())" """)
-  end
-
-  log("Generated secrets.jl file in $(Genie.CONFIG_PATH)", :info)
 
   nothing
 end

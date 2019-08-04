@@ -214,6 +214,7 @@ function newresource(resource_name::String; pluralize::Bool = true) :: Nothing
   try
     SearchLight.Generator.new_resource(uppercasefirst(resource_name))
   catch ex
+    log(ex, :error)
     log("Skipping SearchLight", :warn)
   end
 

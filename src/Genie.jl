@@ -88,7 +88,7 @@ end
 
 Scaffolds a new Genie app.
 """
-function newapp(path = "."; autostart = true, fullstack = false, dbsupport = true) :: Nothing
+function newapp(path = "."; autostart = true, fullstack = false, dbsupport = false) :: Nothing
   REPL.newapp(path, autostart = autostart, fullstack = fullstack, dbsupport = dbsupport)
 end
 const new_app = newapp

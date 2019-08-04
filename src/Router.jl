@@ -1,7 +1,7 @@
 module Router
 
 using Revise
-using HTTP, URIParser, HttpCommon, Nullables, Sockets, Millboard, JSON, Dates
+using HTTP, URIParser, HttpCommon, Nullables, Sockets, Millboard, JSON, Dates, OrderedCollections
 using Genie, Genie.HTTPUtils, Genie.Sessions, Genie.Configuration, Genie.Input, Genie.Loggers, Genie.Util, Genie.Renderer
 
 include(joinpath(@__DIR__, "mimetypes.jl"))
@@ -20,7 +20,6 @@ const OPTIONS = "OPTIONS"
 
 const BEFORE_HOOK  = :before_hook
 const AFTER_HOOK   = :after_hook
-const RESCUE_HOOK  = :rescue_hook
 
 const sessionless = Symbol[:json]
 
@@ -40,29 +39,31 @@ mutable struct Route
   method::String
   path::String
   action::Function
-  with::Dict{Symbol,Any}
-  before::Array{Function,1}
-  after::Array{Function,1}
 
-  Route(; method = GET, path = "", action = () -> error("Route not set"), with = Dict{Symbol,Any}(), before = Function[], after = Function[]) =
-    new(method, path, action, with, before, after)
+  Route(; method = GET, path = "", action = () -> error("Route not set")) =
+    new(method, path, action)
 end
 
 
 mutable struct Channel
   path::String
   action::Function
-  with::Dict{Symbol,Any}
-  before::Array{Function,1}
-  after::Array{Function,1}
 
-  Channel(; path = "", action = () -> error("Channel not set"), with = Dict{Symbol,Any}(), before = Function[], after = Function[]) =
-    new(path, action, with, before, after)
+  Channel(; path = "", action = () -> error("Channel not set")) =
+    new(path, action)
 end
 
 
-const _routes = Dict{Symbol,Route}()
-const _channels = Dict{Symbol,Channel}()
+function Base.show(io::IO, r::Route)
+  print(io, "[$(r.method)] $(r.path) => $(r.action)")
+end
+function Base.show(io::IO, r::Channel)
+  print(io, "[WS] $(r.path) => $(r.action)")
+end
+
+
+const _routes = OrderedDict{Symbol,Route}()
+const _channels = OrderedDict{Symbol,Channel}()
 
 
 mutable struct Params{T}
@@ -190,38 +191,34 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Params
 end
 
 
-"""
-    route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Route
-    route(path::String, action::Function; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Route
-
-Used for defining Genie routes.
-"""
-function route(action::Function, path::String; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Route
-  route(path, action, method = method, with = with, named = named, before = before, after = after)
-end
-function route(path::String, action::Function; method = GET, with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_route, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Route
-  r = Route(method = method, path = path, action = action, with = with, before = before, after = after)
-
-  named = named == :__anonymous_route ? route_name(r) : named
-
-  _routes[named] = r
+function Base.push!(collection, name::Symbol, item::Union{Route,Channel})
+  collection[name] = item
 end
 
 
 """
-    channel(action::Function, path::String; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Channel
-    channel(path::String, action::Function; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Channel
-
-Used for defining Genie channels.
+Named Genie routes constructors.
 """
-function channel(action::Function, path::String; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Channel
-  channel(path, action, with = with, named = named, before = before, after = after)
+function route(action::Function, path::String; method = GET, named::Union{Symbol,Nothing} = nothing) :: Route
+  route(path, action, method = method, named = named)
 end
-function channel(path::String, action::Function; with::Dict = Dict{Symbol,Any}(), named::Symbol = :__anonymous_channel, before::Array{Function,1} = Function[], after::Array{Function,1} = Function[]) :: Channel
-  c = Channel(path = path, action = action, with = with, before = before, after = after)
-  named = named == :__anonymous_channel ? channel_name(c) : named
+function route(path::String, action::Function; method = GET, named::Union{Symbol,Nothing} = nothing) :: Route
+  r = Route(method = method, path = path, action = action)
 
-  _channels[named] = c
+  Router.push!(_routes, (named === nothing ? route_name(r) : named), r)
+end
+
+
+"""
+Named Genie channels constructors.
+"""
+function channel(action::Function, path::String; named::Union{Symbol,Nothing} = nothing) :: Channel
+  channel(path, action, named = named)
+end
+function channel(path::String, action::Function; named::Union{Symbol,Nothing} = nothing) :: Channel
+  c = Channel(path = path, action = action)
+
+  Router.push!(_channels, (named === nothing ? channel_name(c) : named), c)
 end
 
 
@@ -231,13 +228,7 @@ end
 Computes the name of a route.
 """
 function route_name(params::Route) :: Symbol
-  route_parts = String[lowercase(params.method)]
-  for uri_part in split(params.path, "/", keepempty = false)
-    startswith(uri_part, ":") && continue # we ignore named params
-    push!(route_parts, lowercase(uri_part))
-  end
-
-  join(route_parts, "_") |> Symbol
+  baptizer(params, String[lowercase(params.method)])
 end
 
 
@@ -247,24 +238,27 @@ end
 Computes the name of a channel.
 """
 function channel_name(params::Channel) :: Symbol
-  channel_parts = String[]
+  baptizer(params, String[])
+end
+
+
+function baptizer(params::Union{Route,Channel}, parts::Vector{String}) :: Symbol
   for uri_part in split(params.path, "/", keepempty = false)
     startswith(uri_part, ":") && continue # we ignore named params
-    push!(channel_parts, lowercase(uri_part))
+    push!(parts, lowercase(uri_part))
   end
 
-  join(channel_parts, "_") |> Symbol
+  join(parts, "_") |> Symbol
 end
 
 
 """
-    named_routes() :: Dict{Symbol,Any}
-
 The list of the defined named routes.
 """
-function named_routes() :: Dict{Symbol,Route}
+function named_routes() :: OrderedDict{Symbol,Route}
   _routes
 end
+const namedroutes = named_routes
 
 
 """
@@ -272,59 +266,18 @@ end
 
 The list of the defined named channels.
 """
-function named_channels() :: Dict{Symbol,Channel}
+function named_channels() :: OrderedDict{Symbol,Channel}
   _channels
 end
+const namedchannels = named_channels
 
 
 """
-    print_named_routes() :: Nothing
-
-Prints a table of the routes and their names to standard output.
+Gets the `Route` correspoding to `route_name`
 """
-function print_named_routes() :: Nothing
-  Millboard.table(named_routes()) |> println
-
-  nothing
+function get_route(route_name::Symbol) :: Route
+  named_routes()[route_name]
 end
-
-
-"""
-    print_named_channels() :: Nothing
-
-Prints a table of the channels and their names to standard output.
-"""
-function print_named_channels() :: Nothing
-  Millboard.table(named_channels()) |> println
-
-  nothing
-end
-
-
-"""
-    get_route(route_name::Symbol) :: Nullable{Route}
-
-Gets the `Route` correspoding to `route_name`, wrapped in a `Nullable`.
-"""
-function get_route(route_name::Symbol) :: Nullable{Route}
-  haskey(named_routes(), route_name) ? Nullable(named_routes()[route_name]) : Nullable()
-end
-
-
-# add here
-
-
-"""
-    get_route!!(route_name::Symbol) :: Route
-
-Gets the `Route` correspoding to `route_name` - errors if the route is not defined.
-"""
-function get_route!!(route_name::Symbol) :: Route
-  get_route(route_name) |> Base.get
-end
-
-
-# add here
 
 
 """
@@ -333,7 +286,7 @@ end
 Returns a vector of defined routes.
 """
 function routes() :: Vector{Route}
-  collect(values(_routes))
+  collect(values(_routes)) |> reverse
 end
 
 
@@ -343,40 +296,21 @@ end
 Returns a vector of defined channels.
 """
 function channels() :: Vector{Channel}
-  collect(values(_channels))
+  collect(values(_channels)) |> reverse
 end
 
 
 """
-    print_routes() :: Nothing
-
-Prints a table of the defined routes to standard output.
 """
-function print_routes() :: Nothing
-  Millboard.table(routes()) |> println
-
-  nothing
+function Base.delete!(collection::OrderedDict{Symbol,Route}, key::Symbol)
+  delete!(_routes, key)
+end
+function Base.delete!(collection::OrderedDict{Symbol,Channel}, key::Symbol)
+  delete!(_channels, key)
 end
 
 
 """
-    print_channels() :: Nothing
-
-Prints a table of the defined routes to standard output.
-"""
-function print_channels() :: Nothing
-  Millboard.table(channels()) |> println
-
-  nothing
-end
-
-
-"""
-    to_link!!{T}(route_name::Symbol, d::Vector{Pair{Symbol,T}}) :: String
-    to_link!!{T}(route_name::Symbol, d::Pair{Symbol,T}) :: String
-    to_link!!{T}(route_name::Symbol, d::Dict{Symbol,T}) :: String
-    to_link!!(route_name::Symbol; route_params...) :: String
-
 Generates the HTTP link corresponding to `route_name`.
 """
 function to_link!!(route_name::Symbol, d::Vector{Pair{Symbol,T}})::String where {T}
@@ -387,11 +321,10 @@ function to_link!!(route_name::Symbol, d::Pair{Symbol,T})::String where {T}
 end
 function to_link!!(route_name::Symbol, d::Dict{Symbol,T})::String where {T}
   route = try
-            get_route!!(route_name)
+            get_route(route_name)
           catch ex
             log("Route not found $route_name", :err)
-            log(string(ex), :err)
-            log("$(@__FILE__):$(@__LINE__)", :err)
+            log(ex, :err)
 
             rethrow(ex)
           end
@@ -511,7 +444,6 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
     extract_uri_params(uri.path, regex_route, param_names, param_types, params) || continue
 
     ispayload(req) && extract_post_params(req, params)
-    isempty(r.with) || extract_extra_params(r.with, params)
     ispayload(req) && extract_request_params(req, params)
     action_controller_params(r.action, params)
 
@@ -522,15 +454,14 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
     controller = (r.action |> typeof).name.module
 
     return  try
-              map(x -> x(), r.before)
               run_hook(controller, BEFORE_HOOK)
               result =  (isdev() ? Base.invokelatest(r.action) : (r.action)()) |> to_response
               run_hook(controller, AFTER_HOOK)
-              map(x -> x(), r.after)
 
               result
             catch ex
-              (isdefined(controller, RESCUE_HOOK) && return to_response(getfield(controller, RESCUE_HOOK)(ex))) || rethrow(ex)
+              log(ex, :error)
+              rethrow(ex)
             end
   end
 
@@ -566,7 +497,6 @@ function match_channels(req, msg::String, ws_client, params::Params, session::Un
 
     extract_uri_params(uri, regex_channel, param_names, param_types, params) || continue
 
-    isempty(c.with) || extract_extra_params(c.with, params)
     action_controller_params(c.action, params)
 
     task_local_storage(:__params, params.collection)
@@ -574,15 +504,14 @@ function match_channels(req, msg::String, ws_client, params::Params, session::Un
     controller = (c.action |> typeof).name.module
 
      return   try
-                map(x -> x(), c.before)
                 run_hook(controller, BEFORE_HOOK)
                 result = (isdev() ? Base.invokelatest(c.action) : (c.action)()) |> string
                 run_hook(controller, AFTER_HOOK)
-                map(x -> x(), c.after)
 
                 result
               catch ex
-                (isdefined(controller, RESCUE_HOOK) && return to_response(getfield(controller, RESCUE_HOOK)(ex))) || rethrow(ex)
+                log(ex, :error)
+                rethrow(ex)
               end
   end
 
@@ -704,22 +633,6 @@ function extract_get_params(uri::URI, params::Params) :: Bool
   end
 
   true # this must be bool cause it's used in bool context for chaining
-end
-
-
-"""
-    extract_extra_params(extra_params::Dict, params::Params) :: Nothing
-
-Parses extra params present in the route's definition and sets them into the `params` `Dict`.
-"""
-function extract_extra_params(extra_params::Dict, params::Params) :: Nothing
-  isempty(extra_params) && return nothing
-
-  for (k, v) in extra_params
-    params.collection[Symbol(k)] = v
-  end
-
-  nothing
 end
 
 
@@ -1109,10 +1022,10 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
         error_page = replace(error_page, "<error_description/>"=>escapeHTML(em))
 
         error_message =
-                        """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                             $("\n" ^ 3)""" *
-                        """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(params))                 $("\n" ^ 3)""" *
-                        """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Router.named_routes()))  $("\n" ^ 3)""" *
-                        """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$ENV                                       $("\n" ^ 1)"""
+                        """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                                     $("\n" ^ 3)""" *
+                        """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(params))                         $("\n" ^ 3)""" *
+                        """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Router.named_routes() |> Dict))  $("\n" ^ 3)""" *
+                        """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$ENV                                               $("\n" ^ 1)"""
       end
 
       error_page = replace(error_page, "<error_message/>"=>escapeHTML(error_message))
