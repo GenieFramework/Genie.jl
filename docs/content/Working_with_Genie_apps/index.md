@@ -306,23 +306,23 @@ We'll see how to do this right now.
 
 ### Rendering views
 
-We now need to refactor our controller to use the view, passing in the expected variables. We will use the `html!` method which renders and outputs the response as HTML (you've seen its `json!` counterpart earlier).
+We now need to refactor our controller to use the view, passing in the expected variables. We will use the `html` method which renders and outputs the response as HTML (you've seen its `json` counterpart earlier).
 Update the definition of the `billgatesbooks` function to be as follows:
 
 ```julia
 # BooksController.jl
 function billgatesbooks()
-  html!(:books, :billgatesbooks, books = BillGatesBooks)
+  html(:books, :billgatesbooks, books = BillGatesBooks)
 end
 ```
 
-We also need to add `Genie.Renderer` as a dependency, to get access to the `html!` method. So add this at the top of the `BooksController` module:
+We also need to add `Genie.Renderer` as a dependency, to get access to the `html` method. So add this at the top of the `BooksController` module:
 
 ```julia
 using Genie.Renderer
 ```
 
-The `html!` function takes as its arguments:
+The `html` function takes as its arguments:
 
 * `:books` is the name of the resource (which effectively indicates in which `views` folder Genie should look for the view file);
 * `:billgatesbooks` is the name of the view file. We don't need to pass the extension, Genie will figure it out since there's only one file with this name;
@@ -441,7 +441,7 @@ Now edit it and make it look like this:
 </html>
 ```
 
-Finally, we must instruct our `BooksController` to use it. The `html!` function takes a third, optional argument, for the layout.
+Finally, we must instruct our `BooksController` to use it. The `html` function takes a third, optional argument, for the layout.
 Update the `billgatesbooks` function to look like this:
 
 ```julia

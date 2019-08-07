@@ -8,7 +8,7 @@ using Genie, Genie.Router, Genie.Renderer
 
 route("/") do
   view = "<h1>Hello Genie!!</h1>"
-  html!(view)
+  html(view)
 end
 
 route("/test") do

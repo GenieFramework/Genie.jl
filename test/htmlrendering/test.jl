@@ -7,7 +7,7 @@ markup = """<button class="nes-btn" id="submit-button">Go!</button>"""
 markup *= """<label for="whatever"></label>"""
 
 route("/") do
-  html!(markup)
+  html(markup)
 end
 
 Genie.AppServer.startup(async = false)

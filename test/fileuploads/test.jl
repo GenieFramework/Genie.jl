@@ -12,7 +12,7 @@ form = """
 """
 
 route("/") do
-  html!(form)
+  html(form)
 end
 
 route("/", method = POST) do

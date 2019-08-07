@@ -13,7 +13,7 @@ form = """
 layout = "<? @yield ?>"
 
 route("/") do
-  html!(form)
+  html(form)
 end
 
 route("/", method = POST) do
