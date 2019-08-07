@@ -39,7 +39,7 @@ function encryption_sauce() :: Tuple{Vector{UInt8},Vector{UInt8}}
     log("Encryption error", :warn)
     log("$(@__FILE__):$(@__LINE__)", :warn)
 
-    if ! Genie.Configuration.is_prod()
+    if ! Genie.Configuration.isprod()
       log("Generating temporary secret token", :warn)
       Core.eval(Genie, :(const SECRET_TOKEN = $(Genie.REPL.secret_token())))
     else

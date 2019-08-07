@@ -10,13 +10,13 @@ using Serialization
 Persists the `Session` object to the file system, using the configured sessions folder and returns it.
 """
 function write(session::Sessions.Session) :: Sessions.Session
-  if ! isdir(joinpath(Genie.config.session_folder))
-    log("The configured sessions folder $(Genie.config.session_folder) does not exist -- switching to using a temporary folder.")
-    Core.eval(Genie, :(Genie.config.session_folder = mktempdir()))
+  if ! isdir(joinpath(Genie.SESSIONS_PATH))
+    log("The configured sessions folder $(Genie.SESSIONS_PATH) does not exist -- switching to using a temporary folder.")
+    Core.eval(Genie, :(Genie.SESSIONS_PATH = mktempdir()))
   end
 
   try
-    open(joinpath(Genie.config.session_folder, session.id), "w") do (io)
+    open(joinpath(Genie.SESSIONS_PATH, session.id), "w") do (io)
       serialize(io, session)
     end
   catch ex
@@ -24,7 +24,7 @@ function write(session::Sessions.Session) :: Sessions.Session
     log(string(ex), :err)
     log("$(@__FILE__):$(@__LINE__)", :err)
 
-    Genie.Configuration.is_prod() && rethrow(ex)
+    Genie.Configuration.isprod() && rethrow(ex)
   end
 
   session
@@ -39,7 +39,7 @@ Attempts to read from file the session object serialized as `session_id`.
 """
 function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
   try
-    isfile(joinpath(Genie.config.session_folder, session_id)) || return Nullable{Sessions.Session}(write(Session(session_id)))
+    isfile(joinpath(Genie.SESSIONS_PATH, session_id)) || return Nullable{Sessions.Session}(write(Session(session_id)))
   catch ex
     log("Can't check session file", :err)
     log(string(ex), :err)
@@ -49,7 +49,7 @@ function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
   end
 
   try
-    session = open(joinpath(Genie.config.session_folder, session_id), "r") do (io)
+    session = open(joinpath(Genie.SESSIONS_PATH, session_id), "r") do (io)
       deserialize(io)
     end
 

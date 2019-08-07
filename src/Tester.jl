@@ -13,9 +13,9 @@ function bootstrap_tests(cmd_args::String = "", config::Settings = Genie.config,
 
   set_test_env()
 
-  include(abspath(joinpath(config.test_folder, "test_config.jl")))
+  include(abspath(joinpath(Genie.TEST_PATH, "test_config.jl")))
 
-  for (path, _, files) in (walkdir(abspath(joinpath(config.test_folder))) |> collect)
+  for (path, _, files) in (walkdir(abspath(joinpath(Genie.TEST_PATH))) |> collect)
     for file_name in files
       isempty(resource) && endswith(file_name, "_test.jl") && include(joinpath(path, file_name))
       ! isempty(resource) && startswith(file_name, resource) && endswith(file_name, "_test.jl") && include(joinpath(path, file_name))
@@ -72,7 +72,7 @@ function set_test_env() :: Nothing
     Genie.config.app_env = TEST
     log("Switched app to >> $(uppercase(App.config.app_env)) << env", :debug)
 
-    ! is_test() && error("Could not switch env")
+    ! istest() && error("Could not switch env")
   end
 
   nothing

@@ -1,3 +1,6 @@
+"""
+Collection of utilities for working with Requests data
+"""
 module Requests
 
 using Genie, Genie.Router

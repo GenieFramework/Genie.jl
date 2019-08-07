@@ -58,10 +58,10 @@ task_local_storage(:__yield, "")
 
 Cleans up the template before rendering (ex by removing empty nodes).
 """
-function prepare_template(s::String) :: String
+@inline function prepare_template(s::String) :: String
   s
 end
-function prepare_template(v::Vector{T})::String where {T}
+@inline function prepare_template(v::Vector{T})::String where {T}
   filter!(v) do (x)
     ! isa(x, Nothing)
   end
@@ -92,37 +92,40 @@ end
 
 
 """
+    normalize_element(elem::String)
+
+Cleans up problematic characters or DOM elements.
 """
-function normalize_element(elem::String)
+@inline function normalize_element(elem::String)
   elem == "d" && (elem = "div")
   replace(string(lowercase(elem)), "_"=>"-")
 end
 
 
 """
-    normal_element(f::Function, elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: HTMLString
+    normal_element(f::Function, elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
 
-Generates a regular HTML element in the form <...></...>
+Generates a HTML element in the form <...></...>
 """
-function normal_element(f::Function, elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+@inline function normal_element(f::Function, elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   normal_element(f(), elem, attrs...)
 end
-function normal_element(children::Union{String,Vector{String}}, elem::String, attrs::Pair{Symbol,Any}) :: HTMLString
+@inline function normal_element(children::Union{String,Vector{String}}, elem::String, attrs::Pair{Symbol,Any}) :: HTMLString
   normal_element(children, elem, Pair{Symbol,Any}[attrs])
 end
-function normal_element(children::Union{String,Vector{String}}, elem::String, attrs...) :: HTMLString
+@inline function normal_element(children::Union{String,Vector{String}}, elem::String, attrs...) :: HTMLString
   normal_element(children, elem, Pair{Symbol,Any}[attrs...])
 end
-function normal_element(children::Union{String,Vector{String}}, elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+@inline function normal_element(children::Union{String,Vector{String}}, elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   children = join(children)
   elem = normalize_element(elem)
 
   string("<", elem, " ", attributes(attrs), ">", prepare_template(children), "</", elem, ">")
 end
-function normal_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+@inline function normal_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   normal_element("", elem, attrs...)
 end
-function normal_element(elems::Vector, elem::String) :: HTMLString
+@inline function normal_element(elems::Vector, elem::String) :: HTMLString
   io = IOBuffer()
 
   for e in elems
@@ -135,7 +138,7 @@ function normal_element(elems::Vector, elem::String) :: HTMLString
 
   normal_element(String(take!(io)), elem)
 end
-function normal_element(_::Nothing, __::Any) :: HTMLString
+@inline function normal_element(_::Nothing, __::Any) :: HTMLString
   ""
 end
 
@@ -145,7 +148,7 @@ end
 
 Generates a void HTML element in the form <...>
 """
-function void_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+@inline function void_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   string("<", normalize_element(elem), " ", attributes(attrs), ">")
 end
 
@@ -156,15 +159,18 @@ end
 
 Cleans up empty elements.
 """
-function skip_element(f::Function) :: HTMLString
+@inline function skip_element(f::Function) :: HTMLString
   "$(prepare_template(f()))"
 end
-function skip_element() :: HTMLString
+@inline function skip_element() :: HTMLString
   ""
 end
 
 
 """
+    partial(path::String; mod::Module = @__MODULE__, vars...) :: String
+
+Renders (includes) a view partial within a larger view or layout file.
 """
 function partial(path::String; mod::Module = @__MODULE__, vars...) :: String
   for (k,v) in vars
@@ -186,6 +192,9 @@ end
 
 
 """
+    view_file_info(path::String) :: Tuple{String,String}
+
+Extracts path and extension info about a file
 """
 function view_file_info(path::String) :: Tuple{String,String}
   _path, _extension = "", ""
@@ -206,6 +215,9 @@ end
 
 
 """
+    include_markdown(path::String; mod::Module = @__MODULE__)
+
+Includes and renders a markdown view file
 """
 function include_markdown(path::String; mod::Module = @__MODULE__)
   md = read(path, String)
@@ -221,8 +233,6 @@ function include_markdown(path::String; mod::Module = @__MODULE__)
     end
 
     md = replace(md[close_sep_pos[end]+length(MD_SEPARATOR_END)+1:end], "\"\"\""=>"\\\"\\\"\\\"")
-
-    # TODO: escape 3 quotes
   end
 
   content = string( "\"\"\"", md, "\"\"\"")
@@ -231,6 +241,11 @@ function include_markdown(path::String; mod::Module = @__MODULE__)
 end
 
 
+"""
+    get_template(path::String; partial::Bool = true, mod::Module = @__MODULE__) :: Function
+
+Resolves the inclusion and rendering of a template file
+"""
 function get_template(path::String; partial::Bool = true, mod::Module = @__MODULE__) :: Function
   path, extension = view_file_info(path)
 
@@ -258,6 +273,9 @@ end
 
 
 """
+    parse_view(data::String; partial = false, mod::Module = @__MODULE__) :: Function
+
+Parses a view file, returning a rendering function. If necessary, the function is JIT-compiled, persisted and loaded into memory.
 """
 function parse_view(data::String; partial = false, mod::Module = @__MODULE__) :: Function
   path = "Flax_" * string(hash(data))
@@ -277,13 +295,19 @@ end
 
 
 """
+    template(path::String; partial::Bool = true, mod::Module = @__MODULE__) :: String
+
+Renders a template file.
 """
-function template(path::String; partial::Bool = true, mod::Module = @__MODULE__) :: String
+@inline function template(path::String; partial::Bool = true, mod::Module = @__MODULE__) :: String
   get_template(path, partial = partial, mod = mod) |> Base.invokelatest
 end
 
 
 """
+    build_is_stale(file_path::String, build_path::String) :: Bool
+
+Checks if the view template has been changed since the last time the template was compiled.
 """
 function build_is_stale(file_path::String, build_path::String) :: Bool
   isfile(file_path) || return true
@@ -299,8 +323,11 @@ end
 
 
 """
+    register_vars(vars...) :: Nothing
+
+Loads the rendering vars into the task's scope
 """
-function register_vars(vars...) :: Nothing
+@inline function register_vars(vars...) :: Nothing
   init_task_local_storage()
   task_local_storage(:__vars, merge(Dict{Symbol,Any}(vars), task_local_storage(:__vars)))
 
@@ -309,6 +336,9 @@ end
 
 
 """
+    html_renderer(resource::Union{Symbol,String}, action::Union{Symbol,String}; layout::Union{Symbol,String} = Genie.config.renderer_default_layout_file, mod::Module = @__MODULE__, vars...) :: Function
+
+Renders data as HTML
 """
 function html_renderer(resource::Union{Symbol,String}, action::Union{Symbol,String}; layout::Union{Symbol,String} = Genie.config.renderer_default_layout_file, mod::Module = @__MODULE__, vars...) :: Function
   register_vars(vars...)
@@ -331,8 +361,11 @@ end
 
 
 """
+    json_renderer(resource::Union{Symbol,String}, action::Union{Symbol,String}; mod::Module = @__MODULE__, vars...) :: Function
+
+Renders data as JSON
 """
-function json_renderer(resource::Union{Symbol,String}, action::Union{Symbol,String}; mod::Module = @__MODULE__, vars...) :: Function
+@inline function json_renderer(resource::Union{Symbol,String}, action::Union{Symbol,String}; mod::Module = @__MODULE__, vars...) :: Function
   register_vars(vars...)
 
     () -> (Base.include(mod, joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action) * JSON_FILE_EXT)) |> JSON.json)
@@ -344,7 +377,7 @@ end
 
 Generates function name for generated Flax views.
 """
-function function_name(file_path::String) :: String
+@inline function function_name(file_path::String) :: String
   file_path = relpath(file_path)
   "func_$(sha1(file_path) |> bytes2hex)"
 end
@@ -355,7 +388,7 @@ end
 
 Generates module name for generated Flax views.
 """
-function m_name(file_path::String) :: String
+@inline function m_name(file_path::String) :: String
   file_path = relpath(file_path)
   "$(sha1(file_path) |> bytes2hex)"
 end
@@ -366,21 +399,27 @@ end
 
 Converts a HTML document to a Flax document.
 """
-function html_to_flax(file_path::String; partial = true) :: String
+@inline function html_to_flax(file_path::String; partial = true) :: String
   to_flax(file_path, parse_template, partial = partial)
 end
 
 
 """
+    string_to_flax(content::String; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "") :: String
+
+Converts string view data to Flax code
 """
-function string_to_flax(content::String; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "") :: String
+@inline function string_to_flax(content::String; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "") :: String
   to_flax(content, parse_string, partial = partial, f_name = f_name, prepend = prepend)
 end
 
 
 """
+    to_flax(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "") :: String
+
+Converts an input file to Flax code
 """
-function to_flax(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "") :: String
+@inline function to_flax(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "") :: String
   f_name = f_name === nothing ? function_name(input) : f_name
 
   string("function $(f_name)() \n",
@@ -391,25 +430,15 @@ end
 
 
 """
+    build_module(content::String, path::String) :: Bool
+
+Persists compiled Flax view data to file
 """
 function build_module(content::String, path::String) :: Bool
   module_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl")
   isdir(joinpath(Genie.BUILD_PATH, BUILD_NAME)) || mkpath(joinpath(Genie.BUILD_PATH, BUILD_NAME))
   open(module_path, "w") do io
     write(io, "# $path \n\n")
-    write(io, content)
-  end
-
-  true
-end
-
-
-"""
-"""
-function build_inline_module(module_name::String, content::String) :: Bool
-  module_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, module_name * ".jl")
-  isdir(joinpath(Genie.BUILD_PATH, BUILD_NAME)) || mkpath(joinpath(Genie.BUILD_PATH, BUILD_NAME))
-  open(module_path, "w") do io
     write(io, content)
   end
 
@@ -437,23 +466,24 @@ end
 """
     parse_template(file_path::String; partial = true) :: String
 
-Parses a HTML file into a `string` of Flax code.
+Parses a HTML file into Flax code.
 """
-function parse_template(file_path::String; partial = true) :: String
+@inline function parse_template(file_path::String; partial = true) :: String
   parse(read_template_file(file_path), partial = partial)
 end
 
 
 """
+    parse_string(data::String; partial = true) :: String
+
+Parses a HTML string into Flax code.
 """
-function parse_string(data::String; partial = true) :: String
+@inline function parse_string(data::String; partial = true) :: String
   parse(parse_tags(data), partial = partial)
 end
 
 
-"""
-"""
-function parse(input::String; partial = true) :: String
+@inline function parse(input::String; partial = true) :: String
   parse_tree(Gumbo.parsehtml(input).root, "", 0, partial = partial)
 end
 
@@ -549,10 +579,10 @@ end
 
 Parses special Flax tags.
 """
-function parse_tags(line::Tuple{Int64,String}) :: String
+@inline function parse_tags(line::Tuple{Int64,String}) :: String
   parse_tags(line[2])
 end
-function parse_tags(code::String) :: String
+@inline function parse_tags(code::String) :: String
   code = replace(code, "<%"=>"""<script type="julia/eval">""")
   replace(code, "%>"=>"""</script>""")
 end
@@ -561,7 +591,7 @@ end
 """
 Outputs document's doctype.
 """
-function doctype(doctype::Symbol = :html) :: HTMLString
+@inline function doctype(doctype::Symbol = :html) :: HTMLString
   "<!DOCTYPE $doctype>"
 end
 
@@ -569,10 +599,10 @@ end
 """
 Outputs document's doctype.
 """
-function doc(html::String) :: HTMLString
+@inline function doc(html::String) :: HTMLString
   doctype() * "\n" * html
 end
-function doc(doctype::Symbol, html::String) :: HTMLString
+@inline function doc(doctype::Symbol, html::String) :: HTMLString
   doctype(doctype) * "\n" * html
 end
 
@@ -582,7 +612,7 @@ end
 
 Generated functions that represent Flax functions definitions corresponding to HTML elements.
 """
-function register_elements() :: Nothing
+@inline function register_elements() :: Nothing
   for elem in NORMAL_ELEMENTS
     register_normal_element(elem)
   end
@@ -595,13 +625,11 @@ function register_elements() :: Nothing
 end
 
 
-function register_element(elem::Symbol, elem_type::Symbol = :normal) :: Nothing
+@inline function register_element(elem::Symbol, elem_type::Symbol = :normal) :: Nothing
   elem_type == :normal ? register_normal_element(elem) : register_void_element(elem)
 end
 
 
-"""
-"""
 function register_normal_element(elem::Symbol) :: Nothing
   Core.eval(@__MODULE__, """
     function $elem(f::Function; attrs...) :: HTMLString
@@ -618,8 +646,6 @@ function register_normal_element(elem::Symbol) :: Nothing
 end
 
 
-"""
-"""
 function register_void_element(elem::Symbol) :: Nothing
   Core.eval(@__MODULE__, """
     function $elem(; attrs...) :: HTMLString
@@ -634,6 +660,10 @@ push!(LOAD_PATH,  abspath(Genie.HELPERS_PATH))
 
 
 """
+    @foreach(f, arr)
+
+Iterates over the `arr` Array and applies function `f` for each element.
+The results of each iteration are concatenated and the final string is returned.
 """
 macro foreach(f, arr)
   quote
@@ -656,7 +686,7 @@ end
 """
     foreachvar(f::Function, key::Symbol, v::Vector) :: String
 
-Utility function for looping over a `vector` `v` in the view layer.
+Utility function for looping over a vector `v` in the view layer.
 """
 function foreachvar(f::Function, key::Symbol, v::Vector) :: String
   isempty(v) && return ""
@@ -682,7 +712,7 @@ register_elements()
 """
     var_dump(var, html = true) :: String
 
-Utility function for dumping a variable.
+Utility function for dumping a variable into the view.
 """
 function var_dump(var, html = true) :: String
   iobuffer = IOBuffer()
@@ -694,13 +724,30 @@ end
 
 
 """
+    @vars
+
+Utility macro for accessing view vars
 """
 macro vars()
   :(task_local_storage(:__vars))
 end
+
+
+"""
+    @vars(key)
+
+Utility macro for accessing view vars stored under `key`
+"""
 macro vars(key)
   :(task_local_storage(:__vars)[$key])
 end
+
+
+"""
+    @vars(key, value)
+
+Utility macro for setting a new view var, as `key` => `value`
+"""
 macro vars(key, value)
   quote
     try
@@ -714,6 +761,9 @@ end
 
 
 """
+    @yield
+
+Outputs the rendering of the view within the template.
 """
 macro yield()
   quote
@@ -751,8 +801,11 @@ end
 
 
 """
+    create_build_folders()
+
+Sets up build folders.
 """
-function create_build_folders()
+@inline function create_build_folders()
   prepare_build(BUILD_NAME)
 end
 

@@ -1,11 +1,15 @@
 """
-Easy to enable caching functionality for Genie - works with pluggable cache adapters for the persistance layer.
+Caching functionality for Genie.
 """
 module Cache
 
-using Genie, SHA, Genie.Loggers, Nullables
+using SHA
+using Nullables
+using Genie, Genie.Loggers
+
 
 export cachekey, withcache, @cachekey
+export purge, purgeall
 
 
 """
@@ -24,7 +28,7 @@ const CACHE_ADAPTER = Core.eval(@__MODULE__, Meta.parse("$CACHE_ADAPTER_NAME"))
 
 
 """
-    with_cache(f::Function, key::Union{String,Symbol}, expiration::Int = CACHE_DURATION; dir = "", condition::Bool = true)
+    withcache(f::Function, key::Union{String,Symbol}, expiration::Int = CACHE_DURATION; dir = "", condition::Bool = true)
 
 Executes the function `f` and stores the result into the cache for the duration (in seconds) of `expiration`. Next time the function is invoked,
 if the cache has not expired, the cached result is returned skipping the function execution.
@@ -49,11 +53,10 @@ function withcache(f::Function, key::Union{String,Symbol}, expiration::Int = CAC
 
   Base.get(cached_data)
 end
-const with_cache = withcache
 
 
 """
-    purge(key::Union{String,Symbol}) :: Nothing
+    purge(key::Union{String,Symbol}; dir::String = "") :: Nothing
 
 Removes the cache data stored under the `key` key.
 """
@@ -63,14 +66,17 @@ end
 
 
 """
-    function purgeall() :: Nothing
+    purgeall(; dir::String = "") :: Nothing
 
 Removes all cached data.
 """
-function purgeall(; dir = "") :: Nothing
+function purgeall(; dir::String = "") :: Nothing
   CACHE_ADAPTER.purgeall(dir = dir)
 end
 const purge_all = purgeall
+
+
+### PRIVATE ###
 
 
 """

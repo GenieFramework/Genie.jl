@@ -686,7 +686,7 @@ end
 """
 """
 function content_type(req::HTTP.Request) :: String
-  get(Genie.HTTPUtils.req_headers_to_dict(req), "content-type", "")
+  get(Genie.HTTPUtils.Dict(req), "content-type", "")
 end
 function content_type() :: String
   content_type(_params_(Genie.PARAMS_REQUEST_KEY))
@@ -696,7 +696,7 @@ end
 """
 """
 function content_length(req::HTTP.Request) :: Int
-  parse(Int, get(Genie.HTTPUtils.req_headers_to_dict(req), "content-length", "0"))
+  parse(Int, get(Genie.HTTPUtils.Dict(req), "content-length", "0"))
 end
 function content_length() :: Int
   content_length(_params_(Genie.PARAMS_REQUEST_KEY))

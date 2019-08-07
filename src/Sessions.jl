@@ -19,17 +19,15 @@ const SessionAdapter = Core.eval(@__MODULE__, Meta.parse(session_adapter_name))
 
 """
     id() :: String
-    id(req::Request) :: String
-    id(req::Request, res::Response) :: String
 
-Generates a unique session id.
+Generates a new session id.
 """
 function id() :: String
   if ! isdefined(Genie, :SECRET_TOKEN)
     log("Session error", :warn)
     log("$(@__FILE__):$(@__LINE__)", :warn)
 
-    if ! Genie.Configuration.is_prod()
+    if ! Genie.Configuration.isprod()
       log("Generating temporary secret token", :warn)
       Core.eval(Genie, :(const SECRET_TOKEN = $(Genie.REPL.secret_token())))
     else
@@ -45,13 +43,29 @@ function id() :: String
     error("Can't compute session id - please make sure SECRET_TOKEN is defined in config/secrets.jl")
   end
 end
-function id(req::HTTP.Request) :: String
-  ! isnull(Cookies.get(req, Genie.config.session_key_name)) &&
-    ! isempty(Base.get(Cookies.get(req, Genie.config.session_key_name))) &&
-      return Base.get(Cookies.get(req, Genie.config.session_key_name))
+
+
+"""
+    id(payload::Union{HTTP.Request,HTTP.Response}) :: String
+
+Attempts to retrieve the session id from the provided `payload` object.
+If that is not available, a new session id is created.
+"""
+function id(payload::Union{HTTP.Request,HTTP.Response}) :: String
+  ! isnull(Cookies.get(payload, Genie.config.session_key_name)) &&
+    ! isempty(Base.get(Cookies.get(payload, Genie.config.session_key_name))) &&
+      return Base.get(Cookies.get(payload, Genie.config.session_key_name))
 
   id()
 end
+
+
+"""
+    id(req::HTTP.Request, res::HTTP.Response) :: String
+
+Attempts to retrieve the session id from the provided request and response objects.
+If that is not available, a new session id is created.
+"""
 function id(req::HTTP.Request, res::HTTP.Response) :: String
   ! isnull(Cookies.get(res, Genie.config.session_key_name)) &&
     ! isempty(Base.get(Cookies.get(res, Genie.config.session_key_name))) &&
@@ -66,26 +80,43 @@ end
 
 
 """
-    start(session_id::String, req::Request, res::Response; options = Dict{String,String}()) :: Session
-    start(req::Request, res::Response) :: Session
+    start(session_id::String, req::HTTP.Request, res::HTTP.Response; options = Dict{String,String}()) :: Session
 
-Initiates a session.
+Initiates a new HTTP session with the provided `session_id`.
+
+# Arguments
+- `session_id::String`: the id of the session object
+- `req::HTTP.Request`: the request object
+- `res::HTTP.Response`: the response object
+- `options::Dict{String,String}`: extra options for setting the session cookie, such as `Path` and `HttpOnly`
 """
-function start(session_id::String, req::HTTP.Request, res::HTTP.Response; options = Dict{String,String}()) :: Session
+function start(session_id::String, req::HTTP.Request, res::HTTP.Response; options::Dict{String,String} = Dict{String,String}()) :: Session
   options = merge(Dict("Path" => "/", "HttpOnly" => true), options)
   Cookies.set!(res, Genie.config.session_key_name, session_id, options)
 
   load(session_id)
 end
-function start(req::HTTP.Request, res::HTTP.Response) :: Session
-  start(id(req, res), req, res)
+
+
+"""
+    start(req::HTTP.Request, res::HTTP.Response; options::Dict{String,String} = Dict{String,String}()) :: Session
+
+Initiates a new default session object, generating a new session id.
+
+# Arguments
+- `req::HTTP.Request`: the request object
+- `res::HTTP.Response`: the response object
+- `options::Dict{String,String}`: extra options for setting the session cookie, such as `Path` and `HttpOnly`
+"""
+function start(req::HTTP.Request, res::HTTP.Response; options::Dict{String,String} = Dict{String,String}()) :: Session
+  start(id(req, res), req, res, options = options)
 end
 
 
 """
     set!(s::Session, key::Symbol, value::Any) :: Session
 
-Stores `value` as `key` on the `Session` `s`.
+Stores `value` as `key` on the `Session` object `s`.
 """
 function set!(s::Session, key::Symbol, value::Any) :: Session
   s.data[key] = value
@@ -97,21 +128,22 @@ end
 """
     get(s::Session, key::Symbol) :: Nullable
 
-Returns the value stored on the `Session` `s` as `key`, wrapped in a `Nullable`.
+Returns the value stored on the `Session` object `s` as `key`, wrapped in a `Nullable`.
 """
 function get(s::Session, key::Symbol) :: Nullable
-  return  if haskey(s.data, key)
-            Nullable(s.data[key])
-          else
-            Nullable()
-          end
+  haskey(s.data, key) ? Nullable(s.data[key]) : Nullable()
 end
 
 
 """
+    get(s::Session, key::Symbol, default::T) :: T where T
+
+Attempts to retrive the value stored on the `Session` object `s` as `key`.
+If the value is not set, it returns the `default`.
 """
-function get(s::Session, key::Symbol, default::T)::T where T
+function get(s::Session, key::Symbol, default::T) :: T where T
   val = get(s, key)
+
   isnull(val) ? default : Nullables.get(val)
 end
 
@@ -119,7 +151,7 @@ end
 """
     get!!(s::Session, key::Symbol)
 
-Attempts to read the value stored on the `Session` `s` as `key` - throws an exception if the `key` does not exist.
+Attempts to read the value stored on the `Session` `s` as `key` - throws an exception if the `key` is not set.
 """
 function get!!(s::Session, key::Symbol)
   s.data[key]
@@ -139,11 +171,11 @@ end
 
 
 """
-    is_set(s::Session, key::Symbol) :: Bool
+    isset(s::Session, key::Symbol) :: Bool
 
 Checks wheter or not `key` exists on the `Session` `s`.
 """
-function is_set(s::Union{Session,Nothing}, key::Symbol) :: Bool
+function isset(s::Union{Session,Nothing}, key::Symbol) :: Bool
   s != nothing && haskey(s.data, key)
 end
 

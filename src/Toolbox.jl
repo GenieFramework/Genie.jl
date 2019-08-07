@@ -115,7 +115,7 @@ function new(cmd_args::Dict{String,Any}, config::Settings = Genie.config) :: Not
   isdir(tasksdir()) || mkpath(tasksdir())
 
   f = open(tfn, "w")
-  write(f, Genie.FileTemplates.new_task(taskmodulename(cmd_args["task:new"])))
+  write(f, Genie.FileTemplates.newtask(taskmodulename(cmd_args["task:new"])))
   close(f)
 
   log("New task created at $tfn")

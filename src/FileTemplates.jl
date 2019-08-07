@@ -7,9 +7,9 @@ using Genie.Inflector
 
 
 """
-    new_task(module_name::String) :: String
+    newtask(module_name::String) :: String
 
-Default content for a new Genie task.
+Default content for a new Genie Toolbox task.
 """
 function newtask(module_name::String) :: String
   """
@@ -28,7 +28,6 @@ function newtask(module_name::String) :: String
   end
   """
 end
-const new_task = newtask
 
 
 """
@@ -39,11 +38,10 @@ Default content for a new Genie controller.
 function newcontroller(controller_name::String) :: String
   """
   module $(controller_name)Controller
-  # Build something great
+    # Build something great
   end
   """
 end
-const new_controller = newcontroller
 
 
 """
@@ -59,10 +57,12 @@ function newtest(plural_name::String, singular_name::String) :: String
   @test 1 == 1
   """
 end
-const new_test = newtest
 
 
 """
+    appmodule(path::String)
+
+Generates a custom app module when a new app is bootstrapped.
 """
 function appmodule(path::String)
   path = replace(path, "-"=>"_") |> strip

@@ -1,20 +1,17 @@
 module FileCacheAdapter
 
+
+using Serialization
+using Nullables
 using Genie, Genie.Loggers
 
 
 """
-The subfolder under the cache folder where the cache should be stored.
-"""
-const CACHE_FOLDER = Genie.config.cache_folder
-
-
-"""
-    to_cache(key::Union{String,Symbol}, content::Any; dir = "") :: Nothing
+    to_cache(key::Union{String,Symbol}, content::Any; dir::String = "") :: Nothing
 
 Persists `content` onto the file system under the `key` key.
 """
-function to_cache(key::Union{String,Symbol}, content::Any; dir = "") :: Nothing
+function to_cache(key::Union{String,Symbol}, content::Any; dir::String = "") :: Nothing
   open(cache_path(string(key), dir = dir), "w") do io
     serialize(io, content)
   end
@@ -24,11 +21,11 @@ end
 
 
 """
-    from_cache(key::Union{String,Symbol}, expiration::Int) :: Nullable
+    from_cache(key::Union{String,Symbol}, expiration::Int; dir::String = "") :: Nullable
 
 Retrieves from cache the object stored under the `key` key if the `expiration` delta (in seconds) is in the future.
 """
-function from_cache(key::Union{String,Symbol}, expiration::Int; dir = "") :: Nullable
+function from_cache(key::Union{String,Symbol}, expiration::Int; dir::String = "") :: Nullable
   file_path = cache_path(string(key), dir = dir)
 
   ( ! isfile(file_path) || stat(file_path).ctime + expiration < time() ) && return Nullable()
@@ -48,7 +45,7 @@ end
 
 Removes the cache data stored under the `key` key.
 """
-function purge(key::Union{String,Symbol}; dir = "") :: Nothing
+function purge(key::Union{String,Symbol}; dir::String = "") :: Nothing
   rm(cache_path(string(key), dir = dir))
 
   nothing
@@ -56,11 +53,11 @@ end
 
 
 """
-    purge_all() :: Nothing
+    purge_all(; dir::String = "") :: Nothing
 
 Removes all cached data.
 """
-function purge_all(; dir = "") :: Nothing
+function purge_all(; dir::String = "") :: Nothing
   rm(cache_path("", dir = dir), recursive = true)
   mkpath(cache_path("", dir = dir))
   open(joinpath(cache_path("", dir = dir), ".gitkeep"), "w") do f
@@ -72,12 +69,12 @@ end
 
 
 """
-    cache_path(key::Union{String,Symbol}; dir = "") :: String
+    cache_path(key::Union{String,Symbol}; dir::String = "") :: String
 
 Computes the path to a cache `key` based on current cache settings.
 """
-function cache_path(key::Union{String,Symbol}; dir = "") :: String
-  path = joinpath(CACHE_FOLDER, dir)
+function cache_path(key::Union{String,Symbol}; dir::String = "") :: String
+  path = joinpath(Genie.CACHE_PATH, dir)
   ! isdir(path) && mkpath(path)
 
   joinpath(path, string(key))

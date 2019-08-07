@@ -7,15 +7,34 @@ using Revise, HTTP, HTTP.IOExtras, HTTP.Sockets, Millboard, MbedTLS, URIParser, 
 using Genie, Genie.Configuration, Genie.Loggers, Genie.Sessions, Genie.Flax, Genie.Router, Genie.WebChannels
 
 
-"""
-    startup(port::Int = 8000)
+### PRIVATE ###
 
-Starts the web server on the configured port.
+
+"""
+    startup(port::Int = 8000, host::String = Genie.config.server_host;
+            ws_port::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
+            verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing)
+
+Starts the web server.
+
+# Arguments
+- `port::Int`: the port used by the web server
+- `host::String`: the host used by the web server
+- `ws_port::Int`: the port used by the Web Sockets server
+- `async::Bool`: run the web server task asynchronously
+- `verbose::Bool`: output debug info about connections status
+- `ratelimit::Union{Rational{Int},Nothing}`: limit the number of requests
+
+# Examples
+```julia-repl
+julia> startup(8000, "0.0.0.0", async = false)
+[ Info: Ready!
+Web Server starting at http://0.0.0.0:8000
 ```
 """
 function startup(port::Int = 8000, host::String = Genie.config.server_host;
                   ws_port::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
-                  verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing)
+                  verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing) :: Nothing
 
   # Create log directory and log file
   Genie.config.log_to_file && Loggers.initlogfile()
@@ -51,12 +70,17 @@ function startup(port::Int = 8000, host::String = Genie.config.server_host;
     command()
     log("Web Server stopped")
   end
+
+  nothing
 end
 
 
 """
+    setup_http_handler(req::HTTP.Request, res::HTTP.Response = HTTP.Response()) :: HTTP.Response
+
+Configures the handler for the HTTP Request and handles errors.
 """
-function setup_http_handler(req::HTTP.Request, res::HTTP.Response = HTTP.Response()) :: HTTP.Response
+@inline function setup_http_handler(req::HTTP.Request, res::HTTP.Response = HTTP.Response()) :: HTTP.Response
   try
     @fetch handle_request(req, res)
   catch ex
@@ -64,7 +88,7 @@ function setup_http_handler(req::HTTP.Request, res::HTTP.Response = HTTP.Respons
 
     log(error_message, :critical)
 
-    message = Genie.Configuration.is_prod() ?
+    message = Genie.Configuration.isprod() ?
                 "The error has been logged and we'll look into it ASAP." :
                 string(error_message, " in $(@__FILE__):$(@__LINE__)", "\n\n")
 
@@ -74,8 +98,11 @@ end
 
 
 """
+    setup_ws_handler(req::HTTP.Request, ws_client) :: Nothing
+
+Configures the handler for WebSockets requests.
 """
-function setup_ws_handler(req, ws_client) :: Nothing
+@inline function setup_ws_handler(req::HTTP.Request, ws_client) :: Nothing
   while ! eof(ws_client)
     write(ws_client, String(@fetch handle_ws_request(req, String(readavailable(ws_client)), ws_client)))
   end
@@ -85,16 +112,32 @@ end
 
 
 """
-    handle_request(req::Request, res::Response, ip::IPv4 = Genie.config.server_host) :: Response
+    handle_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = IPv4(Genie.config.server_host)) :: HTTP.Response
 
 Http server handler function - invoked when the server gets a request.
 """
-function handle_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = IPv4(Genie.config.server_host)) :: HTTP.Response
+@inline function handle_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = IPv4(Genie.config.server_host)) :: HTTP.Response
   isempty(Genie.config.server_signature) && sign_response!(res)
   set_headers!(req, res, Genie.Router.route_request(req, res, ip))
 end
 
 
+"""
+    handle_ws_request(req::HTTP.Request, msg::String, ws_client, ip::IPv4 = IPv4(Genie.config.server_host)) :: String
+
+Http server handler function - invoked when the server gets a request.
+"""
+function handle_ws_request(req::HTTP.Request, msg::String, ws_client, ip::IPv4 = IPv4(Genie.config.server_host)) :: String
+  msg == "" && return "" # keep alive
+  Genie.Router.route_ws_request(req, msg, ws_client, ip)
+end
+
+
+"""
+    set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.Response) :: HTTP.Response
+
+Configures the response headers.
+"""
 function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.Response) :: HTTP.Response
   if req.method == Genie.Router.OPTIONS
     Genie.config.cors_headers["Access-Control-Allow-Origin"] = strip(Genie.config.cors_headers["Access-Control-Allow-Origin"])
@@ -115,23 +158,12 @@ end
 
 
 """
-    handle_ws_request(req::Request, client::Client, ip::IPv4 = Genie.config.server_host) :: String
-
-Http server handler function - invoked when the server gets a request.
-"""
-function handle_ws_request(req::HTTP.Request, msg::String, ws_client, ip::IPv4 = IPv4(Genie.config.server_host)) :: String
-  msg == "" && return "" # keep alive
-  Genie.Router.route_ws_request(req, msg, ws_client, ip)
-end
-
-
-"""
-    sign_response!(res::Response) :: Response
+    sign_response!(res::HTTP.Response) :: HTTP.Response
 
 Adds a signature header to the response using the value in `Genie.config.server_signature`.
 If `Genie.config.server_signature` is empty, the header is not added.
 """
-function sign_response!(res::HTTP.Response) :: HTTP.Response
+@inline function sign_response!(res::HTTP.Response) :: HTTP.Response
   headers = Dict(res.headers)
   isempty(Genie.config.server_signature) || (headers["Server"] = Genie.config.server_signature)
 

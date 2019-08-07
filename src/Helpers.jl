@@ -11,13 +11,19 @@ export request, response, flash, wsclient, flash_has_message
 
 """
     request() :: HTTP.Request
-    request(params::Dict{Symbol,Any}) :: HTTP.Request
 
 Returns the `Request` object associated with the current HTTP request.
 """
 function request() :: HTTP.Request
   request(@params)
 end
+
+
+"""
+    request(params::Dict{Symbol,Any}) :: HTTP.Request
+
+Returns the `Request` object associated with the current HTTP request.
+"""
 function request(params::Dict{Symbol,Any}) :: HTTP.Request
   if haskey(params, Genie.PARAMS_REQUEST_KEY)
     return params[Genie.PARAMS_REQUEST_KEY]
@@ -31,13 +37,19 @@ end
 
 """
     response() :: HTTP.Response
-    response(params::Dict{Symbol,Any}) :: HTTP.Response
 
 Returns the `Response` object associated with the current HTTP request.
 """
 function response() :: HTTP.Response
   response(@params)
 end
+
+
+"""
+    response(params::Dict{Symbol,Any}) :: HTTP.Response
+
+Returns the `Response` object associated with the current HTTP request.
+"""
 function response(params::Dict{Symbol,Any}) :: HTTP.Response
   if haskey(params, Genie.PARAMS_RESPONSE_KEY)
     return params[Genie.PARAMS_RESPONSE_KEY]
@@ -50,13 +62,20 @@ end
 
 
 """
-    flash(params::Dict{Symbol,Any})
+    flash()
 
 Returns the `flash` dict object associated with the current HTTP request.
 """
 function flash()
   flash(@params)
 end
+
+
+"""
+    flash(params::Dict{Symbol,Any})
+
+Returns the `flash` dict object associated with the current HTTP request.
+"""
 function flash(params::Dict{Symbol,Any})
   if haskey(params, Genie.PARAMS_FLASH_KEY)
     return params[Genie.PARAMS_FLASH_KEY]
@@ -70,13 +89,19 @@ end
 
 """
     flash(value::Any) :: Nothing
-    flash(value::Any, params::Dict{Symbol,Any}) :: Nothing
 
 Stores `value` on the `flash`.
 """
 function flash(value::Any) :: Nothing
   flash(value, @params)
 end
+
+
+"""
+    flash(value::Any, params::Dict{Symbol,Any}) :: Nothing
+
+Stores `value` on the `flash`.
+"""
 function flash(value::Any, params) :: Nothing
   Sessions.set!(Sessions.session(params), Genie.PARAMS_FLASH_KEY, value)
   params[Genie.PARAMS_FLASH_KEY] = value
@@ -86,7 +111,9 @@ end
 
 
 """
+    flash_has_message() :: Bool
 
+Checks if there's any value on the flash storage
 """
 function flash_has_message() :: Bool
   ! isempty(flash())

@@ -12,6 +12,8 @@ const LAYOUTS_PATH    = joinpath(APP_PATH, "layouts")
 const TASKS_PATH      = "task"
 const BUILD_PATH      = "build"
 const PLUGINS_PATH    = "plugins"
+const SESSIONS_PATH   = "sessions"
+const CACHE_PATH      = "cache"
 
 const GENIE_CONTROLLER_FILE_POSTFIX     = "Controller.jl"
 
@@ -29,10 +31,6 @@ const PARAMS_RAW_PAYLOAD    = :RAW_PAYLOAD
 const PARAMS_FILES          = :FILES
 
 const TEST_FILE_IDENTIFIER = "_test.jl"
-
-# Used to store log info during app bootstrap, when the logger itself is not available.
-# The queue is automatically emptied by the logger upon load.
-const GENIE_LOG_QUEUE = Vector{Tuple{String,Symbol}}()
 
 const VIEWS_FOLDER = "views"
 const LAYOUTS_FOLDER = "layouts"

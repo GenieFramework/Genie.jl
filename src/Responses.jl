@@ -1,3 +1,6 @@
+"""
+Collection of utilities for working with Responses data
+"""
 module Responses
 
 using Genie, Genie.Router

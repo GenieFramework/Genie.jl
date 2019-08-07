@@ -1,5 +1,5 @@
 """
-Loads dependencies and bootstraps a Genie app.
+Loads dependencies and bootstraps a Genie app. Exposes core Genie functionality.
 """
 module Genie
 
@@ -9,8 +9,6 @@ include(joinpath(@__DIR__, "Configuration.jl"))
 include(joinpath(@__DIR__, "constants.jl"))
 
 config = Configuration.Settings(app_env = Configuration.DEV)
-
-export startup
 
 using Revise
 
@@ -57,21 +55,30 @@ using .Flax, .AppServer, .Plugins
 
 include(joinpath(@__DIR__, "REPL.jl"))
 
-"""
-    run() :: Nothing
-
-Runs the Genie app by parsing the command line args and invoking the corresponding actions.
-"""
-function run() :: Nothing
-  Commands.execute(Genie.config)
-
-  nothing
-end
+export startup, serve
 
 
 """
+    serve(path::String = DOC_ROOT_PATH, params...; kwparams...)
+
+Serves a folder of static files located at `path`. Allows Genie to be used as a static files web server.
+The `params` and `kwparams` arguments are forwarded to `Genie.startup()`.
+
+# Arguments
+- `path::String`: the folder of static files to be served by the server
+- `params`: additional arguments which are passed to `Genie.startup` to control the web server
+- `kwparams`: additionak keyword arguments which are passed to `Genie.startup` to control the web server
+
+# Examples
+```julia-repl
+julia> Genie.serve("public", 8888, async = false, verbose = true)
+[ Info: Ready!
+2019-08-06 16:39:20:DEBUG:Main: Web Server starting at http://127.0.0.1:8888
+[ Info: Listening on: 127.0.0.1:8888
+[ Info: Accept (1):  🔗    0↑     0↓    1s 127.0.0.1:8888:8888 ≣16
+```
 """
-function serve(path = DOC_ROOT_PATH, params...; kwparams...)
+function serve(path::String = DOC_ROOT_PATH, params...; kwparams...)
   route("/") do
     serve_static_file("index.html", root = path)
   end
@@ -83,30 +90,137 @@ function serve(path = DOC_ROOT_PATH, params...; kwparams...)
 end
 
 
-"""
-    newapp(path = "."; autostart = true, fullstack = false, dbsupport = true) :: Nothing
+### NOT EXPORTED ###
 
-Scaffolds a new Genie app.
+
 """
-function newapp(path = "."; autostart = true, fullstack = false, dbsupport = false) :: Nothing
+    newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false) :: Nothing
+
+Scaffolds a new Genie app, setting up the file structure indicated by the various arguments.
+
+# Arguments
+- `path::String`: the name of the app and the path where to bootstrap it
+- `autostart::Bool`: automatically start the app once the file structure is created
+- `fullstack::Bool`: the type of app to be bootstrapped. The fullstack app includes MVC structure, DB connection code, and asset pipeline files.
+- `dbsupport::Bool`: bootstrap the files needed for DB connection setup via the SearchLight ORM
+
+# Examples
+```julia-repl
+julia> Genie.newapp("MyGenieApp")
+2019-08-06 16:54:15:INFO:Main: Done! New app created at MyGenieApp
+2019-08-06 16:54:15:DEBUG:Main: Changing active directory to MyGenieApp
+2019-08-06 16:54:15:DEBUG:Main: Installing app dependencies
+ Resolving package versions...
+  Updating `~/Dropbox/Projects/GenieTests/MyGenieApp/Project.toml`
+  [c43c736e] + Genie v0.10.1
+  Updating `~/Dropbox/Projects/GenieTests/MyGenieApp/Manifest.toml`
+
+2019-08-06 16:54:27:INFO:Main: Starting your brand new Genie app - hang tight!
+ _____         _
+|   __|___ ___|_|___
+|  |  | -_|   | | -_|
+|_____|___|_|_|_|___|
+
+┌ Info:
+│ Starting Genie in >> DEV << mode
+└
+[ Info: Logging to file at MyGenieApp/log/dev.log
+[ Info: Ready!
+2019-08-06 16:54:32:DEBUG:Main: Web Server starting at http://127.0.0.1:8000
+2019-08-06 16:54:32:DEBUG:Main: Web Server running at http://127.0.0.1:8000
+```
+"""
+function newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false) :: Nothing
   REPL.newapp(path, autostart = autostart, fullstack = fullstack, dbsupport = dbsupport)
+
+  nothing
 end
-const new_app = newapp
 
 
 """
+    loadapp(path::String = "."; autostart::Bool = false) :: Nothing
+
+Loads an existing Genie app from the file system, within the current Julia REPL session.
+
+# Arguments
+- `path::String`: the path to the Genie app on the file system.
+- `autostart::Bool`: automatically start the app upon loading it.
+
+# Examples
+```julia-repl
+shell> tree -L 1
+.
+├── Manifest.toml
+├── Project.toml
+├── bin
+├── bootstrap.jl
+├── config
+├── env.jl
+├── genie.jl
+├── log
+├── public
+├── routes.jl
+└── src
+
+5 directories, 6 files
+
+julia> using Genie
+
+julia> Genie.loadapp(".")
+ _____         _
+|   __|___ ___|_|___
+|  |  | -_|   | | -_|
+|_____|___|_|_|_|___|
+
+┌ Info:
+│ Starting Genie in >> DEV << mode
+└
+[ Info: Logging to file at MyGenieApp/log/dev.log
+```
 """
-function loadapp(path = "."; autostart = false) :: Nothing
+function loadapp(path::String = "."; autostart::Bool = false) :: Nothing
   REPL.loadapp(path, autostart = autostart)
 end
 
 
 """
-    startup()
+    startup(port::Int = 8000, host::String = Genie.config.server_host;
+            ws_port::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
+            verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing)
 
-Starts the web server.
+Starts the web server. Alias for `AppServer.startup`
+
+# Arguments
+- `port::Int`: the port used by the web server
+- `host::String`: the host used by the web server
+- `ws_port::Int`: the port used by the Web Sockets server
+- `async::Bool`: run the web server task asynchronously
+- `verbose::Bool`: output debug info about connections status
+- `ratelimit::Union{Rational{Int},Nothing}`: limit the number of requests
+
+# Examples
+```julia-repl
+julia> startup(8000, "0.0.0.0", async = false)
+[ Info: Ready!
+Web Server starting at http://0.0.0.0:8000
 ```
 """
 const startup = AppServer.startup
+
+
+### PRIVATE ###
+
+
+"""
+    run() :: Nothing
+
+Runs the Genie app by parsing the command line args and invoking the corresponding actions.
+Used internally to parse command line arguments.
+"""
+function run() :: Nothing
+  Commands.execute(Genie.config)
+
+  nothing
+end
 
 end

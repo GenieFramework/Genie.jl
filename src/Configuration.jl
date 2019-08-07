@@ -3,48 +3,40 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
-const GENIE_VERSION = v"0.12.0"
+const GENIE_VERSION = v"0.13.0"
 
-using Genie, YAML
+using YAML
+using Genie
 
-export is_dev, is_prod, is_test, isdev, isprod, istest, env
+export isdev, isprod, istest, env
 export @ifdev, @ifprod, @iftest
 export cache_enabled, Settings, DEV, PROD, TEST
-export LOG_LEVEL_VERBOSITY_VERBOSE, LOG_LEVEL_VERBOSITY_MINIMAL
 
 # app environments
 const DEV   = "dev"
 const PROD  = "prod"
 const TEST  = "test"
 
-# log levels
-const LOG_LEVEL_VERBOSITY_VERBOSE = :verbose
-const LOG_LEVEL_VERBOSITY_MINIMAL = :minimal
-
 
 """
-    is_dev()  :: Bool
-    is_prod() :: Bool
-    is_test() :: Bool
+    isdev()  :: Bool
+    isprod() :: Bool
+    istest() :: Bool
 
 Set of utility functions that return whether or not the current environment is development, production or testing.
 
 # Examples
 ```julia
-julia> Configuration.is_dev()
+julia> Configuration.isdev()
 true
 
-julia> Configuration.is_prod()
+julia> Configuration.isprod()
 false
 ```
 """
-is_dev():: Bool  = (Genie.config.app_env == DEV)
-is_prod():: Bool = (Genie.config.app_env == PROD)
-is_test():: Bool = (Genie.config.app_env == TEST)
-
-const isdev  = is_dev
-const isprod = is_prod
-const istest = is_test
+isdev() :: Bool  = (Genie.config.app_env == DEV)
+isprod():: Bool = (Genie.config.app_env == PROD)
+istest():: Bool = (Genie.config.app_env == TEST)
 
 macro ifdev(e::Expr)
   isdev() && esc(e)
@@ -83,12 +75,40 @@ cache_enabled() :: Bool = (Genie.config.cache_duration > 0)
     mutable struct Settings
 
 App configuration - sets up the app's defaults. Individual options are overwritten in the corresponding environment file.
+
+# Arguments
+- `server_port::Int`: the port for running the web server (default 8000)
+- `server_host::String`: the host for running the web server (default "127.0.0.1")
+- `server_document_root::String`: path to the document root (default "public/")
+- `server_handle_static_files::Bool`: if `true`, Genie will also serve static files. In production, it is recommended to serve static files with a web server like Nginx.
+- `server_signature::String`: Genie's signature used for tagging the HTTP responses. If empty, it will not be added.
+- `app_env::String`: the environment in which the app is running (dev, test, or prod)
+- `cors_headers::Dict{String,String}`: default `Access-Control-*` CORS settings
+- `cors_allowed_origins::Vector{String}`: allowed origin hosts for CORS settings
+- `cache_adapter::Symbol`: cache adapter backend (default File)
+- `cache_duraction::Int`: cache expiration time in seconds
+- `log_level::Symbol`: logging severity level, one of :debug, :info, :warn, :error
+- `log_formatted::Bool`: if true, Genie will attempt to pretty print some of the logged values
+- `log_cache::Bool`: if true, caching info is logged
+- `log_views::Bool`: if true, information from the view layer (template building) is logged
+- `log_to_file::Bool`: if true, information will be logged to file besides REPL
+- `assets_fingerprinted::Bool`: if true, asset fingerprinting is used in the asset pipeline
+- `tests_force_test_env::Bool`: if true, when running tests, Genie will automatically switch the configuration to the test environment to avoid accidental coruption of dev or prod data
+- `session_auto_start::Bool`: if true, a session is automatically started for each request
+- `session_key_name::String`: the name of the session cookie
+- `session_storage::Symbol`: the backend adapter for session storage (default File)
+- `inflector_irregulars::Vector{Tuple{String,String}}`: additional irregular singular-plural forms to be used by the Inflector
+- `flax_compile_templates::Bool`: if true, the view templates are compiled and persisted between requests
+- `flax_autoregister_webcomponents::Bool`: automatically register custom HTML tags
+- `run_as_server::Bool`: when true the server thread is launched synchronously to avoid that the script exits
+- `websocket_server::Bool`: if true, the websocket server is also started together with the web server
+- `renderer_default_layout_file::Symbol`: default name for the layout file (:app)
 """
 mutable struct Settings
   server_port::Int
   server_host::String
-  server_workers_count::Int
   server_document_root::String
+
   server_handle_static_files::Bool
   server_signature::String
 
@@ -97,29 +117,15 @@ mutable struct Settings
   cors_headers::Dict{String,String}
   cors_allowed_origins::Vector{String}
 
-  suppress_output::Bool
-  output_length::Int
-
-  tasks_folder::String
-  test_folder::String
-
-  log_folder::String
-
-  cache_folder::String
   cache_adapter::Symbol
   cache_duration::Int
-  cache_table::String
 
-  log_router::Bool
   log_level::Symbol
-  log_verbosity::Symbol
   log_formatted::Bool
   log_cache::Bool
   log_views::Bool
   log_to_file::Bool
 
-  assets_path::String
-  assets_serve::Bool
   assets_fingerprinted::Bool
 
   tests_force_test_env::Bool
@@ -127,18 +133,11 @@ mutable struct Settings
   session_auto_start::Bool
   session_key_name::String
   session_storage::Symbol
-  session_folder::String
-  session_table::String
 
   inflector_irregulars::Vector{Tuple{String,String}}
 
-  html_template_engine::Symbol
-  json_template_engine::Symbol
-
   flax_compile_templates::Bool
   flax_autoregister_webcomponents::Bool
-
-  lookup_ip::Bool
 
   run_as_server::Bool
 
@@ -149,7 +148,6 @@ mutable struct Settings
   Settings(;
             server_port                 = 8000, # default port for binding the web server
             server_host                 = "127.0.0.1",
-            server_workers_count        = 1,
             server_document_root        = "public",
             server_handle_static_files  = true,
             server_signature            = "Genie/$GENIE_VERSION/Julia/$VERSION",
@@ -166,29 +164,15 @@ mutable struct Settings
             ),
             cors_allowed_origins = String[],
 
-            suppress_output = false,
-            output_length   = 10_000, # where to truncate strings in console
-
-            task_folder       = joinpath("task"),
-            test_folder       = joinpath("test"),
-
-            log_folder        = joinpath("log"),
-
-            cache_folder      = joinpath("cache"),
             cache_adapter     = :FileCacheAdapter,
             cache_duration    = 0,
-            cache_table       = "storage_caches",
 
-            log_router    = false,
             log_level     = :debug,
-            log_verbosity = LOG_LEVEL_VERBOSITY_VERBOSE,
             log_formatted = true,
             log_cache     = true,
             log_views     = true,
             log_to_file   = false,
 
-            assets_path           = "/",
-            assets_serve          = true,
             assets_fingerprinted  = false,
 
             tests_force_test_env = true,
@@ -196,18 +180,11 @@ mutable struct Settings
             session_auto_start  = false,
             session_key_name    = "__GENIESID",
             session_storage     = :File,
-            session_folder      = "session",
-            session_table       = "storage_sessions",
 
             inflector_irregulars = Tuple{String,String}[],
 
-            html_template_engine = :Flax,
-            json_template_engine = :Flax,
-
             flax_compile_templates = false,
             flax_autoregister_webcomponents = true,
-
-            lookup_ip = true,
 
             run_as_server = false,
 
@@ -217,22 +194,16 @@ mutable struct Settings
         ) =
               new(
                   server_port, server_host,
-                  server_workers_count, server_document_root, server_handle_static_files, server_signature,
+                  server_document_root, server_handle_static_files, server_signature,
                   app_env,
                   cors_headers, cors_allowed_origins,
-                  suppress_output, output_length,
-                  task_folder, test_folder,
-                  log_folder,
-                  cache_folder, cache_adapter, cache_duration, cache_table,
-                  log_router,
-                  log_level, log_verbosity, log_formatted, log_cache, log_views, log_to_file,
-                  assets_path, assets_serve, assets_fingerprinted,
+                  cache_adapter, cache_duration,
+                  log_level, log_formatted, log_cache, log_views, log_to_file,
+                  assets_fingerprinted,
                   tests_force_test_env,
-                  session_auto_start, session_key_name, session_storage, session_folder, session_table,
+                  session_auto_start, session_key_name, session_storage,
                   inflector_irregulars,
-                  html_template_engine, json_template_engine,
                   flax_compile_templates, flax_autoregister_webcomponents,
-                  lookup_ip,
                   run_as_server,
                   websocket_server,
                   renderer_default_layout_file
