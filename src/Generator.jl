@@ -65,6 +65,8 @@ end
 Computes and creates the directories structure needed to persist a new resource.
 """
 function setup_resource_path(resource_name::String; path::String = ".") :: String
+  isdir(Genie.APP_PATH) || Genie.REPL.copy_mvc_support(path)
+
   resource_path = joinpath(path, Genie.RESOURCES_PATH, lowercase(resource_name))
 
   if ! isdir(resource_path)

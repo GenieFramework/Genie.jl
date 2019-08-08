@@ -190,7 +190,7 @@ Let's add a "books" controller. We could do it by hand – but Genie comes with 
 Let's generate our `BooksController`:
 
 ```julia
-julia> MyGenieApp.newcontroller("Books")
+julia> Genie.newcontroller("Books")
 [info]: New controller created at app/resources/books/BooksController.jl
 ```
 
@@ -1040,7 +1040,7 @@ The first thing we need to do is to modify our table to add a new column, for st
 Obviously, we'll use migrations:
 
 ```julia
-julia> MyGenieApp.newmigration("add cover column")
+julia> Genie.newmigration("add cover column")
 [debug] New table migration created at db/migrations/2019030813344258_add_cover_column.jl
 ```
 
