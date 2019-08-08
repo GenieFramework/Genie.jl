@@ -24,16 +24,16 @@ Genie will
 At this point you can confirm that everything worked as expected by visiting <http://localhost:8000> in your favourite web browser.
 You should see Genie's welcome page.
 
-Next, let's add a new route. This time we need to append it to the dedicated `routes.jl` file. Edit `/path/to/MyGenieApp/config/routes.jl` in your favourite editor or run the next snippet (making sure you are in the app's directory):
+Next, let's add a new route. This time we need to append it to the dedicated `routes.jl` file. Edit `/path/to/MyGenieApp/routes.jl` in your favourite editor or run the next snippet (making sure you are in the app's directory):
 
 ```julia
-julia> edit("config/routes.jl")
+julia> edit("routes.jl")
 ```
 
 Append this at the bottom of the `routes.jl` file and save it:
 
 ```julia
-# config/routes.jl
+# routes.jl
 route("/hello") do
   "Welcome to Genie!"
 end
@@ -148,10 +148,10 @@ end
 end
 ```
 
-Then we can reference it in `config/routes.jl` as follows:
+Then we can reference it in `routes.jl` as follows:
 
 ```julia
-# config/routes.jl
+# routes.jl
 using Genie.Router
 using MyLib
 
@@ -244,7 +244,7 @@ Make sure it works as expected - you should get the HTML string previously descr
 Now, let's expose our `billgatesbooks` method on the web. We need to add a new `route` which points to it:
 
 ```julia
-# config/routes.jl
+# routes.jl
 using Genie.Router
 using BooksController
 
@@ -1222,7 +1222,7 @@ A more robust way would be to compute a hash based on author and title and renam
 So far so good, but what if we want to update the books we have already uploaded? It would be nice to add those missing covers.
 We need to add a bit of functionality to include editing features.
 
-First things first - let's add the routes. Please add these two new route definitions to the `config/routes.jl` file:
+First things first - let's add the routes. Please add these two new route definitions to the `routes.jl` file:
 
 ```julia
 route("/bgbooks/:id::Int/edit", BooksController.edit)
