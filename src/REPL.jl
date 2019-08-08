@@ -19,7 +19,7 @@ end
 """
 """
 function copy_fullstack_app(app_path::String = ".") :: Nothing
-  cp(joinpath(@__DIR__, "../", "files", "new_app"), app_path)
+  cp(joinpath(@__DIR__, "..", "files", "new_app"), app_path)
 
   nothing
 end
@@ -33,7 +33,7 @@ function copy_microstack_app(app_path::String = ".") :: Nothing
   for f in ["bin", "config", "public", "src",
             ".gitattributes", ".gitignore",
             "bootstrap.jl", "env.jl", "genie.jl", "routes.jl"]
-    cp(joinpath(@__DIR__, "../", "files", "new_app", f), joinpath(app_path, f))
+    cp(joinpath(@__DIR__, "..", "files", "new_app", f), joinpath(app_path, f))
   end
 
   remove_fingerprint_initializer(app_path)
@@ -45,7 +45,7 @@ end
 """
 """
 function copy_db_support(app_path::String = ".") :: Nothing
-  cp(joinpath(@__DIR__, "../", "files", "new_app", "db"), joinpath(app_path, "db"))
+  cp(joinpath(@__DIR__, "..", "files", "new_app", "db"), joinpath(app_path, "db"))
 
   nothing
 end
@@ -54,7 +54,7 @@ end
 """
 """
 function copy_mvc_support(app_path::String = ".") :: Nothing
-  cp(joinpath(@__DIR__, "../", "files", "new_app", "app"), joinpath(app_path, "app"))
+  cp(joinpath(@__DIR__, "..", "files", "new_app", "app"), joinpath(app_path, "app"))
 
   nothing
 end
@@ -150,16 +150,18 @@ end
 
 
 """
-    newapp(path::String; autostart = true, fullstack = false, dbsupport = false) :: Nothing
+    newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false, mvcsupport::Bool = false) :: Nothing
 
 Creates a new Genie app at the indicated path.
 """
-function newapp(path::String = "."; autostart = true, fullstack = false, dbsupport = false) :: Nothing
+function newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false, mvcsupport::Bool = false) :: Nothing
   app_path = abspath(path)
 
   fullstack ? copy_fullstack_app(app_path) : copy_microstack_app(app_path)
 
   dbsupport ? (fullstack || copy_db_support(app_path)) : remove_searchlight_initializer(app_path)
+
+  mvcsupport && (fullstack || copy_mvc_support(app_path))
 
   write_secrets_file(app_path)
 
@@ -183,7 +185,7 @@ const new_app = newapp
 
 """
 """
-function loadapp(path = "."; autostart = false) :: Nothing
+function loadapp(path::String = "."; autostart::Bool = false) :: Nothing
   Core.eval(Main, Meta.parse("using Revise"))
   Core.eval(Main, Meta.parse("""include(joinpath("$path", "bootstrap.jl"))"""))
   Core.eval(Main, Meta.parse("Revise.revise()"))
@@ -198,7 +200,7 @@ end
 
 """
 """
-function setup_windows_bin_files(path = ".") :: Nothing
+function setup_windows_bin_files(path::String = ".") :: Nothing
   open(joinpath(path, "bin", "repl.bat"), "w") do f
     write(f, "$JULIA_PATH --color=yes --depwarn=no -q -i -- ../bootstrap.jl %*")
   end
