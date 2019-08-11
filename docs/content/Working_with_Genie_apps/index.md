@@ -102,6 +102,13 @@ $ bin/server
 On Windows it's similar to macOS and Linux, but dedicated Windows scripts, `repl.bat` and `server.bat` are provided inside the project folder, within the `bin/` folder (so for our example, `MyGenieApp/bin/`).
 Double click them or execute them in the os shell to start an interactive REPL session or a server session, respectively, as explained in the previous paragraphs.
 
+---
+**HEADS UP**
+
+The recommended way to load an app is via the `bin/repl` command. It will correctly start the Julia process and start the app REPL with all the dependencies loaded with just one command.
+
+---
+
 ### Juno / Jupyter / other Julia environment
 
 First, make sure that you `cd` into your app's project folder.
@@ -124,52 +131,6 @@ Genie.loadapp()
 Genie seamlessly integrates with your frontend assets (js, css, images, fonts) relying on best technologies and practices (Yarn, Webpack4). More details can be found in following guide:
 
 [Frontend_assets](Frontend_assets.md)
-
-## Adding your Julia libraries to a Genie app
-
-If you have an existing Julia application or standalone codebase which you'd like to expose over the web through your Genie app, the easiest thing to do is to drop the files into the `lib/` folder.
-The `lib/` folder is automatically added by Genie to the `LOAD_PATH`.
-
-You can also add folders under `lib/`, they will be recursively added to `LOAD_PATH`. Beware though that this only happens when the Genie app is initially loaded.
-Hence, an app restart might be required if you add nested folders once the app is loaded.
-
----
-**HEADS UP**
-
-In most cases, Genie won't create the `lib/` folder by default. If the `lib/` folder is not present in the root of the app, just create it yourself:
-
-```julia
-julia> mkdir("lib")
-```
-
----
-
-Once you module is added to `lib/` it will become available in your app's environment. For example, say we have a file `lib/MyLib.jl`:
-
-```julia
-# lib/MyLib.jl
-module MyLib
-
-using Dates
-
-function isitfriday()
-  Dates.dayofweek(Dates.now()) == Dates.Friday
-end
-
-end
-```
-
-Then we can reference it in `routes.jl` as follows:
-
-```julia
-# routes.jl
-using Genie.Router
-using MyLib
-
-route("/friday") do
-  MyLib.isitfriday() ? "Yes, it's Friday!" : "No, not yet :("
-end
-```
 
 ## Working with resources
 

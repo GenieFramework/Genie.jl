@@ -28,6 +28,8 @@ Genie is compatible with Julia v1.0 and up.
 
 [Handling File Uploads](8--Handling_File_Uploads.md)
 
+[Publish Your Julia Code with Genie](9--Publishing_Your_Julia_Code_Online_With_Genie_Apps.md)
+
 ## Guides
 
 Genie can be used for a variety of tasks, from quickly whipping up a web server to full MVC web apps.
