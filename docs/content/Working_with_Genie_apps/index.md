@@ -72,7 +72,7 @@ The app's environment will now be loaded.
 In order to start the web server execute
 
 ```julia
-julia> Genie.startup()
+julia> startup()
 ```
 
 ### MacOS / Linux
@@ -88,7 +88,7 @@ The app's environment will now be loaded.
 In order to start the web server execute
 
 ```julia
-julia> Genie.startup()
+julia> startup()
 ```
 
 If, instead, if you want to directly start the server, use
@@ -133,6 +133,17 @@ The `lib/` folder is automatically added by Genie to the `LOAD_PATH`.
 You can also add folders under `lib/`, they will be recursively added to `LOAD_PATH`. Beware though that this only happens when the Genie app is initially loaded.
 Hence, an app restart might be required if you add nested folders once the app is loaded.
 
+---
+**HEADS UP**
+
+In most cases, Genie won't create the `lib/` folder by default. If the `lib/` folder is not present in the root of the app, just create it yourself:
+
+```julia
+julia> mkdir("lib")
+```
+
+---
+
 Once you module is added to `lib/` it will become available in your app's environment. For example, say we have a file `lib/MyLib.jl`:
 
 ```julia
@@ -165,12 +176,6 @@ end
 Adding your code to the `routes.jl` file or placing it into the `lib/` folder works great for small projects, where you want to quickly publish some features on the web.
 But for larger projects we're better off using Genie's MVC structure. By employing the Module-View-Controller design pattern we can break our code in modules with clear responsibilities.
 Modular code is easier to write, test and maintain.
-
----
-
-## Check the code
-
-The code for the example app being built in the upcoming paragraphs can be accessed at: <https://github.com/essenciary/Genie-Searchlight-example-app>
 
 ---
 
@@ -364,22 +369,6 @@ It's a simple change in the `BookiesController`: we have to explicitly tell Geni
 function billgatesbooks()
   html(:books, "billgatesbooks.jl.md", books = BillGatesBooks)
 end
-```
-
-**Please keep in mind that Markdown files are not compiled, nor cached, so the performance _will_ be _negatively_ affected.**
-
-Here is the `@time` output for rendering the HTML view:
-
-```julia
-[info]: Including app/resources/books/views/billgatesbooks.jl.html
-  0.000405 seconds (838 allocations: 53.828 KiB)
-```
-
-And here is the `@time` output for the Markdown view:
-
-```julia
-[info]: Including app/resources/books/views/billgatesbooks.jl.md
-  0.214844 seconds (281.36 k allocations: 13.841 MiB)
 ```
 
 ### Taking advantage of layouts
