@@ -1,4 +1,4 @@
-![Genie Logo](docs/content/img/genie_logo.png)
+![Genie Logo](content/img/genie_logo.png)
 
 # Genie
 
