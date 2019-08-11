@@ -33,13 +33,13 @@ Genie is compatible with Julia v1.0 and up.
 Genie can be used for a variety of tasks, from quickly whipping up a web server to full MVC web apps.
 Use the following resources to dive into each use case.
 
-[Using Genie in an interactive environment (Jupyter/IJulia, REPL, etc)](docs/content/Interactive_environment.md)
+[Using Genie in an interactive environment (Jupyter/IJulia, REPL, etc)](content/Interactive_environment.md)
 
-[Developing a simple API backend](docs/content/Simple_API_backend.md)
+[Developing a simple API backend](content/Simple_API_backend.md)
 
-[Working with Genie apps (projects)](docs/content/Working_with_Genie_apps/index.md)
+[Working with Genie apps (projects)](content/Working_with_Genie_apps/index.md)
 
-[Using and developing Genie plugins](/docs/content/Genie_Plugins.md)
+[Using and developing Genie plugins](content/Genie_Plugins.md)
 
 ## Acknowledgements
 
