@@ -6,8 +6,13 @@ CurrentModule = Configuration
 ```
 
 ```@docs
-execute
-parse_commandline_args
-check_valid_task!
-called_command
+isdev
+isprod
+istest
+@ifdev
+@ifprod
+@iftest
+env
+cache_enabled
+Settings
 ```

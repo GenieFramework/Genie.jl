@@ -7,6 +7,9 @@ CurrentModule = Cookies
 
 ```@docs
 get
+get!!
 set!
-to_dict
+Dict
+nullablevalue
+getcookies
 ```

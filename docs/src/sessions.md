@@ -6,13 +6,13 @@ CurrentModule = Sessions
 ```
 
 ```@docs
+Session
 id
 start
 set!
 get
 get!!
 unset!
-is_set
-persist
-load
+isset
+session
 ```

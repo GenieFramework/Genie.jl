@@ -56,7 +56,7 @@ end
 
 
 """
-    valid_task_name(task_name::String) :: String
+    validtaskname(task_name::String) :: String
 
 Attempts to convert a potentially invalid (partial) `task_name` into a valid one.
 """
@@ -157,7 +157,7 @@ end
 
 
 """
-    check_valid_task!(parsed_args::Dict{String,Any}) :: Dict{String,Any}
+    isvalidtask!(parsed_args::Dict{String,Any}) :: Dict{String,Any}
 
 Checks if the name of the task passed as the command line arg is valid task identifier -- if not, attempts to address it, by appending the TASK_SUFFIX suffix.
 Returns the potentially modified `parsed_args` `Dict`.

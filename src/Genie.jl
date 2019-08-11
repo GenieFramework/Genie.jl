@@ -94,7 +94,7 @@ end
 
 
 """
-    newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false) :: Nothing
+    newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false, mvcsupport::Bool = false) :: Nothing
 
 Scaffolds a new Genie app, setting up the file structure indicated by the various arguments.
 
@@ -103,6 +103,7 @@ Scaffolds a new Genie app, setting up the file structure indicated by the variou
 - `autostart::Bool`: automatically start the app once the file structure is created
 - `fullstack::Bool`: the type of app to be bootstrapped. The fullstack app includes MVC structure, DB connection code, and asset pipeline files.
 - `dbsupport::Bool`: bootstrap the files needed for DB connection setup via the SearchLight ORM
+- `mvcsupport::Bool`: adds the files used for Flax view templates rendering and working with resources
 
 # Examples
 ```julia-repl
@@ -130,11 +131,7 @@ julia> Genie.newapp("MyGenieApp")
 2019-08-06 16:54:32:DEBUG:Main: Web Server running at http://127.0.0.1:8000
 ```
 """
-function newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false) :: Nothing
-  REPL.newapp(path, autostart = autostart, fullstack = fullstack, dbsupport = dbsupport)
-
-  nothing
-end
+const newapp = REPL.newapp
 
 
 """
@@ -178,9 +175,7 @@ julia> Genie.loadapp(".")
 [ Info: Logging to file at MyGenieApp/log/dev.log
 ```
 """
-function loadapp(path::String = "."; autostart::Bool = false) :: Nothing
-  REPL.loadapp(path, autostart = autostart)
-end
+const loadapp = REPL.loadapp
 
 
 """

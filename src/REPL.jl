@@ -152,7 +152,40 @@ end
 """
     newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false, mvcsupport::Bool = false) :: Nothing
 
-Creates a new Genie app at the indicated path.
+Scaffolds a new Genie app, setting up the file structure indicated by the various arguments.
+
+# Arguments
+- `path::String`: the name of the app and the path where to bootstrap it
+- `autostart::Bool`: automatically start the app once the file structure is created
+- `fullstack::Bool`: the type of app to be bootstrapped. The fullstack app includes MVC structure, DB connection code, and asset pipeline files.
+- `dbsupport::Bool`: bootstrap the files needed for DB connection setup via the SearchLight ORM
+- `mvcsupport::Bool`: adds the files used for Flax view templates rendering and working with resources
+
+# Examples
+```julia-repl
+julia> Genie.newapp("MyGenieApp")
+2019-08-06 16:54:15:INFO:Main: Done! New app created at MyGenieApp
+2019-08-06 16:54:15:DEBUG:Main: Changing active directory to MyGenieApp
+2019-08-06 16:54:15:DEBUG:Main: Installing app dependencies
+ Resolving package versions...
+  Updating `~/Dropbox/Projects/GenieTests/MyGenieApp/Project.toml`
+  [c43c736e] + Genie v0.10.1
+  Updating `~/Dropbox/Projects/GenieTests/MyGenieApp/Manifest.toml`
+
+2019-08-06 16:54:27:INFO:Main: Starting your brand new Genie app - hang tight!
+ _____         _
+|   __|___ ___|_|___
+|  |  | -_|   | | -_|
+|_____|___|_|_|_|___|
+
+┌ Info:
+│ Starting Genie in >> DEV << mode
+└
+[ Info: Logging to file at MyGenieApp/log/dev.log
+[ Info: Ready!
+2019-08-06 16:54:32:DEBUG:Main: Web Server starting at http://127.0.0.1:8000
+2019-08-06 16:54:32:DEBUG:Main: Web Server running at http://127.0.0.1:8000
+```
 """
 function newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false, mvcsupport::Bool = false) :: Nothing
   app_path = abspath(path)
@@ -180,10 +213,48 @@ function newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = fa
 
   nothing
 end
-const new_app = newapp
 
 
 """
+    loadapp(path::String = "."; autostart::Bool = false) :: Nothing
+
+Loads an existing Genie app from the file system, within the current Julia REPL session.
+
+# Arguments
+- `path::String`: the path to the Genie app on the file system.
+- `autostart::Bool`: automatically start the app upon loading it.
+
+# Examples
+```julia-repl
+shell> tree -L 1
+.
+├── Manifest.toml
+├── Project.toml
+├── bin
+├── bootstrap.jl
+├── config
+├── env.jl
+├── genie.jl
+├── log
+├── public
+├── routes.jl
+└── src
+
+5 directories, 6 files
+
+julia> using Genie
+
+julia> Genie.loadapp(".")
+ _____         _
+|   __|___ ___|_|___
+|  |  | -_|   | | -_|
+|_____|___|_|_|_|___|
+
+┌ Info:
+│ Starting Genie in >> DEV << mode
+└
+[ Info: Logging to file at MyGenieApp/log/dev.log
+```
 """
 function loadapp(path::String = "."; autostart::Bool = false) :: Nothing
   Core.eval(Main, Meta.parse("using Revise"))

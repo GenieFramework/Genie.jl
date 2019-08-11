@@ -6,10 +6,10 @@ CurrentModule = Toolbox
 ```
 
 ```@docs
-run_task
-print_all_tasks
-all_tasks
+TaskInfo
+TaskResult
+tasks
+loadtasks
+printtasks
 new
-task_file_name
-task_module_name
 ```

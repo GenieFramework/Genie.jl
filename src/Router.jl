@@ -779,6 +779,8 @@ function setup_base_params(req::HTTP.Request, res::Union{HTTP.Response,Nothing},
   params[Genie.PARAMS_POST_KEY]      = Dict{Symbol,Any}()
   params[Genie.PARAMS_GET_KEY]       = Dict{Symbol,Any}()
 
+  params[Genie.PARAMS_FILES]         = Dict{String,HttpFile}()
+
   params
 end
 

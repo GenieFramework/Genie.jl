@@ -241,7 +241,7 @@ end
 Pushes `msg` (and `payload`) to all the clients subscribed to all the channels.
 """
 function broadcast(msg::String, payload::Union{Dict,Nothing}) :: Bool
-  payload == nothing ?
+  payload === nothing ?
     broadcast(collect(keys(SUBSCRIPTIONS)), msg) :
     broadcast(collect(keys(SUBSCRIPTIONS)), msg, payload)
 end
@@ -251,7 +251,7 @@ end
 Pushes `msg` (and `payload`) to `channel`.
 """
 function message(channel::ChannelName, msg::String, payload::Union{Dict,Nothing} = nothing) :: Bool
-  payload == nothing ?
+  payload === nothing ?
     broadcast(channel, msg) :
     broadcast(channel, msg, payload)
 end

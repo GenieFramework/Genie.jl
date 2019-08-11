@@ -6,7 +6,7 @@ CurrentModule = Cache
 ```
 
 ```@docs
-with_cache
-cache_key
-cache_adapter
+withcache
+purge
+purgeall
 ```

@@ -6,8 +6,9 @@ CurrentModule = Helpers
 ```
 
 ```@docs
-session
 request
 response
 flash
+flash_has_message
+wsclient
 ```

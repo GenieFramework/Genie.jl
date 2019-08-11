@@ -1,10 +1,9 @@
 ```@meta
-CurrentModule = Input
+CurrentModule = Plugins
 ```
 
 ```@contents
 ```
 
 ```@docs
-
 ```

@@ -1,13 +1,14 @@
 using Documenter, Genie
-using App, AppServer
-using Cache, Commands, Configuration, Cookies, WebChannels
-using FileTemplates, Generator
-using Helpers, Inflector, Input, Loggers
-using Renderer, REPL, Router, Sessions, Tester, Toolbox, Util
-using FileCacheAdapter, FileSessionAdapter, Encryption
+
+using Genie.App, Genie.AppServer, Genie.Assets
+using Genie.Cache, Genie.Commands, Genie.Configuration, Genie.Cookies
+using Genie.Encryption, Genie.FileTemplates, Genie.Flax, Genie.Generator
+using Genie.Helpers, Genie.Inflector, Genie.Input, Genie.Loggers, Genie.Plugins
+using Genie.Renderer, Genie.REPL, Genie.Requests, Genie.Responses, Genie.Router
+using Genie.Sessions, Genie.Tester, Genie.Toolbox, Genie.Util, Genie.WebChannels
 
 push!(LOAD_PATH,  "../../src",
                   "../../src/cache_adapters",
                   "../../src/session_adapters")
 
-makedocs()
+makedocs(sitename = "Genie - The Highly Productive Julia Web Framework")
