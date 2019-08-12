@@ -6,7 +6,7 @@ module Requests
 using Genie, Genie.Router, Genie.Input
 using HTTP
 
-export jsonpayload, rawpayload, filespayload, postpayload, getpayload, getrequest
+export jsonpayload, rawpayload, filespayload, postpayload, getpayload, getrequest, infilespayload, download, filename
 
 
 """
@@ -31,13 +31,52 @@ end
 
 
 """
-    filespayload()
+    filespayload() :: Dict{String,HttpFile}
+
+Collection of form uploaded files.
 """
 @inline function filespayload() :: Dict{String,HttpFile}
   @params(Genie.PARAMS_FILES)
 end
-@inline function filespayload(filename::Union{String,Symbol}) :: HttpFile
-  @params(Genie.PARAMS_FILES)[string(filename)]
+
+
+"""
+    filespayload(filename::Union{String,Symbol}) :: HttpFile
+
+Returns the `HttpFile` uploaded through the `key` input name.
+"""
+@inline function filespayload(key::Union{String,Symbol}) :: HttpFile
+  @params(Genie.PARAMS_FILES)[string(key)]
+end
+
+
+"""
+    infilespayload(key::Union{String,Symbol}) :: Bool
+
+Checks if the collection of uploaded files contains a file stored under the `key` name.
+"""
+@inline function infilespayload(key::Union{String,Symbol}) :: Bool
+  haskey(filespayload(), string(key))
+end
+
+
+"""
+    Base.download(file::HttpFile, name::String = file.name)
+
+Saves uploaded `HttpFile` `file` to local storage under the `name` filename.
+"""
+@inline function Base.download(file::HttpFile, name::String = file.name) :: Int
+  write(name, IOBuffer(file.data))
+end
+
+
+"""
+    filename(file::HttpFile) :: String
+
+Original filename of the uploaded `HttpFile` `file`.
+"""
+@inline function filename(file::HttpFile) :: String
+  file.name
 end
 
 

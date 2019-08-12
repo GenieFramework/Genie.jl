@@ -1,6 +1,6 @@
 # Handling query params (GET variables)
 
-Genie makes it easy to access query params: values sent as part of the URL. All the values are automatically collected by Genie and exposed in the `@params` collection (which is part of the `Router` module).
+Genie makes it easy to access query params: values sent as part of the URL over GET requests. All these values are automatically collected by Genie and exposed in the `@params` collection (which is part of the `Router` module).
 
 Here's a quick sample:
 
@@ -19,7 +19,7 @@ However, requesting <http://127.0.0.1:8000/hi?name=Adrian> will in turn display 
 
 ## The `Requests` module
 
-Genie provides a set of utilities for working with requests data within the `Requests` module. You can use the `getpayload` method to retrieve the query params as a `Dict{Symbol,Any}. We can rewrite the previous route to take advantage of this:
+Genie provides a set of utilities for working with requests data within the `Requests` module. You can use the `getpayload` method to retrieve the query params as a `Dict{Symbol,Any}`. We can rewrite the previous route to take advantage of the `Requests` utilities:
 
 ```julia
 using Genie, Genie.Router, Genie.Requests
@@ -29,4 +29,4 @@ route("/hi") do
 end
 ```
 
-The `getpayload` function has a few specializations, and one of them accepts the key and the default value. The default value is retuned if the `key` variable is not defined. You can see the various implementations for `getpayload` using the API docs or Julia's `help>` mode.
+The `getpayload` function has a few specializations, and one of them accepts the key and a default value. The default value is returned if the `key` variable is not defined. You can see the various implementations for `getpayload` using the API docs or Julia's `help>` mode.
