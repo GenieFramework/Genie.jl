@@ -598,23 +598,22 @@ julia> SearchLight.Migration.status()
 |   |                             File name  |
 |---|----------------------------------------|
 |   |                   CreateTableBooks: UP |
-| 1 | 2018100120160530_create_table_books.jl |
+| 1 | 2019081212100662_create_table_books.jl |
 ```
 
 Our table is ready!
 
 #### Defining the model
 
-Now it's time to edit our model file at `app/resources/books/Books.jl`. Another convention in SearchLight is that we're using the pluralized name (`Books`) for the module – because it's for managing multiple books.
-And within it we define a type, called `Book` – which represents an item (a single book) and maps to a row in the underlying database.
+Now it's time to edit our model file at `app/resources/books/Books.jl`. Another convention in SearchLight is that we're using the pluralized name (`Books`) for the module – because it's for managing multiple books. And within it we define a type, called `Book` – which represents an item (a single book) and maps to a row in the underlying database.
 
-The `Books.jl` file should look like this:
+Do not let the large file intimidate you - the commented out code readily makes available some of the most important features of the model type, but we can ignore all that for now and simply delete it and replace it with this code. The `Books.jl` file should look like this:
 
 ```julia
 # Books.jl
 module Books
 
-using SearchLight, Nullables, SearchLight.Validation, BooksValidator
+using SearchLight
 
 export Book
 
@@ -622,33 +621,28 @@ mutable struct Book <: AbstractModel
   ### INTERNALS
   _table_name::String
   _id::String
-  _serializable::Vector{Symbol}
 
   ### FIELDS
   id::DbId
   title::String
   author::String
+end
 
-  ### constructor
-  Book(;
+Book(;
     ### FIELDS
     id = DbId(),
     title = "",
     author = ""
-  ) = new("books", "id", Symbol[],
-          id, title, author
-          )
-end
+  ) = Book("books", "id", id, title, author)
 
 end
 ```
 
-Pretty straightforward: we define a new `mutable struct` which matches our previous `Book` type except that it has a few special fields used by SearchLight.
-We also define a default keyword constructor as SearchLight needs it.
+We defined a `mutable struct` which matches our previous `Book` type except that it has a few special fields used by SearchLight: the fields starting with an underscore which reference the table name and the name of the primary key column. We also define a keyword constructor as SearchLight needs it.
 
 #### Using our model
 
-To make things more interesting, we should import our current books into the database. Add this function to the `Books.jl` module, under the type definition:
+To make things more interesting, we should import our current books into the database. Add this function to the `Books.jl` module, under the `Book()` constructor definition:
 
 ```julia
 # Books.jl
@@ -660,6 +654,7 @@ function seed()
     ("The Sympathizer!", "Viet Thanh Nguyen"),
     ("Energy and Civilization, A History", "Vaclav Smil")
   ]
+
   for b in BillGatesBooks
     Book(title = b[1], author = b[2]) |> SearchLight.save!
   end
@@ -668,19 +663,14 @@ end
 
 #### Autoloading the DB configuration
 
-Now, to try things out. Genie takes care of loading all our resource files for us when we load the app.
-Also, Genie comes with a special file called an initializer, which can automatically load the database configuration and setup SearchLight.
-Just edit `config/initializers/searchlight.jl` and uncomment the code. It should look like this:
+Now, to try things out. Genie takes care of loading all our resource files for us when we load the app. To do this, Genie comes with a special file called an initializer, which automatically loads the database configuration and sets up SearchLight. Edit `config/initializers/searchlight.jl` and uncomment the code. It should look like this:
 
 ```julia
 using SearchLight, SearchLight.QueryBuilder
 
-Core.eval(SearchLight, :(config.db_config_settings = SearchLight.Configuration.load_db_connection()))
+SearchLight.Configuration.load()
 
-SearchLight.Loggers.setup_loggers()
-SearchLight.Loggers.empty_log_queue()
-
-if SearchLight.config.db_config_settings["adapter"] != nothing
+if SearchLight.config.db_config_settings["adapter"] !== nothing
   SearchLight.Database.setup_adapter()
   SearchLight.Database.connect()
   SearchLight.load_resources()
@@ -689,22 +679,12 @@ end
 
 ##### Heads up!
 
-All the `.jl` files placed into the `config/initializers/` folder are automatically included by Genie upon starting the Genie app.
-They are included early (upon initialisation), before the controllers, models, views, are loaded.
+All the `.jl` files placed into the `config/initializers/` folder are automatically included by Genie upon starting the Genie app. They are included early (upon initialisation), before the controllers, models, views, are loaded.
 
 #### Trying it out!
 
-Great, now we can start a new Julia REPL within our app's dir and load the app:
+Now it's time to restart our REPL session and test our app. Exit to the OS command line and run:
 
-```julia
-julia>]
-pkg> activate .
-
-julia> using Genie
-julia> Genie.loadapp()
-```
-
-Alternatively we can skip all these steps by simply using:
 ```bash
 $ bin/repl
 ```
@@ -713,15 +693,18 @@ Everything should be loaded now, DB configuration included - so we can invoke th
 
 ```julia
 julia> using Books
+
 julia> Books.seed()
 ```
 
 There should be a list of queries showing how the data is inserted in the DB. If you want to make sure, just ask SearchLight to retrieve them:
 
 ```julia
-julia> SearchLight.all(Book)
-julia> 5-element Array{Book,1}:
+julia> using SearchLight
 
+julia> SearchLight.all(Book)
+
+5-element Array{Book,1}:
 Book
 |    KEY |                                    VALUE |
 |--------|------------------------------------------|
@@ -741,7 +724,7 @@ Book
 
 All good!
 
-The next thing is to update our controller to use the model. Make sure that `app/resources/books/BooksController.jl` reads like this:
+The next thing we need to do is to update our controller to use the model. Make sure that `app/resources/books/BooksController.jl` reads like this:
 
 ```julia
 # BooksController.jl
@@ -758,7 +741,6 @@ module API
 using ..BooksController
 using Genie.Renderer
 using SearchLight, Books
-using JSON
 
 function billgatesbooks()
   json(:books, :billgatesbooks, books = SearchLight.all(Book))
@@ -776,16 +758,17 @@ And finally, our JSON view needs a bit of tweaking too:
 "Bill's Gates list of recommended books" => [Dict("author" => b.author, "title" => b.title) for b in @vars(:books)]
 ```
 
-Now if we just start the server we'll see the list of books served from the database, at <http://localhost:8000/api/v1/bgbooks:>
+Now if we just start the server we'll see the list of books served from the database, at <http://localhost:8000/api/v1/bgbooks>
 
 ```julia
-julia> Genie.startup()
+julia> startup()
 ```
 
 Let's add a new book to see how it works:
 
 ```julia
 julia> newbook = Book(title = "Leonardo da Vinci", author = "Walter Isaacson")
+
 julia> SearchLight.save!(newbook)
 ```
 
@@ -798,355 +781,8 @@ If you reload the page at <http://localhost:8000/bgbooks> the new book should sh
 
 ---
 
-## Handling forms
+## Congratulations!
 
-Now, the problem is that Bill Gates reads – a lot! It would be much easier if we would allow our users to add a few books themselves, to give us a hand.
-But since, obviously, we're not going to give them access to our Julia REPL, we should setup a web page with a form. Let's do it.
+You have successfully finished the first part of the step by step walkthrough - you now master the Genie basics, allowing you to set up a new app, register routes, add resources (controllers, models, and views), add database support, version the database schema with migrations, and execute basic queries with SearchLight!
 
-We'll start by adding the new routes:
-
-```julia
-# routes.jl
-route("/bgbooks/new", BooksController.new)
-route("/bgbooks/create", BooksController.create, method = POST, named = :create_book)
-```
-
-The first route will be used to display the page with the new book form. The second will be the target page for submitting our form - this page will accept the form's payload.
-Please note that it's configured to match `POST` requests and that we gave it a name. We'll use the name in our form so that Genie will dynamically generate the correct links to the corresponding URL (to avoid hard coding URLs).
-This way we'll make sure that our form will always submit to the right URL, even if we change the route (as long as we don't change the name).
-
-Now, to add the methods in `BooksController`. Add these definition under the `billgatesbooks` function (make sure you add them in `BooksController`, not in `BooksController.API`):
-
-```julia
-# BooksController.jl
-function new()
-  html(:books, :new)
-end
-
-function create()
-  # code here
-end
-```
-
-The `new` method should be clear: we'll just render a view file called `new`. As for `create`, for now it's just a placeholder.
-
-Next, to add our view. Add a blank file called `new.jl.html` in `app/resources/books/views`. Using Julia:
-
-```julia
-julia> touch("app/resources/books/views/new.jl.html")
-```
-
-Make sure that it has this content:
-
-```html
-<!-- app/resources/books/views/new.jl.html -->
-<h2>Add a new book recommended by Bill Gates</h2>
-<p>
-  For inspiration you can visit <a href="https://www.gatesnotes.com/Books" target="_blank">Bill Gates' website</a>
-</p>
-<form action="$(Genie.Router.link_to(:create_book))" method="POST">
-  <input type="text" name="book_title" placeholder="Book title" /><br />
-  <input type="text" name="book_author" placeholder="Book author" /><br />
-  <input type="submit" value="Add book" />
-</form>
-```
-
-Notice that the form's action calls the `link_to` method, passing in the name of the route to generate the URL, resulting in the following HTML: `<form method="POST" action="/bgbooks/create">`.
-
-We should also update the `BooksController.create` method to do something useful with the form data. Let's make it create a new book, persist it to the database and redirect to the list of books. Here is the code:
-
-```julia
-# BooksController.jl
-using Genie.Router
-
-function create()
-  Book(title = @params(:book_title), author = @params(:book_author)) |> save && redirect_to(:get_bgbooks)
-end
-```
-
-A few things are worth pointing out in this snippet:
-
-* again, we're accessing the `@params` collection to extract the request data, in this case passing in the names of our form's inputs as parameters.
-We need to bring `Genie.Router` into scope in order to access `@params`;
-* we're using the `redirect_to` method to perform a HTTP redirect. As the argument we're passing in the name of the route, just like we did with the form's action.
-However, we didn't set any route to use this name. It turns out that Genie gives default names to all the routes.
-We can use these – but a word of notice: **these names are generated using the properties of the route, so if the route changes it's possible that the name will change too**.
-So either make sure your route stays unchanged – or explicitly name your routes. The autogenerated name, `get_bgbooks` corresponds to the method (`GET`) and the route (`bgbooks`).
-
-In order to get info about the defined routes you can use the `Router.named_routes` function:
-
-```julia
-julia> Router.named_routes()
-julia> Dict{Symbol,Genie.Router.Route} with 6 entries:
-  :get_bgbooks        => Route("GET", "/bgbooks", billgatesbooks, Dict{Symbol,Any}(), Function[], Function[])
-  :get_bgbooks_new    => Route("GET", "/bgbooks/new", new, Dict{Symbol,Any}(), Function[], Function[])
-  :get                => Route("GET", "/", (), Dict{Symbol,Any}(), Function[], Function[])
-  :get_api_v1_bgbooks => Route("GET", "/api/v1/bgbooks", billgatesbooks, Dict{Symbol,Any}(), Function[], Function[])
-  :create_book        => Route("POST", "/bgbooks/create", create, Dict{Symbol,Any}(), Function[], Function[])
-  :get_friday         => Route("GET", "/friday", (), Dict{Symbol,Any}(), Function[], Function[])
-```
-
-Let's try it out. Input something and submit the form. If everything goes well a new book will be persisted to the database – and it will be added at the bottom of the list of books.
-
----
-
-## Uploading files
-
-Our app looks great -- but the list of books would be so much better if we'd display the covers as well. Let's do it!
-
-### Modify the database
-
-The first thing we need to do is to modify our table to add a new column, for storing a reference to the name of the cover image.
-Obviously, we'll use migrations:
-
-```julia
-julia> Genie.newmigration("add cover column")
-[debug] New table migration created at db/migrations/2019030813344258_add_cover_column.jl
-```
-
-Now we need to edit the migration file - please make it look like this:
-
-```julia
-# db/migrations/*_add_cover_column.jl
-module AddCoverColumn
-
-import SearchLight.Migrations: add_column, remove_column
-
-function up()
-  add_column(:books, :cover, :string)
-end
-
-function down()
-  remove_column(:books, :cover)
-end
-
-end
-```
-
-Looking good - lets ask SearchLight to run it:
-
-```julia
-julia> SearchLight.Migration.last_up()
-[debug] Executed migration AddCoverColumn up
-```
-
-If you want to double check, ask SearchLight for the migrations status:
-
-```julia
-julia> SearchLight.Migration.status()
-
-|   |                  Module name & status  |
-|   |                             File name  |
-|---|----------------------------------------|
-|   |                   CreateTableBooks: UP |
-| 1 | 2018100120160530_create_table_books.jl |
-|   |                     AddCoverColumn: UP |
-| 2 |   2019030813344258_add_cover_column.jl |
-```
-
-Perfect! Now we need to add the new column as a field to the `Books.Book` model:
-
-```julia
-module Books
-
-using SearchLight, SearchLight.Validation, BooksValidator
-
-export Book
-
-mutable struct Book <: AbstractModel
-  ### INTERNALS
-  _table_name::String
-  _id::String
-  _serializable::Vector{Symbol}
-
-  ### FIELDS
-  id::DbId
-  title::String
-  author::String
-  cover::String
-
-  Book(;
-    ### FIELDS
-    id = DbId(),
-    title = "",
-    author = "",
-    cover = "",
-  ) = new("books", "id", Symbol[],
-          id, title, author, cover
-          )
-end
-
-end
-```
-
-As a quick test we can extend our JSON view and see that all goes well - make it look like this:
-
-```julia
-# app/resources/books/views/billgatesbooks.json.jl
-"Bill's Gates list of recommended books" => [Dict("author" => b.author,
-                                                  "title" => b.title,
-                                                  "cover" => b.cover) for b in @vars(:books)]
-```
-
-If we navigate <http://localhost:8000/api/v1/bgbooks> you should see the newly added "cover" property (empty, but present).
-
-##### Heads up!
-
-Sometimes Julia/Genie/Revise fails to update `structs` on changes. If you get an error saying that `Book` does not have a `cover` field, please restart the Genie app.
-
-### File uploading
-
-Next step, extending our form to upload images (book covers). Please edit the `new.jl.html` view file as follows:
-
-```html
-<h3>Add a new book recommended by Bill Gates</h3>
-<p>
-  For inspiration you can visit <a href="https://www.gatesnotes.com/Books" target="_blank">Bill Gates' website</a>
-</p>
-<form action="$(Genie.Router.link_to(:create_book))" method="POST" enctype="multipart/form-data">
-  <input type="text" name="book_title" placeholder="Book title" /><br />
-  <input type="text" name="book_author" placeholder="Book author" /><br />
-  <input type="file" name="book_cover" /><br />
-  <input type="submit" value="Add book" />
-</form>
-```
-
-The new bits are:
-
-* we added a new attribute to our `<form>` tag: `enctype="multipart/form-data"`. This is required in order to support files payloads.
-* there's a new input of type file: `<input type="file" name="book_cover" />`
-
-You can see the updated form by visiting <http://localhost:8000/bgbooks/new>
-
-Now, time to add a new book, with the cover! How about "Identity" by Francis Fukuyama? Sounds good.
-You can use whatever image you want for the cover, or maybe borrow the one from Bill Gates, I hope he won't mind <https://www.gatesnotes.com/-/media/Images/GoodReadsBookCovers/Identity.png>.
-Just download the file to your computer so you can upload it through our form.
-
-Almost there - now to add the logic for handling the uploaded file server side. Please update the `BooksController.create` method to look like this:
-
-```julia
-# BooksController
-function create()
-  cover_path = if haskey(filespayload(), "book_cover")
-      path = joinpath("img", "covers", filespayload("book_cover").name)
-      write(joinpath("public", path), IOBuffer(filespayload("book_cover").data))
-
-      path
-    else
-      ""
-  end
-
-  Book( title = @params(:book_title),
-        author = @params(:book_author),
-        cover = cover_path) |> save && redirect_to(:get_bgbooks)
-end
-```
-
-Also, very important, you need to make sure that `BooksController` is `using Genie.Requests`.
-
-Regarding the code, there's nothing very fancy about it. First we check if the files payload contains an entry for our `book_cover` input.
-If yes, we compute the path where we want to store the file, write the file, and store the path in the database.
-
-**Please make sure that you create the folder `covers/` within `public/img/`**.
-
-Great, now let's display the images. Let's start with the HTML view - please edit `app/resources/books/views/billgatesbooks.jl.html` and make sure it has the following content:
-
-```html
-<!-- app/resources/books/views/billgatesbooks.jl.html -->
-<h1>Bill's Gates top $( length(@vars(:books)) ) recommended books</h1>
-<ul>
-   <%
-      @foreach(@vars(:books)) do book
-         """<li><img src="$( isempty(book.cover) ? "img/docs.png" : book.cover )" width="100px" /> $(book.title) by $(book.author)"""
-      end
-   %>
-</ul>
-```
-
-Basically here we check if the `cover` property is not empty, and display the actual cover. Otherwise we show a placeholder image.
-You can check the result at <http://localhost:8000/bgbooks>
-
-As for the JSON view, it already does what we want - you can check that the `cover` property is now outputted, as stored in the database: <http://localhost:8000/api/v1/bgbooks>
-
-Success, we're done here!
-
-
-
-#### Heads up!
-
-In production you will have to make the upload code more robust - the big problem here is that we store the cover file as it comes from the user which can lead to name clashes and files being overwritten - not to mention security vulnerabilities.
-A more robust way would be to compute a hash based on author and title and rename the cover to that.
-
-### One more thing...
-
-So far so good, but what if we want to update the books we have already uploaded? It would be nice to add those missing covers.
-We need to add a bit of functionality to include editing features.
-
-First things first - let's add the routes. Please add these two new route definitions to the `routes.jl` file:
-
-```julia
-route("/bgbooks/:id::Int/edit", BooksController.edit)
-route("/bgbooks/:id::Int/update", BooksController.update, method = POST, named = :update_book)
-```
-
-We defined two new routes. The first will display the book object in the form, for editing. While the second will take care of actually updating the database, server side.
-For both routes we need to pass the id of the book that we want to edit - and we want to constrain it to an `Int`. We express this as the `/:id::Int/` part of the route.
-
-We also want to:
-
-* reuse the form which we have defined in `app/resources/books/views/new.jl.html`
-* make the form aware of whether it's used to create a new book, or for editing an existing one respond accordingly by setting the correct `action`
-* pre-fill the inputs with the book's info when editing a book.
-
-OK, that's quite a list and this is where things become interesting. This is an important design pattern for CRUD web apps.
-So, are you ready, cause here is the trick: in order to simplify the rendering of the form, we will always pass a book object into it.
-When editing a book it will be the book corresponding to the `id` passed into the `route`. And when creating a new book, it will be just an empty book object we'll create and then dispose of.
-
-#### Using view partials
-
-First, let's set up the views. In `app/resources/books/views/` please create a new file called `form.jl.html`.
-Then, from `app/resources/books/views/new.jl.html` cut the `<form>` code. That is, everything between the opening and closing `<form>...</form>` tags.
-Paste it into the newly created `form.jl.html` file. Now, back to `new.jl.html`, instead of the previous `<form>...</form>` code add:
-
-```julia
-<% partial("app/resources/books/views/form.jl.html", context = @__MODULE__) %>
-```
-
-This line, as the `partial` function suggests, includes a view partial, which is a part of a view file, effectively including a view within another view. Notice that we're explicitly passing the `context` so Genie can set the correct variable scope when including the partial.
-
-You can reload the `new` page to make sure that everything still works: <http://localhost:8000/bgbooks/new>
-
-Now, let's add an Edit option to our list of books. Please go back to our list view file, `billgatesbooks.jl.html`.
-Here, for each iteration, within the `@foreach` block we'll want to dynamically link to the edit page for the corresponding book.
-
-##### `@foreach` with view partials
-
-However, this `@foreach` which renders a Julia string is very ugly - and we now know how to refactor it, by using a view partial.
-Let's do it. First, replace the body of the `@foreach` block:
-
-```html
-<!-- app/resources/books/views/billgatesbooks.jl.html -->
-"""<li><img src="$( isempty(book.cover) ? "img/docs.png" : book.cover )" width="100px" /> $(book.title) by $(book.author)"""
-```
-
-with:
-
-```julia
-partial("app/resources/books/views/book.jl.html", book = book, context = @__MODULE__)
-```
-
-Notice that we are using the `partial` function and we pass the book object into our view, under the name `book` (will be accessible in `@vars(:book)` inside the view partial). Again, we're passing the scope's `context` (our controller object).
-
-Next, create the `book.jl.html` in `app/resources/books/views/`, for example with
-
-```julia
-julia> touch("app/resources/books/views/book.jl.html")
-```
-
-Add this content to it:
-TO BE CONTINUED
-
-
-#### View helpers
-
-#### Using Flax elements
+In the next part we'll look at more advanced topics like handling forms and file uploads, templates rendering, interactivity and more.

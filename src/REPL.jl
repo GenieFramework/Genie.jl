@@ -46,6 +46,7 @@ end
 """
 function copy_db_support(app_path::String = ".") :: Nothing
   cp(joinpath(@__DIR__, "..", "files", "new_app", "db"), joinpath(app_path, "db"))
+  cp(joinpath(@__DIR__, "..", "files", "new_app", "config", "initializers", "searchlight.jl"), joinpath(app_path, "config", "initializers", "searchlight.jl"))
 
   nothing
 end

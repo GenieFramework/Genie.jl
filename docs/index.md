@@ -12,7 +12,9 @@ Genie is compatible with Julia v1.0 and up.
 
 ## Getting started
 
-[The Genie Step by Step Guide: Working with Genie Apps](content/Working_With_Genie_Apps.md)
+[The Genie Walkthrough: Developing Genie Apps, the Basics](content/Working_With_Genie_Apps.md)
+
+[The Genie Walkthrough: Developing Genie Apps, Intermediate Topics](content/Working_With_Genie_Apps_Intermediary_Topics.md)
 
 ## Documentation
 
