@@ -44,12 +44,12 @@ using .Loggers, .Configuration
 
 
 """
-    newmodel(model_name::String) :: Nothing
+    newmodel(model_name::String; context = @__MODULE__) :: Nothing
 
 Creates a new SearchLight `model` file.
 """
-function newmodel(model_name::String) :: Nothing
-  SearchLight.Generator.newmodel(model_name)
+function newmodel(model_name::String; context::Module = @__MODULE__) :: Nothing
+  Core.eval(context, :(SearchLight.Generator.newmodel($model_name)))
   load_resources()
 
   nothing
@@ -70,16 +70,16 @@ end
 
 
 """
-    newresource(resource_name::String) :: Nothing
+    newresource(resource_name::String; pluralize::Bool = true, context::Module = @__MODULE__) :: Nothing
 
 Creates all the files associated with a new resource.
 If `pluralize` is `false`, the name of the resource is not automatically pluralized.
 """
-function newresource(resource_name::String; pluralize::Bool = true) :: Nothing
+function newresource(resource_name::String; pluralize::Bool = true, context::Module = @__MODULE__) :: Nothing
   Generator.newresource(Dict{String,Any}("resource:new" => resource_name), pluralize = pluralize)
 
   try
-    SearchLight.Generator.newresource(uppercasefirst(resource_name))
+    Core.eval(context, :(SearchLight.Generator.newresource(uppercasefirst($resource_name))))
   catch ex
     log(ex, :error)
     log("Skipping SearchLight", :warn)
@@ -92,12 +92,12 @@ end
 
 
 """
-    newmigration(migration_name::String) :: Nothing
+    newmigration(migration_name::String, context::Module = @__MODULE__) :: Nothing
 
 Creates a new SearchLight migration file.
 """
-function newmigration(migration_name::String) :: Nothing
-  SearchLight.Generator.new_migration(Dict{String,Any}("migration:new" => migration_name))
+function newmigration(migration_name::String; context::Module = @__MODULE__) :: Nothing
+  Core.eval(context, :(SearchLight.Generator.new_migration(Dict{String,Any}("migration:new" => $migration_name))))
 
   nothing
 end
@@ -108,8 +108,8 @@ end
 
 Creates a new migration prefilled with code for creating a new table.
 """
-function newtablemigration(migration_name::String) :: Nothing
-  SearchLight.Generator.new_table_migration(Dict{String,Any}("migration:new" => migration_name))
+function newtablemigration(migration_name::String; context::Module = @__MODULE__) :: Nothing
+  Core.eval(context, :(SearchLight.Generator.new_table_migration(Dict{String,Any}("migration:new" => $migration_name))))
 
   nothing
 end

@@ -125,10 +125,12 @@ end
 @inline function normal_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   normal_element("", elem, attrs...)
 end
-@inline function normal_element(elems::Vector, elem::String) :: HTMLString
+@inline function normal_element(elems::Vector, elem::String, attrs...) :: HTMLString
   io = IOBuffer()
 
   for e in elems
+    e === nothing && continue
+
     if isa(e, Function)
       print(io, e(), "\n")
     else
@@ -136,7 +138,7 @@ end
     end
   end
 
-  normal_element(String(take!(io)), elem)
+  normal_element(String(take!(io)), elem, attrs...)
 end
 @inline function normal_element(_::Nothing, __::Any) :: HTMLString
   ""
@@ -222,6 +224,8 @@ Includes and renders a markdown view file
 function include_markdown(path::String; mod::Module = @__MODULE__)
   md = read(path, String)
 
+  vars_injection = ""
+
   if startswith(md, MD_SEPARATOR_START)
     close_sep_pos = findfirst(MD_SEPARATOR_END, md[length(MD_SEPARATOR_START)+1:end])
     metadata = md[length(MD_SEPARATOR_START)+1:close_sep_pos[end]] |> YAML.load
@@ -247,7 +251,11 @@ end
 Resolves the inclusion and rendering of a template file
 """
 function get_template(path::String; partial::Bool = true, mod::Module = @__MODULE__) :: Function
+  orig_path = path
+
   path, extension = view_file_info(path)
+
+  isfile(path) || error("Template file $orig_path does not exist")
 
   extension in FILE_EXT && return (() -> Base.include(mod, path))
 
@@ -668,6 +676,7 @@ The results of each iteration are concatenated and the final string is returned.
 macro foreach(f, arr)
   quote
     isempty($(esc(arr))) && return ""
+
     mapreduce(*, $(esc(arr))) do _s
       $f(_s) * "\n"
     end
@@ -677,6 +686,7 @@ end
 
 function foreachstr(f, arr)
   isempty(arr) && return ""
+
   mapreduce(*, arr) do _s
     f(_s)
   end

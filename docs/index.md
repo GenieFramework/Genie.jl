@@ -10,6 +10,10 @@ Genie is a full-stack MVC web framework that provides a streamlined and efficien
 
 Genie is compatible with Julia v1.0 and up.
 
+## Getting started
+
+[The Genie Step by Step Guide: Working with Genie Apps](content/Working_with_Genie_Apps.md)
+
 ## Documentation
 
 [Overview](1--Overview.md)
@@ -30,18 +34,21 @@ Genie is compatible with Julia v1.0 and up.
 
 [Publish Your Julia Code with Genie](9--Publishing_Your_Julia_Code_Online_With_Genie_Apps.md)
 
+[Loading Genie Apps](10--Loading_Genie_Apps.md)
+
 ## Guides
 
-Genie can be used for a variety of tasks, from quickly whipping up a web server to full MVC web apps.
-Use the following resources to dive into each use case.
+Genie can be used for a variety of tasks, from quickly whipping up a web server to full MVC web apps. Use the following resources to dive into each use case.
 
-[Using Genie in an interactive environment (Jupyter/IJulia, REPL, etc)](content/Interactive_environment.md)
+[Using Genie in an Interactive Environment (Jupyter/IJulia, REPL, etc)](content/Interactive_environment.md)
 
-[Developing a simple API backend](content/Simple_API_backend.md)
+[Developing a Simple API Backend](content/Simple_API_backend.md)
 
-[Working with Genie apps (projects)](content/Working_with_Genie_apps/index.md)
+[Using and Developing Genie Plugins](content/Genie_Plugins.md)
 
-[Using and developing Genie plugins](content/Genie_Plugins.md)
+[Managing Frontend Assets with the Asset Pipeline](content/Frontend_assets.md)
+
+## API docs (at ReadTheDocs.com)
 
 ## Acknowledgements
 
