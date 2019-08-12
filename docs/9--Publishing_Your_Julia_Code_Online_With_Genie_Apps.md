@@ -1,14 +1,12 @@
 # Publish your Julia code online with Genie apps
 
-If you have existing Julia code (modules and libraries) you'd like to expose online without building an app from scratch and copy-pasting your code the MVC way, Genie provides a built-in features to add and load your code into a Genie app.
+If you have existing Julia code (modules and libraries) which you'd like to quicly expose on the web without building an app from scratch, Genie provides an easy way to add and load your code into an app.
 
 ## Adding your Julia code to a Genie app
 
-If you have an existing Julia application or standalone codebase which you'd like to expose over the web through your Genie app, the easiest thing to do is to drop the files into the `lib/` folder.
-The `lib/` folder is automatically added by Genie to the `LOAD_PATH`.
+If you have an existing Julia application or standalone codebase which you'd like to expose over the web through a Genie app, the simples thing is to drop the files into the `lib/` folder. The `lib/` folder is automatically added by Genie to the `LOAD_PATH`, _recursively_.
 
-You can also add folders under `lib/`, they will be recursively added to `LOAD_PATH`. Beware though that this only happens when the Genie app is initially loaded.
-Hence, an app restart might be required if you add nested folders once the app is loaded.
+This means that can also add folders under `lib/`, and they will be recursively added to the `LOAD_PATH`. Beware though that this only happens when the Genie app is initially loaded. Hence, an app restart might be required if you add nested folders after the app is started.
 
 ---
 **HEADS UP**
@@ -21,7 +19,7 @@ julia> mkdir("lib")
 
 ---
 
-Once you module is added to `lib/` it will become available in your app's environment. For example, say we have a file `lib/MyLib.jl`:
+Once you code is added to the `lib/` follder, it will become available in your app's environment. For example, say we have a file in `lib/MyLib.jl`:
 
 ```julia
 # lib/MyLib.jl
@@ -36,7 +34,7 @@ end
 end
 ```
 
-Then we can reference it in `routes.jl` as follows:
+Then we can reference it in `routes.jl` and expose it on the web as follows:
 
 ```julia
 # routes.jl
@@ -48,4 +46,4 @@ route("/friday") do
 end
 ```
 
-By placing your files into the `lib/` folder, Genie knows where to look in order to load it and make it available throughout the app.
+Use the `lib/` folder to host your Julia code so that Genie knows where to look in order to load it and make it available throughout the application.
