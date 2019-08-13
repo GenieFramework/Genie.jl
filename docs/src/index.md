@@ -1,4 +1,4 @@
-![Genie Logo](docs/content/img/genie_logo.png)
+![Genie Logo](https://genieframework.github.io/Genie.jl/content/img/genie_logo.png)
 
 [![Stable](https://readthedocs.org/projects/docs/badge/?version=stable)](http://geniejl.readthedocs.io/en/stable/build/)
 [![Latest](https://readthedocs.org/projects/docs/badge/?version=latest)](http://geniejl.readthedocs.io/en/latest/build/)
