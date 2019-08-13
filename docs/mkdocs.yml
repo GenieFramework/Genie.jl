@@ -1,12 +1,16 @@
 site_name:        Genie.jl
-repo_url:         https://github.com/essenciary/Genie.jl
-site_description: Genie is a full-stack MVC web framework that promotes a streamlined and efficient workflow for developing modern web applications.
+repo_url:         https://github.com/GenieFramework/Genie.jl
+site_description: Genie is a full-stack MVC web framework that promotes a streamlined and efficient workflow for developing modern web applications with Julia.
 site_author:      essenciary
 
 theme: readthedocs
 
 extra_css:
   - assets/Documenter.css
+
+extra_javascript:
+  - https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML
+  - assets/mathjaxhelper.js
 
 markdown_extensions:
   - extra
