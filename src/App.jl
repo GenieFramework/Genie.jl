@@ -26,7 +26,7 @@ function bootstrap(context::Module = @__MODULE__) :: Nothing
     eval(context, Meta.parse("config = Configuration.Settings(app_env = Configuration.DEV)"))
   end
 
-  Core.eval(Genie, Meta.parse("config = config"))
+  Core.eval(Genie, Meta.parse("config = App.config"))
 
   nothing
 end

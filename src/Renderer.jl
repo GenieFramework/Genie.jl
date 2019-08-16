@@ -104,10 +104,10 @@ Sets redirect headers and prepares the `Response`.
 """
 function redirect(location::String, code::Int = 302, headers::HTTPHeaders = HTTPHeaders()) :: HTTP.Response
   headers["Location"] = location
-  WebRenderable("Redirecting you to $location", :text, code, headers)
+  WebRenderable("Redirecting you to $location", :text, code, headers) |> respond
 end
 function redirect(named_route::Symbol, code::Int = 302, headers::HTTPHeaders = HTTPHeaders()) :: HTTP.Response
-  redirect_to(Genie.Router.link_to(named_route), code, headers)
+  redirect(Genie.Router.link_to(named_route), code, headers)
 end
 
 

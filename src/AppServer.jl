@@ -11,9 +11,8 @@ using Genie, Genie.Configuration, Genie.Loggers, Genie.Sessions, Genie.Flax, Gen
 
 
 """
-    startup(port::Int = 8000, host::String = Genie.config.server_host;
-            ws_port::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
-            verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing)
+    startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
+        ws_port::Int = Genie.config.websocket_port, async::Bool = ! Genie.config.run_as_server) :: Nothing
 
 Starts the web server.
 
@@ -22,8 +21,6 @@ Starts the web server.
 - `host::String`: the host used by the web server
 - `ws_port::Int`: the port used by the Web Sockets server
 - `async::Bool`: run the web server task asynchronously
-- `verbose::Bool`: output debug info about connections status
-- `ratelimit::Union{Rational{Int},Nothing}`: limit the number of requests
 
 # Examples
 ```julia-repl
@@ -32,8 +29,8 @@ julia> startup(8000, "0.0.0.0", async = false)
 Web Server starting at http://0.0.0.0:8000
 ```
 """
-function startup(port::Int = 8000, host::String = Genie.config.server_host;
-                  ws_port::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
+function startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
+                  ws_port::Int = Genie.config.websocket_port, async::Bool = ! Genie.config.run_as_server,
                   verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing) :: Nothing
 
   # Create log directory and log file

@@ -179,9 +179,8 @@ const loadapp = REPL.loadapp
 
 
 """
-    startup(port::Int = 8000, host::String = Genie.config.server_host;
-            ws_port::Int = port + 1, async::Bool = ! Genie.config.run_as_server,
-            verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing)
+    startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
+        ws_port::Int = Genie.config.websocket_port, async::Bool = ! Genie.config.run_as_server) :: Nothing
 
 Starts the web server. Alias for `AppServer.startup`
 
@@ -190,8 +189,6 @@ Starts the web server. Alias for `AppServer.startup`
 - `host::String`: the host used by the web server
 - `ws_port::Int`: the port used by the Web Sockets server
 - `async::Bool`: run the web server task asynchronously
-- `verbose::Bool`: output debug info about connections status
-- `ratelimit::Union{Rational{Int},Nothing}`: limit the number of requests
 
 # Examples
 ```julia-repl

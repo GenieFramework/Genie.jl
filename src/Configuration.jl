@@ -3,7 +3,7 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
-const GENIE_VERSION = v"0.13.2"
+const GENIE_VERSION = v"0.13.3"
 
 using YAML
 using Genie
@@ -142,6 +142,7 @@ mutable struct Settings
   run_as_server::Bool
 
   websocket_server::Bool
+  websocket_port::Int
 
   renderer_default_layout_file::Symbol
 
@@ -189,6 +190,7 @@ mutable struct Settings
             run_as_server = false,
 
             websocket_server = false,
+            websocket_port = 8001,
 
             renderer_default_layout_file = :app,
         ) =
@@ -205,7 +207,7 @@ mutable struct Settings
                   inflector_irregulars,
                   flax_compile_templates, flax_autoregister_webcomponents,
                   run_as_server,
-                  websocket_server,
+                  websocket_server, websocket_port,
                   renderer_default_layout_file
                 )
 end
