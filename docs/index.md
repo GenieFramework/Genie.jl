@@ -38,6 +38,10 @@ Genie is compatible with Julia v1.0 and up.
 
 [Loading Genie Apps](docs/10--Loading_Genie_Apps.md)
 
+[Managing External Dependencies](docs/11--Managing_External_Packages.md)
+
+[Routing Requests Complete Guide](docs/12--Advanced_Routing_Techniques.md)
+
 ## Guides
 
 Genie can be used for a variety of tasks, from quickly whipping up a web server to full MVC web apps. Use the following resources to dive into each use case.
