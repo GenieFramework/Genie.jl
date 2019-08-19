@@ -6,6 +6,8 @@ Genie makes it easy to work with `POST` payloads. First, we need to register a d
 
 The following snippet registeres two routes in the root of the app, one for `GET` and the other for `POST` requests. The `GET` route displays a form which submits over `POST` to the other route. Finally, upon receiving the data, we display a custom message.
 
+### Example
+
 ```julia
 using Genie, Genie.Router, Genie.Renderer, Genie.Requests
 

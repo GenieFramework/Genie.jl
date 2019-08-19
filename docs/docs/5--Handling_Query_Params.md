@@ -2,7 +2,7 @@
 
 Genie makes it easy to access query params: values sent as part of the URL over GET requests. All these values are automatically collected by Genie and exposed in the `@params` collection (which is part of the `Router` module).
 
-Here's a quick sample:
+### Example
 
 ```julia
 using Genie, Genie.Router
@@ -19,7 +19,9 @@ However, requesting <http://127.0.0.1:8000/hi?name=Adrian> will in turn display 
 
 ## The `Requests` module
 
-Genie provides a set of utilities for working with requests data within the `Requests` module. You can use the `getpayload` method to retrieve the query params as a `Dict{Symbol,Any}`. We can rewrite the previous route to take advantage of the `Requests` utilities:
+Genie provides a set of utilities for working with requests data within the `Requests` module. You can use the `getpayload` method to retrieve the query params as a `Dict{Symbol,Any}`. We can rewrite the previous route to take advantage of the `Requests` utilities.
+
+### Example
 
 ```julia
 using Genie, Genie.Router, Genie.Requests

@@ -1,7 +1,7 @@
 site_name:        Genie.jl
 repo_url:         https://github.com/GenieFramework/Genie.jl
 site_description: Genie is a full-stack MVC web framework that promotes a streamlined and efficient workflow for developing modern web applications with Julia.
-site_author:      essenciary
+site_author:      Genie Framework Contributors
 
 theme: readthedocs
 

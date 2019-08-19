@@ -6,7 +6,7 @@ module Requests
 using Genie, Genie.Router, Genie.Input
 using HTTP
 
-export jsonpayload, rawpayload, filespayload, postpayload, getpayload, getrequest, infilespayload, download, filename
+export jsonpayload, rawpayload, filespayload, postpayload, getpayload, getrequest, infilespayload, download, filename, payload
 
 
 """
@@ -147,6 +147,26 @@ Returns the raw HTTP.Request object associated with the request.
 """
 @inline function getrequest() :: HTTP.Request
   @params(Genie.PARAMS_REQUEST_KEY)
+end
+
+
+"""
+    payload() :: Any
+
+Utility function for accessing the `@params` collection, which holds the request variables.
+"""
+@inline function payload() :: Any
+  @params
+end
+
+
+"""
+    payload(key::Symbol) :: Any
+
+Utility function for accessing the `key` value within the `@params` collection of request variables.
+"""
+@inline function payload(key::Symbol) :: Any
+  @params()[key]
 end
 
 end

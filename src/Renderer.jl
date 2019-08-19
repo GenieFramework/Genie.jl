@@ -107,7 +107,7 @@ function redirect(location::String, code::Int = 302, headers::HTTPHeaders = HTTP
   WebRenderable("Redirecting you to $location", :text, code, headers) |> respond
 end
 function redirect(named_route::Symbol, code::Int = 302, headers::HTTPHeaders = HTTPHeaders()) :: HTTP.Response
-  redirect(Genie.Router.link_to(named_route), code, headers)
+  redirect(Genie.Router.linkto(named_route), code, headers)
 end
 
 
@@ -139,10 +139,10 @@ function respond(body::String, params::Dict{Symbol,T})::HTTP.Response where {T}
 
   r |> respond
 end
-function respond(err::T, content_type::Union{Symbol,String} = Genie.Router.response_type(), code::Int = 500)::HTTP.Response where {T<:Exception}
+function respond(err::T, content_type::Union{Symbol,String} = Genie.Router.responsetype(), code::Int = 500)::HTTP.Response where {T<:Exception}
   HTTP.Response(code, (isa(content_type, Symbol) ? ["Content-Type" => CONTENT_TYPES[content_type]] : ["Content-Type" => content_type]), body = string(err))
 end
-function respond(body::String, content_type::Union{Symbol,String} = Genie.Router.response_type(), code::Int = 200) :: HTTP.Response
+function respond(body::String, content_type::Union{Symbol,String} = Genie.Router.responsetype(), code::Int = 200) :: HTTP.Response
   HTTP.Response(code, (isa(content_type, Symbol) ? ["Content-Type" => CONTENT_TYPES[content_type]] : ["Content-Type" => content_type]), body = body)
 end
 function respond(body, code::Int = 200, headers::HTTPHeaders = HTTPHeaders())

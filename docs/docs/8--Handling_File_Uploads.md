@@ -4,6 +4,8 @@ Genie has built-in support for working with file uploads. The collection of uplo
 
 In the following snippet we configure two routes in the root of the app (`/`): the first route, handling `GET` requests, displays an upload form. The second route, handling `POST` requests, processes the uploads, generating a file from the uploaded data, saving it, and displaying the file stats.
 
+### Example
+
 ```julia
 using Genie, Genie.Router, Genie.Renderer, Genie.Requests
 

@@ -8,8 +8,9 @@ include(joinpath(@__DIR__, "mimetypes.jl"))
 
 export route, routes, channel, channels, serve_static_file
 export GET, POST, PUT, PATCH, DELETE, OPTIONS
-export to_link!!, to_link, link_to!!, link_to, response_type, @params
+export tolink!!, tolink, linkto!!, linkto, responsetype
 export error_404, error_500
+export @params, @routes, @channels
 
 const GET     = "GET"
 const POST    = "POST"
@@ -262,6 +263,16 @@ const namedroutes = named_routes
 
 
 """
+    @routes
+
+Collection of named routes
+"""
+macro routes()
+  _routes
+end
+
+
+"""
     named_channels() :: Dict{Symbol,Any}
 
 The list of the defined named channels.
@@ -270,6 +281,16 @@ function named_channels() :: OrderedDict{Symbol,Channel}
   _channels
 end
 const namedchannels = named_channels
+
+
+"""
+    @channels
+
+Collection of named channels.
+"""
+macro channels()
+  _channels
+end
 
 
 """
@@ -301,12 +322,12 @@ end
 
 
 """
+    delete!(routes, route_name::Symbol)
+
+Removes the route with the corresponding name from the routes collection and returns the collection of remaining routes.
 """
-function Base.delete!(collection::OrderedDict{Symbol,Route}, key::Symbol)
-  delete!(_routes, key)
-end
-function Base.delete!(collection::OrderedDict{Symbol,Channel}, key::Symbol)
-  delete!(_channels, key)
+function delete!(routes::OrderedDict{Symbol,Route}, key::Symbol) :: OrderedDict{Symbol,Route}
+  OrderedCollections.delete!(routes, key)
 end
 
 
@@ -359,6 +380,8 @@ function to_link!!(route_name::Symbol; route_params...) :: String
 end
 
 const link_to!! = to_link!!
+const linkto!! = link_to!!
+const tolink!! = to_link!!
 
 function to_link(route_name::Symbol; route_params...) :: String
   try
@@ -373,6 +396,8 @@ function to_link(route_name::Symbol; route_params...) :: String
 end
 
 const link_to = to_link
+const linkto = link_to
+const tolink = to_link
 
 
 """
@@ -866,6 +891,9 @@ Checks if the content-type of the current request-response cycle matches `check`
 function response_type(check::Symbol, params::Dict{Symbol,T})::Bool where {T}
   check == response_type(params)
 end
+
+
+const responsetype = response_type
 
 
 """

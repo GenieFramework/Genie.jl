@@ -53,14 +53,14 @@ Make sure that it has this content:
 <p>
   For inspiration you can visit <a href="https://www.gatesnotes.com/Books" target="_blank">Bill Gates' website</a>
 </p>
-<form action="$(Genie.Router.link_to(:create_book))" method="POST">
+<form action="$(Genie.Router.linkto(:create_book))" method="POST">
   <input type="text" name="book_title" placeholder="Book title" /><br />
   <input type="text" name="book_author" placeholder="Book author" /><br />
   <input type="submit" value="Add book" />
 </form>
 ```
 
-Notice that the form's action calls the `link_to` method, passing in the name of the route to generate the URL, resulting in the following HTML: `<form method="POST" action="/bgbooks/create">`.
+Notice that the form's action calls the `linkto` method, passing in the name of the route to generate the URL, resulting in the following HTML: `<form method="POST" action="/bgbooks/create">`.
 
 We should also update the `BooksController.create` method to do something useful with the form data. Let's make it create a new book, persist it to the database and redirect to the list of books. Here is the code:
 
@@ -212,7 +212,7 @@ Next step, extending our form to upload images (book covers). Please edit the `n
 <p>
   For inspiration you can visit <a href="https://www.gatesnotes.com/Books" target="_blank">Bill Gates' website</a>
 </p>
-<form action="$(Genie.Router.link_to(:create_book))" method="POST" enctype="multipart/form-data">
+<form action="$(Genie.Router.linkto(:create_book))" method="POST" enctype="multipart/form-data">
   <input type="text" name="book_title" placeholder="Book title" /><br />
   <input type="text" name="book_author" placeholder="Book author" /><br />
   <input type="file" name="book_cover" /><br />

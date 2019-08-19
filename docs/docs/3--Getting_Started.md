@@ -6,6 +6,8 @@ Here are a few examples to quickly get you started with building Genie web apps.
 
 The simplest use case is to configure a routing function at the REPL and start the web server. That's all that's needed to run your code on the web:
 
+### Example
+
 ```julia
 julia> using Genie, Genie.Router
 
