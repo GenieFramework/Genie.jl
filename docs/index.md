@@ -1,6 +1,6 @@
-![Genie Logo](content/img/genie_logo.png)
-
 # Genie
+
+![Genie Logo](content/img/genie_logo.png)
 
 ## The highly productive Julia web framework
 
@@ -56,7 +56,6 @@ Genie can be used for a variety of tasks, from quickly whipping up a web server 
 
 ## API docs
 [Developer API Docs](documentation/API)
-
 
 ## Acknowledgements
 
