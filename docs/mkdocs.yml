@@ -20,8 +20,6 @@ markdown_extensions:
 
 docs_dir: 'src'
 
-site_dir: 'API_docs'
-
 pages:
   - Home: index.md
 
