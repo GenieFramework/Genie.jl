@@ -3,6 +3,12 @@ module Sessions
 using SHA, HTTP, Dates, Nullables
 using Genie, Genie.Cookies, Genie.Loggers
 
+
+"""
+    mutable struct Session
+
+Represents a session object
+"""
 mutable struct Session
   id::String
   data::Dict{Symbol,Any}

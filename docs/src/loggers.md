@@ -1,5 +1,5 @@
 ```@meta
-CurrentModule = Logger
+CurrentModule = Loggers
 ```
 
 ```@contents

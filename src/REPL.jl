@@ -271,6 +271,9 @@ end
 
 
 """
+    setup_windows_bin_files(path::String = ".") :: Nothing
+
+Creates the bin/server and bin/repl binaries for Windows
 """
 function setup_windows_bin_files(path::String = ".") :: Nothing
   open(joinpath(path, "bin", "repl.bat"), "w") do f
@@ -285,6 +288,11 @@ function setup_windows_bin_files(path::String = ".") :: Nothing
 end
 
 
+"""
+    setup_nix_bin_files(app_path::String = ".") :: Nothing
+
+Creates the bin/server and bin/repl binaries for *nix systems
+"""
 function setup_nix_bin_files(app_path::String = ".") :: Nothing
   chmod(joinpath(app_path, "bin", "server"), 0o700)
   chmod(joinpath(app_path, "bin", "repl"), 0o700)

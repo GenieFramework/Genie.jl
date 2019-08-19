@@ -36,6 +36,11 @@ const request_mappings = Dict(
 )
 
 
+"""
+    mutable struct Route
+
+Representation of a route object
+"""
 mutable struct Route
   method::String
   path::String
@@ -46,6 +51,11 @@ mutable struct Route
 end
 
 
+"""
+    mutable struct Channel
+
+Representation of a WebSocket Channel object
+"""
 mutable struct Channel
   path::String
   action::Function
@@ -67,6 +77,11 @@ const _routes = OrderedDict{Symbol,Route}()
 const _channels = OrderedDict{Symbol,Channel}()
 
 
+"""
+    mutable struct Params{T}
+
+Collection of key value pairs representing the parameters of the current request - response cycle.
+"""
 mutable struct Params{T}
   collection::Dict{Symbol,T}
 end
@@ -76,6 +91,12 @@ Base.Dict(params::Params) = params.collection
 
 Base.getindex(params, keys...) = getindex(Dict(params), keys...)
 
+
+"""
+    ispayload(req::HTTP.Request)
+
+True if the request can carry a payload - that is, it's a `POST`, `PUT`, or `PATCH` request
+"""
 ispayload(req::HTTP.Request) = req.method in [POST, PUT, PATCH]
 
 
@@ -332,14 +353,24 @@ end
 
 
 """
-Generates the HTTP link corresponding to `route_name`.
+Generates the HTTP link corresponding to `route_name` using the parameters in `d`.
 """
 function to_link!!(route_name::Symbol, d::Vector{Pair{Symbol,T}})::String where {T}
   to_link!!(route_name, Dict(d...))
 end
+
+
+"""
+Generates the HTTP link corresponding to `route_name` using the parameters in `d`.
+"""
 function to_link!!(route_name::Symbol, d::Pair{Symbol,T})::String where {T}
   to_link!!(route_name, Dict(d))
 end
+
+
+"""
+Generates the HTTP link corresponding to `route_name` using the parameters in `d`.
+"""
 function to_link!!(route_name::Symbol, d::Dict{Symbol,T})::String where {T}
   route = try
             get_route(route_name)
@@ -375,6 +406,11 @@ function to_link!!(route_name::Symbol, d::Dict{Symbol,T})::String where {T}
 
   join(result, "/") * ( size(query_vars, 1) > 0 ? "?" : "" ) * join(query_vars, "&")
 end
+
+
+"""
+Generates the HTTP link corresponding to `route_name` using the parameters in `route_params`.
+"""
 function to_link!!(route_name::Symbol; route_params...) :: String
   to_link!!(route_name, route_params_to_dict(route_params))
 end
@@ -383,6 +419,10 @@ const link_to!! = to_link!!
 const linkto!! = link_to!!
 const tolink!! = to_link!!
 
+
+"""
+Generates the HTTP link corresponding to `route_name` using the parameters in `route_params`.
+"""
 function to_link(route_name::Symbol; route_params...) :: String
   try
     to_link!!(route_name, route_params_to_dict(route_params))

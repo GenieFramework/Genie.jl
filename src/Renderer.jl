@@ -21,12 +21,24 @@ const DEFAULT_CONTENT_TYPE = :html
 const ResourcePath = Union{String,Symbol}
 const HTTPHeaders = Dict{String,String}
 
+
+"""
+    mutable struct WebResource
+
+Represents a resource that can be resolved by the view layer
+"""
 mutable struct WebResource
   resource::ResourcePath
   action::ResourcePath
   layout::ResourcePath
 end
 
+
+"""
+    mutable struct WebRenderable
+
+Represents an object that can be rendered on the web
+"""
 mutable struct WebRenderable
   body::String
   content_type::Symbol
