@@ -18,5 +18,11 @@ markdown_extensions:
   - fenced_code
   - mdx_math
 
+docs_dir: 'src'
+
+site_dir: 'API_docs'
+
 pages:
   - Home: index.md
+
+google_analytics: ['UA-4730466-4', 'Genie Docs']
