@@ -55,7 +55,7 @@ Genie can be used for a variety of tasks, from quickly whipping up a web server 
 [Managing Frontend Assets with the Asset Pipeline](guides/Frontend_assets.md)
 
 ## API docs
-[Developer API Docs @ReadTheDocs](https://geniejl.readthedocs.io/en/latest/src/)
+[Developer API Docs](documentation/API)
 
 
 ## Acknowledgements

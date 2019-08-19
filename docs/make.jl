@@ -13,4 +13,4 @@ push!(LOAD_PATH,  "../../src",
                   "../../src/cache_adapters",
                   "../../src/session_adapters")
 
-makedocs(sitename = "Genie - The Highly Productive Julia Web Framework")
+makedocs(sitename = "Genie - The Highly Productive Julia Web Framework", format = Documenter.HTML(prettyurls = false))
