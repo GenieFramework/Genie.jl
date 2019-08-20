@@ -165,11 +165,8 @@ function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.
   Combine headers. If different values for the same keys,
   use the following order of precedence:
   app_response > res
-
-  The vcat step is unnecessary, since it will allow duplicate keys, but these
-  shouldn't exist between app_response and the outcome of a merge where app_response has highest precedence.
   =#
-  app_response.headers = vcat(app_response.headers, [d for d in merge(Dict(res.headers), Dict(app_response.headers))]) |> unique
+  app_response.headers = [d for d in merge(Dict(res.headers), Dict(app_response.headers))]
 
   app_response
 end
