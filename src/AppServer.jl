@@ -139,13 +139,12 @@ function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.
   if req.method == Genie.Router.OPTIONS || req.method == Genie.Router.GET
 
     request_origin = Dict(req.headers)["Origin"]
-    allowed_origin = strip(Genie.config.cors_headers["Access-Control-Allow-Origin"])
 
-    if in(request_origin, Genie.config.cors_allowed_origins)
-      allowed_origin = request_origin
-    end
-
-    allowed_origin_dict = Dict("Access-Control-Allow-Origin" => allowed_origin)
+    allowed_origin_dict = Dict("Access-Control-Allow-Origin" =>
+      in(request_origin, Genie.config.cors_allowed_origins)
+      ? request_origin
+      : strip(Genie.config.cors_headers["Access-Control-Allow-Origin"])
+    )
 
     #=
     Combine headers. If different values for the same keys,
