@@ -136,7 +136,7 @@ end
 Configures the response headers.
 """
 function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.Response) :: HTTP.Response
-  if req.method == Genie.Router.OPTIONS
+  if req.method == Genie.Router.OPTIONS || req.method == Genie.Router.GET
     Genie.config.cors_headers["Access-Control-Allow-Origin"] = strip(Genie.config.cors_headers["Access-Control-Allow-Origin"])
 
     ! isempty(Genie.config.cors_allowed_origins) &&
