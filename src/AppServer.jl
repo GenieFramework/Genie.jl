@@ -150,7 +150,15 @@ function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.
         Genie.config.cors_headers["Access-Control-Allow-Origin"] == "*") &&
       (Genie.config.cors_headers["Access-Control-Allow-Origin"] = Dict(req.headers)["Origin"])
 
-    app_response.headers = [d for d in merge(Genie.config.cors_headers, Dict(res.headers))]
+    #=
+    Combine headers. If different values for the same keys,
+    use the following order of precedence:
+    app_response > res > Genie.config
+
+    The app_response likely has an automatically-determined
+    response type header that we want to keep.
+    =#
+    app_response.headers = [d for d in merge(Genie.config.cors_headers, Dict(res.headers), Dict(app_response.headers))]
   end
 
   app_response.headers = vcat(app_response.headers, [d for d in merge(Dict(res.headers), Dict(app_response.headers))]) |> unique
