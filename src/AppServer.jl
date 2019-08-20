@@ -137,28 +137,25 @@ Configures the response headers.
 """
 function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.Response) :: HTTP.Response
   if req.method == Genie.Router.OPTIONS || req.method == Genie.Router.GET
-    Genie.config.cors_headers["Access-Control-Allow-Origin"] = strip(Genie.config.cors_headers["Access-Control-Allow-Origin"])
 
-    #=
-    If the request origin matches an entry in the config's array of allowed origins,
-    and the CORS header allowed origin is set to "" or "*", then overwrite the
-    CORS header allowed origin with the request origin.
-    =#
-    ! isempty(Genie.config.cors_allowed_origins) &&
-      in(Dict(req.headers)["Origin"], Genie.config.cors_allowed_origins) &&
-      (Genie.config.cors_headers["Access-Control-Allow-Origin"] == "" ||
-        Genie.config.cors_headers["Access-Control-Allow-Origin"] == "*") &&
-      (Genie.config.cors_headers["Access-Control-Allow-Origin"] = Dict(req.headers)["Origin"])
+    request_origin = Dict(req.headers)["Origin"]
+    allowed_origin = strip(Genie.config.cors_headers["Access-Control-Allow-Origin"])
+
+    if in(request_origin, Genie.config.cors_allowed_origins)
+      allowed_origin = request_origin
+    end
+
+    allowed_origin_dict = Dict("Access-Control-Allow-Origin" => allowed_origin)
 
     #=
     Combine headers. If different values for the same keys,
     use the following order of precedence:
-    app_response > res > Genie.config
+    app_response > res > allowed_origin > Genie.config
 
     The app_response likely has an automatically-determined
     response type header that we want to keep.
     =#
-    app_response.headers = [d for d in merge(Genie.config.cors_headers, Dict(res.headers), Dict(app_response.headers))]
+    app_response.headers = [d for d in merge(Genie.config.cors_headers, allowed_origin_dict, Dict(res.headers), Dict(app_response.headers))]
   end
 
   #=
