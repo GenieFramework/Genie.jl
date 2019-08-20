@@ -139,11 +139,16 @@ function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.
   if req.method == Genie.Router.OPTIONS || req.method == Genie.Router.GET
     Genie.config.cors_headers["Access-Control-Allow-Origin"] = strip(Genie.config.cors_headers["Access-Control-Allow-Origin"])
 
+    #=
+    If the request origin matches an entry in the config's array of allowed origins,
+    and the CORS header allowed origin is set to "" or "*", then overwrite the
+    CORS header allowed origin with the request origin.
+    =#
     ! isempty(Genie.config.cors_allowed_origins) &&
-      in(req.headers["Origin"], Genie.config.cors_allowed_origins) &&
+      in(Dict(req.headers)["Origin"], Genie.config.cors_allowed_origins) &&
       (Genie.config.cors_headers["Access-Control-Allow-Origin"] == "" ||
         Genie.config.cors_headers["Access-Control-Allow-Origin"] == "*") &&
-      (Genie.config.cors_headers["Access-Control-Allow-Origin"] = req.headers["Origin"])
+      (Genie.config.cors_headers["Access-Control-Allow-Origin"] = Dict(req.headers)["Origin"])
 
     app_response.headers = [d for d in merge(Genie.config.cors_headers, Dict(res.headers))]
   end
