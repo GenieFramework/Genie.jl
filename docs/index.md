@@ -42,6 +42,12 @@ Genie is compatible with Julia v1.0 and up.
 
 [Routing Requests Complete Guide](documentation/12--Advanced_Routing_Techniques.md)
 
+[Configuration: Initializers](documentation/13--Initializers.md)
+
+[Configuration: The Secrets File](documentation/14--The_Secrets_File.md)
+
+[Loading External Modules](documentation/15--The_Lib_Folder.md)
+
 ## Guides
 
 Genie can be used for a variety of tasks, from quickly whipping up a web server to full MVC web apps. Use the following resources to dive into each use case.
