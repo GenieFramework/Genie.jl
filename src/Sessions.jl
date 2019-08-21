@@ -1,7 +1,7 @@
 module Sessions
 
 using SHA, HTTP, Dates, Nullables
-using Genie, Genie.Cookies, Genie.Loggers
+using Genie, Genie.Cookies, Genie.Loggers, Genie.Generator
 
 
 """
@@ -35,7 +35,7 @@ function id() :: String
 
     if ! Genie.Configuration.isprod()
       log("Generating temporary secret token", :warn)
-      Core.eval(Genie, :(const SECRET_TOKEN = $(Genie.REPL.secret_token())))
+      Core.eval(Genie, :(const SECRET_TOKEN = $(Genie.Generator.secret_token())))
     else
       error("Can't compute session id - please make sure SECRET_TOKEN is defined in config/secrets.jl")
     end

@@ -387,7 +387,7 @@ function to_link!!(route_name::Symbol, d::Dict{Symbol,T})::String where {T}
       var_name = split(part, "::")[1][2:end] |> Symbol
       ( isempty(d) || ! haskey(d, var_name) ) && error("Route $route_name expects param $var_name")
       push!(result, pathify(d[var_name]))
-      delete!(d, var_name)
+      Base.delete!(d, var_name)
       continue
     end
     push!(result, part)
@@ -395,7 +395,7 @@ function to_link!!(route_name::Symbol, d::Dict{Symbol,T})::String where {T}
 
   query_vars = String[]
   if haskey(d, :_preserve_query)
-    delete!(d, :_preserve_query)
+    Base.delete!(d, :_preserve_query)
     query = URI(task_local_storage(:__params)[:REQUEST].target).query
     query != "" && (query_vars = split(query , "&" ))
   end

@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.14 - 2019-08-21
+
+* consolidation of the Generator API
+* Genie depencencies update
+* support for Julia v1.2
+* removal of the `REPL` module
+* CORS handling improvement (thanks @milesfrain)
+* internal API cleanup and optimisations
+* bug fixes
+* improved documentation
+* more docstrings
+* removal of deprecated `env.jl` file
+* updated error HTML files (thanks @Acciaiodigitale)
+
 ## v0.13.4 - 2019-08-19
 
 * files cleanup -- removed unused, unnecessary files from Genie codebase and new app bootstrap code
@@ -8,7 +22,6 @@
 * extended `Router` API
 * new documentation about `Router`
 * documentation tweaks
-*
 
 ## v0.13.3 - 2019-08-13
 

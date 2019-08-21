@@ -41,7 +41,7 @@ function encryption_sauce() :: Tuple{Vector{UInt8},Vector{UInt8}}
 
     if ! Genie.Configuration.isprod()
       log("Generating temporary secret token", :warn)
-      Core.eval(Genie, :(const SECRET_TOKEN = $(Genie.REPL.secret_token())))
+      Core.eval(Genie, :(const SECRET_TOKEN = $(Genie.Generator.secret_token())))
     else
       error("Can't encrypt - please make sure you run a Genie project and SECRET_TOKEN is defined in config/secrets.jl")
     end

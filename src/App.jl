@@ -19,14 +19,14 @@ Kickstarts the loading of a Genie app by loading the environment settings.
 """
 function bootstrap(context::Module = @__MODULE__) :: Nothing
   if haskey(ENV, "GENIE_ENV") && isfile(joinpath(Genie.ENV_PATH, ENV["GENIE_ENV"] * ".jl"))
-    isfile(joinpath(Genie.ENV_PATH, "global.jl")) && include(joinpath(Genie.ENV_PATH, "global.jl"))
-    include(joinpath(Genie.ENV_PATH, ENV["GENIE_ENV"] * ".jl"))
+    isfile(joinpath(Genie.ENV_PATH, Genie.GLOBAL_ENV_FILE_NAME)) && Base.include(context, joinpath(Genie.ENV_PATH, Genie.GLOBAL_ENV_FILE_NAME))
+    isfile(joinpath(Genie.ENV_PATH, ENV["GENIE_ENV"] * ".jl")) && Base.include(context, joinpath(Genie.ENV_PATH, ENV["GENIE_ENV"] * ".jl"))
   else
-    ENV["GENIE_ENV"] = Configuration.DEV
-    eval(context, Meta.parse("config = Configuration.Settings(app_env = Configuration.DEV)"))
+    ENV["GENIE_ENV"] = Genie.Configuration.DEV
+    Core.eval(context, Meta.parse("const config = Configuration.Settings(app_env = Configuration.DEV)"))
   end
 
-  Core.eval(Genie, Meta.parse("config = App.config"))
+  Core.eval(Genie, Meta.parse("config = $(context).config"))
 
   nothing
 end
@@ -138,7 +138,7 @@ Recursively adds subfolders of `lib/` to LOAD_PATH.
 The `lib/` folder, if present, is designed to host user code in the form of .jl files.
 This function loads user code into the Genie app.
 """
-function load_libs(root_dir::String = LIB_PATH) :: Nothing
+function load_libs(root_dir::String = Genie.LIB_PATH) :: Nothing
   isdir(root_dir) || return nothing
 
   push!(LOAD_PATH, root_dir)
@@ -159,7 +159,7 @@ end
 
 Recursively adds subfolders of `resources/` to LOAD_PATH.
 """
-function load_resources(root_dir::String = RESOURCES_PATH) :: Nothing
+function load_resources(root_dir::String = Genie.RESOURCES_PATH) :: Nothing
   isdir(root_dir) || return nothing
 
   push!(LOAD_PATH, root_dir)
@@ -180,7 +180,7 @@ end
 
 Recursively adds subfolders of `helpers/` to LOAD_PATH.
 """
-function load_helpers(root_dir::String = HELPERS_PATH) :: Nothing
+function load_helpers(root_dir::String = Genie.HELPERS_PATH) :: Nothing
   isdir(root_dir) || return nothing
 
   push!(LOAD_PATH, root_dir)
@@ -202,11 +202,8 @@ end
 Loads (includes) the framework's configuration files into the app's module `context`.
 The files are set up with `Revise` to be automatically reloaded.
 """
-function load_configurations(root_dir::String = CONFIG_PATH; context::Module = @__MODULE__) :: Nothing
-  loggers_path = joinpath(root_dir, "loggers.jl")
-  isfile(loggers_path) && Revise.track(context, loggers_path, define = true)
-
-  secrets_path = joinpath(root_dir, "secrets.jl")
+function load_configurations(root_dir::String = Genie.CONFIG_PATH; context::Module = @__MODULE__) :: Nothing
+  secrets_path = joinpath(root_dir, Genie.SECRETS_FILE_NAME)
   isfile(secrets_path) && Revise.track(context, secrets_path, define = true)
 
   nothing
@@ -219,8 +216,8 @@ end
 Loads (includes) the framework's initializers.
 The files are set up with `Revise` to be automatically reloaded.
 """
-function load_initializers(root_dir::String = CONFIG_PATH; context::Module = @__MODULE__) :: Nothing
-  dir = joinpath(root_dir, "initializers")
+function load_initializers(root_dir::String = Genie.CONFIG_PATH; context::Module = @__MODULE__) :: Nothing
+  dir = joinpath(root_dir, Genie.INITIALIZERS_FOLDER)
 
   isdir(dir) || return nothing
 
@@ -239,7 +236,7 @@ end
 
 Loads (includes) the framework's plugins initializers.
 """
-function load_plugins(root_dir::String = PLUGINS_PATH; context::Module = @__MODULE__) :: Nothing
+function load_plugins(root_dir::String = Genie.PLUGINS_PATH; context::Module = @__MODULE__) :: Nothing
   isdir(root_dir) || return nothing
 
   for i in readdir(root_dir)
@@ -275,10 +272,10 @@ function secret_token(; context::Module = @__MODULE__) :: String
     context.SECRET_TOKEN
   else
     @warn "SECRET_TOKEN not configured - please make sure that you have a valid secrets.jl file.
-          You can generate a new secrets.jl file with a random SECRET_TOKEN using Genie.REPL.write_secrets_file()
+          You can generate a new secrets.jl file with a random SECRET_TOKEN using Genie.Generator.write_secrets_file()
           or use the included /app/config/secrets.jl.example file as a model."
 
-    st = REPL.secret_token()
+    st = Generator.secret_token()
     Core.eval(@__MODULE__, Meta.parse("""const SECRET_TOKEN = "$st" """))
 
     st

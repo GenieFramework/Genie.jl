@@ -1,7 +1,3 @@
-cd(@__DIR__)
-using Pkg
-pkg"activate ."
-
 using Revise
 
 const ROOT_PATH = pwd()

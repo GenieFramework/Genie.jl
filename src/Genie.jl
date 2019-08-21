@@ -27,8 +27,8 @@ include("Inflector.jl")
 include("Util.jl")
 include("FileTemplates.jl")
 include("Toolbox.jl")
-include("Generator.jl")
 include("Tester.jl")
+include("Generator.jl")
 include("Encryption.jl")
 include("Cookies.jl")
 include("Sessions.jl")
@@ -52,8 +52,6 @@ using .Inflector, .Util
 using .FileTemplates, .Toolbox, .Generator, .Tester, .Encryption, .Cookies, .Sessions
 using .Input, .Renderer, .Assets, .Router, .Helpers, .AppServer, .Commands
 using .Flax, .AppServer, .Plugins
-
-include(joinpath(@__DIR__, "REPL.jl"))
 
 export startup, serve
 
@@ -131,7 +129,7 @@ julia> Genie.newapp("MyGenieApp")
 2019-08-06 16:54:32:DEBUG:Main: Web Server running at http://127.0.0.1:8000
 ```
 """
-const newapp = REPL.newapp
+const newapp = Generator.newapp
 
 
 """
@@ -175,7 +173,17 @@ julia> Genie.loadapp(".")
 [ Info: Logging to file at MyGenieApp/log/dev.log
 ```
 """
-const loadapp = REPL.loadapp
+function loadapp(path::String = "."; autostart::Bool = false) :: Nothing
+  Core.eval(Main, Meta.parse("using Revise"))
+  Core.eval(Main, Meta.parse("""include(joinpath("$path", "$(Genie.BOOTSTRAP_FILE_NAME)"))"""))
+  Core.eval(Main, Meta.parse("Revise.revise()"))
+  Core.eval(Main, Meta.parse("using Genie"))
+
+  Core.eval(Main.UserApp, Meta.parse("Revise.revise()"))
+  Core.eval(Main.UserApp, Meta.parse("$autostart && Genie.startup()"))
+
+  nothing
+end
 
 
 """
