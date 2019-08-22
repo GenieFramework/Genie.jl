@@ -5,8 +5,8 @@ module Genie
 
 push!(LOAD_PATH, @__DIR__)
 
-include(joinpath(@__DIR__, "Configuration.jl"))
-include(joinpath(@__DIR__, "constants.jl"))
+include("Configuration.jl")
+include("constants.jl")
 
 config = Configuration.Settings(app_env = Configuration.DEV)
 

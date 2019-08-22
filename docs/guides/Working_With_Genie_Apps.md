@@ -457,7 +457,7 @@ Next, we add `SearchLight`:
 Genie is designed to seamlessly integrate with SearchLight and provides access to various database oriented generators. First we need to tell Genie/SearchLight how to connect to the database. Let's use them to set up our database support. Run this in the Genie/Julia REPL:
 
 ```julia
-julia> Genie.REPL.copy_db_support()
+julia> Genie.Generator.dbsupport()
 ```
 
 The command will add a `db/` folder within the root of the app. What we're looking for is the `db/connection.yml` file. Let's edit it. Make the file to look like this:
@@ -501,7 +501,7 @@ Database migrations provide a way to reliably, consistently and repeatedly apply
 SearchLight needs its own DB table to keep track of the state of the migrations so let's set it up:
 
 ```julia
-julia> SearchLight.db_init()
+julia> SearchLight.init()
 [info]: SQL QUERY: CREATE TABLE `schema_migrations` (
     `version` varchar(30) NOT NULL DEFAULT '',
     PRIMARY KEY (`version`)

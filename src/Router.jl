@@ -8,7 +8,7 @@ include(joinpath(@__DIR__, "mimetypes.jl"))
 
 export route, routes, channel, channels, serve_static_file
 export GET, POST, PUT, PATCH, DELETE, OPTIONS
-export tolink!!, tolink, linkto!!, linkto, responsetype
+export tolink, linkto, responsetype
 export error_404, error_500
 export @params, @routes, @channels
 
@@ -259,7 +259,7 @@ end
 
 Computes the name of a channel.
 """
-function channel_name(params::Channel) :: Symbol
+@inline function channel_name(params::Channel) :: Symbol
   baptizer(params, String[])
 end
 
@@ -277,7 +277,7 @@ end
 """
 The list of the defined named routes.
 """
-function named_routes() :: OrderedDict{Symbol,Route}
+@inline function named_routes() :: OrderedDict{Symbol,Route}
   _routes
 end
 const namedroutes = named_routes
@@ -298,7 +298,7 @@ end
 
 The list of the defined named channels.
 """
-function named_channels() :: OrderedDict{Symbol,Channel}
+@inline function named_channels() :: OrderedDict{Symbol,Channel}
   _channels
 end
 const namedchannels = named_channels
@@ -317,8 +317,8 @@ end
 """
 Gets the `Route` correspoding to `route_name`
 """
-function get_route(route_name::Symbol) :: Route
-  named_routes()[route_name]
+@inline function get_route(route_name::Symbol) :: Route
+  haskey(named_routes(), route_name) ? named_routes()[route_name] : error("Route named `$route_name` is not defined")
 end
 
 
@@ -327,7 +327,7 @@ end
 
 Returns a vector of defined routes.
 """
-function routes() :: Vector{Route}
+@inline function routes() :: Vector{Route}
   collect(values(_routes)) |> reverse
 end
 
@@ -337,7 +337,7 @@ end
 
 Returns a vector of defined channels.
 """
-function channels() :: Vector{Channel}
+@inline function channels() :: Vector{Channel}
   collect(values(_channels)) |> reverse
 end
 
@@ -347,7 +347,7 @@ end
 
 Removes the route with the corresponding name from the routes collection and returns the collection of remaining routes.
 """
-function delete!(routes::OrderedDict{Symbol,Route}, key::Symbol) :: OrderedDict{Symbol,Route}
+@inline function delete!(routes::OrderedDict{Symbol,Route}, key::Symbol) :: OrderedDict{Symbol,Route}
   OrderedCollections.delete!(routes, key)
 end
 
@@ -355,31 +355,24 @@ end
 """
 Generates the HTTP link corresponding to `route_name` using the parameters in `d`.
 """
-function to_link!!(route_name::Symbol, d::Vector{Pair{Symbol,T}})::String where {T}
-  to_link!!(route_name, Dict(d...))
+@inline function to_link(route_name::Symbol, d::Vector{Pair{Symbol,T}})::String where {T}
+  to_link(route_name, Dict(d...))
 end
 
 
 """
 Generates the HTTP link corresponding to `route_name` using the parameters in `d`.
 """
-function to_link!!(route_name::Symbol, d::Pair{Symbol,T})::String where {T}
-  to_link!!(route_name, Dict(d))
+@inline function to_link(route_name::Symbol, d::Pair{Symbol,T})::String where {T}
+  to_link(route_name, Dict(d))
 end
 
 
 """
 Generates the HTTP link corresponding to `route_name` using the parameters in `d`.
 """
-function to_link!!(route_name::Symbol, d::Dict{Symbol,T})::String where {T}
-  route = try
-            get_route(route_name)
-          catch ex
-            log("Route not found $route_name", :err)
-            log(ex, :err)
-
-            rethrow(ex)
-          end
+function to_link(route_name::Symbol, d::Dict{Symbol,T})::String where {T}
+  route = get_route(route_name)
 
   result = String[]
   for part in split(route.path, "/")
@@ -411,28 +404,8 @@ end
 """
 Generates the HTTP link corresponding to `route_name` using the parameters in `route_params`.
 """
-function to_link!!(route_name::Symbol; route_params...) :: String
-  to_link!!(route_name, route_params_to_dict(route_params))
-end
-
-const link_to!! = to_link!!
-const linkto!! = link_to!!
-const tolink!! = to_link!!
-
-
-"""
-Generates the HTTP link corresponding to `route_name` using the parameters in `route_params`.
-"""
-function to_link(route_name::Symbol; route_params...) :: String
-  try
-    to_link!!(route_name, route_params_to_dict(route_params))
-  catch ex
-    log("Route not found", :err)
-    log(string(ex), :err)
-    log("$(@__FILE__):$(@__LINE__)", :err)
-
-    ""
-  end
+@inline function to_link(route_name::Symbol; route_params...) :: String
+  to_link(route_name, route_params_to_dict(route_params))
 end
 
 const link_to = to_link
@@ -445,7 +418,7 @@ const tolink = to_link
 
 Converts the route params to a `Dict`.
 """
-function route_params_to_dict(route_params) :: Dict{Symbol,Any}
+@inline function route_params_to_dict(route_params) :: Dict{Symbol,Any}
   Dict{Symbol,Any}(route_params)
 end
 

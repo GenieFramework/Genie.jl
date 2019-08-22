@@ -13,11 +13,13 @@ const ASSET_FINGERPRINT = ""
 
 
 """
-    bootstrap(context::Module = @__MODULE__) :: Nothing
+    bootstrap(context::Union{Module,Nothing} = nothing) :: Nothing
 
 Kickstarts the loading of a Genie app by loading the environment settings.
 """
-function bootstrap(context::Module = @__MODULE__) :: Nothing
+function bootstrap(context::Union{Module,Nothing} = nothing) :: Nothing
+  context = Genie.default_context(context)
+
   if haskey(ENV, "GENIE_ENV") && isfile(joinpath(Genie.ENV_PATH, ENV["GENIE_ENV"] * ".jl"))
     isfile(joinpath(Genie.ENV_PATH, Genie.GLOBAL_ENV_FILE_NAME)) && Base.include(context, joinpath(Genie.ENV_PATH, Genie.GLOBAL_ENV_FILE_NAME))
     isfile(joinpath(Genie.ENV_PATH, ENV["GENIE_ENV"] * ".jl")) && Base.include(context, joinpath(Genie.ENV_PATH, ENV["GENIE_ENV"] * ".jl"))
@@ -44,13 +46,20 @@ using .Loggers, .Configuration
 
 
 """
-    newmodel(model_name::String; context = @__MODULE__) :: Nothing
+    newmodel(model_name::String; context::Union{Module,Nothing} = nothing) :: Nothing
 
 Creates a new SearchLight `model` file.
 """
-function newmodel(model_name::String; context::Module = @__MODULE__) :: Nothing
-  Core.eval(context, :(SearchLight.Generator.newmodel($model_name)))
-  load_resources()
+function newmodel(model_name::String; context::Union{Module,Nothing} = nothing) :: Nothing
+  context = default_context(context)
+
+  try
+    Core.eval(context, :(SearchLight.Generator.newmodel($model_name)))
+
+    load_resources()
+  catch ex
+    @error ex
+  end
 
   nothing
 end
@@ -70,18 +79,20 @@ end
 
 
 """
-    newresource(resource_name::String; pluralize::Bool = true, context::Module = @__MODULE__) :: Nothing
+    newresource(resource_name::String; pluralize::Bool = true, context::Union{Module,Nothing} = nothing) :: Nothing
 
 Creates all the files associated with a new resource.
 If `pluralize` is `false`, the name of the resource is not automatically pluralized.
 """
-function newresource(resource_name::String; pluralize::Bool = true, context::Module = @__MODULE__) :: Nothing
+function newresource(resource_name::String; pluralize::Bool = true, context::Union{Module,Nothing} = nothing) :: Nothing
+  context = default_context(context)
+
   Generator.newresource(Dict{String,Any}("resource:new" => resource_name), pluralize = pluralize)
 
   try
     Core.eval(context, :(SearchLight.Generator.newresource(uppercasefirst($resource_name))))
   catch ex
-    log(ex, :error)
+    @error ex
     log("Skipping SearchLight", :warn)
   end
 
@@ -92,24 +103,36 @@ end
 
 
 """
-    newmigration(migration_name::String, context::Module = @__MODULE__) :: Nothing
+    newmigration(migration_name::String, context::Union{Module,Nothing} = nothing) :: Nothing
 
 Creates a new SearchLight migration file.
 """
-function newmigration(migration_name::String; context::Module = @__MODULE__) :: Nothing
-  Core.eval(context, :(SearchLight.Generator.new_migration(Dict{String,Any}("migration:new" => $migration_name))))
+function newmigration(migration_name::String; context::Union{Module,Nothing} = nothing) :: Nothing
+  context = default_context(context)
+
+  try
+    Core.eval(context, :(SearchLight.Generator.new_migration(Dict{String,Any}("migration:new" => $migration_name))))
+  catch ex
+    @error ex
+  end
 
   nothing
 end
 
 
 """
-    newtablemigration(migration_name::String) :: Nothing
+    newtablemigration(migration_name::String, context::Union{Module,Nothing} = nothing) :: Nothing
 
 Creates a new migration prefilled with code for creating a new table.
 """
-function newtablemigration(migration_name::String; context::Module = @__MODULE__) :: Nothing
-  Core.eval(context, :(SearchLight.Generator.new_table_migration(Dict{String,Any}("migration:new" => $migration_name))))
+function newtablemigration(migration_name::String; context::Union{Module,Nothing} = nothing) :: Nothing
+  context = default_context(context)
+
+  try
+    Core.eval(context, :(SearchLight.Generator.new_table_migration(Dict{String,Any}("migration:new" => $migration_name))))
+  catch ex
+    @error ex
+  end
 
   nothing
 end
@@ -197,12 +220,14 @@ end
 
 
 """
-    load_configurations(root_dir::String = CONFIG_PATH, context::Module = @__MODULE__) :: Nothing
+    load_configurations(root_dir::String = CONFIG_PATH; context::Union{Module,Nothing} = nothing) :: Nothing
 
 Loads (includes) the framework's configuration files into the app's module `context`.
 The files are set up with `Revise` to be automatically reloaded.
 """
-function load_configurations(root_dir::String = Genie.CONFIG_PATH; context::Module = @__MODULE__) :: Nothing
+function load_configurations(root_dir::String = Genie.CONFIG_PATH; context::Union{Module,Nothing} = nothing) :: Nothing
+  context = default_context(context)
+
   secrets_path = joinpath(root_dir, Genie.SECRETS_FILE_NAME)
   isfile(secrets_path) && Revise.track(context, secrets_path, define = true)
 
@@ -211,12 +236,14 @@ end
 
 
 """
-    load_initializers(root_dir::String = CONFIG_PATH, context::Module = @__MODULE__) :: Nothing
+    load_initializers(root_dir::String = CONFIG_PATH; context::Union{Module,Nothing} = nothing) :: Nothing
 
 Loads (includes) the framework's initializers.
 The files are set up with `Revise` to be automatically reloaded.
 """
-function load_initializers(root_dir::String = Genie.CONFIG_PATH; context::Module = @__MODULE__) :: Nothing
+function load_initializers(root_dir::String = Genie.CONFIG_PATH; context::Union{Module,Nothing} = nothing) :: Nothing
+  context = default_context(context)
+
   dir = joinpath(root_dir, Genie.INITIALIZERS_FOLDER)
 
   isdir(dir) || return nothing
@@ -232,11 +259,13 @@ end
 
 
 """
-    load_plugins(root_dir::String = PLUGINS_PATH; context::Module = @__MODULE__) :: Nothing
+    load_plugins(root_dir::String = PLUGINS_PATH; context::Union{Module,Nothing} = nothing) :: Nothing
 
 Loads (includes) the framework's plugins initializers.
 """
-function load_plugins(root_dir::String = Genie.PLUGINS_PATH; context::Module = @__MODULE__) :: Nothing
+function load_plugins(root_dir::String = Genie.PLUGINS_PATH; context::Union{Module,Nothing} = nothing) :: Nothing
+  context = default_context(context)
+
   isdir(root_dir) || return nothing
 
   for i in readdir(root_dir)
@@ -249,11 +278,13 @@ end
 
 
 """
-    load_routes_definitions(routes_file::String = Genie.ROUTES_FILE_NAME, context::Module = @__MODULE__) :: Nothing
+    load_routes_definitions(routes_file::String = Genie.ROUTES_FILE_NAME; context::Union{Module,Nothing} = nothing) :: Nothing
 
 Loads the routes file.
 """
-function load_routes_definitions(routes_file::String = Genie.ROUTES_FILE_NAME; context::Module = @__MODULE__) :: Nothing
+function load_routes_definitions(routes_file::String = Genie.ROUTES_FILE_NAME; context::Union{Module,Nothing} = nothing) :: Nothing
+  context = default_context(context)
+
   isfile(routes_file) && Revise.track(context, routes_file, define = true)
 
   nothing
@@ -261,13 +292,15 @@ end
 
 
 """
-    secret_token(; context::Module = @__MODULE__) :: String
+    secret_token(; context::Union{Module,Nothing} = nothing) :: String
 
 Wrapper around /config/secrets.jl SECRET_TOKEN `const`.
 Sets up the secret token used in the app for encryption and salting.
 If there isn't a valid secrets file, a temporary secret token is generated for the current session only.
 """
-function secret_token(; context::Module = @__MODULE__) :: String
+function secret_token(; context::Union{Module,Nothing} = nothing) :: String
+  context = default_context(context)
+
   if isdefined(context, :SECRET_TOKEN)
     context.SECRET_TOKEN
   else
@@ -284,11 +317,28 @@ end
 
 
 """
-    load(; context::Module = @__MODULE__) :: Nothing
+    default_context(context::Union{Module,Nothing})
+
+Sets the module in which the code is loaded (the app's module)
+"""
+function default_context(context::Union{Module,Nothing})
+  try
+    context === nothing ? Main.UserApp : context
+  catch ex
+    @error ex
+    @__MODULE__
+  end
+end
+
+
+"""
+    load(; context::Union{Module,Nothing} = nothing) :: Nothing
 
 Main entry point to loading a Genie app.
 """
-function load(; context::Module = @__MODULE__) :: Nothing
+function load(; context::Union{Module,Nothing} = nothing) :: Nothing
+  context = default_context(context)
+
   App.bootstrap(context)
 
   load_configurations(context = context)

@@ -6,7 +6,8 @@ module Requests
 using Genie, Genie.Router, Genie.Input
 using HTTP
 
-export jsonpayload, rawpayload, filespayload, postpayload, getpayload, getrequest, infilespayload, download, filename, payload
+export jsonpayload, rawpayload, filespayload, postpayload, getpayload, getrequest
+export infilespayload, download, filename, payload, read
 
 
 """
@@ -67,6 +68,16 @@ Saves uploaded `HttpFile` `file` to local storage under the `name` filename.
 """
 @inline function Base.download(file::HttpFile, name::String = file.name) :: Int
   write(name, IOBuffer(file.data))
+end
+
+
+"""
+    read(file::HttpFile)
+
+Returns the content of `file` as string.
+"""
+@inline function Base.read(file::HttpFile, ::Type{String}) :: String
+  file.data |> String
 end
 
 

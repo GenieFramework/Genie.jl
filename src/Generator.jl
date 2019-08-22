@@ -255,7 +255,9 @@ Writes files used for interacting with the SearchLight ORM.
 """
 function db_support(app_path::String = ".") :: Nothing
   cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.DB_PATH), joinpath(app_path, Genie.DB_PATH))
-  cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.INITIALIZERS_PATH, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME), joinpath(app_path, Genie.INITIALIZERS_PATH, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME))
+
+  initializer_path = joinpath(app_path, Genie.INITIALIZERS_PATH, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME)
+  isfile(initializer_path) || cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.INITIALIZERS_PATH, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME), initializer_path)
 
   nothing
 end

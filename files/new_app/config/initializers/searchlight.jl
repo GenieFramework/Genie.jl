@@ -1,13 +1,8 @@
-# Uncomment the code to enable SearchLight support
-
-#=
 using SearchLight, SearchLight.QueryBuilder
 
-SearchLight.Configuration.load()
-
-if SearchLight.config.db_config_settings["adapter"] !== nothing
-  SearchLight.Database.setup_adapter()
-  SearchLight.Database.connect()
+try
+  SearchLight.Configuration.load() |> SearchLight.Database.connect!
   SearchLight.load_resources()
+catch ex
+  @error "Failed loading SearchLight database configuration. Please make sure you have a valid connection.yml file."
 end
-=#
