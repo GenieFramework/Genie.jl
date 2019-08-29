@@ -1,37 +1,10 @@
 using Revise
+using Genie, Genie.App, Genie.Toolbox
 
 const ROOT_PATH = pwd()
 
-"""
-    bootstrap_genie() :: Nothing
-
-Bootstraps the Genie framework setting up paths and workers. Invoked automatically.
-"""
-function bootstrap() :: Nothing
-  printstyled("""
-   _____         _
-  |   __|___ ___|_|___
-  |  |  | -_|   | | -_|
-  |_____|___|_|_|_|___|
-
-  """, color = :magenta)
-
-  DEFAULT_NWORKERS_REPL = 1
-  DEFAULT_NWORKERS_SERVER = 1
-
-  isfile("env.jl") && include("env.jl")
-  haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = "dev")
-  @info "\nStarting Genie v$(Genie.Configuration.GENIE_VERSION) in >> $(ENV["GENIE_ENV"] |> uppercase) << mode \n\n"
-
-  push!(LOAD_PATH, pwd(), "src")
-
-  nothing
-end
-
-bootstrap()
-
-using Genie, Genie.App, Genie.Toolbox
+haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = "dev")
+push!(LOAD_PATH, pwd(), "src")
 
 Genie.load(context = @__MODULE__)
-
 Genie.run()

@@ -1,4 +1,4 @@
-using Genie.Configuration
+using Genie.Configuration, Logging
 
 const config =  Settings(
                   cache_duration      = 0,
@@ -10,5 +10,7 @@ const config =  Settings(
                   session_auto_start  = false,
                   websocket_server    = false
                 )
+
+global_logger(ConsoleLogger(stdout, Logging.Debug))
 
 ENV["JULIA_REVISE"] = "off"

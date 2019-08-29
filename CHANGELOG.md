@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.16.1 - 2019-08-29
+
+* environment configuration files define appropriate `global_logger`
+* fixed issue with webserver port env settings being overwritten
+* small changes to better support logging
+* moved version and env info out of app files into core files
+
 ## v0.16.0 - 2019-08-29
 
 * switched to native Julia logging (automatic logging to file for now is disabled, will come back in a future version)

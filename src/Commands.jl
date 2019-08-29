@@ -13,13 +13,12 @@ execute(config::Settings) :: Nothing
 Runs the requested Genie app command, based on the `args` passed to the script.
 """
 function execute(config::Settings) :: Nothing
-  parsed_args = parse_commandline_args()::Dict{String,Any}
+  parsed_args = parse_commandline_args(config)::Dict{String,Any}
 
+  # overwrite env settings with command line arguments
   Genie.config.app_env = ENV["GENIE_ENV"]
   Genie.config.server_port = parse(Int, parsed_args["server:port"])
-  if haskey(parsed_args, "server:host") && parsed_args["server:host"] != nothing
-    Genie.config.server_host = parsed_args["server:host"]
-  end
+  Genie.config.server_host = parsed_args["server:host"]
 
   if called_command(parsed_args, "s") || called_command(parsed_args, "server:start")
     Genie.config.run_as_server = true
@@ -36,7 +35,7 @@ parse_commandline_args() :: Dict{String,Any}
 Extracts the command line args passed into the app and returns them as a `Dict`, possibly setting up defaults.
 Also, it is used by the ArgParse module to populate the command line help for the app `-h`.
 """
-function parse_commandline_args() :: Dict{String,Any}
+function parse_commandline_args(config::Settings) :: Dict{String,Any}
   settings = ArgParseSettings()
 
   settings.description = "Genie web framework CLI"
@@ -51,9 +50,10 @@ function parse_commandline_args() :: Dict{String,Any}
     help = "starts HTTP server"
     "--server:port", "-p"
     help = "HTTP server port"
-    default = "8000"
+    default = "$(config.server_port)"
     "--server:host", "-l"
     help = "Host IP to listen on"
+    default = "$(config.server_host)"
   end
 
   parse_args(settings)

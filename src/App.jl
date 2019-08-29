@@ -17,9 +17,7 @@ const ASSET_FINGERPRINT = ""
 
 Kickstarts the loading of a Genie app by loading the environment settings.
 """
-function bootstrap(context::Union{Module,Nothing} = nothing) :: Nothing
-  context = Genie.default_context(context)
-
+function bootstrap(context::Union{Module,Nothing} = Genie.default_context(context)) :: Nothing
   if haskey(ENV, "GENIE_ENV") && isfile(joinpath(Genie.ENV_PATH, ENV["GENIE_ENV"] * ".jl"))
     isfile(joinpath(Genie.ENV_PATH, Genie.GLOBAL_ENV_FILE_NAME)) && Base.include(context, joinpath(Genie.ENV_PATH, Genie.GLOBAL_ENV_FILE_NAME))
     isfile(joinpath(Genie.ENV_PATH, ENV["GENIE_ENV"] * ".jl")) && Base.include(context, joinpath(Genie.ENV_PATH, ENV["GENIE_ENV"] * ".jl"))
@@ -29,6 +27,18 @@ function bootstrap(context::Union{Module,Nothing} = nothing) :: Nothing
   end
 
   Core.eval(Genie, Meta.parse("config = $(context).config"))
+
+  printstyled("""
+
+   _____         _
+  |   __|___ ___|_|___
+  |  |  | -_|   | | -_|
+  |_____|___|_|_|_|___|
+
+  """, color = :red, bold = true)
+
+  printstyled("Genie v$(Genie.Configuration.GENIE_VERSION)\n", color = :green, bold = true)
+  printstyled("Active env: $(ENV["GENIE_ENV"] |> uppercase)\n\n", color = :light_blue, bold = true)
 
   nothing
 end
