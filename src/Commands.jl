@@ -3,8 +3,9 @@ Handles command line arguments for the genie.jl script.
 """
 module Commands
 
+using Logging
 using ArgParse
-using Genie, Genie.Configuration, Genie.Generator, Genie.Tester, Genie.Loggers, Genie.AppServer
+using Genie, Genie.Configuration, Genie.Generator, Genie.Tester, Genie.AppServer
 
 """
 execute(config::Settings) :: Nothing

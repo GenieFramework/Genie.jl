@@ -2,37 +2,9 @@
 
 At any time, you can load and serve an existing Genie app. Loading a Genie app will bring into scope all your app's files, including the main app module, controllers, models, etcetera.
 
-## Manual loading in Julia's REPL
-
-First, make sure that you're in the root dir of a Genie app. This is the project's folder and you can tell by the fact that there should be a `bootstrap.jl` file, plus Julia's `Project.toml` and `Manifest.toml` files, amongst others.
-
-Next, once you start a new Julia REPL session, we have to activate the local package environment:
-
-```julia
-julia> ] # enter pkg> mode
-
-pkg> activate .
-```
-
-Then, back to the julian prompt, run
-
-```julia
-julia> using Genie
-
-julia> Genie.loadapp()
-```
-
-The app's environment will now be loaded.
-
-In order to start the web server execute
-
-```julia
-julia> startup()
-```
-
 ## Starting a Genie REPL session MacOS / Linux
 
-The recommended approach is to skip the manual loading and start an interactive REPL in Genie's environment by executing `bin/repl` in the os shell, again while in the project's root folder.
+The recommended approach is to start an interactive REPL in Genie's environment by executing `bin/repl` in the os shell, while in the project's root folder.
 
 ```shell
 $ bin/repl
@@ -40,7 +12,7 @@ $ bin/repl
 
 The app's environment will be loaded.
 
-In order to start the web server execute:
+In order to start the web server, you can next execute:
 
 ```julia
 julia> startup()
@@ -51,6 +23,8 @@ If you want to directly start the server, use `bin/server` instead of `bin/repl`
 ```shell
 $ bin/server
 ```
+
+This will automatically start the web server and drop you off at the Julia REPL.
 
 ---
 **HEADS UP**
@@ -97,4 +71,32 @@ Then:
 using Genie
 
 Genie.loadapp()
+```
+
+## Manual loading in Julia's REPL
+
+In order to load a Genie app within an open Julia REPL session, first make sure that you're in the root dir of a Genie app. This is the project's folder and you can tell by the fact that there should be a `bootstrap.jl` file, plus Julia's `Project.toml` and `Manifest.toml` files, amongst others. You can `julia> cd(...)` or `shell> cd ...` your way into the folder of the Genie app.
+
+Next, from within the active Julia REPL session, we have to activate the local package environment:
+
+```julia
+julia> ] # enter pkg> mode
+
+pkg> activate .
+```
+
+Then, back to the julian prompt, run the following to load the Genie app:
+
+```julia
+julia> using Genie
+
+julia> Genie.loadapp()
+```
+
+The app's environment will now be loaded.
+
+In order to start the web server execute
+
+```julia
+julia> startup()
 ```

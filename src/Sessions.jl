@@ -1,7 +1,7 @@
 module Sessions
 
-using SHA, HTTP, Dates, Nullables
-using Genie, Genie.Cookies, Genie.Loggers, Genie.Generator
+using SHA, HTTP, Dates, Nullables, Logging
+using Genie, Genie.Cookies, Genie.Generator
 
 
 """
@@ -18,9 +18,9 @@ Session(id::String) = Session(id, Dict{Symbol,Any}())
 export Session
 
 const session_adapter_name = string(Genie.config.session_storage) * "SessionAdapter"
-include("session_adapters/$session_adapter_name.jl")
-Core.eval(@__MODULE__, Meta.parse("using .$session_adapter_name"))
-const SessionAdapter = Core.eval(@__MODULE__, Meta.parse(session_adapter_name))
+const SessionAdapter = include("session_adapters/$session_adapter_name.jl")
+
+using .(SessionAdapter)
 
 
 """
@@ -30,11 +30,10 @@ Generates a new session id.
 """
 function id() :: String
   if ! isdefined(Genie, :SECRET_TOKEN)
-    log("Session error", :warn)
-    log("$(@__FILE__):$(@__LINE__)", :warn)
+    @error "Session error"
 
     if ! Genie.Configuration.isprod()
-      log("Generating temporary secret token", :warn)
+      @warn "Generating temporary secret token"
       Core.eval(Genie, :(const SECRET_TOKEN = $(Genie.Generator.secret_token())))
     else
       error("Can't compute session id - please make sure SECRET_TOKEN is defined in config/secrets.jl")
@@ -44,8 +43,7 @@ function id() :: String
   try
     Genie.SECRET_TOKEN * ":" * bytes2hex(sha1(string(Dates.now()))) * ":" * string(rand()) * ":" * string(hash(Genie)) |> sha256 |> bytes2hex
   catch ex
-    log("Session error", :err)
-    log("$(@__FILE__):$(@__LINE__)", :err)
+    @error "Session error"
     error("Can't compute session id - please make sure SECRET_TOKEN is defined in config/secrets.jl")
   end
 end
@@ -96,11 +94,11 @@ Initiates a new HTTP session with the provided `session_id`.
 - `res::HTTP.Response`: the response object
 - `options::Dict{String,String}`: extra options for setting the session cookie, such as `Path` and `HttpOnly`
 """
-function start(session_id::String, req::HTTP.Request, res::HTTP.Response; options::Dict{String,String} = Dict{String,String}()) :: Session
+function start(session_id::String, req::HTTP.Request, res::HTTP.Response; options::Dict{String,String} = Dict{String,String}()) :: Tuple{Session,HTTP.Response}
   options = merge(Dict("Path" => "/", "HttpOnly" => true), options)
   Cookies.set!(res, Genie.config.session_key_name, session_id, options)
 
-  load(session_id)
+  load(session_id), res
 end
 
 
@@ -114,7 +112,7 @@ Initiates a new default session object, generating a new session id.
 - `res::HTTP.Response`: the response object
 - `options::Dict{String,String}`: extra options for setting the session cookie, such as `Path` and `HttpOnly`
 """
-function start(req::HTTP.Request, res::HTTP.Response; options::Dict{String,String} = Dict{String,String}()) :: Session
+function start(req::HTTP.Request, res::HTTP.Response; options::Dict{String,String} = Dict{String,String}()) :: Tuple{Session,HTTP.Response}
   start(id(req, res), req, res, options = options)
 end
 
@@ -206,11 +204,7 @@ Loads session data from persistent storage - delegates to the underlying `Sessio
 function load(session_id::String) :: Session
   session = SessionAdapter.read(session_id)
 
-  if isnull(session)
-    return Session(session_id)
-  else
-    return Base.get(session)
-  end
+  isnull(session) ? Session(session_id) : Base.get(session)
 end
 
 
@@ -220,16 +214,10 @@ end
 Returns the `Session` object associated with the current HTTP request.
 """
 function session(params) :: Sessions.Session
-  if haskey(params, Genie.PARAMS_SESSION_KEY)
-    params[Genie.PARAMS_SESSION_KEY] == nothing &&
+  (! haskey(params, Genie.PARAMS_SESSION_KEY) || params[Genie.PARAMS_SESSION_KEY] == nothing) &&
       (params[Genie.PARAMS_SESSION_KEY] = start(params[Genie.PARAMS_REQUEST_KEY], params[Genie.PARAMS_RESPONSE_KEY]))
 
-    params[Genie.PARAMS_SESSION_KEY]
-  else
-    msg = "Missing @params $(Genie.PARAMS_SESSION_KEY) key"
-    log(msg, :err)
-    error(msg)
-  end
+  params[Genie.PARAMS_SESSION_KEY]
 end
 
 end

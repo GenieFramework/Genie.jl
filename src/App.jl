@@ -39,7 +39,8 @@ end
 ### THIS IS LOADED INTO the Genie module !!!
 
 
-using .Loggers, .Configuration
+using Logging
+using .Configuration
 
 
 ### PUBLIC ###
@@ -90,10 +91,11 @@ function newresource(resource_name::String; pluralize::Bool = true, context::Uni
   Generator.newresource(Dict{String,Any}("resource:new" => resource_name), pluralize = pluralize)
 
   try
-    Core.eval(context, :(SearchLight.Generator.newresource(uppercasefirst($resource_name))))
+    pluralize || error("SearchLight resources need to be pluralized")
+    Core.eval(context, :(SearchLight.Generator.newresource(uppercasefirst($resource_name)))) # SearchLight resources don't work on singular
   catch ex
     @error ex
-    log("Skipping SearchLight", :warn)
+    @warn "Skipping SearchLight"
   end
 
   load_resources()
@@ -342,8 +344,6 @@ function load(; context::Union{Module,Nothing} = nothing) :: Nothing
   App.bootstrap(context)
 
   load_configurations(context = context)
-
-  Genie.Loggers.log_path!()
 
   Core.eval(Genie, Meta.parse("""const SECRET_TOKEN = "$(secret_token(context = context))" """))
   Core.eval(Genie, Meta.parse("""const ASSET_FINGERPRINT = "$(App.ASSET_FINGERPRINT)" """))

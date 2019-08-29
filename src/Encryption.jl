@@ -36,11 +36,10 @@ end
 
 function encryption_sauce() :: Tuple{Vector{UInt8},Vector{UInt8}}
   if ! isdefined(Genie, :SECRET_TOKEN)
-    log("Encryption error", :warn)
-    log("$(@__FILE__):$(@__LINE__)", :warn)
+    @warn "Encryption error"
 
     if ! Genie.Configuration.isprod()
-      log("Generating temporary secret token", :warn)
+      @warn "Generating temporary secret token"
       Core.eval(Genie, :(const SECRET_TOKEN = $(Genie.Generator.secret_token())))
     else
       error("Can't encrypt - please make sure you run a Genie project and SECRET_TOKEN is defined in config/secrets.jl")

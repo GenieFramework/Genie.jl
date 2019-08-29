@@ -166,7 +166,6 @@ mutable struct Book <: AbstractModel
   ### INTERNALS
   _table_name::String
   _id::String
-  _serializable::Vector{Symbol}
 
   ### FIELDS
   id::DbId
@@ -180,9 +179,7 @@ mutable struct Book <: AbstractModel
     title = "",
     author = "",
     cover = "",
-  ) = new("books", "id", Symbol[],
-          id, title, author, cover
-          )
+  ) = new("books", "id", id, title, author, cover)
 end
 
 end
@@ -264,11 +261,13 @@ Great, now let's display the images. Let's start with the HTML view - please edi
 <!-- app/resources/books/views/billgatesbooks.jl.html -->
 <h1>Bill's Gates top $( length(@vars(:books)) ) recommended books</h1>
 <ul>
-   <%
-      @foreach(@vars(:books)) do book
-         """<li><img src="$( isempty(book.cover) ? "img/docs.png" : book.cover )" width="100px" /> $(book.title) by $(book.author)"""
-      end
-   %>
+<%
+@foreach(@vars(:books)) do book
+%>
+  <li><img src="$( isempty(book.cover) ? "img/docs.png" : book.cover )" width="100px" /> $(book.title) by $(book.author)
+<%
+end
+%>
 </ul>
 ```
 

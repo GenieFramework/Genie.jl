@@ -6,7 +6,7 @@ module Requests
 using Genie, Genie.Router, Genie.Input
 using HTTP
 
-export jsonpayload, rawpayload, filespayload, postpayload, getpayload, getrequest
+export jsonpayload, rawpayload, filespayload, postpayload, getpayload, request, matchedroute, matchedchannel
 export infilespayload, download, filename, payload, read
 
 
@@ -152,11 +152,11 @@ end
 
 
 """
-    getrequest() :: HTTP.Request
+    request() :: HTTP.Request
 
 Returns the raw HTTP.Request object associated with the request.
 """
-@inline function getrequest() :: HTTP.Request
+@inline function request() :: HTTP.Request
   @params(Genie.PARAMS_REQUEST_KEY)
 end
 
@@ -178,6 +178,37 @@ Utility function for accessing the `key` value within the `@params` collection o
 """
 @inline function payload(key::Symbol) :: Any
   @params()[key]
+end
+
+
+"""
+    payload(key::Symbol, default_value::T) :: Any
+
+Utility function for accessing the `key` value within the `@params` collection of request variables.
+If `key` is not defined, `default_value` is returned.
+"""
+@inline function payload(key::Symbol, default_value::T)::T where {T}
+  haskey(@params(), key) ? @params()[key] : default_value
+end
+
+
+"""
+    matchedroute() :: Route
+
+Returns the `Route` object which was matched for the current request.
+"""
+@inline function matchedroute() :: Genie.Router.Route
+  @params(Genie.PARAMS_ROUTE_KEY)
+end
+
+
+"""
+    matchedchannel() :: Channel
+
+Returns the `Channel` object which was matched for the current request.
+"""
+@inline function matchedchannel() :: Genie.Router.Channel
+  @params(Genie.PARAMS_CHANNELS_KEY)
 end
 
 end

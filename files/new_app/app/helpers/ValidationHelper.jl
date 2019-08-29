@@ -1,6 +1,6 @@
 module ValidationHelper
 
-using Genie, Genie.Helpers
+using Genie
 using SearchLight.Validation
 
 export output_errors

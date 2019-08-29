@@ -2,7 +2,8 @@ module Toolbox
 
 import Base.string
 
-using Revise, Genie, Genie.Util, Millboard, Genie.FileTemplates, Genie.Configuration, Genie.Loggers, Genie.Inflector
+using Revise
+using Genie, Genie.Util, Millboard, Genie.FileTemplates, Genie.Configuration, Genie.Inflector, Logging
 
 export TaskResult, VoidTaskResult
 
@@ -118,7 +119,7 @@ function new(cmd_args::Dict{String,Any}, config::Settings = Genie.config) :: Not
   write(f, Genie.FileTemplates.newtask(taskmodulename(cmd_args["task:new"])))
   close(f)
 
-  log("New task created at $tfn")
+  @info "New task created at $tfn"
 
   nothing
 end

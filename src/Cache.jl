@@ -3,9 +3,9 @@ Caching functionality for Genie.
 """
 module Cache
 
-using SHA
+using SHA, Logging
 using Nullables
-using Genie, Genie.Loggers
+using Genie
 
 
 export cachekey, withcache, @cachekey
@@ -22,9 +22,8 @@ const CACHE_DURATION  = Genie.config.cache_duration
 Underlying module that handles persistance and retrieval of cached data.
 """
 const CACHE_ADAPTER_NAME = Genie.config.cache_adapter
-Core.eval(@__MODULE__, Meta.parse("""include("cache_adapters/$CACHE_ADAPTER_NAME.jl")"""))
-Core.eval(@__MODULE__, Meta.parse("using .$(CACHE_ADAPTER_NAME)"))
-const CACHE_ADAPTER = Core.eval(@__MODULE__, Meta.parse("$CACHE_ADAPTER_NAME"))
+const CACHE_ADAPTER = include("cache_adapters/$CACHE_ADAPTER_NAME.jl")
+using .(CACHE_ADAPTER)
 
 
 """
@@ -41,7 +40,7 @@ function withcache(f::Function, key::Union{String,Symbol}, expiration::Int = CAC
   cached_data = CACHE_ADAPTER.fromcache(cachekey(key), expiration, dir = dir)
 
   if isnull(cached_data)
-    Genie.config.log_cache && log("Missed cache for $key", :warn)
+    Genie.config.log_cache && @warn("Missed cache for $key")
 
     output = f()
     CACHE_ADAPTER.tocache(cachekey(key), output, dir = dir)
@@ -49,7 +48,7 @@ function withcache(f::Function, key::Union{String,Symbol}, expiration::Int = CAC
     return output
   end
 
-  Genie.config.log_cache && log("Hit cache for $(cachekey(key))", :info)
+  Genie.config.log_cache && @info("Hit cache for $(cachekey(key))")
 
   Base.get(cached_data)
 end

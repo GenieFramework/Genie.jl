@@ -3,12 +3,12 @@ Compiled templating language for Genie.
 """
 module Flax
 
-using Revise, Gumbo, SHA, Reexport, JSON, OrderedCollections, Markdown, YAML
-using Genie, Genie.Loggers, Genie.Configuration
+using Revise, Gumbo, SHA, Reexport, JSON, OrderedCollections, Markdown, YAML, Logging
+using Genie, Genie.Configuration
 @reexport using HttpCommon
 
 export HTMLString, JSONString, JSString
-export doctype, var_dump, @vars, @yield, el
+export doctype, vardump, @vars, @yield, el
 export foreachvar, @foreach, foreachstr
 export partial, template
 
@@ -107,25 +107,25 @@ end
 
 Generates a HTML element in the form <...></...>
 """
-@inline function normal_element(f::Function, elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
-  normal_element(f(), elem, attrs...)
+@inline function normal_element(f::Function, elem::String, args = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+  normal_element(f(), elem, args, attrs...)
 end
-@inline function normal_element(children::Union{String,Vector{String}}, elem::String, attrs::Pair{Symbol,Any}) :: HTMLString
-  normal_element(children, elem, Pair{Symbol,Any}[attrs])
+@inline function normal_element(children::Union{String,Vector{String}}, elem::String, args, attrs::Pair{Symbol,Any}) :: HTMLString
+  normal_element(children, elem, args, Pair{Symbol,Any}[attrs])
 end
-@inline function normal_element(children::Union{String,Vector{String}}, elem::String, attrs...) :: HTMLString
-  normal_element(children, elem, Pair{Symbol,Any}[attrs...])
+@inline function normal_element(children::Union{String,Vector{String}}, elem::String, args, attrs...) :: HTMLString
+  normal_element(children, elem, args, Pair{Symbol,Any}[attrs...])
 end
-@inline function normal_element(children::Union{String,Vector{String}}, elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+@inline function normal_element(children::Union{String,Vector{String}}, elem::String, args = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   children = join(children)
   elem = normalize_element(elem)
-
-  string("<", elem, " ", attributes(attrs), ">", prepare_template(children), "</", elem, ">")
+  attribs = rstrip(attributes(attrs))
+  string("<", elem, (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), ">", prepare_template(children), "</", elem, ">")
 end
 @inline function normal_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   normal_element("", elem, attrs...)
 end
-@inline function normal_element(elems::Vector, elem::String, attrs...) :: HTMLString
+@inline function normal_element(elems::Vector, elem::String, args = [], attrs...) :: HTMLString
   io = IOBuffer()
 
   for e in elems
@@ -138,7 +138,7 @@ end
     end
   end
 
-  normal_element(String(take!(io)), elem, attrs...)
+  normal_element(String(take!(io)), elem, args, attrs...)
 end
 @inline function normal_element(_::Nothing, __::Any) :: HTMLString
   ""
@@ -150,8 +150,9 @@ end
 
 Generates a void HTML element in the form <...>
 """
-@inline function void_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
-  string("<", normalize_element(elem), " ", attributes(attrs), ">")
+@inline function void_element(elem::String, args = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+  attribs = rstrip(attributes(attrs))
+  string("<", normalize_element(elem), (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), ">")
 end
 
 
@@ -170,17 +171,12 @@ end
 
 
 """
-    partial(path::String; mod::Module = @__MODULE__, vars...) :: String
+    partial(path::String; context::Module = @__MODULE__, vars...) :: String
 
 Renders (includes) a view partial within a larger view or layout file.
 """
-function partial(path::String; mod::Module = @__MODULE__, vars...) :: String
+function partial(path::String; context::Module = @__MODULE__, vars...) :: String
   for (k,v) in vars
-    if k == :context && isa(v, Module)
-      (mod = v)
-      continue
-    end
-
     try
       task_local_storage(:__vars)[k] = v
     catch
@@ -189,7 +185,7 @@ function partial(path::String; mod::Module = @__MODULE__, vars...) :: String
     end
   end
 
-  template(path, partial = true, mod = mod)
+  template(path, partial = true, context = context)
 end
 
 
@@ -217,11 +213,11 @@ end
 
 
 """
-    include_markdown(path::String; mod::Module = @__MODULE__)
+    include_markdown(path::String; context::Module = @__MODULE__)
 
 Includes and renders a markdown view file
 """
-function include_markdown(path::String; mod::Module = @__MODULE__)
+function include_markdown(path::String; context::Module = @__MODULE__)
   md = read(path, String)
 
   vars_injection = ""
@@ -241,31 +237,31 @@ function include_markdown(path::String; mod::Module = @__MODULE__)
 
   content = string( "\"\"\"", md, "\"\"\"")
 
-  vars_injection, (include_string(mod, content) |> Markdown.parse |> Markdown.html)
+  vars_injection, (include_string(context, content) |> Markdown.parse |> Markdown.html)
 end
 
 
 """
-    get_template(path::String; partial::Bool = true, mod::Module = @__MODULE__) :: Function
+    get_template(path::String; partial::Bool = true, context::Module = @__MODULE__) :: Function
 
 Resolves the inclusion and rendering of a template file
 """
-function get_template(path::String; partial::Bool = true, mod::Module = @__MODULE__) :: Function
+function get_template(path::String; partial::Bool = true, context::Module = @__MODULE__) :: Function
   orig_path = path
 
   path, extension = view_file_info(path)
 
   isfile(path) || error("Template file $orig_path does not exist")
 
-  extension in FILE_EXT && return (() -> Base.include(mod, path))
+  extension in FILE_EXT && return (() -> Base.include(context, path))
 
   f_name = Symbol(function_name(path))
   f_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl")
   f_stale = build_is_stale(path, f_path)
 
-  if f_stale || ! isdefined(mod, f_name)
+  if f_stale || ! isdefined(context, f_name)
     content = if extension in MARKDOWN_FILE_EXT
-      vars_injection, md = include_markdown(path, mod = mod)
+      vars_injection, md = include_markdown(path, context = context)
       string_to_flax(md, partial = partial, f_name = f_name, prepend = vars_injection)
     else
       html_to_flax(path, partial = partial)
@@ -273,42 +269,42 @@ function get_template(path::String; partial::Bool = true, mod::Module = @__MODUL
 
     f_stale && build_module(content, path)
 
-    return Base.include(mod, joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl"))
+    return Base.include(context, joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl"))
   end
 
-  getfield(mod, f_name)
+  getfield(context, f_name)
 end
 
 
 """
-    parse_view(data::String; partial = false, mod::Module = @__MODULE__) :: Function
+    parse_view(data::String; partial = false, context::Module = @__MODULE__) :: Function
 
 Parses a view file, returning a rendering function. If necessary, the function is JIT-compiled, persisted and loaded into memory.
 """
-function parse_view(data::String; partial = false, mod::Module = @__MODULE__) :: Function
+function parse_view(data::String; partial = false, context::Module = @__MODULE__) :: Function
   path = "Flax_" * string(hash(data))
 
   func_name = function_name(data) |> Symbol
   f_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl")
   f_stale = build_is_stale(f_path, f_path)
 
-  if f_stale || ! isdefined(mod, func_name)
+  if f_stale || ! isdefined(context, func_name)
     f_stale && build_module(string_to_flax(data, partial = partial), path)
 
-    return Base.include(mod, joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl"))
+    return Base.include(context, joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl"))
   end
 
-  getfield(mod, func_name)
+  getfield(context, func_name)
 end
 
 
 """
-    template(path::String; partial::Bool = true, mod::Module = @__MODULE__) :: String
+    template(path::String; partial::Bool = true, context::Module = @__MODULE__) :: String
 
 Renders a template file.
 """
-@inline function template(path::String; partial::Bool = true, mod::Module = @__MODULE__) :: String
-  get_template(path, partial = partial, mod = mod) |> Base.invokelatest
+@inline function template(path::String; partial::Bool = true, context::Module = @__MODULE__) :: String
+  get_template(path, partial = partial, context = context) |> Base.invokelatest
 end
 
 
@@ -324,7 +320,7 @@ function build_is_stale(file_path::String, build_path::String) :: Bool
   build_mtime = stat(build_path).mtime
   status = file_mtime > build_mtime
 
-  Genie.config.log_views && status && log("🚨  Flax view $file_path build $build_path is stale")
+  Genie.config.log_views && status && @debug("🚨  Flax view $file_path build $build_path is stale")
 
   status
 end
@@ -344,39 +340,39 @@ end
 
 
 """
-    html_renderer(resource::Union{Symbol,String}, action::Union{Symbol,String}; layout::Union{Symbol,String} = Genie.config.renderer_default_layout_file, mod::Module = @__MODULE__, vars...) :: Function
+    html_renderer(resource::Union{Symbol,String}, action::Union{Symbol,String}; layout::Union{Symbol,String} = Genie.config.renderer_default_layout_file, context::Module = @__MODULE__, vars...) :: Function
 
 Renders data as HTML
 """
-function html_renderer(resource::Union{Symbol,String}, action::Union{Symbol,String}; layout::Union{Symbol,String} = Genie.config.renderer_default_layout_file, mod::Module = @__MODULE__, vars...) :: Function
+function html_renderer(resource::Union{Symbol,String}, action::Union{Symbol,String}; layout::Union{Symbol,String} = Genie.config.renderer_default_layout_file, context::Module = @__MODULE__, vars...) :: Function
   register_vars(vars...)
-  task_local_storage(:__yield, get_template(joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action)), partial = true, mod = mod) |> Base.invokelatest)
+  task_local_storage(:__yield, get_template(joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action)), partial = true, context = context) |> Base.invokelatest)
 
   layout = Base.get(task_local_storage(:__vars), :layout, layout)
 
-  get_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false, mod = mod)
+  get_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false, context = context)
 end
-function html_renderer(data::String; mod::Module = @__MODULE__, layout::Union{Symbol,String,Nothing} = nothing, vars...) :: Function
+function html_renderer(data::String; context::Module = @__MODULE__, layout::Union{Symbol,String,Nothing} = nothing, vars...) :: Function
   register_vars(vars...)
 
   if layout != nothing
-    task_local_storage(:__yield, parse_view(data, partial = true, mod = mod))
-    get_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false, mod = mod)
+    task_local_storage(:__yield, parse_view(data, partial = true, context = context))
+    get_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false, context = context)
   else
-    parse_view(data, partial = false, mod = mod)
+    parse_view(data, partial = false, context = context)
   end
 end
 
 
 """
-    json_renderer(resource::Union{Symbol,String}, action::Union{Symbol,String}; mod::Module = @__MODULE__, vars...) :: Function
+    json_renderer(resource::Union{Symbol,String}, action::Union{Symbol,String}; context::Module = @__MODULE__, vars...) :: Function
 
 Renders data as JSON
 """
-@inline function json_renderer(resource::Union{Symbol,String}, action::Union{Symbol,String}; mod::Module = @__MODULE__, vars...) :: Function
+@inline function json_renderer(resource::Union{Symbol,String}, action::Union{Symbol,String}; context::Module = @__MODULE__, vars...) :: Function
   register_vars(vars...)
 
-    () -> (Base.include(mod, joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action) * JSON_FILE_EXT)) |> JSON.json)
+    () -> (Base.include(context, joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action) * JSON_FILE_EXT)) |> JSON.json)
 end
 
 
@@ -508,7 +504,7 @@ function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", dept
     tag_name = replace(lowercase(string(tag(elem))), "-"=>"_")
 
     if Genie.config.flax_autoregister_webcomponents && ! isdefined(@__MODULE__, Symbol(tag_name))
-      log("Autoregistering HTML element $tag_name", :debug)
+      @debug "Autoregistering HTML element $tag_name"
 
       register_element(Symbol(tag_name))
       print(io, "Genie.Flax.register_element(Symbol(\"$tag_name\")) \n")
@@ -530,19 +526,17 @@ function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", dept
       for (k,v) in attrs(elem)
         x = v
 
-        if startswith(v, "<\$") && endswith(v, "\$>")
-          v = (replace(replace(replace(v, "<\$"=>""), "\$>"=>""), "'"=>"\"") |> strip)
-          x = v
-          v = "\$($v)"
+        if startswith(k, "\$") # do not process embedded julia code
+          print(attributes, string(k)[2:end], ", ") # strip the $, this is rendered directly in Julia code
+          continue
         end
 
         if in(Symbol(lowercase(k)), BOOL_ATTRIBUTES)
-          if x == true || x == "true" || x == :true || x == ":true" || x == ""
-            # push!(attributes, "$k = \"$k\"") # boolean attributes can have the same value as the attribute -- or be empty
-            print(attributes, "$k = \"$k\"", ", ") # boolean attributes can have the same value as the attribute -- or be empty
+          if x == true || x == "true" || x == :true || x == ":true" || x == "" || x == "on"
+            print(attributes, "$k=\"$k\"", ", ") # boolean attributes can have the same value as the attribute -- or be empty
           end
         else
-          print(attributes, """$(replace(lowercase(string(k)), "-"=>"_")) = "$v" """, ", ")
+          print(attributes, """$(replace(lowercase(string(k)), "-"=>"_"))="$v" """, ", ")
         end
       end
 
@@ -574,8 +568,9 @@ function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", dept
     end
 
   elseif isa(elem, HTMLText)
-    content = replace(elem.text |> strip |> string, "\""=>"\\\"")
-    print(io, repeat("\t", depth), "\"$(content)\"")
+    content = elem.text |> strip |> string
+    endswith(content, "\"") && (content *= "\n")
+    print(io, repeat("\t", depth), "\"\"\"$(content)\"\"\"")
   end
 
   String(take!(io))
@@ -640,13 +635,13 @@ end
 
 function register_normal_element(elem::Symbol) :: Nothing
   Core.eval(@__MODULE__, """
-    function $elem(f::Function; attrs...) :: HTMLString
-      \"\"\"\$(normal_element(f, "$(string(elem))", Pair{Symbol,Any}[attrs...]))\"\"\"
+    function $elem(f::Function, args...; attrs...) :: HTMLString
+      \"\"\"\$(normal_element(f, "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
   Core.eval(@__MODULE__, """
-    function $elem(children::Union{String,Vector{String}} = ""; attrs...) :: HTMLString
-      \"\"\"\$(normal_element(children, "$(string(elem))", Pair{Symbol,Any}[attrs...]))\"\"\"
+    function $elem(children::Union{String,Vector{String}} = "", args...; attrs...) :: HTMLString
+      \"\"\"\$(normal_element(children, "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
 
@@ -656,8 +651,8 @@ end
 
 function register_void_element(elem::Symbol) :: Nothing
   Core.eval(@__MODULE__, """
-    function $elem(; attrs...) :: HTMLString
-      \"\"\"\$(void_element("$(string(elem))", Pair{Symbol,Any}[attrs...]))\"\"\"
+    function $elem(args...; attrs...) :: HTMLString
+      \"\"\"\$(void_element("$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
 
@@ -672,6 +667,12 @@ push!(LOAD_PATH,  abspath(Genie.HELPERS_PATH))
 
 Iterates over the `arr` Array and applies function `f` for each element.
 The results of each iteration are concatenated and the final string is returned.
+
+## Examples
+
+@foreach(@vars(:translations)) do t
+  t
+end
 """
 macro foreach(f, arr)
   quote
@@ -720,11 +721,11 @@ register_elements()
 
 
 """
-    var_dump(var, html = true) :: String
+    vardump(var, html = true) :: String
 
 Utility function for dumping a variable into the view.
 """
-function var_dump(var, html = true) :: String
+function vardump(var, html = true) :: String
   iobuffer = IOBuffer()
   show(iobuffer, var)
   content = String(take!(iobuffer))
@@ -802,7 +803,7 @@ function prepare_build(subfolder) :: Bool
   build_path = joinpath(Genie.BUILD_PATH, subfolder)
   @ifdev rm(build_path, force = true, recursive = true)
   if ! isdir(build_path)
-    log("Creating build folder at $(build_path)", :info)
+    @info "Creating build folder at $(build_path)"
     mkpath(build_path)
   end
 

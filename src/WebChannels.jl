@@ -3,9 +3,8 @@ Handles WebSockets communication logic.
 """
 module WebChannels
 
-using HTTP, JSON, Distributed
-using Genie.Loggers
-
+using Revise
+using HTTP, JSON, Distributed, Logging
 
 const ClientId = UInt # web socket hash
 const ChannelName = String
@@ -117,11 +116,9 @@ Unsubscribes a web socket client `ws` from all the channels.
 function unsubscribe_client(ws::HTTP.WebSockets.WebSocket) :: ChannelClientsCollection
   if haskey(CLIENTS, id(ws))
     for channel_id in CLIENTS[id(ws)].channels
-      # @show "popping subscription " id(ws)
       pop_subscription(id(ws), channel_id)
     end
 
-    # @show "deleting clients " id(ws)
     delete!(CLIENTS, id(ws))
   end
 

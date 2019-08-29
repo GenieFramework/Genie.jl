@@ -3,7 +3,7 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
-const GENIE_VERSION = v"0.15.0"
+const GENIE_VERSION = v"0.16.0"
 
 using YAML
 using Genie
@@ -16,6 +16,9 @@ export cache_enabled, Settings, DEV, PROD, TEST
 const DEV   = "dev"
 const PROD  = "prod"
 const TEST  = "test"
+
+
+haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = DEV)
 
 
 """
@@ -229,7 +232,7 @@ mutable struct Settings
             tests_force_test_env = true,
 
             session_auto_start  = false,
-            session_key_name    = "__GENIESID",
+            session_key_name    = "__geniesid",
             session_storage     = :File,
 
             inflector_irregulars = Tuple{String,String}[],

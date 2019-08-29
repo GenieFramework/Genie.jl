@@ -157,13 +157,13 @@ Attempts to retrieve a cookie value stored at `key` in the `payload object` and 
 - `encrypted::Bool`: if `true` the value stored on the cookie is automatically decrypted
 """
 function nullablevalue(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}; encrypted::Bool = true) :: Nullable{String}
-  cookies = Dict(payload)
+  for cookie in split(Dict(payload)["cookie"], ';')
+    if startswith(lowercase(cookie), lowercase(string(key)))
+      value = split(cookie, '=')[2] |> String
+      encrypted && (value = Genie.Encryption.decrypt(value))
 
-  if haskey(cookies, string(key))
-    value = cookies[string(key)]
-    encrypted && (value = Genie.Encryption.decrypt(value))
-
-    return Nullable{String}(value)
+      return Nullable{String}(value)
+    end
   end
 
   Nullable{String}()

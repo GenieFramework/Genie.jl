@@ -1,7 +1,7 @@
 module Plugins
 
-using Genie, Genie.Loggers
-using Pkg, Markdown
+using Genie
+using Pkg, Markdown, Logging
 
 
 const FILES_FOLDER = "files"
@@ -24,18 +24,18 @@ function recursive_copy(path::String, dest::String; only_hidden = true, force = 
 
     try
       mkdir(dest_path)
-      log("Created dir $dest_path", :info)
+      @info "Created dir $dest_path"
     catch ex
-      log("Failed to create dir $dest_path", :err)
+      @error "Failed to create dir $dest_path"
     end
 
     for f in files
       (only_hidden && startswith(f, ".")) || continue # only copy hidden files, especially .gitkeep
       try
         cp(joinpath(root, f), joinpath(dest_path, f), force = force)
-        log("Copied $(joinpath(root, f)) to $(joinpath(dest_path, f))", :info)
+        @info "Copied $(joinpath(root, f)) to $(joinpath(dest_path, f))"
       catch ex
-        log("Failed to copy $(joinpath(root, f)) to $(joinpath(dest_path, f))", :err)
+        @error "Failed to copy $(joinpath(root, f)) to $(joinpath(dest_path, f))"
       end
     end
   end
@@ -51,13 +51,17 @@ function congrats()
 
   doc"""
   ```julia
-  function install(dest::String; force = false)
+  function install(dest::String; force = false) :: Nothing
     src = abspath(normpath(joinpath(@__DIR__, "..", Genie.Plugins.FILES_FOLDER)))
 
     for f in readdir(src)
-      isdir(f) || continue
+      isfile(f) && continue
+      isdir(f) || mkpath(joinpath(src, f))
+
       Genie.Plugins.install(joinpath(src, f), dest, force = force)
     end
+
+    nothing
   end
   ```
   """
@@ -69,12 +73,12 @@ function scaffold(plugin_name::String, dest::String = "."; force = false)
   dest = normpath(dest) |> abspath
   ispath(dest) || mkpath(dest)
 
-  log("Generating project file", :info)
+  @info "Generating project file"
   cd(dest)
   Pkg.generate(plugin_name)
   dest = joinpath(dest, plugin_name)
 
-  log("Scaffolding file structure", :info)
+  @info "Scaffolding file structure"
   mkpath(joinpath(dest, FILES_FOLDER))
 
   for path in FOLDERS
@@ -82,10 +86,10 @@ function scaffold(plugin_name::String, dest::String = "."; force = false)
   end
 
   initializer_path = joinpath(dest, FILES_FOLDER, PLUGINS_FOLDER, lowercase(plugin_name) * ".jl")
-  log("Creating plugin initializer at $initializer_path", :info)
+  @info "Creating plugin initializer at $initializer_path"
   touch(initializer_path)
 
-  log("Adding dependencies", :info)
+  @info "Adding dependencies"
 
   cd(dest)
   pkg"activate ."
@@ -100,6 +104,8 @@ end
 
 
 function install(path::String, dest::String; force = false)
+  isdir(Genie.PLUGINS_PATH) || mkpath(Genie.PLUGINS_PATH)
+
   isdir(dest) || mkdir(dest)
 
   for (root, dirs, files) in walkdir(path)
@@ -107,17 +113,17 @@ function install(path::String, dest::String; force = false)
 
     try
       mkdir(dest_path)
-      log("Created dir $dest_path", :info)
+      @info "Created dir $dest_path"
     catch ex
-      log("Did not create dir $dest_path")
+      @error "Did not create dir $dest_path"
     end
 
     for f in files
       try
         cp(joinpath(root, f), joinpath(dest_path, f), force = force)
-        log("Copied $(joinpath(root, f)) to $(joinpath(dest_path, f))", :info)
+        @info "Copied $(joinpath(root, f)) to $(joinpath(dest_path, f))"
       catch ex
-        log("Did not copy $(joinpath(root, f)) to $(joinpath(dest_path, f))")
+        @error "Did not copy $(joinpath(root, f)) to $(joinpath(dest_path, f))"
       end
     end
   end

@@ -21,7 +21,7 @@ function bootstrap() :: Nothing
 
   isfile("env.jl") && include("env.jl")
   haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = "dev")
-  @info "\nStarting Genie in >> $(ENV["GENIE_ENV"] |> uppercase) << mode \n\n"
+  @info "\nStarting Genie v$(Genie.Configuration.GENIE_VERSION) in >> $(ENV["GENIE_ENV"] |> uppercase) << mode \n\n"
 
   push!(LOAD_PATH, pwd(), "src")
 

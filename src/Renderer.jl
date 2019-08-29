@@ -2,8 +2,8 @@ module Renderer
 
 export respond, html, json, redirect
 
-using Nullables, JSON, HTTP, Reexport, Markdown
-using Genie, Genie.Util, Genie.Configuration, Genie.Loggers
+using Nullables, JSON, HTTP, Reexport, Markdown, Logging
+using Genie, Genie.Util, Genie.Configuration, Genie.Exceptions
 
 @reexport using Genie.Flax
 
@@ -63,10 +63,10 @@ end
 """
 function tohtml(resource::ResourcePath, action::ResourcePath;
                   layout::ResourcePath = Genie.config.renderer_default_layout_file, context::Module = @__MODULE__, vars...) :: WebRenderable
-  WebRenderable(Flax.html_renderer(resource, action; layout = layout, mod = context, vars...) |> Base.invokelatest)
+  WebRenderable(Flax.html_renderer(resource, action; layout = layout, context = context, vars...) |> Base.invokelatest)
 end
 function tohtml(data::String; context::Module = @__MODULE__, layout::Union{ResourcePath,Nothing} = nothing, vars...) :: WebRenderable
-  WebRenderable(Flax.html_renderer(data; mod = context, layout = layout, vars...) |> Base.invokelatest)
+  WebRenderable(Flax.html_renderer(data; context = context, layout = layout, vars...) |> Base.invokelatest)
 end
 function tohtml(restful_resource::WebResource; context::Module = @__MODULE__, vars...) :: WebRenderable
   WebRenderable(restful_resource.resource, restful_resource.action, layout = restful_resource.layout, context = context, vars...)
@@ -92,7 +92,7 @@ end
 Invokes the JSON renderer of the underlying configured templating library.
 """
 function tojson(resource::ResourcePath, action::ResourcePath; context::Module = @__MODULE__, vars...) :: WebRenderable
-  WebRenderable(Flax.json_renderer(resource, action; mod = context, vars...) |> Base.invokelatest, :json)
+  WebRenderable(Flax.json_renderer(resource, action; context = context, vars...) |> Base.invokelatest, :json)
 end
 function tojson(data) :: WebRenderable
   WebRenderable(JSON.json(data), :json)
@@ -103,7 +103,7 @@ end
 """
 function json(resource::ResourcePath, action::ResourcePath; context::Module = @__MODULE__,
               status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
-  WebRenderable(tojson(resource, action; mod = context, vars...), status, headers) |> respond
+  WebRenderable(tojson(resource, action; context = context, vars...), status, headers) |> respond
 end
 function json(data; status::Int = 200, headers::HTTPHeaders = HTTPHeaders()) :: HTTP.Response
   WebRenderable(tojson(data), status, headers) |> respond
@@ -118,8 +118,8 @@ function redirect(location::String, code::Int = 302, headers::HTTPHeaders = HTTP
   headers["Location"] = location
   WebRenderable("Redirecting you to $location", :text, code, headers) |> respond
 end
-function redirect(named_route::Symbol, code::Int = 302, headers::HTTPHeaders = HTTPHeaders()) :: HTTP.Response
-  redirect(Genie.Router.linkto(named_route), code, headers)
+function redirect(named_route::Symbol, code::Int = 302, headers::HTTPHeaders = HTTPHeaders(); route_args...) :: HTTP.Response
+  redirect(Genie.Router.linkto(named_route; route_args...), code, headers)
 end
 
 
@@ -155,7 +155,9 @@ function respond(err::T, content_type::Union{Symbol,String} = Genie.Router.respo
   HTTP.Response(code, (isa(content_type, Symbol) ? ["Content-Type" => CONTENT_TYPES[content_type]] : ["Content-Type" => content_type]), body = string(err))
 end
 function respond(body::String, content_type::Union{Symbol,String} = Genie.Router.responsetype(), code::Int = 200) :: HTTP.Response
-  HTTP.Response(code, (isa(content_type, Symbol) ? ["Content-Type" => CONTENT_TYPES[content_type]] : ["Content-Type" => content_type]), body = body)
+  HTTP.Response(code,
+                (isa(content_type, Symbol) ? ["Content-Type" => CONTENT_TYPES[content_type]] : ["Content-Type" => content_type]),
+                body = body) |> ExceptionalResponse
 end
 function respond(body, code::Int = 200, headers::HTTPHeaders = HTTPHeaders())
   HTTP.Response(code, [h for h in headers], body = string(body))

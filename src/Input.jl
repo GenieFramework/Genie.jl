@@ -96,8 +96,6 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
         file::HttpFile = HttpFile()
         fileFieldName::String = ""
 
-        # @show part.headers
-
         for (field::String, values::Dict{String,String}) in part.headers
           if field == "Content-Disposition" && getkey(values, "form-data", nothing) != nothing
 
@@ -118,8 +116,6 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
           end
         end # for
 
-        # @show file
-
         if hasFile
           file.data = part.data
 
@@ -133,7 +129,6 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
     end # if
   end
 
-  # @show files
   nothing
 end
 

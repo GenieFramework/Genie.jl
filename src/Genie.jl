@@ -8,9 +8,10 @@ push!(LOAD_PATH, @__DIR__)
 include("Configuration.jl")
 include("constants.jl")
 
-config = Configuration.Settings(app_env = Configuration.DEV)
+config = Configuration.Settings(app_env = ENV["GENIE_ENV"])
 
 using Revise
+using Logging
 
 isfile(joinpath(CONFIG_PATH, "plugins.jl")) && include(joinpath(CONFIG_PATH, "plugins.jl"))
 
@@ -20,8 +21,8 @@ push!(LOAD_PATH,  joinpath(@__DIR__, "cache_adapters"),
 
 include(joinpath(@__DIR__, "genie_types.jl"))
 
-include("Loggers.jl")
 include("HTTPUtils.jl")
+include("Exceptions.jl")
 include("App.jl")
 include("Inflector.jl")
 include("Util.jl")
@@ -37,23 +38,23 @@ include("Flax.jl")
 include("Renderer.jl")
 include("Assets.jl")
 include("Router.jl")
-include("Helpers.jl")
 include("WebChannels.jl")
 include("AppServer.jl")
 include("Commands.jl")
 include("Cache.jl")
 include("Responses.jl")
 include("Requests.jl")
+include("Flash.jl")
 include("Plugins.jl")
 
-using .Loggers, .HTTPUtils
+using .HTTPUtils
 using .App
 using .Inflector, .Util
 using .FileTemplates, .Toolbox, .Generator, .Tester, .Encryption, .Cookies, .Sessions
-using .Input, .Renderer, .Assets, .Router, .Helpers, .AppServer, .Commands
+using .Input, .Renderer, .Assets, .Router, .Commands
 using .Flax, .AppServer, .Plugins
 
-export startup, serve
+export startup, serve, up
 
 
 """
@@ -206,6 +207,7 @@ Web Server starting at http://0.0.0.0:8000
 ```
 """
 const startup = AppServer.startup
+const up = startup
 
 
 ### PRIVATE ###

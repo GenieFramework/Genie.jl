@@ -1,6 +1,6 @@
 The MIT License (MIT)
 
-Copyright (c) 2016-2019 [Genie.jl Contributors](https://github.com/GenieFramework/Genie.jl/graphs/contributors)
+Copyright (c) 2016-2019 [Adrian Salceanu](https://www.linkedin.com/in/adriansalceanu/) and [Genie.jl Contributors](https://github.com/GenieFramework/Genie.jl/graphs/contributors)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

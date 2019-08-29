@@ -1,16 +1,19 @@
 module Router
 
 using Revise
+using Reexport, Logging
 using HTTP, URIParser, HttpCommon, Nullables, Sockets, Millboard, JSON, Dates, OrderedCollections
-using Genie, Genie.HTTPUtils, Genie.Sessions, Genie.Configuration, Genie.Input, Genie.Loggers, Genie.Util, Genie.Renderer
+using Genie, Genie.HTTPUtils, Genie.Sessions, Genie.Configuration, Genie.Input, Genie.Util, Genie.Renderer, Genie.Exceptions
 
-include(joinpath(@__DIR__, "mimetypes.jl"))
+include("mimetypes.jl")
 
 export route, routes, channel, channels, serve_static_file
 export GET, POST, PUT, PATCH, DELETE, OPTIONS
-export tolink, linkto, responsetype
-export error_404, error_500
+export tolink, linkto, responsetype, toroute
+export error_404, error_500, error_xxx
 export @params, @routes, @channels
+
+@reexport using HttpCommon
 
 const GET     = "GET"
 const POST    = "POST"
@@ -19,8 +22,8 @@ const PATCH   = "PATCH"
 const DELETE  = "DELETE"
 const OPTIONS = "OPTIONS"
 
-const BEFORE_HOOK  = :before_hook
-const AFTER_HOOK   = :after_hook
+const BEFORE_HOOK  = :before
+const AFTER_HOOK   = :after
 
 const sessionless = Symbol[:json]
 
@@ -45,9 +48,10 @@ mutable struct Route
   method::String
   path::String
   action::Function
+  name::Union{Symbol,Nothing}
 
-  Route(; method = GET, path = "", action = () -> error("Route not set")) =
-    new(method, path, action)
+  Route(; method = GET, path = "", action = (() -> error("Route not set")), name = nothing) =
+    new(method, path, action, name)
 end
 
 
@@ -59,17 +63,18 @@ Representation of a WebSocket Channel object
 mutable struct Channel
   path::String
   action::Function
+  name::Union{Symbol,Nothing}
 
-  Channel(; path = "", action = () -> error("Channel not set")) =
+  Channel(; path = "", action = (() -> error("Channel not set")), name = nothing) =
     new(path, action)
 end
 
 
 function Base.show(io::IO, r::Route)
-  print(io, "[$(r.method)] $(r.path) => $(r.action)")
+  print(io, "[$(r.method)] $(r.path) => $(r.action) | :$(r.name)")
 end
-function Base.show(io::IO, r::Channel)
-  print(io, "[WS] $(r.path) => $(r.action)")
+function Base.show(io::IO, c::Channel)
+  print(io, "[WS] $(c.path) => $(c.action) | :$(c.name)")
 end
 
 
@@ -113,30 +118,35 @@ function route_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = IPv4(Ge
 
   if is_static_file(req.target)
     Genie.config.server_handle_static_files && return serve_static_file(req.target)
+
     return error_404(req.target, req)
   end
 
   Revise.revise()
 
-  session = Genie.config.session_auto_start ? Sessions.start(req, res) : nothing
+  session, res = Genie.config.session_auto_start ? Sessions.start(req, res) : (nothing, res)
 
-  controller_response::HTTP.Response = HTTP.Response()
   try
-    controller_response = match_routes(req, res, session, params)
+    res = match_routes(req, res, session, params)
   catch ex
-    log(sprint(showerror, ex), :error)
-    log("$(req.target) 500\n", :error)
+    @error sprint(showerror, ex)
+    @error "$(req.target) 500\n"
 
     rethrow(ex)
   end
 
-  controller_response.status == 404 && req.method == OPTIONS && return preflight_response()
+  res.status == 404 && req.method == OPTIONS && return preflight_response()
 
   ! in(response_type(params), sessionless) && Genie.config.session_auto_start && Sessions.persist(session)
 
-  log("$(req.target) $(controller_response.status)\n", (controller_response.status < 400 ? :info : :error))
+  reqstatus = "$(req.target) $(res.status)\n"
+  if res.status < 400
+    @info reqstatus
+  else
+    @error reqstatus
+  end
 
-  controller_response
+  res
 end
 
 
@@ -225,9 +235,13 @@ function route(action::Function, path::String; method = GET, named::Union{Symbol
   route(path, action, method = method, named = named)
 end
 function route(path::String, action::Function; method = GET, named::Union{Symbol,Nothing} = nothing) :: Route
-  r = Route(method = method, path = path, action = action)
+  r = Route(method = method, path = path, action = action, name = named)
 
-  Router.push!(_routes, (named === nothing ? route_name(r) : named), r)
+  if named === nothing
+    r.name = routename(r)
+  end
+
+  Router.push!(_routes, r.name, r)
 end
 
 
@@ -238,28 +252,32 @@ function channel(action::Function, path::String; named::Union{Symbol,Nothing} = 
   channel(path, action, named = named)
 end
 function channel(path::String, action::Function; named::Union{Symbol,Nothing} = nothing) :: Channel
-  c = Channel(path = path, action = action)
+  c = Channel(path = path, action = action, name = named)
 
-  Router.push!(_channels, (named === nothing ? channel_name(c) : named), c)
+  if named === nothing
+    c.name = channelname(c)
+  end
+
+  Router.push!(_channels, c.name, c)
 end
 
 
 """
-    route_name(params) :: Symbol
+    routename(params) :: Symbol
 
 Computes the name of a route.
 """
-function route_name(params::Route) :: Symbol
+function routename(params::Route) :: Symbol
   baptizer(params, String[lowercase(params.method)])
 end
 
 
 """
-    channel_name(params) :: Symbol
+    channelname(params) :: Symbol
 
 Computes the name of a channel.
 """
-@inline function channel_name(params::Channel) :: Symbol
+@inline function channelname(params::Channel) :: Symbol
   baptizer(params, String[])
 end
 
@@ -315,7 +333,7 @@ end
 
 
 """
-Gets the `Route` correspoding to `route_name`
+Gets the `Route` correspoding to `routename`
 """
 @inline function get_route(route_name::Symbol) :: Route
   haskey(named_routes(), route_name) ? named_routes()[route_name] : error("Route named `$route_name` is not defined")
@@ -355,27 +373,15 @@ end
 """
 Generates the HTTP link corresponding to `route_name` using the parameters in `d`.
 """
-@inline function to_link(route_name::Symbol, d::Vector{Pair{Symbol,T}})::String where {T}
-  to_link(route_name, Dict(d...))
-end
-
-
-"""
-Generates the HTTP link corresponding to `route_name` using the parameters in `d`.
-"""
-@inline function to_link(route_name::Symbol, d::Pair{Symbol,T})::String where {T}
-  to_link(route_name, Dict(d))
-end
-
-
-"""
-Generates the HTTP link corresponding to `route_name` using the parameters in `d`.
-"""
-function to_link(route_name::Symbol, d::Dict{Symbol,T})::String where {T}
+function to_link(route_name::Symbol, d::Dict{Symbol,T}; preserve_query::Bool = true, extra_query::Dict = Dict())::String where {T}
   route = get_route(route_name)
 
   result = String[]
   for part in split(route.path, "/")
+    if occursin("#", part)
+      part = split(part, "#")[1]
+    end
+
     if startswith(part, ":")
       var_name = split(part, "::")[1][2:end] |> Symbol
       ( isempty(d) || ! haskey(d, var_name) ) && error("Route $route_name expects param $var_name")
@@ -383,34 +389,45 @@ function to_link(route_name::Symbol, d::Dict{Symbol,T})::String where {T}
       Base.delete!(d, var_name)
       continue
     end
+
     push!(result, part)
   end
 
-  query_vars = String[]
-  if haskey(d, :_preserve_query)
-    Base.delete!(d, :_preserve_query)
+  query_vars = Dict{String,String}()
+  if preserve_query
     query = URI(task_local_storage(:__params)[:REQUEST].target).query
-    query != "" && (query_vars = split(query , "&" ))
+    if ! isempty(query)
+      for pair in split(query, '&')
+        parts = split(pair, '=')
+        query_vars[parts[1]] = parts[2]
+      end
+    end
   end
 
-  for (k,v) in d
-    push!(query_vars, "$k=$v")
+  for (k,v) in extra_query
+    query_vars[string(k)] = string(v)
   end
 
-  join(result, "/") * ( size(query_vars, 1) > 0 ? "?" : "" ) * join(query_vars, "&")
+  qv = String[]
+  for (k,v) in query_vars
+    push!(qv, "$k=$v")
+  end
+
+  join(result, "/") * ( ! isempty(qv) ? "?" : "" ) * join(qv, "&")
 end
 
 
 """
 Generates the HTTP link corresponding to `route_name` using the parameters in `route_params`.
 """
-@inline function to_link(route_name::Symbol; route_params...) :: String
-  to_link(route_name, route_params_to_dict(route_params))
+@inline function to_link(route_name::Symbol; preserve_query::Bool = true, extra_query::Dict = Dict(), route_params...) :: String
+  to_link(route_name, route_params_to_dict(route_params), preserve_query = preserve_query, extra_query = extra_query)
 end
 
 const link_to = to_link
 const linkto = link_to
 const tolink = to_link
+const toroute = to_link
 
 
 """
@@ -440,11 +457,9 @@ function run_hook(controller::Module, hook_type::Symbol) :: Bool
   isdefined(controller, hook_type) || return false
 
   try
-    getfield(controller, hook_type)()
+    getfield(controller, hook_type) |> Base.invokelatest
   catch ex
-    log("Failed invoking $hook_type", :err)
-    log(string(ex), :err)
-    log("$(@__FILE__):$(@__LINE__)", :err)
+    @error "Failed invoking $hook_type"
 
     rethrow(ex)
   end
@@ -468,7 +483,7 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
     regex_route = try
       Regex("^" * parsed_route * "\$")
     catch
-      log("Invalid route $parsed_route", :error)
+      @error "Invalid route $parsed_route"
 
       continue
     end
@@ -487,6 +502,8 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
 
     res = negotiate_content(req, res, params)
 
+    params.collection[Genie.PARAMS_ROUTE_KEY] = r
+
     task_local_storage(:__params, params.collection)
 
     controller = (r.action |> typeof).name.module
@@ -498,8 +515,7 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
 
               result
             catch ex
-              log(ex, :error)
-              rethrow(ex)
+              isa(ex, ExceptionalResponse) ? ex.response : rethrow(ex)
             end
   end
 
@@ -537,19 +553,20 @@ function match_channels(req, msg::String, ws_client, params::Params, session::Un
 
     action_controller_params(c.action, params)
 
+    params.collection[Genie.PARAMS_CHANNEL_KEY] = c
+
     task_local_storage(:__params, params.collection)
 
     controller = (c.action |> typeof).name.module
 
-     return   try
+    return  try
                 run_hook(controller, BEFORE_HOOK)
                 result = (isdev() ? Base.invokelatest(c.action) : (c.action)()) |> string
                 run_hook(controller, AFTER_HOOK)
 
                 result
               catch ex
-                log(ex, :error)
-                rethrow(ex)
+                isa(ex, Exception) ? ex.msg : rethrow(ex)
               end
   end
 
@@ -567,7 +584,15 @@ function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
   param_names = String[]
   param_types = Any[]
 
+  validation_match = "[\\w\\-\\.\\+\\,\\s\\%]+"
+
   for rp in split(route, "/", keepempty = false)
+    if occursin("#", rp)
+      x = split(rp, "#")
+      rp = x[1]
+      validation_match = x[2]
+    end
+
     if startswith(rp, ":")
       param_type =  if occursin("::", rp)
                       x = split(rp, "::")
@@ -577,10 +602,13 @@ function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
                       Any
                     end
       param_name = rp[2:end]
-      rp = """(?P<$param_name>[\\w\\-\\.\\+\\,\\s\\%]+)"""
+
+      rp = """(?P<$param_name>$validation_match)"""
+
       push!(param_names, param_name)
       push!(param_types, param_type)
     end
+
     push!(parts, rp)
   end
 
@@ -626,14 +654,14 @@ Extracts params from request URI and sets up the `params` `Dict`.
 """
 function extract_uri_params(uri::String, regex_route::Regex, param_names::Vector{String}, param_types::Vector{Any}, params::Params) :: Bool
   matches = match(regex_route, uri)
+
   i = 1
   for param_name in param_names
     try
       params.collection[Symbol(param_name)] = convert(param_types[i], matches[param_name])
     catch ex
-      log("Failed to match URI params between $(param_types[i])::$(typeof(param_types[i])) and $(matches[param_name])::$(typeof(matches[param_name]))", :err)
-      log(string(ex), :err)
-      log("$(@__FILE__):$(@__LINE__)", :err)
+      @error "Failed to match URI params between $(param_types[i])::$(typeof(param_types[i])) and $(matches[param_name])::$(typeof(matches[param_name]))"
+      @error ex
 
       return false
     end
@@ -642,13 +670,6 @@ function extract_uri_params(uri::String, regex_route::Regex, param_names::Vector
   end
 
   true # this must be bool cause it's used in bool context for chaining
-end
-
-
-"""
-"""
-macro converter(f)
-  Base.eval(Genie.Router, f)
 end
 
 
@@ -709,8 +730,9 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
     try
       params.collection[Genie.PARAMS_JSON_PAYLOAD] = JSON.parse(params.collection[Genie.PARAMS_RAW_PAYLOAD])
     catch ex
-      log(sprint(showerror, ex), :error)
-      log("Setting @params(:JSON_PAYLOAD) to Nothing", :warn)
+      @error sprint(showerror, ex)
+      @warn "Setting @params(:JSON_PAYLOAD) to Nothing"
+
       params.collection[Genie.PARAMS_JSON_PAYLOAD] = nothing
     end
   else
@@ -840,9 +862,7 @@ function to_response(action_result) :: HTTP.Response
               HTTP.Response(string(action_result))
             end
           catch ex
-            log("Can't convert $action_result to HttpServer.Response", :err)
-            log(string(ex), :err)
-            log("$(@__FILE__):$(@__LINE__)", :err)
+            @error "Can't convert $action_result to HttpServer.Response"
 
             rethrow(ex)
           end
@@ -1038,49 +1058,60 @@ end
 
 
 """
+"""
+function error_xxx(error_message = "", req = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]]); error_info::String = "", error_code::Int = 500) :: HTTP.Response
+  if request_type_is(req, :json)
+    HTTP.Response(error_code, ["Content-Type" => request_mappings[:json]], body = JSON.json(Dict("error" => "500 - $error_message")))
+  elseif request_type_is(req, :text)
+    HTTP.Response(error_code, ["Content-Type" => request_mappings[:text]], body = "Error: 500 - $error_message")
+  else
+    serve_error_file(error_code, error_message, @params, error_info = error_info)
+  end
+end
+
+
+"""
     serve_error_file(error_code::Int, error_message::String = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
 
 Serves the error file correspoding to `error_code` and current environment.
 """
-function serve_error_file(error_code::Int, error_message::String = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: HTTP.Response
+function serve_error_file(error_code::Int, error_message::String = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}(); error_info::String = "") :: HTTP.Response
   ERROR_DESCRIPTION_MAX_LENGTH = 1000
 
+  page_code = error_code in [404, 500] ? "$error_code" : "xxx"
+
   try
-    error_page_file = isfile(joinpath(Genie.DOC_ROOT_PATH, "error-$(error_code).html")) ?
-                        joinpath(Genie.DOC_ROOT_PATH, "error-$(error_code).html") :
-                          joinpath(@__DIR__, "..", "files", "static", "error-$(error_code).html")
+    error_page_file = isfile(joinpath(Genie.DOC_ROOT_PATH, "error-$page_code.html")) ?
+                        joinpath(Genie.DOC_ROOT_PATH, "error-$page_code.html") :
+                          joinpath(@__DIR__, "..", "files", "static", "error-$page_code.html")
+
     error_page =  open(error_page_file) do f
                     read(f, String)
                   end
 
-    if Genie.Configuration.isdev()
-      if error_code == 500
+    if error_code == 500
+      error_page = replace(error_page, "<error_description/>"=>split(error_message, "\n")[1])
 
-        em =  if length(error_message) > ERROR_DESCRIPTION_MAX_LENGTH
-                error_message = error_message[1:(findfirst("\n", error_message)[1])]
-              else
-                error_message
-              end
-
-        error_page = replace(error_page, "<error_description/>"=>escapeHTML(em))
-
-        error_message =
-                        """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                                     $("\n" ^ 3)""" *
-                        """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(params))                         $("\n" ^ 3)""" *
-                        """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Router.named_routes() |> Dict))  $("\n" ^ 3)""" *
-                        """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$ENV                                               $("\n" ^ 1)"""
+      error_message = if Genie.Configuration.isdev()
+                      """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                                     $("\n" ^ 3)""" *
+                      """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(params))                         $("\n" ^ 3)""" *
+                      """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Router.named_routes() |> Dict))  $("\n" ^ 3)""" *
+                      """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$ENV                                               $("\n" ^ 1)"""
+      else
+        ""
       end
 
       error_page = replace(error_page, "<error_message/>"=>escapeHTML(error_message))
-
-      HTTP.Response(error_code, ["Content-Type"=>"text/html"], body = error_page)
+    elseif error_code == 404
+      error_page = replace(error_page, "<error_message/>"=>error_message)
     else
-      f = file_path(URI("/error-$(error_code).html").path)
-
-      HTTP.Response(error_code, ["Content-Type"=>"text/html"], body = replace(open(readstring, f), "<error_message/>"=>error_message))
+      error_page = replace(replace(error_page, "<error_message/>"=>error_message), "<error_info/>"=>error_info)
     end
+
+    HTTP.Response(error_code, ["Content-Type"=>"text/html"], body = error_page)
   catch ex
-    HTTP.Response(error_code, ["Content-Type"=>"text/html"], body = "Error $error_code: $error_message")
+    @error ex
+    HTTP.Response(error_code, ["Content-Type"=>"text/html"], body = "Error $page_code: $error_message")
   end
 end
 

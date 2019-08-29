@@ -1,11 +1,11 @@
 module ViewHelper
 
-using Genie, Genie.Helpers
+using Genie, Genie.Flash, Genie.Router
 
 export output_flash
 
-function output_flash(params::Dict{Symbol,Any}) :: String
-  ! isempty( flash(params) ) ? """<div class="form-group alert alert-info">$(flash(params))</div>""" : ""
+function output_flash() :: String
+  flash_has_message() ? """<div class="form-group alert alert-info">$(flash())</div>""" : ""
 end
 
 end

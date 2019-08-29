@@ -3,8 +3,8 @@ Generates various Genie files.
 """
 module Generator
 
-using Revise, SHA, Dates, Pkg
-using Genie, Genie.Loggers, Genie.FileTemplates, Genie.Inflector, Genie.Configuration, Genie.Tester, Genie.Util, Genie.FileTemplates
+using Revise, SHA, Dates, Pkg, Logging
+using Genie, Genie.FileTemplates, Genie.Inflector, Genie.Configuration, Genie.Tester, Genie.Util, Genie.FileTemplates
 
 
 const JULIA_PATH = joinpath(Sys.BINDIR, "julia")
@@ -23,7 +23,7 @@ function newcontroller(cmd_args::Dict{String,Any}; path::String = ".", pluralize
   resource_path = setup_resource_path(resource_name, path = path)
   cfn = controller_file_name(resource_name)
   write_resource_file(resource_path, cfn, resource_name, :controller, pluralize = pluralize) &&
-    log("New controller created at $(joinpath(resource_path, cfn))")
+    @info "New controller created at $(joinpath(resource_path, cfn))"
 
   nothing
 end
@@ -44,7 +44,7 @@ function newresource(cmd_args::Dict{String,Any}; path::String = ".", pluralize::
   resource_path = setup_resource_path(resource_name, path = path)
   for (resource_file, resource_type) in [(controller_file_name(resource_name), :controller)]
     write_resource_file(resource_path, resource_file, resource_name, resource_type, pluralize = pluralize) &&
-      log("New $resource_file created at $(joinpath(resource_path, resource_file))")
+      @info "New $resource_file created at $(joinpath(resource_path, resource_file))"
   end
 
   views_path = joinpath(resource_path, "views")
@@ -53,7 +53,7 @@ function newresource(cmd_args::Dict{String,Any}; path::String = ".", pluralize::
   ! isdir(Genie.TEST_PATH_UNIT) && mkpath(Genie.TEST_PATH_UNIT)
   test_file = resource_name * Genie.TEST_FILE_IDENTIFIER |> lowercase
   write_resource_file(Genie.TEST_PATH_UNIT, test_file, resource_name, :test, pluralize = pluralize) &&
-    log("New $test_file created at $(joinpath(Genie.TEST_PATH_UNIT, test_file))")
+    @info "New $test_file created at $(joinpath(Genie.TEST_PATH_UNIT, test_file))"
 
   nothing
 end
@@ -102,24 +102,27 @@ function write_resource_file(resource_path::String, file_name::String, resource_
       open(joinpath(resource_path, file_name), "w") do f
         write(f, Genie.FileTemplates.newcontroller(resource_name))
       end
-
-    elseif resource_type == :test
-      resource_does_not_exist(resource_path, file_name) || return true
-      open(joinpath(resource_path, file_name), "w") do f
-        write(f, Genie.FileTemplates.newtest(resource_name, Base.get(Inflector.to_singular(resource_name)) ))
-      end
-
-    else
-      error("Not supported, $file_name")
     end
   catch ex
-    log(ex, :warn)
+    @error ex
+  end
+
+  try
+    if resource_type == :test
+      resource_does_not_exist(resource_path, file_name) || return true
+      open(joinpath(resource_path, file_name), "w") do f
+        name = pluralize ? Base.get(Inflector.to_singular(resource_name)) : resource_name
+        write(f, Genie.FileTemplates.newtest(resource_name,  name))
+      end
+    end
+  catch ex
+    @error ex
   end
 
   try
     Genie.load_resources()
   catch ex
-    log(ex, :warn)
+    @error ex
   end
 
   true
@@ -164,7 +167,7 @@ Returns `true` if the indicated resources does not exists - false otherwise.
 """
 function resource_does_not_exist(resource_path::String, file_name::String) :: Bool
   if isfile(joinpath(resource_path, file_name))
-    log("File already exists, $(joinpath(resource_path, file_name)) - skipping", :warn)
+    @warn "File already exists, $(joinpath(resource_path, file_name)) - skipping"
     return false
   end
 
@@ -298,7 +301,7 @@ end
 Installs the application's dependencies using Julia's Pkg
 """
 function install_app_dependencies(app_path::String = ".") :: Nothing
-  log("Installing app dependencies")
+  @info "Installing app dependencies"
   pkg"activate ."
 
   pkg"add Genie#master"
@@ -317,10 +320,10 @@ If `autostart` is `true`, the newly generated Genie app will be automatically st
 """
 function autostart_app(autostart::Bool = true) :: Nothing
   if autostart
-    log("Starting your brand new Genie app - hang tight!", :info)
+    @info "Starting your brand new Genie app - hang tight!"
     Genie.loadapp(".", autostart = autostart)
   else
-    log("Your new Genie app is ready!
+    @info("Your new Genie app is ready!
         Run \njulia> Genie.loadapp() \nto load the app's environment
         and then \njulia> Genie.startup() \nto start the web server on port 8000.")
   end
@@ -406,9 +409,9 @@ function newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = fa
 
   Sys.iswindows() ? setup_windows_bin_files(app_path) : setup_nix_bin_files(app_path)
 
-  log("Done! New app created at $(abspath(path))", :info)
+  @info "Done! New app created at $(abspath(path))"
 
-  log("Changing active directory to $app_path")
+  @info "Changing active directory to $app_path"
   cd(path)
 
   install_app_dependencies(app_path)

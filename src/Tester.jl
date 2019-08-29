@@ -1,6 +1,7 @@
 module Tester
 
-using Genie, Genie.Util, Genie.Configuration, Genie.Loggers
+using Logging
+using Genie, Genie.Util, Genie.Configuration
 
 
 """
@@ -23,7 +24,7 @@ function bootstrap_tests(cmd_args::String = "", config::Settings = Genie.config,
   end
 
   Genie.config.app_env = current_env
-  log("Switched app to >> $(uppercase(Genie.config.app_env)) << env", :debug)
+  @warn "Switched app to >> $(uppercase(Genie.config.app_env)) << env"
 
   nothing
 end
@@ -70,7 +71,7 @@ Switches Genie to the test env for the duration of the current execution.
 function set_test_env() :: Nothing
   if Genie.config.tests_force_test_env
     Genie.config.app_env = TEST
-    log("Switched app to >> $(uppercase(App.config.app_env)) << env", :debug)
+    @warn "Switched app to >> $(uppercase(App.config.app_env)) << env"
 
     ! istest() && error("Could not switch env")
   end

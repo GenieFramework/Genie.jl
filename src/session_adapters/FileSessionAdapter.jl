@@ -1,8 +1,8 @@
 module FileSessionAdapter
 
 using Nullables
-using Genie.Sessions, Genie, Genie.Loggers, Genie.Configuration
-using Serialization
+using Genie.Sessions, Genie, Genie.Configuration
+using Serialization, Logging
 
 """
     write(session::Sessions.Session) :: Sessions.Session
@@ -11,8 +11,9 @@ Persists the `Session` object to the file system, using the configured sessions 
 """
 function write(session::Sessions.Session) :: Sessions.Session
   if ! isdir(joinpath(Genie.SESSIONS_PATH))
-    log("The configured sessions folder $(Genie.SESSIONS_PATH) does not exist -- switching to using a temporary folder.")
-    Core.eval(Genie, :(Genie.SESSIONS_PATH = mktempdir()))
+    @warn "Sessions folder $(abspath(Genie.SESSIONS_PATH)) does not exist"
+    @info "Creating sessions folder at $(abspath(Genie.SESSIONS_PATH))"
+    mkpath(Genie.SESSIONS_PATH)
   end
 
   try
@@ -20,11 +21,9 @@ function write(session::Sessions.Session) :: Sessions.Session
       serialize(io, session)
     end
   catch ex
-    log("Error when serializing session in $(@__FILE__):$(@__LINE__)", :err)
-    log(string(ex), :err)
-    log("$(@__FILE__):$(@__LINE__)", :err)
+    @error "Error when serializing session"
 
-    Genie.Configuration.isprod() && rethrow(ex)
+    rethrow(ex)
   end
 
   session
@@ -41,9 +40,8 @@ function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
   try
     isfile(joinpath(Genie.SESSIONS_PATH, session_id)) || return Nullable{Sessions.Session}(write(Session(session_id)))
   catch ex
-    log("Can't check session file", :err)
-    log(string(ex), :err)
-    log("$(@__FILE__):$(@__LINE__)", :err)
+    @error "Can't check session file"
+    @error ex
 
     Nullable{Sessions.Session}(write(Session(session_id)))
   end
@@ -55,9 +53,8 @@ function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
 
     Nullable{Sessions.Session}(session)
   catch ex
-    log("Can't read session", :err)
-    log(string(ex), :err)
-    log("$(@__FILE__):$(@__LINE__)", :err)
+    @error "Can't read session"
+    @error ex
 
     Nullable{Sessions.Session}(write(Session(session_id)))
   end

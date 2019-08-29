@@ -3,8 +3,8 @@ Handles Http server related functionality, manages requests and responses and th
 """
 module AppServer
 
-using Revise, HTTP, HTTP.IOExtras, HTTP.Sockets, Millboard, MbedTLS, URIParser, Sockets, Distributed
-using Genie, Genie.Configuration, Genie.Loggers, Genie.Sessions, Genie.Flax, Genie.Router, Genie.WebChannels
+using Revise, HTTP, HTTP.IOExtras, HTTP.Sockets, Millboard, MbedTLS, URIParser, Sockets, Distributed, Logging
+using Genie, Genie.Configuration, Genie.Sessions, Genie.Flax, Genie.Router, Genie.WebChannels
 
 
 ### PRIVATE ###
@@ -33,9 +33,6 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
                   ws_port::Int = Genie.config.websocket_port, async::Bool = ! Genie.config.run_as_server,
                   verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing) :: Nothing
 
-  # Create log directory and log file
-  Genie.config.log_to_file && Loggers.initlogfile()
-
   # Create build folders
   Genie.config.flax_compile_templates && Flax.create_build_folders()
 
@@ -48,7 +45,7 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
       end
     end
 
-    log("Web Sockets server running at $host:$ws_port")
+    @info "Web Sockets server running at $host:$ws_port"
   end
 
   command = () -> begin
@@ -58,14 +55,14 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
   end
 
   @info "Ready!\n"
-  log("Web Server starting at http://$host:$port")
+  @info "Web Server starting at http://$host:$port"
 
   if async
     @async command()
-    log("Web Server running at http://$host:$port")
+    @info "Web Server running at http://$host:$port"
   else
     command()
-    log("Web Server stopped")
+    @info "Web Server stopped"
   end
 
   nothing
@@ -83,11 +80,11 @@ Configures the handler for the HTTP Request and handles errors.
   catch ex
     error_message = string(sprint(showerror, ex), "\n\n")
 
-    log(error_message, :critical)
+    @error error_message
 
     message = Genie.Configuration.isprod() ?
                 "The error has been logged and we'll look into it ASAP." :
-                string(error_message, " in $(@__FILE__):$(@__LINE__)", "\n\n")
+                error_message
 
     Genie.Router.error_500(message, req)
   end
