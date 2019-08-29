@@ -166,10 +166,9 @@ Now all we need to do is to move the HTML code out of the controller and into th
 <!-- billgatesbooks.jl.html -->
 <h1>Bill Gates' top $( length(@vars(:books)) ) recommended books</h1>
 <ul>
-   <%
-      @foreach(@vars(:books)) do book
-         "<li>$(book.title) by $(book.author)"
-      end
+   <% @foreach(@vars(:books)) do book %>
+      <li>$(book.title) by $(book.author)
+    <% end %>
    %>
 </ul>
 ```
@@ -761,7 +760,7 @@ And finally, our JSON view needs a bit of tweaking too:
 Now if we just start the server we'll see the list of books served from the database, at <http://localhost:8000/api/v1/bgbooks>
 
 ```julia
-julia> startup()
+julia> up()
 ```
 
 Let's add a new book to see how it works:
