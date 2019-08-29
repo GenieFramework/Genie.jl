@@ -456,13 +456,7 @@ end
 function run_hook(controller::Module, hook_type::Symbol) :: Bool
   isdefined(controller, hook_type) || return false
 
-  try
-    getfield(controller, hook_type) |> Base.invokelatest
-  catch ex
-    @error "Failed invoking $hook_type"
-
-    rethrow(ex)
-  end
+  getfield(controller, hook_type) |> Base.invokelatest
 
   true
 end
