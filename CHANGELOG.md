@@ -2,10 +2,13 @@
 
 ## v0.16.1 - 2019-08-29
 
+* added a new command `bin/serverinteractive` allowing to start the web server interactively
 * environment configuration files define appropriate `global_logger`
 * fixed issue with webserver port env settings being overwritten
 * small changes to better support logging
 * moved version and env info out of app files into core files
+* added default `favicon.ico` file to avoid annoying 404 errors from browsers
+* small documentation updates
 
 ## v0.16.0 - 2019-08-29
 

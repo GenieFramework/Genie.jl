@@ -61,6 +61,13 @@ These are the roles of each of the files and folders:
 - `public/` the document root, includes static files exposed by the on the network/internet.
 - `routes.jl` dedicated file for registering Genie routes.
 
+---
+**HEADS UP**
+
+After creating a new app you might need to change the file permissions to allow editing/saving the files such as `routes.jl`.
+
+---
+
 ## Adding logic
 
 You can now edit the `routes.jl` file to add your logic, at the bottom of the file:

@@ -143,6 +143,10 @@ function setup_windows_bin_files(path::String = ".") :: Nothing
     write(f, "$JULIA_PATH --color=yes --depwarn=no -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) s %*")
   end
 
+  open(joinpath(path, Genie.BIN_PATH, "serverinteractive.bat"), "w") do f
+    write(f, "$JULIA_PATH --color=yes --depwarn=no -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) si %*")
+  end
+
   nothing
 end
 

@@ -23,6 +23,8 @@ function execute(config::Settings) :: Nothing
   if called_command(parsed_args, "s") || called_command(parsed_args, "server:start")
     Genie.config.run_as_server = true
     AppServer.startup(Genie.config.server_port, Genie.config.server_host)
+  elseif called_command(parsed_args, "si") || called_command(parsed_args, "server:interactive")
+    AppServer.startup(Genie.config.server_port, Genie.config.server_host)
   end
 
   nothing
@@ -54,6 +56,10 @@ function parse_commandline_args(config::Settings) :: Dict{String,Any}
     "--server:host", "-l"
     help = "Host IP to listen on"
     default = "$(config.server_host)"
+    "si"
+    help = "starts HTTP server and enters REPL"
+    "--server:interactive"
+    help = "starts HTTP server and enters REPL"
   end
 
   parse_args(settings)
