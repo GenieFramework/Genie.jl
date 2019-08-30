@@ -10,6 +10,8 @@ include("constants.jl")
 
 config = Configuration.Settings(app_env = ENV["GENIE_ENV"])
 
+setconfig(config::Configuration.Settings) = (config = config)
+
 using Revise
 using Logging
 

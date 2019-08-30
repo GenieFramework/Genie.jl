@@ -1,14 +1,17 @@
 # Changelog
 
-## v0.16.1 - 2019-08-29
+## v0.17.0 - 2019-08-31
 
+* fully migrated logging to Julia's native logger (**breaking**)
+* reintroduced support for logging to file via `LoggingExtras` (new app dependency)
 * added a new command `bin/serverinteractive` allowing to start the web server interactively
-* environment configuration files define appropriate `global_logger`
-* fixed issue with webserver port env settings being overwritten
+* fixed issue with webserver port env settings being overwritten by default settings
 * small changes to better support logging
-* moved version and env info out of app files into core files
-* added default `favicon.ico` file to avoid annoying 404 errors from browsers
+* moved welcome info out of app files into core files
+* added default `favicon.ico` file to avoid annoying 404 errors from automatic browsers requests
+* cleaned up the env files
 * small documentation updates
+* dependencies updates
 
 ## v0.16.0 - 2019-08-29
 

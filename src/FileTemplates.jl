@@ -72,6 +72,7 @@ function appmodule(path::String)
   module $appname
 
   using Genie, Genie.Router, Genie.Renderer, Genie.AppServer
+  using Logging, LoggingExtras
 
   function main()
     Base.eval(Main, :(const UserApp = $appname))

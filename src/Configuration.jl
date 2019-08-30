@@ -5,6 +5,7 @@ module Configuration
 
 const GENIE_VERSION = v"0.16.1"
 
+using Logging
 using YAML
 using Genie
 
@@ -140,7 +141,7 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `cors_allowed_origins::Vector{String}`: allowed origin hosts for CORS settings
 - `cache_adapter::Symbol`: cache adapter backend (default File)
 - `cache_duraction::Int`: cache expiration time in seconds
-- `log_level::Symbol`: logging severity level, one of :debug, :info, :warn, :error
+- `log_level::Logging.LogLevel`: logging severity level
 - `log_formatted::Bool`: if true, Genie will attempt to pretty print some of the logged values
 - `log_cache::Bool`: if true, caching info is logged
 - `log_views::Bool`: if true, information from the view layer (template building) is logged
@@ -173,7 +174,7 @@ mutable struct Settings
   cache_adapter::Symbol
   cache_duration::Int
 
-  log_level::Symbol
+  log_level::Logging.LogLevel
   log_formatted::Bool
   log_cache::Bool
   log_views::Bool
@@ -221,7 +222,7 @@ mutable struct Settings
             cache_adapter     = :FileCacheAdapter,
             cache_duration    = 0,
 
-            log_level     = :debug,
+            log_level     = Logging.Debug,
             log_formatted = true,
             log_cache     = true,
             log_views     = true,

@@ -26,7 +26,7 @@ function bootstrap(context::Union{Module,Nothing} = Genie.default_context(contex
     Core.eval(context, Meta.parse("const config = Configuration.Settings(app_env = Configuration.DEV)"))
   end
 
-  Core.eval(Genie, Meta.parse("config = $(context).config"))
+  Genie.setconfig(context.config)
 
   printstyled("""
 

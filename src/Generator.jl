@@ -312,6 +312,7 @@ function install_app_dependencies(app_path::String = ".") :: Nothing
   pkg"add JSON"
   pkg"add Millboard"
   pkg"add Revise"
+  pkg"add LoggingExtras"
 
   nothing
 end
