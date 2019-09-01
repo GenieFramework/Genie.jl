@@ -26,7 +26,9 @@ function bootstrap(context::Union{Module,Nothing} = Genie.default_context(contex
     Core.eval(context, Meta.parse("const config = Configuration.Settings(app_env = Configuration.DEV)"))
   end
 
-  Genie.setconfig(context.config)
+  for f in fieldnames(typeof(context.config))
+    setfield!(Genie.config, f, getfield(context.config, f))
+  end
 
   printstyled("""
 

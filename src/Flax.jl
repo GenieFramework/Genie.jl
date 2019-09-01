@@ -8,8 +8,8 @@ using Genie, Genie.Configuration
 @reexport using HttpCommon
 
 export HTMLString, JSONString, JSString
-export doctype, vardump, @vars, @yield, el
-export foreachvar, @foreach, foreachstr
+export doctype, vardump, el
+export @foreach, @vars, @yield
 export partial, template
 
 import Base.string
@@ -684,38 +684,6 @@ macro foreach(f, arr)
   end
 end
 
-
-function foreachstr(f, arr)
-  isempty(arr) && return ""
-
-  mapreduce(*, arr) do _s
-    f(_s)
-  end
-end
-
-
-"""
-    foreachvar(f::Function, key::Symbol, v::Vector) :: String
-
-Utility function for looping over a vector `v` in the view layer.
-"""
-function foreachvar(f::Function, key::Symbol, v::Vector) :: String
-  isempty(v) && return ""
-
-  output = mapreduce(*, v) do (value)
-    vars = task_local_storage(:__vars)
-    vars[key] = value
-    task_local_storage(:__vars, vars)
-
-    f(value)
-  end
-
-  vars = task_local_storage(:__vars)
-  delete!(vars, key)
-  task_local_storage(:__vars, vars)
-
-  output
-end
 
 register_elements()
 

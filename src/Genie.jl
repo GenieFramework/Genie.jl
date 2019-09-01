@@ -8,9 +8,7 @@ push!(LOAD_PATH, @__DIR__)
 include("Configuration.jl")
 include("constants.jl")
 
-config = Configuration.Settings(app_env = ENV["GENIE_ENV"])
-
-setconfig(config::Configuration.Settings) = (config = config)
+const config = Configuration.Settings(app_env = ENV["GENIE_ENV"])
 
 using Revise
 using Logging
