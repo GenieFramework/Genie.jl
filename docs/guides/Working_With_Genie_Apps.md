@@ -167,20 +167,20 @@ Now all we need to do is to move the HTML code out of the controller and into th
 <h1>Bill Gates' top $( length(@vars(:books)) ) recommended books</h1>
 <ul>
    <% @foreach(@vars(:books)) do book %>
-      <li>$(book.title) by $(book.author)
-    <% end %>
-   %>
+     <li>$(book.title) by $(book.author)</li>
+   <% end %>
 </ul>
 ```
 
 As you can see, it's just plain HTML with embedded Julia. We can add Julia code by using the `<% ... %>` code block tags – these should be used for more complex, multiline expressions.
 Or by using plain string interpolation with `$(...)` – for simple values outputting.
 
-It is very important to keep in mind that Genie views work by rendering a HTML string. Thus, your Julia view code _must return a string_ as the result, so that the output of your computation comes up on the page.
+It is very important to keep in mind that Genie views work by rendering a HTML string. Thus, your Julia view code _must return a string_ as the result, so that the output of your computation comes up on the page. Given that Julia automatically returns the result of the last computation, most of the times this just flows naturally. But if sometimes you notice that the templates don't output what is expected, do check that the code returns a string (or something which can be converted to a string). 
 
-Genie provides a series of helpers, like the above `@foreach` macro.
+Genie provides a series of helpers, like the above `@foreach` macro which allows iterating over a collection, passing the current item into the processing function. 
 
 Also, very important, please notice the `@vars` macro. This is used to access variables which are passed from the controller into the view.
+
 We'll see how to use this right now.
 
 ### Rendering views
