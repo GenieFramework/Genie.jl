@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.17.1 - 2019-09-09
+
+* improved support for testing
+* deps updates
+* small bug fixes
+
 ## v0.17.0 - 2019-08-31
 
 * fully migrated logging to Julia's native logger (**breaking**)

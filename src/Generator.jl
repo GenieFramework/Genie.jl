@@ -48,12 +48,29 @@ function newresource(cmd_args::Dict{String,Any}; path::String = ".", pluralize::
   end
 
   views_path = joinpath(resource_path, "views")
-  ! isdir(views_path) && mkpath(views_path)
+  isdir(views_path) || mkpath(views_path)
 
-  ! isdir(Genie.TEST_PATH_UNIT) && mkpath(Genie.TEST_PATH_UNIT)
+  runtests()
+
+  isdir(Genie.TEST_PATH_UNIT) || mkpath(Genie.TEST_PATH_UNIT)
   test_file = resource_name * Genie.TEST_FILE_IDENTIFIER |> lowercase
   write_resource_file(Genie.TEST_PATH_UNIT, test_file, resource_name, :test, pluralize = pluralize) &&
     @info "New $test_file created at $(joinpath(Genie.TEST_PATH_UNIT, test_file))"
+
+  nothing
+end
+
+
+function runtests() :: Nothing
+  testfile = joinpath(Genie.TEST_PATH, Genie.TESTS_FILE_NAME)
+
+  if ! isfile(testfile)
+    open(testfile, "w") do f
+      write(f, Genie.FileTemplates.runtests())
+    end
+  else
+    @error "File $testfile already exists"
+  end
 
   nothing
 end

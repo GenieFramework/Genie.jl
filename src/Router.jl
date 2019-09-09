@@ -700,7 +700,6 @@ function extract_post_params(req::HTTP.Request, params::Params) :: Nothing
   input = Input.all(req)
 
   for (k, v) in input.post
-    v = replace(v, "+"=>" ")
     nested_keys(k, v, params)
 
     k = Symbol(k)

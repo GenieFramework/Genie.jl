@@ -32,6 +32,7 @@ const BOOTSTRAP_FILE_NAME = "bootstrap.jl"
 const ENV_FILE_NAME = "env.jl"
 const GENIE_FILE_NAME = "genie.jl"
 const GLOBAL_ENV_FILE_NAME = "global.jl"
+const TESTS_FILE_NAME = "runtests.jl"
 
 const PARAMS_REQUEST_KEY    = :REQUEST
 const PARAMS_RESPONSE_KEY   = :RESPONSE

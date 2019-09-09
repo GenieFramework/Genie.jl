@@ -89,4 +89,25 @@ function appmodule(path::String)
   (appname, content)
 end
 
+
+function runtests()
+  """
+  isdefined(Main, :UserApp) || include(normpath(joinpath("..", "bootstrap.jl")))
+
+  using Revise
+  using Test
+  using Genie, Genie.Tester, Genie.Router
+
+  current_env = Genie.config.app_env
+
+  Tester.setenv()
+
+  @testset "Integration testing" begin
+    # awesome tests here
+  end
+
+  Tester.setenv(current_env)
+  """
+end
+
 end
