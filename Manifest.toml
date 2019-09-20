@@ -96,9 +96,9 @@ version = "0.21.0"
 
 [[JuliaInterpreter]]
 deps = ["CodeTracking", "InteractiveUtils", "Random", "UUIDs"]
-git-tree-sha1 = "1441c3e4a94263389f8a6e26f1d502540ca6e8c5"
+git-tree-sha1 = "5020abc08c5c9f7d47ec7e861309bc79ed74aec7"
 uuid = "aa1ae85d-cabe-5617-a682-6adf51b2e16a"
-version = "0.7.1"
+version = "0.7.2"
 
 [[LibGit2]]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"

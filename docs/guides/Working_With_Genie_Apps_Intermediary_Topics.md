@@ -264,7 +264,7 @@ Great, now let's display the images. Let's start with the HTML view - please edi
 <%
 @foreach(@vars(:books)) do book
 %>
-  <li><img src="$( isempty(book.cover) ? "img/docs.png" : book.cover )" width="100px" /> $(book.title) by $(book.author)
+  <li><img src='$( isempty(book.cover) ? "img/docs.png" : book.cover )' width="100px" /> $(book.title) by $(book.author)
 <%
 end
 %>
@@ -334,7 +334,7 @@ Let's do it. First, replace the body of the `@foreach` block:
 
 ```html
 <!-- app/resources/books/views/billgatesbooks.jl.html -->
-"""<li><img src="$( isempty(book.cover) ? "img/docs.png" : book.cover )" width="100px" /> $(book.title) by $(book.author)"""
+"""<li><img src='$( isempty(book.cover) ? "img/docs.png" : book.cover )' width="100px" /> $(book.title) by $(book.author)"""
 ```
 
 with:

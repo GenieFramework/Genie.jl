@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.18.0 - 2019-09-20
+
+* pluralized some of the folders for consistent naming: sessions, tasks, and tests
+* fixed an issue with generating a new task
+* deps updates
+
 ## v0.17.1 - 2019-09-09
 
 * improved support for testing
