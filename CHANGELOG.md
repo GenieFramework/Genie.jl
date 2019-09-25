@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.18.1 - 2019-09-25
+
+* fixes an issue with parsing JSON payloads
+* deps updates
+
 ## v0.18.0 - 2019-09-20
 
 * pluralized some of the folders for consistent naming: sessions, tasks, and tests

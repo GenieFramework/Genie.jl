@@ -96,9 +96,9 @@ version = "0.21.0"
 
 [[JuliaInterpreter]]
 deps = ["CodeTracking", "InteractiveUtils", "Random", "UUIDs"]
-git-tree-sha1 = "5020abc08c5c9f7d47ec7e861309bc79ed74aec7"
+git-tree-sha1 = "5450b881f1adaec498cd7facf05abdf57722618b"
 uuid = "aa1ae85d-cabe-5617-a682-6adf51b2e16a"
-version = "0.7.2"
+version = "0.7.3"
 
 [[LibGit2]]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
@@ -185,9 +185,9 @@ version = "0.2.0"
 
 [[Revise]]
 deps = ["CodeTracking", "Distributed", "FileWatching", "JuliaInterpreter", "LibGit2", "LoweredCodeUtils", "OrderedCollections", "Pkg", "REPL", "UUIDs", "Unicode"]
-git-tree-sha1 = "3ea49472d265bc250bb14100ba54090fcf11e9e6"
+git-tree-sha1 = "2e5e1ec94098cd4866ba157be54f7e166f1c56d5"
 uuid = "295af30f-e4ad-537b-8983-00126c2a3abe"
-version = "2.1.10"
+version = "2.2.0"
 
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"

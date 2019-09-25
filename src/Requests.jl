@@ -11,13 +11,24 @@ export infilespayload, download, filename, payload, read
 
 
 """
-    jsonpayload() :: Dict{String,Any}
+    jsonpayload()
 
-Processes an `application/json` `POST` request attempting to convert the payload into a `Dict`.
-If it fails to successfully parse the `JSON` data this returns `nothing`. The original payload can still be accessed invoking `rawpayload()`
+Processes an `application/json` `POST` request.
+If it fails to successfully parse the `JSON` data it returns `nothing`. The original payload can still be accessed invoking `rawpayload()`
 """
-@inline function jsonpayload() :: Dict{String,Any}
+@inline function jsonpayload()
   @params(Genie.PARAMS_JSON_PAYLOAD)
+end
+
+
+"""
+    jsonpayload(::Type{T}) where {T}
+
+Processes an `application/json` `POST` request attempting to convert the payload into a value of type `T`.
+If it fails to successfully parse and convert the `JSON` data, it throws an exception. The original payload can still be accessed invoking `rawpayload()`
+"""
+@inline function jsonpayload(::Type{T}) where {T}
+  @params(Genie.PARAMS_JSON_PAYLOAD)::T
 end
 
 
