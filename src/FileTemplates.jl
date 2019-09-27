@@ -111,53 +111,6 @@ function runtests()
 end
 
 
-function supervisordconf(; user::String = "genie", appdir::String = "/home/$user/app", env::String = "dev")
-"""
-[supervisord]
-logfile = /tmp/supervisord.log
-logfile_maxbytes = 50MB
-logfile_backups=10
-loglevel = info
-pidfile = /tmp/supervisord.pid
-nodaemon = true
-minfds = 1024
-minprocs = 200
-umask = 022
-identifier = supervisor
-nocleanup = true
-childlogdir = /tmp
-strip_ansi = false
-
-[rpcinterface:supervisor]
-supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
-
-[unix_http_server]
-file=/tmp/supervisor.sock
-
-[supervisorctl]
-serverurl=unix:///tmp/supervisor.sock
-
-[program:genieapp]
-directory=$appdir
-user=$user
-environment=HOME="/home/$user"
-command=/bin/bash -c 'GENIE_ENV=$env julia --color=yes --depwarn=no -q -i -- bootstrap.jl s'
-stdout_logfile=/var/log/supervisor/genieapp-stdout.log
-stderr_logfile=/var/log/supervisor/genieapp-stderr.log
-priority=999
-autostart=true
-autorestart=unexpected
-startsecs=10
-startretries=3
-exitcodes=0
-stopsignal=TERM
-stopwaitsecs=10
-stopasgroup=false
-killasgroup=false
-"""
-end
-
-
 function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::Bool = false, env::String = "dev",
                       filename::String = "Dockerfile", port::Int = 8000, dockerport::Int = 80)
   appdir = "/home/$user/app"
@@ -165,27 +118,6 @@ function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::B
   """
   FROM julia:latest
 
-  # dependencies
-  RUN apt-get update
-  $(supervisor ?
-  "
-
-  # supervisor
-  RUN apt-get install -y supervisor
-  COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-
-  " :
-  ""
-  )
-  $(nginx ?
-  "
-  # nginx
-  RUN apt-get install -y nginx
-  RUN service nginx start
-
-  " :
-  ""
-  )
   # user
   RUN useradd --create-home --shell /bin/bash $user
 
@@ -208,16 +140,10 @@ function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::B
   EXPOSE $port
   EXPOSE $dockerport
 
-  $(supervisor ?
-  "
-  # start app via supervisor
-  CMD [\"/usr/bin/supervisord\"]
-  " :
-  "
-  # start app via Julia
-  CMD [\"GENIE_ENV=$env --server:host=0.0.0.0 bin/server\"]
-  "
-  )
+  ENV JULIA_DEPOT_PATH "/home/$user/.julia"
+  ENV GENIE_ENV "$env"
+
+  CMD ["bin/server"]
   """
 end
 

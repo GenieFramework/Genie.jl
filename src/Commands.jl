@@ -17,7 +17,7 @@ function execute(config::Settings) :: Nothing
 
   # overwrite env settings with command line arguments
   Genie.config.app_env = ENV["GENIE_ENV"]
-  Genie.config.server_port = parse(Int, parsed_args["server:port"])
+  Genie.config.server_port = haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : parse(Int, parsed_args["server:port"])
   Genie.config.server_host = parsed_args["server:host"]
 
   if called_command(parsed_args, "s") || called_command(parsed_args, "server:start")

@@ -4,14 +4,14 @@ module Docker
 
 using Genie, Genie.FileTemplates
 
-function dockerfile(path::String = "."; user::String = "genie", supervisor::Bool = false, nginx::Bool = false,
-                    env::String = "dev", filename::String = "Dockerfile", port::Int = 8000, dockerport::Int = 80, force::Bool = false)
+function dockerfile(path::String = "."; user::String = "genie", env::String = "dev",
+                    filename::String = "Dockerfile", port::Int = 8000, dockerport::Int = 80, force::Bool = false)
   filename = normpath(joinpath(path, filename))
   isfile(filename) && force && rm(filename)
   isfile(filename) && error("File $(filename) already exists. Use the `force = true` option to overwrite the existing file.")
 
   open(filename, "w") do io
-    write(io, FileTemplates.dockerfile(user = user, supervisor = supervisor, nginx = nginx, env = env, filename = filename,
+    write(io, FileTemplates.dockerfile(user = user, env = env, filename = filename,
                                         port = port, dockerport = dockerport))
   end
 
@@ -47,18 +47,6 @@ function run(; containername::String = "genieapp", hostport::Int = 80, container
   `docker run $options` |> Base.run
 end
 
-
-function supervisord(path::String = "."; user::String = "genie", env::String = "dev", filename::String = "supervisord.conf", force::Bool = false)
-  filename = normpath(joinpath(path, filename))
-  isfile(filename) && force && rm(filename)
-  isfile(filename) && error("File $(filename) already exists. Use the `force = true` option to overwrite the existing file.")
-
-  open(filename, "w") do io
-    write(io, FileTemplates.supervisordconf(user = user, env = env))
-  end
-
-  "supervisord.conf file successfully written at $(abspath(filename))" |> println
-end
 
 end # end module Docker
 
