@@ -111,6 +111,53 @@ function runtests()
 end
 
 
+function supervisordconf(; user::String = "genie", appdir::String = "/home/$user/app", env::String = "dev")
+"""
+[supervisord]
+logfile = /tmp/supervisord.log
+logfile_maxbytes = 50MB
+logfile_backups=10
+loglevel = info
+pidfile = /tmp/supervisord.pid
+nodaemon = true
+minfds = 1024
+minprocs = 200
+umask = 022
+identifier = supervisor
+nocleanup = true
+childlogdir = /tmp
+strip_ansi = false
+
+[rpcinterface:supervisor]
+supervisor.rpcinterface_factory = supervisor.rpcinterface:make_main_rpcinterface
+
+[unix_http_server]
+file=/tmp/supervisor.sock
+
+[supervisorctl]
+serverurl=unix:///tmp/supervisor.sock
+
+[program:genieapp]
+directory=$appdir
+user=$user
+environment=HOME="/home/$user"
+command=/bin/bash -c 'GENIE_ENV=$env julia --color=yes --depwarn=no -q -i -- bootstrap.jl s'
+stdout_logfile=/var/log/supervisor/genieapp-stdout.log
+stderr_logfile=/var/log/supervisor/genieapp-stderr.log
+priority=999
+autostart=true
+autorestart=unexpected
+startsecs=10
+startretries=3
+exitcodes=0
+stopsignal=TERM
+stopwaitsecs=10
+stopasgroup=false
+killasgroup=false
+"""
+end
+
+
 function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::Bool = false, env::String = "dev",
                       filename::String = "Dockerfile", port::Int = 8000, dockerport::Int = 80)
   appdir = "/home/$user/app"
@@ -124,7 +171,7 @@ function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::B
   "
 
   # supervisor
-  apt-get install -y supervisor
+  RUN apt-get install -y supervisor
   COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
   " :
@@ -141,15 +188,23 @@ function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::B
   )
   # user
   RUN useradd --create-home --shell /bin/bash $user
-  USER $user
 
   # app
   RUN mkdir $appdir
   COPY . $appdir
   WORKDIR $appdir
+
+  RUN chown $user:$user -R *
+
+  RUN chmod +x bin/repl
+  RUN chmod +x bin/server
+  RUN chmod +x bin/serverinteractive
+
+  USER $user
+
   RUN julia -e "using Pkg; pkg\\"activate . \\"; pkg\\"instantiate\\"; pkg\\"precompile\\"; "
 
-  # PORTS
+  # ports
   EXPOSE $port
   EXPOSE $dockerport
 
@@ -160,7 +215,7 @@ function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::B
   " :
   "
   # start app via Julia
-  CMD [\"/bin/bash -c 'GENIE_ENV=$env julia --color=yes --depwarn=no -q -i -- bootstrap.jl --server:host=0.0.0.0 s'\"]
+  CMD [\"GENIE_ENV=$env --server:host=0.0.0.0 bin/server\"]
   "
   )
   """
