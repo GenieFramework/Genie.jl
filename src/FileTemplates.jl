@@ -110,4 +110,61 @@ function runtests()
   """
 end
 
+
+function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::Bool = false, env::String = "dev",
+                      filename::String = "Dockerfile", port::Int = 8000, dockerport::Int = 80)
+  appdir = "/home/$user/app"
+
+  """
+  FROM julia:latest
+
+  # dependencies
+  RUN apt-get update
+  $(supervisor ?
+  "
+
+  # supervisor
+  apt-get install -y supervisor
+  COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+  " :
+  ""
+  )
+  $(nginx ?
+  "
+  # nginx
+  RUN apt-get install -y nginx
+  RUN service nginx start
+
+  " :
+  ""
+  )
+  # user
+  RUN useradd --create-home --shell /bin/bash $user
+  USER $user
+
+  # app
+  RUN mkdir $appdir
+  COPY . $appdir
+  WORKDIR $appdir
+  RUN julia -e "using Pkg; pkg\\"activate . \\"; pkg\\"instantiate\\"; pkg\\"precompile\\"; "
+
+  # PORTS
+  EXPOSE $port
+  EXPOSE $dockerport
+
+  $(
+    supervisor ?
+  "
+  # start app via supervisor
+  CMD [\"/usr/bin/supervisord\"]
+  " :
+  "
+  # start app via Julia
+  CMD [\"/bin/bash -c 'GENIE_ENV=$env julia --color=yes --depwarn=no -q -i -- bootstrap.jl s'\"]
+  "
+  )
+  """
+end
+
 end

@@ -4,7 +4,8 @@ Handles WebSockets communication logic.
 module WebChannels
 
 using Revise
-using HTTP, JSON, Distributed, Logging
+using HTTP, Distributed, Logging
+using Genie, Genie.Renderer
 
 const ClientId = UInt # web socket hash
 const ChannelName = String
@@ -224,7 +225,7 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String
       in(channel, keys(SUBSCRIPTIONS)) || continue
 
       for client in SUBSCRIPTIONS[channel]
-        message(client, ChannelMessage(channel, client, msg, payload) |> JSON.json)
+        message(client, ChannelMessage(channel, client, msg, payload) |> Renderer.JSONParser.json)
       end
     end
   catch

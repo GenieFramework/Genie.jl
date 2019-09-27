@@ -27,7 +27,7 @@ end
 Processes an `application/json` `POST` request attempting to convert the payload into a value of type `T`.
 If it fails to successfully parse and convert the `JSON` data, it throws an exception. The original payload can still be accessed invoking `rawpayload()`
 """
-@inline function jsonpayload(::Type{T}) where {T}
+@inline function jsonpayload(::Type{T})::T where {T}
   @params(Genie.PARAMS_JSON_PAYLOAD)::T
 end
 

@@ -11,7 +11,7 @@ include("constants.jl")
 const config = Configuration.Settings(app_env = ENV["GENIE_ENV"])
 
 using Revise
-using Logging
+using Logging, LoggingExtras
 
 isfile(joinpath(CONFIG_PATH, "plugins.jl")) && include(joinpath(CONFIG_PATH, "plugins.jl"))
 
@@ -46,6 +46,7 @@ include("Responses.jl")
 include("Requests.jl")
 include("Flash.jl")
 include("Plugins.jl")
+include("Deploy.jl")
 
 using .HTTPUtils
 using .App
@@ -53,6 +54,7 @@ using .Inflector, .Util
 using .FileTemplates, .Toolbox, .Generator, .Tester, .Encryption, .Cookies, .Sessions
 using .Input, .Renderer, .Assets, .Router, .Commands
 using .Flax, .AppServer, .Plugins
+using .Deploy
 
 export startup, serve, up
 
@@ -131,6 +133,11 @@ julia> Genie.newapp("MyGenieApp")
 ```
 """
 const newapp = Generator.newapp
+
+
+const newapp_webservice = Generator.newapp_webservice
+const newapp_mvc = Generator.newapp_mvc
+const newapp_fullstack = Generator.newapp_fullstack
 
 
 """

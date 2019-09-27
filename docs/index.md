@@ -60,6 +60,12 @@ Genie can be used for a variety of tasks, from quickly whipping up a web server 
 
 [Managing Frontend Assets with the Asset Pipeline](guides/Frontend_assets.md)
 
+## Deployment
+
+Guides for deployments on various hosts.
+
+[Deploying with Heroku](documentation/90--Deploying_With_Heroku.md)
+
 ## API docs
 [Developer API Docs](documentation/API)
 

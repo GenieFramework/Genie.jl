@@ -21,6 +21,7 @@ const DEFAULT_CONTENT_TYPE = :html
 const ResourcePath = Union{String,Symbol}
 const HTTPHeaders = Dict{String,String}
 
+const JSONParser = JSON
 
 """
     mutable struct WebResource
@@ -95,7 +96,7 @@ function tojson(resource::ResourcePath, action::ResourcePath; context::Module = 
   WebRenderable(Flax.json_renderer(resource, action; context = context, vars...) |> Base.invokelatest, :json)
 end
 function tojson(data) :: WebRenderable
-  WebRenderable(JSON.json(data), :json)
+  WebRenderable(JSONParser.json(data), :json)
 end
 
 
