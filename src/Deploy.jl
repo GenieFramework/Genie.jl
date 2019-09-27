@@ -42,6 +42,8 @@ function run(; containername::String = "genieapp", hostport::Int = 80, container
   push!(options, image)
   isempty(command) || push!(options, command)
 
+  "Starting docker container with `docker run $options`" |> println
+
   `docker run $options` |> Base.run
 end
 
