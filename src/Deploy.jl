@@ -21,12 +21,28 @@ end
 
 function build(path::String = "."; appname = "genie")
   `docker build -t "$appname" $path` |> Base.run
+
+  "Docker container successfully built" |> println
 end
 
 
-function run(; containername::String = "genieapp", hostport::Int = 80, containerport::Int = 8000,
+function run(; containername::String = "genieapp", hostport::Int = 80, containerport::Int = 8000, appdir::String = "/home/genie/app",
                 mountapp::Bool = false, image::String = "genie", command::String = "", rm::Bool = true, it::Bool = true)
-  `docker run $(it ? "-it" : "") $(rm ? "--rm" : "") -p $hostport:$containerport --name geniedev -v $(mountapp && "\"$PWD\":/app") $image $command` |> Base.run
+  options = []
+  it && push!(options, "-it")
+  rm && push!(options, "--rm")
+  push!(options, "-p")
+  push!(options, "$hostport:$containerport")
+  push!(options, "--name")
+  push!(options, "$containername")
+  if mountapp
+    push!(options, "-v")
+    push!(options,  "\"\$PWD\":$appdir")
+  end
+  push!(options, image)
+  isempty(command) || push!(options, command)
+
+  `docker run $options` |> Base.run
 end
 
 end # end module Docker

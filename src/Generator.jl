@@ -346,7 +346,7 @@ function autostart_app(autostart::Bool = true) :: Nothing
   else
     @info("Your new Genie app is ready!
         Run \njulia> Genie.loadapp() \nto load the app's environment
-        and then \njulia> Genie.startup() \nto start the web server on port 8000.")
+        and then \njulia> up() \nto start the web server on port 8000.")
   end
 
   nothing

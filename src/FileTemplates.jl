@@ -153,15 +153,14 @@ function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::B
   EXPOSE $port
   EXPOSE $dockerport
 
-  $(
-    supervisor ?
+  $(supervisor ?
   "
   # start app via supervisor
   CMD [\"/usr/bin/supervisord\"]
   " :
   "
   # start app via Julia
-  CMD [\"/bin/bash -c 'GENIE_ENV=$env julia --color=yes --depwarn=no -q -i -- bootstrap.jl s'\"]
+  CMD [\"/bin/bash -c 'GENIE_ENV=$env julia --color=yes --depwarn=no -q -i -- bootstrap.jl --server:host=0.0.0.0 s'\"]
   "
   )
   """
