@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.19.0 - 2019-09-25
+
+* New API for deployments
+* Docker integration: generators for Dockerfile and API for building and running containers
+* Heroku integration: API for deploying dockerized Genie apps to Heroku
+* Extended API for app generation: `newapp_webservice`, `newapp_mvc`, and `newapp_fullstack`
+* Deps updates
+
 ## v0.18.1 - 2019-09-25
 
 * fixes an issue with parsing JSON payloads

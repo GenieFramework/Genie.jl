@@ -24,7 +24,7 @@ Genie is compatible with Julia v1.0 and up.
 
 [Getting Started with Genie](documentation/3--Getting_Started.md)
 
-[Using Genie as a Micro Framework](documentation/4--Developing_Micro_Apps.md)
+[Using Genie as a Micro Framework](documentation/4--Developing_Web_Services.md)
 
 [Handling Query/GET Params](documentation/5--Handling_Query_Params.md)
 
@@ -34,9 +34,9 @@ Genie is compatible with Julia v1.0 and up.
 
 [Handling File Uploads](documentation/8--Handling_File_Uploads.md)
 
-[Publish Your Julia Code with Genie](documentation/9--Publishing_Your_Julia_Code_Online_With_Genie_Apps.md)
+[Adding Your Existing Julia Code into Genie](documentation/9--Publishing_Your_Julia_Code_Online_With_Genie_Apps.md)
 
-[Loading Genie Apps](documentation/10--Loading_Genie_Apps.md)
+[Loading Genie Apps](documentation/10--Loading_and Starting_Genie_Apps.md)
 
 [Managing External Dependencies](documentation/11--Managing_External_Packages.md)
 

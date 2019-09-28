@@ -1,6 +1,6 @@
 # The secrets (`config/secrets.jl`) file
 
-Confidential configuration (like API keys, usernames, passwords, etc) can be added to the `config/secrets.jl` file. This file is by default added to `.gitignore` when creating a Genie app, so it won't be added to source control.
+Confidential configuration data (like API keys, usernames, passwords, etc) should be added to the `config/secrets.jl` file. This file is by default added to `.gitignore` when creating a Genie app, so it won't be added to source control -- avoid that it is accidentally exposed.
 
 ## Scope
 

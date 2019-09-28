@@ -4,7 +4,7 @@ Genie makes it easy to work with `POST` payloads. First, we need to register a d
 
 ## Handling `form-data` payloads
 
-The following snippet registeres two routes in the root of the app, one for `GET` and the other for `POST` requests. The `GET` route displays a form which submits over `POST` to the other route. Finally, upon receiving the data, we display a custom message.
+The following snippet registers two routes in the root of the app, one for `GET` and the other for `POST` requests. The `GET` route displays a form which submits over `POST` to the other route. Finally, upon receiving the data, we display a custom message.
 
 ### Example
 
@@ -26,7 +26,7 @@ route("/", method = POST) do
   "Hello $(postpayload(:name, "Anon"))"
 end
 
-startup()
+up()
 ```
 
 The `postpayload` function has a few specializations, and one of them accepts the key and the default value. The default value is returned if the `key` variable is not defined. You can see the various implementations for `postpayload` using the API docs or Julia's `help>` mode.

@@ -1,12 +1,12 @@
 # How to Install Genie
 
-Genie development moves fast -- many times too fast for Julia's package registration workflow to keep up. Hence, for now, the recommended installation, to get the latest and greatest Genie, is to run off the `master` branch:
+Genie development moves fast. Until reaching v1, the recommended installation is to get the latest and greatest Genie, by running off the `master` branch:
 
 ```julia
 pkg> add Genie#master
 ```
 
-You can also install Genie from Julia's registry, though chances are this won't be the newest version:
+You can also install Genie from Julia's registry -- for example the latest version:
 
 ```julia
 pkg> add Genie

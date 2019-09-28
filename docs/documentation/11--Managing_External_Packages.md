@@ -10,6 +10,6 @@ In order to add extra packages to your Genie app, thus, we need to use Julia's `
 
 That's all! Now you can use the packages at the Genie REPL or anywhere in your files via `using` or `import`.
 
-Use the same approach to update all the packages, via: `pkg> up`, or `pkg> up OhMyREPL` to update a single package.
+Use the same approach to update all the packages, via: `pkg> up` to apply all available updates, or `pkg> up OhMyREPL` to update a single package.
 
-Finally, you can use `pkg> remove OhMyREPL` to uninstall a depedency.
+Finally, you can use `pkg> remove OhMyREPL` to uninstall a dependency.

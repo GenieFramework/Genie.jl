@@ -1,4 +1,4 @@
-# Loading Genie apps
+# Loading and starting Genie apps
 
 At any time, you can load and serve an existing Genie app. Loading a Genie app will bring into scope all your app's files, including the main app module, controllers, models, etcetera.
 
@@ -6,7 +6,7 @@ At any time, you can load and serve an existing Genie app. Loading a Genie app w
 
 The recommended approach is to start an interactive REPL in Genie's environment by executing `bin/repl` in the os shell, while in the project's root folder.
 
-```shell
+```sh
 $ bin/repl
 ```
 
@@ -15,32 +15,27 @@ The app's environment will be loaded.
 In order to start the web server, you can next execute:
 
 ```julia
-julia> startup()
+julia> up()
 ```
 
 If you want to directly start the server, use `bin/server` instead of `bin/repl`:
 
-```shell
+```sh
 $ bin/server
 ```
 
-This will automatically start the web server and drop you off at the Julia REPL.
+This will automatically start the web server _in non interactive mode_.
 
----
-**HEADS UP**
-
-The recommended way to load an app is via the `bin/repl` command. It will correctly start the Julia process and start the app REPL with all the dependencies loaded with just one command.
-
----
+Finally, there is the option to start the serve and drop to an interactive REPL, using `bin/serverinteractive` instead.
 
 ## Starting a Genie REPL on Windows
 
-On Windows the workflow is similar to macOS and Linux, but dedicated Windows scripts, `repl.bat` and `server.bat` are provided inside the project folder, within the `bin/` folder. Double click them or execute them in the os shell to start an interactive REPL session or a server session, respectively, as explained in the previous paragraphs.
+On Windows the workflow is similar to macOS and Linux, but dedicated Windows scripts, `repl.bat`, `server.bat`, and `serverinteractive.bat` are provided inside the project folder, within the `bin/` directory. Double click them or execute them in the os shell (cmd or PowerShell) to start an interactive REPL session or a server session, respectively, as explained in the previous paragraphs.
 
 ---
 **HEADS UP**
 
-It is possible that the Windows executables `repl.bat` and `server.bat` are missing - this is usually the case if the app was generated on a Linux/Mac. You can create them at anytime by running this in the Genie/Julia REPL (at the root of the Genie project):
+It is possible that the Windows executables `repl.bat`, `server.bat`, and `serverinteractive.bat` are missing - this is usually the case if the app was generated on a Linux/Mac and ported to a windows computer. You can create them at anytime by running this generator in the Genie/Julia REPL (at the root of the Genie project):
 
 ```julia
 julia> using Genie
@@ -100,3 +95,10 @@ In order to start the web server execute
 ```julia
 julia> startup()
 ```
+
+---
+**HEADS UP**
+
+The recommended way to load an app is via the `bin/repl`, `bin/server` and `bin/serverinteractive` commands. It will correctly start the Julia process and start the app REPL with all the dependencies loaded with just one command.
+
+---

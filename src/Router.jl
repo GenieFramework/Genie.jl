@@ -10,7 +10,7 @@ include("mimetypes.jl")
 export route, routes, channel, channels, serve_static_file
 export GET, POST, PUT, PATCH, DELETE, OPTIONS
 export tolink, linkto, responsetype, toroute
-export error_404, error_500, error_xxx
+export error_404, error_500, error_xxx, err
 export @params, @routes, @channels
 
 @reexport using HttpCommon
@@ -1026,7 +1026,7 @@ end
 
 """
 """
-function error_404(resource = "", req = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]])) :: HTTP.Response
+function error_404(resource::String = "", req::HTTP.Request = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]])) :: HTTP.Response
   if request_type_is(req, :json)
     HTTP.Response(404, ["Content-Type" => request_mappings[:json]], body = """{ "error": "404 - NOT FOUND" }""")
   elseif request_type_is(req, :text)
@@ -1039,7 +1039,7 @@ end
 
 """
 """
-function error_500(error_message = "", req = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]])) :: HTTP.Response
+function error_500(error_message::String = "", req::HTTP.Request = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]])) :: HTTP.Response
   if request_type_is(req, :json)
     HTTP.Response(500, ["Content-Type" => request_mappings[:json]], body = Renderer.JSONParser.json(Dict("error" => "500 - $error_message")))
   elseif request_type_is(req, :text)
@@ -1052,7 +1052,7 @@ end
 
 """
 """
-function error_xxx(error_message = "", req = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]]); error_info::String = "", error_code::Int = 500) :: HTTP.Response
+function error_xxx(error_message::String = "", req::HTTP.Request = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]]); error_info::String = "", error_code::Int = 500) :: HTTP.Response
   if request_type_is(req, :json)
     HTTP.Response(error_code, ["Content-Type" => request_mappings[:json]], body = Renderer.JSONParser.json(Dict("error" => "500 - $error_message")))
   elseif request_type_is(req, :text)
@@ -1060,6 +1060,11 @@ function error_xxx(error_message = "", req = HTTP.Request("", "", ["Content-Type
   else
     serve_error_file(error_code, error_message, @params, error_info = error_info)
   end
+end
+
+
+function err(error_message::String; error_info::String = "", error_code::Int = 500)
+  error_xxx(error_message, @params(:REQUEST), error_info = error_info, error_code = error_code)
 end
 
 

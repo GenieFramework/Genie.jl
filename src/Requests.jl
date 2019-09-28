@@ -123,7 +123,7 @@ end
 
 
 """
-    getpayload(key::Symbol, default::Any)
+    postpayload(key::Symbol, default::Any)
 
 Returns the value of the POST variables `key` or the `default` value if `key` is not defined.
 """

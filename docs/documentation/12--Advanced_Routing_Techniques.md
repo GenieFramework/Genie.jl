@@ -1,6 +1,6 @@
 # Advanced routing techniques
 
-Genie's router can be considered the brain of the app, matching web requests to functions, extracting and setting up the request's variables and the execution environment, and invoking the response methods. Such power is accompanied by a powerful set of features in regards to defining routes. Let's dive into these.
+Genie's router can be considered the brain of the app, matching web requests to functions, extracting and setting up the request's variables and the execution environment, and invoking the response methods. Such power is accompanied by a powerful set of features for defining routes. Let's dive into these.
 
 ## Static routing
 
@@ -17,7 +17,7 @@ greet() = "Welcome to Genie!"
 
 route("/greet", greet)          # [GET] /greet => greet
 
-startup()
+up() # start the server
 ```
 
 If you use your browser to navigate to <http://127.0.0.1:8000/greet> you'll see the code in action.
@@ -37,7 +37,7 @@ You can just navigate to <http://127.0.0.1:8000/bye> -- the route is instantly a
 
 The routes are added in the order in which they are defined but are matched from newest to oldest. This means that you can define a new route to overwrite a previously defined one.
 
-Unlike Julia's multiple dispatch, Genie's router won't match by the most specific rule but by the first match. So if, for example, you register a route to match `/*`, it will handle all the requests, even if you have previously defined more specific routes. As a sidenote, you can use this technique to temporarely divert all users to a "Service Unavailable" page.
+Unlike Julia's multiple dispatch, Genie's router won't match the most specific rule, but the first matching one. So if, for example, you register a route to match `/*`, it will handle all the requests, even if you have previously defined more specific routes. As a side-note, you can use this technique to temporarily divert all users to a maintenance page.
 
 ---
 
@@ -56,14 +56,14 @@ route("/customers/:customer_id/orders/:order_id") do
   "You asked for the order $(payload(:order_id)) for customer $(payload(:customer_id))"
 end
 
-startup()
+up()
 ```
 
 ## Routing methods (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`)
 
-By default, routes are created to handle `GET` requests, since these are the most common. In order to define routes for handling other types of requests, we need to pass the `method` keyword argument, indicating the method. Genie's Router supports `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS` methods.
+By default, routes handle `GET` requests, since these are the most common. In order to define routes for handling other types of request methods, we need to pass the `method` keyword argument, indicating the HTTP method. Genie's Router supports `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS` methods.
 
-The router defines and exports constansts for each of these as `Router.GET`, `Router.POST`, `Router.PUT`, `Router.PATCH`, `Router.DELETE`, and `Router.OPTIONS`.
+The router defines and exports constants for each of these as `Router.GET`, `Router.POST`, `Router.PUT`, `Router.PATCH`, `Router.DELETE`, and `Router.OPTIONS`.
 
 ### Example
 
@@ -76,7 +76,7 @@ route("/patch_stuff", method = PATCH) do
   "Stuff to patch"
 end
 
-startup()
+up()
 ```
 
 And we can test it using the `HTTP` package:
@@ -90,11 +90,11 @@ HTTP.request("PATCH", "http://127.0.0.1:8000/patch_stuff").body |> String
 "Stuff to patch"
 ```
 
-By executing a request with the `PATCH` method our route is triggered. Consequently, we access the response body and convert it to a string, which is "Stuff to patch", corresponding to our response.
+By sending a request with the `PATCH` method, our route is triggered. Consequently, we access the response body and convert it to a string, which is "Stuff to patch", corresponding to our response.
 
 ## Named routes
 
-Genie allows tagging routes with names. This is a very useful feature, to be used in conjunction with the `Router.tolink` method, in order to dynamically generate URLs to the routes. The advantage of this technique is that if we refer the route by name and generate the links dynamically, as long as the name stays the same, if we change the route, all the URLs will automatically point to the new route.
+Genie allows tagging routes with names. This is a very powerful feature, to be used in conjunction with the `Router.tolink` method, for dynamically generating URLs towards the routes. The advantage of this technique is that if we refer the route by name and generate the links dynamically using `tolink`, as long as the name of the route stays the same, if we change the route pattern, all the URLs will automatically match the new route definiton.
 
 In order to name a route we need to use the `named` keyword argument, which expects a `Symbol`.
 
@@ -167,6 +167,12 @@ julia> linkto(:get_customer_order, customer_id = 1234, order_id = 5678)
 "/customers/1234/orders/5678"
 ```
 
+The `linkto` should be used in conjunction with the HTML code for generating links, ie:
+
+```html
+<a href="$(linkto(:get_foo))">Foo</a>
+```
+
 ## Listing routes
 
 At any time we can check which routes are registered with `Router.routes`:
@@ -189,7 +195,7 @@ OrderedCollections.OrderedDict{Symbol,Genie.Router.Route} with 2 entries:
 
 ### The `Route` type
 
-The routes are represented internally by the `Route` type which has 3 fields:
+The routes are represented internally by the `Route` type which has 4 fields:
 
 * `method::String` - for storing the method of the route (`GET`, `POST`, etc)
 * `path::String` - represents the URI pattern to be matched against
@@ -231,7 +237,7 @@ end
 
 This will output `Order ID has type SubString{String} // Customer ID has type SubString{String}`
 
-However, for such a case, we'd very much prefer to receive our data as `Int` to avoid an explicit conversion -- _and_ to match only numbers. Genie supports such a workflow by allowing type annotatons to route parameters:
+However, for such a case, we'd very much prefer to receive our data as `Int` to avoid an explicit conversion -- _and_ to match only numbers. Genie supports such a workflow by allowing type annotations to route parameters:
 
 ```julia
 route("/customers/:customer_id::Int/orders/:order_id::Int", named = :get_customer_order) do
@@ -239,7 +245,7 @@ route("/customers/:customer_id::Int/orders/:order_id::Int", named = :get_custome
 end     #     [GET] /customers/:customer_id::Int/orders/:order_id::Int => getfield(Main, Symbol("##3#4"))()
 ```
 
-Notice how we've added type annotations to `:customer_id` and `:order_id`.
+Notice how we've added type annotations to `:customer_id` and `:order_id` in the form `:customer_id::Int` and `:order_id::Int`.
 
 However, attempting to access the URL `http://127.0.0.1:8000/customers/10/orders/20` will fail:
 
@@ -273,7 +279,7 @@ For instance, let's assume that we want to implement a localized website where w
 route(":locale", TranslationsController.index)
 ```
 
-This will work very well, matching requests and passing the locale into our code within the `payload(:locale)` variable. However, it will also be too greedy, virtually matching all the requests, including things like static files (ie `mywebsite.com/favicon.ico`). We can constrain what the `:locale` variable can match, by appending the pattern:
+This will work very well, matching requests and passing the locale into our code within the `payload(:locale)` variable. However, it will also be too greedy, virtually matching all the requests, including things like static files (ie `mywebsite.com/favicon.ico`). We can constrain what the `:locale` variable can match, by appending the pattern (a regex pattern):
 
 ```julia
 route(":locale#(en|es|de)", TranslationsController.index)
@@ -296,4 +302,4 @@ route("/$LOCALE", TranslationsController.index, named = :get_index)
 
 ## The `@params` collection
 
-It's good to know that the router bundles all the parameters of the current request into the `@params` collection (a `Dict{Symbol,Any}`). This contains valuable information, such as route parameters, query params, POST payload, the original HTTP.Request and HTTP.Response objects, etcetera. In general it's recommended not to access the `@params` collection directly but through the utility methods defined by `Genie.Requests` and `Genie.Responses` -- but knowing about `@params` might come in handy.
+It's good to know that the router bundles all the parameters of the current request into the `@params` collection (a `Dict{Symbol,Any}`). This contains valuable information, such as route parameters, query params, POST payload, the original HTTP.Request and HTTP.Response objects, etcetera. In general it's recommended not to access the `@params` collection directly but through the utility methods defined by `Genie.Requests` and `Genie.Responses` -- but knowing about `@params` might come in handy for advanced users.

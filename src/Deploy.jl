@@ -47,7 +47,36 @@ function run(; containername::String = "genieapp", hostport::Int = 80, container
   `docker run $options` |> Base.run
 end
 
-
 end # end module Docker
+
+########
+
+module Heroku
+
+function createapp(appname::String; appendrand::Bool = false)
+  `heroku create $appname` |> Base.run
+end
+
+
+function push(appname::String)
+  `heroku container:push web -a $appname` |> Base.run
+end
+
+
+function release(appname::String)
+  `heroku container:release web -a $appname` |> Base.run
+end
+
+
+function open(appname::String)
+  `heroku open -a $appname` |> Base.run
+end
+
+
+function login()
+  `heroku container:login` |> Base.run
+end
+
+end # end module Heroku
 
 end # end module Deploy
