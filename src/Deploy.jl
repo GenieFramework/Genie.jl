@@ -2,6 +2,7 @@ module Deploy
 
 module Docker
 
+using Revise
 using Genie, Genie.FileTemplates
 
 function dockerfile(path::String = "."; user::String = "genie", env::String = "dev",
@@ -42,7 +43,7 @@ function run(; containername::String = "genieapp", hostport::Int = 80, container
   push!(options, image)
   isempty(command) || push!(options, command)
 
-  "Starting docker container with `docker run $(join(options, ' '))`" |> println
+  "Starting docker container with `docker run $options`" |> println
 
   `docker run $options` |> Base.run
 end
@@ -53,8 +54,8 @@ end # end module Docker
 
 module Heroku
 
-function createapp(appname::String; appendrand::Bool = false)
-  `heroku create $appname` |> Base.run
+function createapp(appname::String; region::String = "us")
+  `heroku create $(lowercase(appname)) --region $region` |> Base.run
 end
 
 
