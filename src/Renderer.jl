@@ -7,21 +7,26 @@ using Genie, Genie.Util, Genie.Configuration, Genie.Exceptions
 
 @reexport using Genie.Flax
 
+const default_charset = "charset=utf-8"
+
 const CONTENT_TYPES = Dict{Symbol,String}(
-  :html       => "text/html",
-  :plain      => "text/plain",
-  :text       => "text/plain",
-  :json       => "application/json",
-  :js         => "application/javascript",
-  :javascript => "application/javascript",
-  :xml        => "text/xml",
-  :markdown   => "text/markdown"
+  :html       => "text/html; $default_charset",
+  :plain      => "text/plain; $default_charset",
+  :text       => "text/plain; $default_charset",
+  :json       => "application/json; $default_charset",
+  :js         => "application/javascript; $default_charset",
+  :javascript => "application/javascript; $default_charset",
+  :xml        => "text/xml; $default_charset",
+  :markdown   => "text/markdown; $default_charset"
 )
 const DEFAULT_CONTENT_TYPE = :html
 const ResourcePath = Union{String,Symbol}
 const HTTPHeaders = Dict{String,String}
 
 const JSONParser = JSON
+const Html = Flax
+
+export JSONParser, Html
 
 """
     mutable struct WebResource
@@ -153,12 +158,12 @@ function respond(body::String, params::Dict{Symbol,T})::HTTP.Response where {T}
   r |> respond
 end
 function respond(err::T, content_type::Union{Symbol,String} = Genie.Router.responsetype(), code::Int = 500)::HTTP.Response where {T<:Exception}
-  HTTP.Response(code, (isa(content_type, Symbol) ? ["Content-Type" => CONTENT_TYPES[content_type]] : ["Content-Type" => content_type]), body = string(err))
+  HTTP.Response(code, (isa(content_type, Symbol) ? ["Content-Type" => CONTENT_TYPES[content_type]] : ["Content-Type" => content_type]), body = string(err))  |> ExceptionalResponse
 end
 function respond(body::String, content_type::Union{Symbol,String} = Genie.Router.responsetype(), code::Int = 200) :: HTTP.Response
   HTTP.Response(code,
                 (isa(content_type, Symbol) ? ["Content-Type" => CONTENT_TYPES[content_type]] : ["Content-Type" => content_type]),
-                body = body) |> ExceptionalResponse
+                body = body)
 end
 function respond(body, code::Int = 200, headers::HTTPHeaders = HTTPHeaders())
   HTTP.Response(code, [h for h in headers], body = string(body))

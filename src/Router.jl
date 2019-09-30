@@ -509,7 +509,8 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
 
               result
             catch ex
-              isa(ex, ExceptionalResponse) ? ex.response : rethrow(ex)
+              isa(ex, RuntimeException) && to_response(ex)
+              isa(ex, ExceptionalResponse) ? (return ex.response) : Renderer.respond(ex) #rethrow(ex)
             end
   end
 
@@ -846,19 +847,17 @@ Converts the result of invoking the controller action to a `Response`.
 function to_response(action_result) :: HTTP.Response
   isa(action_result, HTTP.Response) && return action_result
 
-  return  try
-            if isa(action_result, Tuple)
-              HTTP.Response(action_result...)
-            elseif isa(action_result, Nothing)
-              HTTP.Response("")
-            else
-              HTTP.Response(string(action_result))
-            end
-          catch ex
-            @error "Can't convert $action_result to HttpServer.Response"
-
-            rethrow(ex)
-          end
+  if isa(action_result, Tuple)
+    HTTP.Response(action_result...)
+  elseif isa(action_result, Nothing)
+    HTTP.Response("")
+  elseif isa(action_result, String)
+    Renderer.respond(action_result)
+  elseif isa(action_result, RuntimeException)
+    err(action_result.message, error_info = action_result.info, error_code = action_result.code)
+  else
+    HTTP.Response(string(action_result))
+  end
 end
 
 
@@ -1063,7 +1062,7 @@ function error_xxx(error_message::String = "", req::HTTP.Request = HTTP.Request(
 end
 
 
-function err(error_message::String; error_info::String = "", error_code::Int = 500)
+function err(error_message::String; error_info::String = "", error_code::Int = 500) :: HTTP.Response
   error_xxx(error_message, @params(:REQUEST), error_info = error_info, error_code = error_code)
 end
 

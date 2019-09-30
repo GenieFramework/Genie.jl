@@ -59,13 +59,13 @@ function createapp(appname::String; region::String = "us")
 end
 
 
-function push(appname::String)
-  `heroku container:push web -a $appname` |> Base.run
+function push(appname::String; apptype::String = "web")
+  `heroku container:push $apptype -a $appname` |> Base.run
 end
 
 
-function release(appname::String)
-  `heroku container:release web -a $appname` |> Base.run
+function release(appname::String; apptype::String = "web")
+  `heroku container:release $apptype -a $appname` |> Base.run
 end
 
 
@@ -76,6 +76,11 @@ end
 
 function login()
   `heroku container:login` |> Base.run
+end
+
+
+function logs(appname::String; lines::Int = 1_000)
+  `heroku logs --tail -a $appname -n $lines` |> Base.run
 end
 
 end # end module Heroku
