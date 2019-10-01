@@ -6,13 +6,14 @@ module AppServer
 using Revise, HTTP, HTTP.IOExtras, HTTP.Sockets, Millboard, MbedTLS, URIParser, Sockets, Distributed, Logging
 using Genie, Genie.Configuration, Genie.Sessions, Genie.Flax, Genie.Router, Genie.WebChannels
 
+const SERVERS = Dict{Symbol,Task}()
 
 ### PRIVATE ###
 
 
 """
     startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
-        ws_port::Int = Genie.config.websocket_port, async::Bool = ! Genie.config.run_as_server) :: Nothing
+        ws_port::Int = Genie.config.websocket_port, async::Bool = ! Genie.config.run_as_server) :: Dict{Symbol,Task}
 
 Starts the web server.
 
@@ -31,13 +32,13 @@ Web Server starting at http://0.0.0.0:8000
 """
 function startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
                   ws_port::Int = Genie.config.websocket_port, async::Bool = ! Genie.config.run_as_server,
-                  verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing) :: Nothing
+                  verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing) :: Dict{Symbol,Task}
 
   # Create build folders
   Genie.config.flax_compile_templates && Flax.create_build_folders()
 
   if Genie.config.websocket_server
-    @async HTTP.listen(host, ws_port) do req
+    SERVERS[:wss] = @async HTTP.listen(host, ws_port) do req
       if HTTP.WebSockets.is_upgrade(req.message)
         HTTP.WebSockets.upgrade(req) do ws
           setup_ws_handler(req.message, ws)
@@ -57,14 +58,14 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
   printstyled("Web Server starting at http://$host:$port \n", color = :light_blue, bold = true)
 
   if async
-    @async command()
+    SERVERS[:ws] = @async command()
     printstyled("Web Server running at http://$host:$port \n", color = :light_blue, bold = true)
   else
-    command()
+    SERVERS[:ws] = command()
     printstyled("Web Server stopped \n", color = :light_blue, bold = true)
   end
 
-  nothing
+  SERVERS
 end
 
 
@@ -176,6 +177,47 @@ If `Genie.config.server_signature` is empty, the header is not added.
 
   res.headers = [k for k in headers]
   res
+end
+
+
+"""
+
+"""
+function keepalive(; host::String, protocol::String = "http", port::Int = 80, urls::Vector{String} = String[],
+                      interval::Int = 60, delay::Int = 30, nap::Int = 2, silent::Bool = true)
+  in(protocol, ["http", "https"]) || error("Protocol should be one of `http` or `https`")
+
+  function ping(t::Timer)
+    @show urls
+
+    try
+      for u in urls
+        if ! isempty(u) && startswith(u, "/") && length(u) > 1
+          u = u[2:end]
+        elseif u == "/"
+          u = ""
+        end
+
+        url = protocol * "://" * host * ":" * "$port" * "/" * u
+
+        if ! silent
+          @info "Pinging $url"
+          HTTP.get(url)
+        else
+          HTTP.get(url);
+        end
+
+        sleep(nap)
+      end
+    catch ex
+      @error ex
+    end
+  end
+
+  t = Timer(ping, delay, interval = interval)
+  wait(t)
+
+  t
 end
 
 end

@@ -394,7 +394,7 @@ function to_link(route_name::Symbol, d::Dict{Symbol,T}; preserve_query::Bool = t
   end
 
   query_vars = Dict{String,String}()
-  if preserve_query
+  if preserve_query && haskey(task_local_storage(), :__params) && haskey(task_local_storage(:__params)[:REQUEST])
     query = URI(task_local_storage(:__params)[:REQUEST].target).query
     if ! isempty(query)
       for pair in split(query, '&')
