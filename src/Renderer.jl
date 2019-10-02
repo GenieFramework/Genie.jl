@@ -26,8 +26,6 @@ const HTTPHeaders = Dict{String,String}
 const JSONParser = JSON
 const Html = Flax
 
-export JSONParser, Html
-
 """
     mutable struct WebResource
 
