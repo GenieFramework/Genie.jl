@@ -7,6 +7,11 @@ using Genie, Genie.Util, Genie.Configuration, Genie.Exceptions
 
 @reexport using Genie.Flax
 
+const JSONParser = JSON
+const Html = Genie.Flax
+
+export Html
+
 const default_charset = "charset=utf-8"
 
 const CONTENT_TYPES = Dict{Symbol,String}(
@@ -22,9 +27,6 @@ const CONTENT_TYPES = Dict{Symbol,String}(
 const DEFAULT_CONTENT_TYPE = :html
 const ResourcePath = Union{String,Symbol}
 const HTTPHeaders = Dict{String,String}
-
-const JSONParser = JSON
-const Html = Flax
 
 """
     mutable struct WebResource
@@ -155,9 +157,11 @@ function respond(body::String, params::Dict{Symbol,T})::HTTP.Response where {T}
 
   r |> respond
 end
-function respond(err::T, content_type::Union{Symbol,String} = Genie.Router.responsetype(), code::Int = 500)::HTTP.Response where {T<:Exception}
-  HTTP.Response(code, (isa(content_type, Symbol) ? ["Content-Type" => CONTENT_TYPES[content_type]] : ["Content-Type" => content_type]), body = string(err))  |> ExceptionalResponse
+
+function respond(err::T, content_type::Union{Symbol,String} = Genie.Router.responsetype(), code::Int = 500) :: T where {T<:Exception}
+  T
 end
+
 function respond(body::String, content_type::Union{Symbol,String} = Genie.Router.responsetype(), code::Int = 200) :: HTTP.Response
   HTTP.Response(code,
                 (isa(content_type, Symbol) ? ["Content-Type" => CONTENT_TYPES[content_type]] : ["Content-Type" => content_type]),

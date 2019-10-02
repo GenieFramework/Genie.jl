@@ -509,8 +509,7 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
 
               result
             catch ex
-              isa(ex, RuntimeException) && to_response(ex)
-              isa(ex, ExceptionalResponse) ? (return ex.response) : Renderer.respond(ex) #rethrow(ex)
+              isa(ex, ExceptionalResponse) ? (return ex.response) : to_response(ex)
             end
   end
 
@@ -853,8 +852,12 @@ function to_response(action_result) :: HTTP.Response
     HTTP.Response("")
   elseif isa(action_result, String)
     Renderer.respond(action_result)
+  elseif isa(action_result, ExceptionalResponse)
+    action_result.response
   elseif isa(action_result, RuntimeException)
-    err(action_result.message, error_info = action_result.info, error_code = action_result.code)
+    throw(action_result)
+  elseif isa(action_result, Exception)
+    throw(action_result)
   else
     HTTP.Response(string(action_result))
   end
