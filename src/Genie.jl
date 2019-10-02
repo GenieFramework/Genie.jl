@@ -49,7 +49,7 @@ include("Plugins.jl")
 include("Deploy.jl")
 
 using .HTTPUtils
-using .App
+using .App, .Exceptions
 using .Inflector, .Util
 using .FileTemplates, .Toolbox, .Generator, .Tester, .Encryption, .Cookies, .Sessions
 using .Input, .Renderer, .Assets, .Router, .Commands
