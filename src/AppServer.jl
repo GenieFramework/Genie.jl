@@ -32,7 +32,8 @@ Web Server starting at http://0.0.0.0:8000
 """
 function startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
                   ws_port::Int = Genie.config.websocket_port, async::Bool = ! Genie.config.run_as_server,
-                  verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing) :: Dict{Symbol,Task}
+                  verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
+                  server = Union{Sockets.TCPServer,Nothing}) :: Dict{Symbol,Task}
 
   # Create build folders
   Genie.config.flax_compile_templates && Flax.create_build_folders()
@@ -50,7 +51,7 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
   end
 
   command = () -> begin
-    HTTP.serve(parse(IPAddr, host), port, verbose = verbose, rate_limit = ratelimit) do req::HTTP.Request
+    HTTP.serve(parse(IPAddr, host), port, verbose = verbose, rate_limit = ratelimit, server = server) do req::HTTP.Request
       setup_http_handler(req)
     end
   end
