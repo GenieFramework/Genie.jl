@@ -33,7 +33,7 @@ Web Server starting at http://0.0.0.0:8000
 function startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
                   ws_port::Int = Genie.config.websocket_port, async::Bool = ! Genie.config.run_as_server,
                   verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
-                  server = Union{Sockets.TCPServer,Nothing}) :: Dict{Symbol,Task}
+                  server::Union{Sockets.TCPServer,Nothing} = nothing) :: Dict{Symbol,Task}
 
   # Create build folders
   Genie.config.flax_compile_templates && Flax.create_build_folders()
