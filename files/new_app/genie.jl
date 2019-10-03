@@ -1,12 +1,13 @@
 using Revise
 
+haskey(ENV, "HOST") || (ENV["HOST"] = "0.0.0.0")
+haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = "dev")
 
 ### EARLY BIND TO PORT FOR HOSTS WITH TIMEOUT ###
 
 using Sockets
 
 const EARLYBINDING = if haskey(ENV, "EARLYBIND") && lowercase(ENV["EARLYBIND"]) == "true" && haskey(ENV, "PORT")
-  haskey(ENV, "HOST") || (ENV["HOST"] = "0.0.0.0")
   printstyled("\nEarly binding to host $(ENV["HOST"]) and port $(ENV["PORT"]) \n", color = :light_blue, bold = true)
   try
     Sockets.listen(parse(IPAddr, ENV["HOST"]), parse(Int, ENV["PORT"]))
@@ -27,7 +28,6 @@ using Genie, Genie.App, Genie.Toolbox
 
 const ROOT_PATH = pwd()
 
-haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = "dev")
 push!(LOAD_PATH, pwd(), "src")
 
 Genie.load(context = @__MODULE__)
