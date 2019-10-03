@@ -326,7 +326,6 @@ function install_app_dependencies(app_path::String = ".") :: Nothing
   pkg"activate ."
 
   pkg"add Genie#master"
-  pkg"add Millboard"
   pkg"add Revise"
   pkg"add LoggingExtras"
 

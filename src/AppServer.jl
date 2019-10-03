@@ -177,8 +177,6 @@ function keepalive(; host::String, protocol::String = "http", port::Int = 80, ur
   in(protocol, ["http", "https"]) || error("Protocol should be one of `http` or `https`")
 
   function ping(t::Timer)
-    @show urls
-
     try
       for u in urls
         if ! isempty(u) && startswith(u, "/") && length(u) > 1

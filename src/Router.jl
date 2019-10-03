@@ -509,7 +509,13 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
 
               result
             catch ex
-              isa(ex, ExceptionalResponse) ? (return ex.response) : to_response(ex)
+              if isa(ex, ExceptionalResponse)
+                return ex.response
+              elseif isa(ex, RuntimeException)
+                rethrow(ex)
+              elseif isa(ex, Exception)
+                rethrow(ex)
+              end
             end
   end
 
