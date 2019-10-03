@@ -71,7 +71,6 @@ function appmodule(path::String)
   content = """
   module $appname
 
-  using Genie, Genie.Router, Genie.Renderer, Genie.AppServer
   using Logging, LoggingExtras
 
   function main()

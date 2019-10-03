@@ -11,9 +11,8 @@ include("constants.jl")
 const config = Configuration.Settings(app_env = ENV["GENIE_ENV"])
 
 using Revise
+using Sockets
 using Logging, LoggingExtras
-
-isfile(joinpath(CONFIG_PATH, "plugins.jl")) && include(joinpath(CONFIG_PATH, "plugins.jl"))
 
 push!(LOAD_PATH,  joinpath(@__DIR__, "cache_adapters"),
                   joinpath(@__DIR__, "session_adapters"),
@@ -226,8 +225,8 @@ const up = startup
 Runs the Genie app by parsing the command line args and invoking the corresponding actions.
 Used internally to parse command line arguments.
 """
-function run() :: Nothing
-  Commands.execute(Genie.config)
+function run(; server::Union{Sockets.TCPServer,Nothing} = nothing) :: Nothing
+  Commands.execute(Genie.config, server = server)
 
   nothing
 end

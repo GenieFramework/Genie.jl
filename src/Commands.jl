@@ -3,16 +3,16 @@ Handles command line arguments for the genie.jl script.
 """
 module Commands
 
-using Logging
+using Sockets
 using ArgParse
-using Genie, Genie.Configuration, Genie.Generator, Genie.Tester, Genie.AppServer
+using Genie, Genie.Configuration, Genie.AppServer
 
 """
 execute(config::Settings) :: Nothing
 
 Runs the requested Genie app command, based on the `args` passed to the script.
 """
-function execute(config::Settings) :: Nothing
+function execute(config::Settings; server::Union{Sockets.TCPServer,Nothing} = nothing) :: Nothing
   parsed_args = parse_commandline_args(config)::Dict{String,Any}
 
   # overwrite env settings with command line arguments
@@ -22,9 +22,9 @@ function execute(config::Settings) :: Nothing
 
   if called_command(parsed_args, "s") || called_command(parsed_args, "server:start")
     Genie.config.run_as_server = true
-    AppServer.startup(Genie.config.server_port, Genie.config.server_host)
+    AppServer.startup(Genie.config.server_port, Genie.config.server_host, server = server)
   elseif called_command(parsed_args, "si") || called_command(parsed_args, "server:interactive")
-    AppServer.startup(Genie.config.server_port, Genie.config.server_host)
+    AppServer.startup(Genie.config.server_port, Genie.config.server_host, server = server)
   end
 
   nothing
