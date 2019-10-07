@@ -40,13 +40,13 @@ It is possible that the Windows executables `repl.bat`, `server.bat`, and `serve
 ```julia
 julia> using Genie
 
-julia> Genie.REPL.setup_windows_bin_files()
+julia> Genie.Generator.setup_windows_bin_files()
 ```
 
 Alternatively, you can pass the path to the project as the argument to `setup_windows_bin_files`:
 
 ```julia
-julia> Genie.REPL.setup_windows_bin_files("path/to/your/Genie/project")
+julia> Genie.Generator.setup_windows_bin_files("path/to/your/Genie/project")
 ```
 
 ## Juno / Jupyter / other Julia environment
