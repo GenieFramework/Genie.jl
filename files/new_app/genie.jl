@@ -28,7 +28,7 @@ using Genie, Genie.App, Genie.Toolbox
 
 const ROOT_PATH = pwd()
 
-push!(LOAD_PATH, pwd(), "src")
+push!(LOAD_PATH, ROOT_PATH, "src")
 
 Genie.load(context = @__MODULE__)
 Genie.run(server = EARLYBINDING)
