@@ -4,7 +4,7 @@ Genie makes use of Yarn and Webpack to compile and serve frontend assets. In fac
 
 As summary:
 
-- production minimizes files, separarting CSS from JS
+- production minimizes files, separating CSS from JS
 - development uses webpack-dev-server on node port 3000 (relies on inbuilt socket server)
 - supported file formats: css, scss, sass, js, coffee
 - output is saved to `public/dist` of your Genie app
