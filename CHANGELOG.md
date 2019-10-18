@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.19.1 - 2019-10-18
+
+* Documentation improvements for `Genie.Deploy`
+* Dockerfile generation enhancements
+* Deps updates
+
 ## v0.19.0 - 2019-09-25
 
 * New API for deployments
