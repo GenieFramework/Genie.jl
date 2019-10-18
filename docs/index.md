@@ -36,7 +36,7 @@ Genie is compatible with Julia v1.0 and up.
 
 [Adding Your Existing Julia Code into Genie](documentation/9--Publishing_Your_Julia_Code_Online_With_Genie_Apps.md)
 
-[Loading Genie Apps](documentation/10--Loading_and Starting_Genie_Apps.md)
+[Loading Genie Apps](documentation/10--Loading_Genie_Apps.md)
 
 [Managing External Dependencies](documentation/11--Managing_External_Packages.md)
 
@@ -62,11 +62,14 @@ Genie can be used for a variety of tasks, from quickly whipping up a web server 
 
 ## Deployment
 
-Guides for deployments on various hosts.
+**Guides for deployments on various hosts.**
 
-[Deploying with Heroku](documentation/90--Deploying_With_Heroku.md)
+[Genie and Docker Integration](documentation/16--Using_Genie_With_Docker.md)
+
+[Deploying with Heroku Buildpacks](documentation/90--Deploying_With_Heroku_Buildpacks.md)
 
 ## API docs
+
 [Developer API Docs](documentation/API)
 
 ## Acknowledgements
