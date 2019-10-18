@@ -12,11 +12,15 @@ Genie is compatible with Julia v1.0 and up.
 
 ## Getting started
 
+**First steps for building Genie apps.**
+
 [The Genie Walkthrough: Developing Genie Apps, the Basics](guides/Working_With_Genie_Apps.md)
 
 [The Genie Walkthrough: Developing Genie Apps, Intermediate Topics](guides/Working_With_Genie_Apps_Intermediary_Topics.md)
 
 ## Documentation
+
+**A deeper dive into the various Genie features and modules.**
 
 [Overview](documentation/1--Overview.md)
 
@@ -50,7 +54,7 @@ Genie is compatible with Julia v1.0 and up.
 
 ## Guides
 
-Genie can be used for a variety of tasks, from quickly whipping up a web server to full MVC web apps. Use the following resources to dive into each use case.
+**Genie can be used for a variety of tasks, from quickly whipping up a web server to full MVC web apps. Use the following resources to dive into each use case.**
 
 [Using Genie in an Interactive Environment (Jupyter/IJulia, REPL, etc)](guides/Interactive_environment.md)
 
