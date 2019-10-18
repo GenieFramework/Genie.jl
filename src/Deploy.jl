@@ -2,17 +2,35 @@ module Deploy
 
 module Docker
 
+
 using Revise
 using Genie, Genie.FileTemplates
 
-function dockerfile(path::String = "."; user::String = "genie", env::String = "dev",
-                    filename::String = "Dockerfile", port::Int = 8000, dockerport::Int = 80, force::Bool = false)
+
+"""
+    dockerfile(path::String = "."; user::String = "genie", env::String = "dev",
+              filename::String = "Dockerfile", port::Int = 8000, dockerport::Int = 80, force::Bool = false)
+
+Generates a `Dockerfile` optimised for containerizing Genie apps.
+
+# Arguments
+- `path::String`: where to generate the file
+- `filename::String`: the name of the file (default `Dockerfile`)
+- `user::String`: the name of the system user under which the Genie app is run
+- `env::String`: the environment in which the Genie app will run
+- `host::String`: the local IP of the Genie app inside the container
+- `port::Int`: the port of the Genie app inside the container
+- `dockerport::Int`: the port to use on the host (used by the `EXPOSE` directive)
+- `force::Bool`: if the file already exists, when `force` is `true`, it will be overwritten
+"""
+function dockerfile(path::String = "."; filename::String = "Dockerfile", user::String = "genie", env::String = "dev",
+                    host = "0.0.0.0", port::Int = 8000, dockerport::Int = 80, force::Bool = false)
   filename = normpath(joinpath(path, filename))
   isfile(filename) && force && rm(filename)
   isfile(filename) && error("File $(filename) already exists. Use the `force = true` option to overwrite the existing file.")
 
   open(filename, "w") do io
-    write(io, FileTemplates.dockerfile(user = user, env = env, filename = filename,
+    write(io, FileTemplates.dockerfile(user = user, env = env, filename = filename, host = host,
                                         port = port, dockerport = dockerport))
   end
 
@@ -20,13 +38,35 @@ function dockerfile(path::String = "."; user::String = "genie", env::String = "d
 end
 
 
-function build(path::String = "."; appname = "genie")
+"""
+    build(path::String = "."; appname = "genie")
+
+Builds the Docker image based on the `Dockerfile`
+"""
+function build(path::String = "."; appname::String = "genie")
   `docker build -t "$appname" $path` |> Base.run
 
   "Docker container successfully built" |> println
 end
 
 
+"""
+    run(; containername::String = "genieapp", hostport::Int = 80, containerport::Int = 8000, appdir::String = "/home/genie/app",
+        mountapp::Bool = false, image::String = "genie", command::String = "bin/server", rm::Bool = true, it::Bool = true)
+
+Runs the Docker container named `containername`, binding `hostport` and `containerport`.
+
+# Arguments
+- `containername::String`: the name of the container of the Genie app
+- `hostport::Int`: port to be used on the host for accessing the app
+- `containerport::Int`: the port on which the app is running inside the container
+- `appdir::String`: the folder where the app is stored within the container
+- `mountapp::String`: if true the app from the host will be mounted so that changes on the host will be reflected when accessing the app in the container (to be used for dev)
+- `image::String`: the name of the Docker image
+- `command::String`: what command to run when starting the app
+- `rm::Bool`: removes the container upon exit
+- `it::Bool`: runs interactively
+"""
 function run(; containername::String = "genieapp", hostport::Int = 80, containerport::Int = 8000, appdir::String = "/home/genie/app",
                 mountapp::Bool = false, image::String = "genie", command::String = "bin/server", rm::Bool = true, it::Bool = true)
   options = []
@@ -43,7 +83,7 @@ function run(; containername::String = "genieapp", hostport::Int = 80, container
   push!(options, image)
   isempty(command) || push!(options, command)
 
-  "Starting docker container with `docker run $options`" |> println
+  "Starting docker container with `docker run $(join(options, " "))`" |> println
 
   `docker run $options` |> Base.run
 end

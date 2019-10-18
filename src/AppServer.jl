@@ -186,7 +186,7 @@ function keepalive(; host::String, protocol::String = "http", port::Int = 80, ur
           u = ""
         end
 
-        url = protocol * "://" * host * ":" * "$port" * "/" * u
+        url = protocol * "://" * host * (port != 80 ? (":" * "$port") : "") * "/" * u
 
         if ! silent
           @info "Pinging $url"
