@@ -51,3 +51,6 @@ const TEST_FILE_IDENTIFIER = "_test.jl"
 
 const VIEWS_FOLDER = "views"
 const LAYOUTS_FOLDER = "layouts"
+
+SECRET_TOKEN = ""
+ASSET_FINGERPRINT = ""

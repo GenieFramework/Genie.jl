@@ -3,8 +3,8 @@ module Deploy
 module Docker
 
 
-using Revise
-using Genie, Genie.FileTemplates
+import Revise
+import Genie, Genie.FileTemplates
 
 
 """

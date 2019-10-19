@@ -5,12 +5,12 @@ haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = "dev")
 
 ### EARLY BIND TO PORT FOR HOSTS WITH TIMEOUT ###
 
-using Sockets
+import Sockets
 
 const EARLYBINDING = if haskey(ENV, "EARLYBIND") && lowercase(ENV["EARLYBIND"]) == "true" && haskey(ENV, "PORT")
   printstyled("\nEarly binding to host $(ENV["HOST"]) and port $(ENV["PORT"]) \n", color = :light_blue, bold = true)
   try
-    Sockets.listen(parse(IPAddr, ENV["HOST"]), parse(Int, ENV["PORT"]))
+    Sockets.listen(parse(Sockets.IPAddr, ENV["HOST"]), parse(Int, ENV["PORT"]))
   catch ex
     @show ex
 
@@ -24,7 +24,7 @@ end
 
 ### OFF WE GO! ###
 
-using Genie, Genie.App, Genie.Toolbox
+using Genie
 
 const ROOT_PATH = pwd()
 

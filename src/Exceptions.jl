@@ -1,8 +1,8 @@
 module Exceptions
 
-using Revise
-using Genie
-using HTTP
+import Revise
+import Genie
+import HTTP
 
 export ExceptionalResponse, RuntimeException
 

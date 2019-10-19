@@ -2,8 +2,8 @@ module Toolbox
 
 import Base.string
 
-using Revise
-using Genie, Genie.Util, Millboard, Genie.FileTemplates, Genie.Configuration, Genie.Inflector, Logging
+import Revise
+import Genie, Genie.Util, Millboard, Genie.FileTemplates, Genie.Configuration, Genie.Inflector, Logging
 
 export TaskResult, VoidTaskResult
 
@@ -109,7 +109,7 @@ end
 
 Generates a new Genie task file.
 """
-function new(cmd_args::Dict{String,Any}, config::Settings = Genie.config) :: Nothing
+function new(cmd_args::Dict{String,Any}, config::Genie.Configuration.Settings = Genie.config) :: Nothing
   tfn = taskfilename(cmd_args, config)
 
   isfile(tfn) && error("Task file already exists at $tfn")
@@ -123,7 +123,7 @@ function new(cmd_args::Dict{String,Any}, config::Settings = Genie.config) :: Not
 
   nothing
 end
-function new(task_name::String, config::Settings = Genie.config) :: Nothing
+function new(task_name::String, config::Genie.Configuration.Settings = Genie.config) :: Nothing
   new(Dict{String,Any}("task:new" => validtaskname(task_name)), config)
 
   nothing
@@ -135,7 +135,7 @@ end
 
 Computes the name of a Genie task based on the command line input.
 """
-function taskfilename(cmd_args::Dict{String,Any}, config::Settings = Genie.config) :: String
+function taskfilename(cmd_args::Dict{String,Any}, config::Genie.Configuration.Settings = Genie.config) :: String
   joinpath(tasksdir(), cmd_args["task:new"] * ".jl")
 end
 

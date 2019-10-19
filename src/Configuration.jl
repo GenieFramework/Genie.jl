@@ -3,11 +3,11 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
-const GENIE_VERSION = v"0.19.0"
+const GENIE_VERSION = v"0.19.2"
 
-using Logging
-using YAML
-using Genie
+import Logging
+import YAML
+import Genie
 
 export isdev, isprod, istest, env
 export @ifdev, @ifprod, @iftest

@@ -2,10 +2,10 @@ module Renderer
 
 export respond, html, json, redirect
 
-using Nullables, JSON, HTTP, Reexport, Markdown, Logging
-using Genie, Genie.Util, Genie.Configuration, Genie.Exceptions
+import Nullables, JSON, HTTP, Reexport, Markdown, Logging
+import Genie, Genie.Util, Genie.Configuration, Genie.Exceptions
 
-@reexport using Genie.Flax
+Reexport.@reexport using Genie.Flax
 
 const JSONParser = JSON
 const Html = Genie.Flax

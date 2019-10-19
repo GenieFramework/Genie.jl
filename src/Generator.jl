@@ -3,8 +3,8 @@ Generates various Genie files.
 """
 module Generator
 
-using Revise, SHA, Dates, Pkg, Logging
-using Genie, Genie.FileTemplates, Genie.Inflector, Genie.Configuration, Genie.Tester, Genie.Util, Genie.FileTemplates
+import Revise, SHA, Dates, Pkg, Logging
+import Genie, Genie.FileTemplates, Genie.Inflector, Genie.Configuration, Genie.Tester, Genie.Util, Genie.FileTemplates
 
 
 const JULIA_PATH = joinpath(Sys.BINDIR, "julia")
@@ -212,7 +212,7 @@ end
 Generates a random secret token to be used for configuring the SECRET_TOKEN const.
 """
 function secret_token() :: String
-  sha256("$(randn()) $(Dates.now())") |> bytes2hex
+  SHA.sha256("$(randn()) $(Dates.now())") |> bytes2hex
 end
 
 
@@ -303,8 +303,8 @@ function write_app_custom_files(path::String, app_path::String) :: Nothing
     write(f,
     """
       cd(@__DIR__)
-      using Pkg
-      pkg"activate ."
+      import Pkg
+      Pkg.pkg"activate ."
 
       function main()
         include(joinpath("$(Genie.SRC_PATH)", "$(moduleinfo[1]).jl"))
@@ -323,11 +323,11 @@ Installs the application's dependencies using Julia's Pkg
 """
 function install_app_dependencies(app_path::String = ".") :: Nothing
   @info "Installing app dependencies"
-  pkg"activate ."
+  Pkg.pkg"activate ."
 
-  pkg"add Genie#master"
-  pkg"add Revise"
-  pkg"add LoggingExtras"
+  Pkg.pkg"add Genie#master"
+  Pkg.pkg"add Revise"
+  Pkg.pkg"add LoggingExtras"
 
   nothing
 end

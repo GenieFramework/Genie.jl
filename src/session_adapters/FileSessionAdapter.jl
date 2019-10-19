@@ -36,14 +36,14 @@ end
 
 Attempts to read from file the session object serialized as `session_id`.
 """
-function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
+function read(session_id::Union{String,Symbol}) :: Nullables.Nullable{Sessions.Session}
   try
-    isfile(joinpath(Genie.SESSIONS_PATH, session_id)) || return Nullable{Sessions.Session}(write(Session(session_id)))
+    isfile(joinpath(Genie.SESSIONS_PATH, session_id)) || return Nullables.Nullable{Sessions.Session}(write(Session(session_id)))
   catch ex
     @error "Can't check session file"
     @error ex
 
-    Nullable{Sessions.Session}(write(Session(session_id)))
+    Nullables.Nullable{Sessions.Session}(write(Session(session_id)))
   end
 
   try
@@ -51,15 +51,15 @@ function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
       deserialize(io)
     end
 
-    Nullable{Sessions.Session}(session)
+    Nullables.Nullable{Sessions.Session}(session)
   catch ex
     @error "Can't read session"
     @error ex
 
-    Nullable{Sessions.Session}(write(Session(session_id)))
+    Nullables.Nullable{Sessions.Session}(write(Session(session_id)))
   end
 end
-function read(session::Sessions.Session) :: Nullable{Sessions.Session}
+function read(session::Sessions.Session) :: Nullables.Nullable{Sessions.Session}
   read(session.id)
 end
 

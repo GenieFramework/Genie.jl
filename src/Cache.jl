@@ -3,9 +3,9 @@ Caching functionality for Genie.
 """
 module Cache
 
-using SHA, Logging
-using Nullables
-using Genie
+import SHA, Logging
+import Nullables
+import Genie
 
 
 export cachekey, withcache, @cachekey
@@ -39,7 +39,7 @@ function withcache(f::Function, key::Union{String,Symbol}, expiration::Int = CAC
 
   cached_data = CACHE_ADAPTER.fromcache(cachekey(key), expiration, dir = dir)
 
-  if isnull(cached_data)
+  if Nullables.isnull(cached_data)
     Genie.config.log_cache && @warn("Missed cache for $key")
 
     output = f()
@@ -89,7 +89,7 @@ function cachekey(args...) :: String
     print(key, string(a))
   end
 
-  bytes2hex(sha1(String(take!(key))))
+  bytes2hex(SHA.sha1(String(take!(key))))
 end
 
 

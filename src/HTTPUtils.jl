@@ -1,6 +1,6 @@
 module HTTPUtils
 
-using HTTP
+import HTTP
 
 function Base.Dict(req::HTTP.Request) :: Dict{String,String}
   result = Dict{String,String}()

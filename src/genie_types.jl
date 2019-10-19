@@ -19,7 +19,7 @@ end
 
 # const Channel = GenieChannel
 
-using Millboard
+import Millboard
 
 
 """

@@ -3,9 +3,9 @@ Compiled templating language for Genie.
 """
 module Flax
 
-using Revise, Gumbo, SHA, Reexport, JSON, OrderedCollections, Markdown, YAML, Logging
-using Genie, Genie.Configuration
-@reexport using HttpCommon
+import Revise, Gumbo, SHA, Reexport, JSON, OrderedCollections, Markdown, YAML, Logging
+import Genie, Genie.Configuration
+Reexport.@reexport using HttpCommon
 
 export HTMLString, JSONString, JSString
 export doctype, vardump, el
@@ -383,7 +383,7 @@ Generates function name for generated Flax views.
 """
 @inline function function_name(file_path::String) :: String
   file_path = relpath(file_path)
-  "func_$(sha1(file_path) |> bytes2hex)"
+  "func_$(SHA.sha1(file_path) |> bytes2hex)"
 end
 
 
@@ -394,7 +394,7 @@ Generates module name for generated Flax views.
 """
 @inline function m_name(file_path::String) :: String
   file_path = relpath(file_path)
-  "$(sha1(file_path) |> bytes2hex)"
+  "$(SHA.sha1(file_path) |> bytes2hex)"
 end
 
 
@@ -497,11 +497,11 @@ end
 
 Parses a Gumbo tree structure into a `string` of Flax code.
 """
-function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", depth::Int = 0; partial = true) :: String
+function parse_tree(elem::Union{Gumbo.HTMLElement,Gumbo.HTMLText}, output::String = "", depth::Int = 0; partial = true) :: String
   io = IOBuffer()
 
-  if isa(elem, HTMLElement)
-    tag_name = replace(lowercase(string(tag(elem))), "-"=>"_")
+  if isa(elem, Gumbo.HTMLElement)
+    tag_name = replace(lowercase(string(Gumbo.tag(elem))), "-"=>"_")
 
     if Genie.config.flax_autoregister_webcomponents && ! isdefined(@__MODULE__, Symbol(tag_name))
       @debug "Autoregistering HTML element $tag_name"
@@ -512,10 +512,10 @@ function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", dept
 
     invalid_tag = partial && (tag_name == "html" || tag_name == "head" || tag_name == "body")
 
-    if tag_name == "script" && in("type", collect(keys(attrs(elem))))
-      if attrs(elem)["type"] == "julia/eval"
-        if ! isempty(children(elem))
-          print(io, repeat("\t", depth), string(children(elem)[1].text), "\n")
+    if tag_name == "script" && in("type", collect(keys(Gumbo.attrs(elem))))
+      if Gumbo.attrs(elem)["type"] == "julia/eval"
+        if ! isempty(Gumbo.children(elem))
+          print(io, repeat("\t", depth), string(Gumbo.children(elem)[1].text), "\n")
         end
       end
 
@@ -523,7 +523,7 @@ function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", dept
       print(io, repeat("\t", depth), ( ! invalid_tag ? "Flax.$(tag_name)(" : "Flax.skip_element(" ))
 
       attributes = IOBuffer()
-      for (k,v) in attrs(elem)
+      for (k,v) in Gumbo.attrs(elem)
         x = v
 
         if startswith(k, "\$") # do not process embedded julia code
@@ -545,18 +545,19 @@ function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", dept
       print(io, attributes_string, ") ")
 
       inner = ""
-      if ! isempty(children(elem))
-        children_count = size(children(elem))[1]
+      if ! isempty(Gumbo.children(elem))
+        children_count = size(Gumbo.children(elem))[1]
 
         print(io, "do;[\n")
 
         idx = 0
-        for child in children(elem)
+        for child in Gumbo.children(elem)
           idx += 1
           inner *= parse_tree(child, "", depth + 1, partial = partial)
           if idx < children_count
-            if isa(child, HTMLText) ||
-                ( isa(child, HTMLElement) && ( ! in("type", collect(keys(attrs(child)))) || ( in("type", collect(keys(attrs(child)))) && (attrs(child)["type"] != "julia/eval") ) ) )
+            if isa(child, Gumbo.HTMLText) ||
+                ( isa(child, Gumbo.HTMLElement) && ( ! in("type", collect(keys(Gumbo.attrs(child)))) ||
+                  ( in("type", collect(keys(Gumbo.attrs(child)))) && (Gumbo.attrs(child)["type"] != "julia/eval") ) ) )
                 ! isempty(inner) && (inner = repeat("\t", depth) * inner * "\n")
             end
           end
@@ -567,7 +568,7 @@ function parse_tree(elem::Union{HTMLElement,HTMLText}, output::String = "", dept
       end
     end
 
-  elseif isa(elem, HTMLText)
+  elseif isa(elem, Gumbo.HTMLText)
     content = elem.text |> strip |> string
     endswith(content, "\"") && (content *= "\n")
     print(io, repeat("\t", depth), "\"\"\"$(content)\"\"\"")
@@ -758,7 +759,7 @@ macro yield(value)
 end
 
 function el(; vars...)
-  OrderedDict(vars)
+  OrderedCollections.OrderedDict(vars)
 end
 
 
@@ -769,7 +770,7 @@ Sets up the build folder and the build module file for generating the compiled v
 """
 function prepare_build(subfolder) :: Bool
   build_path = joinpath(Genie.BUILD_PATH, subfolder)
-  @ifdev rm(build_path, force = true, recursive = true)
+  Genie.Configuration.@ifdev rm(build_path, force = true, recursive = true)
   if ! isdir(build_path)
     @info "Creating build folder at $(build_path)"
     mkpath(build_path)

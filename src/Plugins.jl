@@ -1,7 +1,7 @@
 module Plugins
 
-using Genie
-using Pkg, Markdown, Logging
+import Genie
+import Pkg, Markdown, Logging
 
 
 const FILES_FOLDER = "files"
@@ -49,7 +49,7 @@ function congrats()
   """
   print(message)
 
-  doc"""
+  Markdown.doc"""
   ```julia
   function install(dest::String; force = false) :: Nothing
     src = abspath(normpath(joinpath(@__DIR__, "..", Genie.Plugins.FILES_FOLDER)))
@@ -92,8 +92,8 @@ function scaffold(plugin_name::String, dest::String = "."; force = false)
   @info "Adding dependencies"
 
   cd(dest)
-  pkg"activate ."
-  pkg"add https://github.com/genieframework/Genie.jl"
+  Pkg.pkg"activate ."
+  Pkg.pkg"add https://github.com/genieframework/Genie.jl"
 
   run(`git init`)
   run(`git add .`)

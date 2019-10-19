@@ -1,9 +1,9 @@
 module Router
 
-using Revise
-using Reexport, Logging
-using HTTP, URIParser, HttpCommon, Nullables, Sockets, Millboard, Dates, OrderedCollections
-using Genie, Genie.HTTPUtils, Genie.Sessions, Genie.Configuration, Genie.Input, Genie.Util, Genie.Renderer, Genie.Exceptions
+import Revise
+import Reexport, Logging
+import HTTP, URIParser, HttpCommon, Nullables, Sockets, Millboard, Dates, OrderedCollections
+import Genie, Genie.HTTPUtils, Genie.Sessions, Genie.Configuration, Genie.Input, Genie.Util, Genie.Renderer, Genie.Exceptions
 
 include("mimetypes.jl")
 
@@ -13,7 +13,7 @@ export tolink, linkto, responsetype, toroute
 export error_404, error_500, error_xxx, err
 export @params, @routes, @channels
 
-@reexport using HttpCommon
+Reexport.@reexport using HttpCommon
 
 const GET     = "GET"
 const POST    = "POST"
@@ -78,8 +78,8 @@ function Base.show(io::IO, c::Channel)
 end
 
 
-const _routes = OrderedDict{Symbol,Route}()
-const _channels = OrderedDict{Symbol,Channel}()
+const _routes = OrderedCollections.OrderedDict{Symbol,Route}()
+const _channels = OrderedCollections.OrderedDict{Symbol,Channel}()
 
 
 """
@@ -110,7 +110,7 @@ ispayload(req::HTTP.Request) = req.method in [POST, PUT, PATCH]
 
 First step in handling a request: sets up @params collection, handles query vars, negotiates content, starts and persists sessions.
 """
-function route_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = IPv4(Genie.config.server_host)) :: HTTP.Response
+function route_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: HTTP.Response
   params = Params()
   params.collection[:request_ipv4] = ip
 
@@ -155,12 +155,12 @@ end
 
 First step in handling a web socket request: sets up @params collection, handles query vars, starts and persists sessions.
 """
-function route_ws_request(req, msg::String, ws_client, ip::IPv4 = IPv4(Genie.config.server_host)) :: String
+function route_ws_request(req, msg::String, ws_client, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: String
   params = Params()
   params.collection[:request_ipv4] = ip
   params.collection[Genie.PARAMS_WS_CLIENT] = ws_client
 
-  extract_get_params(URI(req.target), params)
+  extract_get_params(URIParser.URI(req.target), params)
 
   Revise.revise()
 
@@ -295,7 +295,7 @@ end
 """
 The list of the defined named routes.
 """
-@inline function named_routes() :: OrderedDict{Symbol,Route}
+@inline function named_routes() :: OrderedCollections.OrderedDict{Symbol,Route}
   _routes
 end
 const namedroutes = named_routes
@@ -316,7 +316,7 @@ end
 
 The list of the defined named channels.
 """
-@inline function named_channels() :: OrderedDict{Symbol,Channel}
+@inline function named_channels() :: OrderedCollections.OrderedDict{Symbol,Channel}
   _channels
 end
 const namedchannels = named_channels
@@ -365,7 +365,7 @@ end
 
 Removes the route with the corresponding name from the routes collection and returns the collection of remaining routes.
 """
-@inline function delete!(routes::OrderedDict{Symbol,Route}, key::Symbol) :: OrderedDict{Symbol,Route}
+@inline function delete!(routes::OrderedCollections.OrderedDict{Symbol,Route}, key::Symbol) :: OrderedCollections.OrderedDict{Symbol,Route}
   OrderedCollections.delete!(routes, key)
 end
 
@@ -394,8 +394,8 @@ function to_link(route_name::Symbol, d::Dict{Symbol,T}; preserve_query::Bool = t
   end
 
   query_vars = Dict{String,String}()
-  if preserve_query && haskey(task_local_storage(), :__params) && haskey(task_local_storage(:__params)[:REQUEST])
-    query = URI(task_local_storage(:__params)[:REQUEST].target).query
+  if preserve_query && haskey(task_local_storage(), :__params) && haskey(task_local_storage(:__params), :REQUEST)
+    query = URIParser.URI(task_local_storage(:__params)[:REQUEST].target).query
     if ! isempty(query)
       for pair in split(query, '&')
         parts = split(pair, '=')
@@ -473,7 +473,7 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
 
     parsed_route, param_names, param_types = parse_route(r.path)
 
-    uri = URI(to_uri(req.target))
+    uri = URIParser.URI(to_uri(req.target))
     regex_route = try
       Regex("^" * parsed_route * "\$")
     catch
@@ -486,7 +486,7 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
 
     params.collection = setup_base_params(req, res, params.collection, session)
 
-    occursin("?", req.target) && extract_get_params(URI(to_uri(req.target)), params)
+    occursin("?", req.target) && extract_get_params(URIParser.URI(to_uri(req.target)), params)
 
     extract_uri_params(uri.path, regex_route, param_names, param_types, params) || continue
 
@@ -504,14 +504,14 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
 
     return  try
               run_hook(controller, BEFORE_HOOK)
-              result =  (isdev() ? Base.invokelatest(r.action) : (r.action)()) |> to_response
+              result =  (Genie.Configuration.isdev() ? Base.invokelatest(r.action) : (r.action)()) |> to_response
               run_hook(controller, AFTER_HOOK)
 
               result
             catch ex
-              if isa(ex, ExceptionalResponse)
+              if isa(ex, Genie.Exceptions.ExceptionalResponse)
                 return ex.response
-              elseif isa(ex, RuntimeException)
+              elseif isa(ex, Genie.Exceptions.RuntimeException)
                 rethrow(ex)
               elseif isa(ex, Exception)
                 rethrow(ex)
@@ -561,7 +561,7 @@ function match_channels(req, msg::String, ws_client, params::Params, session::Un
 
     return  try
                 run_hook(controller, BEFORE_HOOK)
-                result = (isdev() ? Base.invokelatest(c.action) : (c.action)()) |> string
+                result = (Genie.Configuration.isdev() ? Base.invokelatest(c.action) : (c.action)()) |> string
                 run_hook(controller, AFTER_HOOK)
 
                 result
@@ -678,7 +678,7 @@ end
 
 Extracts query vars and adds them to the execution `params` `Dict`.
 """
-function extract_get_params(uri::URI, params::Params) :: Bool
+function extract_get_params(uri::URIParser.URI, params::Params) :: Bool
   # GET params
   if ! isempty(uri.query)
     for query_part in split(uri.query, "&")
@@ -826,7 +826,7 @@ function setup_base_params(req::HTTP.Request, res::Union{HTTP.Response,Nothing},
   params[Genie.PARAMS_FLASH_KEY]     = Genie.config.session_auto_start ?
                                        begin
                                         s = Genie.Sessions.get(session, Genie.PARAMS_FLASH_KEY)
-                                        if isnull(s)
+                                        if Nullables.isnull(s)
                                           ""
                                         else
                                           ss = Base.get(s)
@@ -838,7 +838,7 @@ function setup_base_params(req::HTTP.Request, res::Union{HTTP.Response,Nothing},
   params[Genie.PARAMS_POST_KEY]      = Dict{Symbol,Any}()
   params[Genie.PARAMS_GET_KEY]       = Dict{Symbol,Any}()
 
-  params[Genie.PARAMS_FILES]         = Dict{String,HttpFile}()
+  params[Genie.PARAMS_FILES]         = Dict{String,Input.HttpFile}()
 
   params
 end
@@ -858,9 +858,9 @@ function to_response(action_result) :: HTTP.Response
     HTTP.Response("")
   elseif isa(action_result, String)
     Renderer.respond(action_result)
-  elseif isa(action_result, ExceptionalResponse)
+  elseif isa(action_result, Genie.Exceptions.ExceptionalResponse)
     action_result.response
-  elseif isa(action_result, RuntimeException)
+  elseif isa(action_result, Genie.Exceptions.RuntimeException)
     throw(action_result)
   elseif isa(action_result, Exception)
     throw(action_result)
@@ -975,14 +975,14 @@ end
 
 Attempts to convert `resource` to URI
 """
-function to_uri(resource::String) :: URI
+function to_uri(resource::String) :: URIParser.URI
   try
-    URI(resource)
+    URIParser.URI(resource)
   catch ex
     qp = URIParser.query_params(resource) |> keys |> collect
     escaped_resource = join(map( x -> ( startswith(x, "/") ? escape_resource_path(string(x)) : URIParser.escape(string(x)) ) * "=" * URIParser.escape(URIParser.query_params(resource)[string(x)]), qp ), "&")
 
-    URI(escaped_resource)
+    URIParser.URI(escaped_resource)
   end
 end
 
@@ -1005,7 +1005,7 @@ Reads the static file and returns the content as a `Response`.
 function serve_static_file(resource::String; root = Genie.DOC_ROOT_PATH) :: HTTP.Response
   startswith(resource, "/") || (resource = "/$resource")
   resource_path = try
-                    URI(resource).path
+                    URIParser.URI(resource).path
                   catch ex
                     resource
                   end

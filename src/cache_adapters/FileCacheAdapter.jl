@@ -1,9 +1,9 @@
 module FileCacheAdapter
 
 
-using Serialization, Logging
-using Nullables
-using Genie
+import Serialization, Logging
+import Nullables
+import Genie
 
 
 """
@@ -25,10 +25,10 @@ end
 
 Retrieves from cache the object stored under the `key` key if the `expiration` delta (in seconds) is in the future.
 """
-function from_cache(key::Union{String,Symbol}, expiration::Int; dir::String = "") :: Nullable
+function from_cache(key::Union{String,Symbol}, expiration::Int; dir::String = "") :: Nullables.Nullable
   file_path = cache_path(string(key), dir = dir)
 
-  ( ! isfile(file_path) || stat(file_path).ctime + expiration < time() ) && return Nullable()
+  ( ! isfile(file_path) || stat(file_path).ctime + expiration < time() ) && return Nullables.Nullable()
 
   Genie.config.log_cache && @info("Found file system cache for $key at $file_path")
 
@@ -36,7 +36,7 @@ function from_cache(key::Union{String,Symbol}, expiration::Int; dir::String = ""
     deserialize(io)
   end
 
-  Nullable(output)
+  Nullables.Nullable(output)
 end
 
 

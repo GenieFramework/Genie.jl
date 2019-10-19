@@ -3,7 +3,7 @@ Handles input coming through Http server requests.
 """
 module Input
 
-using HttpCommon, URIParser, HTTP
+import HttpCommon, URIParser, HTTP
 
 export post, files, HttpInput, HttpPostData, HttpFiles, HttpFile
 

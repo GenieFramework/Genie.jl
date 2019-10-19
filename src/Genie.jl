@@ -3,6 +3,8 @@ Loads dependencies and bootstraps a Genie app. Exposes core Genie functionality.
 """
 module Genie
 
+import Revise
+
 push!(LOAD_PATH, @__DIR__)
 
 include("Configuration.jl")
@@ -10,9 +12,8 @@ include("constants.jl")
 
 const config = Configuration.Settings(app_env = ENV["GENIE_ENV"])
 
-using Revise
-using Sockets
-using Logging, LoggingExtras
+import Sockets
+import Logging, LoggingExtras
 
 push!(LOAD_PATH,  joinpath(@__DIR__, "cache_adapters"),
                   joinpath(@__DIR__, "session_adapters"),
@@ -23,6 +24,7 @@ include(joinpath(@__DIR__, "genie_types.jl"))
 include("HTTPUtils.jl")
 include("Exceptions.jl")
 include("App.jl")
+include("genie_module.jl")
 include("Inflector.jl")
 include("Util.jl")
 include("FileTemplates.jl")
@@ -47,13 +49,13 @@ include("Flash.jl")
 include("Plugins.jl")
 include("Deploy.jl")
 
-using .HTTPUtils
-using .App, .Exceptions
-using .Inflector, .Util
-using .FileTemplates, .Toolbox, .Generator, .Tester, .Encryption, .Cookies, .Sessions
-using .Input, .Renderer, .Assets, .Router, .Commands
-using .Flax, .AppServer, .Plugins
-using .Deploy
+import .HTTPUtils
+import .App, .Exceptions
+import .Inflector, .Util
+import .FileTemplates, .Toolbox, .Generator, .Tester, .Encryption, .Cookies, .Sessions
+import .Input, .Renderer, .Assets, .Router, .Commands
+import .Flax, .AppServer, .Plugins
+import .Deploy
 
 export startup, serve, up
 
@@ -83,7 +85,7 @@ function serve(path::String = DOC_ROOT_PATH, params...; kwparams...)
     serve_static_file("index.html", root = path)
   end
   route(".*") do
-    serve_static_file(@params(:REQUEST).target, root = path)
+    serve_static_file(Router.@params(:REQUEST).target, root = path)
   end
 
   Genie.startup(params...; kwparams...)
@@ -181,13 +183,13 @@ julia> Genie.loadapp(".")
 ```
 """
 function loadapp(path::String = "."; autostart::Bool = false) :: Nothing
-  Core.eval(Main, Meta.parse("using Revise"))
+  Core.eval(Main, Meta.parse("import Revise"))
   Core.eval(Main, Meta.parse("""include(joinpath("$path", "$(Genie.BOOTSTRAP_FILE_NAME)"))"""))
   Core.eval(Main, Meta.parse("Revise.revise()"))
   Core.eval(Main, Meta.parse("using Genie"))
 
   Core.eval(Main.UserApp, Meta.parse("Revise.revise()"))
-  Core.eval(Main.UserApp, Meta.parse("$autostart && Genie.startup()"))
+  Core.eval(Main.UserApp, Meta.parse("$autostart && up()"))
 
   nothing
 end
@@ -217,7 +219,6 @@ const up = startup
 
 
 ### PRIVATE ###
-
 
 """
     run() :: Nothing

@@ -1,10 +1,10 @@
 module Tester
 
-using Revise
-using Logging
-using Genie, Genie.Util, Genie.Configuration
-using Reexport
-@reexport using HTTP
+import Revise
+import Logging
+import Genie, Genie.Util, Genie.Configuration
+import Reexport
+Reexport.@reexport using HTTP
 
 
 """

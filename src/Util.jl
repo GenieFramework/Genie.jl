@@ -1,7 +1,7 @@
 module Util
 
-using Nullables
-using Genie
+import Nullables
+import Genie
 
 export expand_nullable, time_to_unixtimestamp
 
@@ -14,12 +14,8 @@ Returns `value` if it is not `null` - otherwise `default`.
 function expand_nullable(value::T)::T where T
   value
 end
-function expand_nullable(value::Nullable{T}, default::T)::T where T
-  if isnull(value)
-    default
-  else
-    Base.get(value)
-  end
+function expand_nullable(value::Nullables.Nullable{T}, default::T)::T where T
+  Nullables.isnull(value) ? default : Base.get(value)
 end
 
 

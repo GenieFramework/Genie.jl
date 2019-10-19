@@ -3,8 +3,8 @@ Collection of utilities for working with Responses data
 """
 module Responses
 
-using Genie, Genie.Router
-using HTTP
+import Genie, Genie.Router
+import HTTP
 
 export getresponse, getheaders, setheaders, setheaders!, getstatus, setstatus, setstatus!, getbody, setbody, setbody!
 
@@ -12,7 +12,7 @@ export getresponse, getheaders, setheaders, setheaders!, getstatus, setstatus, s
 """
 """
 function getresponse() :: HTTP.Response
-  @params(Genie.PARAMS_RESPONSE_KEY)
+  Router.@params(Genie.PARAMS_RESPONSE_KEY)
 end
 
 

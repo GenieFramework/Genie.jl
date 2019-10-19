@@ -1,7 +1,7 @@
 name = "Genie"
 uuid = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
 authors = ["Adrian Salceanu <e@essenciary.com>"]
-version = "0.19.1"
+version = "0.19.2"
 
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
@@ -20,6 +20,7 @@ Nettle = "49dea1ee-f6fa-5aa6-9a11-8816cee7d4b9"
 Nullables = "4d1e1d77-625e-5b40-9113-a560ec7a8ecd"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+REPL = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
@@ -30,7 +31,6 @@ Unicode = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
-julia = "1"
 ArgParse = "0.6.2"
 Gumbo = "0.5.1"
 HTTP = "0.8.6"
@@ -46,3 +46,4 @@ Reexport = "0.2.0"
 Revise = "2.2.2"
 URIParser = "0.4.0"
 YAML = "0.3.2"
+julia = "1"

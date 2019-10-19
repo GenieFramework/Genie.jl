@@ -3,8 +3,8 @@ Functionality for dealing with HTTP cookies.
 """
 module Cookies
 
-using HTTP, Nullables
-using Genie, Genie.Encryption, Genie.HTTPUtils
+import HTTP, Nullables
+import Genie, Genie.Encryption, Genie.HTTPUtils
 
 
 """
@@ -21,7 +21,7 @@ If the `key` is not set, the `default` value is returned.
 """
 function get(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}, default::T; encrypted::Bool = true)::T where T
   val = get(payload, key, encrypted = encrypted)
-  isnull(val) ? default : parse(T, Nullables.get(val))
+  Nullables.isnull(val) ? default : parse(T, Nullables.get(val))
 end
 
 
@@ -35,10 +35,10 @@ Retrieves a value stored on the cookie as `key` from the `Respose` object.
 - `key::Union{String,Symbol}`: the name of the cookie value
 - `encrypted::Bool`: if `true` the value stored on the cookie is automatically decrypted
 """
-function get(res::HTTP.Response, key::Union{String,Symbol}; encrypted::Bool = true) :: Nullable{String}
+function get(res::HTTP.Response, key::Union{String,Symbol}; encrypted::Bool = true) :: Nullables.Nullable{String}
   haskey(HTTPUtils.Dict(res), "Set-Cookie") ?
     nullablevalue(req, key, encrypted = encrypted) :
-      Nullable{String}()
+      Nullables.Nullable{String}()
 end
 
 
@@ -52,10 +52,10 @@ Retrieves a value stored on the cookie as `key` from the `Request` object.
 - `key::Union{String,Symbol}`: the name of the cookie value
 - `encrypted::Bool`: if `true` the value stored on the cookie is automatically decrypted
 """
-function get(req::HTTP.Request, key::Union{String,Symbol}; encrypted::Bool = true) :: Nullable{String}
+function get(req::HTTP.Request, key::Union{String,Symbol}; encrypted::Bool = true) :: Nullables.Nullable{String}
   haskey(HTTPUtils.Dict(req), "cookie") ?
     nullablevalue(req, key, encrypted = encrypted) :
-      Nullable{String}()
+      Nullables.Nullable{String}()
 end
 
 
@@ -156,17 +156,17 @@ Attempts to retrieve a cookie value stored at `key` in the `payload object` and 
 - `key::Union{String,Symbol}`: the name of the cookie value
 - `encrypted::Bool`: if `true` the value stored on the cookie is automatically decrypted
 """
-function nullablevalue(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}; encrypted::Bool = true) :: Nullable{String}
+function nullablevalue(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}; encrypted::Bool = true) :: Nullables.Nullable{String}
   for cookie in split(Dict(payload)["cookie"], ';')
     if startswith(lowercase(cookie), lowercase(string(key)))
       value = split(cookie, '=')[2] |> String
       encrypted && (value = Genie.Encryption.decrypt(value))
 
-      return Nullable{String}(value)
+      return Nullables.Nullable{String}(value)
     end
   end
 
-  Nullable{String}()
+  Nullables.Nullable{String}()
 end
 
 

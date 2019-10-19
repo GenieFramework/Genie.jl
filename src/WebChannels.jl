@@ -3,9 +3,9 @@ Handles WebSockets communication logic.
 """
 module WebChannels
 
-using Revise
-using HTTP, Distributed, Logging
-using Genie, Genie.Renderer
+import Revise
+import HTTP, Distributed, Logging
+import Genie, Genie.Renderer
 
 const ClientId = UInt # web socket hash
 const ChannelName = String

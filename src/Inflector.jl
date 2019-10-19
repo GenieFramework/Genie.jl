@@ -3,8 +3,8 @@ Handles the functionality for applying various gramatical rules.
 """
 module Inflector
 
-using Nullables, Unicode
-using Genie
+import Nullables, Unicode
+import Genie
 
 const vowels = ["a", "e", "i", "o", "u"]
 
@@ -14,12 +14,12 @@ const vowels = ["a", "e", "i", "o", "u"]
 
 Returns the singural form of `word`.
 """
-function to_singular(word::String; is_irregular::Bool = Inflector.is_irregular(word)) :: Nullable{String}
+function to_singular(word::String; is_irregular::Bool = Inflector.is_irregular(word)) :: Nullables.Nullable{String}
   ( is_irregular || ! endswith(word, "s") ) && return to_singular_irregular(word)
-  endswith(word, "ies") && ! in(word[end-3], vowels) && return Nullable{String}(word[1:end-3] * "y")
-  endswith(word, "s") && return Nullable{String}(word[1:end-1])
+  endswith(word, "ies") && ! in(word[end-3], vowels) && return Nullables.Nullable{String}(word[1:end-3] * "y")
+  endswith(word, "s") && return Nullables.Nullable{String}(word[1:end-1])
 
-  Nullable{String}()
+  Nullables.Nullable{String}()
 end
 
 
@@ -28,12 +28,12 @@ end
 
 Returns the singular form of the irregular word `word`.
 """
-function to_singular_irregular(word::String) :: Nullable{String}
+function to_singular_irregular(word::String) :: Nullables.Nullable{String}
   irr = irregular(word)
-  if ! isnull(irr)
-    Nullable{Base.get(irr)[1]}
+  if ! Nullables.isnull(irr)
+    Nullables.Nullable{Base.get(irr)[1]}
   else
-    Nullable{String}()
+    Nullables.Nullable{String}()
   end
 end
 
@@ -43,10 +43,10 @@ end
 
 Returns the plural form of `word`.
 """
-function to_plural(word::String; is_irregular::Bool = Inflector.is_irregular(word)) :: Nullable{String}
+function to_plural(word::String; is_irregular::Bool = Inflector.is_irregular(word)) :: Nullables.Nullable{String}
   is_irregular && return to_plural_irregular(word)
-  endswith(word, "y") && ! in(word[end-1], vowels) && return Nullable{String}(word[1:end-1] * "ies") # category -> categories // story -> stories
-  is_singular(word) ? Nullable{String}(word * "s") : Nullable{String}(word)
+  endswith(word, "y") && ! in(word[end-1], vowels) && return Nullables.Nullable{String}(word[1:end-1] * "ies") # category -> categories // story -> stories
+  is_singular(word) ? Nullables.Nullable{String}(word * "s") : Nullables.Nullable{String}(word)
 end
 
 
@@ -55,12 +55,12 @@ end
 
 Returns the plural form of the irregular word `word`.
 """
-function to_plural_irregular(word::String) :: Nullable{String}
+function to_plural_irregular(word::String) :: Nullables.Nullable{String}
   irr = irregular(word)
-  if ! isnull(irr)
-    Nullable{String}(Base.get(irr)[2])
+  if ! Nullables.isnull(irr)
+    Nullables.Nullable{String}(Base.get(irr)[2])
   else
-    Nullable{String}()
+    Nullables.Nullable{String}()
   end
 end
 
@@ -93,8 +93,8 @@ Returns wether or not `word` is a plural.
 function is_plural(word::String) :: Bool
   word = Unicode.normalize(word, casefold = true)
   irr_word = irregular(word)
-  (! isnull(irr_word) && word != Base.get(irr_word)[1]) ||
-    (! isnull(irr_word) && word == Base.get(irr_word)[2]) ||
+  (Nullables.isnull(irr_word) || word != Base.get(irr_word)[1]) ||
+    (Nullables.isnull(irr_word) || word == Base.get(irr_word)[2]) ||
     endswith(word, "s")
 end
 
@@ -114,14 +114,14 @@ end
 
 Wether or not `word` has an irregular singular or plural form.
 """
-function irregular(word::String) :: Nullable{Tuple{String,String}}
+function irregular(word::String) :: Nullables.Nullable{Tuple{String,String}}
   word = Unicode.normalize(word, casefold = true)
 
   for (k, v) in IRREGULAR_NOUNS
-    (word == k || word == v) && return Nullable{Tuple{String,String}}( (k,v) )
+    (word == k || word == v) && return Nullables.Nullable{Tuple{String,String}}( (k,v) )
   end
 
-  Nullable{Tuple{String,String}}()
+  Nullables.Nullable{Tuple{String,String}}()
 end
 
 
@@ -131,7 +131,7 @@ end
 Whether or not `word` has a singular or plural irregular form.
 """
 function is_irregular(word::String) :: Bool
-  isnull(irregular(word)) ? false : true
+  Nullables.isnull(irregular(word)) ? false : true
 end
 
 

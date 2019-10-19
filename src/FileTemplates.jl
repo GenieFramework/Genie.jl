@@ -3,7 +3,7 @@ Functionality for handling the defautl conent of the various Genie files (migrat
 """
 module FileTemplates
 
-using Genie.Inflector
+import Genie.Inflector
 
 
 """

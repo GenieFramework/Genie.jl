@@ -3,7 +3,7 @@ Helper functions for working with frontend assets (including JS, CSS, etc files)
 """
 module Assets
 
-using Genie, Genie.Configuration
+import Genie, Genie.Configuration
 
 export include_asset, css_asset, js_asset
 

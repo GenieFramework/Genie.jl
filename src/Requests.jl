@@ -3,8 +3,8 @@ Collection of utilities for working with Requests data
 """
 module Requests
 
-using Genie, Genie.Router, Genie.Input
-using HTTP
+import Genie, Genie.Router, Genie.Input
+import HTTP
 
 export jsonpayload, rawpayload, filespayload, postpayload, getpayload, request, matchedroute, matchedchannel
 export infilespayload, download, filename, payload, read
@@ -17,7 +17,7 @@ Processes an `application/json` `POST` request.
 If it fails to successfully parse the `JSON` data it returns `nothing`. The original payload can still be accessed invoking `rawpayload()`
 """
 @inline function jsonpayload()
-  @params(Genie.PARAMS_JSON_PAYLOAD)
+  Router.@params(Genie.PARAMS_JSON_PAYLOAD)
 end
 
 
@@ -28,7 +28,7 @@ Processes an `application/json` `POST` request attempting to convert the payload
 If it fails to successfully parse and convert the `JSON` data, it throws an exception. The original payload can still be accessed invoking `rawpayload()`
 """
 @inline function jsonpayload(::Type{T})::T where {T}
-  @params(Genie.PARAMS_JSON_PAYLOAD)::T
+  Router.@params(Genie.PARAMS_JSON_PAYLOAD)::T
 end
 
 
@@ -38,7 +38,7 @@ end
 Returns the raw `POST` payload as a `String`.
 """
 @inline function rawpayload() :: String
-  @params(Genie.PARAMS_RAW_PAYLOAD)
+  Router.@params(Genie.PARAMS_RAW_PAYLOAD)
 end
 
 
@@ -47,8 +47,8 @@ end
 
 Collection of form uploaded files.
 """
-@inline function filespayload() :: Dict{String,HttpFile}
-  @params(Genie.PARAMS_FILES)
+@inline function filespayload() :: Dict{String,Input.HttpFile}
+  Router.@params(Genie.PARAMS_FILES)
 end
 
 
@@ -57,8 +57,8 @@ end
 
 Returns the `HttpFile` uploaded through the `key` input name.
 """
-@inline function filespayload(key::Union{String,Symbol}) :: HttpFile
-  @params(Genie.PARAMS_FILES)[string(key)]
+@inline function filespayload(key::Union{String,Symbol}) :: Input.HttpFile
+  Router.@params(Genie.PARAMS_FILES)[string(key)]
 end
 
 
@@ -77,7 +77,7 @@ end
 
 Saves uploaded `HttpFile` `file` to local storage under the `name` filename.
 """
-@inline function Base.download(file::HttpFile, name::String = file.name) :: Int
+@inline function Base.download(file::Input.HttpFile, name::String = file.name) :: Int
   write(name, IOBuffer(file.data))
 end
 
@@ -87,7 +87,7 @@ end
 
 Returns the content of `file` as string.
 """
-@inline function Base.read(file::HttpFile, ::Type{String}) :: String
+@inline function Base.read(file::Input.HttpFile, ::Type{String}) :: String
   file.data |> String
 end
 
@@ -97,7 +97,7 @@ end
 
 Original filename of the uploaded `HttpFile` `file`.
 """
-@inline function filename(file::HttpFile) :: String
+@inline function filename(file::Input.HttpFile) :: String
   file.name
 end
 
@@ -108,7 +108,7 @@ end
 A dict representing the POST variables payload of the request (corresponding to a `form-data` request)
 """
 @inline function postpayload() :: Dict{Symbol,Any}
-  @params(Genie.PARAMS_POST_KEY)
+  Router.@params(Genie.PARAMS_POST_KEY)
 end
 
 
@@ -138,7 +138,7 @@ end
 A dict representing the GET/query variables payload of the request (the part correspoding to `?foo=bar&baz=moo`)
 """
 @inline function getpayload() :: Dict{Symbol,Any}
-  @params(Genie.PARAMS_GET_KEY)
+  Router.@params(Genie.PARAMS_GET_KEY)
 end
 
 
@@ -168,7 +168,7 @@ end
 Returns the raw HTTP.Request object associated with the request.
 """
 @inline function request() :: HTTP.Request
-  @params(Genie.PARAMS_REQUEST_KEY)
+  Router.@params(Genie.PARAMS_REQUEST_KEY)
 end
 
 
@@ -178,7 +178,7 @@ end
 Utility function for accessing the `@params` collection, which holds the request variables.
 """
 @inline function payload() :: Any
-  @params
+  Router.@params
 end
 
 
@@ -188,7 +188,7 @@ end
 Utility function for accessing the `key` value within the `@params` collection of request variables.
 """
 @inline function payload(key::Symbol) :: Any
-  @params()[key]
+  Router.@params()[key]
 end
 
 
@@ -199,7 +199,7 @@ Utility function for accessing the `key` value within the `@params` collection o
 If `key` is not defined, `default_value` is returned.
 """
 @inline function payload(key::Symbol, default_value::T)::T where {T}
-  haskey(@params(), key) ? @params()[key] : default_value
+  haskey(Router.@params(), key) ? Router.@params()[key] : default_value
 end
 
 
@@ -209,7 +209,7 @@ end
 Returns the `Route` object which was matched for the current request.
 """
 @inline function matchedroute() :: Genie.Router.Route
-  @params(Genie.PARAMS_ROUTE_KEY)
+  Router.@params(Genie.PARAMS_ROUTE_KEY)
 end
 
 
@@ -219,7 +219,7 @@ end
 Returns the `Channel` object which was matched for the current request.
 """
 @inline function matchedchannel() :: Genie.Router.Channel
-  @params(Genie.PARAMS_CHANNELS_KEY)
+  Router.@params(Genie.PARAMS_CHANNELS_KEY)
 end
 
 end
