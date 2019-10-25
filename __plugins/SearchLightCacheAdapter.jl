@@ -1,9 +1,11 @@
 module SearchLightCacheAdapter
 
-using Genie, Loggers, App, SearchLight, Util
+using Logging
+using Genie, Genie.App, Genie.Util
+using SearchLight
 
 
-type StorageCache <: AbstractModel
+mutable struct StorageCache <: AbstractModel
   ### internals
   _table_name::String
   _id::String

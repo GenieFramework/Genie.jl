@@ -124,7 +124,7 @@ function route_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 =
 
   Revise.revise()
 
-  session, res = Genie.config.session_auto_start ? Sessions.start(req, res) : (nothing, res)
+  session, res = Genie.config.session_auto_start ? Genie.Sessions.start(req, res) : (nothing, res)
 
   try
     res = match_routes(req, res, session, params)
@@ -164,7 +164,7 @@ function route_ws_request(req, msg::String, ws_client, ip::Sockets.IPv4 = Socket
 
   Revise.revise()
 
-  session = Genie.config.session_auto_start ? Sessions.load(Sessions.id(req)) : nothing
+  session = Genie.config.session_auto_start ? Genie.Sessions.load(Genie.Sessions.id(req)) : nothing
 
   match_channels(req, msg, ws_client, params, session)
 end
@@ -513,6 +513,10 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
                 return ex.response
               elseif isa(ex, Genie.Exceptions.RuntimeException)
                 rethrow(ex)
+              elseif isa(ex, Genie.Exceptions.InternalServerException)
+                return error_500(ex.message)
+              elseif isa(ex, Genie.Exceptions.NotFoundException)
+                return error_404(ex.resource)
               elseif isa(ex, Exception)
                 rethrow(ex)
               end
