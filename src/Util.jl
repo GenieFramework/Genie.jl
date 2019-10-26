@@ -1,21 +1,19 @@
 module Util
 
-import Nullables
+import Revise
 import Genie
 
 export expand_nullable, time_to_unixtimestamp
 
 
-"""
-    expand_nullable{T}(value::Nullable{T}, default::T) :: T
 
-Returns `value` if it is not `null` - otherwise `default`.
 """
-function expand_nullable(value::T)::T where T
-  value
-end
-function expand_nullable(value::Nullables.Nullable{T}, default::T)::T where T
-  Nullables.isnull(value) ? default : Base.get(value)
+    expand_nullable{T}(value::Union{Nothing,T}, default::T) :: T
+
+Returns `value` if it is not `nothing` - otherwise `default`.
+"""
+function expand_nullable(value::Union{Nothing,T}, default::T)::T where T
+  value === nothing ? default : value
 end
 
 

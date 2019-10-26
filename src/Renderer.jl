@@ -2,7 +2,8 @@ module Renderer
 
 export respond, html, json, redirect
 
-import Nullables, JSON, HTTP, Reexport, Markdown, Logging
+import Revise
+import JSON, HTTP, Reexport, Markdown, Logging
 import Genie, Genie.Util, Genie.Configuration, Genie.Exceptions
 
 Reexport.@reexport using Genie.Flax

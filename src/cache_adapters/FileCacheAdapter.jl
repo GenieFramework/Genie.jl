@@ -1,19 +1,17 @@
 module FileCacheAdapter
 
-
+import Revise
 import Serialization, Logging
-import Nullables
 import Genie
 
-
 """
-    to_cache(key::Union{String,Symbol}, content::Any; dir::String = "") :: Nothing
+    tocache(key::Union{String,Symbol}, content::Any; dir::String = "") :: Nothing
 
 Persists `content` onto the file system under the `key` key.
 """
-function to_cache(key::Union{String,Symbol}, content::Any; dir::String = "") :: Nothing
+function tocache(key::Union{String,Symbol}, content::Any; dir::String = "") :: Nothing
   open(cache_path(string(key), dir = dir), "w") do io
-    serialize(io, content)
+    Serialization.serialize(io, content)
   end
 
   nothing
@@ -21,22 +19,22 @@ end
 
 
 """
-    from_cache(key::Union{String,Symbol}, expiration::Int; dir::String = "") :: Nullable
+    fromcache(key::Union{String,Symbol}, expiration::Int; dir::String = "") :: Union{Nothing,Any}
 
 Retrieves from cache the object stored under the `key` key if the `expiration` delta (in seconds) is in the future.
 """
-function from_cache(key::Union{String,Symbol}, expiration::Int; dir::String = "") :: Nullables.Nullable
+function fromcache(key::Union{String,Symbol}, expiration::Int; dir::String = "") :: Union{Nothing,Any}
   file_path = cache_path(string(key), dir = dir)
 
-  ( ! isfile(file_path) || stat(file_path).ctime + expiration < time() ) && return Nullables.Nullable()
+  ( ! isfile(file_path) || stat(file_path).ctime + expiration < time() ) && return nothing
 
-  Genie.config.log_cache && @info("Found file system cache for $key at $file_path")
+  Genie.config.log_cache && @info("Hit file system cache for $key at $file_path")
 
   output = open(file_path) do io
-    deserialize(io)
+    Serialization.deserialize(io)
   end
 
-  Nullables.Nullable(output)
+  output
 end
 
 
@@ -53,16 +51,13 @@ end
 
 
 """
-    purge_all(; dir::String = "") :: Nothing
+    purgeall(; dir::String = "") :: Nothing
 
 Removes all cached data.
 """
-function purge_all(; dir::String = "") :: Nothing
+function purgeall(; dir::String = "") :: Nothing
   rm(cache_path("", dir = dir), recursive = true)
   mkpath(cache_path("", dir = dir))
-  open(joinpath(cache_path("", dir = dir), ".gitkeep"), "w") do f
-    write(f, "")
-  end
 
   nothing
 end

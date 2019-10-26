@@ -3,10 +3,9 @@ Caching functionality for Genie.
 """
 module Cache
 
+import Revise
 import SHA, Logging
-import Nullables
 import Genie
-
 
 export cachekey, withcache, @cachekey
 export purge, purgeall
@@ -39,7 +38,7 @@ function withcache(f::Function, key::Union{String,Symbol}, expiration::Int = CAC
 
   cached_data = CACHE_ADAPTER.fromcache(cachekey(key), expiration, dir = dir)
 
-  if Nullables.isnull(cached_data)
+  if cached_data === nothing
     Genie.config.log_cache && @warn("Missed cache for $key")
 
     output = f()
@@ -50,7 +49,7 @@ function withcache(f::Function, key::Union{String,Symbol}, expiration::Int = CAC
 
   Genie.config.log_cache && @info("Hit cache for $(cachekey(key))")
 
-  Base.get(cached_data)
+  cached_data
 end
 
 
@@ -72,7 +71,6 @@ Removes all cached data.
 function purgeall(; dir::String = "") :: Nothing
   CACHE_ADAPTER.purgeall(dir = dir)
 end
-const purge_all = purgeall
 
 
 ### PRIVATE ###
@@ -90,17 +88,6 @@ function cachekey(args...) :: String
   end
 
   bytes2hex(SHA.sha1(String(take!(key))))
-end
-
-
-"""
-    macro cachekey()
-
-Generate a unique and repeatable cache key.
-The key is generated using file path and line number, so editing code can invalidate the cache.
-"""
-macro cachekey()
-  :(cachekey(esc(@__FILE__), esc(@__LINE__)))
 end
 
 end

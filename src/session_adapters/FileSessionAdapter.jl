@@ -1,8 +1,7 @@
 module FileSessionAdapter
 
-using Nullables
 using Genie.Sessions, Genie, Genie.Configuration
-using Serialization, Logging
+import Serialization, Logging
 
 """
     write(session::Sessions.Session) :: Sessions.Session
@@ -18,10 +17,10 @@ function write(session::Sessions.Session) :: Sessions.Session
 
   try
     open(joinpath(Genie.SESSIONS_PATH, session.id), "w") do (io)
-      serialize(io, session)
+      Serialization.serialize(io, session)
     end
   catch ex
-    @error "Error when serializing session"
+    @error "Error serializing session"
 
     rethrow(ex)
   end
@@ -31,35 +30,33 @@ end
 
 
 """
-    read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
-    read(session::Sessions.Session) :: Nullable{Sessions.Session}
+    read(session_id::Union{String,Symbol}) :: Union{Nothing,Sessions.Session}
+    read(session::Sessions.Session) :: Union{Nothing,Sessions.Session}
 
 Attempts to read from file the session object serialized as `session_id`.
 """
-function read(session_id::Union{String,Symbol}) :: Nullables.Nullable{Sessions.Session}
+function read(session_id::Union{String,Symbol}) :: Union{Nothing,Sessions.Session}
   try
-    isfile(joinpath(Genie.SESSIONS_PATH, session_id)) || return Nullables.Nullable{Sessions.Session}(write(Session(session_id)))
+    isfile(joinpath(Genie.SESSIONS_PATH, session_id)) || return write(Session(session_id))
   catch ex
     @error "Can't check session file"
     @error ex
 
-    Nullables.Nullable{Sessions.Session}(write(Session(session_id)))
+    write(Session(session_id))
   end
 
   try
-    session = open(joinpath(Genie.SESSIONS_PATH, session_id), "r") do (io)
-      deserialize(io)
+    open(joinpath(Genie.SESSIONS_PATH, session_id), "r") do (io)
+      Serialization.deserialize(io)
     end
-
-    Nullables.Nullable{Sessions.Session}(session)
   catch ex
     @error "Can't read session"
     @error ex
 
-    Nullables.Nullable{Sessions.Session}(write(Session(session_id)))
+    write(Session(session_id))
   end
 end
-function read(session::Sessions.Session) :: Nullables.Nullable{Sessions.Session}
+function read(session::Sessions.Session) :: Union{Nothing,Sessions.Session}
   read(session.id)
 end
 

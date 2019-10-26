@@ -1,6 +1,7 @@
 module Sessions
 
-import SHA, HTTP, Dates, Nullables, Logging
+import Revise
+import SHA, HTTP, Dates, Logging
 import Genie, Genie.Cookies, Genie.Generator
 
 
@@ -22,6 +23,11 @@ const SessionAdapter = include("session_adapters/$session_adapter_name.jl")
 
 using .(SessionAdapter)
 
+struct InvalidSessionIdException <: Exception
+  msg::String
+end
+InvalidSessionIdException() = InvalidSessionIdException("Can't compute session id - please make sure SECRET_TOKEN is defined in config/secrets.jl")
+
 
 """
     id() :: String
@@ -36,15 +42,15 @@ function id() :: String
       @warn "Generating temporary secret token"
       Core.eval(Genie, :(const SECRET_TOKEN = $(Genie.Generator.secret_token())))
     else
-      error("Can't compute session id - please make sure SECRET_TOKEN is defined in config/secrets.jl")
+      throw(InvalidSessionIdException())
     end
   end
 
   try
     Genie.SECRET_TOKEN * ":" * bytes2hex(SHA.sha1(string(Dates.now()))) * ":" * string(rand()) * ":" * string(hash(Genie)) |> SHA.sha256 |> bytes2hex
   catch ex
-    @error "Session error"
-    error("Can't compute session id - please make sure SECRET_TOKEN is defined in config/secrets.jl")
+    @error ex
+    throw(InvalidSessionIdException())
   end
 end
 
@@ -56,9 +62,9 @@ Attempts to retrieve the session id from the provided `payload` object.
 If that is not available, a new session id is created.
 """
 function id(payload::Union{HTTP.Request,HTTP.Response}) :: String
-  ! Nullables.isnull(Cookies.get(payload, Genie.config.session_key_name)) &&
-    ! isempty(Base.get(Cookies.get(payload, Genie.config.session_key_name))) &&
-      return Base.get(Cookies.get(payload, Genie.config.session_key_name))
+  (Cookies.get(payload, Genie.config.session_key_name) !== nothing) &&
+    ! isempty(Cookies.get(payload, Genie.config.session_key_name)) &&
+      return Cookies.get(payload, Genie.config.session_key_name)
 
   id()
 end
@@ -71,20 +77,20 @@ Attempts to retrieve the session id from the provided request and response objec
 If that is not available, a new session id is created.
 """
 function id(req::HTTP.Request, res::HTTP.Response) :: String
-  ! Nullables.isnull(Cookies.get(res, Genie.config.session_key_name)) &&
-    ! isempty(Base.get(Cookies.get(res, Genie.config.session_key_name))) &&
-      return Base.get(Cookies.get(res, Genie.config.session_key_name))
+  (Cookies.get(res, Genie.config.session_key_name) !== nothing) &&
+    ! isempty(Cookies.get(res, Genie.config.session_key_name)) &&
+      return Cookies.get(res, Genie.config.session_key_name)
 
-  ! Nullables.isnull(Cookies.get(req, Genie.config.session_key_name)) &&
-    ! isempty(Base.get(Cookies.get(req, Genie.config.session_key_name))) &&
-      return Base.get(Cookies.get(req, Genie.config.session_key_name))
+  (Cookies.get(req, Genie.config.session_key_name) !== nothing) &&
+    ! isempty(Cookies.get(req, Genie.config.session_key_name)) &&
+      return Cookies.get(req, Genie.config.session_key_name)
 
   id()
 end
 
 
 """
-    start(session_id::String, req::HTTP.Request, res::HTTP.Response; options = Dict{String,String}()) :: Session
+    start(session_id::String, req::HTTP.Request, res::HTTP.Response; options = Dict{String,String}()) :: Tuple{Session,HTTP.Response}
 
 Initiates a new HTTP session with the provided `session_id`.
 
@@ -130,12 +136,12 @@ end
 
 
 """
-    get(s::Session, key::Symbol) :: Nullable
+    get(s::Session, key::Symbol) :: Union{Nothing,Any}
 
-Returns the value stored on the `Session` object `s` as `key`, wrapped in a `Nullable`.
+Returns the value stored on the `Session` object `s` as `key`, wrapped in a `Union{Nothing,Any}`.
 """
-function get(s::Session, key::Symbol) :: Nullables.Nullable
-  haskey(s.data, key) ? Nullables.Nullable(s.data[key]) : Nullables.Nullable()
+function get(s::Session, key::Symbol) :: Union{Nothing,Any}
+  haskey(s.data, key) ? (s.data[key]) : nothing
 end
 
 
@@ -148,7 +154,7 @@ If the value is not set, it returns the `default`.
 function get(s::Session, key::Symbol, default::T) :: T where T
   val = get(s, key)
 
-  Nullables.isnull(val) ? default : Nullables.get(val)
+  val === nothing ? default : val
 end
 
 
@@ -204,7 +210,7 @@ Loads session data from persistent storage - delegates to the underlying `Sessio
 function load(session_id::String) :: Session
   session = SessionAdapter.read(session_id)
 
-  Nullables.isnull(session) ? Session(session_id) : Base.get(session)
+  session === nothing ? Session(session_id) : (session)
 end
 
 

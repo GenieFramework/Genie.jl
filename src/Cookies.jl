@@ -3,7 +3,8 @@ Functionality for dealing with HTTP cookies.
 """
 module Cookies
 
-import HTTP, Nullables
+import Revise
+import HTTP
 import Genie, Genie.Encryption, Genie.HTTPUtils
 
 
@@ -21,12 +22,12 @@ If the `key` is not set, the `default` value is returned.
 """
 function get(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}, default::T; encrypted::Bool = true)::T where T
   val = get(payload, key, encrypted = encrypted)
-  Nullables.isnull(val) ? default : parse(T, Nullables.get(val))
+  val === nothing ? default : parse(T, val)
 end
 
 
 """
-    get(res::HTTP.Response, key::Union{String,Symbol}) :: Nullable{String}
+    get(res::HTTP.Response, key::Union{String,Symbol}) :: Union{Nothing,String}
 
 Retrieves a value stored on the cookie as `key` from the `Respose` object.
 
@@ -35,15 +36,15 @@ Retrieves a value stored on the cookie as `key` from the `Respose` object.
 - `key::Union{String,Symbol}`: the name of the cookie value
 - `encrypted::Bool`: if `true` the value stored on the cookie is automatically decrypted
 """
-function get(res::HTTP.Response, key::Union{String,Symbol}; encrypted::Bool = true) :: Nullables.Nullable{String}
-  haskey(HTTPUtils.Dict(res), "Set-Cookie") ?
-    nullablevalue(req, key, encrypted = encrypted) :
-      Nullables.Nullable{String}()
+function get(res::HTTP.Response, key::Union{String,Symbol}; encrypted::Bool = true) :: Union{Nothing,String}
+  (haskey(HTTPUtils.Dict(res), "Set-Cookie") || haskey(HTTPUtils.Dict(res), "set-cookie")) ?
+    nullablevalue(res, key, encrypted = encrypted)::String :
+      nothing
 end
 
 
 """
-    get(req::Request, key::Union{String,Symbol}) :: Nullable{String}
+    get(req::Request, key::Union{String,Symbol}) :: Union{Nothing,String}
 
 Retrieves a value stored on the cookie as `key` from the `Request` object.
 
@@ -52,25 +53,10 @@ Retrieves a value stored on the cookie as `key` from the `Request` object.
 - `key::Union{String,Symbol}`: the name of the cookie value
 - `encrypted::Bool`: if `true` the value stored on the cookie is automatically decrypted
 """
-function get(req::HTTP.Request, key::Union{String,Symbol}; encrypted::Bool = true) :: Nullables.Nullable{String}
-  haskey(HTTPUtils.Dict(req), "cookie") ?
-    nullablevalue(req, key, encrypted = encrypted) :
-      Nullables.Nullable{String}()
-end
-
-
-"""
-    get!!(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}; encrypted::Bool = true) :: String
-
-Retrieves the cookie value stored at `key` within the `payload` object. Throws error if the key is not set.
-
-# Arguments
-- `payload::Union{HTTP.Response,HTTP.Request}`: the request or response object containing the Cookie headers
-- `key::Union{String,Symbol}`: the name of the cookie value
-- `encrypted::Bool`: if `true` the value stored on the cookie is automatically decrypted
-"""
-function get!!(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}; encrypted::Bool = true) :: String
-  get(payload, key, encrypted = encrypted) |> Nullables.get
+function get(req::HTTP.Request, key::Union{String,Symbol}; encrypted::Bool = true) :: Union{Nothing,String}
+  (haskey(HTTPUtils.Dict(req), "cookie") || haskey(HTTPUtils.Dict(req), "Cookie")) ?
+    nullablevalue(req, key, encrypted = encrypted)::String :
+      nothing
 end
 
 
@@ -99,6 +85,8 @@ function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attribu
   headers = Dict(res.headers)
   if haskey(headers, "Set-Cookie")
     headers["Set-Cookie"] *= "\nSet-Cookie: " * HTTP.Cookies.String(cookie, false) * "; "
+  elseif haskey(headers, "set-cookie")
+    headers["set-cookie"] *= "\nset-cookie: " * HTTP.Cookies.String(cookie, false) * "; "
   else
     headers["Set-Cookie"] = HTTP.Cookies.String(cookie, false) * "; "
   end
@@ -117,25 +105,22 @@ function Base.Dict(r::Union{HTTP.Request,HTTP.Response}) :: Dict{String,String}
   d = Dict{String,String}()
   headers = Dict(r.headers)
 
-  if haskey(headers, "Cookie")
-    for cookie in split(headers["Cookie"], ";")
-      cookie_parts = split(cookie, "=")
-      if length(cookie_parts) == 2
-        d[strip(cookie_parts[1])] = cookie_parts[2]
-      else
-        d[strip(cookie_parts[1])] = ""
-      end
-    end
+  h = if haskey(headers, "Cookie")
+    split(headers["Cookie"], ";")
+  elseif haskey(headers, "cookie")
+    split(headers["cookie"], ";")
+  elseif haskey(headers, "Set-Cookie")
+    split(headers["Set-Cookie"], ";")
+  elseif haskey(headers, "set-cookie")
+    split(headers["set-cookie"], ";")
   end
 
-  if haskey(headers, "Set-Cookie")
-    for cookie in split(headers["Set-Cookie"], ";")
-      cookie_parts = split(cookie, "=")
-      if length(cookie_parts) == 2
-        d[strip(cookie_parts[1])] = cookie_parts[2]
-      else
-        d[strip(cookie_parts[1])] = ""
-      end
+  for cookie in h
+    cookie_parts = split(cookie, "=")
+    if length(cookie_parts) == 2
+      d[strip(cookie_parts[1])] = cookie_parts[2]
+    else
+      d[strip(cookie_parts[1])] = ""
     end
   end
 
@@ -149,24 +134,24 @@ end
 """
     nullablevalue(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}; encrypted::Bool = true)
 
-Attempts to retrieve a cookie value stored at `key` in the `payload object` and returns a `Nullable{String}`
+Attempts to retrieve a cookie value stored at `key` in the `payload object` and returns a `Union{Nothing,String}`
 
 # Arguments
 - `payload::Union{HTTP.Response,HTTP.Request}`: the request or response object containing the Cookie headers
 - `key::Union{String,Symbol}`: the name of the cookie value
 - `encrypted::Bool`: if `true` the value stored on the cookie is automatically decrypted
 """
-function nullablevalue(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}; encrypted::Bool = true) :: Nullables.Nullable{String}
+function nullablevalue(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}; encrypted::Bool = true) :: Union{Nothing,String}
   for cookie in split(Dict(payload)["cookie"], ';')
     if startswith(lowercase(cookie), lowercase(string(key)))
       value = split(cookie, '=')[2] |> String
       encrypted && (value = Genie.Encryption.decrypt(value))
 
-      return Nullables.Nullable{String}(value)
+      return value::String
     end
   end
 
-  Nullables.Nullable{String}()
+  nothing
 end
 
 

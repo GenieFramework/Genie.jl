@@ -2,7 +2,7 @@ module Router
 
 import Revise
 import Reexport, Logging
-import HTTP, URIParser, HttpCommon, Nullables, Sockets, Millboard, Dates, OrderedCollections
+import HTTP, URIParser, HttpCommon, Sockets, Millboard, Dates, OrderedCollections
 import Genie, Genie.HTTPUtils, Genie.Sessions, Genie.Configuration, Genie.Input, Genie.Util, Genie.Renderer, Genie.Exceptions
 
 include("mimetypes.jl")
@@ -830,12 +830,11 @@ function setup_base_params(req::HTTP.Request, res::Union{HTTP.Response,Nothing},
   params[Genie.PARAMS_FLASH_KEY]     = Genie.config.session_auto_start ?
                                        begin
                                         s = Genie.Sessions.get(session, Genie.PARAMS_FLASH_KEY)
-                                        if Nullables.isnull(s)
+                                        if s === nothing
                                           ""
                                         else
-                                          ss = Base.get(s)
                                           Genie.Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
-                                          ss
+                                          s
                                         end
                                        end : ""
 

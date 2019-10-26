@@ -3,7 +3,10 @@ Deals with authorization functionality, roles, ACL.
 """
 module Authorization
 
-using Genie, SearchLight, Authentication, Helpers, App, Util, Loggers
+import Revise
+import Logging
+
+using Genie, SearchLight, Genie.Authentication, Genie.App, Genie.Util, Genie.Sessions
 
 export is_authorized, with_authorization
 
@@ -14,8 +17,8 @@ export is_authorized, with_authorization
 Checks if the user authenticated on the current session (its role) is authorized for `ability` per the corresponding access list.
 """
 function is_authorized(ability::Symbol, params::Dict{Symbol,Any}) :: Bool
-  Authentication.is_authenticated(session(params)) || return false
-  user_role = expand_nullable(expand_nullable(current_user(session(params)), User()).role, :user)
+  Authentication.is_authenticated(Sessions.session(params)) || return false
+  user_role = (expand_nullable(current_user(session(params)), User()).role, :user) |> expand_nullable
   role_has_ability(user_role, ability, params)
 end
 
@@ -29,7 +32,7 @@ function with_authorization(f::Function, ability::Symbol, fallback::Function, pa
   if ! is_authorized(ability, params)
     fallback(params)
   else
-    user_role = expand_nullable( expand_nullable(current_user(session(params)), User()).role, :user )
+    user_role = (expand_nullable(current_user(session(params)), User()).role, :user) |> expand_nullable
     f(scopes_of_role_ability(user_role, ability, params))
   end
 end
@@ -46,9 +49,8 @@ function role_has_ability(role::Symbol, ability::Symbol, params::Dict{Symbol,Any
             (ability == :any || # no ability required, just the right kind of role
               haskey(params[Genie.PARAMS_ACL_KEY][string(role)], string(ability)) ) # role has ability
   catch ex
-    log("Invalid ACL", :err)
-    log(string(ex), :err)
-    log("$(@__FILE__):$(@__LINE__)", :err)
+    @error "Invalid ACL"
+    @error ex
 
     return false
   end
@@ -63,7 +65,7 @@ Returns a `vector` of SQL scopes defined by the role and ability settings.
 function scopes_of_role_ability(role::Symbol, ability::Symbol, params::Dict{Symbol,Any}) :: Vector{Symbol}
   haskey(params[Genie.PARAMS_ACL_KEY], string(role)) &&
     haskey(params[Genie.PARAMS_ACL_KEY][string(role)], string(ability)) &&
-    params[Genie.PARAMS_ACL_KEY][string(role)][string(ability)] != nothing ?
+    params[Genie.PARAMS_ACL_KEY][string(role)][string(ability)] !== nothing ?
       map(scope -> Symbol(scope), params[Genie.PARAMS_ACL_KEY][string(role)][string(ability)]) :
       Symbol[]
 end
