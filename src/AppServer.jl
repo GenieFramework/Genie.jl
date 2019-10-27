@@ -6,14 +6,19 @@ module AppServer
 import Revise, HTTP, HTTP.IOExtras, HTTP.Sockets, Millboard, MbedTLS, URIParser, Sockets, Distributed, Logging
 import Genie, Genie.Configuration, Genie.Sessions, Genie.Flax, Genie.Router, Genie.WebChannels, Genie.Exceptions
 
-const SERVERS = Dict{Symbol,Task}()
+mutable struct ServersCollection
+  webserver::Union{Task,Nothing}
+  websockets::Union{Task,Nothing}
+end
+
+const SERVERS = ServersCollection(nothing, nothing)
 
 ### PRIVATE ###
 
 
 """
     startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
-        ws_port::Int = Genie.config.websocket_port, async::Bool = ! Genie.config.run_as_server) :: Dict{Symbol,Task}
+        ws_port::Int = Genie.config.websocket_port, async::Bool = ! Genie.config.run_as_server) :: ServersCollection
 
 Starts the web server.
 
@@ -33,13 +38,13 @@ Web Server starting at http://0.0.0.0:8000
 function startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
                   ws_port::Int = Genie.config.websocket_port, async::Bool = ! Genie.config.run_as_server,
                   verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
-                  server::Union{Sockets.TCPServer,Nothing} = nothing) :: Dict{Symbol,Task}
+                  server::Union{Sockets.TCPServer,Nothing} = nothing) :: ServersCollection
 
   # Create build folders
   Genie.config.flax_compile_templates && Flax.create_build_folders()
 
   if Genie.config.websocket_server
-    SERVERS[:wss] = @async HTTP.listen(host, ws_port) do req
+    SERVERS.websockets = @async HTTP.listen(host, ws_port) do req
       if HTTP.WebSockets.is_upgrade(req.message)
         HTTP.WebSockets.upgrade(req) do ws
           setup_ws_handler(req.message, ws)
@@ -59,10 +64,10 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
   printstyled("Web Server starting at http://$host:$port \n", color = :light_blue, bold = true)
 
   if async
-    SERVERS[:ws] = @async command()
+    SERVERS.webserver = @async command()
     printstyled("Web Server running at http://$host:$port \n", color = :light_blue, bold = true)
   else
-    SERVERS[:ws] = command()
+    SERVERS.webserver = command()
     printstyled("Web Server stopped \n", color = :light_blue, bold = true)
   end
 

@@ -56,7 +56,7 @@ Retrieves from cache the object stored under the `key` key if the `expiration` d
 """
 function from_cache(key::Union{String,Symbol}, expiration::Int; dir = "") :: Nullable
   try
-    cache_info = SearchLight.find_one_by!!(StorageCache, :name, key)
+    cache_info = SearchLight.findoneby(StorageCache, :name, key)
 
     App.config.log_cache && log("Found cache for $key", :info)
 
@@ -85,7 +85,7 @@ end
 Removes the cache data stored under the `key` key.
 """
 function purge(key::Union{String,Symbol}; dir = "") :: Nothing
-  cache_info = SearchLight.find_one_by!!(StorageCache, :name, key)
+  cache_info = SearchLight.findoneby(StorageCache, :name, key)
   SearchLight.delete(cache_info)
 
   nothing

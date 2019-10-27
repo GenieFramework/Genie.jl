@@ -3,7 +3,8 @@ Compiled templating language for Genie.
 """
 module Flax
 
-import Revise, Gumbo, SHA, Reexport, JSON, OrderedCollections, Markdown, YAML, Logging
+import Revise
+import Gumbo, SHA, Reexport, JSON, OrderedCollections, Markdown, YAML, Logging, FilePaths
 import Genie, Genie.Configuration
 Reexport.@reexport using HttpCommon
 
@@ -345,21 +346,28 @@ end
 Renders data as HTML
 """
 function html_renderer(resource::Union{Symbol,String}, action::Union{Symbol,String}; layout::Union{Symbol,String} = Genie.config.renderer_default_layout_file, context::Module = @__MODULE__, vars...) :: Function
-  register_vars(vars...)
-  task_local_storage(:__yield, get_template(joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action)), partial = true, context = context) |> Base.invokelatest)
-
-  layout = Base.get(task_local_storage(:__vars), :layout, layout)
-
-  get_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false, context = context)
+  html_renderer(  FilePaths.Path(joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action)));
+                  layout = FilePaths.Path(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout))),
+                  context = context, vars...)
 end
 function html_renderer(data::String; context::Module = @__MODULE__, layout::Union{Symbol,String,Nothing} = nothing, vars...) :: Function
   register_vars(vars...)
 
-  if layout != nothing
+  if layout !== nothing
     task_local_storage(:__yield, parse_view(data, partial = true, context = context))
     get_template(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout)), partial = false, context = context)
   else
     parse_view(data, partial = false, context = context)
+  end
+end
+function html_renderer(viewfile::FilePaths.PosixPath; layout::Union{Nothing,FilePaths.PosixPath} = nothing, context::Module = @__MODULE__, vars...) :: Function
+  register_vars(vars...)
+
+  if layout !== nothing
+    task_local_storage(:__yield, get_template(string(viewfile), partial = true, context = context))
+    get_template(string(layout), partial = false, context = context)
+  else
+    get_template(string(viewfile), partial = false, context = context)
   end
 end
 

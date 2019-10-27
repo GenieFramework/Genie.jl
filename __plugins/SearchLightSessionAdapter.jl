@@ -49,7 +49,7 @@ Attempts to read from DB the session object.
 """
 function read(session_id::Union{String,Symbol}) :: Nullable{Sessions.Session}
   try
-    session_info = SearchLight.find_one_by!!(StorageSession, :name, session_id)
+    session_info = SearchLight.findoneby(StorageSession, :name, session_id)
     session = Sessions.Session(session_info.name, JSON.parse(session_info.val))
 
     return isnull(session) ? Nullable{Sessions.Session}() : Nullable{Sessions.Session}(session)

@@ -17,7 +17,7 @@ Generates a new Genie controller file and persists it to the resources folder.
 """
 function newcontroller(cmd_args::Dict{String,Any}; path::String = ".", pluralize::Bool = true) :: Nothing
   resource_name = cmd_args["controller:new"]
-  Genie.Inflector.is_singular(resource_name) && pluralize && (resource_name = Inflector.to_plural(resource_name) |> Base.get)
+  Genie.Inflector.is_singular(resource_name) && pluralize && (resource_name = Inflector.to_plural(resource_name))
   resource_name = uppercasefirst(resource_name)
 
   resource_path = setup_resource_path(resource_name, path = path)
@@ -38,7 +38,7 @@ function newresource(cmd_args::Dict{String,Any}; path::String = ".", pluralize::
   resource_name = uppercasefirst(cmd_args["resource:new"])
 
   if Genie.Inflector.is_singular(resource_name) && pluralize
-    resource_name = Genie.Inflector.to_plural(resource_name) |> Base.get
+    resource_name = Genie.Inflector.to_plural(resource_name)
   end
 
   resource_path = setup_resource_path(resource_name, path = path)
@@ -111,7 +111,7 @@ end
 Generates all resouce files and persists them to disk.
 """
 function write_resource_file(resource_path::String, file_name::String, resource_name::String, resource_type::Symbol; pluralize::Bool = true) :: Bool
-  resource_name = (pluralize ? Base.get(Inflector.to_plural(resource_name)) : resource_name) |> Inflector.from_underscores
+  resource_name = (pluralize ? (Inflector.to_plural(resource_name)) : resource_name) |> Inflector.from_underscores
 
   try
     if resource_type == :controller
@@ -128,7 +128,7 @@ function write_resource_file(resource_path::String, file_name::String, resource_
     if resource_type == :test
       resource_does_not_exist(resource_path, file_name) || return true
       open(joinpath(resource_path, file_name), "w") do f
-        name = pluralize ? Base.get(Inflector.tosingular(resource_name)) : resource_name
+        name = pluralize ? (Inflector.tosingular(resource_name)) : resource_name
         write(f, Genie.FileTemplates.newtest(resource_name,  name))
       end
     end

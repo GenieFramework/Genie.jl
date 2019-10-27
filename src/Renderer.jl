@@ -3,7 +3,7 @@ module Renderer
 export respond, html, json, redirect
 
 import Revise
-import JSON, HTTP, Reexport, Markdown, Logging
+import JSON, HTTP, Reexport, Markdown, Logging, FilePaths
 import Genie, Genie.Util, Genie.Configuration, Genie.Exceptions
 
 Reexport.@reexport using Genie.Flax
@@ -28,6 +28,10 @@ const CONTENT_TYPES = Dict{Symbol,String}(
 const DEFAULT_CONTENT_TYPE = :html
 const ResourcePath = Union{String,Symbol}
 const HTTPHeaders = Dict{String,String}
+
+const FilePath = FilePaths.PosixPath
+const filepath = FilePaths.Path
+export FilePath, filepath
 
 """
     mutable struct WebResource
@@ -78,6 +82,10 @@ end
 function tohtml(restful_resource::WebResource; context::Module = @__MODULE__, vars...) :: WebRenderable
   WebRenderable(restful_resource.resource, restful_resource.action, layout = restful_resource.layout, context = context, vars...)
 end
+function tohtml(viewfile::FilePath; layout::Union{Nothing,FilePath} = nothing,
+                  context::Module = @__MODULE__, vars...) :: WebRenderable
+  WebRenderable(Flax.html_renderer(viewfile; layout = layout, context = context, vars...) |> Base.invokelatest)
+end
 
 
 """
@@ -92,6 +100,10 @@ end
 function html(data::HTML; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), layout::Union{ResourcePath,Nothing} = nothing, vars...) :: HTTP.Response
   html(data.content, context = context, status = status, headers = headers, layout = layout, vars...)
 end
+function html(viewfile::FilePath; layout::Union{Nothing,FilePath} = nothing,
+                context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
+  WebRenderable(tohtml(viewfile; layout = layout, context = context, vars...), status, headers) |> respond
+end
 
 ### JSON RENDERING ###
 
@@ -101,7 +113,7 @@ Invokes the JSON renderer of the underlying configured templating library.
 function tojson(resource::ResourcePath, action::ResourcePath; context::Module = @__MODULE__, vars...) :: WebRenderable
   WebRenderable(Flax.json_renderer(resource, action; context = context, vars...) |> Base.invokelatest, :json)
 end
-function tojson(data) :: WebRenderable
+function tojson(data::Any) :: WebRenderable
   WebRenderable(JSONParser.json(data), :json)
 end
 

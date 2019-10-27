@@ -27,6 +27,12 @@ git-tree-sha1 = "29995a7b317bbd06be147e1974a3541ce2502dca"
 uuid = "b99e7846-7c00-51b0-8f62-c81ae34c0232"
 version = "0.5.7"
 
+[[CSTParser]]
+deps = ["Tokenize"]
+git-tree-sha1 = "c69698c3d4a7255bc1b4bc2afc09f59db910243b"
+uuid = "00ebfdb7-1f24-5e51-bd34-a7502290713f"
+version = "0.6.2"
+
 [[CodeTracking]]
 deps = ["InteractiveUtils", "UUIDs"]
 git-tree-sha1 = "0becdab7e6fbbcb7b88d8de5b72e5bb2f28239f3"
@@ -45,6 +51,12 @@ git-tree-sha1 = "ed2c4abadf84c53d9e58510b5fc48912c2336fbb"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
 version = "2.2.0"
 
+[[DataStructures]]
+deps = ["InteractiveUtils", "OrderedCollections"]
+git-tree-sha1 = "2103e504f427e54ffa19af9ada225733a21f951f"
+uuid = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+version = "0.17.3"
+
 [[Dates]]
 deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
@@ -56,6 +68,18 @@ uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 [[Distributed]]
 deps = ["Random", "Serialization", "Sockets"]
 uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
+
+[[FilePaths]]
+deps = ["FilePathsBase", "MacroTools", "Reexport", "URIParser"]
+git-tree-sha1 = "191796576b7f69cfe66d63b3d66a2741783204eb"
+uuid = "8fc22ac5-c921-52a6-82fd-178b2807b824"
+version = "0.8.0"
+
+[[FilePathsBase]]
+deps = ["Dates", "LinearAlgebra", "Printf", "Test", "UUIDs"]
+git-tree-sha1 = "2ee1d999c462425e2f848524f732ed51bc1ab63a"
+uuid = "48062228-2e41-5def-b9a4-89aafe57970f"
+version = "0.6.2"
 
 [[FileWatching]]
 uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
@@ -123,6 +147,12 @@ deps = ["JuliaInterpreter"]
 git-tree-sha1 = "ea065f38cccb556b4eabe43b3b3b91e1c67cbffd"
 uuid = "6f1432cf-f94c-5a45-995e-cdbf5db27b0b"
 version = "0.3.8"
+
+[[MacroTools]]
+deps = ["CSTParser", "Compat", "DataStructures", "Test", "Tokenize"]
+git-tree-sha1 = "d6e9dedb8c92c3465575442da456aec15a89ff76"
+uuid = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
+version = "0.5.1"
 
 [[Markdown]]
 deps = ["Base64"]
@@ -224,6 +254,11 @@ deps = ["Compat", "Test"]
 git-tree-sha1 = "8355cc559e85469cd4dbe927c375f61d3750e002"
 uuid = "b718987f-49a8-5099-9789-dcd902bef87d"
 version = "0.3.0"
+
+[[Tokenize]]
+git-tree-sha1 = "dfcdbbfb2d0370716c815cbd6f8a364efb6f42cf"
+uuid = "0796e94c-ce3b-5d07-9a54-7f471281c624"
+version = "0.5.6"
 
 [[URIParser]]
 deps = ["Test", "Unicode"]
