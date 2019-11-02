@@ -13,19 +13,26 @@ const Html = Genie.Flax
 
 export Html
 
-const default_charset = "charset=utf-8"
-
-const CONTENT_TYPES = Dict{Symbol,String}(
-  :html       => "text/html; $default_charset",
-  :plain      => "text/plain; $default_charset",
-  :text       => "text/plain; $default_charset",
-  :json       => "application/json; $default_charset",
-  :js         => "application/javascript; $default_charset",
-  :javascript => "application/javascript; $default_charset",
-  :xml        => "text/xml; $default_charset",
-  :markdown   => "text/markdown; $default_charset"
-)
+const DEFAULT_CHARSET = "charset=utf-8"
 const DEFAULT_CONTENT_TYPE = :html
+
+"""
+    const CONTENT_TYPES = Dict{Symbol,String}
+
+Collection of content-types mappings between user friendly short names and
+MIME types plus charset.
+"""
+const CONTENT_TYPES = Dict{Symbol,String}(
+  :html       => "text/html; $DEFAULT_CHARSET",
+  :plain      => "text/plain; $DEFAULT_CHARSET",
+  :text       => "text/plain; $DEFAULT_CHARSET",
+  :json       => "application/json; $DEFAULT_CHARSET",
+  :js         => "application/javascript; $DEFAULT_CHARSET",
+  :javascript => "application/javascript; $DEFAULT_CHARSET",
+  :xml        => "text/xml; $DEFAULT_CHARSET",
+  :markdown   => "text/markdown; $DEFAULT_CHARSET"
+)
+
 const ResourcePath = Union{String,Symbol}
 const HTTPHeaders = Dict{String,String}
 
@@ -48,7 +55,7 @@ end
 """
     mutable struct WebRenderable
 
-Represents an object that can be rendered on the web
+Represents an object that can be rendered on the web as a HTTP Response
 """
 mutable struct WebRenderable
   body::String
@@ -58,10 +65,66 @@ mutable struct WebRenderable
 end
 
 
+"""
+    WebRenderable(body::String)
+
+Creates a new instance of `WebRenderable` with `body` as the body of the response and
+default content type, no headers, and 200 status code.
+
+#Examples
+```jldoctest
+julia> Genie.Renderer.WebRenderable("hello")
+Genie.Renderer.WebRenderable("hello", :html, 200, Dict{String,String}())
+```
+"""
 WebRenderable(body::String) = WebRenderable(body, DEFAULT_CONTENT_TYPE, 200, HTTPHeaders())
+
+
+"""
+    WebRenderable(body::String, content_type::Symbol)
+
+Creates a new instance of `WebRenderable` with `body` as the body of the response and
+`content_type` as the content type, no headers, and 200 status code.
+
+#Examples
+```jldoctest
+julia> Genie.Renderer.WebRenderable("hello", :json)
+Genie.Renderer.WebRenderable("hello", :json, 200, Dict{String,String}())
+```
+"""
 WebRenderable(body::String, content_type::Symbol) = WebRenderable(body, content_type, 200, HTTPHeaders())
+
+
+"""
+    WebRenderable(; body::String = "", content_type::Symbol = DEFAULT_CONTENT_TYPE,
+                    status::Int = 200, headers::HTTPHeaders = HTTPHeaders())
+
+Creates a new instance of `WebRenderable` using the values passed as keyword arguments.
+
+#Examples
+```jldoctest
+julia> Genie.Renderer.WebRenderable()
+Genie.Renderer.WebRenderable("", :html, 200, Dict{String,String}())
+
+julia> Genie.Renderer.WebRenderable(body = "bye", content_type = :js, status = 301, headers = Dict("Location" => "/bye"))
+Genie.Renderer.WebRenderable("bye", :js, 301, Dict("Location" => "/bye"))
+```
+"""
 WebRenderable(; body::String = "", content_type::Symbol = DEFAULT_CONTENT_TYPE,
                 status::Int = 200, headers::HTTPHeaders = HTTPHeaders()) = WebRenderable(body, content_type, status, headers)
+
+
+"""
+    WebRenderable(wr::WebRenderable, status::Int, headers::HTTPHeaders)
+
+Returns `wr` overwriting its `status` and `headers` fields with the passed arguments.
+
+#Examples
+```jldoctest
+julia> Genie.Renderer.WebRenderable(Genie.Renderer.WebRenderable(body = "good morning", content_type = :js), 302, Dict("Location" => "/morning"))
+Genie.Renderer.WebRenderable("good morning", :js, 302, Dict("Location" => "/morning"))
+```
+"""
 function WebRenderable(wr::WebRenderable, status::Int, headers::HTTPHeaders)
   wr.status = status
   wr.headers = headers
@@ -74,17 +137,17 @@ end
 """
 function tohtml(resource::ResourcePath, action::ResourcePath;
                   layout::ResourcePath = Genie.config.renderer_default_layout_file, context::Module = @__MODULE__, vars...) :: WebRenderable
-  WebRenderable(Flax.html_renderer(resource, action; layout = layout, context = context, vars...) |> Base.invokelatest)
+  WebRenderable(Flax.HTMLRenderer.render(resource, action; layout = layout, context = context, vars...) |> Base.invokelatest)
 end
 function tohtml(data::String; context::Module = @__MODULE__, layout::Union{ResourcePath,Nothing} = nothing, vars...) :: WebRenderable
-  WebRenderable(Flax.html_renderer(data; context = context, layout = layout, vars...) |> Base.invokelatest)
+  WebRenderable(Flax.HTMLRenderer.render(data; context = context, layout = layout, vars...) |> Base.invokelatest)
 end
 function tohtml(restful_resource::WebResource; context::Module = @__MODULE__, vars...) :: WebRenderable
   WebRenderable(restful_resource.resource, restful_resource.action, layout = restful_resource.layout, context = context, vars...)
 end
 function tohtml(viewfile::FilePath; layout::Union{Nothing,FilePath} = nothing,
                   context::Module = @__MODULE__, vars...) :: WebRenderable
-  WebRenderable(Flax.html_renderer(viewfile; layout = layout, context = context, vars...) |> Base.invokelatest)
+  WebRenderable(Flax.HTMLRenderer.render(viewfile; layout = layout, context = context, vars...) |> Base.invokelatest)
 end
 
 
@@ -100,6 +163,14 @@ end
 function html(data::HTML; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), layout::Union{ResourcePath,Nothing} = nothing, vars...) :: HTTP.Response
   html(data.content, context = context, status = status, headers = headers, layout = layout, vars...)
 end
+
+
+"""
+    html(viewfile::FilePath; layout::Union{Nothing,FilePath} = nothing,
+          context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
+
+
+"""
 function html(viewfile::FilePath; layout::Union{Nothing,FilePath} = nothing,
                 context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
   WebRenderable(tohtml(viewfile; layout = layout, context = context, vars...), status, headers) |> respond
@@ -111,7 +182,7 @@ end
 Invokes the JSON renderer of the underlying configured templating library.
 """
 function tojson(resource::ResourcePath, action::ResourcePath; context::Module = @__MODULE__, vars...) :: WebRenderable
-  WebRenderable(Flax.json_renderer(resource, action; context = context, vars...) |> Base.invokelatest, :json)
+  WebRenderable(Flax.JSONRenderer.render(resource, action; context = context, vars...) |> Base.invokelatest, :json)
 end
 function tojson(data::Any) :: WebRenderable
   WebRenderable(JSONParser.json(data), :json)

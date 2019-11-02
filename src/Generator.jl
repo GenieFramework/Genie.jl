@@ -189,6 +189,7 @@ Returns `true` if the indicated resources does not exists - false otherwise.
 function resource_does_not_exist(resource_path::String, file_name::String) :: Bool
   if isfile(joinpath(resource_path, file_name))
     @warn "File already exists, $(joinpath(resource_path, file_name)) - skipping"
+
     return false
   end
 
@@ -293,7 +294,7 @@ end
 Writes the Genie app main module file.
 """
 function write_app_custom_files(path::String, app_path::String) :: Nothing
-  moduleinfo = FileTemplates.appmodule(path)
+  moduleinfo = Genie.FileTemplates.appmodule(path)
 
   open(joinpath(app_path, Genie.SRC_PATH, moduleinfo[1] * ".jl"), "w") do f
     write(f, moduleinfo[2])

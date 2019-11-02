@@ -54,7 +54,8 @@ import .App, .Exceptions
 import .Inflector, .Util
 import .FileTemplates, .Toolbox, .Generator, .Tester, .Encryption, .Cookies, .Sessions
 import .Input, .Renderer, .Assets, .Router, .Commands
-import .Flax, .AppServer, .Plugins
+import .Flax
+import .AppServer, .Plugins
 import .Deploy
 
 export startup, serve, up
