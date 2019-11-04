@@ -157,9 +157,31 @@ function html(resource::ResourcePath, action::ResourcePath; layout::ResourcePath
                 context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
   WebRenderable(tohtml(resource, action; layout = layout, context = context, vars...), status, headers) |> respond
 end
+
+
+"""
+    html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), layout::Union{ResourcePath,Nothing} = nothing, vars...) :: HTTP.Response
+
+Parses the `data` input as HTML, returning a HTML HTTP Response.
+
+# Arguments
+- `data::String`: the HTML string to be rendered
+- `context::Module`: the module in which the variables are evaluated (in order to provide the scope for vars). Usually the controller.
+- `status::Int`: status code of the response
+- `headers::HTTPHeaders`: HTTP response headers
+- `layout::Union{ResourcePath,Nothing}`: layout file for rendering `data`
+
+# Example
+
+
+"""
 function html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), layout::Union{ResourcePath,Nothing} = nothing, vars...) :: HTTP.Response
   WebRenderable(tohtml(data; context = context, layout = layout, vars...), status, headers) |> respond
 end
+
+
+"""
+"""
 function html(data::HTML; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), layout::Union{ResourcePath,Nothing} = nothing, vars...) :: HTTP.Response
   html(data.content, context = context, status = status, headers = headers, layout = layout, vars...)
 end

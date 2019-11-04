@@ -6,7 +6,6 @@ module Configuration
 const GENIE_VERSION = v"0.20.0"
 
 import Logging
-import YAML
 import Genie
 
 export isdev, isprod, istest, env
