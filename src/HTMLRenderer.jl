@@ -182,7 +182,8 @@ function get_template(path::String; partial::Bool = true, context::Module = @__M
   extension in HTML_FILE_EXT && return (() -> Base.include(context, path))
 
   f_name = Flax.function_name(path) |> Symbol
-  f_path = joinpath(Genie.BUILD_PATH, Flax.BUILD_NAME, Flax.m_name(path) * ".jl")
+  mod_name = Flax.m_name(string(path, partial)) * ".jl"
+  f_path = joinpath(Genie.BUILD_PATH, Flax.BUILD_NAME, mod_name)
   f_stale = Flax.build_is_stale(path, f_path)
 
   if f_stale || ! isdefined(context, f_name)
@@ -193,9 +194,9 @@ function get_template(path::String; partial::Bool = true, context::Module = @__M
       Flax.html_to_flax(path, partial = partial)
     end
 
-    f_stale && Flax.build_module(content, path)
+    f_stale && Flax.build_module(content, path, mod_name)
 
-    return Base.include(context, joinpath(Genie.BUILD_PATH, Flax.BUILD_NAME, Flax.m_name(path) * ".jl"))
+    return Base.include(context, joinpath(Genie.BUILD_PATH, Flax.BUILD_NAME, mod_name))
   end
 
   getfield(context, f_name)
@@ -263,7 +264,7 @@ function render(data::String; context::Module = @__MODULE__, layout::Union{Strin
 
   if layout !== nothing
     task_local_storage(:__yield, Flax.parseview(data, partial = true, context = context))
-    Flax.parseview(layout, partial = false, context = context))
+    Flax.parseview(layout, partial = false, context = context)
   else
     Flax.parseview(data, partial = false, context = context)
   end

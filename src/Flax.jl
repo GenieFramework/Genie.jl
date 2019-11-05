@@ -71,16 +71,18 @@ end
 Parses a view file, returning a rendering function. If necessary, the function is JIT-compiled, persisted and loaded into memory.
 """
 function parseview(data::String; partial = false, context::Module = @__MODULE__) :: Function
-  path = "Flax_" * string(hash(data))
+  data_hash = hash(data)
+  path = "Flax_" * string(hash(data_hash))
 
-  func_name = function_name(data) |> Symbol
-  f_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl")
+  func_name = function_name(string(data_hash, partial)) |> Symbol
+  mod_name = m_name(string(path, partial)) * ".jl"
+  f_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, mod_name)
   f_stale = build_is_stale(f_path, f_path)
 
   if f_stale || ! isdefined(context, func_name)
-    f_stale && build_module(string_to_flax(data, partial = partial), path)
+    f_stale && build_module(string_to_flax(data, partial = partial), path, mod_name)
 
-    return Base.include(context, joinpath(Genie.BUILD_PATH, BUILD_NAME, m_name(path) * ".jl"))
+    return Base.include(context, joinpath(Genie.BUILD_PATH, BUILD_NAME, mod_name))
   end
 
   getfield(context, func_name)
@@ -120,7 +122,7 @@ end
 
 Loads the rendering vars into the task's scope
 """
-@inline function registervars(vars...) :: Nothing
+function registervars(vars...) :: Nothing
   init_task_local_storage()
   task_local_storage(:__vars, merge(Dict{Symbol,Any}(vars), task_local_storage(:__vars)))
 
@@ -134,8 +136,7 @@ end
 Generates function name for generated Flax views.
 """
 @inline function function_name(file_path::String) :: String
-  file_path = relpath(file_path)
-  "func_$(SHA.sha1(file_path) |> bytes2hex)"
+  "func_$(SHA.sha1(relpath(file_path)) |> bytes2hex)"
 end
 
 
@@ -145,8 +146,7 @@ end
 Generates module name for generated Flax views.
 """
 @inline function m_name(file_path::String) :: String
-  file_path = relpath(file_path)
-  "$(SHA.sha1(file_path) |> bytes2hex)"
+  string(SHA.sha1(relpath(file_path)) |> bytes2hex)
 end
 
 
@@ -186,15 +186,14 @@ end
 
 
 """
-    build_module(content::String, path::String) :: String
+    build_module(content::String, path::String, mod_name::String) :: String
 
 Persists compiled Flax view data to file and returns the path
 """
-function build_module(content::String, path::String) :: String
-  builds_path = joinpath(Genie.BUILD_PATH, BUILD_NAME)
-  module_path = joinpath(builds_path, m_name(path) * ".jl")
+function build_module(content::String, path::String, mod_name::String) :: String
+  module_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, mod_name)
 
-  isdir(builds_path) || mkpath(builds_path)
+  isdir(dirname(module_path)) || mkpath(dirname(module_path))
 
   open(module_path, "w") do io
     write(io, "# $path \n\n")

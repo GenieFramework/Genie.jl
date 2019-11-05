@@ -133,13 +133,11 @@ function WebRenderable(wr::WebRenderable, status::Int, headers::HTTPHeaders)
 end
 
 
-"""
-"""
 function tohtml(resource::ResourcePath, action::ResourcePath;
                   layout::ResourcePath = Genie.config.renderer_default_layout_file, context::Module = @__MODULE__, vars...) :: WebRenderable
   WebRenderable(Flax.HTMLRenderer.render(resource, action; layout = layout, context = context, vars...) |> Base.invokelatest)
 end
-function tohtml(data::String; context::Module = @__MODULE__, layout::Union{ResourcePath,Nothing} = nothing, vars...) :: WebRenderable
+function tohtml(data::String; context::Module = @__MODULE__, layout::Union{String,Nothing} = nothing, vars...) :: WebRenderable
   WebRenderable(Flax.HTMLRenderer.render(data; context = context, layout = layout, vars...) |> Base.invokelatest)
 end
 function tohtml(restful_resource::WebResource; context::Module = @__MODULE__, vars...) :: WebRenderable
@@ -172,18 +170,19 @@ Parses the `data` input as HTML, returning a HTML HTTP Response.
 - `layout::Union{ResourcePath,Nothing}`: layout file for rendering `data`
 
 # Example
+```jldoctest
+julia> html("<h1>Welcome \$(@vars(:name))</h1>", layout = "<div><% @yield %></div>", name = "Adrian")
+HTTP.Messages.Response:
+"
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
 
-
+<html><head></head><body><div><h1>Welcome Adrian</h1>
+</div></body></html>"
+```
 """
-function html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), layout::Union{ResourcePath,Nothing} = nothing, vars...) :: HTTP.Response
+function html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), layout::Union{String,Nothing} = nothing, vars...) :: HTTP.Response
   WebRenderable(tohtml(data; context = context, layout = layout, vars...), status, headers) |> respond
-end
-
-
-"""
-"""
-function html(data::HTML; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), layout::Union{ResourcePath,Nothing} = nothing, vars...) :: HTTP.Response
-  html(data.content, context = context, status = status, headers = headers, layout = layout, vars...)
 end
 
 
