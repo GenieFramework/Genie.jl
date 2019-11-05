@@ -153,7 +153,6 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `session_storage::Symbol`: the backend adapter for session storage (default File)
 - `inflector_irregulars::Vector{Tuple{String,String}}`: additional irregular singular-plural forms to be used by the Inflector
 - `flax_compile_templates::Bool`: if true, the view templates are compiled and persisted between requests
-- `flax_autoregister_webcomponents::Bool`: automatically register custom HTML tags
 - `run_as_server::Bool`: when true the server thread is launched synchronously to avoid that the script exits
 - `websocket_server::Bool`: if true, the websocket server is also started together with the web server
 - `renderer_default_layout_file::Symbol`: default name for the layout file (:app)
@@ -191,7 +190,6 @@ mutable struct Settings
   inflector_irregulars::Vector{Tuple{String,String}}
 
   flax_compile_templates::Bool
-  flax_autoregister_webcomponents::Bool
 
   run_as_server::Bool
 
@@ -239,7 +237,6 @@ mutable struct Settings
             inflector_irregulars = Tuple{String,String}[],
 
             flax_compile_templates = false,
-            flax_autoregister_webcomponents = true,
 
             run_as_server = false,
 
@@ -259,7 +256,7 @@ mutable struct Settings
                   tests_force_test_env,
                   session_auto_start, session_key_name, session_storage,
                   inflector_irregulars,
-                  flax_compile_templates, flax_autoregister_webcomponents,
+                  flax_compile_templates,
                   run_as_server,
                   websocket_server, websocket_port,
                   renderer_default_layout_file

@@ -4,7 +4,7 @@ Compiled templating language for Genie.
 module Flax
 
 import Revise
-import Gumbo, SHA, Reexport, OrderedCollections, Logging, FilePaths
+import SHA, Reexport, OrderedCollections, Logging, FilePaths
 import Genie, Genie.Configuration
 Reexport.@reexport using HttpCommon
 
@@ -15,20 +15,6 @@ import Base.string
 import Base.show
 import Base.==
 import Base.hash
-
-
-const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :article, :aside, :footer,
-                          :header, :h1, :h2, :h3, :h4, :h5, :h6, :hgroup, :nav, :section,
-                          :dd, :div, :d, :dl, :dt, :figcaption, :figure, :li, :main, :ol, :p, :pre, :ul, :span,
-                          :a, :abbr, :b, :bdi, :bdo, :cite, :code, :data, :dfn, :em, :i, :kbd, :mark,
-                          :q, :rp, :rt, :rtc, :ruby, :s, :samp, :small, :spam, :strong, :sub, :sup, :time,
-                          :u, :var, :wrb, :audio, :map, :void, :embed, :object, :canvas, :noscript, :script,
-                          :del, :ins, :caption, :col, :colgroup, :table, :tbody, :td, :tfoot, :th, :thead, :tr,
-                          :button, :datalist, :fieldset, :form, :label, :legend, :meter, :optgroup, :option,
-                          :output, :progress, :select, :textarea, :details, :dialog, :menu, :menuitem, :summary,
-                          :slot, :template, :blockquote, :center]
-const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input]
-const BOOL_ATTRIBUTES = [:checked, :disabled, :selected]
 
 
 include("HTMLRenderer.jl")
@@ -136,7 +122,7 @@ end
 Generates function name for generated Flax views.
 """
 @inline function function_name(file_path::String) :: String
-  "func_$(SHA.sha1(relpath(file_path)) |> bytes2hex)"
+  "func_$(SHA.sha1(relpath(isempty(file_path) ? " " : file_path)) |> bytes2hex)"
 end
 
 
@@ -146,7 +132,7 @@ end
 Generates module name for generated Flax views.
 """
 @inline function m_name(file_path::String) :: String
-  string(SHA.sha1(relpath(file_path)) |> bytes2hex)
+  string(SHA.sha1(relpath(isempty(file_path) ? " " : file_path)) |> bytes2hex)
 end
 
 
@@ -226,7 +212,7 @@ end
 
 Parses a HTML file into Flax code.
 """
-@inline function parse_template(file_path::String; partial = true) :: String
+@inline function parse_template(file_path::String; partial::Bool = true) :: String
   parse(read_template_file(file_path), partial = partial)
 end
 
@@ -236,99 +222,13 @@ end
 
 Parses a HTML string into Flax code.
 """
-@inline function parse_string(data::String; partial = true) :: String
+@inline function parse_string(data::String; partial::Bool = true) :: String
   parse(parsetags(data), partial = partial)
 end
 
 
-@inline function parse(input::String; partial = true) :: String
-  parsetree(Gumbo.parsehtml(input).root, "", 0, partial = partial)
-end
-
-
-"""
-    parsetree(elem, output, depth; partial = true) :: String
-
-Parses a Gumbo tree structure into a `string` of Flax code.
-"""
-function parsetree(elem::Union{Gumbo.HTMLElement,Gumbo.HTMLText}, output::String = "", depth::Int = 0; partial = true) :: String
-  io = IOBuffer()
-
-  if isa(elem, Gumbo.HTMLElement)
-    tag_name = replace(lowercase(string(Gumbo.tag(elem))), "-"=>"_")
-
-    if Genie.config.flax_autoregister_webcomponents && ! isdefined(@__MODULE__, Symbol(tag_name))
-      @debug "Autoregistering HTML element $tag_name"
-
-      register_element(Symbol(tag_name))
-      print(io, "Genie.Flax.register_element(Symbol(\"$tag_name\")) \n")
-    end
-
-    invalid_tag = partial && (tag_name == "html" || tag_name == "head" || tag_name == "body")
-
-    if tag_name == "script" && in("type", collect(keys(Gumbo.attrs(elem))))
-      if Gumbo.attrs(elem)["type"] == "julia/eval"
-        if ! isempty(Gumbo.children(elem))
-          print(io, repeat("\t", depth), string(Gumbo.children(elem)[1].text), "\n")
-        end
-      end
-
-    else
-      print(io, repeat("\t", depth), ( ! invalid_tag ? "Html.$(tag_name)(" : "Html.HTMLRenderer.skip_element(" ))
-
-      attributes = IOBuffer()
-      for (k,v) in Gumbo.attrs(elem)
-        x = v
-
-        if startswith(k, "\$") # do not process embedded julia code
-          print(attributes, string(k)[2:end], ", ") # strip the $, this is rendered directly in Julia code
-          continue
-        end
-
-        if in(Symbol(lowercase(k)), BOOL_ATTRIBUTES)
-          if x == true || x == "true" || x == :true || x == ":true" || x == "" || x == "on"
-            print(attributes, "$k=\"$k\"", ", ") # boolean attributes can have the same value as the attribute -- or be empty
-          end
-        else
-          print(attributes, """$(replace(lowercase(string(k)), "-"=>"_"))="$v" """, ", ")
-        end
-      end
-
-      attributes_string = String(take!(attributes))
-      endswith(attributes_string, ", ") && (attributes_string = attributes_string[1:end-2])
-      print(io, attributes_string, ") ")
-
-      inner = ""
-      if ! isempty(Gumbo.children(elem))
-        children_count = size(Gumbo.children(elem))[1]
-
-        print(io, "do;[\n")
-
-        idx = 0
-        for child in Gumbo.children(elem)
-          idx += 1
-          inner *= parsetree(child, "", depth + 1, partial = partial)
-          if idx < children_count
-            if isa(child, Gumbo.HTMLText) ||
-                ( isa(child, Gumbo.HTMLElement) && ( ! in("type", collect(keys(Gumbo.attrs(child)))) ||
-                  ( in("type", collect(keys(Gumbo.attrs(child)))) && (Gumbo.attrs(child)["type"] != "julia/eval") ) ) )
-                ! isempty(inner) && (inner = repeat("\t", depth) * inner * "\n")
-            end
-          end
-        end
-        isempty(inner) || (print(io, inner, "\n", repeat("\t", depth)))
-
-        print(io, "]end\n")
-      end
-    end
-
-  elseif isa(elem, Gumbo.HTMLText)
-    content = elem.text # |> strip |> string
-    endswith(content, "\"") && (content *= "\n")
-    print(io, repeat("\t", depth), "\"\"\"$(content)\"\"\"")
-  end
-
-  String(take!(io))
+@inline function parse(input::String; partial::Bool = true) :: String
+  HTMLRenderer.parsehtml(input, partial = partial)
 end
 
 
@@ -352,11 +252,11 @@ end
 Generated functions that represent Flax functions definitions corresponding to HTML elements.
 """
 @inline function register_elements() :: Nothing
-  for elem in NORMAL_ELEMENTS
+  for elem in HTMLRenderer.NORMAL_ELEMENTS
     register_normal_element(elem)
   end
 
-  for elem in VOID_ELEMENTS
+  for elem in HTMLRenderer.VOID_ELEMENTS
     register_void_element(elem)
   end
 
@@ -420,20 +320,6 @@ end
 
 
 register_elements()
-
-
-"""
-    vardump(var, html = true) :: String
-
-Utility function for dumping a variable into the view.
-"""
-function vardump(var, html = true) :: String
-  iobuffer = IOBuffer()
-  show(iobuffer, var)
-  content = String(take!(iobuffer))
-
-  html ? replace(replace("<code>$content</code>", "\n"=>"<br>"), " "=>"&nbsp;") : content
-end
 
 
 """

@@ -1,0 +1,50 @@
+using Genie.Renderer
+
+greeting = "Welcome"
+name = "Genie"
+
+function htmlviewfile_withvars()
+  "
+  <h1><% @vars(:greeting) %></h1>
+  <div>
+    <p>This is a <% @vars(:name) %> test</p>
+  </div>
+  <hr />
+  "
+end
+
+function htmltemplatefile_withvars()
+  "
+  <!DOCTYPE HTML>
+  <html>
+  <head>
+    <title>$(@vars(:name)) test</title>
+  </head>
+  <body>
+    <div class=\"template\">
+    <% @yield %>
+    </div>
+    <footer>Just a footer</footer>
+  </body>
+  </html>
+  "
+end
+
+@testset "HTML rendering" begin
+  r = Tester.HTTP.Response()
+
+  @testset "String no layout with vars" begin
+    r = html(htmlviewfile_withvars(), greeting = greeting, name = name)
+
+    @test String(r.body) == "<html><head></head><body><h1>$greeting</h1><div><p>This is a $name test</p></div><hr></body></html>"
+  end;
+
+  @testset "String with layout with vars" begin
+    r = html(htmlviewfile_withvars(), layout = htmltemplatefile_withvars(), greeting = "Welcome", name = "Genie")
+
+    @test String(r.body) == "<html><head><title>$name test</title></head><body><div class=\"template\"><h1>$greeting</h1><div><p>This is a $name test</p></div><hr>\n</div><footer>Just a footer</footer></body></html>"
+  end;
+
+  @test r.status == 200
+  @test r.headers[1]["Content-Type"] == "text/html; charset=utf-8"
+end;

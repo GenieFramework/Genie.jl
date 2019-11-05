@@ -2,7 +2,7 @@ module HTMLRenderer
 
 
 import Revise
-import Markdown, Logging, FilePaths
+import Markdown, Logging, FilePaths, Gumbo
 using Genie, Genie.Flax
 
 
@@ -13,9 +13,25 @@ const MARKDOWN_FILE_EXT = [".md", ".jl.md"]
 const SUPPORTED_HTML_OUTPUT_FILE_FORMATS = TEMPLATE_EXT
 
 const HTMLString = String
+const HTMLParser = Gumbo
 
 const MD_SEPARATOR_START = "---\n"
 const MD_SEPARATOR_END   = "---\n"
+
+const NBSP_REPLACEMENT = ("&nbsp;"=>"!!nbsp;;")
+
+const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :article, :aside, :footer,
+                          :header, :h1, :h2, :h3, :h4, :h5, :h6, :hgroup, :nav, :section,
+                          :dd, :div, :d, :dl, :dt, :figcaption, :figure, :li, :main, :ol, :p, :pre, :ul, :span,
+                          :a, :abbr, :b, :bdi, :bdo, :cite, :code, :data, :dfn, :em, :i, :kbd, :mark,
+                          :q, :rp, :rt, :rtc, :ruby, :s, :samp, :small, :spam, :strong, :sub, :sup, :time,
+                          :u, :var, :wrb, :audio, :map, :void, :embed, :object, :canvas, :noscript, :script,
+                          :del, :ins, :caption, :col, :colgroup, :table, :tbody, :td, :tfoot, :th, :thead, :tr,
+                          :button, :datalist, :fieldset, :form, :label, :legend, :meter, :optgroup, :option,
+                          :output, :progress, :select, :textarea, :details, :dialog, :menu, :menuitem, :summary,
+                          :slot, :template, :blockquote, :center]
+const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input]
+const BOOL_ATTRIBUTES = [:checked, :disabled, :selected]
 
 export HTMLString
 
@@ -280,6 +296,95 @@ function render(viewfile::FilePaths.PosixPath; layout::Union{Nothing,FilePaths.P
   else
     get_template(string(viewfile), partial = false, context = context)
   end
+end
+
+
+function parsehtml(input::String; partial::Bool = true) :: String
+  parsehtml(HTMLParser.parsehtml(replace(input, NBSP_REPLACEMENT)).root, 0, partial = partial)
+end
+
+
+"""
+    parsehtml(elem, output, depth; partial = true) :: String
+
+Parses a HTML tree structure into a `string` of Flax code.
+"""
+function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool = true) :: String
+  io = IOBuffer()
+
+  tag_name = replace(lowercase(string(HTMLParser.tag(elem))), "-"=>"_")
+
+  invalid_tag = partial && (tag_name == "html" || tag_name == "head" || tag_name == "body")
+
+  if tag_name == "script" && in("type", collect(keys(HTMLParser.attrs(elem))))
+    if HTMLParser.attrs(elem)["type"] == "julia/eval"
+      isempty(HTMLParser.children(elem)) || print(io, repeat("\t", depth), string(HTMLParser.children(elem)[1].text), "\n")
+    end
+
+  else
+    print(io, repeat("\t", depth), ( ! invalid_tag ? "Html.$(tag_name)(" : "Html.HTMLRenderer.skip_element(" ))
+
+    attributes = IOBuffer()
+    for (k,v) in HTMLParser.attrs(elem)
+      x = v
+
+      if startswith(k, "\$") # do not process embedded julia code
+        print(attributes, string(k)[2:end], ", ") # strip the $, this is rendered directly in Julia code
+        continue
+      end
+
+      if in(Symbol(lowercase(k)), BOOL_ATTRIBUTES)
+        if x == true || x == "true" || x == :true || x == ":true" || x == "" || x == "on"
+          print(attributes, "$k=\"$k\"", ", ") # boolean attributes can have the same value as the attribute -- or be empty
+        end
+      else
+        print(attributes, """$(replace(lowercase(string(k)), "-"=>"_"))="$v" """, ", ")
+      end
+    end
+
+    attributes_string = String(take!(attributes))
+    endswith(attributes_string, ", ") && (attributes_string = attributes_string[1:end-2])
+    print(io, attributes_string, ")")
+
+    inner = ""
+    if ! isempty(HTMLParser.children(elem))
+      children_count = size(HTMLParser.children(elem))[1]
+
+      print(io, " do;[\n")
+
+      idx = 0
+      for child in HTMLParser.children(elem)
+        idx += 1
+        inner *= isa(child, HTMLParser.HTMLText) ? parsehtml(child, depth + 1) : parsehtml(child, depth + 1, partial = partial)
+        if idx < children_count
+          if  ( isa(child, HTMLParser.HTMLText) ) ||
+              ( isa(child, HTMLParser.HTMLElement) &&
+              ( ! in("type", collect(keys(HTMLParser.attrs(child)))) ||
+                ( in("type", collect(keys(HTMLParser.attrs(child)))) && (HTMLParser.attrs(child)["type"] != "julia/eval") ) ) )
+              isempty(inner) || (inner = string(repeat("\t", depth), inner, "\n"))
+          end
+        end
+      end
+
+      if ! isempty(inner)
+        endswith(inner, "\n\n") && (inner = inner[1:end-2])
+        print(io, inner, repeat("\t", depth))
+      end
+
+      print(io, "]end\n")
+    end
+
+  end
+
+  String(take!(io))
+end
+
+
+function parsehtml(elem::HTMLParser.HTMLText, depth::Int = 0; partial::Bool = true) :: String
+  content = elem.text
+  endswith(content, "\"") && (content *= Char(0x0))
+  content = replace(content, NBSP_REPLACEMENT[2]=>NBSP_REPLACEMENT[1])
+  string(repeat("\t", depth), "\"\"\"$(content)\"\"\"")
 end
 
 end

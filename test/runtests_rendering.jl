@@ -1,65 +1,35 @@
-using Test
-using Genie
 using Genie.Renderer
 
 greeting = "Welcome"
 name = "Genie"
 
 function htmlviewfile()
-  """
+  "
   <h1>$greeting</h1>
   <div>
     <p>This is a $name test</p>
   </div>
   <hr />
-  """
-end
-
-function htmlviewfile_withvars()
-  """
-  <h1><% @vars(:greeting) %></h1>
-  <div>
-    <p>This is a <% @vars(:name) %> test</p>
-  </div>
-  <hr />
-  """
+  "
 end
 
 function htmltemplatefile()
-  """
+  "
   <!DOCTYPE HTML>
   <html>
   <head>
     <title>$name test</title>
   </head>
   <body>
-    <div class="template">
-    <% @yield %>
-    </div>
-    <footer>
-      Just a footer
-    </footer>
-  </body>
-  </html>
-  """
-end
-
-function htmltemplatefile_withvars()
-  """
-  <!DOCTYPE HTML>
-  <html>
-  <head>
-    <title>$(@vars(:name)) test</title>
-  </head>
-  <body>
-    <div class="template">
+    <div class=\"template\">
     <% @yield %>
     </div>
     <footer>Just a footer</footer>
   </body>
   </html>
-  """
+  "
 end
+
 
 @testset "Rendering" begin
   @testset "WebRenderable constructors" begin
@@ -95,36 +65,21 @@ end
   end;
 
   @testset "HTML rendering" begin
-    @testset "String rendering no layout" begin
-      response = htmlviewfile() |> html
+    r = Tester.HTTP.Response()
 
-      @test String(response.body) == "<html><head></head><body><h1>$greeting</h1><div><p>This is a $name test</p></div><hr></body></html>"
-      @test response.status == 200
-      @test response.headers[1]["Content-Type"] == "text/html; charset=utf-8"
+    @testset "String no layout" begin
+      r = htmlviewfile() |> html
+
+      @test String(r.body) == "<html><head></head><body><h1>$greeting</h1><div><p>This is a $name test</p></div><hr></body></html>"
     end;
 
-    @testset "String rendering no layout with vars" begin
-      response = html(htmlviewfile_withvars(), greeting = greeting, name = name)
+    @testset "String with layout" begin
+      r = html(htmlviewfile(), layout = htmltemplatefile())
 
-      @test String(response.body) == "<html><head></head><body><h1>$greeting</h1><div><p>This is a $name test</p></div><hr></body></html>"
-      @test response.status == 200
-      @test response.headers[1]["Content-Type"] == "text/html; charset=utf-8"
+      @test String(r.body) == "<html><head><title>$name test</title></head><body><div class=\"template\"><h1>$greeting</h1><div><p>This is a $name test</p></div><hr>\n</div><footer>Just a footer</footer></body></html>"
     end;
 
-    @testset "String rendering with layout" begin
-      response = html(htmlviewfile(), layout = htmltemplatefile())
-
-      @test String(response.body) == "<html><head><title>$name test</title></head><body><div class=\"template\"><h1>$greeting</h1><div><p>This is a $name test</p></div><hr>\n</div><footer>Just a footer</footer></body></html>"
-      @test response.status == 200
-      @test response.headers[1]["Content-Type"] == "text/html; charset=utf-8"
-    end;
-
-    @testset "String rendering with layout with vars" begin
-      response = html(htmlviewfile_withvars(), layout = htmltemplatefile_withvars(), greeting = "Welcome", name = "Genie")
-
-      @test String(response.body) == "<html><head><title>$name test</title></head><body><div class=\"template\"><h1>$greeting</h1><div><p>This is a $name test</p></div><hr>\n</div><footer>Just a footer</footer></body></html>"
-      @test response.status == 200
-      @test response.headers[1]["Content-Type"] == "text/html; charset=utf-8"
-    end;
+    @test r.status == 200
+    @test r.headers[1]["Content-Type"] == "text/html; charset=utf-8"
   end;
 end;
