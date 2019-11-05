@@ -30,7 +30,7 @@ function htmltemplatefile_withvars()
   "
 end
 
-@testset "HTML rendering" begin
+@testset "String HTML rendering with vars" begin
   r = Tester.HTTP.Response()
 
   @testset "String no layout with vars" begin

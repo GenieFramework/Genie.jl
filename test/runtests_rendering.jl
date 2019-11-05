@@ -31,7 +31,7 @@ function htmltemplatefile()
 end
 
 
-@testset "Rendering" begin
+@testset "HTML Rendering" begin
   @testset "WebRenderable constructors" begin
     wr = Genie.Renderer.WebRenderable("hello")
     @test wr.body == "hello"
@@ -64,7 +64,7 @@ end
     @test wr.headers["Location"] == "/morning"
   end;
 
-  @testset "HTML rendering" begin
+  @testset "String HTML rendering" begin
     r = Tester.HTTP.Response()
 
     @testset "String no layout" begin
