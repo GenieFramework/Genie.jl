@@ -72,7 +72,7 @@ Parses a view file, returning a rendering function. If necessary, the function i
 """
 function parseview(data::String; partial = false, context::Module = @__MODULE__) :: Function
   data_hash = hash(data)
-  path = "Flax_" * string(hash(data_hash))
+  path = "Flax_" * string(data_hash)
 
   func_name = function_name(string(data_hash, partial)) |> Symbol
   mod_name = m_name(string(path, partial)) * ".jl"
@@ -213,7 +213,7 @@ function read_template_file(file_path::String) :: String
   io = IOBuffer()
   open(file_path) do f
     for line in enumerate(eachline(f))
-      print(io, parse_tags(line), "\n")
+      print(io, parsetags(line), "\n")
     end
   end
 
@@ -237,21 +237,21 @@ end
 Parses a HTML string into Flax code.
 """
 @inline function parse_string(data::String; partial = true) :: String
-  parse(parse_tags(data), partial = partial)
+  parse(parsetags(data), partial = partial)
 end
 
 
 @inline function parse(input::String; partial = true) :: String
-  parse_tree(Gumbo.parsehtml(input).root, "", 0, partial = partial)
+  parsetree(Gumbo.parsehtml(input).root, "", 0, partial = partial)
 end
 
 
 """
-    parse_tree(elem, output, depth; partial = true) :: String
+    parsetree(elem, output, depth; partial = true) :: String
 
 Parses a Gumbo tree structure into a `string` of Flax code.
 """
-function parse_tree(elem::Union{Gumbo.HTMLElement,Gumbo.HTMLText}, output::String = "", depth::Int = 0; partial = true) :: String
+function parsetree(elem::Union{Gumbo.HTMLElement,Gumbo.HTMLText}, output::String = "", depth::Int = 0; partial = true) :: String
   io = IOBuffer()
 
   if isa(elem, Gumbo.HTMLElement)
@@ -307,7 +307,7 @@ function parse_tree(elem::Union{Gumbo.HTMLElement,Gumbo.HTMLText}, output::Strin
         idx = 0
         for child in Gumbo.children(elem)
           idx += 1
-          inner *= parse_tree(child, "", depth + 1, partial = partial)
+          inner *= parsetree(child, "", depth + 1, partial = partial)
           if idx < children_count
             if isa(child, Gumbo.HTMLText) ||
                 ( isa(child, Gumbo.HTMLElement) && ( ! in("type", collect(keys(Gumbo.attrs(child)))) ||
@@ -323,7 +323,7 @@ function parse_tree(elem::Union{Gumbo.HTMLElement,Gumbo.HTMLText}, output::Strin
     end
 
   elseif isa(elem, Gumbo.HTMLText)
-    content = elem.text |> strip |> string
+    content = elem.text # |> strip |> string
     endswith(content, "\"") && (content *= "\n")
     print(io, repeat("\t", depth), "\"\"\"$(content)\"\"\"")
   end
@@ -333,14 +333,14 @@ end
 
 
 """
-    parse_tags(line::Tuple{Int64,String}, strip_close_tag = false) :: String
+    parsetags(line::Tuple{Int64,String}, strip_close_tag = false) :: String
 
 Parses special Flax tags.
 """
-@inline function parse_tags(line::Tuple{Int64,String}) :: String
-  parse_tags(line[2])
+@inline function parsetags(line::Tuple{Int64,String}) :: String
+  parsetags(line[2])
 end
-@inline function parse_tags(code::String) :: String
+@inline function parsetags(code::String) :: String
   code = replace(code, "<%"=>"""<script type="julia/eval">""")
   replace(code, "%>"=>"""</script>""")
 end

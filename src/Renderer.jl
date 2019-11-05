@@ -158,7 +158,7 @@ end
 
 
 """
-    html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), layout::Union{ResourcePath,Nothing} = nothing, vars...) :: HTTP.Response
+    html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), layout::Union{String,Nothing} = nothing, vars...) :: HTTP.Response
 
 Parses the `data` input as HTML, returning a HTML HTTP Response.
 
@@ -167,7 +167,7 @@ Parses the `data` input as HTML, returning a HTML HTTP Response.
 - `context::Module`: the module in which the variables are evaluated (in order to provide the scope for vars). Usually the controller.
 - `status::Int`: status code of the response
 - `headers::HTTPHeaders`: HTTP response headers
-- `layout::Union{ResourcePath,Nothing}`: layout file for rendering `data`
+- `layout::Union{String,Nothing}`: layout file for rendering `data`
 
 # Example
 ```jldoctest

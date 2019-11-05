@@ -91,7 +91,6 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
 
   for (k,v) in attrs
     sk = string(k)
-    sk == "typ" && (k = "type")
     startswith(sk, "_") && (k = sk = sk[2:end])
     k = replace(sk, "_"=>"-")
 
@@ -108,7 +107,6 @@ end
 Cleans up problematic characters or DOM elements.
 """
 @inline function normalize_element(elem::String)
-  elem == "d" && (elem = "div")
   replace(string(lowercase(elem)), "_"=>"-")
 end
 

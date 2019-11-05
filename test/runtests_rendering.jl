@@ -2,11 +2,14 @@ using Test
 using Genie
 using Genie.Renderer
 
+greeting = "Welcome"
+name = "Genie"
+
 function htmlviewfile()
   """
-  <h1>Welcome</h1>
+  <h1>$greeting</h1>
   <div>
-    <p>This is a Genie test</p>
+    <p>This is a $name test</p>
   </div>
   <hr />
   """
@@ -27,7 +30,7 @@ function htmltemplatefile()
   <!DOCTYPE HTML>
   <html>
   <head>
-    <title>Genie test</title>
+    <title>$name test</title>
   </head>
   <body>
     <div class="template">
@@ -52,9 +55,7 @@ function htmltemplatefile_withvars()
     <div class="template">
     <% @yield %>
     </div>
-    <footer>
-      Just a footer
-    </footer>
+    <footer>Just a footer</footer>
   </body>
   </html>
   """
@@ -97,15 +98,15 @@ end
     @testset "String rendering no layout" begin
       response = htmlviewfile() |> html
 
-      @test String(response.body) == "<html><head></head><body><h1>Welcome</h1><div><p>This is a Genie test</p></div><hr></body></html>"
+      @test String(response.body) == "<html><head></head><body><h1>$greeting</h1><div><p>This is a $name test</p></div><hr></body></html>"
       @test response.status == 200
       @test response.headers[1]["Content-Type"] == "text/html; charset=utf-8"
     end;
 
     @testset "String rendering no layout with vars" begin
-      response = html(htmlviewfile_withvars(), greeting = "Hello", name = "Genie")
+      response = html(htmlviewfile_withvars(), greeting = greeting, name = name)
 
-      @test String(response.body) == "<html><head></head><body><h1>Welcome</h1><div><p>This is a Genie test</p></div><hr></body></html>"
+      @test String(response.body) == "<html><head></head><body><h1>$greeting</h1><div><p>This is a $name test</p></div><hr></body></html>"
       @test response.status == 200
       @test response.headers[1]["Content-Type"] == "text/html; charset=utf-8"
     end;
@@ -113,7 +114,15 @@ end
     @testset "String rendering with layout" begin
       response = html(htmlviewfile(), layout = htmltemplatefile())
 
-      @test String(response.body) == "<html><head><title>Genie test</title></head><body><div class=\"template\"><h1>Welcome</h1><div><p>This is a Genie test</p></div><hr>\n</div><footer>Just a footer</footer></body></html>"
+      @test String(response.body) == "<html><head><title>$name test</title></head><body><div class=\"template\"><h1>$greeting</h1><div><p>This is a $name test</p></div><hr>\n</div><footer>Just a footer</footer></body></html>"
+      @test response.status == 200
+      @test response.headers[1]["Content-Type"] == "text/html; charset=utf-8"
+    end;
+
+    @testset "String rendering with layout with vars" begin
+      response = html(htmlviewfile_withvars(), layout = htmltemplatefile_withvars(), greeting = "Welcome", name = "Genie")
+
+      @test String(response.body) == "<html><head><title>$name test</title></head><body><div class=\"template\"><h1>$greeting</h1><div><p>This is a $name test</p></div><hr>\n</div><footer>Just a footer</footer></body></html>"
       @test response.status == 200
       @test response.headers[1]["Content-Type"] == "text/html; charset=utf-8"
     end;
