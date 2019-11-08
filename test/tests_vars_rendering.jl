@@ -1,20 +1,20 @@
-using Genie.Renderer
+using Genie.Renderer, Genie.Requests
 
 greeting = "Welcome"
 name = "Genie"
 
 function htmlviewfile_withvars()
-  "
-  <h1><% @vars(:greeting) %></h1>
+  raw"
+  <h1>$(@vars(:greeting))</h1>
   <div>
-    <p>This is a <% @vars(:name) %> test</p>
+    <p>This is a $(@vars(:name)) test</p>
   </div>
   <hr />
   "
 end
 
 function htmltemplatefile_withvars()
-  "
+  raw"
   <!DOCTYPE HTML>
   <html>
   <head>
@@ -31,7 +31,7 @@ function htmltemplatefile_withvars()
 end
 
 @testset "String HTML rendering with vars" begin
-  r = Tester.HTTP.Response()
+  r = Requests.HTTP.Response()
 
   @testset "String no layout with vars" begin
     r = html(htmlviewfile_withvars(), greeting = greeting, name = name)

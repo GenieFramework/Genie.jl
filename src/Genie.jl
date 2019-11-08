@@ -29,7 +29,6 @@ include("Inflector.jl")
 include("Util.jl")
 include("FileTemplates.jl")
 include("Toolbox.jl")
-include("Tester.jl")
 include("Generator.jl")
 include("Encryption.jl")
 include("Cookies.jl")
@@ -52,7 +51,7 @@ include("Deploy.jl")
 import .HTTPUtils
 import .App, .Exceptions
 import .Inflector, .Util
-import .FileTemplates, .Toolbox, .Generator, .Tester, .Encryption, .Cookies, .Sessions
+import .FileTemplates, .Toolbox, .Generator, .Encryption, .Cookies, .Sessions
 import .Input, .Renderer, .Assets, .Router, .Commands
 import .Flax
 import .AppServer, .Plugins

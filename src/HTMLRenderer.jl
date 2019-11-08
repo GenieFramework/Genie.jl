@@ -195,7 +195,7 @@ function get_template(path::String; partial::Bool = true, context::Module = @__M
 
   extension in HTML_FILE_EXT && return (() -> Base.include(context, path))
 
-  f_name = Flax.function_name(path) |> Symbol
+  f_name = Flax.function_name(string(path, partial)) |> Symbol
   mod_name = Flax.m_name(string(path, partial)) * ".jl"
   f_path = joinpath(Genie.BUILD_PATH, Flax.BUILD_NAME, mod_name)
   f_stale = Flax.build_is_stale(path, f_path)
@@ -256,18 +256,6 @@ function view_file_info(path::String) :: Tuple{String,String}
   end
 
   _path, _extension
-end
-
-
-"""
-    render(resource::Union{Symbol,String}, action::Union{Symbol,String}; layout::Union{Symbol,String} = Genie.config.renderer_default_layout_file, context::Module = @__MODULE__, vars...) :: Function
-
-Renders data as HTML
-"""
-function render(resource::Union{Symbol,String}, action::Union{Symbol,String}; layout::Union{Symbol,String} = Genie.config.renderer_default_layout_file, context::Module = @__MODULE__, vars...) :: Function
-  render(FilePaths.Path(joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action)));
-                  layout = FilePaths.Path(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout))),
-                  context = context, vars...)
 end
 
 

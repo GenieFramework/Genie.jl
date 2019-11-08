@@ -1,26 +1,33 @@
 module JSONRenderer
 
 import Revise
-import JSON
+import JSON3, FilePaths
 using Genie
 using ..Flax
 
+const JSONParser = JSON3
 const JSON_FILE_EXT = ".json.jl"
-
 const JSONString = String
 
 export JSONString
 
 
-"""
-    render(resource::Union{Symbol,String}, action::Union{Symbol,String}; context::Module = @__MODULE__, vars...) :: Function
-
-Renders data as JSON
-"""
-@inline function render(resource::Union{Symbol,String}, action::Union{Symbol,String}; context::Module = @__MODULE__, vars...) :: Function
+function render(viewfile::FilePaths.PosixPath; context::Module = @__MODULE__, vars...) :: Function
   Flax.registervars(vars...)
 
-    () -> (Base.include(context, joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action) * JSON_FILE_EXT)) |> JSON.json)
+  () -> (Base.include(context, string(viewfile)) |> JSONParser.write)
+end
+
+
+function render(data::String; context::Module = @__MODULE__, vars...) :: Function
+  Flax.registervars(vars...)
+
+  () -> (Base.include_string(context, data) |> JSONParser.write)
+end
+
+
+function render(data) :: Function
+  () -> JSONParser.write(data)
 end
 
 end

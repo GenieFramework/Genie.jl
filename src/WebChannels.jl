@@ -225,7 +225,7 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String
       in(channel, keys(SUBSCRIPTIONS)) || continue
 
       for client in SUBSCRIPTIONS[channel]
-        message(client, ChannelMessage(channel, client, msg, payload) |> Renderer.JSONParser.json)
+        message(client, ChannelMessage(channel, client, msg, payload) |> Renderer.JSONParser.write)
       end
     end
   catch

@@ -1,10 +1,12 @@
+using Genie
 using Genie.Renderer
+using Genie.Requests
 
 const content = "abcd"
 const content2 = "efgh"
 
 @testset "Basic rendering" begin
-  r = Tester.HTTP.Response()
+  r = Requests.HTTP.Response()
 
   @testset "Empty string" begin
     r = html("")

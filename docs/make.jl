@@ -7,7 +7,7 @@ using Genie.Cache, Genie.Commands, Genie.Configuration, Genie.Cookies
 using Genie.Encryption, Genie.FileTemplates, Genie.Flax, Genie.Generator
 using Genie.Inflector, Genie.Input, Genie.Plugins
 using Genie.Renderer, Genie.Requests, Genie.Responses, Genie.Router
-using Genie.Sessions, Genie.Tester, Genie.Toolbox, Genie.Util, Genie.WebChannels
+using Genie.Sessions, Genie.Toolbox, Genie.Util, Genie.WebChannels
 
 push!(LOAD_PATH,  "../../src",
                   "../../src/cache_adapters",

@@ -4,10 +4,11 @@ Collection of utilities for working with Requests data
 module Requests
 
 import Genie, Genie.Router, Genie.Input
-import HTTP
+import HTTP, Reexport
 
 export jsonpayload, rawpayload, filespayload, postpayload, getpayload, request, matchedroute, matchedchannel
 export infilespayload, download, filename, payload, read
+Reexport.@reexport using HTTP
 
 
 """

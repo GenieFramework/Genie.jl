@@ -162,7 +162,7 @@ end
 Converts an input file to Flax code
 """
 @inline function to_flax(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "") :: String
-  f_name = f_name === nothing ? function_name(input) : f_name
+  f_name = (f_name === nothing) ? function_name(string(input, partial)) : f_name
 
   string("function $(f_name)() \n",
           prepend,
