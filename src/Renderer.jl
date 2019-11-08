@@ -147,7 +147,8 @@ end
 function html(resource::ResourcePath, action::ResourcePath; layout::ResourcePath = Genie.config.renderer_default_layout_file,
                 context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
   html(FilePaths.Path(joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action)));
-        layout = layout, context = content, status = status, headers = headers, vars...)
+        layout = FilePaths.Path(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout))),
+        context = context, status = status, headers = headers, vars...)
 end
 
 
@@ -218,7 +219,7 @@ end
 """
 function json(resource::ResourcePath, action::ResourcePath; context::Module = @__MODULE__,
               status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
-  json(FilePaths.Path(joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action) * JSON_FILE_EXT));
+  json(FilePaths.Path(joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action) * RENDERERS[MIME"application/json"].JSON_FILE_EXT));
         context = context, status = status, headers = headers, vars...)
 end
 

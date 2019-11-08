@@ -15,19 +15,19 @@ export JSONString
 function render(viewfile::FilePaths.PosixPath; context::Module = @__MODULE__, vars...) :: Function
   Flax.registervars(vars...)
 
-  () -> (Base.include(context, string(viewfile)) |> JSONParser.write)
+  () -> (Base.include(context, string(viewfile)) |> JSONParser.json)
 end
 
 
 function render(data::String; context::Module = @__MODULE__, vars...) :: Function
   Flax.registervars(vars...)
 
-  () -> (Base.include_string(context, data) |> JSONParser.write)
+  () -> (Base.include_string(context, data) |> JSONParser.json)
 end
 
 
 function render(data) :: Function
-  () -> JSONParser.write(data)
+  () -> JSONParser.json(data)
 end
 
 end

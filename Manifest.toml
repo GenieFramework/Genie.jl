@@ -106,11 +106,11 @@ version = "0.5.0"
 deps = ["Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 
-[[JSON3]]
-deps = ["Mmap", "Parsers", "Test"]
-git-tree-sha1 = "f9ae511abe2295a22f8192259210bd23d17e633a"
-uuid = "0f8b85d8-7281-11e9-16c2-39a750bddbf1"
-version = "0.1.12"
+[[JSON]]
+deps = ["Dates", "Mmap", "Parsers", "Unicode"]
+git-tree-sha1 = "b34d7cef7b337321e97d22242c3c2b91f476748e"
+uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+version = "0.21.0"
 
 [[JuliaInterpreter]]
 deps = ["CodeTracking", "InteractiveUtils", "Random", "UUIDs"]
