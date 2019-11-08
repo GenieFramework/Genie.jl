@@ -1,11 +1,11 @@
 module JSONRenderer
 
 import Revise
-import JSON3, FilePaths
+import JSON, FilePaths
 using Genie
 using ..Flax
 
-const JSONParser = JSON3
+const JSONParser = JSON
 const JSON_FILE_EXT = ".json.jl"
 const JSONString = String
 
