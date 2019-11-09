@@ -50,28 +50,6 @@ function newresource(cmd_args::Dict{String,Any}; path::String = ".", pluralize::
   views_path = joinpath(resource_path, "views")
   isdir(views_path) || mkpath(views_path)
 
-  runtests()
-
-  isdir(Genie.TEST_PATH_UNIT) || mkpath(Genie.TEST_PATH_UNIT)
-  test_file = resource_name * Genie.TEST_FILE_IDENTIFIER |> lowercase
-  write_resource_file(Genie.TEST_PATH_UNIT, test_file, resource_name, :test, pluralize = pluralize) &&
-    @info "New $test_file created at $(joinpath(Genie.TEST_PATH_UNIT, test_file))"
-
-  nothing
-end
-
-
-function runtests() :: Nothing
-  testfile = joinpath(Genie.TEST_PATH, Genie.TESTS_FILE_NAME)
-
-  if ! isfile(testfile)
-    open(testfile, "w") do f
-      write(f, Genie.FileTemplates.runtests())
-    end
-  else
-    @error "File $testfile already exists"
-  end
-
   nothing
 end
 
@@ -92,9 +70,9 @@ end
 Computes and creates the directories structure needed to persist a new resource.
 """
 function setup_resource_path(resource_name::String; path::String = ".") :: String
-  isdir(Genie.APP_PATH) || Genie.Generator.mvc_support(path)
+  isdir(Genie.config.path_app) || Genie.Generator.mvc_support(path)
 
-  resource_path = joinpath(path, Genie.RESOURCES_PATH, lowercase(resource_name))
+  resource_path = joinpath(path, Genie.config.path_resources, lowercase(resource_name))
 
   if ! isdir(resource_path)
     mkpath(resource_path)
@@ -152,15 +130,15 @@ end
 Creates the bin/server and bin/repl binaries for Windows
 """
 function setup_windows_bin_files(path::String = ".") :: Nothing
-  open(joinpath(path, Genie.BIN_PATH, "repl.bat"), "w") do f
+  open(joinpath(path, Genie.config.path_bin, "repl.bat"), "w") do f
     write(f, "$JULIA_PATH --color=yes --depwarn=no -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) %*")
   end
 
-  open(joinpath(path, Genie.BIN_PATH, "server.bat"), "w") do f
+  open(joinpath(path, Genie.config.path_bin, "server.bat"), "w") do f
     write(f, "$JULIA_PATH --color=yes --depwarn=no -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) s %*")
   end
 
-  open(joinpath(path, Genie.BIN_PATH, "serverinteractive.bat"), "w") do f
+  open(joinpath(path, Genie.config.path_bin, "serverinteractive.bat"), "w") do f
     write(f, "$JULIA_PATH --color=yes --depwarn=no -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) si %*")
   end
 
@@ -174,8 +152,8 @@ end
 Creates the bin/server and bin/repl binaries for *nix systems
 """
 function setup_nix_bin_files(app_path::String = ".") :: Nothing
-  chmod(joinpath(app_path, Genie.BIN_PATH, "server"), 0o700)
-  chmod(joinpath(app_path, Genie.BIN_PATH, "repl"), 0o700)
+  chmod(joinpath(app_path, Genie.config.path_bin, "server"), 0o700)
+  chmod(joinpath(app_path, Genie.config.path_bin, "repl"), 0o700)
 
   nothing
 end
@@ -221,7 +199,7 @@ end
 Generates a valid secrets.jl file with a random SECRET_TOKEN.
 """
 function write_secrets_file(app_path::String = ".") :: Nothing
-  open(joinpath(app_path, Genie.CONFIG_PATH, Genie.SECRETS_FILE_NAME), "w") do f
+  open(joinpath(app_path, Genie.config.path_config, Genie.SECRETS_FILE_NAME), "w") do f
     write(f, """const SECRET_TOKEN = "$(secret_token())" """)
   end
 
@@ -249,7 +227,7 @@ Writes the file necessary to create a microstack app.
 function microstack_app(app_path::String = ".") :: Nothing
   mkdir(app_path)
 
-  for f in [Genie.BIN_PATH, Genie.CONFIG_PATH, Genie.DOC_ROOT_PATH, Genie.SRC_PATH,
+  for f in [Genie.config.path_bin, Genie.config.path_config, Genie.config.server_document_root, Genie.config.path_src,
             Genie.GENIE_FILE_NAME, Genie.ROUTES_FILE_NAME,
             ".gitattributes", ".gitignore"]
     cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, f), joinpath(app_path, f))
@@ -267,7 +245,7 @@ end
 Writes the files used for rendering resources using the MVC stack and the Flax templating system.
 """
 function mvc_support(app_path::String = ".") :: Nothing
-  cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.APP_PATH), joinpath(app_path, Genie.APP_PATH))
+  cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_app), joinpath(app_path, Genie.config.path_app))
 
   nothing
 end
@@ -279,10 +257,10 @@ end
 Writes files used for interacting with the SearchLight ORM.
 """
 function db_support(app_path::String = ".") :: Nothing
-  cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.DB_PATH), joinpath(app_path, Genie.DB_PATH))
+  cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_db), joinpath(app_path, Genie.config.path_db))
 
-  initializer_path = joinpath(app_path, Genie.INITIALIZERS_PATH, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME)
-  isfile(initializer_path) || cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.INITIALIZERS_PATH, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME), initializer_path)
+  initializer_path = joinpath(app_path, Genie.config.path_initializers, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME)
+  isfile(initializer_path) || cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_initializers, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME), initializer_path)
 
   nothing
 end
@@ -296,7 +274,7 @@ Writes the Genie app main module file.
 function write_app_custom_files(path::String, app_path::String) :: Nothing
   moduleinfo = Genie.FileTemplates.appmodule(path)
 
-  open(joinpath(app_path, Genie.SRC_PATH, moduleinfo[1] * ".jl"), "w") do f
+  open(joinpath(app_path, Genie.config.path_src, moduleinfo[1] * ".jl"), "w") do f
     write(f, moduleinfo[2])
   end
 
@@ -308,7 +286,7 @@ function write_app_custom_files(path::String, app_path::String) :: Nothing
       Pkg.pkg"activate ."
 
       function main()
-        include(joinpath("$(Genie.SRC_PATH)", "$(moduleinfo[1]).jl"))
+        include(joinpath("$(Genie.config.path_src)", "$(moduleinfo[1]).jl"))
       end; main()
     """)
   end
@@ -359,7 +337,7 @@ end
 Removes the asset fingerprint initializers if it's not used
 """
 function remove_fingerprint_initializer(app_path::String = ".") :: Nothing
-  rm(joinpath(app_path, Genie.INITIALIZERS_PATH, Genie.ASSETS_FINGERPRINT_INITIALIZER_FILE_NAME), force = true)
+  rm(joinpath(app_path, Genie.config.path_initializers, Genie.ASSETS_FINGERPRINT_INITIALIZER_FILE_NAME), force = true)
 
   nothing
 end
@@ -371,7 +349,7 @@ end
 Removes the SearchLight initializer file if it's unused
 """
 function remove_searchlight_initializer(app_path::String = ".") :: Nothing
-  rm(joinpath(app_path, Genie.INITIALIZERS_PATH, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME), force = true)
+  rm(joinpath(app_path, Genie.config.path_initializers, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME), force = true)
 
   nothing
 end

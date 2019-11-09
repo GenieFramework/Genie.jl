@@ -6,9 +6,9 @@ function initialize_logging()
   date_format = "yyyy-mm-dd HH:MM:SS"
 
   logger =  if Genie.config.log_to_file
-              isdir(Genie.LOG_PATH) || mkpath(Genie.LOG_PATH)
+              isdir(Genie.config.path_log) || mkpath(Genie.config.path_log)
               LoggingExtras.DemuxLogger(
-                LoggingExtras.FileLogger(joinpath(Genie.LOG_PATH, "$(Genie.config.app_env)-$(Dates.today()).log"), always_flush = true, append = true),
+                LoggingExtras.FileLogger(joinpath(Genie.config.path_log, "$(Genie.config.app_env)-$(Dates.today()).log"), always_flush = true, append = true),
                 LoggingExtras.ConsoleLogger(stdout, Genie.config.log_level),
                 include_current_global = false
               )

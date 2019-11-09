@@ -1005,7 +1005,7 @@ end
 
 Reads the static file and returns the content as a `Response`.
 """
-function serve_static_file(resource::String; root = Genie.DOC_ROOT_PATH) :: HTTP.Response
+function serve_static_file(resource::String; root = Genie.config.server_document_root) :: HTTP.Response
   startswith(resource, "/") || (resource = "/$resource")
   resource_path = try
                     URIParser.URI(resource).path
@@ -1090,8 +1090,8 @@ function serve_error_file(error_code::Int, error_message::String = "", params::D
   page_code = error_code in [404, 500] ? "$error_code" : "xxx"
 
   try
-    error_page_file = isfile(joinpath(Genie.DOC_ROOT_PATH, "error-$page_code.html")) ?
-                        joinpath(Genie.DOC_ROOT_PATH, "error-$page_code.html") :
+    error_page_file = isfile(joinpath(Genie.config.server_document_root, "error-$page_code.html")) ?
+                        joinpath(Genie.config.server_document_root, "error-$page_code.html") :
                           joinpath(@__DIR__, "..", "files", "static", "error-$page_code.html")
 
     error_page =  open(error_page_file) do f
@@ -1130,8 +1130,8 @@ end
 
 Returns the path to a resource file. If `within_doc_root` it will automatically prepend the document root to `resource`.
 """
-function file_path(resource::String; within_doc_root = true, root = Genie.DOC_ROOT_PATH) :: String
-  within_doc_root = within_doc_root && root == Genie.DOC_ROOT_PATH
+function file_path(resource::String; within_doc_root = true, root = Genie.config.server_document_root) :: String
+  within_doc_root = within_doc_root && root == Genie.config.server_document_root
   joinpath(within_doc_root ? Genie.config.server_document_root : root, resource[(startswith(resource, "/") ? 2 : 1):end])
 end
 const filepath = file_path

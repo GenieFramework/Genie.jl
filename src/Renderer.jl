@@ -14,6 +14,10 @@ export Html
 
 const DEFAULT_CHARSET = "charset=utf-8"
 const DEFAULT_CONTENT_TYPE = :html
+const DEFAULT_LAYOUT_FILE = "app"
+
+const VIEWS_FOLDER = "views"
+const LAYOUTS_FOLDER = "layouts"
 
 """
     const CONTENT_TYPES = Dict{Symbol,String}
@@ -144,10 +148,10 @@ end
 
 """
 """
-function html(resource::ResourcePath, action::ResourcePath; layout::ResourcePath = Genie.config.renderer_default_layout_file,
+function html(resource::ResourcePath, action::ResourcePath; layout::ResourcePath = DEFAULT_LAYOUT_FILE,
                 context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
-  html(FilePaths.Path(joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action)));
-        layout = FilePaths.Path(joinpath(Genie.APP_PATH, Genie.LAYOUTS_FOLDER, string(layout))),
+  html(FilePaths.Path(joinpath(Genie.config.path_resources, string(resource), VIEWS_FOLDER, string(action)));
+        layout = FilePaths.Path(joinpath(Genie.config.path_app, LAYOUTS_FOLDER, string(layout))),
         context = context, status = status, headers = headers, vars...)
 end
 
@@ -219,7 +223,7 @@ end
 """
 function json(resource::ResourcePath, action::ResourcePath; context::Module = @__MODULE__,
               status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
-  json(FilePaths.Path(joinpath(Genie.RESOURCES_PATH, string(resource), Genie.VIEWS_FOLDER, string(action) * RENDERERS[MIME"application/json"].JSON_FILE_EXT));
+  json(FilePaths.Path(joinpath(Genie.config.path_resources, string(resource), VIEWS_FOLDER, string(action) * RENDERERS[MIME"application/json"].JSON_FILE_EXT));
         context = context, status = status, headers = headers, vars...)
 end
 

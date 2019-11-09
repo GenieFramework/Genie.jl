@@ -197,7 +197,7 @@ function get_template(path::String; partial::Bool = true, context::Module = @__M
 
   f_name = Flax.function_name(string(path, partial)) |> Symbol
   mod_name = Flax.m_name(string(path, partial)) * ".jl"
-  f_path = joinpath(Genie.BUILD_PATH, Flax.BUILD_NAME, mod_name)
+  f_path = joinpath(Genie.config.path_build, Flax.BUILD_NAME, mod_name)
   f_stale = Flax.build_is_stale(path, f_path)
 
   if f_stale || ! isdefined(context, f_name)
@@ -210,7 +210,7 @@ function get_template(path::String; partial::Bool = true, context::Module = @__M
 
     f_stale && Flax.build_module(content, path, mod_name)
 
-    return Base.include(context, joinpath(Genie.BUILD_PATH, Flax.BUILD_NAME, mod_name))
+    return Base.include(context, joinpath(Genie.config.path_build, Flax.BUILD_NAME, mod_name))
   end
 
   getfield(context, f_name)

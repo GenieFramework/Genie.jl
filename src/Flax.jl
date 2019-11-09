@@ -62,13 +62,13 @@ function parseview(data::String; partial = false, context::Module = @__MODULE__)
 
   func_name = function_name(string(data_hash, partial)) |> Symbol
   mod_name = m_name(string(path, partial)) * ".jl"
-  f_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, mod_name)
+  f_path = joinpath(Genie.config.path_build, BUILD_NAME, mod_name)
   f_stale = build_is_stale(f_path, f_path)
 
   if f_stale || ! isdefined(context, func_name)
     f_stale && build_module(string_to_flax(data, partial = partial), path, mod_name)
 
-    return Base.include(context, joinpath(Genie.BUILD_PATH, BUILD_NAME, mod_name))
+    return Base.include(context, joinpath(Genie.config.path_build, BUILD_NAME, mod_name))
   end
 
   getfield(context, func_name)
@@ -177,7 +177,7 @@ end
 Persists compiled Flax view data to file and returns the path
 """
 function build_module(content::String, path::String, mod_name::String) :: String
-  module_path = joinpath(Genie.BUILD_PATH, BUILD_NAME, mod_name)
+  module_path = joinpath(Genie.config.path_build, BUILD_NAME, mod_name)
 
   isdir(dirname(module_path)) || mkpath(dirname(module_path))
 
@@ -387,8 +387,8 @@ end
 
 Sets up the build folder and the build module file for generating the compiled views.
 """
-function prepare_build(subfolder) :: Bool
-  build_path = joinpath(Genie.BUILD_PATH, subfolder)
+function prepare_build(subfolder = BUILD_NAME) :: Bool
+  build_path = joinpath(Genie.config.path_build, subfolder)
 
   Genie.Configuration.@ifdev rm(build_path, force = true, recursive = true)
   if ! isdir(build_path)
@@ -397,16 +397,6 @@ function prepare_build(subfolder) :: Bool
   end
 
   true
-end
-
-
-"""
-    create_build_folders()
-
-Sets up build folders.
-"""
-@inline function create_build_folders()
-  prepare_build(BUILD_NAME)
 end
 
 end

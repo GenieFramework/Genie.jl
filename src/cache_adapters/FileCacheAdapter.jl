@@ -69,7 +69,7 @@ end
 Computes the path to a cache `key` based on current cache settings.
 """
 function cache_path(key::Union{String,Symbol}; dir::String = "") :: String
-  path = joinpath(Genie.CACHE_PATH, dir)
+  path = joinpath(Genie.config.path_cache, dir)
   ! isdir(path) && mkpath(path)
 
   joinpath(path, string(key))

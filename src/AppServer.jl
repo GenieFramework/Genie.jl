@@ -40,9 +40,6 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
                   verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
                   server::Union{Sockets.TCPServer,Nothing} = nothing) :: ServersCollection
 
-  # Create build folders
-  Genie.config.flax_compile_templates && Flax.create_build_folders()
-
   if Genie.config.websocket_server
     SERVERS.websockets = @async HTTP.listen(host, ws_port) do req
       if HTTP.WebSockets.is_upgrade(req.message)

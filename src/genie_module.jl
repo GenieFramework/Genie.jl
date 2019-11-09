@@ -120,13 +120,13 @@ end
 
 
 """
-    load_libs(root_dir::String = Genie.LIB_PATH) :: Nothing
+    load_libs(root_dir::String = Genie.config.path_lib) :: Nothing
 
 Recursively adds subfolders of `lib/` to LOAD_PATH.
 The `lib/` folder, if present, is designed to host user code in the form of .jl files.
 This function loads user code into the Genie app.
 """
-function load_libs(root_dir::String = Genie.LIB_PATH) :: Nothing
+function load_libs(root_dir::String = Genie.config.path_lib) :: Nothing
   isdir(root_dir) || return nothing
 
   push!(LOAD_PATH, root_dir)
@@ -143,11 +143,11 @@ end
 
 
 """
-    load_resources(root_dir::String = RESOURCES_PATH) :: Nothing
+    load_resources(root_dir::String = Genie.config.path_resources) :: Nothing
 
 Recursively adds subfolders of `resources/` to LOAD_PATH.
 """
-function load_resources(root_dir::String = Genie.RESOURCES_PATH) :: Nothing
+function load_resources(root_dir::String = Genie.config.path_resources) :: Nothing
   isdir(root_dir) || return nothing
 
   push!(LOAD_PATH, root_dir)
@@ -164,11 +164,11 @@ end
 
 
 """
-    load_helpers(root_dir::String = HELPERS_PATH) :: Nothing
+    load_helpers(root_dir::String = Genie.config.path_helpers) :: Nothing
 
 Recursively adds subfolders of `helpers/` to LOAD_PATH.
 """
-function load_helpers(root_dir::String = Genie.HELPERS_PATH) :: Nothing
+function load_helpers(root_dir::String = Genie.config.path_helpers) :: Nothing
   isdir(root_dir) || return nothing
 
   push!(LOAD_PATH, root_dir)
@@ -185,12 +185,12 @@ end
 
 
 """
-    load_configurations(root_dir::String = CONFIG_PATH; context::Union{Module,Nothing} = nothing) :: Nothing
+    load_configurations(root_dir::String = Genie.config.path_config; context::Union{Module,Nothing} = nothing) :: Nothing
 
 Loads (includes) the framework's configuration files into the app's module `context`.
 The files are set up with `Revise` to be automatically reloaded.
 """
-function load_configurations(root_dir::String = Genie.CONFIG_PATH; context::Union{Module,Nothing} = nothing) :: Nothing
+function load_configurations(root_dir::String = Genie.config.path_config; context::Union{Module,Nothing} = nothing) :: Nothing
   context = default_context(context)
 
   secrets_path = joinpath(root_dir, Genie.SECRETS_FILE_NAME)
@@ -201,15 +201,15 @@ end
 
 
 """
-    load_initializers(root_dir::String = CONFIG_PATH; context::Union{Module,Nothing} = nothing) :: Nothing
+    load_initializers(root_dir::String = Genie.config.path_config; context::Union{Module,Nothing} = nothing) :: Nothing
 
 Loads (includes) the framework's initializers.
 The files are set up with `Revise` to be automatically reloaded.
 """
-function load_initializers(root_dir::String = Genie.CONFIG_PATH; context::Union{Module,Nothing} = nothing) :: Nothing
+function load_initializers(root_dir::String = Genie.config.path_config; context::Union{Module,Nothing} = nothing) :: Nothing
   context = default_context(context)
 
-  dir = joinpath(root_dir, Genie.INITIALIZERS_FOLDER)
+  dir = joinpath(root_dir, Genie.config.initializers_folder)
 
   isdir(dir) || return nothing
 
@@ -223,11 +223,11 @@ end
 
 
 """
-    load_plugins(root_dir::String = PLUGINS_PATH; context::Union{Module,Nothing} = nothing) :: Nothing
+    load_plugins(root_dir::String = Genie.config.path_plugins; context::Union{Module,Nothing} = nothing) :: Nothing
 
 Loads (includes) the framework's plugins initializers.
 """
-function load_plugins(root_dir::String = Genie.PLUGINS_PATH; context::Union{Module,Nothing} = nothing) :: Nothing
+function load_plugins(root_dir::String = Genie.config.path_plugins; context::Union{Module,Nothing} = nothing) :: Nothing
   context = default_context(context)
 
   isdir(root_dir) || return nothing

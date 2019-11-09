@@ -8,16 +8,16 @@ import Revise
 push!(LOAD_PATH, @__DIR__)
 
 include("Configuration.jl")
-include("constants.jl")
-
 const config = Configuration.Settings(app_env = ENV["GENIE_ENV"])
+
+include("constants.jl")
 
 import Sockets
 import Logging, LoggingExtras
 
 push!(LOAD_PATH,  joinpath(@__DIR__, "cache_adapters"),
                   joinpath(@__DIR__, "session_adapters"),
-                  RESOURCES_PATH, HELPERS_PATH)
+                  config.path_resources, config.path_helpers)
 
 include(joinpath(@__DIR__, "genie_types.jl"))
 
@@ -61,7 +61,7 @@ export startup, serve, up
 
 
 """
-    serve(path::String = DOC_ROOT_PATH, params...; kwparams...)
+    serve(path::String = Genie.config.server_document_root, params...; kwparams...)
 
 Serves a folder of static files located at `path`. Allows Genie to be used as a static files web server.
 The `params` and `kwparams` arguments are forwarded to `Genie.startup()`.
@@ -80,7 +80,7 @@ julia> Genie.serve("public", 8888, async = false, verbose = true)
 [ Info: Accept (1):  🔗    0↑     0↓    1s 127.0.0.1:8888:8888 ≣16
 ```
 """
-function serve(path::String = DOC_ROOT_PATH, params...; kwparams...)
+function serve(path::String = Genie.config.server_document_root, params...; kwparams...)
   Router.route("/") do
     Router.serve_static_file("index.html", root = path)
   end

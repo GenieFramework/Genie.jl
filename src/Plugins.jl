@@ -5,17 +5,17 @@ import Pkg, Markdown, Logging
 
 
 const FILES_FOLDER = "files"
-const PLUGINS_FOLDER = Genie.PLUGINS_PATH
-const TASKS_FOLDER = Genie.TASKS_PATH
-const APP_FOLDER = Genie.APP_PATH
+const PLUGINS_FOLDER = Genie.config.path_plugins
+const TASKS_FOLDER = Genie.config.path_tasks
+const APP_FOLDER = Genie.config.path_app
 
 const path_prefix = joinpath(@__DIR__, "..", FILES_FOLDER, "new_app") |> normpath |> relpath
 const FOLDERS = [ joinpath(path_prefix, APP_FOLDER),
                   joinpath(path_prefix, "db"),
-                  joinpath(path_prefix, Genie.LIB_PATH),
+                  joinpath(path_prefix, Genie.config.path_lib),
                   joinpath(path_prefix, PLUGINS_FOLDER),
                   joinpath(path_prefix, TASKS_FOLDER),
-                  joinpath(path_prefix, Genie.DOC_ROOT_PATH) ]
+                  joinpath(path_prefix, Genie.config.server_document_root) ]
 
 
 function recursive_copy(path::String, dest::String; only_hidden = true, force = false)
@@ -104,7 +104,7 @@ end
 
 
 function install(path::String, dest::String; force = false)
-  isdir(Genie.PLUGINS_PATH) || mkpath(Genie.PLUGINS_PATH)
+  isdir(Genie.config.path_plugins) || mkpath(Genie.config.path_plugins)
 
   isdir(dest) || mkdir(dest)
 
