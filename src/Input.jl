@@ -70,7 +70,7 @@ function post_from_request!(request::HTTP.Request, input::HttpInput)
 end
 
 function post_url_encoded!(http_data::Array{UInt8, 1}, post_data::HttpPostData)
-  params::Dict{String,String} = query_params(String(http_data))
+  params::Dict{String,String} = URIParser.query_params(String(http_data))
 
   for (key::String, value::String) in params
     post_data[key] = value
