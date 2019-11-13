@@ -163,13 +163,24 @@ end
 
 Converts an input file to Flax code
 """
-@inline function to_flax(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "") :: String
+@inline function to_flax(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "\n") :: String
   f_name = (f_name === nothing) ? function_name(string(input, partial)) : f_name
 
   string("function $(f_name)() \n",
+          inject_vars_code(),
           prepend,
           f(input, partial = partial),
           "\nend \n")
+end
+
+
+function inject_vars_code() :: String
+  output = ""
+  for kv in task_local_storage(:__vars)
+    output *= "$(kv[1]) = @vars($(repr(kv[1]))) \n"
+  end
+
+  output
 end
 
 
@@ -404,5 +415,6 @@ function prepare_build(subfolder = BUILD_NAME) :: Bool
 
   true
 end
+const purgebuilds = prepare_build
 
 end
