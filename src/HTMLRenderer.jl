@@ -191,7 +191,7 @@ function get_template(path::String; partial::Bool = true, context::Module = @__M
 
   path, extension = view_file_info(path)
 
-  isfile(path) || error("Template file $orig_path does not exist")
+  isfile(path) || error("Template file \"$orig_path\" with extensions $SUPPORTED_HTML_OUTPUT_FILE_FORMATS does not exist")
 
   extension in HTML_FILE_EXT && return (() -> Base.include(context, path))
 

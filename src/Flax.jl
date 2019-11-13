@@ -311,12 +311,16 @@ The results of each iteration are concatenated and the final string is returned.
 end
 """
 macro foreach(f, arr)
-  quote
+  e = quote
     isempty($(esc(arr))) && return ""
 
     mapreduce(*, $(esc(arr))) do _s
-      $f(_s) * "\n"
+      $(esc(f))(_s)
     end
+  end
+
+  quote
+    Core.eval($__module__, $e)
   end
 end
 

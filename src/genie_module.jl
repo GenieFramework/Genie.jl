@@ -331,6 +331,7 @@ function load(; context::Union{Module,Nothing} = nothing) :: Nothing
   load_routes_definitions(context = context)
 
   replprint("Ready! ", t, clearline = 2, color = :green, bold = :true)
+  println()
 
   nothing
 end
@@ -349,7 +350,7 @@ function replprint(output::String, terminal;
 
   if newline > 0
     for i in 1:newline
-      print("\n")
+      println()
     end
   end
 

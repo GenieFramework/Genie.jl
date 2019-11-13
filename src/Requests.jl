@@ -7,7 +7,7 @@ import Genie, Genie.Router, Genie.Input
 import HTTP, Reexport
 
 export jsonpayload, rawpayload, filespayload, postpayload, getpayload, request, matchedroute, matchedchannel
-export infilespayload, download, filename, payload, read
+export infilespayload, filename, payload
 Reexport.@reexport using HTTP
 
 
@@ -74,12 +74,13 @@ end
 
 
 """
-    Base.download(file::HttpFile, name::String = file.name)
+    Base.write(filename::String = file.name; file::Input.HttpFile) :: IntBase.write(file::HttpFile, filename::String = file.name)
 
-Saves uploaded `HttpFile` `file` to local storage under the `name` filename.
+Writes uploaded `HttpFile` `file` to local storage under the `name` filename.
+Returns number of bytes written.
 """
-@inline function Base.download(file::Input.HttpFile, name::String = file.name) :: Int
-  write(name, IOBuffer(file.data))
+function Base.write(file::Input.HttpFile; filename::String = file.name) :: Int
+  write(filename, IOBuffer(file.data))
 end
 
 
@@ -88,7 +89,7 @@ end
 
 Returns the content of `file` as string.
 """
-@inline function Base.read(file::Input.HttpFile, ::Type{String}) :: String
+function Base.read(file::Input.HttpFile, ::Type{String}) :: String
   file.data |> String
 end
 

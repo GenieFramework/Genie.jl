@@ -119,7 +119,12 @@ Http server handler function - invoked when the server gets a request.
 """
 @inline function handle_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: HTTP.Response
   isempty(Genie.config.server_signature) && sign_response!(res)
-  set_headers!(req, res, Genie.Router.route_request(req, res, ip))
+  try
+    set_headers!(req, res, Genie.Router.route_request(req, res, ip))
+  catch ex
+    @error ex
+    rethrow(ex)
+  end
 end
 
 
@@ -143,6 +148,7 @@ Configures the handler for the HTTP Request and handles errors.
 
     error_message = string(sprint(showerror, ex), "\n\n")
     @error error_message
+
     message = Genie.Configuration.isprod() ?
                 "The error has been logged and we'll look into it ASAP." :
                 error_message
