@@ -23,6 +23,8 @@ using .HTMLRenderer
 include("JSONRenderer.jl")
 using .JSONRenderer
 
+const Html = @__MODULE__
+
 const BUILD_NAME    = "FlaxViews"
 
 

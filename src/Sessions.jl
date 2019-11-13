@@ -77,13 +77,11 @@ Attempts to retrieve the session id from the provided request and response objec
 If that is not available, a new session id is created.
 """
 function id(req::HTTP.Request, res::HTTP.Response) :: String
-  (Cookies.get(res, Genie.config.session_key_name) !== nothing) &&
-    ! isempty(Cookies.get(res, Genie.config.session_key_name)) &&
-      return Cookies.get(res, Genie.config.session_key_name)
-
-  (Cookies.get(req, Genie.config.session_key_name) !== nothing) &&
-    ! isempty(Cookies.get(req, Genie.config.session_key_name)) &&
-      return Cookies.get(req, Genie.config.session_key_name)
+  for r in [req, res]
+    (Cookies.get(r, Genie.config.session_key_name) !== nothing) &&
+      ! isempty(Cookies.get(r, Genie.config.session_key_name)) &&
+        return Cookies.get(r, Genie.config.session_key_name)
+  end
 
   id()
 end
@@ -219,9 +217,9 @@ end
 
 Returns the `Session` object associated with the current HTTP request.
 """
-function session(params) :: Sessions.Session
-  (! haskey(params, Genie.PARAMS_SESSION_KEY) || params[Genie.PARAMS_SESSION_KEY] == nothing) &&
-      (params[Genie.PARAMS_SESSION_KEY] = start(params[Genie.PARAMS_REQUEST_KEY], params[Genie.PARAMS_RESPONSE_KEY]))
+function session(params::Dict{Symbol,Any}) :: Sessions.Session
+  ( (! haskey(params, Genie.PARAMS_SESSION_KEY) || params[Genie.PARAMS_SESSION_KEY] === nothing) ) &&
+      (params[Genie.PARAMS_SESSION_KEY] = Sessions.start(params[Genie.PARAMS_REQUEST_KEY], params[Genie.PARAMS_RESPONSE_KEY])[1])
 
   params[Genie.PARAMS_SESSION_KEY]
 end

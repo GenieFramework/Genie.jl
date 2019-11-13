@@ -178,7 +178,7 @@ end
 
 Utility function for accessing the `@params` collection, which holds the request variables.
 """
-@inline function payload() :: Any
+@inline function payload() :: Dict
   Router.@params
 end
 

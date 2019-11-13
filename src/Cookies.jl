@@ -113,6 +113,8 @@ function Base.Dict(r::Union{HTTP.Request,HTTP.Response}) :: Dict{String,String}
     split(headers["Set-Cookie"], ";")
   elseif haskey(headers, "set-cookie")
     split(headers["set-cookie"], ";")
+  else
+    []
   end
 
   for cookie in h

@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.20.1 - 2019-11-12
+
+* deps update
+* `Router.@params` is now set with default values
+
+## v0.20.0 - 2019-11-10
+
+* internal rewrite and API cleanup (**breaking**)
+* removal of Nullables and YAML deps
+* deps update
+* over 50 new unit tests added
+
 ## v0.19.1 - 2019-10-18
 
 * Documentation improvements for `Genie.Deploy`

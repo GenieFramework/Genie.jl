@@ -9,7 +9,6 @@ import Genie, Genie.Util, Genie.Configuration, Genie.Exceptions
 Reexport.@reexport using Genie.Flax
 
 const Html = Genie.Flax
-
 export Html
 
 const DEFAULT_CHARSET = "charset=utf-8"

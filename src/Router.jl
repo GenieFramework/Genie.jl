@@ -90,7 +90,7 @@ Collection of key value pairs representing the parameters of the current request
 mutable struct Params{T}
   collection::Dict{Symbol,T}
 end
-Params() = Params(Dict{Symbol,Any}())
+Params() = Params(setup_base_params())
 
 Base.Dict(params::Params) = params.collection
 
@@ -823,18 +823,23 @@ end
 
 Populates `params` with default environment vars.
 """
-function setup_base_params(req::HTTP.Request, res::Union{HTTP.Response,Nothing}, params::Dict{Symbol,Any}, session::Union{Genie.Sessions.Session,Nothing}) :: Dict{Symbol,Any}
+function setup_base_params(req::HTTP.Request = HTTP.Request(), res::Union{HTTP.Response,Nothing} = req.response,
+                            params::Dict{Symbol,Any} = Dict{Symbol,Any}(), session::Union{Genie.Sessions.Session,Nothing} = nothing) :: Dict{Symbol,Any}
   params[Genie.PARAMS_REQUEST_KEY]   = req
   params[Genie.PARAMS_RESPONSE_KEY]  = res
   params[Genie.PARAMS_SESSION_KEY]   = session
   params[Genie.PARAMS_FLASH_KEY]     = Genie.config.session_auto_start ?
                                        begin
-                                        s = Genie.Sessions.get(session, Genie.PARAMS_FLASH_KEY)
-                                        if s === nothing
-                                          ""
+                                        if session !== nothing
+                                          s = Genie.Sessions.get(session, Genie.PARAMS_FLASH_KEY)
+                                          if s === nothing
+                                            ""
+                                          else
+                                            Genie.Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
+                                            s
+                                          end
                                         else
-                                          Genie.Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
-                                          s
+                                          ""
                                         end
                                        end : ""
 
@@ -877,7 +882,7 @@ end
 """
 macro params()
   quote
-    haskey(task_local_storage(), :__params) ? task_local_storage(:__params) : Dict{Symbol,Any}()
+    haskey(task_local_storage(), :__params) ? task_local_storage(:__params) : setup_base_params()
   end
 end
 macro params(key)
