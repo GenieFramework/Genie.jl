@@ -3,7 +3,7 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
-const GENIE_VERSION = v"0.20.1"
+const GENIE_VERSION = v"0.21.0"
 
 import Logging
 import Genie
@@ -123,6 +123,9 @@ env() :: String = Genie.config.app_env
 Indicates whether or not the app has caching enabled (`cache_duration > 0`).
 """
 cache_enabled() :: Bool = (Genie.config.cache_duration > 0)
+
+
+buildpath() :: String = Base.Filesystem.mktempdir(prefix = "jl_genie_build_")
 
 
 """
@@ -258,7 +261,7 @@ mutable struct Settings
             path_helpers        = joinpath(path_app, "helpers"),
             path_log            = "log",
             path_tasks          = "tasks",
-            path_build          = Base.Filesystem.mktempdir(prefix = "jl_genie_build_"),
+            path_build          = buildpath(),
             path_plugins        = "plugins",
             path_cache          = "cache",
             path_initializers   = joinpath(path_config, initializers_folder),

@@ -38,7 +38,7 @@ Retrieves a value stored on the cookie as `key` from the `Respose` object.
 """
 function get(res::HTTP.Response, key::Union{String,Symbol}; encrypted::Bool = true) :: Union{Nothing,String}
   (haskey(HTTPUtils.Dict(res), "Set-Cookie") || haskey(HTTPUtils.Dict(res), "set-cookie")) ?
-    nullablevalue(res, key, encrypted = encrypted)::String :
+    nullablevalue(res, key, encrypted = encrypted) :
       nothing
 end
 
@@ -55,7 +55,7 @@ Retrieves a value stored on the cookie as `key` from the `Request` object.
 """
 function get(req::HTTP.Request, key::Union{String,Symbol}; encrypted::Bool = true) :: Union{Nothing,String}
   (haskey(HTTPUtils.Dict(req), "cookie") || haskey(HTTPUtils.Dict(req), "Cookie")) ?
-    nullablevalue(req, key, encrypted = encrypted)::String :
+    nullablevalue(req, key, encrypted = encrypted) :
       nothing
 end
 
@@ -149,7 +149,7 @@ function nullablevalue(payload::Union{HTTP.Response,HTTP.Request}, key::Union{St
       value = split(cookie, '=')[2] |> String
       encrypted && (value = Genie.Encryption.decrypt(value))
 
-      return value::String
+      return string(value)
     end
   end
 

@@ -14,6 +14,7 @@ export JSONString
 
 function render(viewfile::FilePaths.PosixPath; context::Module = @__MODULE__, vars...) :: Function
   Flax.registervars(vars...)
+  Flax.injectvars(context)
 
   () -> (Base.include(context, string(viewfile)) |> JSONParser.json)
 end
@@ -21,6 +22,7 @@ end
 
 function render(data::String; context::Module = @__MODULE__, vars...) :: Function
   Flax.registervars(vars...)
+  Flax.injectvars(context)
 
   () -> (Base.include_string(context, data) |> JSONParser.json)
 end

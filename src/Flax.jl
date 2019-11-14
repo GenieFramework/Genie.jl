@@ -110,11 +110,16 @@ end
 
 Loads the rendering vars into the task's scope
 """
-function registervars(vars...) :: Nothing
+@inline function registervars(vars...) :: Nothing
   init_task_local_storage()
   task_local_storage(:__vars, merge(Dict{Symbol,Any}(vars), task_local_storage(:__vars)))
 
   nothing
+end
+
+
+@inline function vars_signature() :: String
+  task_local_storage(:__vars) |> keys |> collect |> sort |> string
 end
 
 
@@ -124,7 +129,7 @@ end
 Generates function name for generated Flax views.
 """
 @inline function function_name(file_path::String) :: String
-  "func_$(SHA.sha1(relpath(isempty(file_path) ? " " : file_path)) |> bytes2hex)"
+  "func_$(SHA.sha1( relpath(isempty(file_path) ? " " : file_path) * vars_signature() ) |> bytes2hex)"
 end
 
 
@@ -134,7 +139,7 @@ end
 Generates module name for generated Flax views.
 """
 @inline function m_name(file_path::String) :: String
-  string(SHA.sha1(relpath(isempty(file_path) ? " " : file_path)) |> bytes2hex)
+  string(SHA.sha1( relpath(isempty(file_path) ? " " : file_path) * vars_signature()) |> bytes2hex)
 end
 
 
@@ -167,20 +172,29 @@ Converts an input file to Flax code
   f_name = (f_name === nothing) ? function_name(string(input, partial)) : f_name
 
   string("function $(f_name)() \n",
-          inject_vars_code(),
+          injectvars(),
           prepend,
           f(input, partial = partial),
           "\nend \n")
 end
 
 
-function inject_vars_code() :: String
+function injectvars() :: String
   output = ""
   for kv in task_local_storage(:__vars)
     output *= "$(kv[1]) = @vars($(repr(kv[1]))) \n"
   end
 
   output
+end
+
+
+function injectvars(context::Module) :: Nothing
+  for kv in task_local_storage(:__vars)
+    isdefined(context, Symbol(kv[1])) || Core.eval(context, Meta.parse("$(kv[1]) = @vars($(repr(kv[1])))"))
+  end
+
+  nothing
 end
 
 
@@ -400,21 +414,28 @@ end
 
 
 """
-    prepare_build() :: Bool
+    preparebuilds() :: Bool
 
 Sets up the build folder and the build module file for generating the compiled views.
 """
-function prepare_build(subfolder = BUILD_NAME) :: Bool
+function preparebuilds(subfolder = BUILD_NAME) :: Bool
   build_path = joinpath(Genie.config.path_build, subfolder)
-
-  Genie.Configuration.@ifdev rm(build_path, force = true, recursive = true)
-  if ! isdir(build_path)
-    @info "Creating build folder at $(build_path)"
-    mkpath(build_path)
-  end
+  isdir(build_path) || mkpath(build_path)
 
   true
 end
-const purgebuilds = prepare_build
+
+
+function purgebuilds(subfolder = BUILD_NAME) :: Bool
+  rm(joinpath(Genie.config.path_build, subfolder), force = true, recursive = true)
+
+  true
+end
+
+
+function changebuilds(subfolder = BUILD_NAME) :: Bool
+  Genie.config.path_build = Genie.Configuration.buildpath()
+  preparebuilds()
+end
 
 end

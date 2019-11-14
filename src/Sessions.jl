@@ -78,9 +78,8 @@ If that is not available, a new session id is created.
 """
 function id(req::HTTP.Request, res::HTTP.Response) :: String
   for r in [req, res]
-    (Cookies.get(r, Genie.config.session_key_name) !== nothing) &&
-      ! isempty(Cookies.get(r, Genie.config.session_key_name)) &&
-        return Cookies.get(r, Genie.config.session_key_name)
+    val = Cookies.get(r, Genie.config.session_key_name)
+    (val !== nothing) && ! isempty(val) && return val
   end
 
   id()
