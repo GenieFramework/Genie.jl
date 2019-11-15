@@ -184,7 +184,14 @@ julia> Genie.loadapp(".")
 """
 function loadapp(path::String = "."; autostart::Bool = false) :: Nothing
   Core.eval(Main, Meta.parse("import Revise"))
-  Core.eval(Main, Meta.parse("""include(joinpath("$path", "$(Genie.BOOTSTRAP_FILE_NAME)"))"""))
+
+  try
+    Core.eval(Main, Meta.parse("""include(joinpath("$path", "$(Genie.BOOTSTRAP_FILE_NAME)"))"""))
+  catch ex
+    @error "Path $path does not seem to be a Genie app"
+    rethrow(ex)
+  end
+
   Core.eval(Main, Meta.parse("Revise.revise()"))
   Core.eval(Main, Meta.parse("using Genie"))
 

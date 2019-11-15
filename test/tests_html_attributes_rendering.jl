@@ -110,4 +110,22 @@
     r = html("""<img :src="submission.submissionImage" />""")
     @test String(r.body) == """<html><head></head><body><img :src="submission.submissionImage"></body></html>"""
   end;
+
+  @safetestset "Embedded Julia" begin
+    using Genie
+    using Genie.Renderer
+
+    id = 10
+    r = html("""<span id="$id"></span>""")
+    @test String(r.body) == """<html><head></head><body><span id="10"></span></body></html>"""
+
+    r = html("""<span id="$(string(:moo))"></span>""")
+    @test String(r.body) == """<html><head></head><body><span id="moo"></span></body></html>"""
+
+    r = html("""<span $(string(:disabled))></span>""")
+    @test String(r.body) == """<html><head></head><body><span disabled="disabled"></span></body></html>"""
+
+    r = html("""<span $("foo = $(string(:disabled))")></span>""")
+    @test String(r.body) == """<html><head></head><body><span foo="disabled"></span></body></html>"""
+  end;
 end;

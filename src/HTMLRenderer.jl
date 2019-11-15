@@ -107,8 +107,8 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
 
   for (k,v) in attrs
     sk = string(k)
-    startswith(sk, "_") && (k = sk = sk[2:end])
-    k = replace(sk, "_"=>"-")
+    # startswith(sk, "_") && (k = sk = sk[2:end])
+    # k = replace(sk, "_"=>"-")
 
     print(a, "$(k)=\"$(v)\" ")
   end
@@ -321,9 +321,10 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
 
     for (k,v) in HTMLParser.attrs(elem)
       x = v
+      k = string(k) |> lowercase
 
-      if startswith(k, "\$") # do not process embedded julia code
-        print(attributes, string(k)[2:end], ", ") # strip the $, this is rendered directly in Julia code
+      if startswith(k, raw"$") # do not process embedded julia code
+        print(attributes, k[2:end], ", ") # strip the $, this is rendered directly in Julia code
         continue
       end
 
@@ -332,16 +333,24 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
           print(attributes, "$k=\"$k\"", ", ") # boolean attributes can have the same value as the attribute -- or be empty
         end
       else
-        # print(attributes, """$(replace(lowercase(string(k)), "-"=>"_"))="$v" """, ", ")
-        push!(attributes_keys, Symbol(string(k)) |> repr)
-        push!(attributes_values, string(v) |> repr)
+        if occursin('-', k) || occursin(':', k) || occursin('@', k) || occursin('.', k)
+          push!(attributes_keys, Symbol(k) |> repr)
+
+          v = string(v) |> repr
+          occursin(raw"\$", v) && (v = replace(v, raw"\$"=>raw"$"))
+          push!(attributes_values, v)
+        else
+          print(attributes, """$k="$v" """, ", ")
+        end
       end
     end
 
     attributes_string = String(take!(attributes))
     endswith(attributes_string, ", ") && (attributes_string = attributes_string[1:end-2])
-    print(io, "; ", attributes_string)
+
+    print(io, attributes_string)
     ! isempty(attributes_string) && ! isempty(attributes_keys) && print(io, ", ")
+    isempty(attributes_string) && ! isempty(attributes_keys) && print(io, "; ")
     ! isempty(attributes_keys) &&
       print(io, "NamedTuple{($(join(attributes_keys, ", "))$(length(attributes_keys) == 1 ? ", " : ""))}(($(join(attributes_values, ", "))$(length(attributes_keys) == 1 ? ", " : "")))...")
     print(io, ")")
