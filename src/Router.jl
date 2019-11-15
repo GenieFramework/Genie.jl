@@ -122,24 +122,18 @@ function route_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 =
     return error_404(req.target, req)
   end
 
-  Revise.revise()
+  Genie.Configuration.isdev() && Revise.revise()
 
   session, res = Genie.config.session_auto_start ? Genie.Sessions.start(req, res) : (nothing, res)
 
-  try
-    res = match_routes(req, res, session, params)
-  catch ex
-    @error sprint(showerror, ex)
-    @error "$(req.target) 500\n"
-
-    rethrow(ex)
-  end
+  res = match_routes(req, res, session, params)
 
   res.status == 404 && req.method == OPTIONS && return preflight_response()
 
   ! in(response_type(params), sessionless) && Genie.config.session_auto_start && Sessions.persist(session)
 
   reqstatus = "$(req.target) $(res.status)\n"
+
   if res.status < 400
     @info reqstatus
   else
@@ -157,12 +151,12 @@ First step in handling a web socket request: sets up @params collection, handles
 """
 function route_ws_request(req, msg::String, ws_client, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: String
   params = Params()
-  params.collection[:request_ipv4] = ip
+
   params.collection[Genie.PARAMS_WS_CLIENT] = ws_client
 
   extract_get_params(URIParser.URI(req.target), params)
 
-  Revise.revise()
+  Genie.Configuration.isdev() && Revise.revise()
 
   session = Genie.config.session_auto_start ? Genie.Sessions.load(Genie.Sessions.id(req)) : nothing
 
@@ -588,32 +582,36 @@ function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
   param_names = String[]
   param_types = Any[]
 
-  validation_match = "[\\w\\-\\.\\+\\,\\s\\%]+"
+  if occursin('#', route) || occursin(':', route)
+    validation_match = "[\\w\\-\\.\\+\\,\\s\\%]+"
 
-  for rp in split(route, "/", keepempty = false)
-    if occursin("#", rp)
-      x = split(rp, "#")
-      rp = x[1]
-      validation_match = x[2]
+    for rp in split(route, "/", keepempty = false)
+      if occursin("#", rp)
+        x = split(rp, "#")
+        rp = x[1]
+        validation_match = x[2]
+      end
+
+      if startswith(rp, ":")
+        param_type =  if occursin("::", rp)
+                        x = split(rp, "::")
+                        rp = x[1]
+                        getfield(@__MODULE__, Symbol(x[2]))
+                      else
+                        Any
+                      end
+        param_name = rp[2:end]
+
+        rp = """(?P<$param_name>$validation_match)"""
+
+        push!(param_names, param_name)
+        push!(param_types, param_type)
+      end
+
+      push!(parts, rp)
     end
-
-    if startswith(rp, ":")
-      param_type =  if occursin("::", rp)
-                      x = split(rp, "::")
-                      rp = x[1]
-                      getfield(@__MODULE__, Symbol(x[2]))
-                    else
-                      Any
-                    end
-      param_name = rp[2:end]
-
-      rp = """(?P<$param_name>$validation_match)"""
-
-      push!(param_names, param_name)
-      push!(param_types, param_type)
-    end
-
-    push!(parts, rp)
+  else
+    parts = split(route, "/", keepempty = false)
   end
 
   "/" * join(parts, "/"), param_names, param_types
@@ -630,21 +628,25 @@ function parse_channel(channel::String) :: Tuple{String,Vector{String},Vector{An
   param_names = String[]
   param_types = Any[]
 
-  for rp in split(channel, "/", keepempty = false)
-    if startswith(rp, ":")
-      param_type =  if occursin("::", rp)
-                      x = split(rp, "::")
-                      rp = x[1]
-                      getfield(@__MODULE__, Symbol(x[2]))
-                    else
-                      Any
-                    end
-      param_name = rp[2:end]
-      rp = """(?P<$param_name>[\\w\\-]+)"""
-      push!(param_names, param_name)
-      push!(param_types, param_type)
+  if occursin(':', channel)
+    for rp in split(channel, "/", keepempty = false)
+      if startswith(rp, ":")
+        param_type =  if occursin("::", rp)
+                        x = split(rp, "::")
+                        rp = x[1]
+                        getfield(@__MODULE__, Symbol(x[2]))
+                      else
+                        Any
+                      end
+        param_name = rp[2:end]
+        rp = """(?P<$param_name>[\\w\\-]+)"""
+        push!(param_names, param_name)
+        push!(param_types, param_type)
+      end
+      push!(parts, rp)
     end
-    push!(parts, rp)
+  else
+    parts = split(channel, "/", keepempty = false)
   end
 
   "/" * join(parts, "/"), param_names, param_types

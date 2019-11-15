@@ -17,7 +17,7 @@ function initialize_logging()
             end
 
   timestamp_logger(logger) = LoggingExtras.TransformerLogger(logger) do log
-    merge(log, (; message = "$(Dates.format(now(), date_format)) $(log.message)"))
+    merge(log, (; message = "$(Dates.format(Dates.now(), date_format)) $(log.message)"))
   end
 
   LoggingExtras.DemuxLogger(LoggingExtras.MinLevelLogger(logger, Genie.config.log_level), include_current_global = false) |> timestamp_logger |> global_logger
@@ -25,4 +25,4 @@ function initialize_logging()
   nothing
 end
 
-@async intialize_logging()
+@async initialize_logging()
