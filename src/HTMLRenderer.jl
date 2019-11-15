@@ -123,7 +123,10 @@ end
 Cleans up problematic characters or DOM elements.
 """
 @inline function normalize_element(elem::String)
-  replace(string(lowercase(elem)), "_"=>"-")
+  replace(string(lowercase(elem)), "_____"=>"-")
+end
+@inline function denormalize_element(elem::String)
+  replace(string(lowercase(elem)), "-"=>"_____")
 end
 
 
@@ -300,7 +303,7 @@ Parses a HTML tree structure into a `string` of Flax code.
 function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool = true) :: String
   io = IOBuffer()
 
-  tag_name = replace(lowercase(string(HTMLParser.tag(elem))), "-"=>"_")
+  tag_name = denormalize_element(string(HTMLParser.tag(elem)))
 
   invalid_tag = partial && (tag_name == "html" || tag_name == "head" || tag_name == "body")
 
@@ -313,6 +316,9 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
     print(io, repeat("\t", depth), ( ! invalid_tag ? "Html.$(tag_name)(" : "Html.HTMLRenderer.skip_element(" ))
 
     attributes = IOBuffer()
+    attributes_keys = String[]
+    attributes_values = String[]
+
     for (k,v) in HTMLParser.attrs(elem)
       x = v
 
@@ -326,13 +332,19 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
           print(attributes, "$k=\"$k\"", ", ") # boolean attributes can have the same value as the attribute -- or be empty
         end
       else
-        print(attributes, """$(replace(lowercase(string(k)), "-"=>"_"))="$v" """, ", ")
+        # print(attributes, """$(replace(lowercase(string(k)), "-"=>"_"))="$v" """, ", ")
+        push!(attributes_keys, Symbol(string(k)) |> repr)
+        push!(attributes_values, string(v) |> repr)
       end
     end
 
     attributes_string = String(take!(attributes))
     endswith(attributes_string, ", ") && (attributes_string = attributes_string[1:end-2])
-    print(io, attributes_string, ")")
+    print(io, "; ", attributes_string)
+    ! isempty(attributes_string) && ! isempty(attributes_keys) && print(io, ", ")
+    ! isempty(attributes_keys) &&
+      print(io, "NamedTuple{($(join(attributes_keys, ", "))$(length(attributes_keys) == 1 ? ", " : ""))}(($(join(attributes_values, ", "))$(length(attributes_keys) == 1 ? ", " : "")))...")
+    print(io, ")")
 
     inner = ""
     if ! isempty(HTMLParser.children(elem))

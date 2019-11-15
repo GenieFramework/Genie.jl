@@ -291,18 +291,22 @@ Generated functions that represent Flax functions definitions corresponding to H
 end
 
 
-@inline function register_element(elem::Symbol, elem_type::Symbol = :normal) :: Nothing
+@inline function register_element(elem::Union{Symbol,String}, elem_type::Union{Symbol,String} = :normal; context = Flax) :: Nothing
+  elem = string(elem)
+  occursin('-', elem) && (elem = HTMLRenderer.denormalize_element(elem))
+
   elem_type == :normal ? register_normal_element(elem) : register_void_element(elem)
 end
 
 
-function register_normal_element(elem::Symbol) :: Nothing
-  Core.eval(@__MODULE__, """
+function register_normal_element(elem::Union{Symbol,String}; context = Flax) :: Nothing
+  Core.eval(context, """
     function $elem(f::Function, args...; attrs...) :: HTMLString
       \"\"\"\$(HTMLRenderer.normal_element(f, "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
-  Core.eval(@__MODULE__, """
+
+  Core.eval(context, """
     function $elem(children::Union{String,Vector{String}} = "", args...; attrs...) :: HTMLString
       \"\"\"\$(HTMLRenderer.normal_element(children, "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
     end
@@ -312,8 +316,8 @@ function register_normal_element(elem::Symbol) :: Nothing
 end
 
 
-function register_void_element(elem::Symbol) :: Nothing
-  Core.eval(@__MODULE__, """
+function register_void_element(elem::Union{Symbol,String}; context = Flax) :: Nothing
+  Core.eval(context, """
     function $elem(args...; attrs...) :: HTMLString
       \"\"\"\$(HTMLRenderer.void_element("$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
     end
