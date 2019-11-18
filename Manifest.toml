@@ -80,9 +80,9 @@ version = "0.5.1"
 
 [[HTTP]]
 deps = ["Base64", "Dates", "IniFile", "MbedTLS", "Sockets"]
-git-tree-sha1 = "806f2a5d66d1b78e5349fd463a41f0c10ca5fff3"
+git-tree-sha1 = "5c49dab19938b119fe204fd7d7e8e174f4e9c68b"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-version = "0.8.7"
+version = "0.8.8"
 
 [[HttpCommon]]
 deps = ["Dates", "Nullables", "Test", "URIParser"]
@@ -208,9 +208,9 @@ version = "0.2.0"
 
 [[Revise]]
 deps = ["CodeTracking", "Distributed", "FileWatching", "JuliaInterpreter", "LibGit2", "LoweredCodeUtils", "OrderedCollections", "Pkg", "REPL", "UUIDs", "Unicode"]
-git-tree-sha1 = "0d9092e63eb112b1ada52fc57abebf0c6cc83f42"
+git-tree-sha1 = "dd15b92fac79835f8d87d03522ad861ff40c7459"
 uuid = "295af30f-e4ad-537b-8983-00126c2a3abe"
-version = "2.3.0"
+version = "2.3.1"
 
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
