@@ -159,16 +159,12 @@ Includes and renders a markdown view file
 function include_markdown(path::String; context::Module = @__MODULE__)
   md = read(path, String)
 
-  vars_injection = ""
-
   if startswith(md, MD_SEPARATOR_START)
     close_sep_pos = findfirst(MD_SEPARATOR_END, md[length(MD_SEPARATOR_START)+1:end])
     metadata = md[length(MD_SEPARATOR_START)+1:close_sep_pos[end]] |> YAML.load
 
-    vars_injection = ""
     for (k,v) in metadata
       task_local_storage(:__vars)[Symbol(k)] = v
-      vars_injection *= """@vars($(repr(Symbol(k)))) = $(v)\n"""
     end
 
     md = replace(md[close_sep_pos[end]+length(MD_SEPARATOR_END)+1:end], "\"\"\""=>"\\\"\\\"\\\"")
@@ -176,7 +172,7 @@ function include_markdown(path::String; context::Module = @__MODULE__)
 
   content = string( "\"\"\"", md, "\"\"\"")
 
-  vars_injection, (include_string(context, content) |> Markdown.parse |> Markdown.html)
+  "", (Base.include_string(context, content) |> Markdown.parse |> Markdown.html)
 end
 
 

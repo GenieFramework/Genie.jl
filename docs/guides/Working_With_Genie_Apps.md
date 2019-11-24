@@ -13,13 +13,13 @@ julia> Genie.newapp("MyGenieApp")
 Upon executing the command, Genie will:
 
 * make a new dir called `MyGenieApp` and `cd()` into it,
-* create the app as a Julia project (adding the `Project.toml` file),
-* activate the project,
 * install all the dependencies,
+* create a new Julia project (adding the `Project.toml` and `Manifest.toml` files),
+* activate the project,
 * automatically load the new app environment into the REPL,
-* start the web server on the default port (port 8000) and host (127.0.0.1 or localhost).
+* start the web server on the default Genie port (port 8000) and host (0.0.0.0).
 
-At this point you can confirm that everything worked as expected by visiting <http://localhost:8000> in your favourite web browser.
+At this point you can confirm that everything worked as expected by visiting <http://0.0.0.0:8000> in your favourite web browser.
 You should see Genie's welcome page.
 
 Next, let's add a new route. Routes are used to map request URLs to Julia functions. These functions provide the response that will be sent back to the client. Routes are meant to be defined in the dedicated `routes.jl` file. Open `/path/to/MyGenieApp/routes.jl` in your editor or run the following command (making sure that you are in the app's directory):
@@ -37,15 +37,15 @@ route("/hello") do
 end
 ```
 
-We are using the `route` method, passing in the "/hello" URL and an anonymous function which returns the string "Welcome to Genie!". What this means is that for each request to the "/hello" URL, our app will respond with the welcome message.
+We are using the `route` method, passing in the "/hello" URL and an anonymous function which returns the string "Welcome to Genie!". What this means is that for each request to the "/hello" URL, our app will invoke the route handler function and respond with the welcome message.
 
-Visit <http://localhost:8000/hello> for a warm welcome!
+Visit <http://0.0.0.0:8000/hello> for a warm welcome!
 
 ## Working with resources
 
-Adding our code to the `routes.jl` file works great for small projects, where you want to quickly publish features on the web. But for larger projects we're better off using Genie's MVC structure (MVC stands for Model-View-Controller). By employing the Module-View-Controller design pattern we can break our code in modules with clear responsibilities. Modular code is easier to write, test and maintain.
+Adding our code to the `routes.jl` file works great for small projects, where you want to quickly publish features on the web. But for larger projects we're better off using Genie's MVC structure (MVC stands for Model-View-Controller). By employing the Module-View-Controller design pattern we can break our code into modules with clear responsibilities. Modular code is easier to write, test and maintain.
 
-A Genie app is structured around the concept of "resources". A resource represents a business entity (something like a user, or a product, or an account) and maps to a bundle of files (controller, model, views, etc). Resources live under the `app/resources/` folder and each resource has its own dedicated foler, where all its files are hosted. For example, if we have a web app about "books", a "books" folder would be placed in `app/resources/` and would contain all the files for publishing books on the web (usually called `BooksController.jl` for the controller, `Books.jl` for the model, `BooksValidator.jl` for the model validator -- as well as a `views` folder for hosting all the view files necessary for rendering books data).
+A Genie app is structured around the concept of "resources". A resource represents a business entity (something like a user, or a product, or an account) and maps it to a bundle of files (controller, model, views, etc). Resources live under the `app/resources/` folder and each resource has its own dedicated folder, where all its files are hosted. For example, if we have a web app about "books", a "books" folder would be found at `app/resources/books` and will contain all the files for publishing books on the web (usually called `BooksController.jl` for the controller, `Books.jl` for the model, `BooksValidator.jl` for the model validator -- as well as a `views` folder for hosting all the view files necessary for rendering books data).
 
 ---
 **HEADS UP**
@@ -56,7 +56,7 @@ When creating a default Genie app, the `app/` folder might be missing. This will
 
 ## Using Controllers
 
-Controllers are used to orchestrate interactions between client requests, Models (which handle DB access), and Views (which are responsible for rendering the responses to the clients' web browsers). In a standard workflow, a `route` points to a method in the controller – which is charged with building and sending the response over the network, back to the client.
+Controllers are used to orchestrate interactions between client requests, Models (which handle DB access), and Views (which are responsible for rendering the responses which will be sent to the clients' web browsers). In a standard workflow, a `route` points to a method in the controller – which is charged with building and sending the response over the network, back to the client.
 
 Let's add a "books" controller. Genie comes with handy generators and one of them is for creating new controllers:
 
@@ -66,10 +66,10 @@ Let's generate our `BooksController`:
 
 ```julia
 julia> Genie.newcontroller("Books")
-[info]: New controller created at app/resources/books/BooksController.jl
+[info]: New controller created at ./app/resources/books/BooksController.jl
 ```
 
-Great! Let's edit `BooksController.jl` and add something to it. For example, a function which returns some of Bill Gates' recommended books would be nice. Make sure that `BooksController.jl` looks like this:
+Great! Let's edit `BooksController.jl` (`julia> edit("./app/resources/books/BooksController.jl")`) and add something to it. For example, a function which returns some of Bill Gates' recommended books would be nice. Make sure that `BooksController.jl` looks like this:
 
 ```julia
 # app/resources/books/BooksController.jl
@@ -111,14 +111,19 @@ Before exposing it on the web, we can test the function in the REPL:
 julia> using BooksController
 
 julia> BooksController.billgatesbooks()
-"\n    <h1>Bill Gates' list of recommended books</h1>\n    <ul>\n      <li>The Best We Could Do by Thi Bui<li>Evicted: Poverty and Profit in the American City by Matthew Desmond<li>Believe Me: A Memoir of Love, Death, and Jazz Chickens by Eddie Izzard<li>The Sympathizer by Viet Thanh Nguyen<li>Energy and Civilization, A History by Vaclav Smil\n    </ul>\n  "
 ```
 
-Please make sure that it works as expected - you should get the HTML string previously described.
+The output of the function call should be a HTML string which looks like this:
+
+```julia
+"\n  <h1>Bill Gates' list of recommended books</h1>\n  <ul>\n    <li>The Best We Could Do by Thi Bui</li><li>Evicted: Poverty and Profit in the American City by Matthew Desmond</li><li>Believe Me: A Memoir of Love, Death, and Jazz Chickens by Eddie Izzard</li><li>The Sympathizer by Viet Thanh Nguyen</li><li>Energy and Civilization, A History by Vaclav Smil</li>\n  </ul>\n"
+```
+
+Please make sure that it works as expected.
 
 ### Setup the route
 
-Now, let's expose our `billgatesbooks` method on the web. We need to add a new `route` which points to it. Add these to the `routes.jl` file (feel free to keep or delete what's already in it):
+Now, let's expose our `billgatesbooks` method on the web. We need to add a new `route` which points to it. Add these to the `routes.jl` file:
 
 ```julia
 # routes.jl
@@ -134,14 +139,15 @@ That's all! If you now visit `http://localhost:8000/bgbooks` you'll see Bill Gat
 
 However, putting HTML into the controllers is a bad idea: HTML should stay in the dedicated view files and contain as little logic as possible. Let's refactor our code to use views instead.
 
-The views used for rendering a resource should be placed inside a `views/` folder, within that resource's own folder.
-So in our case, we will add an `app/resources/books/views/` folder. Just go ahead and do it, Genie does not provide a generator for this simple task:
+The views used for rendering a resource should be placed inside the `views/` folder, within that resource's own folder structure.
+So in our case, we will add an `app/resources/books/views/` folder. Just go ahead and do it, Genie does not provide a generator for this task:
 
 ```julia
 julia> mkdir(joinpath("app", "resources", "books", "views"))
+"app/resources/books/views"
 ```
 
-We create the `views/` folder in `app/resources/books/`. We provide the full path as our REPL is running the the root folder of the app. Also, we use the `joinpath` function so that Julia creates the path in a cross-platform way.
+We create the `views/` folder in `app/resources/books/`. We provide the full path as our REPL is running in the the root folder of the app. Also, we use the `joinpath` function so that Julia creates the path in a cross-platform way.
 
 ### Naming views
 
@@ -162,13 +168,13 @@ Genie supports a special type of dynamic HTML view, where we can embed Julia cod
 Hence, the first time you load a view, or after you change one, you might notice a certain delay – it's the time needed to generate and compile the view.
 On next runs (especially in production) it's going to be blazing fast!
 
-Now all we need to do is to move the HTML code out of the controller and into the view, improving it a bit to also show a count of the number of books:
+Now all we need to do is to move the HTML code out of the controller and into the view, improving it a bit to also show a count of the number of books. Edit the view file as follows (`julia> edit("app/resources/books/views/billgatesbooks.jl.html")`):
 
 ```html
 <!-- billgatesbooks.jl.html -->
-<h1>Bill Gates' top $( length(@vars(:books)) ) recommended books</h1>
+<h1>Bill Gates' top $(length(books)) recommended books</h1>
 <ul>
-   <% @foreach(@vars(:books)) do book %>
+   <% @foreach(books) do book %>
      <li>$(book.title) by $(book.author)</li>
    <% end %>
 </ul>
@@ -176,13 +182,9 @@ Now all we need to do is to move the HTML code out of the controller and into th
 
 As you can see, it's just plain HTML with embedded Julia. We can add Julia code by using the `<% ... %>` code block tags – these should be used for more complex, multiline expressions. Or by using plain Julia string interpolation with `$(...)` – for simple values outputting.
 
-It is very important to keep in mind that Genie views work by rendering a HTML string. Thus, your Julia view code _must return a string_ as its result, so that the output of your computation comes up on the page. Given that Julia automatically returns the result of the last computation, most of the times this just flows naturally. But if sometimes you notice that the templates don't output what is expected, do check that the code returns a string (or something which can be converted to a string).
+It is very important to keep in mind that Genie views work by rendering a HTML string. Thus, the Julia view code _must return a string_ as its result, so that the output of the computation comes up on the page. Given that Julia automatically returns the result of the last computation, most of the times this just flows naturally. But if sometimes you notice that the templates don't output what is expected, do check that the code returns a string (or something which can be converted to a string).
 
 To make HTML generation more efficient, Genie provides a series of helpers, like the above `@foreach` macro which allows iterating over a collection, passing the current item into the processing function.
-
-Also, very important, please notice the `@vars` macro. This is used to access variables which are passed from the controller into the view. In our example we iterate over the `@vars(:books)` collection where `@vars` is a "super-collection" which includes all the variables passed from controller into the view -- and `:books` is the name of the variable passed into the view.
-
-We'll see how to use this right now.
 
 ### Rendering views
 
@@ -201,7 +203,7 @@ First, notice that we needed to add `Genie.Renderer` as a dependency, to get acc
 
 * `:books` is the name of the resource (which effectively indicates in which `views` folder Genie should look for the view file -- in our case `app/resources/books/views`);
 * `:billgatesbooks` is the name of the view file. We don't need to pass the extension, Genie will figure it out since there's only one file with this name;
-* and finally, we pass the values we want to expose in the view, as keyword arguments. In this scenario, the `books` keyword argument – which will be available in the view under `@vars(:books)`.
+* and finally, we pass the values we want to expose in the view, as keyword arguments.
 
 That's it – our refactored app should be ready! You can try it out for yourself at <http://localhost:8000/bgbooks>
 
@@ -219,12 +221,13 @@ Now edit the file and make sure it looks like this:
 
 ```md
 <!-- app/resources/books/views/billgatesbooks.jl.md -->
-# Bill Gates' $( length(@vars(:books)) ) recommended books
+# Bill Gates' $(length(books)) recommended books
 
-$(@foreach(@vars(:books)) do book
-  "* $(book.title) by $(book.author)"
-end)
-
+$(
+  @foreach(books) do book
+    "* $(book.title) by $(book.author) \n"
+  end
+)
 ```
 
 Notice that Markdown views do not support Genie's embedded Julia tags `<% ... %>`. Only string interpolation `$(...)` is accepted, but it works across multiple lines.
@@ -278,9 +281,10 @@ We can add a dedicated layout for that:
 
 ```julia
 julia> touch(joinpath("app", "layouts", "admin.jl.html"))
+"app/layouts/admin.jl.html"
 ```
 
-Now edit it and make it look like this:
+Now edit it (`julia> edit("app/layouts/admin.jl.html")`) and make it look like this:
 
 ```html
 <!-- app/layouts/admin.jl.html -->
@@ -312,7 +316,7 @@ Reload the page and you'll see the new heading.
 
 #### The `@yield` instruction
 
-There is a special instruction in the layouts: `@yield`. It outputs the contents of the view as rendered through the controller. So basically where this macro is present, Genie will output the HTML resulting from rendering the view by executing the action in the controller.
+There is a special instruction in the layouts: `@yield`. It outputs the contents of the view as rendered through the controller. So basically where this macro is present, Genie will output the HTML resulting from rendering the view by executing the route handler function within the controller.
 
 ### Rendering JSON views
 
@@ -353,30 +357,7 @@ end
 module API
 
 using ..BooksController
-import JSON
-
-function billgatesbooks()
-  JSON.json(BooksController.BillGatesBooks)
-end
-
-end
-
-end
-```
-
-We nested an API module within the `BooksController` module, where we defined another `billgatesbooks` function which outputs a JSON. We are using the JSON package. Keep in mind that you're free to organize the code as you see fit – not necessarily like this. It's just one way to do it.
-
-If you go to `http://localhost:8000/api/v1/bgbooks` it should already work.
-
-Not a bad start, but we can do better. First, the MIME type of the response is not right. By default Genie will return `text/html`.
-We need `application/json`. That's easy to fix though, we can just use Genie's `json` method instead. The `API` submodule should look like this:
-
-```julia
-module API
-
-using ..BooksController
 using Genie.Renderer
-import JSON
 
 function billgatesbooks()
   json(BooksController.BillGatesBooks)
@@ -385,7 +366,9 @@ end
 end
 ```
 
-Notice that we are `using Genie.Renderer` to access Genie's own `json` method. If you reload the "page", you'll get a proper JSON response. Great!
+We nested an API module within the `BooksController` module, where we defined another `billgatesbooks` function which outputs a JSON.
+
+If you go to `http://localhost:8000/api/v1/bgbooks` it should already work as expected.
 
 #### JSON views
 
@@ -395,16 +378,17 @@ Genie has support for JSON views – these are plain Julia files which have the 
 
 ```julia
 julia> touch(joinpath("app", "resources", "books", "views", "billgatesbooks.json.jl"))
+"app/resources/books/views/billgatesbooks.json.jl"
 ```
 
-We can now create a proper response. Put this in the newly created view file:
+We can now create a proper response. Put this in the view file:
 
 ```julia
 # app/resources/books/views/billgatesbooks.json.jl
-"Bill Gates' list of recommended books" => @vars(:books)
+"Bill Gates' list of recommended books" => books
 ```
 
-Final step, instructing `BooksController` to render the view:
+Final step, instructing `BooksController` to render the view. Simply replace the existing `billgatesbooks` function within the `API` submodule with the following:
 
 ```julia
 function billgatesbooks()
