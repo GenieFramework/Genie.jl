@@ -50,7 +50,7 @@ const RENDERERS = Dict(
 const ResourcePath = Union{String,Symbol}
 const HTTPHeaders = Dict{String,String}
 
-const FilePath = FilePaths.PosixPath
+const FilePath = Union{FilePaths.PosixPath,FilePaths.WindowsPath}
 const filepath = FilePaths.Path
 export FilePath, filepath
 

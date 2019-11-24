@@ -735,7 +735,7 @@ And finally, our JSON view needs a bit of tweaking too:
 
 ```julia
 # app/resources/books/views/billgatesbooks.json.jl
-"Bill's Gates list of recommended books" => [Dict("author" => b.author, "title" => b.title) for b in @vars(:books)]
+"Bill's Gates list of recommended books" => [Dict("author" => b.author, "title" => b.title) for b in books]
 ```
 
 Now if we just start the server we'll see the list of books served from the database, at <http://localhost:8000/api/v1/bgbooks>
@@ -755,6 +755,7 @@ julia> save!(newbook)
 ```
 
 or as a one-liner:
+
 ```julia
 julia> Book(title = "Leonardo da Vinci", author = "Walter Isaacson") |> save!
 ```
