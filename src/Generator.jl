@@ -304,7 +304,7 @@ function install_app_dependencies(app_path::String = ".") :: Nothing
   @info "Installing app dependencies"
   Pkg.pkg"activate ."
 
-  Pkg.pkg"add Genie#master"
+  Pkg.pkg"add Genie"
   Pkg.pkg"add Revise"
   Pkg.pkg"add LoggingExtras"
 
