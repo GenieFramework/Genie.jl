@@ -3,7 +3,7 @@ module Renderer
 export respond, html, json, redirect, js
 
 import Revise
-import HTTP, Reexport, Markdown, Logging, FilePaths
+import HTTP, Reexport, Markdown, Logging
 import Genie, Genie.Util, Genie.Configuration, Genie.Exceptions
 
 Reexport.@reexport using Genie.Flax
@@ -50,9 +50,10 @@ const RENDERERS = Dict(
 const ResourcePath = Union{String,Symbol}
 const HTTPHeaders = Dict{String,String}
 
-const FilePath = Union{FilePaths.PosixPath,FilePaths.WindowsPath}
-const filepath = FilePaths.Path
-export FilePath, filepath
+const FilePath = Flax.FilePath
+const filepath = Flax.filepath
+const Path = Flax.Path
+export FilePath, filepath, Path
 
 
 """
@@ -172,8 +173,8 @@ end
 """
 function html(resource::ResourcePath, action::ResourcePath; layout::ResourcePath = DEFAULT_LAYOUT_FILE,
                 context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
-  html(FilePaths.Path(joinpath(Genie.config.path_resources, string(resource), VIEWS_FOLDER, string(action)));
-        layout = FilePaths.Path(joinpath(Genie.config.path_app, LAYOUTS_FOLDER, string(layout))),
+  html(Path(joinpath(Genie.config.path_resources, string(resource), VIEWS_FOLDER, string(action)));
+        layout = Path(joinpath(Genie.config.path_app, LAYOUTS_FOLDER, string(layout))),
         context = context, status = status, headers = headers, vars...)
 end
 
@@ -245,7 +246,7 @@ end
 """
 function json(resource::ResourcePath, action::ResourcePath; context::Module = @__MODULE__,
               status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
-  json(FilePaths.Path(joinpath(Genie.config.path_resources, string(resource), VIEWS_FOLDER, string(action) * RENDERERS[MIME"application/json"].JSON_FILE_EXT));
+  json(Path(joinpath(Genie.config.path_resources, string(resource), VIEWS_FOLDER, string(action) * RENDERERS[MIME"application/json"].JSON_FILE_EXT));
         context = context, status = status, headers = headers, vars...)
 end
 

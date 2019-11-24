@@ -12,7 +12,7 @@ words = Dict(:en => "Hello", :es => "Hola", :pt => "Ola", :it => "Ciao")
 
 @testset "JSON rendering" begin
   @testset "JSON view rendering with vars" begin
-    r = json(Renderer.FilePath(viewfile[1]), root = "greetings", greetings = words)
+    r = json(Renderer.Path(viewfile[1]), root = "greetings", greetings = words)
 
     @test String(r.body) == """{"greetings":{"en":"Hello","it":"Ciao","pt":"Ola","es":"Hola"}}"""
   end;

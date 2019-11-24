@@ -1,9 +1,8 @@
 module JSONRenderer
 
 import Revise
-import JSON, FilePaths
-using Genie
-using ..Flax
+import JSON
+using Genie, Genie.Flax
 
 const JSONParser = JSON
 const JSON_FILE_EXT = ".json.jl"
@@ -12,7 +11,7 @@ const JSONString = String
 export JSONString
 
 
-function render(viewfile::FilePaths.PosixPath; context::Module = @__MODULE__, vars...) :: Function
+function render(viewfile::Flax.FilePath; context::Module = @__MODULE__, vars...) :: Function
   Flax.registervars(vars...)
   Flax.injectvars(context)
 

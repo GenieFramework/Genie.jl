@@ -2,7 +2,7 @@ module HTMLRenderer
 
 
 import Revise
-import Markdown, Logging, FilePaths, Gumbo
+import Markdown, Logging, Gumbo
 using Genie, Genie.Flax
 
 
@@ -271,7 +271,7 @@ end
 
 """
 """
-function render(viewfile::FilePaths.PosixPath; layout::Union{Nothing,FilePaths.PosixPath} = nothing, context::Module = @__MODULE__, vars...) :: Function
+function render(viewfile::Flax.FilePath; layout::Union{Nothing,Flax.FilePath} = nothing, context::Module = @__MODULE__, vars...) :: Function
   Flax.registervars(vars...)
 
   if layout !== nothing

@@ -1,10 +1,8 @@
 module JSRenderer
 
-
 import Revise
-import Logging, FilePaths
+import Logging
 using Genie, Genie.Flax
-
 
 const JS_FILE_EXT   = ["js.jl"]
 const TEMPLATE_EXT  = [".flax.js", ".jl.js"]
@@ -80,7 +78,7 @@ end
 
 """
 """
-function render(viewfile::FilePaths.PosixPath; context::Module = @__MODULE__, vars...) :: Function
+function render(viewfile::Flax.FilePath; context::Module = @__MODULE__, vars...) :: Function
   Flax.registervars(vars...)
 
   get_template(string(viewfile), partial = false, context = context)

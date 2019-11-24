@@ -16,6 +16,12 @@ import Base.show
 import Base.==
 import Base.hash
 
+const Html = @__MODULE__
+const BUILD_NAME = "FlaxViews"
+
+const Path = FilePaths.Path
+const FilePath = Union{FilePaths.PosixPath,FilePaths.WindowsPath}
+const filepath = FilePaths.Path
 
 include("HTMLRenderer.jl")
 using .HTMLRenderer
@@ -26,14 +32,9 @@ using .JSONRenderer
 include("JSRenderer.jl")
 using .JSRenderer
 
-const Html = @__MODULE__
-
-const BUILD_NAME    = "FlaxViews"
-
 
 init_task_local_storage() = (haskey(task_local_storage(), :__vars) || task_local_storage(:__vars, Dict{Symbol,Any}()))
 init_task_local_storage()
-
 task_local_storage(:__yield, "")
 
 

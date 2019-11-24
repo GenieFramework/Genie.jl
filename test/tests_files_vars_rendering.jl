@@ -44,13 +44,13 @@ close(templatefile[2])
   r = Requests.HTTP.Response()
 
   @testset "HTML rendering with view file no layout with vars" begin
-    r = html(Renderer.FilePath(viewfile[1]), greeting = greeting, name = Genie)
+    r = html(Renderer.Path(viewfile[1]), greeting = greeting, name = Genie)
 
     @test String(r.body) == "<html><head></head><body><h1>$greeting</h1><div><p>This is a $name test</p></div><hr></body></html>"
   end;
 
   @testset "HTML rendering with view file and layout with vars" begin
-    r = html(Renderer.FilePath(viewfile[1]), layout = Renderer.FilePath(templatefile[1]), greeting = greeting, name = Genie)
+    r = html(Renderer.Path(viewfile[1]), layout = Renderer.Path(templatefile[1]), greeting = greeting, name = Genie)
 
     @test String(r.body) == "<html><head><title>$name test</title></head><body><div class=\"template\"><h1>$greeting</h1><div><p>This is a $name test</p></div><hr>\n</div><footer>Just a footer</footer></body></html>"
   end;
@@ -59,21 +59,21 @@ close(templatefile[2])
   @test r.headers[1]["Content-Type"] == "text/html; charset=utf-8"
 
   @testset "HTML rendering with view file no layout with vars custom headers" begin
-    r = html(Renderer.FilePath(viewfile[1]), headers = Renderer.HTTPHeaders("Cache-Control" => "no-cache"), greeting = greeting, name = Genie)
+    r = html(Renderer.Path(viewfile[1]), headers = Renderer.HTTPHeaders("Cache-Control" => "no-cache"), greeting = greeting, name = Genie)
 
     @test String(r.body) == "<html><head></head><body><h1>$greeting</h1><div><p>This is a $name test</p></div><hr></body></html>"
     @test r.headers[1]["Cache-Control"] == "no-cache"
   end;
 
   @testset "HTML rendering with view file and layout with vars custom headers" begin
-    r = html(Renderer.FilePath(viewfile[1]), layout = Renderer.FilePath(templatefile[1]), headers = Renderer.HTTPHeaders("Cache-Control" => "no-cache"), greeting = greeting, name = Genie)
+    r = html(Renderer.Path(viewfile[1]), layout = Renderer.Path(templatefile[1]), headers = Renderer.HTTPHeaders("Cache-Control" => "no-cache"), greeting = greeting, name = Genie)
 
     @test String(r.body) == "<html><head><title>$name test</title></head><body><div class=\"template\"><h1>$greeting</h1><div><p>This is a $name test</p></div><hr>\n</div><footer>Just a footer</footer></body></html>"
     @test r.headers[1]["Cache-Control"] == "no-cache"
   end;
 
   @testset "HTML rendering with view file no layout with vars custom headers custom status" begin
-    r = html(Renderer.FilePath(viewfile[1]), headers = Renderer.HTTPHeaders("Cache-Control" => "no-cache"), status = 500, greeting = greeting, name = Genie)
+    r = html(Renderer.Path(viewfile[1]), headers = Renderer.HTTPHeaders("Cache-Control" => "no-cache"), status = 500, greeting = greeting, name = Genie)
 
     @test String(r.body) == "<html><head></head><body><h1>$greeting</h1><div><p>This is a $name test</p></div><hr></body></html>"
     @test r.headers[1]["Cache-Control"] == "no-cache"
@@ -81,7 +81,7 @@ close(templatefile[2])
   end;
 
   @testset "HTML rendering with view file and layout with vars custom headers custom status" begin
-    r = html(Renderer.FilePath(viewfile[1]), layout = Renderer.FilePath(templatefile[1]),
+    r = html(Renderer.Path(viewfile[1]), layout = Renderer.Path(templatefile[1]),
               headers = Renderer.HTTPHeaders("Cache-Control" => "no-cache"), status = 404, greeting = greeting, name = Genie)
 
     @test String(r.body) == "<html><head><title>$name test</title></head><body><div class=\"template\"><h1>$greeting</h1><div><p>This is a $name test</p></div><hr>\n</div><footer>Just a footer</footer></body></html>"
