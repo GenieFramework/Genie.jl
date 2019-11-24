@@ -23,6 +23,9 @@ using .HTMLRenderer
 include("JSONRenderer.jl")
 using .JSONRenderer
 
+include("JSRenderer.jl")
+using .JSRenderer
+
 const Html = @__MODULE__
 
 const BUILD_NAME    = "FlaxViews"
@@ -50,30 +53,6 @@ function partial(path::String; context::Module = @__MODULE__, vars...) :: String
   end
 
   template(path, partial = true, context = context)
-end
-
-
-"""
-    parseview(data::String; partial = false, context::Module = @__MODULE__) :: Function
-
-Parses a view file, returning a rendering function. If necessary, the function is JIT-compiled, persisted and loaded into memory.
-"""
-function parseview(data::String; partial = false, context::Module = @__MODULE__) :: Function
-  data_hash = hash(data)
-  path = "Flax_" * string(data_hash)
-
-  func_name = function_name(string(data_hash, partial)) |> Symbol
-  mod_name = m_name(string(path, partial)) * ".jl"
-  f_path = joinpath(Genie.config.path_build, BUILD_NAME, mod_name)
-  f_stale = build_is_stale(f_path, f_path)
-
-  if f_stale || ! isdefined(context, func_name)
-    f_stale && build_module(string_to_flax(data, partial = partial), path, mod_name)
-
-    return Base.include(context, joinpath(Genie.config.path_build, BUILD_NAME, mod_name))
-  end
-
-  getfield(context, func_name)
 end
 
 
@@ -440,6 +419,29 @@ end
 function changebuilds(subfolder = BUILD_NAME) :: Bool
   Genie.config.path_build = Genie.Configuration.buildpath()
   preparebuilds()
+end
+
+
+"""
+    view_file_info(path::String, supported_extensions = SUPPORTED_HTML_OUTPUT_FILE_FORMATS) :: Tuple{String,String}
+
+Extracts path and extension info about a file
+"""
+function view_file_info(path::String, supported_extensions::Vector{String} = HTMLRenderer.SUPPORTED_HTML_OUTPUT_FILE_FORMATS) :: Tuple{String,String}
+  _path, _extension = "", ""
+
+  if isfile(path)
+    _path, _extension = relpath(path), "." * split(path, ".", limit = 2)[end]
+  else
+    for file_extension in supported_extensions
+      if isfile(path * file_extension)
+        _path, _extension = path * file_extension, file_extension
+        break
+      end
+    end
+  end
+
+  _path, _extension
 end
 
 end

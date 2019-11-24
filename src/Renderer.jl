@@ -1,6 +1,6 @@
 module Renderer
 
-export respond, html, json, redirect
+export respond, html, json, redirect, js
 
 import Revise
 import HTTP, Reexport, Markdown, Logging, FilePaths
@@ -42,8 +42,9 @@ Collection of renderers associated to each supported mime time. Other mime-rende
 or current ones can be replaced by custom ones, to be used by Genie.
 """
 const RENDERERS = Dict(
-  MIME"text/html"         => Flax.HTMLRenderer,
-  MIME"application/json"  => Flax.JSONRenderer
+  MIME"text/html"               => Flax.HTMLRenderer,
+  MIME"application/json"        => Flax.JSONRenderer,
+  MIME"application/javascript"  => Flax.JSRenderer
 )
 
 const ResourcePath = Union{String,Symbol}
@@ -135,6 +136,15 @@ function WebRenderable(wr::WebRenderable, status::Int, headers::HTTPHeaders)
 end
 
 
+function WebRenderable(wr::WebRenderable, content_type::Symbol, status::Int, headers::HTTPHeaders)
+  wr.content_type = content_type
+  wr.status = status
+  wr.headers = headers
+
+  wr
+end
+
+
 function render(::Type{MIME"text/html"}, data::String;
                 context::Module = @__MODULE__, layout::Union{String,Nothing} = nothing, vars...) :: WebRenderable
   try
@@ -144,6 +154,8 @@ function render(::Type{MIME"text/html"}, data::String;
     rethrow(ex)
   end
 end
+
+
 function render(::Type{MIME"text/html"}, viewfile::FilePath; layout::Union{Nothing,FilePath} = nothing,
                   context::Module = @__MODULE__, vars...) :: WebRenderable
   try
@@ -242,7 +254,7 @@ end
 """
 function json(datafile::FilePath; context::Module = @__MODULE__,
               status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
-  WebRenderable(render(MIME"application/json", datafile; context = context, vars...), status, headers) |> respond
+  WebRenderable(render(MIME"application/json", datafile; context = context, vars...), :json, status, headers) |> respond
 end
 
 
@@ -250,14 +262,51 @@ end
 """
 function json(data::String; context::Module = @__MODULE__,
               status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
-  WebRenderable(render(MIME"application/json", data; context = context, vars...), status, headers) |> respond
+  WebRenderable(render(MIME"application/json", data; context = context, vars...), :json, status, headers) |> respond
 end
 
 
 """
 """
 function json(data; status::Int = 200, headers::HTTPHeaders = HTTPHeaders()) :: HTTP.Response
-  WebRenderable(render(MIME"application/json", data), status, headers) |> respond
+  WebRenderable(render(MIME"application/json", data), :json, status, headers) |> respond
+end
+
+
+### JS RENDERING
+
+
+function render(::Type{MIME"application/javascript"}, data::String; context::Module = @__MODULE__, vars...) :: WebRenderable
+  try
+    WebRenderable(RENDERERS[MIME"application/javascript"].render(data; context = context, vars...) |> Base.invokelatest, :js)
+  catch ex
+    isa(ex, KeyError) && Flax.changebuilds() # it's a view error so don't reuse them
+    rethrow(ex)
+  end
+end
+
+
+function render(::Type{MIME"application/javascript"}, viewfile::FilePath; context::Module = @__MODULE__, vars...) :: WebRenderable
+  try
+    WebRenderable(RENDERERS[MIME"application/javascript"].render(viewfile; context = context, vars...) |> Base.invokelatest, :js)
+  catch ex
+    isa(ex, KeyError) && Flax.changebuilds() # it's a view error so don't reuse them
+    rethrow(ex)
+  end
+end
+
+
+"""
+"""
+function js(data::String; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
+  WebRenderable(render(MIME"application/javascript", data; context = context, vars...), :js, status, headers) |> respond
+end
+
+
+"""
+"""
+function js(viewfile::FilePath; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
+  WebRenderable(render(MIME"application/javascript", viewfile; context = context, vars...), :js, status, headers) |> respond
 end
 
 ### REDIRECT RESPONSES ###

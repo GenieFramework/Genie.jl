@@ -106,10 +106,6 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
   a = IOBuffer()
 
   for (k,v) in attrs
-    sk = string(k)
-    # startswith(sk, "_") && (k = sk = sk[2:end])
-    # k = replace(sk, "_"=>"-")
-
     print(a, "$(k)=\"$(v)\" ")
   end
 
@@ -192,7 +188,7 @@ Resolves the inclusion and rendering of a template file
 function get_template(path::String; partial::Bool = true, context::Module = @__MODULE__) :: Function
   orig_path = path
 
-  path, extension = view_file_info(path)
+  path, extension = Flax.view_file_info(path)
 
   isfile(path) || error("Template file \"$orig_path\" with extensions $SUPPORTED_HTML_OUTPUT_FILE_FORMATS does not exist")
 
@@ -240,25 +236,26 @@ end
 
 
 """
-    view_file_info(path::String) :: Tuple{String,String}
+    parseview(data::String; partial = false, context::Module = @__MODULE__) :: Function
 
-Extracts path and extension info about a file
+Parses a view file, returning a rendering function. If necessary, the function is JIT-compiled, persisted and loaded into memory.
 """
-function view_file_info(path::String) :: Tuple{String,String}
-  _path, _extension = "", ""
+function parseview(data::String; partial = false, context::Module = @__MODULE__) :: Function
+  data_hash = hash(data)
+  path = "Flax_" * string(data_hash)
 
-  if isfile(path)
-    _path, _extension = relpath(path), "." * split(path, ".", limit = 2)[end]
-  else
-    for file_extension in SUPPORTED_HTML_OUTPUT_FILE_FORMATS
-      if isfile(path * file_extension)
-        _path, _extension = path * file_extension, file_extension
-        break
-      end
-    end
+  func_name = Flax.function_name(string(data_hash, partial)) |> Symbol
+  mod_name = Flax.m_name(string(path, partial)) * ".jl"
+  f_path = joinpath(Genie.config.path_build, Flax.BUILD_NAME, mod_name)
+  f_stale = Flax.build_is_stale(f_path, f_path)
+
+  if f_stale || ! isdefined(context, func_name)
+    f_stale && Flax.build_module(Flax.string_to_flax(data, partial = partial), path, mod_name)
+
+    return Base.include(context, joinpath(Genie.config.path_build, Flax.BUILD_NAME, mod_name))
   end
 
-  _path, _extension
+  getfield(context, func_name)
 end
 
 
@@ -268,10 +265,10 @@ function render(data::String; context::Module = @__MODULE__, layout::Union{Strin
   Flax.registervars(vars...)
 
   if layout !== nothing
-    task_local_storage(:__yield, Flax.parseview(data, partial = true, context = context))
-    Flax.parseview(layout, partial = false, context = context)
+    task_local_storage(:__yield, parseview(data, partial = true, context = context))
+    parseview(layout, partial = false, context = context)
   else
-    Flax.parseview(data, partial = false, context = context)
+    parseview(data, partial = false, context = context)
   end
 end
 

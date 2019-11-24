@@ -1,7 +1,7 @@
 # Working with Genie apps (projects)
 
 Working with Genie in an interactive environment can be useful – but usually we want to persist the application and reuse it between sessions.
-One way to achieve that is to save it as an IJulia notebook and rerun the cells. However, you can get the best of Genie by working with Genie apps.
+One way to achieve this is to save it as an IJulia notebook and rerun the cells. However, you can get the best of Genie by working with Genie apps.
 A Genie app is an MVC web application which promotes the convention-over-configuration principle. By working with a few predefined files, within the Genie app structure, the framework can lift a lot of weight and massively improve development productivity. But following Genie's workflow, one instantly gets, out of the box, features like automatic module loading and reloading, dedicated configuration files, logging, support for environments, code generators, caching, support for Genie plugins, and more.
 
 In order to create a new Genie app, all we need to do is run `Genie.newapp($app_name)`:

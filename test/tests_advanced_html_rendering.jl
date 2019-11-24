@@ -1,8 +1,3 @@
-# TODO - rendering of html elements with properties, slashes, quotes, no quotes, empty, etc
-# TODO - multiple tags in if/else
-# TODO @foreach, if, etc
-
-
 @safetestset "Advanced rendering" begin
 
   @safetestset "@foreach macro renders local variables" begin
