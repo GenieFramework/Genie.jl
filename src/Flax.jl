@@ -240,11 +240,11 @@ end
 
 
 """
-    parsetags(line::Tuple{Int64,String}, strip_close_tag = false) :: String
+    parsetags(line::Tuple{Int,String}, strip_close_tag = false) :: String
 
 Parses special Flax tags.
 """
-@inline function parsetags(line::Tuple{Int64,String}) :: String
+@inline function parsetags(line::Tuple{Int,String}) :: String
   parsetags(line[2])
 end
 @inline function parsetags(code::String) :: String
