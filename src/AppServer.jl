@@ -150,7 +150,7 @@ end
 
 
 function normalize_header_key(key::String) :: String
-  join(map(x -> uppercasefirst(x), split(key, '-')), '-')
+  join(map(x -> uppercasefirst(lowercase(x)), split(key, '-')), '-')
 end
 
 
