@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.22.3 - 2019-11-15
+
+* logic to normalize the case of request headers to "Request-Header-Key"
+
+
 ## v0.21 - 2019-11-15
 
 * deps update

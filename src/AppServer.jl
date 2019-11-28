@@ -119,12 +119,38 @@ Http server handler function - invoked when the server gets a request.
 """
 @inline function handle_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: HTTP.Response
   isempty(Genie.config.server_signature) && sign_response!(res)
+
+  try
+    req = normalize_headers(req)
+  catch ex
+    @error ex
+  end
+
   try
     set_headers!(req, res, Genie.Router.route_request(req, res, ip))
   catch ex
     @error ex
     rethrow(ex)
   end
+end
+
+
+function normalize_headers(req::HTTP.Request) :: HTTP.Request
+  headers = Dict(req.headers)
+  normalized_headers = Dict{String,String}()
+
+  for (k,v) in headers
+    normalized_headers[normalize_header_key(string(k))] = string(v)
+  end
+
+  req.headers = [k for k in normalized_headers]
+
+  req
+end
+
+
+function normalize_header_key(key::String) :: String
+  join(map(x -> uppercasefirst(x), split(key, '-')), '-')
 end
 
 

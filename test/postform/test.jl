@@ -6,7 +6,7 @@ using Genie, Genie.Router, Genie.Renderer
 form = """
 <form action="/" method="POST" enctype="multipart/form-data">
   <input type="text" name="greeting" value="hello genie" />
-  <input type="submit" value="upload" />
+  <input type="submit" value="post" />
 </form>
 """
 
@@ -17,7 +17,8 @@ route("/") do
 end
 
 route("/", method = POST) do
-  @show @params(:FILES)
+  @show @params
+
   @show @params(:greeting)
 
   @params(:greeting)
