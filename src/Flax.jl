@@ -92,7 +92,7 @@ Loads the rendering vars into the task's scope
 """
 @inline function registervars(vars...) :: Nothing
   init_task_local_storage()
-  task_local_storage(:__vars, merge(Dict{Symbol,Any}(vars), task_local_storage(:__vars)))
+  task_local_storage(:__vars, merge(task_local_storage(:__vars), Dict{Symbol,Any}(vars)))
 
   nothing
 end
@@ -171,7 +171,8 @@ end
 
 function injectvars(context::Module) :: Nothing
   for kv in task_local_storage(:__vars)
-    isdefined(context, Symbol(kv[1])) || Core.eval(context, Meta.parse("$(kv[1]) = @vars($(repr(kv[1])))"))
+    # isdefined(context, Symbol(kv[1])) ||
+    Core.eval(context, Meta.parse("$(kv[1]) = @vars($(repr(kv[1])))"))
   end
 
   nothing

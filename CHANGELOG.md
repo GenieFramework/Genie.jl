@@ -1,9 +1,12 @@
 # Changelog
 
+## v0.22.4 - 2019-11-30
+
+* fixed issue with JSON rendering where view variables won't get updated
+
 ## v0.22.3 - 2019-11-15
 
 * logic to normalize the case of request headers to "Request-Header-Key"
-
 
 ## v0.21 - 2019-11-15
 
