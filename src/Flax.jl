@@ -63,7 +63,7 @@ end
 Renders a template file.
 """
 @inline function template(path::String; partial::Bool = true, context::Module = @__MODULE__) :: String
-  HTMLRenderer.get_template(path, partial = partial, context = context) |> Base.invokelatest
+  Base.invokelatest(HTMLRenderer.get_template(path, partial = partial, context = context))::String
 end
 
 

@@ -149,7 +149,7 @@ end
 function render(::Type{MIME"text/html"}, data::String;
                 context::Module = @__MODULE__, layout::Union{String,Nothing} = nothing, vars...) :: WebRenderable
   try
-    WebRenderable(RENDERERS[MIME"text/html"].render(data; context = context, layout = layout, vars...) |> Base.invokelatest)
+    WebRenderable(Base.invokelatest(RENDERERS[MIME"text/html"].render(data; context = context, layout = layout, vars...))::String)
   catch ex
     isa(ex, KeyError) && Flax.changebuilds() # it's a view error so don't reuse them
     rethrow(ex)
@@ -160,7 +160,7 @@ end
 function render(::Type{MIME"text/html"}, viewfile::FilePath; layout::Union{Nothing,FilePath} = nothing,
                   context::Module = @__MODULE__, vars...) :: WebRenderable
   try
-    WebRenderable(RENDERERS[MIME"text/html"].render(viewfile; layout = layout, context = context, vars...) |> Base.invokelatest)
+    WebRenderable(Base.invokelatest(RENDERERS[MIME"text/html"].render(viewfile; layout = layout, context = context, vars...))::String)
   catch ex
     isa(ex, KeyError) && Flax.changebuilds() # it's a view error so don't reuse them
 
@@ -232,13 +232,13 @@ end
 
 
 function render(::Type{MIME"application/json"}, datafile::FilePath; context::Module = @__MODULE__, vars...) :: WebRenderable
-  WebRenderable(RENDERERS[MIME"application/json"].render(datafile; context = context, vars...) |> Base.invokelatest, :json)
+  WebRenderable(Base.invokelatest(RENDERERS[MIME"application/json"].render(datafile; context = context, vars...))::String, :json)
 end
 function render(::Type{MIME"application/json"}, data::String; context::Module = @__MODULE__, vars...) :: WebRenderable
-  WebRenderable(RENDERERS[MIME"application/json"].render(data; context = context, vars...) |> Base.invokelatest, :json)
+  WebRenderable(Base.invokelatest(RENDERERS[MIME"application/json"].render(data; context = context, vars...))::String, :json)
 end
 function render(::Type{MIME"application/json"}, data::Any) :: WebRenderable
-  WebRenderable(RENDERERS[MIME"application/json"].render(data) |> Base.invokelatest, :json)
+  WebRenderable(Base.invokelatest(RENDERERS[MIME"application/json"].render(data))::String, :json)
 end
 
 
@@ -279,7 +279,7 @@ end
 
 function render(::Type{MIME"application/javascript"}, data::String; context::Module = @__MODULE__, vars...) :: WebRenderable
   try
-    WebRenderable(RENDERERS[MIME"application/javascript"].render(data; context = context, vars...) |> Base.invokelatest, :js)
+    WebRenderable(Base.invokelatest(RENDERERS[MIME"application/javascript"].render(data; context = context, vars...))::String, :js)
   catch ex
     isa(ex, KeyError) && Flax.changebuilds() # it's a view error so don't reuse them
     rethrow(ex)
@@ -289,7 +289,7 @@ end
 
 function render(::Type{MIME"application/javascript"}, viewfile::FilePath; context::Module = @__MODULE__, vars...) :: WebRenderable
   try
-    WebRenderable(RENDERERS[MIME"application/javascript"].render(viewfile; context = context, vars...) |> Base.invokelatest, :js)
+    WebRenderable(Base.invokelatest(RENDERERS[MIME"application/javascript"].render(viewfile; context = context, vars...))::String, :js)
   catch ex
     isa(ex, KeyError) && Flax.changebuilds() # it's a view error so don't reuse them
     rethrow(ex)

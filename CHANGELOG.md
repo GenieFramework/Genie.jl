@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.22.5 - 2019-11-30
+
+* added type hints to renderer's `invokelastest` calls
+
 ## v0.22.4 - 2019-11-30
 
 * fixed issue with JSON rendering where view variables won't get updated
