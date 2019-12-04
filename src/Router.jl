@@ -3,7 +3,7 @@ module Router
 import Revise
 import Reexport, Logging
 import HTTP, URIParser, HttpCommon, Sockets, Millboard, Dates, OrderedCollections
-import Genie, Genie.HTTPUtils, Genie.Sessions, Genie.Configuration, Genie.Input, Genie.Util, Genie.Renderer, Genie.Exceptions
+import Genie, Genie.HTTPUtils, Genie.Sessions, Genie.Configuration, Genie.Input, Genie.Util, Genie.Renderer, Genie.Exceptions, Genie.Flax
 
 include("mimetypes.jl")
 
@@ -531,7 +531,7 @@ function match_channels(req, msg::String, ws_client, params::Params, session::Un
     parsed_channel, param_names, param_types = parse_channel(c.path)
 
     payload::Dict{String,Any} = try
-                                  Renderer.JSONParser.parse(msg)
+                                  Flax.JSONRenderer.JSONParser.parse(msg)
                                 catch ex
                                   Dict{String,Any}()
                                 end
@@ -733,7 +733,7 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
 
   if request_type_is(req, :json) && content_length(req) > 0
     try
-      params.collection[Genie.PARAMS_JSON_PAYLOAD] = Renderer.JSONParser.parse(params.collection[Genie.PARAMS_RAW_PAYLOAD])
+      params.collection[Genie.PARAMS_JSON_PAYLOAD] = Flax.JSONRenderer.JSONParser.parse(params.collection[Genie.PARAMS_RAW_PAYLOAD])
     catch ex
       @error sprint(showerror, ex)
       @warn "Setting @params(:JSON_PAYLOAD) to Nothing"
@@ -1059,7 +1059,7 @@ end
 """
 function error_500(error_message::String = "", req::HTTP.Request = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]])) :: HTTP.Response
   if request_type_is(req, :json)
-    HTTP.Response(500, ["Content-Type" => request_mappings[:json]], body = Renderer.JSONParser.json(Dict("error" => "500 - $error_message")))
+    HTTP.Response(500, ["Content-Type" => request_mappings[:json]], body = Flax.JSONRenderer.JSONParser.json(Dict("error" => "500 - $error_message")))
   elseif request_type_is(req, :text)
     HTTP.Response(500, ["Content-Type" => request_mappings[:text]], body = "Error: 500 - $error_message")
   else
@@ -1072,7 +1072,7 @@ end
 """
 function error_xxx(error_message::String = "", req::HTTP.Request = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]]); error_info::String = "", error_code::Int = 500) :: HTTP.Response
   if request_type_is(req, :json)
-    HTTP.Response(error_code, ["Content-Type" => request_mappings[:json]], body = Renderer.JSONParser.json(Dict("error" => "500 - $error_message")))
+    HTTP.Response(error_code, ["Content-Type" => request_mappings[:json]], body = Flax.JSONRenderer.JSONParser.json(Dict("error" => "500 - $error_message")))
   elseif request_type_is(req, :text)
     HTTP.Response(error_code, ["Content-Type" => request_mappings[:text]], body = "Error: 500 - $error_message")
   else
