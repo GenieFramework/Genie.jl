@@ -41,25 +41,25 @@ export HTMLString
 
 Generates a HTML element in the form <...></...>
 """
-@inline function normal_element(f::Function, elem::String, args = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+function normal_element(f::Function, elem::String, args = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   normal_element(f(), elem, args, attrs...)
 end
-@inline function normal_element(children::Union{String,Vector{String}}, elem::String, args, attrs::Pair{Symbol,Any}) :: HTMLString
+function normal_element(children::Union{String,Vector{String}}, elem::String, args, attrs::Pair{Symbol,Any}) :: HTMLString
   normal_element(children, elem, args, Pair{Symbol,Any}[attrs])
 end
-@inline function normal_element(children::Union{String,Vector{String}}, elem::String, args, attrs...) :: HTMLString
+function normal_element(children::Union{String,Vector{String}}, elem::String, args, attrs...) :: HTMLString
   normal_element(children, elem, args, Pair{Symbol,Any}[attrs...])
 end
-@inline function normal_element(children::Union{String,Vector{String}}, elem::String, args = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+function normal_element(children::Union{String,Vector{String}}, elem::String, args = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   children = join(children)
   elem = normalize_element(elem)
   attribs = rstrip(attributes(attrs))
   string("<", elem, (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), ">", prepare_template(children), "</", elem, ">")
 end
-@inline function normal_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+function normal_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   normal_element("", elem, attrs...)
 end
-@inline function normal_element(elems::Vector, elem::String, args = [], attrs...) :: HTMLString
+function normal_element(elems::Vector, elem::String, args = [], attrs...) :: HTMLString
   io = IOBuffer()
 
   for e in elems
@@ -74,7 +74,7 @@ end
 
   normal_element(String(take!(io)), elem, args, attrs...)
 end
-@inline function normal_element(_::Nothing, __::Any) :: HTMLString
+function normal_element(_::Nothing, __::Any) :: HTMLString
   ""
 end
 
@@ -85,10 +85,10 @@ end
 
 Cleans up the template before rendering (ex by removing empty nodes).
 """
-@inline function prepare_template(s::String) :: String
+function prepare_template(s::String) :: String
   s
 end
-@inline function prepare_template(v::Vector{T})::String where {T}
+function prepare_template(v::Vector{T})::String where {T}
   filter!(v) do (x)
     ! isa(x, Nothing)
   end
@@ -118,10 +118,10 @@ end
 
 Cleans up problematic characters or DOM elements.
 """
-@inline function normalize_element(elem::String)
+function normalize_element(elem::String)
   replace(string(lowercase(elem)), "_____"=>"-")
 end
-@inline function denormalize_element(elem::String)
+function denormalize_element(elem::String)
   replace(string(lowercase(elem)), "-"=>"_____")
 end
 
@@ -131,7 +131,7 @@ end
 
 Generates a void HTML element in the form <...>
 """
-@inline function void_element(elem::String, args = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+function void_element(elem::String, args = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   attribs = rstrip(attributes(attrs))
   string("<", normalize_element(elem), (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), ">")
 end
@@ -143,10 +143,10 @@ end
 
 Cleans up empty elements.
 """
-@inline function skip_element(f::Function) :: HTMLString
+function skip_element(f::Function) :: HTMLString
   "$(prepare_template(f()))"
 end
-@inline function skip_element() :: HTMLString
+function skip_element() :: HTMLString
   ""
 end
 
@@ -215,7 +215,7 @@ end
 """
 Outputs document's doctype.
 """
-@inline function doctype(doctype::Symbol = :html) :: HTMLString
+function doctype(doctype::Symbol = :html) :: HTMLString
   "<!DOCTYPE $doctype>"
 end
 
@@ -223,10 +223,10 @@ end
 """
 Outputs document's doctype.
 """
-@inline function doc(html::String) :: HTMLString
+function doc(html::String) :: HTMLString
   doctype() * "\n" * html
 end
-@inline function doc(doctype::Symbol, html::String) :: HTMLString
+function doc(doctype::Symbol, html::String) :: HTMLString
   doctype(doctype) * "\n" * html
 end
 

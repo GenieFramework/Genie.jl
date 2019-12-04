@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.22.5 - 2019-12-04
+
+* added support for `if` blocks
+* performance optimisations
+
 ## v0.22.5 - 2019-12-03
 
 * bug fixes

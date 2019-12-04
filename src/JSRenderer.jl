@@ -44,7 +44,7 @@ end
 
 """
 """
-@inline function to_js(data::String; prepend = "\n") :: String
+function to_js(data::String; prepend = "\n") :: String
   string("function $(Flax.function_name(data))() \n",
           Flax.injectvars(),
           prepend,

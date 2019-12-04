@@ -272,7 +272,7 @@ end
 
 Computes the name of a channel.
 """
-@inline function channelname(params::Channel) :: Symbol
+function channelname(params::Channel) :: Symbol
   baptizer(params, String[])
 end
 
@@ -290,7 +290,7 @@ end
 """
 The list of the defined named routes.
 """
-@inline function named_routes() :: OrderedCollections.OrderedDict{Symbol,Route}
+function named_routes() :: OrderedCollections.OrderedDict{Symbol,Route}
   _routes
 end
 const namedroutes = named_routes
@@ -311,7 +311,7 @@ end
 
 The list of the defined named channels.
 """
-@inline function named_channels() :: OrderedCollections.OrderedDict{Symbol,Channel}
+function named_channels() :: OrderedCollections.OrderedDict{Symbol,Channel}
   _channels
 end
 const namedchannels = named_channels
@@ -330,7 +330,7 @@ end
 """
 Gets the `Route` correspoding to `routename`
 """
-@inline function get_route(route_name::Symbol) :: Route
+function get_route(route_name::Symbol) :: Route
   haskey(named_routes(), route_name) ? named_routes()[route_name] : error("Route named `$route_name` is not defined")
 end
 
@@ -340,7 +340,7 @@ end
 
 Returns a vector of defined routes.
 """
-@inline function routes() :: Vector{Route}
+function routes() :: Vector{Route}
   collect(values(_routes)) |> reverse
 end
 
@@ -350,7 +350,7 @@ end
 
 Returns a vector of defined channels.
 """
-@inline function channels() :: Vector{Channel}
+function channels() :: Vector{Channel}
   collect(values(_channels)) |> reverse
 end
 
@@ -360,7 +360,7 @@ end
 
 Removes the route with the corresponding name from the routes collection and returns the collection of remaining routes.
 """
-@inline function delete!(routes::OrderedCollections.OrderedDict{Symbol,Route}, key::Symbol) :: OrderedCollections.OrderedDict{Symbol,Route}
+function delete!(routes::OrderedCollections.OrderedDict{Symbol,Route}, key::Symbol) :: OrderedCollections.OrderedDict{Symbol,Route}
   OrderedCollections.delete!(routes, key)
 end
 
@@ -415,7 +415,7 @@ end
 """
 Generates the HTTP link corresponding to `route_name` using the parameters in `route_params`.
 """
-@inline function to_link(route_name::Symbol; preserve_query::Bool = true, extra_query::Dict = Dict(), route_params...) :: String
+function to_link(route_name::Symbol; preserve_query::Bool = true, extra_query::Dict = Dict(), route_params...) :: String
   to_link(route_name, route_params_to_dict(route_params), preserve_query = preserve_query, extra_query = extra_query)
 end
 
@@ -430,7 +430,7 @@ const toroute = to_link
 
 Converts the route params to a `Dict`.
 """
-@inline function route_params_to_dict(route_params) :: Dict{Symbol,Any}
+function route_params_to_dict(route_params) :: Dict{Symbol,Any}
   Dict{Symbol,Any}(route_params)
 end
 

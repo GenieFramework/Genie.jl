@@ -103,7 +103,7 @@ end
 Adds a signature header to the response using the value in `Genie.config.server_signature`.
 If `Genie.config.server_signature` is empty, the header is not added.
 """
-@inline function sign_response!(res::HTTP.Response) :: HTTP.Response
+function sign_response!(res::HTTP.Response) :: HTTP.Response
   headers = Dict(res.headers)
   isempty(Genie.config.server_signature) || (headers["Server"] = Genie.config.server_signature)
 
@@ -117,7 +117,7 @@ end
 
 Http server handler function - invoked when the server gets a request.
 """
-@inline function handle_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: HTTP.Response
+function handle_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: HTTP.Response
   isempty(Genie.config.server_signature) && sign_response!(res)
 
   try
@@ -159,7 +159,7 @@ end
 
 Configures the handler for the HTTP Request and handles errors.
 """
-@inline function setup_http_handler(req::HTTP.Request, res::HTTP.Response = HTTP.Response()) :: HTTP.Response
+function setup_http_handler(req::HTTP.Request, res::HTTP.Response = HTTP.Response()) :: HTTP.Response
   try
     Distributed.@fetch handle_request(req, res)
   catch ex # ex is a Distributed.RemoteException
@@ -189,7 +189,7 @@ end
 
 Configures the handler for WebSockets requests.
 """
-@inline function setup_ws_handler(req::HTTP.Request, ws_client) :: Nothing
+function setup_ws_handler(req::HTTP.Request, ws_client) :: Nothing
   while ! eof(ws_client)
     write(ws_client, String(Distributed.@fetch handle_ws_request(req, String(readavailable(ws_client)), ws_client)))
   end

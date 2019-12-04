@@ -62,7 +62,7 @@ end
 
 Renders a template file.
 """
-@inline function template(path::String; partial::Bool = true, context::Module = @__MODULE__) :: String
+function template(path::String; partial::Bool = true, context::Module = @__MODULE__) :: String
   Base.invokelatest(HTMLRenderer.get_template(path, partial = partial, context = context))::String
 end
 
@@ -90,7 +90,7 @@ end
 
 Loads the rendering vars into the task's scope
 """
-@inline function registervars(vars...) :: Nothing
+function registervars(vars...) :: Nothing
   init_task_local_storage()
   task_local_storage(:__vars, merge(task_local_storage(:__vars), Dict{Symbol,Any}(vars)))
 
@@ -98,7 +98,7 @@ Loads the rendering vars into the task's scope
 end
 
 
-@inline function vars_signature() :: String
+function vars_signature() :: String
   task_local_storage(:__vars) |> keys |> collect |> sort |> string
 end
 
@@ -108,7 +108,7 @@ end
 
 Generates function name for generated Flax views.
 """
-@inline function function_name(file_path::String) :: String
+function function_name(file_path::String) :: String
   "func_$(SHA.sha1( relpath(isempty(file_path) ? " " : file_path) * vars_signature() ) |> bytes2hex)"
 end
 
@@ -118,7 +118,7 @@ end
 
 Generates module name for generated Flax views.
 """
-@inline function m_name(file_path::String) :: String
+function m_name(file_path::String) :: String
   string(SHA.sha1( relpath(isempty(file_path) ? " " : file_path) * vars_signature()) |> bytes2hex)
 end
 
@@ -128,7 +128,7 @@ end
 
 Converts a HTML document to a Flax document.
 """
-@inline function html_to_flax(file_path::String; partial = true) :: String
+function html_to_flax(file_path::String; partial = true) :: String
   to_flax(file_path, parse_template, partial = partial)
 end
 
@@ -138,7 +138,7 @@ end
 
 Converts string view data to Flax code
 """
-@inline function string_to_flax(content::String; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "") :: String
+function string_to_flax(content::String; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "") :: String
   to_flax(content, parse_string, partial = partial, f_name = f_name, prepend = prepend)
 end
 
@@ -148,7 +148,7 @@ end
 
 Converts an input file to Flax code
 """
-@inline function to_flax(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "\n") :: String
+function to_flax(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "\n") :: String
   f_name = (f_name === nothing) ? function_name(string(input, partial)) : f_name
 
   string("function $(f_name)() \n",
@@ -220,7 +220,7 @@ end
 
 Parses a HTML file into Flax code.
 """
-@inline function parse_template(file_path::String; partial::Bool = true) :: String
+function parse_template(file_path::String; partial::Bool = true) :: String
   parse(read_template_file(file_path), partial = partial)
 end
 
@@ -230,12 +230,12 @@ end
 
 Parses a HTML string into Flax code.
 """
-@inline function parse_string(data::String; partial::Bool = true) :: String
+function parse_string(data::String; partial::Bool = true) :: String
   parse(parsetags(data), partial = partial)
 end
 
 
-@inline function parse(input::String; partial::Bool = true) :: String
+function parse(input::String; partial::Bool = true) :: String
   HTMLRenderer.parsehtml(input, partial = partial)
 end
 
@@ -245,11 +245,12 @@ end
 
 Parses special Flax tags.
 """
-@inline function parsetags(line::Tuple{Int,String}) :: String
+function parsetags(line::Tuple{Int,String}) :: String
   parsetags(line[2])
 end
-@inline function parsetags(code::String) :: String
+function parsetags(code::String) :: String
   code = replace(code, "<%"=>"""<script type="julia/eval">""")
+  occursin(" if ", code) && (code = replace(code, " if "=>" Flax.@condblock if "))
   replace(code, "%>"=>"""</script>""")
 end
 
@@ -259,7 +260,7 @@ end
 
 Generated functions that represent Flax functions definitions corresponding to HTML elements.
 """
-@inline function register_elements() :: Nothing
+function register_elements() :: Nothing
   for elem in HTMLRenderer.NORMAL_ELEMENTS
     register_normal_element(elem)
   end
@@ -272,7 +273,7 @@ Generated functions that represent Flax functions definitions corresponding to H
 end
 
 
-@inline function register_element(elem::Union{Symbol,String}, elem_type::Union{Symbol,String} = :normal; context = Flax) :: Nothing
+function register_element(elem::Union{Symbol,String}, elem_type::Union{Symbol,String} = :normal; context = Flax) :: Nothing
   elem = string(elem)
   occursin('-', elem) && (elem = HTMLRenderer.denormalize_element(elem))
 
@@ -332,6 +333,12 @@ macro foreach(f, arr)
   quote
     Core.eval($__module__, $e)
   end
+end
+
+
+macro condblock(expr)
+  expr.args[2] = esc(:([$([arg for arg in expr.args[2].args if !isa(arg, LineNumberNode)]...),]))
+  expr
 end
 
 
