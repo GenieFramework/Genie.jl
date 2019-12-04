@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.22.5 - 2019-12-03
+
+* bug fixes
+
 ## v0.22.5 - 2019-11-30
 
 * added type hints to renderer's `invokelastest` calls

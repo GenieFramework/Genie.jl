@@ -343,9 +343,9 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
 
     print(io, attributes_string)
     ! isempty(attributes_string) && ! isempty(attributes_keys) && print(io, ", ")
-    isempty(attributes_string) && ! isempty(attributes_keys) && print(io, "; ")
+    # isempty(attributes_string) && ! isempty(attributes_keys) && print(io, "; ")
     ! isempty(attributes_keys) &&
-      print(io, "NamedTuple{($(join(attributes_keys, ", "))$(length(attributes_keys) == 1 ? ", " : ""))}(($(join(attributes_values, ", "))$(length(attributes_keys) == 1 ? ", " : "")))...")
+      print(io, "; NamedTuple{($(join(attributes_keys, ", "))$(length(attributes_keys) == 1 ? ", " : ""))}(($(join(attributes_values, ", "))$(length(attributes_keys) == 1 ? ", " : "")))...")
     print(io, ")")
 
     inner = ""

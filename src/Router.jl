@@ -3,7 +3,8 @@ module Router
 import Revise
 import Reexport, Logging
 import HTTP, URIParser, HttpCommon, Sockets, Millboard, Dates, OrderedCollections
-import Genie, Genie.HTTPUtils, Genie.Sessions, Genie.Configuration, Genie.Input, Genie.Util, Genie.Renderer, Genie.Exceptions, Genie.Flax
+import Genie, Genie.HTTPUtils, Genie.Sessions, Genie.Configuration
+import Genie.Input, Genie.Util, Genie.Renderer, Genie.Exceptions, Genie.Flax
 
 include("mimetypes.jl")
 
