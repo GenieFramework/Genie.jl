@@ -17,6 +17,7 @@ import Logging, LoggingExtras
 
 push!(LOAD_PATH,  joinpath(@__DIR__, "cache_adapters"),
                   joinpath(@__DIR__, "session_adapters"),
+                  joinpath(@__DIR__, "renderers"),
                   config.path_resources, config.path_helpers)
 
 include(joinpath(@__DIR__, "genie_types.jl"))

@@ -333,7 +333,9 @@ function hasrequested(content_type::Symbol) :: Bool
   task_local_storage(:__params)[:response_type] == content_type
 end
 
+
 ### RESPONSES ###
+
 
 """
 Constructs a `Response` corresponding to the content-type sof the request.

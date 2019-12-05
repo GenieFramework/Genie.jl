@@ -23,13 +23,13 @@ const Path = FilePaths.Path
 const FilePath = Union{FilePaths.PosixPath,FilePaths.WindowsPath}
 const filepath = FilePaths.Path
 
-include("HTMLRenderer.jl")
+include("renderers/HTMLRenderer.jl")
 using .HTMLRenderer
 
-include("JSONRenderer.jl")
+include("renderers/JSONRenderer.jl")
 using .JSONRenderer
 
-include("JSRenderer.jl")
+include("renderers/JSRenderer.jl")
 using .JSRenderer
 
 
@@ -248,9 +248,13 @@ Parses special Flax tags.
 function parsetags(line::Tuple{Int,String}) :: String
   parsetags(line[2])
 end
+
+
 function parsetags(code::String) :: String
   code = replace(code, "<%"=>"""<script type="julia/eval">""")
+
   occursin(" if ", code) && (code = replace(code, " if "=>" Flax.@condblock if "))
+
   replace(code, "%>"=>"""</script>""")
 end
 
@@ -337,7 +341,12 @@ end
 
 
 macro condblock(expr)
-  expr.args[2] = esc(:([$([arg for arg in expr.args[2].args if !isa(arg, LineNumberNode)]...),]))
+  # dump(expr)
+
+  expr.args[2] = quote
+    join([$([arg for arg in expr.args[2].args if !isa(arg, LineNumberNode)]...),])
+  end
+
   expr
 end
 
