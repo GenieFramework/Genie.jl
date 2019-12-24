@@ -552,7 +552,7 @@ function match_channels(req, msg::String, ws_client, params::Params, session::Un
 
     action_controller_params(c.action, params)
 
-    params.collection[Genie.PARAMS_CHANNEL_KEY] = c
+    params.collection[Genie.PARAMS_CHANNELS_KEY] = c
 
     task_local_storage(:__params, params.collection)
 
@@ -832,19 +832,19 @@ function setup_base_params(req::HTTP.Request = HTTP.Request(), res::Union{HTTP.R
   params[Genie.PARAMS_RESPONSE_KEY]  = res
   params[Genie.PARAMS_SESSION_KEY]   = session
   params[Genie.PARAMS_FLASH_KEY]     = Genie.config.session_auto_start ?
-                                       begin
-                                        if session !== nothing
-                                          s = Genie.Sessions.get(session, Genie.PARAMS_FLASH_KEY)
-                                          if s === nothing
-                                            ""
+                                        begin
+                                          if session !== nothing
+                                            s = Genie.Sessions.get(session, Genie.PARAMS_FLASH_KEY)
+                                            if s === nothing
+                                              ""
+                                            else
+                                              Genie.Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
+                                              s
+                                            end
                                           else
-                                            Genie.Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
-                                            s
+                                            ""
                                           end
-                                        else
-                                          ""
-                                        end
-                                       end : ""
+                                        end : ""
 
   params[Genie.PARAMS_POST_KEY]      = Dict{Symbol,Any}()
   params[Genie.PARAMS_GET_KEY]       = Dict{Symbol,Any}()

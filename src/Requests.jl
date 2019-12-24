@@ -3,10 +3,11 @@ Collection of utilities for working with Requests data
 """
 module Requests
 
+import Revise
 import Genie, Genie.Router, Genie.Input
 import HTTP, Reexport
 
-export jsonpayload, rawpayload, filespayload, postpayload, getpayload, request, matchedroute, matchedchannel
+export jsonpayload, rawpayload, filespayload, postpayload, getpayload, request, matchedroute, matchedchannel, wsclient
 export infilespayload, filename, payload
 Reexport.@reexport using HTTP
 
@@ -222,6 +223,16 @@ Returns the `Channel` object which was matched for the current request.
 """
 function matchedchannel() :: Genie.Router.Channel
   Router.@params(Genie.PARAMS_CHANNELS_KEY)
+end
+
+
+"""
+    wsclient() :: HTTP.WebSockets.WebSocket
+
+The web sockets client for the current request.
+"""
+function wsclient() :: HTTP.WebSockets.WebSocket
+  Router.@params(Genie.PARAMS_WS_CLIENT)
 end
 
 end

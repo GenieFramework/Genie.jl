@@ -3,7 +3,8 @@ Helper functions for working with frontend assets (including JS, CSS, etc files)
 """
 module Assets
 
-import Genie, Genie.Configuration
+import Revise
+import Genie, Genie.Configuration, Genie.Router, Genie.WebChannels
 
 export include_asset, css_asset, js_asset
 
@@ -47,6 +48,47 @@ Path to a js asset. `file_name` should not include the extension.
 """
 function js_asset(file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
   include_asset(:js, file_name, fingerprinted = fingerprinted)
+end
+
+
+"""
+    embeded(path::String) :: String
+
+Reads and outputs the file at `path` within Genie's root package dir
+"""
+function embedded(path::String) :: String
+  read(joinpath(@__DIR__, "..", path) |> normpath, String)
+end
+
+
+"""
+    channels() :: String
+
+Outputs the channels.js file included with the Genie package
+"""
+function channels() :: String
+  embedded(joinpath("files", "new_app", "public", "js", "app", "channels.js"))
+end
+
+
+function channels_script() :: String
+"""
+<script>
+$(channels())
+</script>
+"""
+end
+
+
+function channels_support() :: String
+  Router.route("/__/channels.js", channels)
+
+  Router.channel("/__/subscribe") do
+    WebChannels.subscribe(Genie.Requests.wsclient(), "__")
+    "OK"
+  end
+
+  "<script src=\"/__/channels.js\"></script>"
 end
 
 end

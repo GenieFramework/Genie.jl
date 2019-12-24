@@ -3,8 +3,10 @@ Handles Http server related functionality, manages requests and responses and th
 """
 module AppServer
 
-import Revise, HTTP, HTTP.IOExtras, HTTP.Sockets, Millboard, MbedTLS, URIParser, Sockets, Distributed, Logging
-import Genie, Genie.Configuration, Genie.Sessions, Genie.Flax, Genie.Router, Genie.WebChannels, Genie.Exceptions
+import Revise
+import HTTP, HTTP.IOExtras, HTTP.Sockets
+import Millboard, MbedTLS, URIParser, Sockets, Distributed, Logging
+import Genie, Genie.Configuration, Genie.Sessions, Genie.Flax, Genie.Router, Genie.WebChannels, Genie.Exceptions, Genie.Headers
 
 mutable struct ServersCollection
   webserver::Union{Task,Nothing}
@@ -73,84 +75,25 @@ end
 
 
 """
-    set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.Response) :: HTTP.Response
-
-Configures the response headers.
-"""
-function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.Response) :: HTTP.Response
-  if req.method == Genie.Router.OPTIONS || req.method == Genie.Router.GET
-
-    request_origin = get(Dict(req.headers), "Origin", "")
-
-    allowed_origin_dict = Dict("Access-Control-Allow-Origin" =>
-      in(request_origin, Genie.config.cors_allowed_origins)
-      ? request_origin
-      : strip(Genie.config.cors_headers["Access-Control-Allow-Origin"])
-    )
-
-    app_response.headers = [d for d in merge(Genie.config.cors_headers, allowed_origin_dict, Dict(res.headers), Dict(app_response.headers))]
-  end
-
-  app_response.headers = [d for d in merge(Dict(res.headers), Dict(app_response.headers))]
-
-  app_response
-end
-
-
-"""
-    sign_response!(res::HTTP.Response) :: HTTP.Response
-
-Adds a signature header to the response using the value in `Genie.config.server_signature`.
-If `Genie.config.server_signature` is empty, the header is not added.
-"""
-function sign_response!(res::HTTP.Response) :: HTTP.Response
-  headers = Dict(res.headers)
-  isempty(Genie.config.server_signature) || (headers["Server"] = Genie.config.server_signature)
-
-  res.headers = [k for k in headers]
-  res
-end
-
-
-"""
     handle_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = IPv4(Genie.config.server_host)) :: HTTP.Response
 
 Http server handler function - invoked when the server gets a request.
 """
 function handle_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: HTTP.Response
-  isempty(Genie.config.server_signature) && sign_response!(res)
+  isempty(Genie.config.server_signature) && Headers.sign_response!(res)
 
   try
-    req = normalize_headers(req)
+    req = Headers.normalize_headers(req)
   catch ex
     @error ex
   end
 
   try
-    set_headers!(req, res, Genie.Router.route_request(req, res, ip))
+    Headers.set_headers!(req, res, Genie.Router.route_request(req, res, ip))
   catch ex
     @error ex
     rethrow(ex)
   end
-end
-
-
-function normalize_headers(req::HTTP.Request) :: HTTP.Request
-  headers = Dict(req.headers)
-  normalized_headers = Dict{String,String}()
-
-  for (k,v) in headers
-    normalized_headers[normalize_header_key(string(k))] = string(v)
-  end
-
-  req.headers = [k for k in normalized_headers]
-
-  req
-end
-
-
-function normalize_header_key(key::String) :: String
-  join(map(x -> uppercasefirst(lowercase(x)), split(key, '-')), '-')
 end
 
 

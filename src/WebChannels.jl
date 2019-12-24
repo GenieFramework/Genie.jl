@@ -10,6 +10,10 @@ import Genie, Genie.Renderer
 const ClientId = UInt # web socket hash
 const ChannelName = String
 
+struct ChannelNotFoundException <: Exception
+  name::ChannelName
+end
+
 mutable struct ChannelClient
   client::HTTP.WebSockets.WebSocket
   channels::Vector{ChannelName}
@@ -206,13 +210,16 @@ Pushes `msg` (and `payload`) to all the clients subscribed to the channels in `c
 function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String) :: Bool
   isa(channels, Array) || (channels = ChannelName[channels])
 
-  try
-    for channel in channels
-      for client in SUBSCRIPTIONS[channel]
+  for channel in channels
+    haskey(SUBSCRIPTIONS, channel) || throw(ChannelNotFoundException(channel))
+
+    for client in SUBSCRIPTIONS[channel]
+      try
         message(client, msg)
+      catch ex
+        @error ex
       end
     end
-  catch
   end
 
   true
@@ -220,15 +227,16 @@ end
 function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String, payload::Dict) :: Bool
   isa(channels, Array) || (channels = [channels])
 
-  try
-    for channel in channels
-      in(channel, keys(SUBSCRIPTIONS)) || continue
+  for channel in channels
+    in(channel, keys(SUBSCRIPTIONS)) || continue
 
-      for client in SUBSCRIPTIONS[channel]
+    for client in SUBSCRIPTIONS[channel]
+      try
         message(client, ChannelMessage(channel, client, msg, payload) |> Renderer.JSONParser.json)
+      catch ex
+        @error ex
       end
     end
-  catch
   end
 
   true

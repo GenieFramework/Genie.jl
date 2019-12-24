@@ -52,7 +52,7 @@ window.WebChannels.load_channels = function() {
 
   // A message maps to a channel route so that channel + message = /action/controller
   // The payload is the data made exposed in the Channel Controller
-  function sendMessageTo(channel, message, payload) {
+  function sendMessageTo(channel, message, payload = {}) {
     if (socket.readyState === 1) {
       socket.send(JSON.stringify({
         'channel': channel,
@@ -74,9 +74,39 @@ WebChannels.load_channels();
 WebChannels.messageHandlers.push(function(event) {
   console.log(event.data);
 });
+
+WebChannels.messageHandlers.push(function(event){
+  try {
+    if (event.data.startsWith('{') && event.data.endsWith('}')) {
+      window.parse_payload(JSON.parse(event.data));
+    } else {
+      window.parse_payload(event.data);
+    }
+  } catch (ex) {
+    console.log(ex);
+  }
+});
+
 WebChannels.errorHandlers.push(function(event) {
   console.log(event.data);
 });
+
 WebChannels.closeHandlers.push(function(event) {
   console.log("Server closed WebSocket connection");
 });
+
+function parse_payload(json_data) {
+  console.log("Overwrite window.parse_payload to handle messages from the server")
+  console.log(json_data);
+};
+
+// subscribe
+function subscribe() {
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    WebChannels.sendMessageTo("__", "subscribe");
+    console.log("Subscription ready");
+  } else {
+    console.log("Queuing subscription");
+    setTimeout(subscribe, 1000);
+  }
+};

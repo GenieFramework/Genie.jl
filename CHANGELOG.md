@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.22.9 - 2019-12-24
+
+* enhanced support for WebChannels and websockets operations
+
 ## v0.22.8 - 2019-12-05
 
 * more tests
