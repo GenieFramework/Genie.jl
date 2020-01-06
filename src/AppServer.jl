@@ -6,7 +6,7 @@ module AppServer
 import Revise
 import HTTP, HTTP.IOExtras, HTTP.Sockets
 import Millboard, MbedTLS, URIParser, Sockets, Distributed, Logging
-import Genie, Genie.Configuration, Genie.Sessions, Genie.Flax, Genie.Router, Genie.WebChannels, Genie.Exceptions, Genie.Headers
+import Genie, Genie.Configuration, Genie.Sessions, Genie.Router, Genie.WebChannels, Genie.Exceptions, Genie.Headers
 
 mutable struct ServersCollection
   webserver::Union{Task,Nothing}

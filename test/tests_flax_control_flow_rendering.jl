@@ -2,7 +2,7 @@
   @safetestset "IF conditional rendering" begin
     @safetestset "IF true" begin
       using Genie
-      using Genie.Renderer
+      using Genie.Renderer.Html
 
       view = raw"""
                 <section class='block'>
@@ -17,7 +17,7 @@
 
     @safetestset "IF false" begin
       using Genie
-      using Genie.Renderer
+      using Genie.Renderer.Html
 
       view = raw"""
                 <section class='block'>

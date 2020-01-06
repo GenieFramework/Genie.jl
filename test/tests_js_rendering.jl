@@ -2,7 +2,7 @@
 
   @safetestset "Plain JS rendering" begin
     using Genie
-    using Genie.Renderer
+    using Genie.Renderer.Js
 
     script = raw"var app = new Vue({el: '#app', data: { message: 'Hello Vue!' }})"
 
@@ -15,8 +15,8 @@
 
   @safetestset "Vars JS rendering" begin
     using Genie
-    using Genie.Renderer
-    using Genie.Renderer.Flax.JSONRenderer.JSONParser
+    using Genie.Renderer.Js
+    using Genie.Renderer.Json.JSONParser
 
     data = JSON.json(("message" => "Hi Vue"))
 

@@ -1,5 +1,5 @@
 using Genie
-using Genie.Renderer
+using Genie.Renderer.Html
 using Genie.Requests
 
 const content = "abcd"

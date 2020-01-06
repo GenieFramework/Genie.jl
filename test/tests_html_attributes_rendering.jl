@@ -1,34 +1,34 @@
 @safetestset "HTML attributes rendering" begin
   @safetestset "No attributes" begin
-    using Genie.Renderer
+    using Genie.Renderer.Html
 
     r = html("<div></div>")
     @test String(r.body) == "<html><head></head><body><div></div></body></html>"
   end;
 
   @safetestset "Regular attribute" begin
-    using Genie.Renderer
+    using Genie.Renderer.Html
 
     r = html("""<div class="foo"></div>""")
     @test String(r.body) == """<html><head></head><body><div class="foo"></div></body></html>"""
   end;
 
   @safetestset "Dashed attributes" begin
-    using Genie.Renderer
+    using Genie.Renderer.Html
 
     r = html("""<div data-arg="foo"></div>""")
     @test String(r.body) == """<html><head></head><body><div data-arg="foo"></div></body></html>"""
   end;
 
   @safetestset "Multiple dashed attributes" begin
-    using Genie.Renderer
+    using Genie.Renderer.Html
 
     r = html("""<div data-arg="foo bar" data-moo-hoo="123"></div>""")
     @test String(r.body) == """<html><head></head><body><div data-arg="foo bar" data-moo-hoo="123"></div></body></html>"""
   end;
 
   @safetestset "Single quotes" begin
-    using Genie.Renderer
+    using Genie.Renderer.Html
 
     r = html("<div class='foo'></div>")
     @test String(r.body) == """<html><head></head><body><div class="foo"></div></body></html>"""
@@ -36,7 +36,7 @@
 
   @safetestset "Vue args" begin
     using Genie
-    using Genie.Renderer
+    using Genie.Renderer.Html
 
     r = html("""<span v-bind:title="message">
     Hover your mouse over me for a few seconds
@@ -113,7 +113,7 @@
 
   @safetestset "Embedded Julia" begin
     using Genie
-    using Genie.Renderer
+    using Genie.Renderer.Html
 
     id = 10
     r = html("""<span id="$id"></span>""")

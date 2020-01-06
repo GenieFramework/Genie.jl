@@ -192,14 +192,14 @@ We now need to refactor our controller to use the view, passing in the expected 
 
 ```julia
 # BooksController.jl
-using Genie.Renderer
+using Genie.Renderer.Html
 
 function billgatesbooks()
   html(:books, :billgatesbooks, books = BillGatesBooks)
 end
 ```
 
-First, notice that we needed to add `Genie.Renderer` as a dependency, to get access to the `html` method. As for the `html` method itself, it takes as its arguments the name of the resource, the name of the view file, and a list of keyword arguments representing view variables:
+First, notice that we needed to add `Genie.Renderer.Html` as a dependency, to get access to the `html` method. As for the `html` method itself, it takes as its arguments the name of the resource, the name of the view file, and a list of keyword arguments representing view variables:
 
 * `:books` is the name of the resource (which effectively indicates in which `views` folder Genie should look for the view file -- in our case `app/resources/books/views`);
 * `:billgatesbooks` is the name of the view file. We don't need to pass the extension, Genie will figure it out since there's only one file with this name;
@@ -334,7 +334,7 @@ Next, in `BooksController.jl`, append the extra logic at the end of the file, be
 # BooksController.jl
 module BooksController
 
-using Genie.Renderer
+using Genie.Renderer.Html
 
 struct Book
   title::String
@@ -357,7 +357,7 @@ end
 module API
 
 using ..BooksController
-using Genie.Renderer
+using Genie.Renderer.Json
 
 function billgatesbooks()
   json(BooksController.BillGatesBooks)
@@ -710,7 +710,7 @@ The next thing we need to do is to update our controller to use the model. Make 
 # BooksController.jl
 module BooksController
 
-using Genie.Renderer, SearchLight, Books
+using Genie.Renderer.Html, SearchLight, Books
 
 function billgatesbooks()
   html(:books, :billgatesbooks, books = all(Book))
@@ -719,7 +719,7 @@ end
 module API
 
 using ..BooksController
-using Genie.Renderer
+using Genie.Renderer.Json
 using SearchLight, Books
 
 function billgatesbooks()

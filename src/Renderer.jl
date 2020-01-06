@@ -1,15 +1,10 @@
 module Renderer
 
-export respond, html, json, redirect, js
+export respond, redirect, render
 
 import Revise
-import HTTP, Reexport, Markdown, Logging
+import HTTP, Reexport, Markdown, Logging, FilePaths, SHA
 import Genie, Genie.Util, Genie.Configuration, Genie.Exceptions
-
-Reexport.@reexport using Genie.Flax
-
-const Html = Genie.Flax
-export Html
 
 const DEFAULT_CHARSET = "charset=utf-8"
 const DEFAULT_CONTENT_TYPE = :html
@@ -17,6 +12,8 @@ const DEFAULT_LAYOUT_FILE = "app"
 
 const VIEWS_FOLDER = "views"
 const LAYOUTS_FOLDER = "layouts"
+
+const BUILD_NAME = "GenieViews"
 
 """
     const CONTENT_TYPES = Dict{Symbol,String}
@@ -35,25 +32,19 @@ const CONTENT_TYPES = Dict{Symbol,String}(
   :markdown   => "text/markdown; $DEFAULT_CHARSET"
 )
 
-"""
-    const RENDERERS = Dict
-
-Collection of renderers associated to each supported mime time. Other mime-renderer pairs can be added -
-or current ones can be replaced by custom ones, to be used by Genie.
-"""
-const RENDERERS = Dict(
-  MIME"text/html"               => Flax.HTMLRenderer,
-  MIME"application/json"        => Flax.JSONRenderer,
-  MIME"application/javascript"  => Flax.JSRenderer
-)
-
 const ResourcePath = Union{String,Symbol}
 const HTTPHeaders = Dict{String,String}
 
-const FilePath = Flax.FilePath
-const filepath = Flax.filepath
-const Path = Flax.Path
+const Path = FilePaths.Path
+const FilePath = Union{FilePaths.PosixPath,FilePaths.WindowsPath}
+const filepath = FilePaths.Path
+
 export FilePath, filepath, Path
+export @vars
+export WebRenderable
+
+init_task_local_storage() = (haskey(task_local_storage(), :__vars) || task_local_storage(:__vars, Dict{Symbol,Any}()))
+init_task_local_storage()
 
 
 """
@@ -66,6 +57,11 @@ mutable struct WebRenderable
   content_type::Symbol
   status::Int
   headers::HTTPHeaders
+end
+
+
+struct MethodNotImplementedException <: Exception
+  method::String
 end
 
 
@@ -146,169 +142,10 @@ function WebRenderable(wr::WebRenderable, content_type::Symbol, status::Int, hea
 end
 
 
-function render(::Type{MIME"text/html"}, data::String;
-                context::Module = @__MODULE__, layout::Union{String,Nothing} = nothing, vars...) :: WebRenderable
-  try
-    WebRenderable(Base.invokelatest(RENDERERS[MIME"text/html"].render(data; context = context, layout = layout, vars...))::String)
-  catch ex
-    isa(ex, KeyError) && Flax.changebuilds() # it's a view error so don't reuse them
-    rethrow(ex)
-  end
+function render() :: WebRenderable
+  throw(MethodNotImplementedException)
 end
 
-
-function render(::Type{MIME"text/html"}, viewfile::FilePath; layout::Union{Nothing,FilePath} = nothing,
-                  context::Module = @__MODULE__, vars...) :: WebRenderable
-  try
-    WebRenderable(Base.invokelatest(RENDERERS[MIME"text/html"].render(viewfile; layout = layout, context = context, vars...))::String)
-  catch ex
-    isa(ex, KeyError) && Flax.changebuilds() # it's a view error so don't reuse them
-
-    rethrow(ex)
-  end
-end
-
-
-"""
-"""
-function html(resource::ResourcePath, action::ResourcePath; layout::ResourcePath = DEFAULT_LAYOUT_FILE,
-                context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
-  html(Path(joinpath(Genie.config.path_resources, string(resource), VIEWS_FOLDER, string(action)));
-        layout = Path(joinpath(Genie.config.path_app, LAYOUTS_FOLDER, string(layout))),
-        context = context, status = status, headers = headers, vars...)
-end
-
-
-"""
-    html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), layout::Union{String,Nothing} = nothing, vars...) :: HTTP.Response
-
-Parses the `data` input as HTML, returning a HTML HTTP Response.
-
-# Arguments
-- `data::String`: the HTML string to be rendered
-- `context::Module`: the module in which the variables are evaluated (in order to provide the scope for vars). Usually the controller.
-- `status::Int`: status code of the response
-- `headers::HTTPHeaders`: HTTP response headers
-- `layout::Union{String,Nothing}`: layout file for rendering `data`
-
-# Example
-```jldoctest
-julia> html("<h1>Welcome \$(@vars(:name))</h1>", layout = "<div><% @yield %></div>", name = "Adrian")
-HTTP.Messages.Response:
-"
-HTTP/1.1 200 OK
-Content-Type: text/html; charset=utf-8
-
-<html><head></head><body><div><h1>Welcome Adrian</h1>
-</div></body></html>"
-```
-"""
-function html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), layout::Union{String,Nothing} = nothing, vars...) :: HTTP.Response
-  WebRenderable(render(MIME"text/html", data; context = context, layout = layout, vars...), status, headers) |> respond
-end
-
-
-"""
-    html(viewfile::FilePath; layout::Union{Nothing,FilePath} = nothing,
-          context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
-
-Parses and renders the HTML `viewfile`, optionally rendering it within the `layout` file. Valid file formats are `.html.jl` and `.flax.jl`.
-
-# Arguments
-- `viewfile::FilePath`: filesystem path to the view file as a `Renderer.FilePath`, ie `Renderer.FilePath("/path/to/file.html.jl")`
-- `layout::FilePath`: filesystem path to the layout file as a `Renderer.FilePath`, ie `Renderer.FilePath("/path/to/file.html.jl")`
-- `context::Module`: the module in which the variables are evaluated (in order to provide the scope for vars). Usually the controller.
-- `status::Int`: status code of the response
-- `headers::HTTPHeaders`: HTTP response headers
-"""
-function html(viewfile::FilePath; layout::Union{Nothing,FilePath} = nothing,
-                context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
-  WebRenderable(render(MIME"text/html", viewfile; layout = layout, context = context, vars...), status, headers) |> respond
-end
-
-
-
-### JSON RENDERING ###
-
-
-function render(::Type{MIME"application/json"}, datafile::FilePath; context::Module = @__MODULE__, vars...) :: WebRenderable
-  WebRenderable(Base.invokelatest(RENDERERS[MIME"application/json"].render(datafile; context = context, vars...))::String, :json)
-end
-function render(::Type{MIME"application/json"}, data::String; context::Module = @__MODULE__, vars...) :: WebRenderable
-  WebRenderable(Base.invokelatest(RENDERERS[MIME"application/json"].render(data; context = context, vars...))::String, :json)
-end
-function render(::Type{MIME"application/json"}, data::Any) :: WebRenderable
-  WebRenderable(Base.invokelatest(RENDERERS[MIME"application/json"].render(data))::String, :json)
-end
-
-
-"""
-"""
-function json(resource::ResourcePath, action::ResourcePath; context::Module = @__MODULE__,
-              status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
-  json(Path(joinpath(Genie.config.path_resources, string(resource), VIEWS_FOLDER, string(action) * RENDERERS[MIME"application/json"].JSON_FILE_EXT));
-        context = context, status = status, headers = headers, vars...)
-end
-
-
-"""
-"""
-function json(datafile::FilePath; context::Module = @__MODULE__,
-              status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
-  WebRenderable(render(MIME"application/json", datafile; context = context, vars...), :json, status, headers) |> respond
-end
-
-
-"""
-"""
-function json(data::String; context::Module = @__MODULE__,
-              status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
-  WebRenderable(render(MIME"application/json", data; context = context, vars...), :json, status, headers) |> respond
-end
-
-
-"""
-"""
-function json(data; status::Int = 200, headers::HTTPHeaders = HTTPHeaders()) :: HTTP.Response
-  WebRenderable(render(MIME"application/json", data), :json, status, headers) |> respond
-end
-
-
-### JS RENDERING
-
-
-function render(::Type{MIME"application/javascript"}, data::String; context::Module = @__MODULE__, vars...) :: WebRenderable
-  try
-    WebRenderable(Base.invokelatest(RENDERERS[MIME"application/javascript"].render(data; context = context, vars...))::String, :js)
-  catch ex
-    isa(ex, KeyError) && Flax.changebuilds() # it's a view error so don't reuse them
-    rethrow(ex)
-  end
-end
-
-
-function render(::Type{MIME"application/javascript"}, viewfile::FilePath; context::Module = @__MODULE__, vars...) :: WebRenderable
-  try
-    WebRenderable(Base.invokelatest(RENDERERS[MIME"application/javascript"].render(viewfile; context = context, vars...))::String, :js)
-  catch ex
-    isa(ex, KeyError) && Flax.changebuilds() # it's a view error so don't reuse them
-    rethrow(ex)
-  end
-end
-
-
-"""
-"""
-function js(data::String; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
-  WebRenderable(render(MIME"application/javascript", data; context = context, vars...), :js, status, headers) |> respond
-end
-
-
-"""
-"""
-function js(viewfile::FilePath; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
-  WebRenderable(render(MIME"application/javascript", viewfile; context = context, vars...), :js, status, headers) |> respond
-end
 
 ### REDIRECT RESPONSES ###
 
@@ -370,6 +207,192 @@ end
 function respond(f::Function, code::Int = 200, headers::HTTPHeaders = HTTPHeaders())
   respond(f(), code, headers)
 end
+
+
+"""
+    registervars(vars...) :: Nothing
+
+Loads the rendering vars into the task's scope
+"""
+function registervars(vars...) :: Nothing
+  init_task_local_storage()
+  task_local_storage(:__vars, merge(task_local_storage(:__vars), Dict{Symbol,Any}(vars)))
+
+  nothing
+end
+
+
+function injectvars() :: String
+  output = ""
+  for kv in task_local_storage(:__vars)
+    output *= "$(kv[1]) = Genie.Renderer.@vars($(repr(kv[1]))) \n"
+  end
+
+  output
+end
+
+
+function injectvars(context::Module) :: Nothing
+  for kv in task_local_storage(:__vars)
+    # isdefined(context, Symbol(kv[1])) ||
+    Core.eval(context, Meta.parse("$(kv[1]) = Genie.Renderer.@vars($(repr(kv[1])))"))
+  end
+
+  nothing
+end
+
+
+"""
+    view_file_info(path::String, supported_extensions::Vector{String}) :: Tuple{String,String}
+
+Extracts path and extension info about a file
+"""
+function view_file_info(path::String, supported_extensions::Vector{String}) :: Tuple{String,String}
+  _path, _extension = "", ""
+
+  if isfile(path)
+    _path, _extension = relpath(path), "." * split(path, ".", limit = 2)[end]
+  else
+    for file_extension in supported_extensions
+      if isfile(path * file_extension)
+        _path, _extension = path * file_extension, file_extension
+        break
+      end
+    end
+  end
+
+  _path, _extension
+end
+
+
+function vars_signature() :: String
+  task_local_storage(:__vars) |> keys |> collect |> sort |> string
+end
+
+
+"""
+    function_name(file_path::String)
+
+Generates function name for generated HTML+Julia views.
+"""
+function function_name(file_path::String) :: String
+  "func_$(SHA.sha1( relpath(isempty(file_path) ? " " : file_path) * vars_signature() ) |> bytes2hex)"
+end
+
+
+"""
+    m_name(file_path::String)
+
+Generates module name for generated HTML+Julia views.
+"""
+function m_name(file_path::String) :: String
+  string(SHA.sha1( relpath(isempty(file_path) ? " " : file_path) * vars_signature()) |> bytes2hex)
+end
+
+
+"""
+    build_is_stale(file_path::String, build_path::String) :: Bool
+
+Checks if the view template has been changed since the last time the template was compiled.
+"""
+function build_is_stale(file_path::String, build_path::String) :: Bool
+  isfile(file_path) || return true
+
+  file_mtime = stat(file_path).mtime
+  build_mtime = stat(build_path).mtime
+  status = file_mtime > build_mtime
+
+  Genie.config.log_views && status && @debug("🚨  View $file_path build $build_path is stale")
+
+  status
+end
+
+
+"""
+    build_module(content::String, path::String, mod_name::String) :: String
+
+Persists compiled Julia view data to file and returns the path
+"""
+function build_module(content::String, path::String, mod_name::String) :: String
+  module_path = joinpath(Genie.config.path_build, BUILD_NAME, mod_name)
+
+  isdir(dirname(module_path)) || mkpath(dirname(module_path))
+
+  open(module_path, "w") do io
+    write(io, "# $path \n\n")
+    write(io, content)
+  end
+
+  module_path
+end
+
+
+"""
+    preparebuilds() :: Bool
+
+Sets up the build folder and the build module file for generating the compiled views.
+"""
+function preparebuilds(subfolder = BUILD_NAME) :: Bool
+  build_path = joinpath(Genie.config.path_build, subfolder)
+  isdir(build_path) || mkpath(build_path)
+
+  true
+end
+
+
+function purgebuilds(subfolder = BUILD_NAME) :: Bool
+  rm(joinpath(Genie.config.path_build, subfolder), force = true, recursive = true)
+
+  true
+end
+
+
+function changebuilds(subfolder = BUILD_NAME) :: Bool
+  Genie.config.path_build = Genie.Configuration.buildpath()
+  preparebuilds()
+end
+
+
+"""
+    @vars
+
+Utility macro for accessing view vars
+"""
+macro vars()
+  :(task_local_storage(:__vars))
+end
+
+
+"""
+    @vars(key)
+
+Utility macro for accessing view vars stored under `key`
+"""
+macro vars(key)
+  :(task_local_storage(:__vars)[$key])
+end
+
+
+"""
+    @vars(key, value)
+
+Utility macro for setting a new view var, as `key` => `value`
+"""
+macro vars(key, value)
+  quote
+    try
+      task_local_storage(:__vars)[$key] = $(esc(value))
+    catch
+      init_task_local_storage()
+      task_local_storage(:__vars)[$key] = $(esc(value))
+    end
+  end
+end
+
+
+include("renderers/Html.jl")
+include("renderers/Json.jl")
+include("renderers/Js.jl")
 
 
 end

@@ -48,7 +48,8 @@ julia> edit("geniews.jl")
 Add the following code:
 
 ```julia
-using Genie, Genie.Router, Genie.Renderer
+using Genie, Genie.Router
+using Genie.Renderer, Genie.Renderer.Html, Genie.Renderer.Json
 
 route("/hello.html") do
   html("Hello World")
@@ -65,7 +66,7 @@ end
 up(8001, async = false)
 ```
 
-We begun by defining 2 routes and we used the `html` and `json` rendering functions (available in the `Renderer` module). These functions are responsible for outputting the data using the correct format and document type (with the correct MIME), in our case HTML data for `hello.html`, and JSON data for `hello.json`.
+We begun by defining 2 routes and we used the `html` and `json` rendering functions (available in the `Renderer.Html` and the `Renderer.Json` modules). These functions are responsible for outputting the data using the correct format and document type (with the correct MIME), in our case HTML data for `hello.html`, and JSON data for `hello.json`.
 
 The third `route` serves text responses. As Genie does not provide a specialized method for sending `text/plain` responses, we use the generic `respond` function, indicating the desired MIME type. In our case `:text`, corresponding to `text/plain`. Other available MIME types shortcuts are `:xml`, `:markdown`, and `:javascript`. If you're looking for something else, you can always pass the full mime type as a string, ie `"text/csv"`.
 

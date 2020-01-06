@@ -1,4 +1,4 @@
-using Genie.Renderer, Genie.Requests
+using Genie.Renderer.Html, Genie.Requests
 
 greeting = "Welcome"
 name = "Genie"
@@ -51,13 +51,13 @@ end
     @test wr.status == 200
     @test wr.headers == Genie.Renderer.HTTPHeaders()
 
-    wr = Genie.Renderer.WebRenderable(body = "bye", content_type = :js, status = 301, headers = Renderer.HTTPHeaders("Location" => "/bye"))
+    wr = Genie.Renderer.WebRenderable(body = "bye", content_type = :js, status = 301, headers = Genie.Renderer.HTTPHeaders("Location" => "/bye"))
     @test wr.body == "bye"
     @test wr.content_type == :js
     @test wr.status == 301
     @test wr.headers["Location"] == "/bye"
 
-    wr = Genie.Renderer.WebRenderable(Genie.Renderer.WebRenderable(body = "good morning", content_type = :js), 302, Renderer.HTTPHeaders("Location" => "/morning"))
+    wr = Genie.Renderer.WebRenderable(Genie.Renderer.WebRenderable(body = "good morning", content_type = :js), 302, Genie.Renderer.HTTPHeaders("Location" => "/morning"))
     @test wr.body == "good morning"
     @test wr.content_type == :js
     @test wr.status == 302
