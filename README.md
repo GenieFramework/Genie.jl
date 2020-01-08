@@ -25,4 +25,4 @@ Genie is compatible with Julia v1.0 and up.
 ## Acknowledgements
 
 * Genie uses a multitude of packages that have been kindly contributed by the Julia community.
-* The awesome Genie logo was designed by Alvaro Casanova (www.yeahstyledg.com).
+* The awesome Genie logo was designed by Alvaro Casanova.
