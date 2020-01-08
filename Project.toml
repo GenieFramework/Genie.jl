@@ -44,7 +44,7 @@ OrderedCollections = "1"
 Reexport = "0.2"
 Revise = "2"
 URIParser = "0.4"
-julia = "1"
+julia = "1.2"
 
 [extras]
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
