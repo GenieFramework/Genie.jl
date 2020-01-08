@@ -1,7 +1,6 @@
 cd(@__DIR__)
 
 using Pkg
-pkg"activate ."
 
 using Test, TestSetExtensions, SafeTestsets
 using Genie
