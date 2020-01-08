@@ -3,6 +3,8 @@
 [![Stable](https://readthedocs.org/projects/docs/badge/?version=stable)](http://geniejl.readthedocs.io/en/stable/build/)
 [![Latest](https://readthedocs.org/projects/docs/badge/?version=latest)](http://geniejl.readthedocs.io/en/latest/build/)
 
+![CI](https://github.com/GenieFramework/Genie.jl/workflows/ci/badge.svg)
+
 # Genie
 
 ## The highly productive Julia web framework
@@ -23,4 +25,4 @@ Genie is compatible with Julia v1.0 and up.
 ## Acknowledgements
 
 * Genie uses a multitude of packages that have been kindly contributed by the Julia community.
-* The awesome Genie logo was designed by Alvaro Casanova (www.yeahstyledg.com).
+* The awesome Genie logo was designed by Alvaro Casanova.
