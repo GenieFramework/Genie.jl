@@ -23,7 +23,11 @@ function render(data::String; context::Module = @__MODULE__, vars...) :: Functio
   Genie.Renderer.registervars(vars...)
   Genie.Renderer.injectvars(context)
 
-  () -> (Base.include_string(context, data) |> JSONParser.json)
+  try
+    () -> (Base.include_string(context, data) |> JSONParser.json)
+  catch
+    () -> JSONParser.json(data)
+  end
 end
 
 

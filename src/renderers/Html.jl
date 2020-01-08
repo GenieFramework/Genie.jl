@@ -294,6 +294,85 @@ function parsehtml(input::String; partial::Bool = true) :: String
 end
 
 
+function Genie.Renderer.render(::Type{MIME"text/html"}, data::String; context::Module = @__MODULE__, layout::Union{String,Nothing} = nothing, vars...) :: Genie.Renderer.WebRenderable
+  try
+    Genie.Renderer.WebRenderable(Base.invokelatest(render(data; context = context, layout = layout, vars...))::String)
+  catch ex
+    isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
+    rethrow(ex)
+  end
+end
+
+
+function Genie.Renderer.render(::Type{MIME"text/html"}, viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.Renderer.FilePath} = nothing, context::Module = @__MODULE__, vars...) :: Genie.Renderer.WebRenderable
+  try
+    Genie.Renderer.WebRenderable(Base.invokelatest(render(viewfile; layout = layout, context = context, vars...))::String)
+  catch ex
+    isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
+
+    rethrow(ex)
+  end
+end
+
+
+"""
+"""
+function html(resource::Genie.Renderer.ResourcePath, action::Genie.Renderer.ResourcePath; layout::Genie.Renderer.ResourcePath = DEFAULT_LAYOUT_FILE,
+                context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
+  html(Path(joinpath(Genie.config.path_resources, string(resource), VIEWS_FOLDER, string(action)));
+        layout = Path(joinpath(Genie.config.path_app, LAYOUTS_FOLDER, string(layout))),
+        context = context, status = status, headers = headers, vars...)
+end
+
+
+"""
+    html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), layout::Union{String,Nothing} = nothing, vars...) :: HTTP.Response
+
+Parses the `data` input as HTML, returning a HTML HTTP Response.
+
+# Arguments
+- `data::String`: the HTML string to be rendered
+- `context::Module`: the module in which the variables are evaluated (in order to provide the scope for vars). Usually the controller.
+- `status::Int`: status code of the response
+- `headers::HTTPHeaders`: HTTP response headers
+- `layout::Union{String,Nothing}`: layout file for rendering `data`
+
+# Example
+```jldoctest
+julia> html("<h1>Welcome \$(@vars(:name))</h1>", layout = "<div><% @yield %></div>", name = "Adrian")
+HTTP.Messages.Response:
+"
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+
+<html><head></head><body><div><h1>Welcome Adrian</h1>
+</div></body></html>"
+```
+"""
+function html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), layout::Union{String,Nothing} = nothing, vars...) :: Genie.Renderer.HTTP.Response
+  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context = context, layout = layout, vars...), status, headers) |> Genie.Renderer.respond
+end
+
+
+"""
+    html(viewfile::FilePath; layout::Union{Nothing,FilePath} = nothing,
+          context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
+
+Parses and renders the HTML `viewfile`, optionally rendering it within the `layout` file. Valid file formats are `.html.jl` and `.flax.jl`.
+
+# Arguments
+- `viewfile::FilePath`: filesystem path to the view file as a `Renderer.FilePath`, ie `Renderer.FilePath("/path/to/file.html.jl")`
+- `layout::FilePath`: filesystem path to the layout file as a `Renderer.FilePath`, ie `Renderer.FilePath("/path/to/file.html.jl")`
+- `context::Module`: the module in which the variables are evaluated (in order to provide the scope for vars). Usually the controller.
+- `status::Int`: status code of the response
+- `headers::HTTPHeaders`: HTTP response headers
+"""
+function html(viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.Renderer.FilePath} = nothing,
+                context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
+  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", viewfile; layout = layout, context = context, vars...), status, headers) |> Genie.Renderer.respond
+end
+
+
 """
     parsehtml(elem, output, depth; partial = true) :: String
 
@@ -393,85 +472,6 @@ function parsehtml(elem::HTMLParser.HTMLText, depth::Int = 0; partial::Bool = tr
   endswith(content, "\"") && (content *= Char(0x0))
   content = replace(content, NBSP_REPLACEMENT[2]=>NBSP_REPLACEMENT[1])
   string(repeat("\t", depth), "\"\"\"$(content)\"\"\"")
-end
-
-
-function Genie.Renderer.render(::Type{MIME"text/html"}, data::String; context::Module = @__MODULE__, layout::Union{String,Nothing} = nothing, vars...) :: Genie.Renderer.WebRenderable
-  try
-    Genie.Renderer.WebRenderable(Base.invokelatest(render(data; context = context, layout = layout, vars...))::String)
-  catch ex
-    isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
-    rethrow(ex)
-  end
-end
-
-
-function Genie.Renderer.render(::Type{MIME"text/html"}, viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.Renderer.FilePath} = nothing, context::Module = @__MODULE__, vars...) :: Genie.Renderer.WebRenderable
-  try
-    Genie.Renderer.WebRenderable(Base.invokelatest(render(viewfile; layout = layout, context = context, vars...))::String)
-  catch ex
-    isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
-
-    rethrow(ex)
-  end
-end
-
-
-"""
-"""
-function html(resource::Genie.Renderer.ResourcePath, action::Genie.Renderer.ResourcePath; layout::Genie.Renderer.ResourcePath = DEFAULT_LAYOUT_FILE,
-                context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
-  html(Path(joinpath(Genie.config.path_resources, string(resource), VIEWS_FOLDER, string(action)));
-        layout = Path(joinpath(Genie.config.path_app, LAYOUTS_FOLDER, string(layout))),
-        context = context, status = status, headers = headers, vars...)
-end
-
-
-"""
-    html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), layout::Union{String,Nothing} = nothing, vars...) :: HTTP.Response
-
-Parses the `data` input as HTML, returning a HTML HTTP Response.
-
-# Arguments
-- `data::String`: the HTML string to be rendered
-- `context::Module`: the module in which the variables are evaluated (in order to provide the scope for vars). Usually the controller.
-- `status::Int`: status code of the response
-- `headers::HTTPHeaders`: HTTP response headers
-- `layout::Union{String,Nothing}`: layout file for rendering `data`
-
-# Example
-```jldoctest
-julia> html("<h1>Welcome \$(@vars(:name))</h1>", layout = "<div><% @yield %></div>", name = "Adrian")
-HTTP.Messages.Response:
-"
-HTTP/1.1 200 OK
-Content-Type: text/html; charset=utf-8
-
-<html><head></head><body><div><h1>Welcome Adrian</h1>
-</div></body></html>"
-```
-"""
-function html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), layout::Union{String,Nothing} = nothing, vars...) :: Genie.Renderer.HTTP.Response
-  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context = context, layout = layout, vars...), status, headers) |> Genie.Renderer.respond
-end
-
-
-"""
-    html(viewfile::FilePath; layout::Union{Nothing,FilePath} = nothing,
-          context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
-
-Parses and renders the HTML `viewfile`, optionally rendering it within the `layout` file. Valid file formats are `.html.jl` and `.flax.jl`.
-
-# Arguments
-- `viewfile::FilePath`: filesystem path to the view file as a `Renderer.FilePath`, ie `Renderer.FilePath("/path/to/file.html.jl")`
-- `layout::FilePath`: filesystem path to the layout file as a `Renderer.FilePath`, ie `Renderer.FilePath("/path/to/file.html.jl")`
-- `context::Module`: the module in which the variables are evaluated (in order to provide the scope for vars). Usually the controller.
-- `status::Int`: status code of the response
-- `headers::HTTPHeaders`: HTTP response headers
-"""
-function html(viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.Renderer.FilePath} = nothing,
-                context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
-  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", viewfile; layout = layout, context = context, vars...), status, headers) |> Genie.Renderer.respond
 end
 
 

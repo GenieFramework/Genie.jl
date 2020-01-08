@@ -3,7 +3,7 @@ module Renderer
 export respond, redirect, render
 
 import Revise
-import HTTP, Reexport, Markdown, Logging, FilePaths, SHA
+import HTTP, Markdown, Logging, FilePaths, SHA
 import Genie, Genie.Util, Genie.Configuration, Genie.Exceptions
 
 const DEFAULT_CHARSET = "charset=utf-8"
@@ -31,6 +31,8 @@ const CONTENT_TYPES = Dict{Symbol,String}(
   :xml        => "text/xml; $DEFAULT_CHARSET",
   :markdown   => "text/markdown; $DEFAULT_CHARSET"
 )
+
+push_content_type(s::Symbol, content_type::String, charset::String = DEFAULT_CHARSET) = (CONTENT_TYPES[s] = "$content_type; $charset")
 
 const ResourcePath = Union{String,Symbol}
 const HTTPHeaders = Dict{String,String}
@@ -182,9 +184,13 @@ function respond(r::WebRenderable) :: HTTP.Response
 
   HTTP.Response(r.status, [h for h in r.headers], body = r.body)
 end
+
+
 function respond(response::HTTP.Response) :: HTTP.Response
   response
 end
+
+
 function respond(body::String, params::Dict{Symbol,T})::HTTP.Response where {T}
   r = params[:RESPONSE]
   r.data = body
@@ -192,18 +198,24 @@ function respond(body::String, params::Dict{Symbol,T})::HTTP.Response where {T}
   r |> respond
 end
 
+
 function respond(err::T, content_type::Union{Symbol,String} = Genie.Router.responsetype(), code::Int = 500) :: T where {T<:Exception}
   T
 end
+
 
 function respond(body::String, content_type::Union{Symbol,String} = Genie.Router.responsetype(), code::Int = 200) :: HTTP.Response
   HTTP.Response(code,
                 (isa(content_type, Symbol) ? ["Content-Type" => CONTENT_TYPES[content_type]] : ["Content-Type" => content_type]),
                 body = body)
 end
+
+
 function respond(body, code::Int = 200, headers::HTTPHeaders = HTTPHeaders())
   HTTP.Response(code, [h for h in headers], body = string(body))
 end
+
+
 function respond(f::Function, code::Int = 200, headers::HTTPHeaders = HTTPHeaders())
   respond(f(), code, headers)
 end
