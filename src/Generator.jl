@@ -242,7 +242,7 @@ end
 """
     mvc_support(app_path::String = ".") :: Nothing
 
-Writes the files used for rendering resources using the MVC stack and the Flax templating system.
+Writes the files used for rendering resources using the MVC stack and the Genie templating system.
 """
 function mvc_support(app_path::String = ".") :: Nothing
   cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_app), joinpath(app_path, Genie.config.path_app))
@@ -365,7 +365,7 @@ Scaffolds a new Genie app, setting up the file structure indicated by the variou
 - `autostart::Bool`: automatically start the app once the file structure is created
 - `fullstack::Bool`: the type of app to be bootstrapped. The fullstack app includes MVC structure, DB connection code, and asset pipeline files.
 - `dbsupport::Bool`: bootstrap the files needed for DB connection setup via the SearchLight ORM
-- `mvcsupport::Bool`: adds the files used for Flax view templates rendering and working with resources
+- `mvcsupport::Bool`: adds the files used for HTML+Julia view templates rendering and working with resources
 
 # Examples
 ```julia-repl

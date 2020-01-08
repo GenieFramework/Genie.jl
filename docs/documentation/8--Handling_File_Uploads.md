@@ -7,7 +7,7 @@ In the following snippet we configure two routes in the root of the app (`/`): t
 ### Example
 
 ```julia
-using Genie, Genie.Router, Genie.Renderer, Genie.Requests
+using Genie, Genie.Router, Genie.Renderer.Html, Genie.Requests
 
 form = """
 <form action="/" method="POST" enctype="multipart/form-data">

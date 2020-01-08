@@ -2,7 +2,7 @@
 
   @safetestset "@foreach macro renders local variables" begin
     using Genie
-    using Genie.Renderer
+    using Genie.Renderer.Html
 
     view = raw"""
 <ol>
@@ -18,7 +18,7 @@
 
   @safetestset "@foreach macro can not access module variables" begin
     using Genie
-    using Genie.Renderer
+    using Genie.Renderer.Html
 
     x = 100
 
@@ -34,7 +34,7 @@
 
   @safetestset "@foreach macro can access view variables" begin
     using Genie
-    using Genie.Renderer
+    using Genie.Renderer.Html
 
     view = raw"""
 <ol>
@@ -50,7 +50,7 @@
 
   @safetestset "@foreach macro can access context variables" begin
     using Genie
-    using Genie.Renderer
+    using Genie.Renderer.Html
 
     x = 200
 

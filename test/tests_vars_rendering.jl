@@ -1,4 +1,4 @@
-using Genie.Renderer, Genie.Requests
+using Genie.Renderer.Html, Genie.Requests
 
 greeting = "Welcome"
 name = "Genie"

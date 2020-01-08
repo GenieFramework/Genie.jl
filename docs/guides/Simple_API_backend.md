@@ -5,7 +5,7 @@ Genie makes it very easy to quickly set up a REST API backend. All it takes is a
 ```julia
 using Genie
 import Genie.Router: route
-import Genie.Renderer: json
+import Genie.Renderer.Json: json
 
 Genie.config.run_as_server = true
 
@@ -28,7 +28,7 @@ $ julia rest.jl
 One common requirement when exposing APIs is to accept `POST` payloads. That is, requests over `POST`, with a request body, usually as a JSON encoded object. We can build an echo service like this:
 
 ```julia
-using Genie, Genie.Router, Genie.Renderer, Genie.Requests
+using Genie, Genie.Router, Genie.Renderer.Json, Genie.Requests
 using HTTP
 
 route("/echo", method = POST) do

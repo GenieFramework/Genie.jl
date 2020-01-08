@@ -5,7 +5,7 @@ A very common design pattern, especially when developing REST APIs, is to accept
 ### Example
 
 ```julia
-using Genie, Genie.Router, Genie.Requests, Genie.Renderer
+using Genie, Genie.Router, Genie.Requests, Genie.Renderer.Json
 
 route("/jsonpayload", method = POST) do
   @show jsonpayload()

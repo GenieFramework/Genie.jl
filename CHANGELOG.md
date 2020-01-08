@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.22.9 - 2020-01-06
+
+* refactoring of the Rendering engine (**breaking**)
+* deps update
+
 ## v0.22.9 - 2019-12-24
 
 * enhanced support for WebChannels and websockets operations

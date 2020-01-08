@@ -1,8 +1,8 @@
-@safetestset "Flax rendering" begin
+@safetestset "HTML+Julia rendering" begin
 
   @safetestset "Simple tag rendering" begin
     using Genie
-    using Genie.Renderer
+    using Genie.Renderer.Html
 
     copy = "Hello Genie"
 

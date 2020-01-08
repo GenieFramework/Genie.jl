@@ -2,9 +2,9 @@ module Router
 
 import Revise
 import Reexport, Logging
-import HTTP, URIParser, HttpCommon, Sockets, Millboard, Dates, OrderedCollections
+import HTTP, URIParser, HttpCommon, Sockets, Millboard, Dates, OrderedCollections, JSON
 import Genie, Genie.HTTPUtils, Genie.Sessions, Genie.Configuration
-import Genie.Input, Genie.Util, Genie.Renderer, Genie.Exceptions, Genie.Flax
+import Genie.Input, Genie.Util, Genie.Renderer, Genie.Exceptions
 
 include("mimetypes.jl")
 
@@ -532,7 +532,7 @@ function match_channels(req, msg::String, ws_client, params::Params, session::Un
     parsed_channel, param_names, param_types = parse_channel(c.path)
 
     payload::Dict{String,Any} = try
-                                  Flax.JSONRenderer.JSONParser.parse(msg)
+                                  JSON.parse(msg)
                                 catch ex
                                   Dict{String,Any}()
                                 end
@@ -734,7 +734,7 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
 
   if request_type_is(req, :json) && content_length(req) > 0
     try
-      params.collection[Genie.PARAMS_JSON_PAYLOAD] = Flax.JSONRenderer.JSONParser.parse(params.collection[Genie.PARAMS_RAW_PAYLOAD])
+      params.collection[Genie.PARAMS_JSON_PAYLOAD] = JSON.parse(params.collection[Genie.PARAMS_RAW_PAYLOAD])
     catch ex
       @error sprint(showerror, ex)
       @warn "Setting @params(:JSON_PAYLOAD) to Nothing"
@@ -939,22 +939,6 @@ end
 
 
 const responsetype = response_type
-
-
-"""
-    serve_error_file_500(ex::Exception, params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
-
-Returns the default 500 error page.
-"""
-function serve_error_file_500(ex::Exception, params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: HTTP.Response
-  serve_error_file( 500,
-                    string(ex) *
-                    "<br/><br/>" *
-                    join(catch_stacktrace(), "<br/>") *
-                    "<hr/>" *
-                    string(params)
-                  )
-end
 
 
 """

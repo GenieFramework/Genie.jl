@@ -35,7 +35,6 @@ include("Encryption.jl")
 include("Cookies.jl")
 include("Sessions.jl")
 include("Input.jl")
-include("Flax.jl")
 include("Renderer.jl")
 include("Router.jl")
 include("WebChannels.jl")
@@ -55,7 +54,6 @@ import .App, .Exceptions
 import .Inflector, .Util
 import .FileTemplates, .Toolbox, .Generator, .Encryption, .Cookies, .Sessions
 import .Input, .Renderer, .Assets, .Router, .Commands
-import .Flax
 import .AppServer, .Plugins
 import .Deploy
 
@@ -107,7 +105,7 @@ Scaffolds a new Genie app, setting up the file structure indicated by the variou
 - `autostart::Bool`: automatically start the app once the file structure is created
 - `fullstack::Bool`: the type of app to be bootstrapped. The fullstack app includes MVC structure, DB connection code, and asset pipeline files.
 - `dbsupport::Bool`: bootstrap the files needed for DB connection setup via the SearchLight ORM
-- `mvcsupport::Bool`: adds the files used for Flax view templates rendering and working with resources
+- `mvcsupport::Bool`: adds the files used for HTML+Julia view templates rendering and working with resources
 
 # Examples
 ```julia-repl
