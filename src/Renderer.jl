@@ -29,7 +29,8 @@ const CONTENT_TYPES = Dict{Symbol,String}(
   :js         => "application/javascript; $DEFAULT_CHARSET",
   :javascript => "application/javascript; $DEFAULT_CHARSET",
   :xml        => "text/xml; $DEFAULT_CHARSET",
-  :markdown   => "text/markdown; $DEFAULT_CHARSET"
+  :markdown   => "text/markdown; $DEFAULT_CHARSET",
+  :favicon    => "image/x-icon",
 )
 
 push_content_type(s::Symbol, content_type::String, charset::String = DEFAULT_CHARSET) = (CONTENT_TYPES[s] = "$content_type; $charset")

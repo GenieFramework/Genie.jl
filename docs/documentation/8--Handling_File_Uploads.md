@@ -22,7 +22,7 @@ end
 
 route("/", method = POST) do
   if infilespayload(:yourfile)
-    download(filespayload(:yourfile))
+    write(filespayload(:yourfile))
 
     stat(filename(filespayload(:yourfile)))
   else

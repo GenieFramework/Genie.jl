@@ -246,7 +246,7 @@ end
 """
 Pushes `msg` (and `payload`) to all the clients subscribed to all the channels.
 """
-function broadcast(msg::String, payload::Union{Dict,Nothing}) :: Bool
+function broadcast(msg::String, payload::Union{Dict,Nothing} = nothing) :: Bool
   payload === nothing ?
     broadcast(collect(keys(SUBSCRIPTIONS)), msg) :
     broadcast(collect(keys(SUBSCRIPTIONS)), msg, payload)

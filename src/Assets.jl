@@ -81,14 +81,30 @@ end
 
 
 function channels_support() :: String
-  Router.route("/__/channels.js", channels)
+  Router.route("/$(Genie.config.webchannels_default_route)/$(Genie.config.webchannels_js_file)") do
+    Genie.Renderer.Js.js(channels())
+  end
 
-  Router.channel("/__/subscribe") do
-    WebChannels.subscribe(Genie.Requests.wsclient(), "__")
+  Router.channel("/$(Genie.config.webchannels_default_route)/$(Genie.config.webchannels_subscribe_channel)") do
+    WebChannels.subscribe(Genie.Requests.wsclient(), Genie.config.webchannels_default_route)
     "OK"
   end
 
-  "<script src=\"/__/channels.js\"></script>"
+  "<script src=\"/$(Genie.config.webchannels_default_route)/$(Genie.config.webchannels_js_file)\"></script>"
+end
+
+
+function favicon_support() :: String
+  Router.route("/favicon.ico") do
+    Genie.Renderer.respond(
+      Genie.Renderer.WebRenderable(
+        body = embedded(joinpath("files", "new_app", "public", "favicon.ico")),
+        content_type = :favicon
+      )
+    )
+  end
+
+  "<link rel=\"icon\" type=\"image/x-icon\" href=\"/favicon.ico\" />"
 end
 
 end

@@ -210,6 +210,10 @@ mutable struct Settings
   path_bin::String
   path_src::String
 
+  webchannels_default_route::String
+  webchannels_js_file::String
+  webchannels_subscribe_channel::String
+
   Settings(;
             server_port                 = (haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : 8000), # default port for binding the web server
             server_host                 = ENV["HOST"],
@@ -267,7 +271,11 @@ mutable struct Settings
             path_initializers   = joinpath(path_config, initializers_folder),
             path_db             = "db",
             path_bin            = "bin",
-            path_src            = "src"
+            path_src            = "src",
+
+            webchannels_default_route     = "__",
+            webchannels_js_file           = "channels.js",
+            webchannels_subscribe_channel = "subscribe"
         ) =
               new(
                   server_port, server_host,
@@ -283,7 +291,8 @@ mutable struct Settings
                   websocket_server, websocket_port,
                   initializers_folder,
                   path_config, path_env, path_app, path_resources, path_lib, path_helpers, path_log, path_tasks, path_build,
-                  path_plugins, path_cache, path_initializers, path_db, path_bin, path_src
+                  path_plugins, path_cache, path_initializers, path_db, path_bin, path_src,
+                  webchannels_default_route, webchannels_js_file, webchannels_subscribe_channel
                 )
 end
 
