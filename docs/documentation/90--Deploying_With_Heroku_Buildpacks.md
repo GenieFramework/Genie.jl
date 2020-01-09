@@ -54,7 +54,7 @@ If you need to check the logs:
 heroku logs -tail -a $HEROKU_APP_NAME
 ```
 
-### Steps with more detailed descriptions:
+### Steps with more detailed descriptions
 
 #### Select an app name
 
@@ -150,7 +150,7 @@ The `println` statements from Julia will also appear here.
 Exit this viewer with `Ctrl-C`.
 
 Logs can also be viewed from the Heroku web dashboard.
-For example: https://dashboard.heroku.com/apps/my-app-name/logs
+For example: <https://dashboard.heroku.com/apps/my-app-name/logs>
 
 ### Deploy app updates changes
 

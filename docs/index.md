@@ -52,6 +52,8 @@ Genie is compatible with Julia v1.0 and up.
 
 [Loading External Modules](documentation/15--The_Lib_Folder.md)
 
+[Eager Compilation of Routes](documentation/80--Force_Compiling_Routes.md)
+
 ## Guides
 
 **Genie can be used for a variety of tasks, from quickly whipping up a web server to full MVC web apps. Use the following resources to dive into each use case.**
