@@ -47,20 +47,10 @@ include("Deploy.jl")
 include("Cache.jl")
 include("cache_adapters/FileCacheAdapter.jl")
 
-# import .HTTPUtils
-# import .App, .Exceptions
-# import .Inflector, .Util
-# import .FileTemplates,
-import .Toolbox, .Generator
-# import .Encryption,
-# import .Cookies, .Sessions
-# import .Input, .Renderer, .Assets, .Router,
 import .Commands
 import .AppServer
-# import .Plugins
-# import .Deploy
 
-export startup, serve, up
+export serve, up
 
 
 """

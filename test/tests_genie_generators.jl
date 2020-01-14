@@ -58,4 +58,24 @@
     @test readdir(joinpath(workdir, Genie.config.path_db)) == ["connection.yml", "migrations", "seeds"]
     @test readdir(joinpath(workdir, Genie.config.path_initializers)) == ["converters.jl", "logging.jl", "searchlight.jl"]
   end;
+
+  cd(testdir)
+  Pkg.activate(".")
+
+  @safetestset "MVC support file structure" begin
+    using Genie
+
+    workdir = Base.Filesystem.mktempdir()
+
+    Genie.newapp(workdir, autostart = false, mvcsupport = true, testmode = true)
+
+    @test readdir(workdir) == [".gitattributes", ".gitignore", "Manifest.toml", "Project.toml", "app", "bin", "bootstrap.jl", "config", "genie.jl", "public", "routes.jl", "src"]
+    @test readdir(joinpath(workdir, Genie.config.path_app)) == ["helpers", "layouts", "resources"]
+    @test readdir(joinpath(workdir, Genie.config.path_initializers)) == ["converters.jl", "logging.jl"]
+  end;
+
+  cd(testdir)
+  Pkg.activate(".")
+
+
 end;

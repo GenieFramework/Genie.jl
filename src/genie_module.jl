@@ -4,29 +4,10 @@
 import Logging
 import REPL, REPL.Terminals
 import .Configuration
+import .Generator, .Toolbox, .App
 
 
 ### PUBLIC ###
-
-
-"""
-    newmodel(model_name::String; context::Union{Module,Nothing} = nothing) :: Nothing
-
-Creates a new SearchLight `model` file.
-"""
-function newmodel(model_name::String; context::Union{Module,Nothing} = nothing) :: Nothing
-  context = default_context(context)
-
-  try
-    Core.eval(context, :(SearchLight.Generator.newmodel($model_name)))
-
-    load_resources()
-  catch ex
-    @error ex
-  end
-
-  nothing
-end
 
 
 """
@@ -68,49 +49,13 @@ end
 
 
 """
-    newmigration(migration_name::String, context::Union{Module,Nothing} = nothing) :: Nothing
-
-Creates a new SearchLight migration file.
-"""
-function newmigration(migration_name::String; context::Union{Module,Nothing} = nothing) :: Nothing
-  context = default_context(context)
-
-  try
-    Core.eval(context, :(SearchLight.Generator.new_migration(Dict{String,Any}("migration:new" => $migration_name))))
-  catch ex
-    @error ex
-  end
-
-  nothing
-end
-
-
-"""
-    newtablemigration(migration_name::String, context::Union{Module,Nothing} = nothing) :: Nothing
-
-Creates a new migration prefilled with code for creating a new table.
-"""
-function newtablemigration(migration_name::String; context::Union{Module,Nothing} = nothing) :: Nothing
-  context = default_context(context)
-
-  try
-    Core.eval(context, :(SearchLight.Generator.new_table_migration(Dict{String,Any}("migration:new" => $migration_name))))
-  catch ex
-    @error ex
-  end
-
-  nothing
-end
-
-
-"""
     newtask(task_name::String) :: Nothing
 
 Creates a new Genie `Task` file.
 """
 function newtask(task_name::String) :: Nothing
   endswith(task_name, "Task") || (task_name = task_name * "Task")
-  Genie.Toolbox.new(Dict{String,Any}("task:new" => task_name), Genie.config)
+  Toolbox.new(Dict{String,Any}("task:new" => task_name), Genie.config)
 
   nothing
 end
@@ -303,7 +248,7 @@ Main entry point to loading a Genie app.
 function load(; context::Union{Module,Nothing} = nothing) :: Nothing
   context = default_context(context)
 
-  Genie.App.bootstrap(context)
+  App.bootstrap(context)
 
   t = Terminals.TTYTerminal("", stdin, stdout, stderr)
 
