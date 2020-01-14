@@ -225,7 +225,7 @@ end
 Writes the file necessary to create a microstack app.
 """
 function microstack_app(app_path::String = ".") :: Nothing
-  mkdir(app_path)
+  isdir(app_path) || mkdir(app_path)
 
   for f in [Genie.config.path_bin, Genie.config.path_config, Genie.config.server_document_root, Genie.config.path_src,
             Genie.GENIE_FILE_NAME, Genie.ROUTES_FILE_NAME,
@@ -300,11 +300,11 @@ end
 
 Installs the application's dependencies using Julia's Pkg
 """
-function install_app_dependencies(app_path::String = ".") :: Nothing
+function install_app_dependencies(app_path::String = "."; testmode::Bool = false) :: Nothing
   @info "Installing app dependencies"
   Pkg.pkg"activate ."
 
-  Pkg.pkg"add Genie"
+  testmode ? Pkg.pkg"dev Genie" : Pkg.pkg"add Genie"
   Pkg.pkg"add Revise"
   Pkg.pkg"add LoggingExtras"
 
@@ -313,14 +313,14 @@ end
 
 
 """
-    autostart_app(autostart::Bool = true) :: Nothing
+    autostart_app(path::String = "."; autostart::Bool = true) :: Nothing
 
 If `autostart` is `true`, the newly generated Genie app will be automatically started.
 """
-function autostart_app(autostart::Bool = true) :: Nothing
+function autostart_app(path::String = "."; autostart::Bool = true) :: Nothing
   if autostart
     @info "Starting your brand new Genie app - hang tight!"
-    Genie.loadapp(".", autostart = autostart)
+    Genie.loadapp(abspath(path), autostart = autostart)
   else
     @info("Your new Genie app is ready!
         Run \njulia> Genie.loadapp() \nto load the app's environment
@@ -393,7 +393,7 @@ julia> Genie.newapp("MyGenieApp")
 2019-08-06 16:54:32:DEBUG:Main: Web Server running at http://127.0.0.1:8000
 ```
 """
-function newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false, mvcsupport::Bool = false) :: Nothing
+function newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false, mvcsupport::Bool = false, testmode::Bool = false) :: Nothing
   app_path = abspath(path)
 
   fullstack ? fullstack_app(app_path) : microstack_app(app_path)
@@ -413,9 +413,9 @@ function newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = fa
   @info "Changing active directory to $app_path"
   cd(path)
 
-  install_app_dependencies(app_path)
+  install_app_dependencies(app_path, testmode = testmode)
 
-  autostart_app(autostart)
+  autostart_app(app_path, autostart = autostart)
 
   nothing
 end

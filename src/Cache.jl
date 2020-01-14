@@ -11,29 +11,20 @@ export cachekey, withcache, @cachekey
 export purge, purgeall
 
 
-"""
-Default period of time until the cache is expired.
-"""
-const CACHE_DURATION  = Genie.config.cache_duration
+function cache_adapter(m::Module)
+  @eval const CACHE_ADAPTER = m
+end
 
 
 """
-Underlying module that handles persistance and retrieval of cached data.
-"""
-const CACHE_ADAPTER_NAME = Genie.config.cache_adapter
-const CACHE_ADAPTER = include("cache_adapters/$CACHE_ADAPTER_NAME.jl")
-using .(CACHE_ADAPTER)
-
-
-"""
-    withcache(f::Function, key::Union{String,Symbol}, expiration::Int = CACHE_DURATION; dir = "", condition::Bool = true)
+    withcache(f::Function, key::Union{String,Symbol}, expiration::Int = Genie.config.cache_duration; dir = "", condition::Bool = true)
 
 Executes the function `f` and stores the result into the cache for the duration (in seconds) of `expiration`. Next time the function is invoked,
 if the cache has not expired, the cached result is returned skipping the function execution.
 The optional `dir` param is used to designate the folder where the cache will be stored (within the configured cache folder).
 If `condition` is `false` caching will be skipped.
 """
-function withcache(f::Function, key::Union{String,Symbol}, expiration::Int = CACHE_DURATION; dir::String = "", condition::Bool = true)
+function withcache(f::Function, key::Union{String,Symbol}, expiration::Int = Genie.config.cache_duration; dir::String = "", condition::Bool = true)
   ( expiration == 0 || ! condition ) && return f()
 
   cached_data = CACHE_ADAPTER.fromcache(cachekey(key), expiration, dir = dir)

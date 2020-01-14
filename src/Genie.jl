@@ -15,11 +15,6 @@ include("constants.jl")
 import Sockets
 import Logging, LoggingExtras
 
-push!(LOAD_PATH,  joinpath(@__DIR__, "cache_adapters"),
-                  joinpath(@__DIR__, "session_adapters"),
-                  joinpath(@__DIR__, "renderers"),
-                  config.path_resources, config.path_helpers)
-
 include(joinpath(@__DIR__, "genie_types.jl"))
 
 include("HTTPUtils.jl")
@@ -42,20 +37,28 @@ include("Headers.jl")
 include("Assets.jl")
 include("AppServer.jl")
 include("Commands.jl")
-include("Cache.jl")
 include("Responses.jl")
 include("Requests.jl")
 include("Flash.jl")
 include("Plugins.jl")
 include("Deploy.jl")
 
-import .HTTPUtils
-import .App, .Exceptions
-import .Inflector, .Util
-import .FileTemplates, .Toolbox, .Generator, .Encryption, .Cookies, .Sessions
-import .Input, .Renderer, .Assets, .Router, .Commands
-import .AppServer, .Plugins
-import .Deploy
+# Extras
+include("Cache.jl")
+include("cache_adapters/FileCacheAdapter.jl")
+
+# import .HTTPUtils
+# import .App, .Exceptions
+# import .Inflector, .Util
+# import .FileTemplates,
+import .Toolbox, .Generator
+# import .Encryption,
+# import .Cookies, .Sessions
+# import .Input, .Renderer, .Assets, .Router,
+import .Commands
+import .AppServer
+# import .Plugins
+# import .Deploy
 
 export startup, serve, up
 
@@ -88,7 +91,7 @@ function serve(path::String = Genie.config.server_document_root, params...; kwpa
     Router.serve_static_file(Router.@params(:REQUEST).target, root = path)
   end
 
-  Genie.startup(params...; kwparams...)
+  up(params...; kwparams...)
 end
 
 

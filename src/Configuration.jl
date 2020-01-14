@@ -3,7 +3,7 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
-const GENIE_VERSION = v"0.23.0"
+const GENIE_VERSION = v"0.24.0"
 
 import Logging
 import Genie
@@ -142,7 +142,6 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `app_env::String`: the environment in which the app is running (dev, test, or prod)
 - `cors_headers::Dict{String,String}`: default `Access-Control-*` CORS settings
 - `cors_allowed_origins::Vector{String}`: allowed origin hosts for CORS settings
-- `cache_adapter::Symbol`: cache adapter backend (default File)
 - `cache_duraction::Int`: cache expiration time in seconds
 - `log_level::Logging.LogLevel`: logging severity level
 - `log_formatted::Bool`: if true, Genie will attempt to pretty print some of the logged values
@@ -170,7 +169,6 @@ mutable struct Settings
   cors_headers::Dict{String,String}
   cors_allowed_origins::Vector{String}
 
-  cache_adapter::Symbol
   cache_duration::Int
 
   log_level::Logging.LogLevel
@@ -233,7 +231,6 @@ mutable struct Settings
             ),
             cors_allowed_origins = String[],
 
-            cache_adapter     = :FileCacheAdapter,
             cache_duration    = 0,
 
             log_level     = Logging.Debug,
@@ -282,7 +279,7 @@ mutable struct Settings
                   server_document_root, server_handle_static_files, server_signature,
                   app_env,
                   cors_headers, cors_allowed_origins,
-                  cache_adapter, cache_duration,
+                  cache_duration,
                   log_level, log_formatted, log_cache, log_views, log_to_file,
                   assets_fingerprinted,
                   session_auto_start, session_key_name, session_storage,
