@@ -3,7 +3,6 @@
 
 import Logging
 import REPL, REPL.Terminals
-import .Configuration, .App
 
 
 ### PUBLIC ###

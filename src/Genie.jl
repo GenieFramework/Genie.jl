@@ -47,9 +47,6 @@ include("Deploy.jl")
 include("Cache.jl")
 include("cache_adapters/FileCacheAdapter.jl")
 
-import .Commands
-import .AppServer
-
 export serve, up
 
 
