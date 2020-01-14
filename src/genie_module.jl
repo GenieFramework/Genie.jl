@@ -3,8 +3,7 @@
 
 import Logging
 import REPL, REPL.Terminals
-import .Configuration
-import .Generator, .Toolbox, .App
+import .Configuration, .App
 
 
 ### PUBLIC ###
