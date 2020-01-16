@@ -6,7 +6,7 @@ const config = Settings(
   log_level                       = Logging.Debug,
   log_to_file                     = false,
   server_handle_static_files      = true,
-  websocket_server                = false
+  websockets_server               = false
 )
 
 ENV["JULIA_REVISE"] = "auto"

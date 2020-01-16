@@ -4,7 +4,7 @@ import Revise
 import Genie
 import HTTP
 
-export ExceptionalResponse, RuntimeException, InternalServerException, NotFoundException
+export ExceptionalResponse, RuntimeException, InternalServerException, NotFoundException, FileExistsException
 
 struct ExceptionalResponse <: Exception
   response::HTTP.Response
@@ -48,5 +48,13 @@ end
 
 NotFoundException(resource::String) = NotFoundException("$resource can not be found", "", 404, resource)
 NotFoundException() = NotFoundException("")
+
+###
+
+struct FileExistsException <: Exception
+  path::String
+end
+
+Base.show(io::IO, ex::FileExistsException) = print(io, "FileExistsException: $(ex.path)")
 
 end

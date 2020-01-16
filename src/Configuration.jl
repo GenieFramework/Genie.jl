@@ -3,7 +3,7 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
-const GENIE_VERSION = v"0.24.0"
+const GENIE_VERSION = v"0.24"
 
 import Logging
 import Genie
@@ -154,7 +154,7 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `session_storage::Symbol`: the backend adapter for session storage (default File)
 - `inflector_irregulars::Vector{Tuple{String,String}}`: additional irregular singular-plural forms to be used by the Inflector
 - `run_as_server::Bool`: when true the server thread is launched synchronously to avoid that the script exits
-- `websocket_server::Bool`: if true, the websocket server is also started together with the web server
+- `websockets_server::Bool`: if true, the websocket server is also started together with the web server
 """
 mutable struct Settings
   server_port::Int
@@ -187,8 +187,8 @@ mutable struct Settings
 
   run_as_server::Bool
 
-  websocket_server::Bool
-  websocket_port::Int
+  websockets_server::Bool
+  websockets_port::Int
 
   initializers_folder::String
 
@@ -211,6 +211,8 @@ mutable struct Settings
   webchannels_default_route::String
   webchannels_js_file::String
   webchannels_subscribe_channel::String
+  webchannels_unsubscribe_channel::String
+  webchannels_autosubscribe::Bool
 
   Settings(;
             server_port                 = (haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : 8000), # default port for binding the web server
@@ -249,8 +251,8 @@ mutable struct Settings
 
             run_as_server = false,
 
-            websocket_server = false,
-            websocket_port = 8001,
+            websockets_server = false,
+            websockets_port   = 8001,
 
             initializers_folder = "initializers",
 
@@ -270,9 +272,11 @@ mutable struct Settings
             path_bin            = "bin",
             path_src            = "src",
 
-            webchannels_default_route     = "__",
-            webchannels_js_file           = "channels.js",
-            webchannels_subscribe_channel = "subscribe"
+            webchannels_default_route       = "__",
+            webchannels_js_file             = "channels.js",
+            webchannels_subscribe_channel   = "subscribe",
+            webchannels_unsubscribe_channel = "unsubscribe",
+            webchannels_autosubscribe       = true,
         ) =
               new(
                   server_port, server_host,
@@ -285,11 +289,11 @@ mutable struct Settings
                   session_auto_start, session_key_name, session_storage,
                   inflector_irregulars,
                   run_as_server,
-                  websocket_server, websocket_port,
+                  websockets_server, websockets_port,
                   initializers_folder,
                   path_config, path_env, path_app, path_resources, path_lib, path_helpers, path_log, path_tasks, path_build,
                   path_plugins, path_cache, path_initializers, path_db, path_bin, path_src,
-                  webchannels_default_route, webchannels_js_file, webchannels_subscribe_channel
+                  webchannels_default_route, webchannels_js_file, webchannels_subscribe_channel, webchannels_unsubscribe_channel, webchannels_autosubscribe
                 )
 end
 

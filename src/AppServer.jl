@@ -20,7 +20,7 @@ const SERVERS = ServersCollection(nothing, nothing)
 
 """
     startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
-        ws_port::Int = Genie.config.websocket_port, async::Bool = ! Genie.config.run_as_server) :: ServersCollection
+        ws_port::Int = Genie.config.websockets_port, async::Bool = ! Genie.config.run_as_server) :: ServersCollection
 
 Starts the web server.
 
@@ -38,11 +38,11 @@ Web Server starting at http://0.0.0.0:8000
 ```
 """
 function startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
-                  ws_port::Int = Genie.config.websocket_port, async::Bool = ! Genie.config.run_as_server,
+                  ws_port::Int = Genie.config.websockets_port, async::Bool = ! Genie.config.run_as_server,
                   verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
                   server::Union{Sockets.TCPServer,Nothing} = nothing) :: ServersCollection
 
-  if Genie.config.websocket_server
+  if Genie.config.websockets_server
     SERVERS.websockets = @async HTTP.listen(host, ws_port) do req
       if HTTP.WebSockets.is_upgrade(req.message)
         HTTP.WebSockets.upgrade(req) do ws

@@ -3,6 +3,7 @@
   testdir = pwd()
   using Pkg
 
+
   @safetestset "Do not autostart app" begin
     using Genie
 
@@ -13,8 +14,10 @@
     @test true === true
   end;
 
+
   cd(testdir)
   Pkg.activate(".")
+
 
   @safetestset "Autostart app" begin
     using Genie
@@ -26,8 +29,10 @@
     @test true === true
   end;
 
+
   cd(testdir)
   Pkg.activate(".")
+
 
   @safetestset "Microstack file structure" begin
     using Genie
@@ -43,8 +48,10 @@
     # TODO: add test for files in /src /config /public and /bin
   end;
 
+
   cd(testdir)
   Pkg.activate(".")
+
 
   @safetestset "DB support file structure" begin
     using Genie
@@ -59,8 +66,10 @@
     @test readdir(joinpath(workdir, Genie.config.path_initializers)) == ["converters.jl", "logging.jl", "searchlight.jl"]
   end;
 
+
   cd(testdir)
   Pkg.activate(".")
+
 
   @safetestset "MVC support file structure" begin
     using Genie
@@ -73,6 +82,55 @@
     @test readdir(joinpath(workdir, Genie.config.path_app)) == ["helpers", "layouts", "resources"]
     @test readdir(joinpath(workdir, Genie.config.path_initializers)) == ["converters.jl", "logging.jl"]
   end;
+
+
+  cd(testdir)
+  Pkg.activate(".")
+
+
+  @safetestset "New controller" begin
+    using Genie
+
+    workdir = Base.Filesystem.mktempdir()
+    cd(workdir)
+    Genie.newcontroller("Yazoo")
+
+    @test isdir(joinpath(workdir, "app", "resources", "yazoo")) == true
+    @test isfile(joinpath(workdir, "app", "resources", "yazoo", "YazooController.jl")) == true
+  end;
+
+  cd(testdir)
+  Pkg.activate(".")
+
+
+  @safetestset "New resource" begin
+    using Genie
+
+    workdir = Base.Filesystem.mktempdir()
+    cd(workdir)
+    Genie.newresource("Kazoo")
+
+    @test isdir(joinpath(workdir, "app", "resources", "kazoo")) == true
+    @test isfile(joinpath(workdir, "app", "resources", "kazoo", "KazooController.jl")) == true
+  end;
+
+
+  cd(testdir)
+  Pkg.activate(".")
+
+
+  @safetestset "New task" begin
+    using Genie, Genie.Exceptions
+
+    workdir = Base.Filesystem.mktempdir()
+    cd(workdir)
+    Genie.newtask("Vavoom")
+
+    @test isdir(joinpath(workdir, "tasks")) == true
+    @test isfile(joinpath(workdir, "tasks", "VavoomTask.jl")) == true
+    @test_throws FileExistsException Genie.newtask("Vavoom")
+  end;
+
 
   cd(testdir)
   Pkg.activate(".")

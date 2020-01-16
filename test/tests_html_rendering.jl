@@ -69,7 +69,7 @@ end
 
     @testset "String no layout" begin
       rm("build", force = true, recursive = true)
-      r = htmlviewfile() |> html
+      r = html(htmlviewfile(), forceparse = true)
 
       @test String(r.body) == "<html><head></head><body><h1>$greeting</h1><div><p>This is a $name test</p></div><hr></body></html>"
     end;

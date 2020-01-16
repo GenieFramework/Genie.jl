@@ -4,7 +4,7 @@ Generates various Genie files.
 module Generator
 
 import Revise, SHA, Dates, Pkg, Logging
-import Genie, Genie.FileTemplates, Genie.Inflector, Genie.Configuration, Genie.Util, Genie.FileTemplates
+import Genie, Genie.FileTemplates, Genie.Inflector, Genie.Configuration, Genie.Util, Genie.Exceptions
 
 
 const JULIA_PATH = joinpath(Sys.BINDIR, "julia")

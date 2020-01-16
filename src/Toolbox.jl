@@ -3,7 +3,7 @@ module Toolbox
 import Base.string
 
 import Revise
-import Genie, Genie.Util, Millboard, Genie.FileTemplates, Genie.Configuration, Genie.Inflector, Logging
+import Genie, Genie.Util, Millboard, Genie.FileTemplates, Genie.Configuration, Genie.Inflector, Genie.Exceptions, Logging
 
 export TaskResult, VoidTaskResult
 
@@ -112,8 +112,8 @@ Generates a new Genie task file.
 function new(cmd_args::Dict{String,Any}, config::Genie.Configuration.Settings = Genie.config) :: Nothing
   tfn = taskfilename(cmd_args, config)
 
-  isfile(tfn) && error("Task file already exists at $tfn")
-  isdir(tasksdir()) || mkpath(tasksdir())
+  isfile(tfn) && throw(Genie.Exceptions.FileExistsException(tfn))
+  isdir(Genie.config.path_tasks) || mkpath(Genie.config.path_tasks)
 
   f = open(tfn, "w")
   write(f, Genie.FileTemplates.newtask(taskmodulename(cmd_args["task:new"])))
@@ -136,14 +136,7 @@ end
 Computes the name of a Genie task based on the command line input.
 """
 function taskfilename(cmd_args::Dict{String,Any}, config::Genie.Configuration.Settings = Genie.config) :: String
-  joinpath(tasksdir(), cmd_args["task:new"] * ".jl")
-end
-
-
-"""
-"""
-function tasksdir() :: String
-  joinpath(Main.UserApp.ROOT_PATH, Genie.config.path_tasks)
+  joinpath(Genie.config.path_tasks, cmd_args["task:new"] * ".jl")
 end
 
 

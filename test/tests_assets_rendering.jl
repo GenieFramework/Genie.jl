@@ -5,11 +5,11 @@
     using Genie.Renderer
     using Genie.Assets
 
-    @test Assets.embedded(joinpath("files", "new_app", "public", "js", "app", "channels.js")) == Assets.channels()
+    @test (Assets.js_settings() * Assets.embedded(joinpath("files", "embedded", "channels.js"))) == Assets.channels()
 
-    @test Assets.channels()[1:23] == "window.WebChannels = {}"
+    @test Assets.channels()[1:18] == "window.Genie = {};"
 
-    @test Assets.channels_script()[1:34] == "<script>\nwindow.WebChannels = {};\n"
+    @test Assets.channels_script()[1:28] == "<script>\nwindow.Genie = {};\n"
   end;
 
 end;

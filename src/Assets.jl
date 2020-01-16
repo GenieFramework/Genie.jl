@@ -5,6 +5,7 @@ module Assets
 
 import Revise
 import Genie, Genie.Configuration, Genie.Router, Genie.WebChannels
+import Genie.Renderer.Json
 
 export include_asset, css_asset, js_asset
 
@@ -38,6 +39,7 @@ Path to a css asset. The `file_name` should not include the extension.
 function css_asset(file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
   include_asset(:css, file_name, fingerprinted = fingerprinted)
 end
+const css = css_asset
 
 
 """
@@ -48,6 +50,25 @@ Path to a js asset. `file_name` should not include the extension.
 """
 function js_asset(file_name::String; fingerprinted::Bool = Genie.config.assets_fingerprinted) :: String
   include_asset(:js, file_name, fingerprinted = fingerprinted)
+end
+const js = js_asset
+
+
+function js_settings() :: String
+  settings = Json.JSONParser.json(Dict(
+    :server_host                      => Genie.config.server_host,
+    :server_port                      => Genie.config.server_port,
+    :websockets_port                  => Genie.config.websockets_port,
+    :webchannels_default_route        => Genie.config.webchannels_default_route,
+    :webchannels_subscribe_channel    => Genie.config.webchannels_subscribe_channel,
+    :webchannels_unsubscribe_channel  => Genie.config.webchannels_unsubscribe_channel,
+    :webchannels_autosubscribe        => Genie.config.webchannels_autosubscribe,
+  ))
+
+  """
+  window.Genie = {};
+  Genie.Settings = $settings
+  """
 end
 
 
@@ -67,7 +88,7 @@ end
 Outputs the channels.js file included with the Genie package
 """
 function channels() :: String
-  embedded(joinpath("files", "new_app", "public", "js", "app", "channels.js"))
+  string(js_settings(), embedded(joinpath("files", "embedded", "channels.js")))
 end
 
 
@@ -87,10 +108,16 @@ function channels_support() :: String
 
   Router.channel("/$(Genie.config.webchannels_default_route)/$(Genie.config.webchannels_subscribe_channel)") do
     WebChannels.subscribe(Genie.Requests.wsclient(), Genie.config.webchannels_default_route)
-    "OK"
+    "Subscription: OK"
   end
 
-  "<script src=\"/$(Genie.config.webchannels_default_route)/$(Genie.config.webchannels_js_file)\"></script>"
+  Router.channel("/$(Genie.config.webchannels_default_route)/$(Genie.config.webchannels_unsubscribe_channel)") do
+    WebChannels.unsubscribe(Genie.Requests.wsclient(), Genie.config.webchannels_default_route)
+    WebChannels.unsubscribe_disconnected_clients()
+    "Unsubscription: OK"
+  end
+
+  "<script src=\"/$(Genie.config.webchannels_default_route)/$(Genie.config.webchannels_js_file)?v=$(Genie.Configuration.GENIE_VERSION)\"></script>"
 end
 
 

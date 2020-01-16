@@ -349,8 +349,12 @@ Content-Type: text/html; charset=utf-8
 </div></body></html>"
 ```
 """
-function html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), layout::Union{String,Nothing} = nothing, vars...) :: Genie.Renderer.HTTP.Response
-  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context = context, layout = layout, vars...), status, headers) |> Genie.Renderer.respond
+function html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), layout::Union{String,Nothing} = nothing, forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
+  if occursin(raw"$", data) || occursin("<%", data) || layout !== nothing || forceparse
+    Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context = context, layout = layout, vars...), status, headers) |> Genie.Renderer.respond
+  else
+    Genie.Renderer.WebRenderable(body = data, status = status, headers = headers) |> Genie.Renderer.respond
+  end
 end
 
 

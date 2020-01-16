@@ -1,10 +1,7 @@
-window.WebChannels = {};
-window.WebChannels.load_channels = function() {
-  const SERVER_HOST = 'localhost';
-  const SERVER_PORT = 8001;
-
-  var socket = new WebSocket('ws://' + SERVER_HOST + ':' + SERVER_PORT);
-  var channels = window.WebChannels;
+Genie.WebChannels = {};
+Genie.WebChannels.load_channels = function() {
+  var socket = new WebSocket('ws://' + window.Genie.Settings.server_host + ':' + window.Genie.Settings.websockets_port);
+  var channels = Genie.WebChannels;
 
   channels.channel = socket;
   channels.sendMessageTo = sendMessageTo;
@@ -64,18 +61,18 @@ window.WebChannels.load_channels = function() {
 };
 
 window.addEventListener('beforeunload', function (event) {
-  if (WebChannels.channel.readyState === 1) {
-    WebChannels.channel.close();
+  if (Genie.WebChannels.channel.readyState === 1) {
+    Genie.WebChannels.channel.close();
   }
 });
 
-WebChannels.load_channels();
+Genie.WebChannels.load_channels();
 
-WebChannels.messageHandlers.push(function(event) {
+Genie.WebChannels.messageHandlers.push(function(event) {
   console.log(event.data);
 });
 
-WebChannels.messageHandlers.push(function(event){
+Genie.WebChannels.messageHandlers.push(function(event){
   try {
     if (event.data.startsWith('{') && event.data.endsWith('}')) {
       window.parse_payload(JSON.parse(event.data));
@@ -87,11 +84,11 @@ WebChannels.messageHandlers.push(function(event){
   }
 });
 
-WebChannels.errorHandlers.push(function(event) {
+Genie.WebChannels.errorHandlers.push(function(event) {
   console.log(event.data);
 });
 
-WebChannels.closeHandlers.push(function(event) {
+Genie.WebChannels.closeHandlers.push(function(event) {
   console.log("Server closed WebSocket connection");
 });
 
@@ -100,13 +97,29 @@ function parse_payload(json_data) {
   console.log(json_data);
 };
 
-// subscribe
 function subscribe() {
   if (document.readyState === "complete" || document.readyState === "interactive") {
-    WebChannels.sendMessageTo("__", "subscribe");
+    Genie.WebChannels.sendMessageTo(window.Genie.Settings.webchannels_default_route, window.Genie.Settings.webchannels_subscribe_channel);
     console.log("Subscription ready");
   } else {
     console.log("Queuing subscription");
     setTimeout(subscribe, 1000);
+  }
+};
+
+function unsubscribe() {
+  Genie.WebChannels.sendMessageTo(window.Genie.Settings.webchannels_default_route, window.Genie.Settings.webchannels_unsubscribe_channel);
+  console.log("Unsubscription completed");
+};
+
+Genie.WebChannels.openHandlers.push(function(event) {
+  if ( Genie.Settings.webchannels_autosubscribe ) {
+    subscribe();
+  }
+});
+
+window.onbeforeunload = function() {
+  if ( Genie.Settings.webchannels_autosubscribe ) {
+    unsubscribe();
   }
 };

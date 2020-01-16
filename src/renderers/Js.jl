@@ -107,8 +107,12 @@ end
 
 """
 """
-function js(data::String; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
-  Genie.Renderer.WebRenderable(render(MIME"application/javascript", data; context = context, vars...), :js, status, headers) |> Genie.Renderer.respond
+function js(data::String; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
+  if occursin(raw"$", data) || occursin("<%", data) || forceparse
+    Genie.Renderer.WebRenderable(render(MIME"application/javascript", data; context = context, vars...), :js, status, headers) |> Genie.Renderer.respond
+  else
+    Genie.Renderer.WebRenderable(body = data, content_type = :js, status = status, headers = headers) |> Genie.Renderer.respond
+  end
 end
 
 

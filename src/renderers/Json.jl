@@ -19,19 +19,7 @@ function render(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__
 end
 
 
-function render(data::String; context::Module = @__MODULE__, vars...) :: Function
-  Genie.Renderer.registervars(vars...)
-  Genie.Renderer.injectvars(context)
-
-  try
-    () -> (Base.include_string(context, data) |> JSONParser.json)
-  catch
-    () -> JSONParser.json(data)
-  end
-end
-
-
-function render(data) :: Function
+function render(data::Any; forceparse::Bool = false) :: Function
   () -> JSONParser.json(data)
 end
 
