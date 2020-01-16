@@ -52,6 +52,8 @@ Genie is compatible with Julia v1.0 and up.
 
 [Loading External Modules](documentation/15--The_Lib_Folder.md)
 
+[Working with WebSockets](documentation/17--Working_with_Web_Sockets.md)
+
 [Eager Compilation of Routes](documentation/80--Force_Compiling_Routes.md)
 
 ## Guides
