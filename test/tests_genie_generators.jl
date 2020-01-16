@@ -15,19 +15,19 @@
   end;
 
 
-  cd(testdir)
-  Pkg.activate(".")
+  # cd(testdir)
+  # Pkg.activate(".")
 
 
-  @safetestset "Autostart app" begin
-    using Genie
+  # @safetestset "Autostart app" begin
+  #   using Genie
 
-    workdir = Base.Filesystem.mktempdir()
+  #   workdir = Base.Filesystem.mktempdir()
 
-    Genie.newapp(workdir, autostart = true, testmode = true)
+  #   Genie.newapp(workdir, autostart = true, testmode = true)
 
-    @test true === true
-  end;
+  #   @test true === true
+  # end;
 
 
   cd(testdir)
