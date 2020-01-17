@@ -178,7 +178,6 @@ function loadapp(path::String = "."; autostart::Bool = false) :: Nothing
   try
     Core.eval(Main, Meta.parse("""include(joinpath("$path", "$(Genie.BOOTSTRAP_FILE_NAME)"))"""))
   catch ex
-    @error "Path $path does not seem to be a Genie app"
     rethrow(ex)
   end
 

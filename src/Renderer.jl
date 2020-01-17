@@ -42,7 +42,11 @@ const Path = FilePaths.Path
 const FilePath = Union{FilePaths.PosixPath,FilePaths.WindowsPath}
 const filepath = FilePaths.Path
 
-export FilePath, filepath, Path
+macro path_str(s)
+  :(FilePaths.@p_str($s))
+end
+
+export FilePath, filepath, Path, @path_str
 export @vars
 export WebRenderable
 
