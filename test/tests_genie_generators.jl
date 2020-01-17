@@ -41,8 +41,8 @@
 
     Genie.newapp(workdir, autostart = false, testmode = true)
 
-    @test readdir(workdir) == [ ".gitattributes", ".gitignore", "Manifest.toml", "Project.toml", "bin",
-                                "bootstrap.jl", "config", "genie.jl", "public", "routes.jl", "src"]
+    @test sort(readdir(workdir)) == sort([".gitattributes", ".gitignore", "Manifest.toml", "Project.toml", "bin",
+                                          "bootstrap.jl", "config", "genie.jl", "public", "routes.jl", "src"])
     @test readdir(joinpath(workdir, Genie.config.path_initializers)) == ["converters.jl", "logging.jl"]
 
     # TODO: add test for files in /src /config /public and /bin
@@ -60,10 +60,10 @@
 
     Genie.newapp(workdir, autostart = false, dbsupport = true, testmode = true)
 
-    @test readdir(workdir) == [ ".gitattributes", ".gitignore", "Manifest.toml", "Project.toml", "bin",
-                                "bootstrap.jl", "config", "db", "genie.jl", "public", "routes.jl", "src"]
-    @test readdir(joinpath(workdir, Genie.config.path_db)) == ["connection.yml", "migrations", "seeds"]
-    @test readdir(joinpath(workdir, Genie.config.path_initializers)) == ["converters.jl", "logging.jl", "searchlight.jl"]
+    @test sort(readdir(workdir)) == sort([".gitattributes", ".gitignore", "Manifest.toml", "Project.toml", "bin",
+                                          "bootstrap.jl", "config", "db", "genie.jl", "public", "routes.jl", "src"])
+    @test sort(readdir(joinpath(workdir, Genie.config.path_db))) == sort(["connection.yml", "migrations", "seeds"])
+    @test sort(readdir(joinpath(workdir, Genie.config.path_initializers))) == sort(["converters.jl", "logging.jl", "searchlight.jl"])
   end;
 
 
@@ -78,9 +78,9 @@
 
     Genie.newapp(workdir, autostart = false, mvcsupport = true, testmode = true)
 
-    @test readdir(workdir) == [".gitattributes", ".gitignore", "Manifest.toml", "Project.toml", "app", "bin", "bootstrap.jl", "config", "genie.jl", "public", "routes.jl", "src"]
-    @test readdir(joinpath(workdir, Genie.config.path_app)) == ["helpers", "layouts", "resources"]
-    @test readdir(joinpath(workdir, Genie.config.path_initializers)) == ["converters.jl", "logging.jl"]
+    @test sort(readdir(workdir)) == sort([".gitattributes", ".gitignore", "Manifest.toml", "Project.toml", "app", "bin", "bootstrap.jl", "config", "genie.jl", "public", "routes.jl", "src"])
+    @test sort(readdir(joinpath(workdir, Genie.config.path_app))) == sort(["helpers", "layouts", "resources"])
+    @test sort(readdir(joinpath(workdir, Genie.config.path_initializers))) == sort(["converters.jl", "logging.jl"])
   end;
 
 
