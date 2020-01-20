@@ -42,6 +42,8 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
                   verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
                   server::Union{Sockets.TCPServer,Nothing} = nothing) :: ServersCollection
 
+  update_config(port, host, ws_port, async)
+
   if Genie.config.websockets_server
     SERVERS.websockets = @async HTTP.listen(host, ws_port) do req
       if HTTP.WebSockets.is_upgrade(req.message)
@@ -71,6 +73,16 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
   end
 
   SERVERS
+end
+
+
+function update_config(port::Int, host::String, ws_port::Int, async::Bool) :: Nothing
+  Genie.config.server_port = port
+  Genie.config.server_host = host
+  Genie.config.websockets_port = ws_port
+  Genie.config.run_as_server = ! async
+
+  nothing
 end
 
 
