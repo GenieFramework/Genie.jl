@@ -8,6 +8,9 @@ import Genie.Renderer: @vars
 Reexport.@reexport using HttpCommon
 
 
+const DEFAULT_LAYOUT_FILE = :app
+const LAYOUTS_FOLDER = "layouts"
+
 const HTML_FILE_EXT      = [".flax.jl", "html.jl"]
 const TEMPLATE_EXT  = [".flax.html", ".jl.html"]
 const MARKDOWN_FILE_EXT = [".md", ".jl.md"]
@@ -319,8 +322,8 @@ end
 """
 function html(resource::Genie.Renderer.ResourcePath, action::Genie.Renderer.ResourcePath; layout::Genie.Renderer.ResourcePath = DEFAULT_LAYOUT_FILE,
                 context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
-  html(Path(joinpath(Genie.config.path_resources, string(resource), VIEWS_FOLDER, string(action)));
-        layout = Path(joinpath(Genie.config.path_app, LAYOUTS_FOLDER, string(layout))),
+  html(Genie.Renderer.Path(joinpath(Genie.config.path_resources, string(resource), Renderer.VIEWS_FOLDER, string(action)));
+        layout = Genie.Renderer.Path(joinpath(Genie.config.path_app, LAYOUTS_FOLDER, string(layout))),
         context = context, status = status, headers = headers, vars...)
 end
 
@@ -362,7 +365,7 @@ end
     html(viewfile::FilePath; layout::Union{Nothing,FilePath} = nothing,
           context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
 
-Parses and renders the HTML `viewfile`, optionally rendering it within the `layout` file. Valid file formats are `.html.jl` and `.flax.jl`.
+Parses and renders the HTML `viewfile`, optionally rendering it within the `layout` file. Valid file format is `.html.jl`.
 
 # Arguments
 - `viewfile::FilePath`: filesystem path to the view file as a `Renderer.FilePath`, ie `Renderer.FilePath("/path/to/file.html.jl")`

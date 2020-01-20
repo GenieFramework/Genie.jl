@@ -154,7 +154,7 @@ We create the `views/` folder in `app/resources/books/`. We provide the full pat
 Usually each controller method will have its own rendering logic – hence, its own view file. Thus, it's a good practice to name the view files just like the methods, so that we can keep track of where they're used.
 
 At the moment, Genie supports HTML and Markdown view files, as well as plain Julia. Their type is identified by file extension so that's an important part.
-The HTML views use a `.jl.html` extension while the Markdown files go with `.jl.md` and the Julia ones by `flax.jl`.
+The HTML views use a `.jl.html` extension while the Markdown files go with `.jl.md` and the Julia ones by `.jl`.
 
 ### HTML views
 

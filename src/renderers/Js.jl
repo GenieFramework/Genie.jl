@@ -13,7 +13,7 @@ const JSString = String
 
 const NBSP_REPLACEMENT = ("&nbsp;"=>"!!nbsp;;")
 
-export JSString, js
+export js
 
 
 """

@@ -11,7 +11,6 @@ const DEFAULT_CONTENT_TYPE = :html
 const DEFAULT_LAYOUT_FILE = "app"
 
 const VIEWS_FOLDER = "views"
-const LAYOUTS_FOLDER = "layouts"
 
 const BUILD_NAME = "GenieViews"
 

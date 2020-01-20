@@ -43,7 +43,7 @@ end
 """
 function json(resource::Genie.Renderer.ResourcePath, action::Genie.Renderer.ResourcePath; context::Module = @__MODULE__,
               status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
-  json(Path(joinpath(Genie.config.path_resources, string(resource), VIEWS_FOLDER, string(action) * JSON_FILE_EXT));
+  json(Genie.Renderer.Path(joinpath(Genie.config.path_resources, string(resource), VIEWS_FOLDER, string(action) * JSON_FILE_EXT));
         context = context, status = status, headers = headers, vars...)
 end
 
