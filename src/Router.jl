@@ -1044,7 +1044,7 @@ end
 """
 function error_500(error_message::String = "", req::HTTP.Request = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]])) :: HTTP.Response
   if request_type_is(req, :json)
-    HTTP.Response(500, ["Content-Type" => request_mappings[:json]], body = Flax.JSONRenderer.JSONParser.json(Dict("error" => "500 - $error_message")))
+    Renderer.Json.json(Dict("error" => "500 - $error_message"), status = 500)
   elseif request_type_is(req, :text)
     HTTP.Response(500, ["Content-Type" => request_mappings[:text]], body = "Error: 500 - $error_message")
   else
@@ -1057,7 +1057,7 @@ end
 """
 function error_xxx(error_message::String = "", req::HTTP.Request = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]]); error_info::String = "", error_code::Int = 500) :: HTTP.Response
   if request_type_is(req, :json)
-    HTTP.Response(error_code, ["Content-Type" => request_mappings[:json]], body = Flax.JSONRenderer.JSONParser.json(Dict("error" => "500 - $error_message")))
+    Renderer.Json.json(Dict("error" => "500 - $error_message"), status = error_code)
   elseif request_type_is(req, :text)
     HTTP.Response(error_code, ["Content-Type" => request_mappings[:text]], body = "Error: 500 - $error_message")
   else
