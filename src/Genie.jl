@@ -28,7 +28,6 @@ include("Toolbox.jl")
 include("Generator.jl")
 include("Encryption.jl")
 include("Cookies.jl")
-include("Sessions.jl")
 include("Input.jl")
 include("Renderer.jl")
 include("Router.jl")
@@ -43,9 +42,14 @@ include("Flash.jl")
 include("Plugins.jl")
 include("Deploy.jl")
 
-# Extras
+# === #
+# EXTRAS #
+
 include("Cache.jl")
-include("cache_adapters/FileCacheAdapter.jl")
+config.cache_storage == :File && include("cache_adapters/FileCache.jl")
+
+include("Sessions.jl")
+config.session_storage == :File && include("session_adapters/FileSession.jl")
 
 export serve, up
 

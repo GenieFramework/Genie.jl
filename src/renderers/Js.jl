@@ -48,7 +48,9 @@ function to_js(data::String; prepend = "\n") :: String
   string("function $(Genie.Renderer.function_name(data))() \n",
           Genie.Renderer.injectvars(),
           prepend,
-          "\"\"\"$data\"\"\"",
+          "\"\"\"
+          $data
+          \"\"\"",
           "\nend \n")
 end
 

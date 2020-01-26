@@ -58,8 +58,6 @@ function from_cache(key::Union{String,Symbol}, expiration::Int; dir = "") :: Nul
   try
     cache_info = SearchLight.findoneby(StorageCache, :name, key)
 
-    App.config.log_cache && log("Found cache for $key", :info)
-
     cache_info.expires_at + expiration < time_to_unixtimestamp() && return Nullable()
 
     io = IOBuffer()

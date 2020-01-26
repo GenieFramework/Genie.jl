@@ -3,14 +3,13 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
-const GENIE_VERSION = v"0.24.2"
+const GENIE_VERSION = v"0.25"
 
 import Logging
 import Genie
 
 export isdev, isprod, istest, env
-export @ifdev, @ifprod, @iftest
-export cache_enabled, Settings, DEV, PROD, TEST
+export Settings, DEV, PROD, TEST
 
 # app environments
 const DEV   = "dev"
@@ -74,36 +73,6 @@ istest():: Bool = (Genie.config.app_env == TEST)
 
 
 """
-    @ifdev(e::Expr)
-
-Executes expression if app is running in dev mode
-"""
-macro ifdev(e::Expr)
-  isdev() && esc(e)
-end
-
-
-"""
-    @ifprod(e::Expr)
-
-Executes expression if app is running in prod mode
-"""
-macro ifprod(e::Expr)
-  isprod() && esc(e)
-end
-
-
-"""
-    @iftest(e::Expr)
-
-Executes expression if app is running in test mode
-"""
-macro iftest(e::Expr)
-  istest() && esc(e)
-end
-
-
-"""
     env() :: String
 
 Returns the current Genie environment.
@@ -115,14 +84,6 @@ julia> Configuration.env()
 ```
 """
 env() :: String = Genie.config.app_env
-
-
-"""
-    cache_enabled() :: Bool
-
-Indicates whether or not the app has caching enabled (`cache_duration > 0`).
-"""
-cache_enabled() :: Bool = (Genie.config.cache_duration > 0)
 
 
 buildpath() :: String = Base.Filesystem.mktempdir(prefix = "jl_genie_build_")
@@ -144,12 +105,8 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `cors_allowed_origins::Vector{String}`: allowed origin hosts for CORS settings
 - `cache_duraction::Int`: cache expiration time in seconds
 - `log_level::Logging.LogLevel`: logging severity level
-- `log_formatted::Bool`: if true, Genie will attempt to pretty print some of the logged values
-- `log_cache::Bool`: if true, caching info is logged
-- `log_views::Bool`: if true, information from the view layer (template building) is logged
 - `log_to_file::Bool`: if true, information will be logged to file besides REPL
 - `assets_fingerprinted::Bool`: if true, asset fingerprinting is used in the asset pipeline
-- `session_auto_start::Bool`: if true, a session is automatically started for each request
 - `session_key_name::String`: the name of the session cookie
 - `session_storage::Symbol`: the backend adapter for session storage (default File)
 - `inflector_irregulars::Vector{Tuple{String,String}}`: additional irregular singular-plural forms to be used by the Inflector
@@ -170,16 +127,13 @@ mutable struct Settings
   cors_allowed_origins::Vector{String}
 
   cache_duration::Int
+  cache_storage::Symbol
 
   log_level::Logging.LogLevel
-  log_formatted::Bool
-  log_cache::Bool
-  log_views::Bool
   log_to_file::Bool
 
   assets_fingerprinted::Bool
 
-  session_auto_start::Bool
   session_key_name::String
   session_storage::Symbol
 
@@ -234,16 +188,13 @@ mutable struct Settings
             cors_allowed_origins = String[],
 
             cache_duration    = 0,
+            cache_storage     = :File,
 
             log_level     = Logging.Debug,
-            log_formatted = true,
-            log_cache     = true,
-            log_views     = true,
             log_to_file   = false,
 
             assets_fingerprinted  = false,
 
-            session_auto_start  = false,
             session_key_name    = "__geniesid",
             session_storage     = :File,
 
@@ -283,10 +234,10 @@ mutable struct Settings
                   server_document_root, server_handle_static_files, server_signature,
                   app_env,
                   cors_headers, cors_allowed_origins,
-                  cache_duration,
-                  log_level, log_formatted, log_cache, log_views, log_to_file,
+                  cache_duration, cache_storage,
+                  log_level, log_to_file,
                   assets_fingerprinted,
-                  session_auto_start, session_key_name, session_storage,
+                  session_key_name, session_storage,
                   inflector_irregulars,
                   run_as_server,
                   websockets_server, websockets_port,

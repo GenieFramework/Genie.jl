@@ -3,7 +3,7 @@ Various utility functions for using across models, controllers and views.
 """
 module Flash
 
-import Genie, Genie.Router, Genie.Sessions, Genie.Requests
+import Genie
 
 export flash, flash_has_message
 
@@ -14,13 +14,13 @@ export flash, flash_has_message
 Returns the `flash` dict object associated with the current HTTP request.
 """
 function flash()
-  Requests.payload()[Genie.PARAMS_FLASH_KEY]
+  Genie.Requests.payload()[Genie.PARAMS_FLASH_KEY]
 end
 
 
 function flash(value::Any) :: Nothing
-  Sessions.set!(Sessions.session(Requests.payload()), Genie.PARAMS_FLASH_KEY, value)
-  Requests.payload()[Genie.PARAMS_FLASH_KEY] = value
+  Genie.Sessions.set!(Genie.Sessions.session(Genie.Requests.payload()), Genie.PARAMS_FLASH_KEY, value)
+  Genie.Requests.payload()[Genie.PARAMS_FLASH_KEY] = value
 
   nothing
 end

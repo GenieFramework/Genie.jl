@@ -24,7 +24,7 @@
 
     r = js(script, data = data)
 
-    @test String(r.body) == "var app = new Vue({el: '#app', data: {\"message\":\"Hi Vue\"}})"
+    @test String(r.body) == "var app = new Vue({el: '#app', data: {\"message\":\"Hi Vue\"}})\n"
     @test r.headers[1]["Content-Type"] == "application/javascript; charset=utf-8"
   end;
 

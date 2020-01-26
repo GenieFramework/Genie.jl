@@ -2,7 +2,9 @@ module Sessions
 
 import Revise
 import SHA, HTTP, Dates, Logging
-import Genie, Genie.Cookies, Genie.Generator
+import Genie
+
+const HTTP = HTTP
 
 
 """
@@ -14,18 +16,15 @@ mutable struct Session
   id::String
   data::Dict{Symbol,Any}
 end
+
 Session(id::String) = Session(id, Dict{Symbol,Any}())
 
 export Session
 
-const session_adapter_name = string(Genie.config.session_storage) * "SessionAdapter"
-const SessionAdapter = include("session_adapters/$session_adapter_name.jl")
-
-using .(SessionAdapter)
-
 struct InvalidSessionIdException <: Exception
   msg::String
 end
+
 InvalidSessionIdException() = InvalidSessionIdException("Can't compute session id - please make sure SECRET_TOKEN is defined in config/secrets.jl")
 
 
@@ -62,9 +61,9 @@ Attempts to retrieve the session id from the provided `payload` object.
 If that is not available, a new session id is created.
 """
 function id(payload::Union{HTTP.Request,HTTP.Response}) :: String
-  (Cookies.get(payload, Genie.config.session_key_name) !== nothing) &&
-    ! isempty(Cookies.get(payload, Genie.config.session_key_name)) &&
-      return Cookies.get(payload, Genie.config.session_key_name)
+  (Genie.Cookies.get(payload, Genie.config.session_key_name) !== nothing) &&
+    ! isempty(Genie.Cookies.get(payload, Genie.config.session_key_name)) &&
+      return Genie.Cookies.get(payload, Genie.config.session_key_name)
 
   id()
 end
@@ -78,11 +77,20 @@ If that is not available, a new session id is created.
 """
 function id(req::HTTP.Request, res::HTTP.Response) :: String
   for r in [req, res]
-    val = Cookies.get(r, Genie.config.session_key_name)
-    (val !== nothing) && ! isempty(val) && return val
+    val = Genie.Cookies.get(r, Genie.config.session_key_name)
+    (val !== nothing) && ! isempty(val) &&
+      return val
   end
 
   id()
+end
+
+
+function init() :: Nothing
+  push!(Genie.Router.pre_match_hooks, Genie.Sessions.start)
+  push!(Genie.Router.pre_response_hooks, Genie.Sessions.persist)
+
+  nothing
 end
 
 
@@ -99,7 +107,7 @@ Initiates a new HTTP session with the provided `session_id`.
 """
 function start(session_id::String, req::HTTP.Request, res::HTTP.Response; options::Dict{String,String} = Dict{String,String}()) :: Tuple{Session,HTTP.Response}
   options = merge(Dict("Path" => "/", "HttpOnly" => true), options)
-  Cookies.set!(res, Genie.config.session_key_name, session_id, options)
+  Genie.Cookies.set!(res, Genie.config.session_key_name, session_id, options)
 
   load(session_id), res
 end
@@ -115,8 +123,25 @@ Initiates a new default session object, generating a new session id.
 - `res::HTTP.Response`: the response object
 - `options::Dict{String,String}`: extra options for setting the session cookie, such as `Path` and `HttpOnly`
 """
-function start(req::HTTP.Request, res::HTTP.Response; options::Dict{String,String} = Dict{String,String}()) :: Tuple{Session,HTTP.Response}
-  start(id(req, res), req, res, options = options)
+function start(req::HTTP.Request, res::HTTP.Response, params::Dict{Symbol,Any} = Dict{Symbol,Any}(); options::Dict{String,String} = Dict{String,String}()) :: Tuple{HTTP.Request,HTTP.Response,Dict{Symbol,Any}}
+  session, res = start(id(req, res), req, res, options = options)
+
+  params[Genie.PARAMS_SESSION_KEY]   = session
+  params[Genie.PARAMS_FLASH_KEY]     = begin
+                                          if session !== nothing
+                                            s = get(session, Genie.PARAMS_FLASH_KEY)
+                                            if s === nothing
+                                              ""
+                                            else
+                                              unset!(session, Genie.PARAMS_FLASH_KEY)
+                                              s
+                                            end
+                                          else
+                                            ""
+                                          end
+                                        end
+
+  req, res, params
 end
 
 
@@ -156,16 +181,6 @@ end
 
 
 """
-    get!!(s::Session, key::Symbol)
-
-Attempts to read the value stored on the `Session` `s` as `key` - throws an exception if the `key` is not set.
-"""
-function get!!(s::Session, key::Symbol)
-  s.data[key]
-end
-
-
-"""
     unset!(s::Session, key::Symbol) :: Session
 
 Removes the value stored on the `Session` `s` as `key`.
@@ -192,11 +207,7 @@ end
 
 Generic method for persisting session data - delegates to the underlying `SessionAdapter`.
 """
-function persist(s::Session) :: Session
-  SessionAdapter.write(s)
-
-  s
-end
+function persist end
 
 
 """
@@ -204,11 +215,7 @@ end
 
 Loads session data from persistent storage - delegates to the underlying `SessionAdapter`.
 """
-function load(session_id::String) :: Session
-  session = SessionAdapter.read(session_id)
-
-  session === nothing ? Session(session_id) : (session)
-end
+function load end
 
 
 """

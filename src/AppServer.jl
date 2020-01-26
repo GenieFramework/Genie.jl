@@ -6,7 +6,7 @@ module AppServer
 import Revise
 import HTTP, HTTP.IOExtras, HTTP.Sockets
 import Millboard, MbedTLS, URIParser, Sockets, Distributed, Logging
-import Genie, Genie.Configuration, Genie.Sessions, Genie.Router, Genie.WebChannels, Genie.Exceptions, Genie.Headers
+import Genie
 
 mutable struct ServersCollection
   webserver::Union{Task,Nothing}
@@ -95,13 +95,13 @@ function handle_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 
   isempty(Genie.config.server_signature) && Headers.sign_response!(res)
 
   try
-    req = Headers.normalize_headers(req)
+    req = Genie.Headers.normalize_headers(req)
   catch ex
     @error ex
   end
 
   try
-    Headers.set_headers!(req, res, Genie.Router.route_request(req, res, ip))
+    Genie.Headers.set_headers!(req, res, Genie.Router.route_request(req, res, ip))
   catch ex
     @error ex
     rethrow(ex)

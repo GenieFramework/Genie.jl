@@ -11,11 +11,6 @@ export cachekey, withcache, @cachekey
 export purge, purgeall
 
 
-function cache_adapter(m::Module)
-  @eval const CACHE_ADAPTER = m
-end
-
-
 """
     withcache(f::Function, key::Union{String,Symbol}, expiration::Int = Genie.config.cache_duration; dir = "", condition::Bool = true)
 
@@ -24,44 +19,23 @@ if the cache has not expired, the cached result is returned skipping the functio
 The optional `dir` param is used to designate the folder where the cache will be stored (within the configured cache folder).
 If `condition` is `false` caching will be skipped.
 """
-function withcache(f::Function, key::Union{String,Symbol}, expiration::Int = Genie.config.cache_duration; dir::String = "", condition::Bool = true)
-  ( expiration == 0 || ! condition ) && return f()
-
-  cached_data = CACHE_ADAPTER.fromcache(cachekey(key), expiration, dir = dir)
-
-  if cached_data === nothing
-    Genie.config.log_cache && @warn("Missed cache for $key")
-
-    output = f()
-    CACHE_ADAPTER.tocache(cachekey(key), output, dir = dir)
-
-    return output
-  end
-
-  Genie.config.log_cache && @info("Hit cache for $(cachekey(key))")
-
-  cached_data
-end
+function withcache end
 
 
 """
-    purge(key::Union{String,Symbol}; dir::String = "") :: Nothing
+    purge()
 
 Removes the cache data stored under the `key` key.
 """
-function purge(key::Union{String,Symbol}; dir::String = "") :: Nothing
-  CACHE_ADAPTER.purge(cachekey(key), dir = dir)
-end
+function purge end
 
 
 """
-    purgeall(; dir::String = "") :: Nothing
+    purgeall()
 
 Removes all cached data.
 """
-function purgeall(; dir::String = "") :: Nothing
-  CACHE_ADAPTER.purgeall(dir = dir)
-end
+function purgeall end
 
 
 ### PRIVATE ###

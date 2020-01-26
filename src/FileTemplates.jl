@@ -15,9 +15,6 @@ function newtask(module_name::String) :: String
   """
   module $module_name
 
-  using Genie, Genie.Toolbox
-
-
   \"\"\"
   Description of the task here
   \"\"\"
@@ -109,6 +106,7 @@ function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::B
   RUN chmod +x bin/repl
   RUN chmod +x bin/server
   RUN chmod +x bin/serverinteractive
+  RUN chmod +x bin/runtask
 
   USER $user
 

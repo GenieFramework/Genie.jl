@@ -418,7 +418,7 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
           print(attributes, "$k=\"$k\"", ", ") # boolean attributes can have the same value as the attribute -- or be empty
         end
       else
-        if occursin('-', k) || occursin(':', k) || occursin('@', k) || occursin('.', k)
+        if occursin('-', k) || occursin(':', k) || occursin('@', k) || occursin('.', k) || occursin("for", k)
           push!(attributes_keys, Symbol(k) |> repr)
 
           v = string(v) |> repr

@@ -3,8 +3,7 @@ module Router
 import Revise
 import Reexport, Logging
 import HTTP, URIParser, HttpCommon, Sockets, Millboard, Dates, OrderedCollections, JSON
-import Genie, Genie.HTTPUtils, Genie.Sessions, Genie.Configuration
-import Genie.Input, Genie.Util, Genie.Renderer, Genie.Exceptions
+import Genie
 
 include("mimetypes.jl")
 
@@ -26,8 +25,6 @@ const OPTIONS = "OPTIONS"
 const BEFORE_HOOK  = :before
 const AFTER_HOOK   = :after
 
-const sessionless = Symbol[:json]
-
 const request_mappings = Dict(
   :text       => "text/plain",
   :html       => "text/html",
@@ -38,6 +35,9 @@ const request_mappings = Dict(
   :multipart  => "multipart/form-data",
   :file       => "application/octet-stream"
 )
+
+const pre_match_hooks = Function[]
+const pre_response_hooks = Function[]
 
 
 """
@@ -109,7 +109,7 @@ ispayload(req::HTTP.Request) = req.method in [POST, PUT, PATCH]
 """
     route_request(req::Request, res::Response, ip::IPv4 = Genie.config.server_host) :: Response
 
-First step in handling a request: sets up @params collection, handles query vars, negotiates content, starts and persists sessions.
+First step in handling a request: sets up @params collection, handles query vars, negotiates content.
 """
 function route_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: HTTP.Response
   params = Params()
@@ -125,13 +125,17 @@ function route_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 =
 
   Genie.Configuration.isdev() && Revise.revise()
 
-  session, res = Genie.config.session_auto_start ? Genie.Sessions.start(req, res) : (nothing, res)
+  for f in unique(pre_match_hooks)
+    req, res, params.collection = f(req, res, params.collection)
+  end
 
-  res = match_routes(req, res, session, params)
+  res = match_routes(req, res, params)
 
   res.status == 404 && req.method == OPTIONS && return preflight_response()
 
-  ! in(response_type(params), sessionless) && Genie.config.session_auto_start && Sessions.persist(session)
+  for f in unique(pre_response_hooks)
+    req, res, params.collection = f(req, res, params.collection)
+  end
 
   reqstatus = "$(req.target) $(res.status)\n"
 
@@ -148,7 +152,7 @@ end
 """
     route_ws_request(req::Request, msg::String, ws_client::HTTP.WebSockets.WebSocket, ip::IPv4 = Genie.config.server_host) :: String
 
-First step in handling a web socket request: sets up @params collection, handles query vars, starts and persists sessions.
+First step in handling a web socket request: sets up @params collection, handles query vars.
 """
 function route_ws_request(req, msg::String, ws_client, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: String
   params = Params()
@@ -159,9 +163,11 @@ function route_ws_request(req, msg::String, ws_client, ip::Sockets.IPv4 = Socket
 
   Genie.Configuration.isdev() && Revise.revise()
 
-  session = Genie.config.session_auto_start ? Genie.Sessions.load(Genie.Sessions.id(req)) : nothing
+  for f in unique(pre_match_hooks)
+    req, res, params.collection = f(req, res, params.collection)
+  end
 
-  match_channels(req, msg, ws_client, params, session)
+  match_channels(req, msg, ws_client, params)
 end
 
 
@@ -458,11 +464,11 @@ end
 
 
 """
-    match_routes(req::Request, res::Response, session::Sessions.Session, params::Params) :: Response
+    match_routes(req::Request, res::Response, params::Params) :: Response
 
 Matches the invoked URL to the corresponding route, sets up the execution environment and invokes the controller method.
 """
-function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Genie.Sessions.Session,Nothing}, params::Params) :: HTTP.Response
+function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: HTTP.Response
   for r in routes()
     r.method != req.method && continue
 
@@ -479,7 +485,7 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, session::Union{Geni
 
     occursin(regex_route, uri.path) || parsed_route == "/*" || continue
 
-    params.collection = setup_base_params(req, res, params.collection, session)
+    params.collection = setup_base_params(req, res, params.collection)
 
     occursin("?", req.target) && extract_get_params(URIParser.URI(to_uri(req.target)), params)
 
@@ -523,11 +529,11 @@ end
 
 
 """
-    match_channels(req::Request, msg::String, ws_client::HTTP.WebSockets.WebSocket, params::Params, session::Sessions.Session) :: String
+    match_channels(req::Request, msg::String, ws_client::HTTP.WebSockets.WebSocket, params::Params) :: String
 
 Matches the invoked URL to the corresponding channel, sets up the execution environment and invokes the channel controller method.
 """
-function match_channels(req, msg::String, ws_client, params::Params, session::Union{Sessions.Session,Nothing}) :: String
+function match_channels(req, msg::String, ws_client, params::Params) :: String
   for c in channels()
     parsed_channel, param_names, param_types = parse_channel(c.path)
 
@@ -546,7 +552,7 @@ function match_channels(req, msg::String, ws_client, params::Params, session::Un
 
     (! occursin(regex_channel, uri)) && continue
 
-    params.collection = setup_base_params(req, nothing, params.collection, session)
+    params.collection = setup_base_params(req, nothing, params.collection)
 
     extract_uri_params(uri, regex_channel, param_names, param_types, params) || continue
 
@@ -569,7 +575,7 @@ function match_channels(req, msg::String, ws_client, params::Params, session::Un
               end
   end
 
-  string("404 - Not found")
+  string("ERROR : 404 - Not found")
 end
 
 
@@ -710,7 +716,7 @@ Parses POST variables and adds the to the `params` `Dict`.
 function extract_post_params(req::HTTP.Request, params::Params) :: Nothing
   ispayload(req) || return nothing
 
-  input = Input.all(req)
+  input = Genie.Input.all(req)
 
   for (k, v) in input.post
     nested_keys(k, v, params)
@@ -822,34 +828,18 @@ end
 
 
 """
-    setup_base_params(req::Request, res::Response, params::Dict{Symbol,Any}, session::Sessions.Session) :: Dict{Symbol,Any}
+    setup_base_params(req::Request, res::Response, params::Dict{Symbol,Any}) :: Dict{Symbol,Any}
 
 Populates `params` with default environment vars.
 """
 function setup_base_params(req::HTTP.Request = HTTP.Request(), res::Union{HTTP.Response,Nothing} = req.response,
-                            params::Dict{Symbol,Any} = Dict{Symbol,Any}(), session::Union{Genie.Sessions.Session,Nothing} = nothing) :: Dict{Symbol,Any}
+                            params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Dict{Symbol,Any}
   params[Genie.PARAMS_REQUEST_KEY]   = req
   params[Genie.PARAMS_RESPONSE_KEY]  = res
-  params[Genie.PARAMS_SESSION_KEY]   = session
-  params[Genie.PARAMS_FLASH_KEY]     = Genie.config.session_auto_start ?
-                                        begin
-                                          if session !== nothing
-                                            s = Genie.Sessions.get(session, Genie.PARAMS_FLASH_KEY)
-                                            if s === nothing
-                                              ""
-                                            else
-                                              Genie.Sessions.unset!(session, Genie.PARAMS_FLASH_KEY)
-                                              s
-                                            end
-                                          else
-                                            ""
-                                          end
-                                        end : ""
-
   params[Genie.PARAMS_POST_KEY]      = Dict{Symbol,Any}()
   params[Genie.PARAMS_GET_KEY]       = Dict{Symbol,Any}()
 
-  params[Genie.PARAMS_FILES]         = Dict{String,Input.HttpFile}()
+  params[Genie.PARAMS_FILES]         = Dict{String,Genie.Input.HttpFile}()
 
   params
 end

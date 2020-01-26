@@ -23,7 +23,7 @@ function newcontroller(cmd_args::Dict{String,Any}; path::String = ".", pluralize
   resource_path = setup_resource_path(resource_name, path = path)
   cfn = controller_file_name(resource_name)
   write_resource_file(resource_path, cfn, resource_name, :controller, pluralize = pluralize) &&
-    @info "New controller created at $(joinpath(resource_path, cfn))"
+    @info "New controller created at $(abspath(joinpath(resource_path, cfn)))"
 
   nothing
 end
@@ -44,7 +44,7 @@ function newresource(cmd_args::Dict{String,Any}; path::String = ".", pluralize::
   resource_path = setup_resource_path(resource_name, path = path)
   for (resource_file, resource_type) in [(controller_file_name(resource_name), :controller)]
     write_resource_file(resource_path, resource_file, resource_name, resource_type, pluralize = pluralize) &&
-      @info "New $resource_file created at $(joinpath(resource_path, resource_file))"
+      @info "New $resource_file created at $(abspath(joinpath(resource_path, resource_file)))"
   end
 
   views_path = joinpath(resource_path, "views")
@@ -140,6 +140,10 @@ function setup_windows_bin_files(path::String = ".") :: Nothing
 
   open(joinpath(path, Genie.config.path_bin, "serverinteractive.bat"), "w") do f
     write(f, "$JULIA_PATH --color=yes --depwarn=no -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) si %*")
+  end
+
+  open(joinpath(path, Genie.config.path_bin, "runtask.bat"), "w") do f
+    write(f, "$JULIA_PATH --color=yes --depwarn=no -q -- ../$(Genie.BOOTSTRAP_FILE_NAME) -r %*")
   end
 
   nothing

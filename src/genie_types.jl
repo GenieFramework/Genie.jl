@@ -29,7 +29,7 @@ Pretty printing of Genie types.
 """
 function genietype_to_print(m::T) :: String where {T<:GenieType}
   output = "\n" * "$(typeof(m))" * "\n"
-  output *= string(config.log_formatted ? Millboard.table(to_string_dict(m)) : to_string_dict(m) ) * "\n"
+  output *= string(Millboard.table(to_string_dict(m)), "\n")
 
   output
 end

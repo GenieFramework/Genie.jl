@@ -5,7 +5,8 @@ module Commands
 
 import Sockets
 import ArgParse
-import Genie, Genie.Configuration, Genie.AppServer
+import Genie
+using Logging
 
 """
     execute(config::Settings) :: Nothing
@@ -17,14 +18,25 @@ function execute(config::Genie.Configuration.Settings; server::Union{Sockets.TCP
 
   # overwrite env settings with command line arguments
   Genie.config.app_env = ENV["GENIE_ENV"]
-  Genie.config.server_port = haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : parse(Int, parsed_args["server:port"])
-  Genie.config.server_host = parsed_args["server:host"]
+  Genie.config.server_port = haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : parse(Int, parsed_args["p"])
+  Genie.config.server_host = parsed_args["l"]
 
-  if called_command(parsed_args, "s") || called_command(parsed_args, "server:start")
+  if called_command(parsed_args, "s")
     Genie.config.run_as_server = true
-    AppServer.startup(Genie.config.server_port, Genie.config.server_host, server = server)
-  elseif called_command(parsed_args, "si") || called_command(parsed_args, "server:interactive")
-    AppServer.startup(Genie.config.server_port, Genie.config.server_host, server = server)
+    Genie.up(Genie.config.server_port, Genie.config.server_host, server = server)
+  elseif called_command(parsed_args, "si")
+    Genie.up(Genie.config.server_port, Genie.config.server_host, server = server)
+  elseif called_command(parsed_args, "r")
+    endswith(parsed_args["r"], "Task") || (parsed_args["r"] *= "Task")
+    Genie.Toolbox.loadtasks(Main.UserApp)
+    taskname = parsed_args["r"]
+
+    try
+      task = getfield(Main.UserApp, Symbol(taskname))
+      @info Base.invokelatest(task.runtask, parsed_args["a"])
+    catch ex
+      @error ex
+    end
   end
 
   nothing
@@ -48,18 +60,23 @@ function parse_commandline_args(config::Genie.Configuration.Settings) :: Dict{St
   ArgParse.@add_arg_table settings begin
     "s"
     help = "starts HTTP server"
-    "--server:start"
-    help = "starts HTTP server"
-    "--server:port", "-p"
+
+    "-p"
     help = "HTTP server port"
     default = "$(config.server_port)"
-    "--server:host", "-l"
+
+    "-l"
     help = "Host IP to listen on"
     default = "$(config.server_host)"
+
     "si"
     help = "starts HTTP server and enters REPL"
-    "--server:interactive"
-    help = "starts HTTP server and enters REPL"
+
+    "-r"
+    help = "runs Genie.Toolbox task"
+
+    "-a"
+    help = "additional arguments passed into the Genie.Toolbox `runtask` function"
   end
 
   ArgParse.parse_args(settings)
@@ -72,7 +89,7 @@ end
 Checks whether or not a certain command was invoked by looking at the command line args.
 """
 function called_command(args::Dict{String,Any}, key::String) :: Bool
-  args[key] == "true" || args["s"] == key
+  haskey(args, key) && (args[key] == "true" || args["s"] == key || args[key] !== nothing)
 end
 
 end

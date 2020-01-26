@@ -66,11 +66,6 @@ mutable struct WebRenderable
 end
 
 
-struct MethodNotImplementedException <: Exception
-  method::String
-end
-
-
 """
     WebRenderable(body::String)
 
@@ -148,9 +143,7 @@ function WebRenderable(wr::WebRenderable, content_type::Symbol, status::Int, hea
 end
 
 
-function render() :: WebRenderable
-  throw(MethodNotImplementedException)
-end
+function render end
 
 
 ### REDIRECT RESPONSES ###
@@ -317,8 +310,6 @@ function build_is_stale(file_path::String, build_path::String) :: Bool
   file_mtime = stat(file_path).mtime
   build_mtime = stat(build_path).mtime
   status = file_mtime > build_mtime
-
-  Genie.config.log_views && status && @debug("🚨  View $file_path build $build_path is stale")
 
   status
 end

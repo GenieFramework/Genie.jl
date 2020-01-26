@@ -9,7 +9,6 @@ import HTTP, Reexport
 
 export jsonpayload, rawpayload, filespayload, postpayload, getpayload, request, matchedroute, matchedchannel, wsclient
 export infilespayload, filename, payload
-Reexport.@reexport using HTTP
 
 
 """
