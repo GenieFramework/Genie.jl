@@ -2,8 +2,8 @@ module Html
 
 
 import Revise
-import Markdown, Logging, Gumbo, Reexport, OrderedCollections
-import Genie, Genie.Configuration, Genie.Renderer
+import Markdown, Logging, Gumbo, Reexport, OrderedCollections, Millboard, HTTP
+import Genie, Genie.Renderer
 import Genie.Renderer: @vars
 Reexport.@reexport using HttpCommon
 
@@ -247,7 +247,7 @@ Parses a view file, returning a rendering function. If necessary, the function i
 """
 function parseview(data::String; partial = false, context::Module = @__MODULE__) :: Function
   data_hash = hash(data)
-  path = "Flax_" * string(data_hash)
+  path = "Genie_" * string(data_hash)
 
   func_name = Genie.Renderer.function_name(string(data_hash, partial)) |> Symbol
   mod_name = Genie.Renderer.m_name(string(path, partial)) * ".jl"
@@ -528,7 +528,7 @@ function partial(path::String; context::Module = @__MODULE__, vars...) :: String
     try
       task_local_storage(:__vars)[k] = v
     catch
-      init_task_local_storage()
+      Genie.Renderer.init_task_local_storage()
       task_local_storage(:__vars)[k] = v
     end
   end
@@ -690,14 +690,80 @@ end
 
 
 macro condblock(expr)
-  # dump(expr)
-
   expr.args[2] = quote
     join([$([arg for arg in expr.args[2].args if !isa(arg, LineNumberNode)]...),])
   end
 
   expr
 end
+
+
+### === ###
+### EXCEPTIONS ###
+
+
+function Genie.Router.error(error_message::String, ::Type{MIME"text/html"}, ::Val{500}; error_info::String = "") :: HTTP.Response
+  serve_error_file(500, error_message, error_info = error_info)
+end
+
+
+function Genie.Router.error(error_message::String, ::Type{MIME"text/html"}, ::Val{404}; error_info::String = "") :: HTTP.Response
+  serve_error_file(404, error_message, error_info = error_info)
+end
+
+
+function Genie.Router.error(error_code::Int, error_message::String, ::Type{MIME"text/html"}; error_info::String = "") :: HTTP.Response
+  serve_error_file(error_code, error_message, error_info = error_info)
+end
+
+
+"""
+    serve_error_file(error_code::Int, error_message::String = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
+
+Serves the error file correspoding to `error_code` and current environment.
+"""
+function serve_error_file(error_code::Int, error_message::String = ""; error_info::String = "") :: HTTP.Response
+  page_code = error_code in [404, 500] ? "$error_code" : "xxx"
+
+  try
+    error_page_file = isfile(joinpath(Genie.config.server_document_root, "error-$page_code.html")) ?
+                        joinpath(Genie.config.server_document_root, "error-$page_code.html") :
+                          joinpath(@__DIR__, "..", "..", "files", "static", "error-$page_code.html")
+
+    error_page =  open(error_page_file) do f
+                    read(f, String)
+                  end
+
+    if error_code == 500
+      error_page = replace(error_page, "<error_description/>"=>split(error_message, "\n")[1])
+
+      error_message = if Genie.Configuration.isdev()
+                      """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                                     $("\n" ^ 3)""" *
+                      """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(Genie.Router.@params))                        $("\n" ^ 3)""" *
+                      """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Genie.Router.named_routes() |> Dict))  $("\n" ^ 3)""" *
+                      """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$ENV                                               $("\n" ^ 1)"""
+      else
+        ""
+      end
+
+      error_page = replace(error_page, "<error_message/>"=>escapeHTML(error_message))
+
+    elseif error_code == 404
+      error_page = replace(error_page, "<error_message/>"=>error_message)
+
+    else
+      error_page = replace(replace(error_page, "<error_message/>"=>error_message), "<error_info/>"=>error_info)
+    end
+
+    HTTP.Response(error_code, ["Content-Type"=>"text/html"], body = error_page)
+  catch ex
+    @error ex
+    HTTP.Response(error_code, ["Content-Type"=>"text/html"], body = "Error $page_code: $error_message")
+  end
+end
+
+
+### === ###
 
 
 """

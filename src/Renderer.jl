@@ -4,7 +4,7 @@ export respond, redirect, render
 
 import Revise
 import HTTP, Markdown, Logging, FilePaths, SHA
-import Genie, Genie.Util, Genie.Configuration, Genie.Exceptions
+import Genie
 
 const DEFAULT_CHARSET = "charset=utf-8"
 const DEFAULT_CONTENT_TYPE = :html
@@ -22,14 +22,21 @@ MIME types plus charset.
 """
 const CONTENT_TYPES = Dict{Symbol,String}(
   :html       => "text/html; $DEFAULT_CHARSET",
-  :plain      => "text/plain; $DEFAULT_CHARSET",
   :text       => "text/plain; $DEFAULT_CHARSET",
   :json       => "application/json; $DEFAULT_CHARSET",
-  :js         => "application/javascript; $DEFAULT_CHARSET",
   :javascript => "application/javascript; $DEFAULT_CHARSET",
   :xml        => "text/xml; $DEFAULT_CHARSET",
   :markdown   => "text/markdown; $DEFAULT_CHARSET",
   :favicon    => "image/x-icon",
+)
+
+const MIME_TYPES = Dict(
+  :html       => MIME"text/html",
+  :text       => MIME"text/plain",
+  :json       => MIME"application/json",
+  :javascript => MIME"application/javascript",
+  :xml        => MIME"text/xml",
+  :markdown   => MIME"text/markdown"
 )
 
 push_content_type(s::Symbol, content_type::String, charset::String = DEFAULT_CHARSET) = (CONTENT_TYPES[s] = "$content_type; $charset")
@@ -107,8 +114,8 @@ Creates a new instance of `WebRenderable` using the values passed as keyword arg
 julia> Genie.Renderer.WebRenderable()
 Genie.Renderer.WebRenderable("", :html, 200, Dict{String,String}())
 
-julia> Genie.Renderer.WebRenderable(body = "bye", content_type = :js, status = 301, headers = Dict("Location" => "/bye"))
-Genie.Renderer.WebRenderable("bye", :js, 301, Dict("Location" => "/bye"))
+julia> Genie.Renderer.WebRenderable(body = "bye", content_type = :javascript, status = 301, headers = Dict("Location" => "/bye"))
+Genie.Renderer.WebRenderable("bye", :javascript, 301, Dict("Location" => "/bye"))
 ```
 """
 WebRenderable(; body::String = "", content_type::Symbol = DEFAULT_CONTENT_TYPE,
@@ -122,8 +129,8 @@ Returns `wr` overwriting its `status` and `headers` fields with the passed argum
 
 #Examples
 ```jldoctest
-julia> Genie.Renderer.WebRenderable(Genie.Renderer.WebRenderable(body = "good morning", content_type = :js), 302, Dict("Location" => "/morning"))
-Genie.Renderer.WebRenderable("good morning", :js, 302, Dict("Location" => "/morning"))
+julia> Genie.Renderer.WebRenderable(Genie.Renderer.WebRenderable(body = "good morning", content_type = :javascript), 302, Dict("Location" => "/morning"))
+Genie.Renderer.WebRenderable("good morning", :javascript, 302, Dict("Location" => "/morning"))
 ```
 """
 function WebRenderable(wr::WebRenderable, status::Int, headers::HTTPHeaders)
@@ -244,7 +251,7 @@ end
 function injectvars(context::Module) :: Nothing
   for kv in task_local_storage(:__vars)
     # isdefined(context, Symbol(kv[1])) ||
-    Core.eval(context, Meta.parse("$(kv[1]) = Genie.Renderer.@vars($(repr(kv[1])))"))
+    Core.eval(context, Meta.parse("$(kv[1]) = Renderer.@vars($(repr(kv[1])))"))
   end
 
   nothing
@@ -395,6 +402,78 @@ macro vars(key, value)
     end
   end
 end
+
+
+function set_negotiated_content(req::HTTP.Request, res::HTTP.Response, params::Dict{Symbol,Any})
+  req_type = Genie.Router.request_type(req)
+  params[:response_type] = req_type === nothing ? DEFAULT_CONTENT_TYPE : req_type
+  params[Genie.PARAMS_MIME_KEY] = get(MIME_TYPES, params[:response_type], MIME_TYPES[DEFAULT_CONTENT_TYPE])
+  push!(res.headers, "Content-Type" => get(CONTENT_TYPES, params[:response_type], "text/html"))
+
+  req, res, params
+end
+
+
+"""
+    negotiate_content(req::Request, res::Response, params::Params) :: Response
+
+Computes the content-type of the `Response`, based on the information in the `Request`.
+"""
+function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Dict{Symbol,Any}) :: Tuple{HTTP.Request,HTTP.Response,Dict{Symbol,Any}}
+  headers = Dict(res.headers)
+
+  if haskey(params, :response_type) && in(Symbol(params[:response_type]), collect(keys(CONTENT_TYPES)) )
+    params[:response_type] = Symbol(params[:response_type])
+    params[Genie.PARAMS_MIME_KEY] = MIME_TYPES[params[:response_type]]
+    headers["Content-Type"] = CONTENT_TYPES[params[:response_type]]
+
+    res.headers = [k for k in headers]
+
+    return req,res,params
+  end
+
+  negotiation_header = haskey(headers, "Accept") ? "Accept" : ( haskey(headers, "Content-Type") ? "Content-Type" : "" )
+
+  if isempty(negotiation_header)
+    req, res, params = set_negotiated_content(req, res, params)
+    return req, res, params
+  end
+
+  accept_parts = split(headers[negotiation_header], ";")
+
+  if isempty(accept_parts)
+    req, res, params = set_negotiated_content(req, res, params)
+    return req, res, params
+  end
+
+  accept_order_parts = split(accept_parts[1], ",")
+
+  if isempty(accept_order_parts)
+    req, res, params = set_negotiated_content(req, res, params)
+    return req, res, params
+  end
+
+  for mime in accept_order_parts
+    if occursin("/", mime)
+      content_type = split(mime, "/")[2] |> lowercase |> Symbol
+      if haskey(CONTENT_TYPES, content_type)
+        params[:response_type] = content_type
+        params[Genie.PARAMS_MIME_KEY] = MIME_TYPES[params[:response_type]]
+        headers["Content-Type"] = CONTENT_TYPES[params[:response_type]]
+
+        res.headers = [k for k in headers]
+        return req,res,params
+      end
+    end
+  end
+
+  req, res, params = set_negotiated_content(req, res, params)
+
+  return req, res, params
+end
+
+
+push!(Genie.Router.content_negotiation_hooks, negotiate_content)
 
 
 include("renderers/Html.jl")

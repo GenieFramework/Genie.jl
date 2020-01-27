@@ -1,7 +1,7 @@
 module Js
 
 import Revise
-import Logging
+import Logging, HTTP
 using Genie, Genie.Renderer
 
 const JS_FILE_EXT   = ["js.jl"]
@@ -61,7 +61,7 @@ function render(data::String; context::Module = @__MODULE__, vars...) :: Functio
   Genie.Renderer.registervars(vars...)
 
   data_hash = hash(data)
-  path = "Flax_" * string(data_hash)
+  path = "Genie_" * string(data_hash)
 
   func_name = Genie.Renderer.function_name(string(data_hash)) |> Symbol
   mod_name = Genie.Renderer.m_name(path) * ".jl"
@@ -89,7 +89,7 @@ end
 
 function render(::Type{MIME"application/javascript"}, data::String; context::Module = @__MODULE__, vars...) :: Genie.Renderer.WebRenderable
   try
-    Genie.Renderer.WebRenderable(Base.invokelatest(render(data; context = context, vars...))::String, :js)
+    Genie.Renderer.WebRenderable(Base.invokelatest(render(data; context = context, vars...))::String, :javascript)
   catch ex
     isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
     rethrow(ex)
@@ -99,7 +99,7 @@ end
 
 function render(::Type{MIME"application/javascript"}, viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__, vars...) :: Genie.Renderer.WebRenderable
   try
-    Genie.Renderer.WebRenderable(Base.invokelatest(render(viewfile; context = context, vars...))::String, :js)
+    Genie.Renderer.WebRenderable(Base.invokelatest(render(viewfile; context = context, vars...))::String, :javascript)
   catch ex
     isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
     rethrow(ex)
@@ -111,9 +111,9 @@ end
 """
 function js(data::String; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
   if occursin(raw"$", data) || occursin("<%", data) || forceparse
-    Genie.Renderer.WebRenderable(render(MIME"application/javascript", data; context = context, vars...), :js, status, headers) |> Genie.Renderer.respond
+    Genie.Renderer.WebRenderable(render(MIME"application/javascript", data; context = context, vars...), :javascript, status, headers) |> Genie.Renderer.respond
   else
-    Genie.Renderer.WebRenderable(body = data, content_type = :js, status = status, headers = headers) |> Genie.Renderer.respond
+    Genie.Renderer.WebRenderable(body = data, content_type = :javascript, status = status, headers = headers) |> Genie.Renderer.respond
   end
 end
 
@@ -121,7 +121,26 @@ end
 """
 """
 function js(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
-  Genie.Renderer.WebRenderable(render(MIME"application/javascript", viewfile; context = context, vars...), :js, status, headers) |> Genie.Renderer.respond
+  Genie.Renderer.WebRenderable(render(MIME"application/javascript", viewfile; context = context, vars...), :javascript, status, headers) |> Genie.Renderer.respond
+end
+
+
+### === ###
+### EXCEPTIONS ###
+
+
+function Genie.Router.error(error_message::String, ::Type{MIME"application/javascript"}, ::Val{500}; error_info::String = "") :: HTTP.Response
+  HTTP.Response(Dict("error" => "500 Internal Error - $error_message", "info" => error_info), status = 500)
+end
+
+
+function Genie.Router.error(error_message::String, ::Type{MIME"application/javascript"}, ::Val{404}; error_info::String = "") :: HTTP.Response
+  HTTP.Response(Dict("error" => "404 Not Found - $error_message", "info" => error_info), status = 404)
+end
+
+
+function Genie.Router.error(error_code::Int, error_message::String, ::Type{MIME"application/javascript"}; error_info::String = "") :: HTTP.Response
+  HTTP.Response(Dict("error" => "$error_code Error - $error_message", "info" => error_info), status = error_code)
 end
 
 end

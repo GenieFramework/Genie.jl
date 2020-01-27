@@ -10,7 +10,6 @@ include("mimetypes.jl")
 export route, routes, channel, channels, serve_static_file
 export GET, POST, PUT, PATCH, DELETE, OPTIONS
 export tolink, linkto, responsetype, toroute
-export error_404, error_500, error_xxx, err
 export @params, @routes, @channels
 
 Reexport.@reexport using HttpCommon
@@ -25,11 +24,10 @@ const OPTIONS = "OPTIONS"
 const BEFORE_HOOK  = :before
 const AFTER_HOOK   = :after
 
-const request_mappings = Dict(
+const request_mappings = Dict{Symbol,String}(
   :text       => "text/plain",
   :html       => "text/html",
   :json       => "application/json",
-  :js         => "application/javascript",
   :javascript => "application/javascript",
   :form       => "application/x-www-form-urlencoded",
   :multipart  => "multipart/form-data",
@@ -38,6 +36,7 @@ const request_mappings = Dict(
 
 const pre_match_hooks = Function[]
 const pre_response_hooks = Function[]
+const content_negotiation_hooks = Function[]
 
 
 """
@@ -115,12 +114,16 @@ function route_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 =
   params = Params()
   params.collection[:request_ipv4] = ip
 
-  res = negotiate_content(req, res, params)
+  for f in unique(content_negotiation_hooks)
+    req, res, params.collection = f(req, res, params.collection)
+  end
+
+  # @show params
 
   if is_static_file(req.target)
     Genie.config.server_handle_static_files && return serve_static_file(req.target)
 
-    return error_404(req.target, req)
+    return error(req.target, response_mime(), Val(404))
   end
 
   Genie.Configuration.isdev() && Revise.revise()
@@ -128,6 +131,8 @@ function route_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 =
   for f in unique(pre_match_hooks)
     req, res, params.collection = f(req, res, params.collection)
   end
+
+  # @show params
 
   res = match_routes(req, res, params)
 
@@ -168,59 +173,6 @@ function route_ws_request(req, msg::String, ws_client, ip::Sockets.IPv4 = Socket
   end
 
   match_channels(req, msg, ws_client, params)
-end
-
-
-"""
-    negotiate_content(req::Request, res::Response, params::Params) :: Response
-
-Computes the content-type of the `Response`, based on the information in the `Request`.
-"""
-function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Params) :: HTTP.Response
-  headers = Dict(res.headers)
-
-  function set_negotiated_content()
-    params.collection[:response_type] = request_type(req)
-    push!(res.headers, "Content-Type" => get(Genie.Renderer.CONTENT_TYPES, params.collection[:response_type], "text/html"))
-
-    true
-  end
-
-  if haskey(params.collection, :response_type) && in(Symbol(params.collection[:response_type]), collect(keys(Genie.Renderer.CONTENT_TYPES)) )
-    params.collection[:response_type] = Symbol(params.collection[:response_type])
-    headers["Content-Type"] = Genie.Renderer.CONTENT_TYPES[params.collection[:response_type]]
-
-    res.headers = [k for k in headers]
-
-    return res
-  end
-
-  negotiation_header = haskey(headers, "Accept") ? "Accept" : ( haskey(headers, "Content-Type") ? "Content-Type" : "" )
-
-  isempty(negotiation_header) && set_negotiated_content() && return res
-
-  accept_parts = split(headers[negotiation_header], ";")
-
-  isempty(accept_parts) && set_negotiated_content() && return res
-
-  accept_order_parts = split(accept_parts[1], ",")
-
-  isempty(accept_order_parts) && set_negotiated_content() && return res
-
-  for mime in accept_order_parts
-    if occursin("/", mime)
-      content_type = split(mime, "/")[2] |> lowercase |> Symbol
-      if haskey(Genie.Renderer.CONTENT_TYPES, content_type)
-        params.collection[:response_type] = content_type
-        headers["Content-Type"] = Genie.Renderer.CONTENT_TYPES[params.collection[:response_type]]
-
-        res.headers = [k for k in headers]
-        return res
-      end
-    end
-  end
-
-  set_negotiated_content() && return res
 end
 
 
@@ -495,7 +447,9 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
     ispayload(req) && extract_request_params(req, params)
     action_controller_params(r.action, params)
 
-    res = negotiate_content(req, res, params)
+    for f in unique(content_negotiation_hooks)
+      req, res, params.collection = f(req, res, params.collection)
+    end
 
     params.collection[Genie.PARAMS_ROUTE_KEY] = r
 
@@ -515,16 +469,16 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
               elseif isa(ex, Genie.Exceptions.RuntimeException)
                 rethrow(ex)
               elseif isa(ex, Genie.Exceptions.InternalServerException)
-                return error_500(ex.message)
+                return error(ex.message, response_mime(), Val(500))
               elseif isa(ex, Genie.Exceptions.NotFoundException)
-                return error_404(ex.resource)
+                return error(ex.resource, response_mime(), Val(404))
               elseif isa(ex, Exception)
                 rethrow(ex)
               end
             end
   end
 
-  error_404(req.target, req)
+  error(req.target, response_mime(params.collection), Val(404))
 end
 
 
@@ -791,14 +745,14 @@ end
 
 """
 """
-function request_type(req::HTTP.Request) :: Symbol
+function request_type(req::HTTP.Request) :: Union{Symbol,Nothing}
   for (k,v) in request_mappings
     if occursin(v, content_type(req))
       return k
     end
   end
 
-  return :unknown
+  return nothing
 end
 function request_type() :: Symbol
   request_type(_params_(Genie.PARAMS_REQUEST_KEY))
@@ -858,7 +812,7 @@ function to_response(action_result) :: HTTP.Response
   elseif isa(action_result, Nothing)
     HTTP.Response("")
   elseif isa(action_result, String)
-    Renderer.respond(action_result)
+    HTTP.Response(action_result)
   elseif isa(action_result, Genie.Exceptions.ExceptionalResponse)
     action_result.response
   elseif isa(action_result, Genie.Exceptions.RuntimeException)
@@ -908,7 +862,7 @@ end
 Returns the content-type of the current request-response cycle.
 """
 function response_type(params::Dict{Symbol,T})::Symbol where {T}
-  haskey(params, :response_type) ? params[:response_type] : Genie.Renderer.DEFAULT_CONTENT_TYPE
+  params[:response_type]
 end
 function response_type(params::Params) :: Symbol
   response_type(params.collection)
@@ -1004,7 +958,7 @@ function serve_static_file(resource::String; root = Genie.config.server_document
       HTTP.Response(200, file_headers(bundled_path), body = read(bundled_path, String))
     else
       @error "404 Not Found $f"
-      error_404(resource)
+      error(resource, response_mime(), Val(404))
     end
   end
 end
@@ -1017,94 +971,16 @@ function preflight_response() :: HTTP.Response
 end
 
 
-"""
-"""
-function error_404(resource::String = "", req::HTTP.Request = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]])) :: HTTP.Response
-  if request_type_is(req, :json)
-    HTTP.Response(404, ["Content-Type" => request_mappings[:json]], body = """{ "error": "404 - NOT FOUND" }""")
-  elseif request_type_is(req, :text)
-    HTTP.Response(404, ["Content-Type" => request_mappings[:text]], body = "Error: 404 - NOT FOUND")
-  else
-    serve_error_file(404, resource)
-  end
+function response_mime()
+  @params(Genie.PARAMS_MIME_KEY, MIME"text/html")
+end
+
+function response_mime(params::Dict{Symbol,Any})
+  params[Genie.PARAMS_MIME_KEY]
 end
 
 
-"""
-"""
-function error_500(error_message::String = "", req::HTTP.Request = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]])) :: HTTP.Response
-  if request_type_is(req, :json)
-    Renderer.Json.json(Dict("error" => "500 - $error_message"), status = 500)
-  elseif request_type_is(req, :text)
-    HTTP.Response(500, ["Content-Type" => request_mappings[:text]], body = "Error: 500 - $error_message")
-  else
-    serve_error_file(500, error_message, @params)
-  end
-end
-
-
-"""
-"""
-function error_xxx(error_message::String = "", req::HTTP.Request = HTTP.Request("", "", ["Content-Type" => request_mappings[:html]]); error_info::String = "", error_code::Int = 500) :: HTTP.Response
-  if request_type_is(req, :json)
-    Renderer.Json.json(Dict("error" => "500 - $error_message"), status = error_code)
-  elseif request_type_is(req, :text)
-    HTTP.Response(error_code, ["Content-Type" => request_mappings[:text]], body = "Error: 500 - $error_message")
-  else
-    serve_error_file(error_code, error_message, @params, error_info = error_info)
-  end
-end
-
-
-function err(error_message::String; error_info::String = "", error_code::Int = 500) :: HTTP.Response
-  error_xxx(error_message, @params(:REQUEST), error_info = error_info, error_code = error_code)
-end
-
-
-"""
-    serve_error_file(error_code::Int, error_message::String = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
-
-Serves the error file correspoding to `error_code` and current environment.
-"""
-function serve_error_file(error_code::Int, error_message::String = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}(); error_info::String = "") :: HTTP.Response
-  ERROR_DESCRIPTION_MAX_LENGTH = 1000
-
-  page_code = error_code in [404, 500] ? "$error_code" : "xxx"
-
-  try
-    error_page_file = isfile(joinpath(Genie.config.server_document_root, "error-$page_code.html")) ?
-                        joinpath(Genie.config.server_document_root, "error-$page_code.html") :
-                          joinpath(@__DIR__, "..", "files", "static", "error-$page_code.html")
-
-    error_page =  open(error_page_file) do f
-                    read(f, String)
-                  end
-
-    if error_code == 500
-      error_page = replace(error_page, "<error_description/>"=>split(error_message, "\n")[1])
-
-      error_message = if Genie.Configuration.isdev()
-                      """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                                     $("\n" ^ 3)""" *
-                      """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(params))                         $("\n" ^ 3)""" *
-                      """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Router.named_routes() |> Dict))  $("\n" ^ 3)""" *
-                      """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$ENV                                               $("\n" ^ 1)"""
-      else
-        ""
-      end
-
-      error_page = replace(error_page, "<error_message/>"=>escapeHTML(error_message))
-    elseif error_code == 404
-      error_page = replace(error_page, "<error_message/>"=>error_message)
-    else
-      error_page = replace(replace(error_page, "<error_message/>"=>error_message), "<error_info/>"=>error_info)
-    end
-
-    HTTP.Response(error_code, ["Content-Type"=>"text/html"], body = error_page)
-  catch ex
-    @error ex
-    HTTP.Response(error_code, ["Content-Type"=>"text/html"], body = "Error $page_code: $error_message")
-  end
-end
+function error end
 
 
 """

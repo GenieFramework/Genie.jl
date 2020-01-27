@@ -121,10 +121,10 @@ function setup_http_handler(req::HTTP.Request, res::HTTP.Response = HTTP.Respons
     if isa(ex, Distributed.RemoteException) &&
         isa(ex.captured, Distributed.CapturedException) &&
           isa(ex.captured.ex, Genie.Exceptions.RuntimeException)
+
       @error ex.captured.ex
-      return Genie.Router.err(ex.captured.ex.message,
-                              error_info = string(ex.captured.ex.code, " ", ex.captured.ex.info),
-                              error_code = ex.captured.ex.code)
+      return Genie.Router.error(ex.captured.ex.code, ex.captured.ex.message, Genie.Router.response_mime(),
+                              error_info = string(ex.captured.ex.code, " ", ex.captured.ex.info))
     end
 
     error_message = string(sprint(showerror, ex), "\n\n")
@@ -134,7 +134,7 @@ function setup_http_handler(req::HTTP.Request, res::HTTP.Response = HTTP.Respons
                 "The error has been logged and we'll look into it ASAP." :
                 error_message
 
-    Genie.Router.error_500(message, req)
+    Genie.Router.error(message, Genie.Router.response_mime(), Val(500))
   end
 end
 
