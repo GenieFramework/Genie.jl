@@ -286,7 +286,7 @@ function write_app_custom_files(path::String, app_path::String) :: Nothing
     write(f,
     """
       cd(@__DIR__)
-      using Pkg
+      import Pkg
       Pkg.activate(".")
 
       function main()

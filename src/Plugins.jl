@@ -93,7 +93,7 @@ function scaffold(plugin_name::String, dest::String = "."; force = false)
 
   cd(dest)
   Pkg.activate(".")
-  Pkg.add(Pkg.PackageSpec(name="Genie", rev="master"))
+  Pkg.add("Genie")
 
   run(`git init`)
   run(`git add .`)
