@@ -92,8 +92,8 @@ function scaffold(plugin_name::String, dest::String = "."; force = false)
   @info "Adding dependencies"
 
   cd(dest)
-  Pkg.pkg"activate ."
-  Pkg.pkg"add https://github.com/genieframework/Genie.jl"
+  Pkg.activate(".")
+  Pkg.add(Pkg.PackageSpec(name="Genie", rev="master"))
 
   run(`git init`)
   run(`git add .`)
