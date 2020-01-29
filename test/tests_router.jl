@@ -1,8 +1,11 @@
 @safetestset "Router tests" begin
 
-  @safetestset "Router hooks" begin
+  @safetestset "Basic routing" begin
+    using Genie, Genie.Router
 
-    using Genie.Router
+    route("/hello") do
+      "Hello"
+    end
 
   end;
 
