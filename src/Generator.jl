@@ -287,7 +287,7 @@ function write_app_custom_files(path::String, app_path::String) :: Nothing
     """
       cd(@__DIR__)
       import Pkg
-      Pkg.pkg"activate ."
+      Pkg.activate(".")
 
       function main()
         include(joinpath("$(Genie.config.path_src)", "$(moduleinfo[1]).jl"))
@@ -306,11 +306,11 @@ Installs the application's dependencies using Julia's Pkg
 """
 function install_app_dependencies(app_path::String = "."; testmode::Bool = false) :: Nothing
   @info "Installing app dependencies"
-  Pkg.pkg"activate ."
+  Pkg.activate(".")
 
-  testmode ? Pkg.pkg"dev Genie" : Pkg.pkg"add Genie"
-  Pkg.pkg"add Revise"
-  Pkg.pkg"add LoggingExtras"
+  testmode ? Pkg.develop("Genie") : Pkg.add("Genie")
+  Pkg.add("Revise")
+  Pkg.add("LoggingExtras")
 
   nothing
 end

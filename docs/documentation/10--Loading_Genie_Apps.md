@@ -57,7 +57,7 @@ We will need to make the local package environment available:
 
 ```julia
 using Pkg
-pkg"activate ."
+Pkg.activate(".")
 ```
 
 Then:
