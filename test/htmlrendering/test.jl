@@ -1,5 +1,5 @@
 using Pkg
-pkg"activate ."
+Pkg.activate(".")
 
 using Genie, Genie.Router, Genie.Renderer
 

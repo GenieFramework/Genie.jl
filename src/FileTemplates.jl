@@ -110,7 +110,7 @@ function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::B
 
   USER $user
 
-  RUN julia -e "using Pkg; pkg\\"activate . \\"; pkg\\"instantiate\\"; pkg\\"precompile\\"; "
+  RUN julia -e "using Pkg; Pkg.activate(\\".\\"); Pkg.instantiate(); Pkg.precompile(); "
 
   # ports
   EXPOSE $port

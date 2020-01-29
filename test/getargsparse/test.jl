@@ -1,5 +1,5 @@
 using Pkg
-pkg"activate ."
+Pkg.activate(".")
 
 using Genie, Dates, HTTP
 import Genie.Router: route, POST, @params
