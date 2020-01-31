@@ -56,6 +56,7 @@ Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 LoggingExtras = "e6f89c97-d47a-5376-807f-9c37f3926c36"
 Sockets = "6462fe0b-24de-5631-8697-dd941f90decc"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 
 [targets]
-test = ["SafeTestsets", "Test", "TestSetExtensions", "Pkg", "Random", "Revise", "Logging","LoggingExtras", "Sockets"]
+test = ["SafeTestsets", "Test", "TestSetExtensions", "Pkg", "Random", "Revise", "Logging","LoggingExtras", "Sockets", "Dates"]
