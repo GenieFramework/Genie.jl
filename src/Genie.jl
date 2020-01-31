@@ -177,19 +177,21 @@ julia> Genie.loadapp(".")
 ```
 """
 function loadapp(path::String = "."; autostart::Bool = false) :: Nothing
-  Core.eval(Main, Meta.parse("import Revise"))
+  Core.eval(Main, :(import Revise))
 
   try
-    Core.eval(Main, Meta.parse("""include(joinpath("$path", "$(Genie.BOOTSTRAP_FILE_NAME)"))"""))
+    Core.eval(Main, quote
+        include(joinpath($path,$(Genie.BOOTSTRAP_FILE_NAME)))
+    end)
   catch ex
     rethrow(ex)
   end
 
-  Core.eval(Main, Meta.parse("Revise.revise()"))
-  Core.eval(Main, Meta.parse("using Genie"))
+  Core.eval(Main, :(Revise.revise()))
+  Core.eval(Main, :(using Genie))
 
-  Core.eval(Main.UserApp, Meta.parse("Revise.revise()"))
-  Core.eval(Main.UserApp, Meta.parse("$autostart && up()"))
+  Core.eval(Main.UserApp, :(Revise.revise()))
+  Core.eval(Main.UserApp, :($autostart && up()))
 
   nothing
 end
