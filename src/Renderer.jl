@@ -264,20 +264,25 @@ end
 Extracts path and extension info about a file
 """
 function view_file_info(path::String, supported_extensions::Vector{String}) :: Tuple{String,String}
+
   _path, _extension = "", ""
 
   if isfile(path)
-    _path, _extension = relpath(path), "." * split(path, ".", limit = 2)[end]
+    _path_without_extension, _extension = Base.Filesystem.splitext(path)
+    _path = _path_without_extension * _extension
   else
-    for file_extension in supported_extensions
-      if isfile(path * file_extension)
-        _path, _extension = path * file_extension, file_extension
-        break
-      end
-    end
-  end
+     for file_extension in supported_extensions
+       if isfile(path * file_extension)
+         _path, _extension = path * file_extension, file_extension
+         break
+       end
+     end
+   end
 
-  _path, _extension
+  # to check that it is among supported files
+  # in(_extension, supported_extensions) || @warn("$_extension is not among $supported_extensions")
+
+  return _path, _extension
 end
 
 
