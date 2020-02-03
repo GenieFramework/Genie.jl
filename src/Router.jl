@@ -459,10 +459,17 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
 
     return  try
               run_hook(controller, BEFORE_HOOK)
-              result =  (Genie.Configuration.isdev() ? Base.invokelatest(r.action) : (r.action)()) |> to_response
+              # result =  (Genie.Configuration.isdev() ? Base.invokelatest(r.action) : (r.action)()) |> to_response
+              result = try
+                (r.action)() |> to_response
+              catch
+                Base.invokelatest(r.action) |> to_response
+              end
+
               run_hook(controller, AFTER_HOOK)
 
               result
+
             catch ex
               if isa(ex, Genie.Exceptions.ExceptionalResponse)
                 return ex.response
@@ -520,7 +527,13 @@ function match_channels(req, msg::String, ws_client, params::Params) :: String
 
     return  try
                 run_hook(controller, BEFORE_HOOK)
-                result = (Genie.Configuration.isdev() ? Base.invokelatest(c.action) : (c.action)()) |> string
+
+                result = try
+                  (c.action)() |> string
+                catch
+                  Base.invokelatest(c.action) |> string
+                end
+
                 run_hook(controller, AFTER_HOOK)
 
                 result

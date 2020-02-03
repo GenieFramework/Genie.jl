@@ -9,11 +9,11 @@ function initialize_logging()
               isdir(Genie.config.path_log) || mkpath(Genie.config.path_log)
               LoggingExtras.DemuxLogger(
                 LoggingExtras.FileLogger(joinpath(Genie.config.path_log, "$(Genie.config.app_env)-$(Dates.today()).log"), always_flush = true, append = true),
-                LoggingExtras.ConsoleLogger(stdout, Genie.config.log_level),
+                Logging.ConsoleLogger(stdout, Genie.config.log_level),
                 include_current_global = false
               )
             else
-              LoggingExtras.ConsoleLogger(stdout, Genie.config.log_level)
+              Logging.ConsoleLogger(stdout, Genie.config.log_level)
             end
 
   timestamp_logger(logger) = LoggingExtras.TransformerLogger(logger) do log
@@ -25,4 +25,4 @@ function initialize_logging()
   nothing
 end
 
-@async initialize_logging()
+initialize_logging()

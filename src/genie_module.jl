@@ -9,12 +9,12 @@ import REPL, REPL.Terminals
 
 
 """
-    newcontroller(controller_name::String) :: Nothing
+    newcontroller(controller_name::Union{String,Symbol}) :: Nothing
 
 Creates a new `controller` file. If `pluralize` is `false`, the name of the controller is not automatically pluralized.
 """
-function newcontroller(controller_name::String; pluralize::Bool = true) :: Nothing
-  Generator.newcontroller(Dict{String,Any}("controller:new" => controller_name), pluralize = pluralize)
+function newcontroller(controller_name::Union{String,Symbol}; path::String = ".", pluralize::Bool = true, mvc_support::Bool = false) :: Nothing
+  Generator.newcontroller(string(controller_name), path = path, pluralize = pluralize, mvc_support = mvc_support)
   load_resources()
 
   nothing
@@ -22,15 +22,15 @@ end
 
 
 """
-    newresource(resource_name::String; pluralize::Bool = true, context::Union{Module,Nothing} = nothing) :: Nothing
+    newresource(resource_name::Union{String,Symbol}; pluralize::Bool = true, context::Union{Module,Nothing} = nothing) :: Nothing
 
 Creates all the files associated with a new resource.
 If `pluralize` is `false`, the name of the resource is not automatically pluralized.
 """
-function newresource(resource_name::String; pluralize::Bool = true, context::Union{Module,Nothing} = nothing) :: Nothing
+function newresource(resource_name::Union{String,Symbol}; path::String = ".", pluralize::Bool = true, context::Union{Module,Nothing} = nothing) :: Nothing
   context = default_context(context)
 
-  Generator.newresource(Dict{String,Any}("resource:new" => resource_name), pluralize = pluralize)
+  Generator.newresource(string(resource_name), path = path, pluralize = pluralize)
 
   try
     pluralize || error("SearchLight resources need to be pluralized")
@@ -47,13 +47,14 @@ end
 
 
 """
-    newtask(task_name::String) :: Nothing
+    newtask(task_name::Union{String,Symbol}) :: Nothing
 
 Creates a new Genie `Task` file.
 """
-function newtask(task_name::String) :: Nothing
+function newtask(task_name::Union{String,Symbol}) :: Nothing
+  task_name = string(task_name)
   endswith(task_name, "Task") || (task_name = task_name * "Task")
-  Toolbox.new(Dict{String,Any}("task:new" => task_name), Genie.config)
+  Toolbox.new(task_name)
 
   nothing
 end

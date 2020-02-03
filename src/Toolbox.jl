@@ -104,27 +104,22 @@ end
 
 
 """
-    new(cmd_args::Dict{String,Any}, config::Settings) :: Nothing
-    new(task_name::String, config::Settings = App.config) :: Nothing
+    new(task_name::String) :: Nothing
 
 Generates a new Genie task file.
 """
-function new(cmd_args::Dict{String,Any}, config::Genie.Configuration.Settings = Genie.config) :: Nothing
-  tfn = taskfilename(cmd_args, config)
+function new(task_name::String) :: Nothing
+  task_name = validtaskname(task_name)
+  tfn = taskfilename(task_name)
 
   isfile(tfn) && throw(Genie.Exceptions.FileExistsException(tfn))
   isdir(Genie.config.path_tasks) || mkpath(Genie.config.path_tasks)
 
-  f = open(tfn, "w")
-  write(f, Genie.FileTemplates.newtask(taskmodulename(cmd_args["task:new"])))
-  close(f)
+  open(tfn, "w") do io
+    write(io, Genie.FileTemplates.newtask(taskmodulename(task_name)))
+  end
 
   @info "New task created at $tfn"
-
-  nothing
-end
-function new(task_name::String, config::Genie.Configuration.Settings = Genie.config) :: Nothing
-  new(Dict{String,Any}("task:new" => validtaskname(task_name)), config)
 
   nothing
 end
@@ -135,8 +130,8 @@ end
 
 Computes the name of a Genie task based on the command line input.
 """
-function taskfilename(cmd_args::Dict{String,Any}, config::Genie.Configuration.Settings = Genie.config) :: String
-  joinpath(Genie.config.path_tasks, cmd_args["task:new"] * ".jl")
+function taskfilename(task_name::String) :: String
+  joinpath(Genie.config.path_tasks, "$task_name.jl")
 end
 
 

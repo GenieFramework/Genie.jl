@@ -12,7 +12,7 @@
     cd(workdir)
 
     Genie.newapp("fullstack_test", fullstack = true, testmode = true)
-    Genie.newcontroller("Foo", pluralize = false)
+    Genie.Generator.newcontroller("Foo", pluralize = false)
     @test isfile(joinpath("app", "resources", "foo", "FooController.jl")) == true
 
     mkpath(joinpath("app", "resources", "foo", "views"))

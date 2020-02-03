@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.25.2 - 2020-02-03
+
+* bug fixes
+* performance improvements
+* deps update
+
 ## v0.22.9 - 2020-01-06
 
 * refactoring of the Rendering engine (**breaking**)

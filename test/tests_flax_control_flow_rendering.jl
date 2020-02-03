@@ -6,10 +6,10 @@
 
       view = raw"""
                 <section class='block'>
-                  <% if true %>
+                  <% if true; [ %>
                     <h1>Hello</h1>
                     <p>Welcome</p>
-                  <% end %>
+                  <% ]end %>
                 </section>"""
 
       @test String(html(view).body) == raw"<html><head></head><body><section class=\"block\"><h1>Hello</h1><p>Welcome</p></section></body></html>"
@@ -21,10 +21,10 @@
 
       view = raw"""
                 <section class='block'>
-                  <% if false %>
+                  <% if false; [ %>
                     <h1>Hello</h1>
                     <p>Welcome</p>
-                  <% end %>
+                  <% ]end %>
                 </section>"""
 
       @test String(html(view).body) == raw"""<html><head></head><body><section class="block"></section></body></html>"""

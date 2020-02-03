@@ -42,7 +42,7 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
                   verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
                   server::Union{Sockets.TCPServer,Nothing} = nothing) :: ServersCollection
 
-  update_config(port, host, ws_port, async)
+  update_config(port, host, ws_port)
 
   if Genie.config.websockets_server
     SERVERS.websockets = @async HTTP.listen(host, ws_port) do req
@@ -76,11 +76,10 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
 end
 
 
-function update_config(port::Int, host::String, ws_port::Int, async::Bool) :: Nothing
+function update_config(port::Int, host::String, ws_port::Int) :: Nothing
   Genie.config.server_port = port
   Genie.config.server_host = host
   Genie.config.websockets_port = ws_port
-  Genie.config.run_as_server = ! async
 
   nothing
 end

@@ -93,7 +93,7 @@
 
     workdir = Base.Filesystem.mktempdir()
     cd(workdir)
-    Genie.newcontroller("Yazoo")
+    Genie.Generator.newcontroller("Yazoo")
 
     @test isdir(joinpath(workdir, "app", "resources", "yazoo")) == true
     @test isfile(joinpath(workdir, "app", "resources", "yazoo", "YazooController.jl")) == true

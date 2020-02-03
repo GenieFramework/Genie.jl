@@ -74,7 +74,9 @@ function normal_element(elems::Vector, elem::String, args = [], attrs...) :: HTM
   for e in elems
     e === nothing && continue
 
-    if isa(e, Function)
+    if isa(e, Vector)
+      print(io, join(e))
+    elseif isa(e, Function)
       print(io, e(), "\n")
     else
       print(io, e, "\n")
@@ -299,7 +301,7 @@ end
 
 function Genie.Renderer.render(::Type{MIME"text/html"}, data::String; context::Module = @__MODULE__, layout::Union{String,Nothing} = nothing, vars...) :: Genie.Renderer.WebRenderable
   try
-    Genie.Renderer.WebRenderable(Base.invokelatest(render(data; context = context, layout = layout, vars...))::String)
+    render(data; context = context, layout = layout, vars...) |> Genie.Renderer.WebRenderable
   catch ex
     isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
     rethrow(ex)
@@ -309,10 +311,9 @@ end
 
 function Genie.Renderer.render(::Type{MIME"text/html"}, viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.Renderer.FilePath} = nothing, context::Module = @__MODULE__, vars...) :: Genie.Renderer.WebRenderable
   try
-    Genie.Renderer.WebRenderable(Base.invokelatest(render(viewfile; layout = layout, context = context, vars...))::String)
+    render(viewfile; layout = layout, context = context, vars...) |> Genie.Renderer.WebRenderable
   catch ex
     isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
-
     rethrow(ex)
   end
 end
@@ -543,7 +544,11 @@ end
 Renders a template file.
 """
 function template(path::String; partial::Bool = true, context::Module = @__MODULE__) :: String
-  Base.invokelatest(get_template(path, partial = partial, context = context))::String
+  try
+    get_template(path, partial = partial, context = context)
+  catch
+    Base.invokelatest(get_template(path, partial = partial, context = context))::String
+  end
 end
 
 
@@ -600,11 +605,9 @@ end
 
 
 function parsetags(code::String) :: String
-  code = replace(code, "<%"=>"""<script type="julia/eval">""")
-
-  occursin(" if ", code) && (code = replace(code, " if "=>" Html.@condblock if "))
-
-  replace(code, "%>"=>"""</script>""")
+  replace(
+    replace(code, "<%"=>"""<script type="julia/eval">"""),
+    "%>"=>"""</script>""")
 end
 
 
@@ -686,15 +689,6 @@ macro foreach(f, arr)
   quote
     Core.eval($__module__, $e)
   end
-end
-
-
-macro condblock(expr)
-  expr.args[2] = quote
-    join([$([arg for arg in expr.args[2].args if !isa(arg, LineNumberNode)]...),])
-  end
-
-  expr
 end
 
 

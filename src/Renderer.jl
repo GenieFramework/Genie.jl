@@ -150,6 +150,17 @@ function WebRenderable(wr::WebRenderable, content_type::Symbol, status::Int, hea
 end
 
 
+function WebRenderable(f::Function, args...)
+  fr::String = try
+    f()::String
+  catch
+    Base.invokelatest(f)::String
+  end
+
+  WebRenderable(fr, args...)
+end
+
+
 function render end
 
 

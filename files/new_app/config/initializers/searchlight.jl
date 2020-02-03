@@ -2,8 +2,7 @@ using SearchLight, SearchLight.QueryBuilder
 
 function initialize_searchlight()
   try
-    SearchLight.Configuration.load() |> SearchLight.Database.connect!
-    SearchLight.load_resources()
+    SearchLight.Configuration.load() |> SearchLight.connect!
   catch ex
     @error ex
   end

@@ -89,7 +89,7 @@ end
 
 function render(::Type{MIME"application/javascript"}, data::String; context::Module = @__MODULE__, vars...) :: Genie.Renderer.WebRenderable
   try
-    Genie.Renderer.WebRenderable(Base.invokelatest(render(data; context = context, vars...))::String, :javascript)
+    Genie.Renderer.WebRenderable(render(data; context = context, vars...), :javascript)
   catch ex
     isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
     rethrow(ex)
@@ -99,7 +99,7 @@ end
 
 function render(::Type{MIME"application/javascript"}, viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__, vars...) :: Genie.Renderer.WebRenderable
   try
-    Genie.Renderer.WebRenderable(Base.invokelatest(render(viewfile; context = context, vars...))::String, :javascript)
+    Genie.Renderer.WebRenderable(render(viewfile; context = context, vars...), :javascript)
   catch ex
     isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
     rethrow(ex)

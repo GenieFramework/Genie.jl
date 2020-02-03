@@ -25,17 +25,17 @@ end
 
 
 function Genie.Renderer.render(::Type{MIME"application/json"}, datafile::Genie.Renderer.FilePath; context::Module = @__MODULE__, vars...) :: Genie.Renderer.WebRenderable
-  Genie.Renderer.WebRenderable(Base.invokelatest(render(datafile; context = context, vars...))::String, :json)
+  Genie.Renderer.WebRenderable(render(datafile; context = context, vars...), :json)
 end
 
 
 function Genie.Renderer.render(::Type{MIME"application/json"}, data::String; context::Module = @__MODULE__, vars...) :: Genie.Renderer.WebRenderable
-  Genie.Renderer.WebRenderable(Base.invokelatest(render(data; context = context, vars...))::String, :json)
+  Genie.Renderer.WebRenderable(render(data; context = context, vars...), :json)
 end
 
 
 function Genie.Renderer.render(::Type{MIME"application/json"}, data::Any) :: Genie.Renderer.WebRenderable
-  Genie.Renderer.WebRenderable(Base.invokelatest(render(data))::String, :json)
+  Genie.Renderer.WebRenderable(render(data), :json)
 end
 
 
