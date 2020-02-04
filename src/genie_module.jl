@@ -13,8 +13,8 @@ import REPL, REPL.Terminals
 
 Creates a new `controller` file. If `pluralize` is `false`, the name of the controller is not automatically pluralized.
 """
-function newcontroller(controller_name::Union{String,Symbol}; path::String = ".", pluralize::Bool = true, mvc_support::Bool = false) :: Nothing
-  Generator.newcontroller(string(controller_name), path = path, pluralize = pluralize, mvc_support = mvc_support)
+function newcontroller(controller_name::Union{String,Symbol}; path::Union{String,Nothing} = nothing, pluralize::Bool = true) :: Nothing
+  Generator.newcontroller(string(controller_name), path = path, pluralize = pluralize)
   load_resources()
 
   nothing

@@ -15,11 +15,11 @@ const JULIA_PATH = joinpath(Sys.BINDIR, "julia")
 
 Generates a new Genie controller file and persists it to the resources folder.
 """
-function newcontroller(resource_name::String; path::String = ".", pluralize::Bool = true, mvc_support::Bool = true) :: Nothing
+function newcontroller(resource_name::String; path::Union{String,Nothing} = nothing, pluralize::Bool = true) :: Nothing
   Genie.Inflector.is_singular(resource_name) && pluralize && (resource_name = Genie.Inflector.to_plural(resource_name))
   resource_name = uppercasefirst(resource_name)
 
-  resource_path = mvc_support ? setup_resource_path(resource_name, path = path) : (ispath(path) ? path : mkpath(path))
+  resource_path = path === nothing ? setup_resource_path(resource_name, path = ".") : (ispath(path) ? path : mkpath(path))
   cfn = controller_file_name(resource_name)
   write_resource_file(resource_path, cfn, resource_name, :controller, pluralize = pluralize) &&
     @info "New controller created at $(abspath(joinpath(resource_path, cfn)))"
