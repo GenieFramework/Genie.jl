@@ -87,7 +87,8 @@ end
 
 
 function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::Bool = false, env::String = "dev",
-                      filename::String = "Dockerfile", port::Int = 8000, dockerport::Int = 80, host::String = "0.0.0.0")
+                      filename::String = "Dockerfile", port::Int = 8000, dockerport::Int = 80, host::String = "0.0.0.0",
+                      websockets_port::Int = 8001, websockets_dockerport::Int = 8001)
   appdir = "/home/$user/app"
 
   """
@@ -115,6 +116,10 @@ function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::B
   # ports
   EXPOSE $port
   EXPOSE $dockerport
+
+  # websockets ports
+  EXPOSE $websockets_port
+  EXPOSE $websockets_dockerport
 
   ENV JULIA_DEPOT_PATH "/home/$user/.julia"
   ENV GENIE_ENV "$env"

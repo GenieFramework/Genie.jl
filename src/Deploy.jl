@@ -24,14 +24,16 @@ Generates a `Dockerfile` optimised for containerizing Genie apps.
 - `force::Bool`: if the file already exists, when `force` is `true`, it will be overwritten
 """
 function dockerfile(path::String = "."; filename::String = "Dockerfile", user::String = "genie", env::String = "dev",
-                    host = "0.0.0.0", port::Int = 8000, dockerport::Int = 80, force::Bool = false)
+                    host = "0.0.0.0", port::Int = 8000, dockerport::Int = 80, force::Bool = false,
+                    websockets_port::Int = 8001, websockets_dockerport::Int = 8001)
   filename = normpath(joinpath(path, filename))
   isfile(filename) && force && rm(filename)
   isfile(filename) && error("File $(filename) already exists. Use the `force = true` option to overwrite the existing file.")
 
   open(filename, "w") do io
     write(io, FileTemplates.dockerfile(user = user, env = env, filename = filename, host = host,
-                                        port = port, dockerport = dockerport))
+                                        port = port, dockerport = dockerport,
+                                        websockets_port = websockets_port, websockets_dockerport = websockets_dockerport))
   end
 
   "Docker file successfully written at $(abspath(filename))" |> println
@@ -68,12 +70,15 @@ Runs the Docker container named `containername`, binding `hostport` and `contain
 - `it::Bool`: runs interactively
 """
 function run(; containername::String = "genieapp", hostport::Int = 80, containerport::Int = 8000, appdir::String = "/home/genie/app",
-                mountapp::Bool = false, image::String = "genie", command::String = "bin/server", rm::Bool = true, it::Bool = true)
+                mountapp::Bool = false, image::String = "genie", command::String = "bin/server", rm::Bool = true, it::Bool = true,
+                websockets_hostport::Int = 8001, websockets_containerport::Int = 8001)
   options = []
   it && push!(options, "-it")
   rm && push!(options, "--rm")
   push!(options, "-p")
   push!(options, "$hostport:$containerport")
+  push!(options, "-p")
+  push!(options, "$websockets_hostport:$websockets_containerport")
   push!(options, "--name")
   push!(options, "$containername")
   if mountapp
