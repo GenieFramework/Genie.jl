@@ -1,13 +1,3 @@
-using SearchLight, SearchLight.QueryBuilder
+using SearchLight
 
-function initialize_searchlight()
-  try
-    SearchLight.Configuration.load() |> SearchLight.connect!
-  catch ex
-    @error ex
-  end
-
-  nothing
-end
-
-@async initialize_searchlight()
+SearchLight.Configuration.load() |> SearchLight.connect!

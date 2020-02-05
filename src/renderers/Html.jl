@@ -545,7 +545,7 @@ Renders a template file.
 """
 function template(path::String; partial::Bool = true, context::Module = @__MODULE__) :: String
   try
-    get_template(path, partial = partial, context = context)
+    get_template(path, partial = partial, context = context)()
   catch
     Base.invokelatest(get_template(path, partial = partial, context = context))::String
   end
