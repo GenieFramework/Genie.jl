@@ -1,3 +1,3 @@
 using SearchLight
 
-SearchLight.Configuration.load() |> SearchLight.connect!
+SearchLight.Configuration.load() |> SearchLight.connect
