@@ -18,7 +18,7 @@ const TEST  = "test"
 
 
 haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = DEV)
-haskey(ENV, "HOST") || (ENV["HOST"] = "0.0.0.0")
+haskey(ENV, "HOST") || (ENV["HOST"] = "127.0.0.1")
 
 
 """
@@ -96,7 +96,7 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 
 # Arguments
 - `server_port::Int`: the port for running the web server (default 8000)
-- `server_host::String`: the host for running the web server (default "0.0.0.0")
+- `server_host::String`: the host for running the web server (default "127.0.0.1")
 - `server_document_root::String`: path to the document root (default "public/")
 - `server_handle_static_files::Bool`: if `true`, Genie will also serve static files. In production, it is recommended to serve static files with a web server like Nginx.
 - `server_signature::String`: Genie's signature used for tagging the HTTP responses. If empty, it will not be added.
