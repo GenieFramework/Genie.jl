@@ -817,29 +817,16 @@ end
 
 Converts the result of invoking the controller action to a `Response`.
 """
-function to_response(action_result) :: HTTP.Response
-  isa(action_result, HTTP.Response) && return action_result
-
-  if isa(action_result, Tuple)
-    HTTP.Response(action_result...)
-  elseif isa(action_result, Nothing)
-    HTTP.Response("")
-  elseif isa(action_result, String)
-    HTTP.Response(action_result)
-  elseif isa(action_result, Genie.Exceptions.ExceptionalResponse)
-    action_result.response
-  elseif isa(action_result, Genie.Exceptions.RuntimeException)
-    throw(action_result)
-  elseif isa(action_result, Exception)
-    throw(action_result)
-  else
-    HTTP.Response(string(action_result))
-  end
-end
+to_response(action_result::HTTP.Response)::HTTP.Response = action_result
+to_response(action_result::Tuple)::HTTP.Response = HTTP.Response(action_result...)
+to_response(action_result::Vector)::HTTP.Response = HTTP.Response(join(action_result))
+to_response(action_result::Nothing)::HTTP.Response = HTTP.Response("")
+to_response(action_result::String)::HTTP.Response = HTTP.Response(action_result)
+to_response(action_result::Genie.Exceptions.ExceptionalResponse)::HTTP.Response = action_result.response
+to_response(action_result::Exception)::HTTP.Response = throw(action_result)
+to_response(action::Any)::HTTP.Response = HTTP.Response(string(action_result))
 
 
-"""
-"""
 macro params()
   quote
     haskey(task_local_storage(), :__params) ? task_local_storage(:__params) : setup_base_params()
@@ -861,8 +848,6 @@ function _params_(key::Union{String,Symbol})
 end
 
 
-"""
-"""
 macro request()
   :(@params(Genie.PARAMS_REQUEST_KEY))
 end
@@ -939,8 +924,6 @@ function to_uri(resource::String) :: URIParser.URI
 end
 
 
-"""
-"""
 function escape_resource_path(resource::String)
   startswith(resource, "/") || return resource
   resource = resource[2:end]
@@ -977,8 +960,6 @@ function serve_static_file(resource::String; root = Genie.config.server_document
 end
 
 
-"""
-"""
 function preflight_response() :: HTTP.Response
   HTTP.Response(200, Genie.config.cors_headers, body = "Success")
 end

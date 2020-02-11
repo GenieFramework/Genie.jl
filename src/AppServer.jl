@@ -91,8 +91,6 @@ end
 Http server handler function - invoked when the server gets a request.
 """
 function handle_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: HTTP.Response
-  isempty(Genie.config.server_signature) && Headers.sign_response!(res)
-
   try
     req = Genie.Headers.normalize_headers(req)
   catch ex

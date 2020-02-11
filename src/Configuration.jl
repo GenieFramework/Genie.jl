@@ -3,7 +3,7 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
-const GENIE_VERSION = v"0.25.7"
+const GENIE_VERSION = v"0.26.0"
 
 import Logging
 import Genie

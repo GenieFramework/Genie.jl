@@ -22,24 +22,15 @@ function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.
     app_response.headers = [d for d in merge(Genie.config.cors_headers, allowed_origin_dict, Dict(res.headers), Dict(app_response.headers))]
   end
 
-  app_response.headers = [d for d in merge(Dict(res.headers), Dict(app_response.headers))]
+  app_response.headers = [d for d in
+                            merge(
+                              Dict(res.headers),
+                              Dict(app_response.headers),
+                              Dict("Server" => Genie.config.server_signature)
+                            )
+                          ]
 
   app_response
-end
-
-
-"""
-    sign_response!(res::HTTP.Response) :: HTTP.Response
-
-Adds a signature header to the response using the value in `Genie.config.server_signature`.
-If `Genie.config.server_signature` is empty, the header is not added.
-"""
-function sign_response!(res::HTTP.Response) :: HTTP.Response
-  headers = Dict(res.headers)
-  isempty(Genie.config.server_signature) || (headers["Server"] = Genie.config.server_signature)
-
-  res.headers = [k for k in headers]
-  res
 end
 
 
