@@ -211,9 +211,9 @@ Starts the web server. Alias for `AppServer.startup`
 
 # Examples
 ```julia-repl
-julia> startup(8000, "0.0.0.0", async = false)
+julia> startup(8000, "127.0.0.1", async = false)
 [ Info: Ready!
-Web Server starting at http://0.0.0.0:8000
+Web Server starting at http://127.0.0.1:8000
 ```
 """
 const startup = AppServer.startup

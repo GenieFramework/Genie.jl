@@ -17,9 +17,9 @@ Upon executing the command, Genie will:
 * create a new Julia project (adding the `Project.toml` and `Manifest.toml` files),
 * activate the project,
 * automatically load the new app's environment into the REPL,
-* start the web server on the default Genie port (port 8000) and host (0.0.0.0).
+* start the web server on the default Genie port (port 8000) and host (127.0.0.1).
 
-At this point you can confirm that everything worked as expected by visiting <http://0.0.0.0:8000> in your favourite web browser. You should see Genie's welcome page.
+At this point you can confirm that everything worked as expected by visiting <http://127.0.0.1:8000> in your favourite web browser. You should see Genie's welcome page.
 
 Next, let's add a new route. Routes are used to map request URLs to Julia functions. These functions provide the response that will be sent back to the client. Routes are meant to be defined in the dedicated `routes.jl` file. Open `MyGenieApp/routes.jl` in your editor or run the following command (making sure that you are in the app's directory):
 
@@ -38,7 +38,7 @@ end
 
 We are using the `route` method, passing in the "/hello" URL and an anonymous function which returns the string "Welcome to Genie!". What this means is that for each request to the "/hello" URL, our app will invoke the route handler function and respond with the welcome message.
 
-Visit <http://0.0.0.0:8000/hello> for a warm welcome!
+Visit <http://127.0.0.1:8000/hello> for a warm welcome!
 
 ## Working with resources
 

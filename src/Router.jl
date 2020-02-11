@@ -538,7 +538,7 @@ function match_channels(req, msg::String, ws_client, params::Params) :: String
 
                 result
               catch ex
-                isa(ex, Exception) ? ex.msg : rethrow(ex)
+                isa(ex, Exception) ? sprint(showerror, ex) : rethrow(ex)
               end
   end
 
