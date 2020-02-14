@@ -74,15 +74,15 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 
 [[Genie]]
 deps = ["ArgParse", "Dates", "Distributed", "FilePaths", "Gumbo", "HTTP", "HttpCommon", "JSON", "Logging", "LoggingExtras", "Markdown", "MbedTLS", "Millboard", "Nettle", "OrderedCollections", "Pkg", "REPL", "Reexport", "Revise", "SHA", "Serialization", "Sockets", "URIParser", "Unicode"]
-git-tree-sha1 = "3d1aeb0b8f95812431e8959b9007bcb0f71963ad"
+git-tree-sha1 = "e7ba61a5da4a4ac01fa91e326476eb4144410a67"
 uuid = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
-version = "0.25.6"
+version = "0.26.0"
 
 [[Gumbo]]
-deps = ["AbstractTrees", "BinaryProvider", "Libdl", "Test"]
-git-tree-sha1 = "b16b6c5127e8c6be3084e6658c5fb5dd1f97d7fd"
+deps = ["AbstractTrees", "BinaryProvider", "Libdl"]
+git-tree-sha1 = "3770e777a0acfb8529630cdd7c4698996064288d"
 uuid = "708ec375-b3d6-5a57-a7ce-8257bf98657a"
-version = "0.5.1"
+version = "0.7.0"
 
 [[HTTP]]
 deps = ["Base64", "Dates", "IniFile", "MbedTLS", "Sockets"]
@@ -114,9 +114,9 @@ version = "0.21.0"
 
 [[JuliaInterpreter]]
 deps = ["CodeTracking", "InteractiveUtils", "Random", "UUIDs"]
-git-tree-sha1 = "83ac4713e3f3ead3085e31e86cebe182f409962c"
+git-tree-sha1 = "998c2a9907f48edb1e93826201b038240f71534c"
 uuid = "aa1ae85d-cabe-5617-a682-6adf51b2e16a"
-version = "0.7.9"
+version = "0.7.10"
 
 [[LibGit2]]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
