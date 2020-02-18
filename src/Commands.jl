@@ -65,7 +65,7 @@ function parse_commandline_args(config::Genie.Configuration.Settings) :: Dict{St
   settings.version = string(Genie.Configuration.GENIE_VERSION)
   settings.add_version = true
 
-  ArgParse.@add_arg_table settings begin
+  ArgParse.@add_arg_table! settings begin
     "s"
     help = "starts HTTP server"
 

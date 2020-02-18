@@ -824,7 +824,7 @@ to_response(action_result::Nothing)::HTTP.Response = HTTP.Response("")
 to_response(action_result::String)::HTTP.Response = HTTP.Response(action_result)
 to_response(action_result::Genie.Exceptions.ExceptionalResponse)::HTTP.Response = action_result.response
 to_response(action_result::Exception)::HTTP.Response = throw(action_result)
-to_response(action::Any)::HTTP.Response = HTTP.Response(string(action_result))
+to_response(action_result::Any)::HTTP.Response = HTTP.Response(string(action_result))
 
 
 macro params()

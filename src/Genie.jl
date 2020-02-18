@@ -181,7 +181,7 @@ function loadapp(path::String = "."; autostart::Bool = false) :: Nothing
 
   try
     Core.eval(Main, quote
-        include(joinpath($path,$(Genie.BOOTSTRAP_FILE_NAME)))
+        include(joinpath($path, $(Genie.BOOTSTRAP_FILE_NAME)))
     end)
   catch ex
     rethrow(ex)

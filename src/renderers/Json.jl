@@ -19,7 +19,7 @@ function render(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__
 end
 
 
-function render(data::Any; forceparse::Bool = false) :: Function
+function render(data::Any; forceparse::Bool = false, context::Module = @__MODULE__) :: Function
   () -> JSONParser.json(data)
 end
 
@@ -34,13 +34,12 @@ function Genie.Renderer.render(::Type{MIME"application/json"}, data::String; con
 end
 
 
-function Genie.Renderer.render(::Type{MIME"application/json"}, data::Any) :: Genie.Renderer.WebRenderable
+function Genie.Renderer.render(::Type{MIME"application/json"}, data::Any; context::Module = @__MODULE__, vars...) :: Genie.Renderer.WebRenderable
   Genie.Renderer.WebRenderable(render(data), :json)
 end
 
+### json API
 
-"""
-"""
 function json(resource::Genie.Renderer.ResourcePath, action::Genie.Renderer.ResourcePath; context::Module = @__MODULE__,
               status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
   json(Genie.Renderer.Path(joinpath(Genie.config.path_resources, string(resource), Renderer.VIEWS_FOLDER, string(action) * JSON_FILE_EXT));
@@ -48,25 +47,19 @@ function json(resource::Genie.Renderer.ResourcePath, action::Genie.Renderer.Reso
 end
 
 
-"""
-"""
 function json(datafile::Genie.Renderer.FilePath; context::Module = @__MODULE__,
               status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
   Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"application/json", datafile; context = context, vars...), :json, status, headers) |> Genie.Renderer.respond
 end
 
 
-"""
-"""
 function json(data::String; context::Module = @__MODULE__,
               status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
   Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"application/json", data; context = context, vars...), :json, status, headers) |> Genie.Renderer.respond
 end
 
 
-"""
-"""
-function json(data; status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders()) :: Genie.Renderer.HTTP.Response
+function json(data::Any; status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders()) :: Genie.Renderer.HTTP.Response
   Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"application/json", data), :json, status, headers) |> Genie.Renderer.respond
 end
 
