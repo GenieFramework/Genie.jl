@@ -5,7 +5,7 @@ module AppServer
 
 import Revise
 import HTTP, HTTP.IOExtras, HTTP.Sockets
-import Millboard, MbedTLS, URIParser, Sockets, Distributed, Logging
+import Millboard, URIParser, Sockets, Distributed, Logging
 import Genie
 
 mutable struct ServersCollection
