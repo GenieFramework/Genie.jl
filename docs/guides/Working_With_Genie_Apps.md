@@ -134,7 +134,7 @@ route("/bgbooks", BooksController.billgatesbooks)
 
 In the snippet we declared that we're `using BooksController` (notice that Genie will know where to find it, no need to explicitly include the file) and then we defined a `route` between `/bgbooks` and the `BooksController.billgatesbooks` function (we say that the `BooksController.billgatesbooks` is the route handler for the `/bgbooks` URL or endpoint).
 
-That's all! If you now visit `http://localhost:8000/bgbooks` you'll see Bill Gates' list of recommended books (well, at least some if them, the man reads a lot!).
+That's all! If you now visit `http://localhost:8000/bgbooks` you'll see Bill Gates' list of recommended books (well, at least some of them, the man reads a lot!).
 
 ---
 **PRO TIP**
