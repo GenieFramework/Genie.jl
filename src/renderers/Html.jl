@@ -32,10 +32,11 @@ const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :articl
                           :q, :rp, :rt, :rtc, :ruby, :s, :samp, :small, :spam, :strong, :sub, :sup, :time,
                           :u, :var, :wrb, :audio, :map, :void, :embed, :object, :canvas, :noscript, :script,
                           :del, :ins, :caption, :col, :colgroup, :table, :tbody, :td, :tfoot, :th, :thead, :tr,
-                          :button, :datalist, :fieldset, :form, :label, :legend, :meter, :optgroup, :option,
+                          :button, :datalist, :fieldset, :label, :legend, :meter,
                           :output, :progress, :select, :textarea, :details, :dialog, :menu, :menuitem, :summary,
                           :slot, :template, :blockquote, :center]
 const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input]
+const CUSTOM_ELEMENTS = [:form, :select]
 const BOOL_ATTRIBUTES = [:checked, :disabled, :selected]
 
 export HTMLString, html
@@ -623,6 +624,10 @@ function register_elements() :: Nothing
 
   for elem in VOID_ELEMENTS
     register_void_element(elem)
+  end
+
+  for elem in CUSTOM_ELEMENTS
+    Core.eval(@__MODULE__, """include("html/$elem.jl")""" |> Meta.parse)
   end
 
   nothing
