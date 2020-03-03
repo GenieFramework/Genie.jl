@@ -12,9 +12,7 @@ const APP_FOLDER = Genie.config.path_app
 const path_prefix = joinpath(@__DIR__, "..", FILES_FOLDER, "new_app") |> normpath |> relpath
 const FOLDERS = [ joinpath(path_prefix, APP_FOLDER),
                   joinpath(path_prefix, "db"),
-                  joinpath(path_prefix, Genie.config.path_lib),
                   joinpath(path_prefix, PLUGINS_FOLDER),
-                  joinpath(path_prefix, TASKS_FOLDER),
                   joinpath(path_prefix, Genie.config.server_document_root) ]
 
 
