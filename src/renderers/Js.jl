@@ -109,18 +109,21 @@ end
 
 """
 """
-function js(data::String; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
+function js(data::String; context::Module = @__MODULE__, status::Int = 200,
+            headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders("Content-Type" => Genie.Renderer.CONTENT_TYPES[:javascript]),
+            forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
   if occursin(raw"$", data) || occursin("<%", data) || forceparse
     Genie.Renderer.WebRenderable(render(MIME"application/javascript", data; context = context, vars...), :javascript, status, headers) |> Genie.Renderer.respond
   else
-    Genie.Renderer.WebRenderable(body = data, content_type = :javascript, status = status, headers = headers) |> Genie.Renderer.respond
+    Genie.Renderer.WebRenderable(data, :javascript, status, headers) |> Genie.Renderer.respond
   end
 end
 
 
 """
 """
-function js(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
+function js(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__, status::Int = 200,
+            headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders("Content-Type" => Genie.Renderer.CONTENT_TYPES[:javascript]), vars...) :: Genie.Renderer.HTTP.Response
   Genie.Renderer.WebRenderable(render(MIME"application/javascript", viewfile; context = context, vars...), :javascript, status, headers) |> Genie.Renderer.respond
 end
 

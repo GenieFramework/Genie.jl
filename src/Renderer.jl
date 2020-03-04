@@ -192,7 +192,7 @@ end
 
 
 """
-Constructs a `Response` corresponding to the content-type sof the request.
+Constructs a `Response` corresponding to the Content-Type of the request.
 """
 function respond(r::WebRenderable) :: HTTP.Response
   haskey(r.headers, "Content-Type") || (r.headers["Content-Type"] = CONTENT_TYPES[r.content_type])
@@ -282,16 +282,13 @@ function view_file_info(path::String, supported_extensions::Vector{String}) :: T
     _path_without_extension, _extension = Base.Filesystem.splitext(path)
     _path = _path_without_extension * _extension
   else
-     for file_extension in supported_extensions
-       if isfile(path * file_extension)
-         _path, _extension = path * file_extension, file_extension
-         break
-       end
-     end
-   end
-
-  # to check that it is among supported files
-  # in(_extension, supported_extensions) || @warn("$_extension is not among $supported_extensions")
+    for file_extension in supported_extensions
+      if isfile(path * file_extension)
+        _path, _extension = path * file_extension, file_extension
+        break
+      end
+    end
+  end
 
   return _path, _extension
 end
