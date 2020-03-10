@@ -40,7 +40,7 @@ const CUSTOM_ELEMENTS = [:form, :select]
 const BOOL_ATTRIBUTES = [:checked, :disabled, :selected]
 
 export HTMLString, html
-export @foreach, @yield
+export @foreach, @yield, collection
 export partial, template
 
 task_local_storage(:__yield, "")
@@ -51,25 +51,28 @@ task_local_storage(:__yield, "")
 
 Generates a HTML element in the form <...></...>
 """
-function normal_element(f::Function, elem::String, args = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
-  normal_element(f(), elem, args, attrs...)
+function normal_element(f::Function, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+  normal_element(f(), string(elem), args, attrs...)
 end
-function normal_element(children::Union{String,Vector{String}}, elem::String, args, attrs::Pair{Symbol,Any}) :: HTMLString
-  normal_element(children, elem, args, Pair{Symbol,Any}[attrs])
+function normal_element(children::Union{String,Vector{String}}, elem::Any, args::Vector, attrs::Pair{Symbol,Any}) :: HTMLString
+  normal_element(children, string(elem), args, Pair{Symbol,Any}[attrs])
 end
-function normal_element(children::Union{String,Vector{String}}, elem::String, args, attrs...) :: HTMLString
-  normal_element(children, elem, args, Pair{Symbol,Any}[attrs...])
+function normal_element(children::Union{String,Vector{String}}, elem::Any, args::Vector, attrs...) :: HTMLString
+  normal_element(children, string(elem), args, Pair{Symbol,Any}[attrs...])
 end
-function normal_element(children::Union{String,Vector{String}}, elem::String, args = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+function normal_element(children::Union{String,Vector{String}}, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   children = join(children)
-  elem = normalize_element(elem)
+  elem = normalize_element(string(elem))
   attribs = rstrip(attributes(attrs))
   string("<", elem, (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), ">", prepare_template(children), "</", elem, ">")
 end
-function normal_element(elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
-  normal_element("", elem, attrs...)
+function normal_element(elem::Any, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+  normal_element("", string(elem), attrs...)
 end
-function normal_element(elems::Vector, elem::String, args = [], attrs...) :: HTMLString
+function normal_element(content::Any, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+  normal_element(string(content), string(elem), args, attrs...)
+end
+function normal_element(elems::Vector, elem::Any, args = [], attrs...) :: HTMLString
   io = IOBuffer()
 
   for e in elems
@@ -84,7 +87,7 @@ function normal_element(elems::Vector, elem::String, args = [], attrs...) :: HTM
     end
   end
 
-  normal_element(String(take!(io)), elem, args, attrs...)
+  normal_element(String(take!(io)), string(elem), args, attrs...)
 end
 function normal_element(_::Nothing, __::Any) :: HTMLString
   ""
@@ -693,6 +696,13 @@ macro foreach(f, arr)
 
   quote
     Core.eval($__module__, $e)
+  end
+end
+
+
+function collection(template::Function, collection::Vector{T})::String where {T}
+  @foreach(collection) do item
+    template(item) |> string
   end
 end
 
