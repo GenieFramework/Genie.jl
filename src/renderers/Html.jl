@@ -11,7 +11,7 @@ Reexport.@reexport using HttpCommon
 const DEFAULT_LAYOUT_FILE = :app
 const LAYOUTS_FOLDER = "layouts"
 
-const HTML_FILE_EXT      = [".flax.jl", "html.jl"]
+const HTML_FILE_EXT = [".flax.jl", "html.jl"]
 const TEMPLATE_EXT  = [".flax.html", ".jl.html"]
 const MARKDOWN_FILE_EXT = [".md", ".jl.md"]
 
@@ -33,7 +33,7 @@ const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :articl
                           :u, :var, :wrb, :audio, :map, :void, :embed, :object, :canvas, :noscript, :script,
                           :del, :ins, :caption, :col, :colgroup, :table, :tbody, :td, :tfoot, :th, :thead, :tr,
                           :button, :datalist, :fieldset, :label, :legend, :meter,
-                          :output, :progress, :select, :textarea, :details, :dialog, :menu, :menuitem, :summary,
+                          :output, :progress, :select, :option, :textarea, :details, :dialog, :menu, :menuitem, :summary,
                           :slot, :template, :blockquote, :center]
 const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input]
 const CUSTOM_ELEMENTS = [:form, :select]

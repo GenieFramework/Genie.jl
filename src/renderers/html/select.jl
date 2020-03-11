@@ -1,12 +1,16 @@
-Base.@kwdef struct option
+Base.@kwdef struct Option
   disabled::Bool = false
   selected::Bool = false
   value::String = ""
   text::String = value
 end
 
+function option(disabled::Bool, selected::Bool, value::String, text::String)
+  Option(; disabled = disabled, selected = selected, value = value, text = text)
+end
 
-function Base.string(o::option) :: HTMLString
+
+function Base.string(o::Option) :: HTMLString
   attributes = String[]
 
   o.disabled && push!(attributes, "disabled")
@@ -17,7 +21,7 @@ function Base.string(o::option) :: HTMLString
 end
 
 
-function select(options::Vector{option}, args...; attrs...) :: HTMLString
+function select(options::Vector{Option}, args...; attrs...) :: HTMLString
   children = String[]
 
   for o in options
@@ -28,7 +32,7 @@ function select(options::Vector{option}, args...; attrs...) :: HTMLString
 end
 
 
-function optgroup(options::Vector{option}, args...; attrs...) :: HTMLString
+function optgroup(options::Vector{Option}, args...; attrs...) :: HTMLString
   children = String[]
 
   for o in options
