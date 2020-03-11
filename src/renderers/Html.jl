@@ -92,6 +92,9 @@ end
 function normal_element(_::Nothing, __::Any) :: HTMLString
   ""
 end
+function normal_element(children::Vector{T} where T, elem::Any, args::Vector{T} where T) :: HTMLString
+  normal_element(join([f() for f in children]), elem, args)
+end
 
 
 """
