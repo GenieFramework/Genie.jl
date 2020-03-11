@@ -2,7 +2,7 @@ module Html
 
 
 import Revise
-import Markdown, Logging, Gumbo, Reexport, OrderedCollections, Millboard, HTTP
+import Markdown, Logging, Gumbo, Reexport, OrderedCollections, Millboard, HTTP, YAML
 import Genie, Genie.Renderer
 import Genie.Renderer: @vars
 Reexport.@reexport using HttpCommon

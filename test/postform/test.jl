@@ -1,7 +1,7 @@
 using Pkg
 Pkg.activate(".")
 
-using Genie, Genie.Router, Genie.Renderer
+using Genie, Genie.Router, Genie.Renderer, Genie.Renderer.Html
 
 form = """
 <form action="/" method="POST" enctype="multipart/form-data">

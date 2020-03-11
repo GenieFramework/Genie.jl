@@ -32,8 +32,8 @@ function get_template(path::String; context::Module = @__MODULE__) :: Function
   f_path = joinpath(Genie.config.path_build, Genie.Renderer.BUILD_NAME, mod_name)
   f_stale = Genie.Renderer.build_is_stale(path, f_path)
 
-  if f_stale || ! isdefined(context, func_name)
-    f_stale && Genie.Renderer.build_module(to_js(data), path, mod_name)
+  if f_stale || ! isdefined(context, f_name)
+    f_stale && Genie.Renderer.build_module(to_js(read(path, String)), path, mod_name)
 
     return Base.include(context, joinpath(Genie.config.path_build, Genie.Renderer.BUILD_NAME, mod_name))
   end

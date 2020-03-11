@@ -1,7 +1,7 @@
 using Pkg
 Pkg.activate(".")
 
-using Genie, HTTP
+using Genie, HTTP, Test
 import Genie.Router: route, POST, @params
 import Genie.Requests: jsonpayload
 

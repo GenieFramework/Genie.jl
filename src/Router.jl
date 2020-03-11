@@ -169,7 +169,7 @@ function route_ws_request(req, msg::String, ws_client, ip::Sockets.IPv4 = Socket
   Genie.Configuration.isdev() && Revise.revise()
 
   for f in unique(pre_match_hooks)
-    req, res, params.collection = f(req, res, params.collection)
+    req, msg, params.collection = f(req, msg, params.collection)
   end
 
   match_channels(req, msg, ws_client, params)

@@ -4,7 +4,7 @@ Pkg.activate(".")
 using Revise
 Revise.track(@__FILE__)
 
-using Genie, Genie.Router, Genie.Renderer
+using Genie, Genie.Router, Genie.Renderer, Genie.Renderer.Html
 
 route("/") do
   view = "<h1>Hello Genie!!</h1>"
