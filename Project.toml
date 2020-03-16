@@ -43,7 +43,7 @@ OrderedCollections = "1"
 Reexport = "0.2"
 Revise = "2"
 URIParser = "0.4"
-YAML = "0.3"
+YAML = "0.3, 0.4"
 julia = "1.2"
 
 [extras]
