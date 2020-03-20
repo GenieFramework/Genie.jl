@@ -694,6 +694,11 @@ function register_void_element(elem::Union{Symbol,String}; context = @__MODULE__
 end
 
 
+macro attr(attr)
+  "$(string(attr))"
+end
+
+
 """
     @foreach(f, arr)
 
