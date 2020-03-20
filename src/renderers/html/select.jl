@@ -32,6 +32,16 @@ function select(options::Vector{Option}, args...; attrs...) :: HTMLString
 end
 
 
+function select(options::Vector, args...; attrs...) :: HTMLString
+  select([option(o) for o in options], args...; attrs...)
+end
+
+
+function select(options::Tuple, args...; attrs...) :: HTMLString
+  select([option(o) for o in [options...]], args...; attrs...)
+end
+
+
 function optgroup(options::Vector{Option}, args...; attrs...) :: HTMLString
   children = String[]
 
