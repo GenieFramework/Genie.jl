@@ -85,6 +85,14 @@ function update_config(port::Int, host::String, ws_port::Int) :: Nothing
 end
 
 
+function down(; webserver::Bool = true, websockets::Bool = true) :: ServersCollection
+  webserver && (@async Base.throwto(SERVERS.webserver, InterruptException()))
+  websockets && (@async Base.throwto(SERVERS.websockets, InterruptException()))
+
+  SERVERS
+end
+
+
 """
     handle_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = IPv4(Genie.config.server_host)) :: HTTP.Response
 

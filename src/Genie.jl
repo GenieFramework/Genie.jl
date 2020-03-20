@@ -51,7 +51,7 @@ config.cache_storage == :File && include("cache_adapters/FileCache.jl")
 include("Sessions.jl")
 config.session_storage == :File && include("session_adapters/FileSession.jl")
 
-export serve, up
+export serve, up, down
 
 
 """
@@ -218,6 +218,9 @@ Web Server starting at http://127.0.0.1:8000
 """
 const startup = AppServer.startup
 const up = startup
+
+
+const down = AppServer.down
 
 
 ### PRIVATE ###

@@ -57,8 +57,14 @@ end
 function normal_element(children::Union{String,Vector{String}}, elem::Any, args::Vector, attrs::Pair{Symbol,Any}) :: HTMLString
   normal_element(children, string(elem), args, Pair{Symbol,Any}[attrs])
 end
+function normal_element(children::Tuple, elem::Any, args::Vector, attrs::Pair{Symbol,Any}) :: HTMLString
+  normal_element([children...], string(elem), args, Pair{Symbol,Any}[attrs])
+end
 function normal_element(children::Union{String,Vector{String}}, elem::Any, args::Vector, attrs...) :: HTMLString
   normal_element(children, string(elem), args, Pair{Symbol,Any}[attrs...])
+end
+function normal_element(children::Any, elem::Any, args::Vector, attrs...) :: HTMLString
+  normal_element(string(children), string(elem), args, Pair{Symbol,Any}[attrs...])
 end
 function normal_element(children::Union{String,Vector{String}}, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   children = join(children)
@@ -658,6 +664,18 @@ function register_normal_element(elem::Union{Symbol,String}; context = @__MODULE
   Core.eval(context, """
     function $elem(children::Union{String,Vector{String}} = "", args...; attrs...) :: HTMLString
       \"\"\"\$(normal_element(children, "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
+    end
+  """ |> Meta.parse)
+
+  Core.eval(context, """
+    function $elem(children::Any, args...; attrs...) :: HTMLString
+      \"\"\"\$(normal_element(string(children), "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
+    end
+  """ |> Meta.parse)
+
+  Core.eval(context, """
+    function $elem(children::Vector{Any}, args...; attrs...) :: HTMLString
+      \"\"\"\$(normal_element([string(c) for c in children], "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
 

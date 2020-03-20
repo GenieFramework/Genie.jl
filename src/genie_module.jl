@@ -159,7 +159,7 @@ function load_initializers(root_dir::String = Genie.config.path_config; context:
 
   Threads.@threads for i in readdir(dir)
     fi = joinpath(dir, i)
-    endswith(fi, ".jl") && @async Revise.track(context, fi, define = true)
+    endswith(fi, ".jl") && Revise.track(context, fi, define = true)
   end
 
   nothing
@@ -178,7 +178,7 @@ function load_plugins(root_dir::String = Genie.config.path_plugins; context::Uni
 
   Threads.@threads for i in readdir(root_dir)
     fi = joinpath(root_dir, i)
-    endswith(fi, ".jl") && @async Revise.track(context, fi, define = true)
+    endswith(fi, ".jl") && Revise.track(context, fi, define = true)
   end
 
   nothing
@@ -193,7 +193,7 @@ Loads the routes file.
 function load_routes_definitions(routes_file::String = Genie.ROUTES_FILE_NAME; context::Union{Module,Nothing} = nothing) :: Nothing
   context = default_context(context)
 
-  isfile(routes_file) && @async Revise.track(context, routes_file, define = true)
+  isfile(routes_file) && Revise.track(context, routes_file, define = true)
 
   nothing
 end
