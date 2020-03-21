@@ -190,10 +190,11 @@ end
 
 Loads the routes file.
 """
-function load_routes_definitions(routes_file::String = Genie.ROUTES_FILE_NAME; context::Union{Module,Nothing} = nothing) :: Nothing
+function load_routes_definitions(routes_file::String = Genie.ROUTES_FILE_NAME; context::Union{Module,Nothing} = nothing, additional_routes_file::String = Genie.APP_FILE_NAME) :: Nothing
   context = default_context(context)
 
   isfile(routes_file) && Revise.track(context, routes_file, define = true)
+  isfile(additional_routes_file) && Revise.track(context, additional_routes_file, define = true)
 
   nothing
 end
