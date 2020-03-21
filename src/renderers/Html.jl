@@ -63,9 +63,6 @@ end
 function normal_element(children::Union{String,Vector{String}}, elem::Any, args::Vector, attrs...) :: HTMLString
   normal_element(children, string(elem), args, Pair{Symbol,Any}[attrs...])
 end
-# function normal_element(children::Any, elem::Any, args::Vector, attrs...) :: HTMLString
-#   normal_element(string(children), string(elem), args, Pair{Symbol,Any}[attrs...])
-# end
 function normal_element(children::Union{String,Vector{String}}, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   children = join(children)
   elem = normalize_element(string(elem))
@@ -78,9 +75,6 @@ end
 function normal_element(content::Any, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   normal_element(string(content), string(elem), args, attrs...)
 end
-# function normal_element(children::Array{T,1} where T, elem::Any, args::Array{T,1} where T, attrs::Vararg{Any,N} where N) :: HTMLString
-#   normal_element([string(c) for c in children], elem, args, [string(a) for a in attrs])
-# end
 function normal_element(elems::Vector, elem::Any, args = [], attrs...) :: HTMLString
   io = IOBuffer()
 
