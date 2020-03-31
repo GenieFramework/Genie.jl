@@ -218,8 +218,12 @@ function secret_token(; context::Union{Module,Nothing} = nothing) :: String
           or use the included /app/config/secrets.jl.example file as a model."
 
     st = Generator.secret_token()
-    Core.eval(@__MODULE__, Meta.parse("""const SECRET_TOKEN = "$st" """))
-
+    if typeof(context) <: Nothing
+        Core.eval(@__MODULE__, Meta.parse("""const SECRET_TOKEN = "$st" """))
+    else
+        Core.eval(context, Meta.parse("""const SECRET_TOKEN = "$st" """))
+    end
+    
     st
   end
 end
