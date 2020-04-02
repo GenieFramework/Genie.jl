@@ -396,7 +396,17 @@ function newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = fa
 
   write_app_custom_files(path, app_path)
 
-  Sys.iswindows() ? setup_windows_bin_files(app_path) : setup_nix_bin_files(app_path)
+  try
+    setup_windows_bin_files(app_path)
+  catch ex
+    @error ex
+  end
+
+  try
+    setup_nix_bin_files(app_path)
+  catch ex
+    @error ex
+  end
 
   @info "Done! New app created at $(abspath(path))"
 

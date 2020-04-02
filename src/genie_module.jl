@@ -213,14 +213,18 @@ function secret_token(; context::Union{Module,Nothing} = nothing) :: String
   if isdefined(context, :SECRET_TOKEN) && ! isempty(context.SECRET_TOKEN)
     context.SECRET_TOKEN
   else
-    @warn "SECRET_TOKEN not configured - please make sure that you have a valid secrets.jl file.
+    @warn "
+          SECRET_TOKEN not configured - please make sure that you have a valid secrets.jl file.
           You can generate a new secrets.jl file with a random SECRET_TOKEN using Genie.Generator.write_secrets_file()
-          or use the included /app/config/secrets.jl.example file as a model."
+          or use the included /app/config/secrets.jl.example file as a model.
 
-    st = Generator.secret_token()
-    Core.eval(@__MODULE__, Meta.parse("""const SECRET_TOKEN = "$st" """))
+          SECRET_TOKEN is used for hashing and encrypting/decrypting sensitive data in Genie.
+          I'm now setting up a random SECRET_TOKEN which will be used for this session only.
+          Data that is encoded with this SECRET_TOKEN will potentially be lost
+          upon restarting the application (like for example the HTTP sessions data).
+          "
 
-    st
+    SECRET_TOKEN = Generator.secret_token()
   end
 end
 
