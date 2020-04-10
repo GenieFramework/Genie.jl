@@ -411,6 +411,8 @@ function billgatesbooks()
 end
 
 end
+
+end
 ```
 
 We nested an API module within the `BooksController` module, where we defined another `billgatesbooks` function which outputs a JSON.
