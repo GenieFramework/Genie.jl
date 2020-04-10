@@ -72,9 +72,9 @@ end
 function normal_element(elem::Any, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   normal_element("", string(elem), attrs...)
 end
-function normal_element(content::Any, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
-  normal_element(string(content), string(elem), args, attrs...)
-end
+# function normal_element(content::Any, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+#   normal_element(string(content), string(elem), args, attrs...)
+# end
 function normal_element(elems::Vector, elem::Any, args = [], attrs...) :: HTMLString
   io = IOBuffer()
 
@@ -154,7 +154,7 @@ Generates a void HTML element in the form <...>
 """
 function void_element(elem::String, args = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   attribs = rstrip(attributes(attrs))
-  string("<", normalize_element(elem), (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), ">")
+  string("<", normalize_element(elem), (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), Genie.config.html_close_tag, ">")
 end
 
 
@@ -446,7 +446,6 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
 
     print(io, attributes_string)
     ! isempty(attributes_string) && ! isempty(attributes_keys) && print(io, ", ")
-    # isempty(attributes_string) && ! isempty(attributes_keys) && print(io, "; ")
     ! isempty(attributes_keys) &&
       print(io, "; NamedTuple{($(join(attributes_keys, ", "))$(length(attributes_keys) == 1 ? ", " : ""))}(($(join(attributes_values, ", "))$(length(attributes_keys) == 1 ? ", " : "")))...")
     print(io, ")")
@@ -680,7 +679,7 @@ function register_normal_element(elem::Union{Symbol,String}; context = @__MODULE
 end
 
 
-function register_void_element(elem::Union{Symbol,String}; context = @__MODULE__) :: Nothing
+function register_void_element(elem::Union{Symbol,String}; context::Module = @__MODULE__) :: Nothing
   Core.eval(context, """
     function $elem(args...; attrs...) :: HTMLString
       \"\"\"\$(void_element("$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"

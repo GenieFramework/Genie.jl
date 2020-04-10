@@ -111,7 +111,7 @@
     <p>{{ message }}</p>
     <input v-model="message">
   </div>""", forceparse = true)
-    @test String(r.body) == """<html><head></head><body><div id="app-6"><p>{{ message }}</p><input v-model="message"></div></body></html>"""
+    @test String(r.body) == """<html><head></head><body><div id="app-6"><p>{{ message }}</p><input v-model="message"$(Genie.config.html_close_tag)></div></body></html>"""
 
     Genie.Renderer.Html.register_element("todo-item")
 
@@ -145,10 +145,10 @@
     @test String(r.body) == """<html><head></head><body><span @click="upvote(submission.id)"></span></body></html>"""
 
     r = html("""<img v-bind:src="submission.submissionImage" />""", forceparse = true)
-    @test String(r.body) == """<html><head></head><body><img v-bind:src="submission.submissionImage"></body></html>"""
+    @test String(r.body) == """<html><head></head><body><img v-bind:src="submission.submissionImage"$(Genie.config.html_close_tag)></body></html>"""
 
     r = html("""<img :src="submission.submissionImage" />""", forceparse = true)
-    @test String(r.body) == """<html><head></head><body><img :src="submission.submissionImage"></body></html>"""
+    @test String(r.body) == """<html><head></head><body><img :src="submission.submissionImage"$(Genie.config.html_close_tag)></body></html>"""
   end;
 
   @safetestset "Embedded Julia" begin
