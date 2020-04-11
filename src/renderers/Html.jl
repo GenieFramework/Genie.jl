@@ -37,7 +37,6 @@ const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :articl
                           :slot, :template, :blockquote, :center]
 const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input]
 const CUSTOM_ELEMENTS = [:form, :select]
-const BOOL_ATTRIBUTES = [:checked, :disabled, :selected]
 
 export HTMLString, html
 export @foreach, @yield, collection
@@ -127,10 +126,25 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
   a = IOBuffer()
 
   for (k,v) in attrs
-    print(a, "$(k)=\"$(v)\" ")
+    if (isa(v,Bool) && v) || isempty(string(v))
+      print(a, "$(k |> parseattr) ")
+    else
+      print(a, "$(k |> parseattr)=\"$(v)\" ")
+    end
   end
 
   String(take!(a))
+end
+
+
+function parseattr(attr)
+  attr = string(attr)
+  endswith(attr, "!!") && (attr = string("@", attr[1:end-2]))
+  endswith(attr, "!") && (attr = string(":", attr[1:end-1]))
+
+  attr = replace(attr, r"!!"=>"-")
+  attr = replace(attr, r"__"=>"-")
+  replace(attr, r"!"=>".")
 end
 
 
@@ -140,10 +154,10 @@ end
 Cleans up problematic characters or DOM elements.
 """
 function normalize_element(elem::String)
-  replace(string(lowercase(elem)), "_____"=>"-")
+  replace(string(lowercase(elem)), "!!"=>"-")
 end
 function denormalize_element(elem::String)
-  replace(string(lowercase(elem)), "-"=>"_____")
+  replace(string(lowercase(elem)), "-"=>"!!")
 end
 
 
@@ -424,20 +438,19 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
         continue
       end
 
-      if in(Symbol(lowercase(k)), BOOL_ATTRIBUTES)
-        if x == true || x == "true" || x == :true || x == ":true" || x == "" || x == "on"
-          print(attributes, "$k=\"$k\"", ", ") # boolean attributes can have the same value as the attribute -- or be empty
-        end
-      else
-        if occursin('-', k) || occursin(':', k) || occursin('@', k) || occursin('.', k) || occursin("for", k)
-          push!(attributes_keys, Symbol(k) |> repr)
 
-          v = string(v) |> repr
-          occursin(raw"\$", v) && (v = replace(v, raw"\$"=>raw"$"))
-          push!(attributes_values, v)
-        else
-          print(attributes, """$k="$v" """, ", ")
-        end
+      if isempty(string(x))
+        print(attributes, "$k=\"$k\"", ", ") # boolean attributes can have the same value as the attribute -- or be empty
+      end
+
+      if occursin('-', k) || occursin(':', k) || occursin('@', k) || occursin('.', k) || occursin("for", k)
+        push!(attributes_keys, Symbol(k) |> repr)
+
+        v = string(v) |> repr
+        occursin(raw"\$", v) && (v = replace(v, raw"\$"=>raw"$"))
+        push!(attributes_values, v)
+      else
+        print(attributes, """$k="$v" """, ", ")
       end
     end
 
