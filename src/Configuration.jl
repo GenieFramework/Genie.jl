@@ -86,7 +86,7 @@ julia> Configuration.env()
 env() :: String = Genie.config.app_env
 
 
-buildpath() :: String = Base.Filesystem.mktempdir(prefix = "jl_genie_build_")
+buildpath() :: String = Base.Filesystem.mktempdir(prefix = "jl_genie_build_", cleanup = false)
 
 
 """

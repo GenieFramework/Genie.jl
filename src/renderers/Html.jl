@@ -404,6 +404,18 @@ function html(viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.Ren
 end
 
 
+function safe_attr(attr)
+  attr = string(attr)
+
+  occursin("-", attr) && replace!(attr, "-"=>Genie.config.html_parser_char_dash)
+  occursin(":", attr) && replace!(attr, ":"=>Genie.config.html_parser_char_column)
+  occursin("@", attr) && replace!(attr, "@"=>Genie.config.html_parser_char_at)
+  occursin(".", attr) && replace!(attr, "."=>Genie.config.html_parser_char_dot)
+
+  attr
+end
+
+
 """
     parsehtml(elem, output, depth; partial = true) :: String
 
@@ -437,11 +449,12 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
         continue
       end
 
-      if occursin(Genie.config.html_parser_char_dash, k) ||
-          occursin(Genie.config.html_parser_char_column, k) ||
-          occursin(Genie.config.html_parser_char_at, k) ||
-          occursin(Genie.config.html_parser_char_dot, k) ||
+      if occursin("-", k) ||
+          occursin(":", k) ||
+          occursin("@", k) ||
+          occursin(".", k) ||
           occursin("for", k)
+
         push!(attributes_keys, Symbol(k) |> repr)
 
         v = string(v) |> repr
@@ -655,7 +668,7 @@ end
 
 function register_element(elem::Union{Symbol,String}, elem_type::Union{Symbol,String} = :normal; context = @__MODULE__) :: Nothing
   elem = string(elem)
-  occursin('-', elem) && (elem = denormalize_element(elem))
+  occursin("-", elem) && (elem = denormalize_element(elem))
 
   elem_type == :normal ? register_normal_element(elem) : register_void_element(elem)
 end
