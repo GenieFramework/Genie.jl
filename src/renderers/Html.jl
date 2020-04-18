@@ -126,7 +126,7 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
   a = IOBuffer()
 
   for (k,v) in attrs
-    if (isa(v,Bool) && v) || isempty(string(v))
+    if (isa(v, Bool) && v) || isempty(string(v))
       print(a, "$(k |> parseattr) ")
     else
       print(a, "$(k |> parseattr)=\"$(v)\" ")
@@ -437,12 +437,11 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
         continue
       end
 
-
-      if isempty(string(x))
-        print(attributes, "$k=\"$k\"", ", ") # boolean attributes can have the same value as the attribute -- or be empty
-      end
-
-      if occursin('-', k) || occursin(':', k) || occursin('@', k) || occursin('.', k) || occursin("for", k)
+      if occursin(Genie.config.html_parser_char_dash, k) ||
+          occursin(Genie.config.html_parser_char_column, k) ||
+          occursin(Genie.config.html_parser_char_at, k) ||
+          occursin(Genie.config.html_parser_char_dot, k) ||
+          occursin("for", k)
         push!(attributes_keys, Symbol(k) |> repr)
 
         v = string(v) |> repr

@@ -163,7 +163,7 @@
     @test String(r.body) == """<html><head></head><body><span id="moo"></span></body></html>"""
 
     r = html("""<span $(string(:disabled))></span>""", forceparse = true)
-    @test String(r.body) == """<html><head></head><body><span disabled="disabled"></span></body></html>"""
+    @test String(r.body) == """<html><head></head><body><span disabled></span></body></html>"""
 
     r = html("""<span $("foo=$(string(:disabled))")></span>""", forceparse = true)
     @test String(r.body) == """<html><head></head><body><span foo="disabled"></span></body></html>"""
