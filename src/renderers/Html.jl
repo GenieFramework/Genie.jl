@@ -34,7 +34,7 @@ const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :articl
                           :del, :ins, :caption, :col, :colgroup, :table, :tbody, :td, :tfoot, :th, :thead, :tr,
                           :button, :datalist, :fieldset, :label, :legend, :meter,
                           :output, :progress, :select, :option, :textarea, :details, :dialog, :menu, :menuitem, :summary,
-                          :slot, :template, :blockquote, :center]
+                          :slot, :template, :blockquote, :center, :iframe]
 const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input]
 const CUSTOM_ELEMENTS = [:form, :select]
 
@@ -139,12 +139,11 @@ end
 
 function parseattr(attr)
   attr = string(attr)
-  endswith(attr, "!!") && (attr = string("@", attr[1:end-2]))
-  endswith(attr, "!") && (attr = string(":", attr[1:end-1]))
+  endswith(attr, Genie.config.html_parser_char_at) && (attr = string("@", attr[1:end-(length(Genie.config.html_parser_char_at))]))
+  endswith(attr, Genie.config.html_parser_char_column) && (attr = string(":", attr[1:end-(length(Genie.config.html_parser_char_column))]))
 
-  attr = replace(attr, r"!!"=>"-")
-  attr = replace(attr, r"__"=>"-")
-  replace(attr, r"!"=>".")
+  attr = replace(attr, Regex(Genie.config.html_parser_char_dash)=>"-")
+  replace(attr, Regex(Genie.config.html_parser_char_dot)=>".")
 end
 
 
@@ -154,10 +153,10 @@ end
 Cleans up problematic characters or DOM elements.
 """
 function normalize_element(elem::String)
-  replace(string(lowercase(elem)), "!!"=>"-")
+  replace(string(lowercase(elem)), Genie.config.html_parser_char_dash=>"-")
 end
 function denormalize_element(elem::String)
-  replace(string(lowercase(elem)), "-"=>"!!")
+  replace(string(lowercase(elem)), "-"=>Genie.config.html_parser_char_dash)
 end
 
 
@@ -168,7 +167,7 @@ Generates a void HTML element in the form <...>
 """
 function void_element(elem::String, args = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   attribs = rstrip(attributes(attrs))
-  string("<", normalize_element(elem), (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), Genie.config.html_close_tag, ">")
+  string("<", normalize_element(elem), (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), Genie.config.html_parser_close_tag, ">")
 end
 
 

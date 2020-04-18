@@ -8,7 +8,7 @@
 
     @test Html.p(copy) == "<p>$copy</p>"
     @test Html.div() == "<div></div>"
-    @test Html.br() ==  "<br$(Genie.config.html_close_tag)>"
+    @test Html.br() ==  "<br$(Genie.config.html_parser_close_tag)>"
 
     message = "Important message"
     @test Html.span(message, class = "focus") == "<span class=\"focus\">$message</span>"

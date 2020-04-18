@@ -112,7 +112,7 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `inflector_irregulars::Vector{Tuple{String,String}}`: additional irregular singular-plural forms to be used by the Inflector
 - `run_as_server::Bool`: when true the server thread is launched synchronously to avoid that the script exits
 - `websockets_server::Bool`: if true, the websocket server is also started together with the web server
-- `html_close_tag::String`: default " /". Can be changed to an empty string "" so the single tags would not be closed.
+- `html_parser_close_tag::String`: default " /". Can be changed to an empty string "" so the single tags would not be closed.
 """
 mutable struct Settings
   server_port::Int
@@ -169,7 +169,11 @@ mutable struct Settings
   webchannels_unsubscribe_channel::String
   webchannels_autosubscribe::Bool
 
-  html_close_tag::String
+  html_parser_close_tag::String
+  html_parser_char_at::String
+  html_parser_char_dot::String
+  html_parser_char_column::String
+  html_parser_char_dash::String
 
   Settings(;
             server_port                 = (haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : 8000), # default port for binding the web server
@@ -232,7 +236,11 @@ mutable struct Settings
             webchannels_unsubscribe_channel = "unsubscribe",
             webchannels_autosubscribe       = true,
 
-            html_close_tag = " /",
+            html_parser_close_tag = " /",
+            html_parser_char_at = "!!",
+            html_parser_char_dot = "!",
+            html_parser_char_column = "!",
+            html_parser_char_dash = "__"
         ) =
               new(
                   server_port, server_host,
@@ -250,7 +258,7 @@ mutable struct Settings
                   path_config, path_env, path_app, path_resources, path_lib, path_helpers, path_log, path_tasks, path_build,
                   path_plugins, path_cache, path_initializers, path_db, path_bin, path_src,
                   webchannels_default_route, webchannels_js_file, webchannels_subscribe_channel, webchannels_unsubscribe_channel, webchannels_autosubscribe,
-                  html_close_tag
+                  html_parser_close_tag, html_parser_char_at, html_parser_char_dot, html_parser_char_column, html_parser_char_dash
                 )
 end
 
