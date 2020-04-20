@@ -16,6 +16,9 @@ const JULIA_PATH = joinpath(Sys.BINDIR, "julia")
 Generates a new Genie controller file and persists it to the resources folder.
 """
 function newcontroller(resource_name::String; path::Union{String,Nothing} = nothing, pluralize::Bool = true) :: Nothing
+  if (occursin(" ", resource_name))
+    throw(ErrorException("Spaces are not allowed in controller names!"))
+  end
   Genie.Inflector.is_singular(resource_name) && pluralize && (resource_name = Genie.Inflector.to_plural(resource_name))
   resource_name = uppercasefirst(resource_name)
 
@@ -34,6 +37,9 @@ end
 Generates all the files associated with a new resource and persists them to the resources folder.
 """
 function newresource(resource_name::String; path::String = ".", pluralize::Bool = true) :: Nothing
+  if (occursin(" ", resource_name))
+    throw(ErrorException("Spaces are not allowed in resource names!"))
+  end
   Genie.Inflector.is_singular(resource_name) && pluralize &&
     (resource_name = Genie.Inflector.to_plural(resource_name))
 
@@ -351,7 +357,7 @@ end
 Scaffolds a new Genie app, setting up the file structure indicated by the various arguments.
 
 # Arguments
-- `path::String`: the name of the app and the path where to bootstrap it
+- `path::String`: the name of the app and the path where to bootstrap it. Spaces not allowed
 - `autostart::Bool`: automatically start the app once the file structure is created
 - `fullstack::Bool`: the type of app to be bootstrapped. The fullstack app includes MVC structure, DB connection code, and asset pipeline files.
 - `dbsupport::Bool`: bootstrap the files needed for DB connection setup via the SearchLight ORM
@@ -384,6 +390,10 @@ julia> Genie.newapp("MyGenieApp")
 ```
 """
 function newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false, mvcsupport::Bool = false, testmode::Bool = false) :: Nothing
+  if (occursin(" ", path))
+    throw(ErrorException("Spaces are not allowed in app Name!"))
+  end
+
   app_path = abspath(path)
 
   fullstack ? fullstack_app(app_path) : microstack_app(app_path)
