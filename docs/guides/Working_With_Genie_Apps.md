@@ -708,32 +708,21 @@ Edit the `Books.jl` file to make it look like this:
 # Books.jl
 module Books
 
-using SearchLight
+import SearchLight: AbstractModel, DbId
+import Base: @kwdef
 
 export Book
 
-mutable struct Book <: AbstractModel
-  ### INTERNALS
-  _table_name::String
-  _id::String
-
-  ### FIELDS
-  id::DbId
-  title::String
-  author::String
+@kwdef mutable struct Book <: AbstractModel
+  id::DbId = DbId()
+  title::String = "
+  author::String = "
 end
-
-Book(;
-    ### FIELDS
-    id = DbId(),
-    title = "",
-    author = ""
-  ) = Book("books", "id", id, title, author)
 
 end
 ```
 
-We defined a `mutable struct` which matches our previous `Book` type except that it has a few special fields used internally by SearchLight: the fields starting with an underscore  reference the table name and the name of the primary key column. We also define a keyword constructor as SearchLight needs it.
+We defined a `mutable struct` which matches our previous `Book` type by using the `@kwdef` macro, in order to also define a keyword constructor, as SearchLight needs it.
 
 #### Using our model
 
@@ -782,6 +771,8 @@ Now it's time to restart our REPL session and test our app. Close the Julia REPL
 ```bash
 $ bin/repl
 ```
+
+In Windows go into the `bin/` folder within the application's directory and run `repl.bat` in the terminal.
 
 The `repl` executable script placed within the app's `bin/` folder starts a new Julia REPL session and loads the applications' environment. Everything should be automatically loaded now, DB configuration included - so we can invoke the previously defined `seed` function to insert the books:
 

@@ -10,15 +10,19 @@ import Genie
 const JULIA_PATH = joinpath(Sys.BINDIR, "julia")
 
 
+function validname(name::String)
+  filter(! isempty, [x.match for x in collect(eachmatch(r"[0-9a-zA-Z_]*", name))]) |> join
+end
+
+
 """
     newcontroller(resource_name::String) :: Nothing
 
 Generates a new Genie controller file and persists it to the resources folder.
 """
 function newcontroller(resource_name::String; path::Union{String,Nothing} = nothing, pluralize::Bool = true) :: Nothing
-  if (occursin(" ", resource_name))
-    throw(ErrorException("Spaces are not allowed in controller names!"))
-  end
+  resource_name = validname(resource_name)
+
   Genie.Inflector.is_singular(resource_name) && pluralize && (resource_name = Genie.Inflector.to_plural(resource_name))
   resource_name = uppercasefirst(resource_name)
 
@@ -37,9 +41,8 @@ end
 Generates all the files associated with a new resource and persists them to the resources folder.
 """
 function newresource(resource_name::String; path::String = ".", pluralize::Bool = true) :: Nothing
-  if (occursin(" ", resource_name))
-    throw(ErrorException("Spaces are not allowed in resource names!"))
-  end
+  resource_name = validname(resource_name)
+
   Genie.Inflector.is_singular(resource_name) && pluralize &&
     (resource_name = Genie.Inflector.to_plural(resource_name))
 
@@ -389,12 +392,10 @@ julia> Genie.newapp("MyGenieApp")
 2019-08-06 16:54:32:DEBUG:Main: Web Server running at http://127.0.0.1:8000
 ```
 """
-function newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false, mvcsupport::Bool = false, testmode::Bool = false) :: Nothing
-  if (occursin(" ", path))
-    throw(ErrorException("Spaces are not allowed in app Name!"))
-  end
+function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false, mvcsupport::Bool = false, testmode::Bool = false) :: Nothing
+  app_name = validname(app_name)
 
-  app_path = abspath(path)
+  app_path = abspath(app_name)
 
   fullstack ? fullstack_app(app_path) : microstack_app(app_path)
 
@@ -404,7 +405,7 @@ function newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = fa
 
   write_secrets_file(app_path)
 
-  write_app_custom_files(path, app_path)
+  write_app_custom_files(app_name, app_path)
 
   try
     setup_windows_bin_files(app_path)
@@ -418,10 +419,10 @@ function newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = fa
     @error ex
   end
 
-  @info "Done! New app created at $(abspath(path))"
+  @info "Done! New app created at $(abspath(app_name))"
 
   @info "Changing active directory to $app_path"
-  cd(path)
+  cd(app_name)
 
   install_app_dependencies(app_path, testmode = testmode)
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.21.0 - 2020-04-23
+
+* names of apps and resources are automatically cleaned (illegal Julia vars chars removed)
+* support for file uploads with UTF-8 chars
+* deps updates
+* docs updates
+
 ## v0.25.2 - 2020-02-03
 
 * bug fixes
