@@ -607,7 +607,7 @@ SearchLight, just like Genie, uses the convention-over-configuration design patt
 Lets ask SearchLight to create a new model:
 
 ```julia
-julia> SearchLight.Generator.newmodel("Book")
+julia> SearchLight.Generator.newresource("Book")
 
 [ Info: New model created at /Users/adrian/Dropbox/Projects/MyGenieApp/app/resources/books/Books.jl
 [ Info: New table migration created at /Users/adrian/Dropbox/Projects/MyGenieApp/db/migrations/2020020909574048_create_table_books.jl
