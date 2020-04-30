@@ -32,7 +32,7 @@ YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 [compat]
 ArgParse = "1"
 FilePaths = "0.8"
-Gumbo = "0.7"
+Gumbo = "0.7, 0.8"
 HTTP = "0.8"
 HttpCommon = "0.5"
 JSON = "0.21"
