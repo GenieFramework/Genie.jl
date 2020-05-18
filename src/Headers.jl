@@ -9,8 +9,7 @@ import Genie
 Configures the response headers.
 """
 function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.Response) :: HTTP.Response
-  if req.method == Genie.Router.OPTIONS || req.method == Genie.Router.GET
-
+  if req.method == Genie.Router.OPTIONS || req.method == Genie.Router.GET || req.method == Genie.Router.POST
     request_origin = get(Dict(req.headers), "Origin", "")
 
     allowed_origin_dict = Dict("Access-Control-Allow-Origin" =>
