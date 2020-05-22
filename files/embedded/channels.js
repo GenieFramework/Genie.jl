@@ -68,10 +68,6 @@ window.addEventListener('beforeunload', function (event) {
 
 Genie.WebChannels.load_channels();
 
-Genie.WebChannels.messageHandlers.push(function(event) {
-  console.log(event.data);
-});
-
 Genie.WebChannels.messageHandlers.push(function(event){
   try {
     if (event.data.startsWith('{') && event.data.endsWith('}')) {

@@ -168,42 +168,4 @@ function handle_ws_request(req::HTTP.Request, msg::String, ws_client, ip::Socket
   Genie.Router.route_ws_request(req, msg, ws_client, ip)
 end
 
-
-"""
-"""
-function keepalive(; host::String, protocol::String = "http", port::Int = 80, urls::Vector{String} = String[],
-                      interval::Int = 60, delay::Int = 30, nap::Int = 2, silent::Bool = true)
-  in(protocol, ["http", "https"]) || error("Protocol should be one of `http` or `https`")
-
-  function ping(t::Timer)
-    try
-      for u in urls
-        if ! isempty(u) && startswith(u, "/") && length(u) > 1
-          u = u[2:end]
-        elseif u == "/"
-          u = ""
-        end
-
-        url = protocol * "://" * host * (port != 80 ? (":" * "$port") : "") * "/" * u
-
-        if ! silent
-          @info "Pinging $url"
-          HTTP.get(url)
-        else
-          HTTP.get(url);
-        end
-
-        sleep(nap)
-      end
-    catch ex
-      @error ex
-    end
-  end
-
-  t = Timer(ping, delay, interval = interval)
-  wait(t)
-
-  t
-end
-
 end
