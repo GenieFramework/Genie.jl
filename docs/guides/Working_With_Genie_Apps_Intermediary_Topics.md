@@ -109,7 +109,7 @@ The first thing we need to do is to modify our table to add a new column, for st
 Obviously, we'll use migrations:
 
 ```julia
-julia> Genie.newmigration("add cover column")
+julia> SearchLight.Generator.newmigration("add cover column")
 [debug] New table migration created at db/migrations/2019030813344258_add_cover_column.jl
 ```
 
@@ -119,13 +119,18 @@ Now we need to edit the migration file - please make it look like this:
 # db/migrations/*_add_cover_column.jl
 module AddCoverColumn
 
-import SearchLight.Migrations: add_column, remove_column
+import SearchLight.Migrations: add_column, add_index
+
+# SQLite does not support column removal so the `remove_column` method is not implemented in the SearchLightSQLite adapter
+# If using SQLite do not add the following import
+import SearchLight.Migrations: remove_column
 
 function up()
   add_column(:books, :cover, :string)
 end
 
 function down()
+  # if using the SQLite backend, do not add the next line, it is not supported
   remove_column(:books, :cover)
 end
 
@@ -162,24 +167,11 @@ using SearchLight, SearchLight.Validation, BooksValidator
 
 export Book
 
-mutable struct Book <: AbstractModel
-  ### INTERNALS
-  _table_name::String
-  _id::String
-
-  ### FIELDS
-  id::DbId
-  title::String
-  author::String
-  cover::String
-
-  Book(;
-    ### FIELDS
-    id = DbId(),
-    title = "",
-    author = "",
-    cover = "",
-  ) = new("books", "id", id, title, author, cover)
+Base.@kwdef mutable struct Book <: AbstractModel
+  id::DbId = DbId()
+  title::String = ""
+  author::String = ""
+  cover::String = ""
 end
 
 end
@@ -277,7 +269,6 @@ You can check the result at <http://localhost:8000/bgbooks>
 As for the JSON view, it already does what we want - you can check that the `cover` property is now outputted, as stored in the database: <http://localhost:8000/api/v1/bgbooks>
 
 Success, we're done here!
-
 
 
 #### Heads up!
