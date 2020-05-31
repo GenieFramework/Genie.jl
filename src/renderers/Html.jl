@@ -1,7 +1,7 @@
 module Html
 
 
-import Revise
+using Revise
 import Markdown, Logging, Gumbo, Reexport, OrderedCollections, Millboard, HTTP, YAML
 import Genie, Genie.Renderer
 import Genie.Renderer: @vars
@@ -220,7 +220,7 @@ function get_template(path::String; partial::Bool = true, context::Module = @__M
 
   path, extension = Genie.Renderer.view_file_info(path, SUPPORTED_HTML_OUTPUT_FILE_FORMATS)
 
-  isfile(path) || error("Template file \"$orig_path\" with extensions $SUPPORTED_HTML_OUTPUT_FILE_FORMATS does not exist")
+  isfile(path) || Base.error("Template file \"$orig_path\" with extensions $SUPPORTED_HTML_OUTPUT_FILE_FORMATS does not exist")
 
   extension in HTML_FILE_EXT && return (() -> Base.include(context, path))
 
@@ -699,6 +699,8 @@ function register_normal_element(elem::Union{Symbol,String}; context = @__MODULE
     end
   """ |> Meta.parse)
 
+  Core.eval(context, "export $elem" |> Meta.parse)
+
   nothing
 end
 
@@ -709,6 +711,8 @@ function register_void_element(elem::Union{Symbol,String}; context::Module = @__
       \"\"\"\$(void_element("$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
+
+  Core.eval(context, "export $elem" |> Meta.parse)
 
   nothing
 end

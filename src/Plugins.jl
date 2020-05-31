@@ -102,12 +102,18 @@ end
 
 
 function install(path::String, dest::String; force = false)
-  isdir(Genie.config.path_plugins) || mkpath(Genie.config.path_plugins)
-
   isdir(dest) || mkdir(dest)
 
+  cd(dest)
+
+  isdir(Genie.config.path_plugins) || mkpath(Genie.config.path_plugins)
+
+  @show pwd()
+  @show dest
+
+  depth = 0
   for (root, dirs, files) in walkdir(path)
-    dest_path = joinpath(dest, split(root, "/" * FILES_FOLDER * "/")[end])
+    dest_path = joinpath(abspath(dest), splitpath(root)[end-depth:end]...)
 
     try
       mkdir(dest_path)
@@ -124,6 +130,8 @@ function install(path::String, dest::String; force = false)
         @error "Did not copy $(joinpath(root, f)) to $(joinpath(dest_path, f))"
       end
     end
+
+    depth += 1
   end
 end
 

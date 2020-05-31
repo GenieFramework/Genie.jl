@@ -255,16 +255,16 @@ Now edit the file and make sure it looks like this:
 
 ```md
 <!-- app/resources/books/views/billgatesbooks.jl.md -->
-# Bill Gates' $(length(books)) recommended books
+# Bill Gates' $(length(@vars(:books))) recommended books
 
 $(
-  @foreach(books) do book
+  @foreach(@vars(:books)) do book
     "* $(book.title) by $(book.author) \n"
   end
 )
 ```
 
-Notice that Markdown views do not support Genie's embedded Julia tags `<% ... %>`. Only string interpolation `$(...)` is accepted, but it works across multiple lines.
+Notice that Markdown views do not support Genie's embedded Julia tags `<% ... %>`. Only string interpolation `$(...)` is accepted, but it works across multiple lines. Another notable difference is that at the moment, markdown views support access to variables only through the `@vars` collection (the `@vars` collection can be used in HTML views as well, but it's not necessary, as the variables can be accessed directly as well).
 
 If you reload the page now, however, Genie will still load the HTML view. The reason is that, _if we have only one view file_, Genie will manage.
 But if there's more than one, the framework won't know which one to pick. It won't error out but will pick the preferred one, which is the HTML version.
