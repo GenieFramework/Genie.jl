@@ -708,15 +708,15 @@ Edit the `Books.jl` file to make it look like this:
 # Books.jl
 module Books
 
-import SearchLight: AbstractModel, DbId
+import SearchLight: AbstractModel, DbId, save!
 import Base: @kwdef
 
 export Book
 
 @kwdef mutable struct Book <: AbstractModel
   id::DbId = DbId()
-  title::String = "
-  author::String = "
+  title::String = ""
+  author::String = ""
 end
 
 end
@@ -740,7 +740,7 @@ function seed()
   ]
 
   for b in BillGatesBooks
-    Book(title = b[1], author = b[2]) |> SearchLight.save!
+    Book(title = b[1], author = b[2]) |> save!
   end
 end
 ```
@@ -752,9 +752,16 @@ Now, to try things out. Genie takes care of loading all our resource files for u
 ```julia
 using SearchLight
 
-SearchLight.Configuration.load()
-eval(Meta.parse("using SearchLight$(SearchLight.config.db_config_settings["adapter"])"))
-SearchLight.connect()
+try
+  SearchLight.Configuration.load()
+
+  if SearchLight.config.db_config_settings["adapter"] !== nothing
+    eval(Meta.parse("using SearchLight$(SearchLight.config.db_config_settings["adapter"])"))
+    SearchLight.connect()
+  end
+catch ex
+  @error ex
+end
 ```
 
 ---
