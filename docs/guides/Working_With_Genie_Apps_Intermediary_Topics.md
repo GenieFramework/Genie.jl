@@ -66,7 +66,7 @@ We should also update the `BooksController.create` method to do something useful
 
 ```julia
 # BooksController.jl
-using Genie.Router
+using Genie.Router, Genie.Renderer
 
 function create()
   Book(title = @params(:book_title), author = @params(:book_author)) |> save && redirect(:get_bgbooks)
