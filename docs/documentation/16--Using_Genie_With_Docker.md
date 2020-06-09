@@ -69,7 +69,7 @@ Starting docker container with `docker run -it --rm -p 80:8000 --name genieapp g
 Genie v0.19.0
 Active env: DEV
 
-Web Server starting at http://0.0.0.0:8000
+Web Server starting at http://127.0.0.1:8000
 ```
 
 Our application starts inside the Docker container, binding port 8000 within the container (where the Genie app is running) to the port 80 of the host. So we are now able to access our app at `http://localhost`. If you navigate to `http://localhost` with your favourite browser you'll see Genie's welcome page. Notice that we don't access on port 8000 - this page is served from the Docker container on the default port 80.

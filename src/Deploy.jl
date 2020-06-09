@@ -24,7 +24,7 @@ Generates a `Dockerfile` optimised for containerizing Genie apps.
 - `force::Bool`: if the file already exists, when `force` is `true`, it will be overwritten
 """
 function dockerfile(path::String = "."; filename::String = "Dockerfile", user::String = "genie", env::String = "dev",
-                    host = "0.0.0.0", port::Int = 8000, dockerport::Int = 80, force::Bool = false,
+                    host = "127.0.0.1", port::Int = 8000, dockerport::Int = 80, force::Bool = false,
                     websockets_port::Int = 8001, websockets_dockerport::Int = 8001)
   filename = normpath(joinpath(path, filename))
   isfile(filename) && force && rm(filename)
