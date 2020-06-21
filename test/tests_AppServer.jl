@@ -37,6 +37,9 @@
     @test Genie.config.server_port == port+1_000
     @test Genie.config.websockets_port == ws_port+1_000
 
+    Genie.config.server_port = port
+    Genie.config.websockets_port = ws_port
+
     Genie.AppServer.down()
   end;
 
