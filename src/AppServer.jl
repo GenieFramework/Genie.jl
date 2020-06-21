@@ -8,11 +8,21 @@ import HTTP, HTTP.IOExtras, HTTP.Sockets
 import Millboard, URIParser, Sockets, Distributed, Logging
 import Genie
 
+"""
+    ServersCollection(webserver::Union{Task,Nothing}, websockets::Union{Task,Nothing})
+
+Represents a object containing references to Genie's web and websockets servers.
+"""
 mutable struct ServersCollection
   webserver::Union{Task,Nothing}
   websockets::Union{Task,Nothing}
 end
 
+"""
+    SERVERS
+
+ServersCollection constant containing references to the current app's web and websockets servers.
+"""
 const SERVERS = ServersCollection(nothing, nothing)
 
 ### PRIVATE ###
@@ -32,7 +42,7 @@ Starts the web server.
 
 # Examples
 ```julia-repl
-julia> startup(8000, "127.0.0.1", async = false)
+julia> up(8000, "127.0.0.1", async = false)
 [ Info: Ready!
 Web Server starting at http://127.0.0.1:8000
 ```
@@ -75,7 +85,15 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
   SERVERS
 end
 
+const up = startup
 
+
+"""
+    update_config(port::Int, host::String, ws_port::Int) :: Nothing
+
+Updates the corresponding Genie configurations to the corresponding values for
+  `port`, `host`, and `ws_port`, if these are passed as arguments when starting up the server.
+"""
 function update_config(port::Int, host::String, ws_port::Int) :: Nothing
   Genie.config.server_port = port
   Genie.config.server_host = host
@@ -85,6 +103,11 @@ function update_config(port::Int, host::String, ws_port::Int) :: Nothing
 end
 
 
+"""
+    downdown(; webserver::Bool = true, websockets::Bool = true) :: ServersCollection
+
+Shuts down the servers optionally indicating which of the `webserver` and `websockets` servers to be stopped.
+"""
 function down(; webserver::Bool = true, websockets::Bool = true) :: ServersCollection
   webserver && (@async Base.throwto(SERVERS.webserver, InterruptException()))
   websockets && (@async Base.throwto(SERVERS.websockets, InterruptException()))

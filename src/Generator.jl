@@ -11,7 +11,7 @@ const JULIA_PATH = joinpath(Sys.BINDIR, "julia")
 
 
 function validname(name::String)
-  filter(! isempty, [x.match for x in collect(eachmatch(r"[0-9a-zA-Z_]*", name))]) |> join
+  filter(! isempty, [x.match for x in collect(eachmatch(r"[0-9a-zA-Z_\\/:]*", name))]) |> join
 end
 
 
