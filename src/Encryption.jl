@@ -34,6 +34,7 @@ function decrypt(s::String) :: String
   String(Nettle.trim_padding_PKCS5(deciphertext))
 end
 
+
 function encryption_sauce() :: Tuple{Vector{UInt8},Vector{UInt8}}
   if ! isdefined(Genie, :SECRET_TOKEN)
     @warn "Encryption error"

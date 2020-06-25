@@ -7,7 +7,9 @@ import Revise
 import Genie, Genie.Configuration, Genie.Router, Genie.WebChannels
 import Genie.Renderer.Json
 
-export include_asset, css_asset, js_asset
+export include_asset, css_asset, js_asset, js_settings, css, js
+export embedded, channels, channels_script, channels_support
+export favicon_support
 
 
 ### PUBLIC ###
@@ -54,6 +56,11 @@ end
 const js = js_asset
 
 
+"""
+    js_settings() :: string
+
+Sets up a `window.Genie.Settings` JavaScript object which exposes relevant Genie app settings from `Genie.config`
+"""
 function js_settings() :: String
   settings = Json.JSONParser.json(Dict(
     :server_host                      => Genie.config.server_host,
@@ -92,6 +99,11 @@ function channels() :: String
 end
 
 
+"""
+    channels_script() :: String
+
+Outputs the channels JavaScript content within `<script>...</script>` tags, for embedding into the page.
+"""
 function channels_script() :: String
 """
 <script>
@@ -101,6 +113,12 @@ $(channels())
 end
 
 
+"""
+    channels_support() :: String
+
+Provides full web channels support, setting up routes for loading support JS files, web sockets subscription and
+returning the `<script>` tag for including the linked JS file into the web page.
+"""
 function channels_support() :: String
   Router.route("/$(Genie.config.webchannels_default_route)/$(Genie.config.webchannels_js_file)") do
     Genie.Renderer.Js.js(channels())
@@ -121,6 +139,11 @@ function channels_support() :: String
 end
 
 
+"""
+    favicon_support() :: String
+
+Outputs the `<link>` tag for referencing the favicon file embedded with Genie.
+"""
 function favicon_support() :: String
   Router.route("/favicon.ico") do
     Genie.Renderer.respond(

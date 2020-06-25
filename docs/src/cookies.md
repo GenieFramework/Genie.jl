@@ -7,7 +7,6 @@ CurrentModule = Cookies
 
 ```@docs
 get
-get!!
 set!
 Dict
 nullablevalue

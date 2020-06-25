@@ -6,7 +6,7 @@ CurrentModule = Commands
 ```
 
 ```@docs
-withcache
-purge
-purgeall
+execute
+parse_commandline_args
+called_command
 ```

@@ -9,4 +9,5 @@ CurrentModule = Cache
 withcache
 purge
 purgeall
+cachekey
 ```

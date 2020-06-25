@@ -3,7 +3,13 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
-const GENIE_VERSION = v"0.31.0"
+
+"""
+  const GENIE_VERSION
+
+References the current Genie version number.
+"""
+const GENIE_VERSION = v"0.31.2"
 
 import Logging
 import Genie
@@ -86,6 +92,11 @@ julia> Configuration.env()
 env() :: String = Genie.config.app_env
 
 
+"""
+    buildpath() :: String
+
+Constructs the temp dir where Genie's view files are built.
+"""
 buildpath() :: String = Base.Filesystem.mktempdir(prefix = "jl_genie_build_", cleanup = false)
 
 
