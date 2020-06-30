@@ -1,6 +1,8 @@
 # Genie
 
-![Genie Logo](content/img/genie_logo.png)
+![Genie Logo](https://raw.githubusercontent.com/GenieFramework/Genie.jl/master/docs/content/img/genie_logo.png)
+
+# Genie
 
 ## The highly productive Julia web framework
 
@@ -8,79 +10,16 @@ Genie is a full-stack MVC web framework that provides a streamlined and efficien
 
 ### Current status
 
-Genie is compatible with Julia v1.0 and up.
+Genie is compatible with Julia v1.2 and up.
 
-## Getting started
-
-**First steps for building Genie apps.**
-
-[The Genie Walkthrough: Developing Genie Apps, the Basics](guides/Working_With_Genie_Apps.md)
-
-[The Genie Walkthrough: Developing Genie Apps, Intermediate Topics](guides/Working_With_Genie_Apps_Intermediary_Topics.md)
+---
 
 ## Documentation
+<https://genieframework.github.io/Genie.jl/dev/>
 
-**A deeper dive into the various Genie features and modules.**
-
-[Overview](documentation/1--Overview.md)
-
-[Installing Genie](documentation/2--Installing_Genie.md)
-
-[Getting Started with Genie](documentation/3--Getting_Started.md)
-
-[Using Genie as a Micro Framework](documentation/4--Developing_Web_Services.md)
-
-[Handling Query/GET Params](documentation/5--Handling_Query_Params.md)
-
-[Working with POST Payloads](documentation/6--Working_with_POST_Payloads.md)
-
-[Using JSON Payloads](documentation/7--Using_JSON_Payloads.md)
-
-[Handling File Uploads](documentation/8--Handling_File_Uploads.md)
-
-[Adding Your Existing Julia Code into Genie](documentation/9--Publishing_Your_Julia_Code_Online_With_Genie_Apps.md)
-
-[Loading Genie Apps](documentation/10--Loading_Genie_Apps.md)
-
-[Managing External Dependencies](documentation/11--Managing_External_Packages.md)
-
-[Routing Requests Complete Guide](documentation/12--Advanced_Routing_Techniques.md)
-
-[Configuration: Initializers](documentation/13--Initializers.md)
-
-[Configuration: The Secrets File](documentation/14--The_Secrets_File.md)
-
-[Loading External Modules](documentation/15--The_Lib_Folder.md)
-
-[Working with WebSockets](documentation/17--Working_with_Web_Sockets.md)
-
-[Eager Compilation of Routes](documentation/80--Force_Compiling_Routes.md)
-
-## Guides
-
-**Genie can be used for a variety of tasks, from quickly whipping up a web server to full MVC web apps. Use the following resources to dive into each use case.**
-
-[Using Genie in an Interactive Environment (Jupyter/IJulia, REPL, etc)](guides/Interactive_environment.md)
-
-[Developing a Simple API Backend](guides/Simple_API_backend.md)
-
-[Using and Developing Genie Plugins](guides/Genie_Plugins.md)
-
-[Managing Frontend Assets with the Asset Pipeline](guides/Frontend_assets.md)
-
-## Deployment
-
-**Guides for deployments on various hosts.**
-
-[Genie and Docker Integration](documentation/16--Using_Genie_With_Docker.md)
-
-[Deploying with Heroku Buildpacks](documentation/90--Deploying_With_Heroku_Buildpacks.md)
-
-## API docs
-
-[Developer API Docs](documentation/API)
+---
 
 ## Acknowledgements
 
 * Genie uses a multitude of packages that have been kindly contributed by the Julia community.
-* The awesome Genie logo was designed by Alvaro Casanova (www.yeahstyledg.com).
+* The awesome Genie logo was designed by Alvaro Casanova.
