@@ -1,3 +1,7 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Genie = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
+
+[compat]
+Documenter = "0.25"
+Genie = "0.31.2"
