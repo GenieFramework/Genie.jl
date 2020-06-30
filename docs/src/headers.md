@@ -1,19 +1,12 @@
 ```@meta
-CurrentModule = Genie
+CurrentModule = Headers
 ```
 
 ```@contents
 ```
 
 ```@docs
-serve
-newapp
-loadapp
-startup
-newmodel
-newcontroller
-newresource
-newmigration
-newtablemigration
-newtask
+set_headers!
+normalize_headers
+normalize_header_key
 ```

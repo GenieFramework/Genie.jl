@@ -285,6 +285,14 @@ function load(; context::Union{Module,Nothing} = nothing) :: Nothing
   nothing
 end
 
+
+"""
+    replprint(output::String, terminal;
+                    newline::Int = 0, clearline::Int = 1, color::Symbol = :white, bold::Bool = false, sleep_time::Float64 = 0.2,
+                    prefix::String = "", prefix_color::Symbol = :green, prefix_bold::Bool = true)
+
+Prints app loading progress to the console.
+"""
 function replprint(output::String, terminal;
                     newline::Int = 0, clearline::Int = 1, color::Symbol = :white, bold::Bool = false, sleep_time::Float64 = 0.2,
                     prefix::String = "", prefix_color::Symbol = :green, prefix_bold::Bool = true)

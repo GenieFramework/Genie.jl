@@ -1,19 +1,13 @@
 ```@meta
-CurrentModule = Genie
+CurrentModule = Exceptions
 ```
 
 ```@contents
 ```
 
 ```@docs
-serve
-newapp
-loadapp
-startup
-newmodel
-newcontroller
-newresource
-newmigration
-newtablemigration
-newtask
+ExceptionalResponse
+RuntimeException
+InternalServerException
+NotFoundException
 ```

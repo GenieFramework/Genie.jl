@@ -1,19 +1,14 @@
 ```@meta
-CurrentModule = Genie
+CurrentModule = FileTemplates
 ```
 
 ```@contents
 ```
 
 ```@docs
-serve
-newapp
-loadapp
-startup
-newmodel
-newcontroller
-newresource
-newmigration
-newtablemigration
 newtask
+newcontroller
+newtest
+appmodule
+dockerfile
 ```

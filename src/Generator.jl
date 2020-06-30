@@ -101,7 +101,7 @@ function write_resource_file(resource_path::String, file_name::String, resource_
     if resource_type == :test
       resource_does_not_exist(resource_path, file_name) || return true
       open(joinpath(resource_path, file_name), "w") do f
-        name = pluralize ? (Genie.Inflector.tosingular(resource_name)) : resource_name
+        name = pluralize ? (Genie.Inflector.to_singular(resource_name)) : resource_name
         write(f, Genie.FileTemplates.newtest(resource_name,  name))
       end
     end

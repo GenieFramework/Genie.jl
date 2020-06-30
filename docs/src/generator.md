@@ -1,19 +1,32 @@
 ```@meta
-CurrentModule = Genie
+CurrentModule = Generator
 ```
 
 ```@contents
 ```
 
 ```@docs
-serve
 newapp
-loadapp
-startup
-newmodel
+newapp_webservice
+newapp_mvc
+newapp_fullstack
 newcontroller
 newresource
-newmigration
-newtablemigration
-newtask
+setup_resource_path
+write_resource_file
+setup_windows_bin_files
+setup_nix_bin_files
+resource_does_not_exist
+controller_file_name
+secret_token
+write_secrets_file
+fullstack_app
+microstack_app
+mvc_support
+db_support
+write_app_custom_files
+install_app_dependencies
+autostart_app
+remove_fingerprint_initializer
+remove_searchlight_initializer
 ```

@@ -1,3 +1,6 @@
+"""
+Provides functionality for working with HTTP headers in Genie.
+"""
 module Headers
 
 import Revise, HTTP
@@ -33,6 +36,11 @@ function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.
 end
 
 
+"""
+    normalize_headers(req::HTTP.Request)
+
+Makes request headers case insensitive.
+"""
 function normalize_headers(req::HTTP.Request) :: HTTP.Request
   headers = Dict(req.headers)
   normalized_headers = Dict{String,String}()
@@ -47,6 +55,11 @@ function normalize_headers(req::HTTP.Request) :: HTTP.Request
 end
 
 
+"""
+    normalize_header_key(key::String) :: String
+
+Brings header keys to standard casing.
+"""
 function normalize_header_key(key::String) :: String
   join(map(x -> uppercasefirst(lowercase(x)), split(key, '-')), '-')
 end

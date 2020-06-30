@@ -1,3 +1,6 @@
+"""
+Functionality for creating and working with Genie plugins.
+"""
 module Plugins
 
 import Genie
@@ -16,6 +19,11 @@ const FOLDERS = [ joinpath(path_prefix, APP_FOLDER),
                   joinpath(path_prefix, Genie.config.server_document_root) ]
 
 
+"""
+    recursive_copy(path::String, dest::String; only_hidden = true, force = false)
+
+Utility function to copy plugin files from package dir to app.
+"""
 function recursive_copy(path::String, dest::String; only_hidden = true, force = false)
   for (root, dirs, files) in walkdir(path)
     dest_path = joinpath(dest, replace(root, (path_prefix * "/")=>""))
@@ -40,6 +48,11 @@ function recursive_copy(path::String, dest::String; only_hidden = true, force = 
 end
 
 
+"""
+    congrats()
+
+Shows success message and instructions when scaffolding a plugin.
+"""
 function congrats()
   message = """
   Congratulations, your plugin is ready!
@@ -66,6 +79,11 @@ function congrats()
 end
 
 
+"""
+    scaffold(plugin_name::String, dest::String = "."; force = false)
+
+Scaffolds a new plugin as a Julia project
+"""
 function scaffold(plugin_name::String, dest::String = "."; force = false)
   plugin_name = replace(plugin_name, " "=>"") |> strip |> string
   dest = normpath(dest) |> abspath
@@ -101,6 +119,11 @@ function scaffold(plugin_name::String, dest::String = "."; force = false)
 end
 
 
+"""
+    install(path::String, dest::String; force = false)
+
+Utility to allow users to install a plugin
+"""
 function install(path::String, dest::String; force = false)
   isdir(dest) || mkdir(dest)
 

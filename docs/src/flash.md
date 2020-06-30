@@ -1,19 +1,11 @@
 ```@meta
-CurrentModule = Genie
+CurrentModule = Flash
 ```
 
 ```@contents
 ```
 
 ```@docs
-serve
-newapp
-loadapp
-startup
-newmodel
-newcontroller
-newresource
-newmigration
-newtablemigration
-newtask
+flash
+flash_has_message
 ```

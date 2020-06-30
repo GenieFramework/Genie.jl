@@ -18,6 +18,11 @@ function flash()
 end
 
 
+"""
+    flash(value::Any) :: Nothing
+
+Stores `value` onto the flash.
+"""
 function flash(value::Any) :: Nothing
   Genie.Sessions.set!(Genie.Sessions.session(Genie.Requests.payload()), Genie.PARAMS_FLASH_KEY, value)
   Genie.Requests.payload()[Genie.PARAMS_FLASH_KEY] = value

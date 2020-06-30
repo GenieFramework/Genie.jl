@@ -11,11 +11,11 @@ const vowels = ["a", "e", "i", "o", "u"]
 
 
 """
-    tosingular(word::String; is_irregular::Bool = false) :: Union{Nothing,String}
+    to_singular(word::String; is_irregular::Bool = false) :: Union{Nothing,String}
 
 Returns the singural form of `word`.
 """
-function tosingular(word::String; is_irregular::Bool = Inflector.is_irregular(word)) :: Union{Nothing,String}
+function to_singular(word::String; is_irregular::Bool = Inflector.is_irregular(word)) :: Union{Nothing,String}
   ( is_irregular || ! endswith(word, "s") ) && return to_singular_irregular(word)
   endswith(word, "ies") && ! in(word[end-3], vowels) && return (word[1:end-3] * "y")
   endswith(word, "s") && return (word[1:end-1])
