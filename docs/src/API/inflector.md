@@ -2,9 +2,6 @@
 CurrentModule = Genie
 ```
 
-```@contents
-```
-
 ```@docs
 to_singular
 to_singular_irregular

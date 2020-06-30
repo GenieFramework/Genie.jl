@@ -2,9 +2,6 @@
 CurrentModule = FileTemplates
 ```
 
-```@contents
-```
-
 ```@docs
 newtask
 newcontroller

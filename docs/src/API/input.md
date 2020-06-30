@@ -2,8 +2,5 @@
 CurrentModule = Genie
 ```
 
-```@contents
-```
-
 ```@docs
 ```

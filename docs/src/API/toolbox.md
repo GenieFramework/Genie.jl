@@ -2,9 +2,6 @@
 CurrentModule = Toolbox
 ```
 
-```@contents
-```
-
 ```@docs
 TaskInfo
 TaskResult

@@ -2,9 +2,6 @@
 CurrentModule = Cookies
 ```
 
-```@contents
-```
-
 ```@docs
 get
 set!

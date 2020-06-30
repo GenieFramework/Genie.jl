@@ -2,9 +2,6 @@
 CurrentModule = Responses
 ```
 
-```@contents
-```
-
 ```@docs
 getresponse
 getheaders

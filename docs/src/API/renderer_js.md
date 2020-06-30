@@ -2,9 +2,6 @@
 CurrentModule = Renderer.Js
 ```
 
-```@contents
-```
-
 ```@docs
 get_template
 to_js

@@ -2,9 +2,6 @@
 CurrentModule = Cache
 ```
 
-```@contents
-```
-
 ```@docs
 withcache
 purge

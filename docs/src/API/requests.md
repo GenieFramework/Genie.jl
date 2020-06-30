@@ -2,9 +2,6 @@
 CurrentModule = Requests
 ```
 
-```@contents
-```
-
 ```@docs
 jsonpayload
 rawpayload

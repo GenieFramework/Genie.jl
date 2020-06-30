@@ -2,9 +2,6 @@
 CurrentModule = Router
 ```
 
-```@contents
-```
-
 ```@docs
 Route
 Channel

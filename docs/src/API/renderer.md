@@ -2,9 +2,6 @@
 CurrentModule = Renderer
 ```
 
-```@contents
-```
-
 ```@docs
 WebRenderable
 render

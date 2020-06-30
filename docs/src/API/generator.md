@@ -2,9 +2,6 @@
 CurrentModule = Generator
 ```
 
-```@contents
-```
-
 ```@docs
 newapp
 newapp_webservice

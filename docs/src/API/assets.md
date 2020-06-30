@@ -2,9 +2,6 @@
 CurrentModule = Assets
 ```
 
-```@contents
-```
-
 ```@docs
 include_asset
 css_asset

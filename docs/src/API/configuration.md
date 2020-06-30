@@ -2,9 +2,6 @@
 CurrentModule = Configuration
 ```
 
-```@contents
-```
-
 ```@docs
 GENIE_VERSION
 isdev

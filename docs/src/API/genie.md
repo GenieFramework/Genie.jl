@@ -2,9 +2,6 @@
 CurrentModule = Genie
 ```
 
-```@contents
-```
-
 ```@docs
 serve
 newapp

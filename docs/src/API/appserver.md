@@ -2,9 +2,6 @@
 CurrentModule = AppServer
 ```
 
-```@contents
-```
-
 ```@docs
 ServersCollection
 SERVERS

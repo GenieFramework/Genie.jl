@@ -2,9 +2,6 @@
 CurrentModule = Renderer.Json
 ```
 
-```@contents
-```
-
 ```@docs
 render
 Genie.Renderer.render

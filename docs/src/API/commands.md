@@ -2,9 +2,6 @@
 CurrentModule = Commands
 ```
 
-```@contents
-```
-
 ```@docs
 execute
 parse_commandline_args

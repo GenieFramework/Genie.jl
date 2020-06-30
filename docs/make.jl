@@ -86,3 +86,7 @@ makedocs(
         ]
     ],
 )
+
+deploydocs(
+  repo = "github.com/GenieFramework/Genie.jl.git",
+)

@@ -2,9 +2,6 @@
 CurrentModule = WebChannels
 ```
 
-```@contents
-```
-
 ```@docs
 ChannelNotFoundException
 ChannelClient

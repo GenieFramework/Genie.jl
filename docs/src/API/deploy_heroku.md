@@ -2,9 +2,6 @@
 CurrentModule = Deploy.Heroku
 ```
 
-```@contents
-```
-
 ```@docs
 createapp
 push

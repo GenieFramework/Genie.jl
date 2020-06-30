@@ -2,9 +2,6 @@
 CurrentModule = Sessions
 ```
 
-```@contents
-```
-
 ```@docs
 Session
 id

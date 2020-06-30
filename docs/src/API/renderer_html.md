@@ -2,9 +2,6 @@
 CurrentModule = Renderer.Html
 ```
 
-```@contents
-```
-
 ```@docs
 normal_element
 prepare_template

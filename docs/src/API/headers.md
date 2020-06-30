@@ -2,9 +2,6 @@
 CurrentModule = Headers
 ```
 
-```@contents
-```
-
 ```@docs
 set_headers!
 normalize_headers
