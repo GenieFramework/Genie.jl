@@ -1,6 +1,6 @@
 # Genie
 
-![Genie Logo](https://github.com/GenieFramework/Genie.jl/docs/content/img/genie_logo.png)
+![Genie Logo](https://raw.githubusercontent.com/GenieFramework/Genie.jl/master/docs/content/img/genie_logo.png)
 
 # Genie
 
