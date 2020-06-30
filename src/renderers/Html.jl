@@ -289,8 +289,6 @@ function parseview(data::String; partial = false, context::Module = @__MODULE__)
 end
 
 
-"""
-"""
 function render(data::String; context::Module = @__MODULE__, layout::Union{String,Nothing} = nothing, vars...) :: Function
   Genie.Renderer.registervars(vars...)
 
@@ -303,8 +301,6 @@ function render(data::String; context::Module = @__MODULE__, layout::Union{Strin
 end
 
 
-"""
-"""
 function render(viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.Renderer.FilePath} = nothing, context::Module = @__MODULE__, vars...) :: Function
   Genie.Renderer.registervars(vars...)
 

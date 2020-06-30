@@ -20,9 +20,12 @@ doctype
 doc
 parseview
 render
+parsehtml
 Genie.Renderer.render
 html
+safe_attr
 parsehtml
+html_to_julia
 string_to_julia
 to_julia
 partial

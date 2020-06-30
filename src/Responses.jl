@@ -9,15 +9,11 @@ import HTTP
 export getresponse, getheaders, setheaders, setheaders!, getstatus, setstatus, setstatus!, getbody, setbody, setbody!
 
 
-"""
-"""
 function getresponse() :: HTTP.Response
   Router.@params(Genie.PARAMS_RESPONSE_KEY)
 end
 
 
-"""
-"""
 function getheaders(res::HTTP.Response) :: Dict{String,String}
   Dict{String,String}(res.headers)
 end
@@ -26,8 +22,6 @@ function getheaders() :: Dict{String,String}
 end
 
 
-"""
-"""
 function setheaders!(res::HTTP.Response, headers::Dict) :: HTTP.Response
   push!(res.headers, [headers...]...)
 
@@ -44,8 +38,6 @@ function setheaders(headers::Vector{Pair{String,String}}) :: HTTP.Response
 end
 
 
-"""
-"""
 function getstatus(res::HTTP.Response) :: Int
   res.status
 end
@@ -54,8 +46,6 @@ function getstatus() :: Int
 end
 
 
-"""
-"""
 function setstatus!(res::HTTP.Response, status::Int) :: HTTP.Response
   res.status = status
 
@@ -66,8 +56,6 @@ function setstatus(status::Int) :: HTTP.Response
 end
 
 
-"""
-"""
 function getbody(res::HTTP.Response) :: String
   String(res.body)
 end
@@ -76,8 +64,6 @@ function getbody() :: String
 end
 
 
-"""
-"""
 function setbody!(res::HTTP.Response, body::String) :: HTTP.Response
   res.body = collect(body)
 

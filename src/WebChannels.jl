@@ -40,8 +40,6 @@ websockets() = map(c -> c.client, clients())
 channels() = collect(keys(SUBSCRIPTIONS))
 
 
-"""
-"""
 function connected_clients(channel::ChannelName) :: Vector{ChannelClient}
   clients = ChannelClient[]
   for client_id in SUBSCRIPTIONS[channel]
@@ -60,8 +58,6 @@ function connected_clients() :: Vector{ChannelClient}
 end
 
 
-"""
-"""
 function disconnected_clients(channel::ChannelName) :: Vector{ChannelClient}
   clients = ChannelClient[]
   for client_id in SUBSCRIPTIONS[channel]

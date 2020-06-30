@@ -6,8 +6,14 @@ CurrentModule = WebChannels
 ```
 
 ```@docs
+ChannelNotFoundException
 ChannelClient
+ChannelClientsCollection
+ChannelSubscriptionsCollection
+MessagePayload
 ChannelMessage
+CLIENTS
+SUBSCRIPTIONS
 clients
 subscriptions
 websockets
@@ -22,4 +28,5 @@ push_subscription
 pop_subscription
 broadcast
 message
+
 ```

@@ -1,3 +1,7 @@
+"""
+Parses requests and extracts parameters, setting up the call variables and invoking
+the appropiate route handler function.
+"""
 module Router
 
 import Revise
@@ -393,8 +397,6 @@ function route_params_to_dict(route_params) :: Dict{Symbol,Any}
 end
 
 
-"""
-"""
 function action_controller_params(action::Function, params::Params) :: Nothing
   params.collection[:action_controller] = action |> string |> Symbol
   params.collection[:action] = nameof(action)
@@ -404,8 +406,6 @@ function action_controller_params(action::Function, params::Params) :: Nothing
 end
 
 
-"""
-"""
 function run_hook(controller::Module, hook_type::Symbol) :: Bool
   isdefined(controller, hook_type) || return false
 
@@ -698,8 +698,6 @@ function extract_post_params(req::HTTP.Request, params::Params) :: Nothing
 end
 
 
-"""
-"""
 function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
   ispayload(req) || return nothing
 
@@ -722,8 +720,6 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
 end
 
 
-"""
-"""
 function content_type(req::HTTP.Request) :: String
   get(Genie.HTTPUtils.Dict(req), "content-type", "")
 end
@@ -732,8 +728,6 @@ function content_type() :: String
 end
 
 
-"""
-"""
 function content_length(req::HTTP.Request) :: Int
   parse(Int, get(Genie.HTTPUtils.Dict(req), "content-length", "0"))
 end
@@ -742,8 +736,6 @@ function content_length() :: Int
 end
 
 
-"""
-"""
 function request_type_is(req::HTTP.Request, request_type::Symbol) :: Bool
   ! in(request_type, keys(request_mappings) |> collect) && error("Unknown request type $request_type - expected one of $(keys(request_mappings) |> collect).")
 
@@ -756,8 +748,6 @@ function request_type_is(request_type::Symbol) :: Bool
 end
 
 
-"""
-"""
 function request_type(req::HTTP.Request) :: Union{Symbol,Nothing}
   for (k,v) in request_mappings
     if occursin(v, content_type(req))
@@ -1003,7 +993,6 @@ pathify(x) :: String = replace(string(x), " "=>"-") |> lowercase |> URIParser.es
 Returns the file extesion of `f`.
 """
 file_extension(f) :: String = ormatch(match(r"(?<=\.)[^\.\\/]*$", f), "")
-const fileextension = file_extension
 
 
 """

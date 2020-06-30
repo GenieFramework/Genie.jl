@@ -11,8 +11,10 @@ id
 start
 set!
 get
-get!!
 unset!
 isset
+persist
+load
 session
+init
 ```

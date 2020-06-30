@@ -16,8 +16,6 @@ const NBSP_REPLACEMENT = ("&nbsp;"=>"!!nbsp;;")
 export js
 
 
-"""
-"""
 function get_template(path::String; context::Module = @__MODULE__) :: Function
   orig_path = path
 
@@ -42,8 +40,6 @@ function get_template(path::String; context::Module = @__MODULE__) :: Function
 end
 
 
-"""
-"""
 function to_js(data::String; prepend = "\n") :: String
   string("function $(Genie.Renderer.function_name(data))() \n",
           Genie.Renderer.injectvars(),
@@ -55,8 +51,6 @@ function to_js(data::String; prepend = "\n") :: String
 end
 
 
-"""
-"""
 function render(data::String; context::Module = @__MODULE__, vars...) :: Function
   Genie.Renderer.registervars(vars...)
 
@@ -78,8 +72,6 @@ function render(data::String; context::Module = @__MODULE__, vars...) :: Functio
 end
 
 
-"""
-"""
 function render(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__, vars...) :: Function
   Genie.Renderer.registervars(vars...)
 
@@ -107,8 +99,6 @@ function render(::Type{MIME"application/javascript"}, viewfile::Genie.Renderer.F
 end
 
 
-"""
-"""
 function js(data::String; context::Module = @__MODULE__, status::Int = 200,
             headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders("Content-Type" => Genie.Renderer.CONTENT_TYPES[:javascript]),
             forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
@@ -120,8 +110,6 @@ function js(data::String; context::Module = @__MODULE__, status::Int = 200,
 end
 
 
-"""
-"""
 function js(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__, status::Int = 200,
             headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders("Content-Type" => Genie.Renderer.CONTENT_TYPES[:javascript]), vars...) :: Genie.Renderer.HTTP.Response
   Genie.Renderer.WebRenderable(render(MIME"application/javascript", viewfile; context = context, vars...), :javascript, status, headers) |> Genie.Renderer.respond
