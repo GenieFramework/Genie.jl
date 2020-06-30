@@ -19,7 +19,7 @@ build_module
 preparebuilds
 purgebuilds
 changebuilds
-vars
+@vars
 set_negotiated_content
 negotiate_content
 ```

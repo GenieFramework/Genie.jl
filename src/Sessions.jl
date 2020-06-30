@@ -86,6 +86,11 @@ function id(req::HTTP.Request, res::HTTP.Response) :: String
 end
 
 
+"""
+    init() :: Nothing
+
+Sets up the session functionality, if configured.
+"""
 function init() :: Nothing
   push!(Genie.Router.pre_match_hooks, Genie.Sessions.start)
   push!(Genie.Router.pre_response_hooks, Genie.Sessions.persist)

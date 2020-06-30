@@ -163,6 +163,11 @@ function WebRenderable(f::Function, args...)
 end
 
 
+"""
+    render
+
+Abstract function that needs to be specialized by individual renderers.
+"""
 function render end
 
 
@@ -251,6 +256,12 @@ function registervars(vars...) :: Nothing
 end
 
 
+"""
+    injectvars() :: String
+
+Sets up variables passed into the view, making them available in the
+generated view function.
+"""
 function injectvars() :: String
   output = ""
   for kv in task_local_storage(:__vars)
@@ -263,7 +274,6 @@ end
 
 function injectvars(context::Module) :: Nothing
   for kv in task_local_storage(:__vars)
-    # isdefined(context, Symbol(kv[1])) ||
     Core.eval(context, Meta.parse("$(kv[1]) = Renderer.@vars($(repr(kv[1])))"))
   end
 
@@ -296,6 +306,12 @@ function view_file_info(path::String, supported_extensions::Vector{String}) :: T
 end
 
 
+"""
+    vars_signature() :: String
+
+Collects the names of the view vars in order to create a unique hash/salt to identify
+compiled views with different vars.
+"""
 function vars_signature() :: String
   task_local_storage(:__vars) |> keys |> collect |> sort |> string
 end
@@ -369,6 +385,11 @@ function preparebuilds(subfolder = BUILD_NAME) :: Bool
 end
 
 
+"""
+    purgebuilds(subfolder = BUILD_NAME) :: Bool
+
+Removes the views builds folders with all the generated views.
+"""
 function purgebuilds(subfolder = BUILD_NAME) :: Bool
   rm(joinpath(Genie.config.path_build, subfolder), force = true, recursive = true)
 
@@ -376,6 +397,11 @@ function purgebuilds(subfolder = BUILD_NAME) :: Bool
 end
 
 
+"""
+    changebuilds(subfolder = BUILD_NAME) :: Bool
+
+Changes/creates a new builds folder.
+"""
 function changebuilds(subfolder = BUILD_NAME) :: Bool
   Genie.config.path_build = Genie.Configuration.buildpath()
   preparebuilds()
@@ -419,6 +445,11 @@ macro vars(key, value)
 end
 
 
+"""
+    set_negotiated_content(req::HTTP.Request, res::HTTP.Response, params::Dict{Symbol,Any})
+
+Configures the request, response, and params response content type based on the request and defaults.
+"""
 function set_negotiated_content(req::HTTP.Request, res::HTTP.Response, params::Dict{Symbol,Any})
   req_type = Genie.Router.request_type(req)
   params[:response_type] = req_type === nothing ? DEFAULT_CONTENT_TYPE : req_type

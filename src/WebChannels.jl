@@ -137,6 +137,11 @@ function unsubscribe_client(channel_client::ChannelClient) :: ChannelClientsColl
 end
 
 
+"""
+unsubscribe_disconnected_clients() :: ChannelClientsCollection
+
+Unsubscribes clients which are no longer connected.
+"""
 function unsubscribe_disconnected_clients() :: ChannelClientsCollection
   for channel_client in disconnected_clients()
     unsubscribe_client(channel_client)

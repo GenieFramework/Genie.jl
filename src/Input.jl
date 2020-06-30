@@ -7,13 +7,18 @@ import HttpCommon, URIParser, HTTP
 
 export post, files, HttpInput, HttpPostData, HttpFiles, HttpFile
 
+
+"""
+    HttpFile
+
+Represents a file sent over HTTP
+"""
 mutable struct HttpFile
   name::String
   mime::String
   data::Array{UInt8}
-
-  HttpFile() = new("", "", UInt8[])
 end
+HttpFile() = HttpFile("", "", UInt8[])
 
 const HttpPostData  = Dict{String,String}
 const HttpFiles     = Dict{String,HttpFile}
@@ -21,18 +26,16 @@ const HttpFiles     = Dict{String,HttpFile}
 mutable struct HttpInput
   post::HttpPostData
   files::HttpFiles
-
-  HttpInput() = new(HttpPostData(), HttpFiles())
 end
+HttpInput() = HttpInput(HttpPostData(), HttpFiles())
 
 ###
 
 mutable struct HttpFormPart
   headers::Dict{String, Dict{String,String}}
   data::Array{UInt8}
-
-  HttpFormPart() = new(Dict{String,Dict{String,String}}(), UInt8[])
 end
+HttpFormPart() = HttpFormPart(Dict{String,Dict{String,String}}(), UInt8[])
 
 ###
 

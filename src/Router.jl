@@ -239,6 +239,11 @@ function channelname(params::Channel) :: Symbol
 end
 
 
+"""
+    baptizer(params::Union{Route,Channel}, parts::Vector{String}) :: Symbol
+
+Generates default names for routes and channels.
+"""
 function baptizer(params::Union{Route,Channel}, parts::Vector{String}) :: Symbol
   for uri_part in split(params.path, "/", keepempty = false)
     startswith(uri_part, ":") && continue # we ignore named params
@@ -397,6 +402,11 @@ function route_params_to_dict(route_params) :: Dict{Symbol,Any}
 end
 
 
+"""
+    action_controller_params(action::Function, params::Params) :: Nothing
+
+Sets up the :action_controller, :action, and :controller key - value pairs of the `params` collection.
+"""
 function action_controller_params(action::Function, params::Params) :: Nothing
   params.collection[:action_controller] = action |> string |> Symbol
   params.collection[:action] = nameof(action)
@@ -406,6 +416,11 @@ function action_controller_params(action::Function, params::Params) :: Nothing
 end
 
 
+"""
+    run_hook(controller::Module, hook_type::Symbol) :: Bool
+
+Invokes the designated hook.
+"""
 function run_hook(controller::Module, hook_type::Symbol) :: Bool
   isdefined(controller, hook_type) || return false
 
@@ -698,6 +713,11 @@ function extract_post_params(req::HTTP.Request, params::Params) :: Nothing
 end
 
 
+"""
+    extract_request_params(req::HTTP.Request, params::Params) :: Nothing
+
+Sets up the `params` key-value pairs corresponding to a JSON payload.
+"""
 function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
   ispayload(req) || return nothing
 
@@ -720,6 +740,11 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
 end
 
 
+"""
+    content_type(req::HTTP.Request) :: String
+
+Gets the content-type of the request.
+"""
 function content_type(req::HTTP.Request) :: String
   get(Genie.HTTPUtils.Dict(req), "content-type", "")
 end
@@ -728,6 +753,11 @@ function content_type() :: String
 end
 
 
+"""
+    content_length(req::HTTP.Request) :: Int
+
+Gets the content-length of the request.
+"""
 function content_length(req::HTTP.Request) :: Int
   parse(Int, get(Genie.HTTPUtils.Dict(req), "content-length", "0"))
 end
@@ -736,6 +766,11 @@ function content_length() :: Int
 end
 
 
+"""
+    request_type_is(req::HTTP.Request, request_type::Symbol) :: Bool
+
+Checks if the request content-type is of a certain type.
+"""
 function request_type_is(req::HTTP.Request, request_type::Symbol) :: Bool
   ! in(request_type, keys(request_mappings) |> collect) && error("Unknown request type $request_type - expected one of $(keys(request_mappings) |> collect).")
 
@@ -748,6 +783,11 @@ function request_type_is(request_type::Symbol) :: Bool
 end
 
 
+"""
+    request_type(req::HTTP.Request) :: Union{Symbol,Nothing}
+
+Gets the request's content type.
+"""
 function request_type(req::HTTP.Request) :: Union{Symbol,Nothing}
   for (k,v) in request_mappings
     if occursin(v, content_type(req))
@@ -817,6 +857,11 @@ to_response(action_result::Exception)::HTTP.Response = throw(action_result)
 to_response(action_result::Any)::HTTP.Response = HTTP.Response(string(action_result))
 
 
+"""
+    @params
+
+The object containing the request variables collection.
+"""
 macro params()
   quote
     haskey(task_local_storage(), :__params) ? task_local_storage(:__params) : setup_base_params()
@@ -830,6 +875,13 @@ macro params(key, default)
     haskey(@params, $key) ? @params($key) : $default
   end
 end
+
+
+"""
+    _params_()
+
+Reference to the request variables collection.
+"""
 function _params_()
   task_local_storage(:__params)
 end
@@ -838,6 +890,11 @@ function _params_(key::Union{String,Symbol})
 end
 
 
+"""
+    @request()
+
+The request object.
+"""
 macro request()
   :(@params(Genie.PARAMS_REQUEST_KEY))
 end
@@ -914,6 +971,11 @@ function to_uri(resource::String) :: URIParser.URI
 end
 
 
+"""
+    escape_resource_path(resource::String)
+
+Cleans up paths to resources.
+"""
 function escape_resource_path(resource::String)
   startswith(resource, "/") || return resource
   resource = resource[2:end]
@@ -950,11 +1012,21 @@ function serve_static_file(resource::String; root = Genie.config.server_document
 end
 
 
+"""
+preflight_response() :: HTTP.Response
+
+Sets up the preflight CORS response header.
+"""
 function preflight_response() :: HTTP.Response
   HTTP.Response(200, Genie.config.cors_headers, body = "Success")
 end
 
 
+"""
+    response_mime()
+
+Returns the MIME type of the response.
+"""
 function response_mime()
   @params(Genie.PARAMS_MIME_KEY, MIME"text/html")
 end
@@ -964,6 +1036,11 @@ function response_mime(params::Dict{Symbol,Any})
 end
 
 
+"""
+    error
+
+Not implemented function for error response.
+"""
 function error end
 
 
@@ -1003,6 +1080,7 @@ Returns the file headers of `f`.
 function file_headers(f) :: Vector{Pair{String,String}}
   ["Content-Type" => get(mimetypes, file_extension(f), "application/octet-stream")]
 end
+
 
 ormatch(r::RegexMatch, x) = r.match
 ormatch(r::Nothing, x) = x

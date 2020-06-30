@@ -35,6 +35,11 @@ function decrypt(s::String) :: String
 end
 
 
+"""
+    encryption_sauce() :: Tuple{Vector{UInt8},Vector{UInt8}}
+
+Generates a pair of key32 and iv16 with salt for encryption/decryption
+"""
 function encryption_sauce() :: Tuple{Vector{UInt8},Vector{UInt8}}
   if ! isdefined(Genie, :SECRET_TOKEN)
     @warn "Encryption error"

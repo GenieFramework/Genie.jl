@@ -1,5 +1,5 @@
 ```@meta
-CurrentModule = Genie
+CurrentModule = HTTPUtils
 ```
 
 ```@docs

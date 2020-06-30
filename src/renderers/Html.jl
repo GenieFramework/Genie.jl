@@ -137,7 +137,12 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
 end
 
 
-function parseattr(attr)
+"""
+    parseattr(attr) :: String
+
+Converts Julia keyword arguments to HTML attributes which illegal Julia chars.
+"""
+function parseattr(attr) :: String
   attr = string(attr)
   endswith(attr, Genie.config.html_parser_char_at) && (attr = string("@", attr[1:end-(length(Genie.config.html_parser_char_at))]))
   endswith(attr, Genie.config.html_parser_char_column) && (attr = string(":", attr[1:end-(length(Genie.config.html_parser_char_column))]))
@@ -155,6 +160,13 @@ Cleans up problematic characters or DOM elements.
 function normalize_element(elem::String)
   replace(string(lowercase(elem)), Genie.config.html_parser_char_dash=>"-")
 end
+
+
+"""
+    denormalize_element(elem::String)
+
+Replaces `-` with the char defined to replace dashes, as Julia does not support them in names.
+"""
 function denormalize_element(elem::String)
   replace(string(lowercase(elem)), "-"=>Genie.config.html_parser_char_dash)
 end
@@ -289,6 +301,11 @@ function parseview(data::String; partial = false, context::Module = @__MODULE__)
 end
 
 
+"""
+    render(data::String; context::Module = @__MODULE__, layout::Union{String,Nothing} = nothing, vars...) :: Function
+
+Renders the string as an HTML view.
+"""
 function render(data::String; context::Module = @__MODULE__, layout::Union{String,Nothing} = nothing, vars...) :: Function
   Genie.Renderer.registervars(vars...)
 
@@ -301,6 +318,11 @@ function render(data::String; context::Module = @__MODULE__, layout::Union{Strin
 end
 
 
+"""
+    render(viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.Renderer.FilePath} = nothing, context::Module = @__MODULE__, vars...) :: Function
+
+Renders the template file as an HTML view.
+"""
 function render(viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.Renderer.FilePath} = nothing, context::Module = @__MODULE__, vars...) :: Function
   Genie.Renderer.registervars(vars...)
 
@@ -313,6 +335,11 @@ function render(viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.R
 end
 
 
+"""
+    parsehtml(input::String; partial::Bool = true) :: String
+
+
+"""
 function parsehtml(input::String; partial::Bool = true) :: String
   parsehtml(HTMLParser.parsehtml(replace(input, NBSP_REPLACEMENT)).root, 0, partial = partial)
 end
@@ -398,7 +425,12 @@ function html(viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.Ren
 end
 
 
-function safe_attr(attr)
+"""
+    safe_attr(attr) :: String
+
+Replaces illegal Julia characters from HTML attributes with safe ones, to be used as keyword arguments.
+"""
+function safe_attr(attr) :: String
   attr = string(attr)
 
   occursin("-", attr) && replace!(attr, "-"=>Genie.config.html_parser_char_dash)
@@ -660,6 +692,11 @@ function register_elements() :: Nothing
 end
 
 
+"""
+    register_element(elem::Union{Symbol,String}, elem_type::Union{Symbol,String} = :normal; context = @__MODULE__) :: Nothing
+
+Generates a Julia function representing an HTML element.
+"""
 function register_element(elem::Union{Symbol,String}, elem_type::Union{Symbol,String} = :normal; context = @__MODULE__) :: Nothing
   elem = string(elem)
   occursin("-", elem) && (elem = denormalize_element(elem))
@@ -668,6 +705,11 @@ function register_element(elem::Union{Symbol,String}, elem_type::Union{Symbol,St
 end
 
 
+"""
+    register_normal_element(elem::Union{Symbol,String}; context = @__MODULE__) :: Nothing
+
+Generates a Julia function representing a "normal" HTML element: that is an element with a closing tag, <tag>...</tag>
+"""
 function register_normal_element(elem::Union{Symbol,String}; context = @__MODULE__) :: Nothing
   Core.eval(context, """
     function $elem(f::Function, args...; attrs...) :: HTMLString
@@ -699,6 +741,11 @@ function register_normal_element(elem::Union{Symbol,String}; context = @__MODULE
 end
 
 
+"""
+    register_void_element(elem::Union{Symbol,String}; context::Module = @__MODULE__) :: Nothing
+
+Generates a Julia function representing a "void" HTML element: that is an element without a closing tag, <tag />
+"""
 function register_void_element(elem::Union{Symbol,String}; context::Module = @__MODULE__) :: Nothing
   Core.eval(context, """
     function $elem(args...; attrs...) :: HTMLString
@@ -712,6 +759,11 @@ function register_void_element(elem::Union{Symbol,String}; context::Module = @__
 end
 
 
+"""
+    @attr(attr)
+
+Returns an HTML attribute string.
+"""
 macro attr(attr)
   "$(string(attr))"
 end
@@ -744,6 +796,11 @@ macro foreach(f, arr)
 end
 
 
+"""
+    collection(template::Function, collection::Vector{T})::String where {T}
+
+Creates a view fragment by repeateadly applying a function to each element of the collection.
+"""
 function collection(template::Function, collection::Vector{T})::String where {T}
   @foreach(collection) do item
     template(item) |> string
@@ -755,16 +812,31 @@ end
 ### EXCEPTIONS ###
 
 
+"""
+    Genie.Router.error(error_message::String, ::Type{MIME"text/html"}, ::Val{500}; error_info::String = "") :: HTTP.Response
+
+Returns a 500 error response as an HTML doc.
+"""
 function Genie.Router.error(error_message::String, ::Type{MIME"text/html"}, ::Val{500}; error_info::String = "") :: HTTP.Response
   serve_error_file(500, error_message, error_info = error_info)
 end
 
 
+"""
+    Genie.Router.error(error_message::String, ::Type{MIME"text/html"}, ::Val{404}; error_info::String = "") :: HTTP.Response
+
+Returns a 404 error response as an HTML doc.
+"""
 function Genie.Router.error(error_message::String, ::Type{MIME"text/html"}, ::Val{404}; error_info::String = "") :: HTTP.Response
   serve_error_file(404, error_message, error_info = error_info)
 end
 
 
+"""
+    Genie.Router.error(error_code::Int, error_message::String, ::Type{MIME"text/html"}; error_info::String = "") :: HTTP.Response
+
+Returns an error response as an HTML doc.
+"""
 function Genie.Router.error(error_code::Int, error_message::String, ::Type{MIME"text/html"}; error_info::String = "") :: HTTP.Response
   serve_error_file(error_code, error_message, error_info = error_info)
 end
@@ -836,6 +908,7 @@ end
 macro yield(value)
   :(task_local_storage(:__yield, $value))
 end
+
 
 function el(; vars...)
   OrderedCollections.OrderedDict(vars)
