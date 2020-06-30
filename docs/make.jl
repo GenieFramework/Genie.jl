@@ -79,7 +79,6 @@ makedocs(
           "Responses" => "API/responses.md",
           "Router" => "API/router.md",
           "Sessions" => "API/sessions.md",
-          "Tester" => "API/tester.md",
           "Toolbox" => "API/toolbox.md",
           "Util" => "API/util.md",
           "WebChannels" => "API/webchannels.md"
