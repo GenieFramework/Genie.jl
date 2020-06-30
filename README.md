@@ -1,7 +1,6 @@
 ![Genie Logo](docs/content/img/genie_logo.png)
 
-[![Stable](https://readthedocs.org/projects/docs/badge/?version=stable)](http://geniejl.readthedocs.io/en/stable/build/)
-[![Latest](https://readthedocs.org/projects/docs/badge/?version=latest)](http://geniejl.readthedocs.io/en/latest/build/)
+[![Documentation Status](https://readthedocs.org/projects/geniejl/badge/?version=latest)](https://geniejl.readthedocs.io/en/latest/?badge=latest)
 
 ![CI](https://github.com/GenieFramework/Genie.jl/workflows/ci/badge.svg)
 
