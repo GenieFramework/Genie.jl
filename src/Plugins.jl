@@ -29,7 +29,7 @@ function recursive_copy(path::String, dest::String; only_hidden = true, force = 
     dest_path = joinpath(dest, replace(root, (path_prefix * "/")=>""))
 
     try
-      mkdir(dest_path)
+      mkpath(dest_path)
       @info "Created dir $dest_path"
     catch ex
       @error "Failed to create dir $dest_path"
@@ -125,7 +125,7 @@ end
 Utility to allow users to install a plugin
 """
 function install(path::String, dest::String; force = false)
-  isdir(dest) || mkdir(dest)
+  isdir(dest) || mkpath(dest)
 
   cd(dest)
 
@@ -139,7 +139,7 @@ function install(path::String, dest::String; force = false)
     dest_path = joinpath(abspath(dest), splitpath(root)[end-depth:end]...)
 
     try
-      mkdir(dest_path)
+      mkpath(dest_path)
       @info "Created dir $dest_path"
     catch ex
       @error "Did not create dir $dest_path"

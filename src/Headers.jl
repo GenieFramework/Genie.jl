@@ -16,7 +16,7 @@ function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.
     request_origin = get(Dict(req.headers), "Origin", "")
 
     allowed_origin_dict = Dict("Access-Control-Allow-Origin" =>
-      in(request_origin, Genie.config.cors_allowed_origins)
+      in(request_origin, Genie.config.cors_allowed_origins) || in("*", Genie.config.cors_allowed_origins)
       ? request_origin
       : strip(Genie.config.cors_headers["Access-Control-Allow-Origin"])
     )

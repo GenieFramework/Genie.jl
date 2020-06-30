@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.31.3 - 2020-06-30
+
+* fix issue with CORS "*"
+* documentation improvements
+* doc comments
+
 ## v0.21.0 - 2020-04-23
 
 * names of apps and resources are automatically cleaned (illegal Julia vars chars removed)

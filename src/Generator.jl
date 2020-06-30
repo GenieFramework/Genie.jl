@@ -224,7 +224,7 @@ end
 Writes the file necessary to create a microstack app.
 """
 function microstack_app(app_path::String = ".") :: Nothing
-  isdir(app_path) || mkdir(app_path)
+  isdir(app_path) || mkpath(app_path)
 
   for f in [Genie.config.path_bin, Genie.config.path_config, Genie.config.server_document_root, Genie.config.path_src,
             Genie.GENIE_FILE_NAME, Genie.ROUTES_FILE_NAME,
