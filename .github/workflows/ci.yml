@@ -26,15 +26,6 @@ jobs:
           arch: ${{ matrix.arch }}
       - uses: julia-actions/julia-buildpkg@latest
       - uses: julia-actions/julia-runtest@latest
-
-name: Documentation
-on:
-  push:
-    branches:
-      - master
-    tags: '*'
-  pull_request:
-jobs:
   build:
     runs-on: ubuntu-latest
     steps:
