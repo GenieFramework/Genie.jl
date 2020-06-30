@@ -1,7 +1,5 @@
 ![Genie Logo](docs/content/img/genie_logo.png)
 
-[![Documentation Status](https://readthedocs.org/projects/geniejl/badge/?version=latest)](https://geniejl.readthedocs.io/en/latest/?badge=latest)
-
 ![CI](https://github.com/GenieFramework/Genie.jl/workflows/ci/badge.svg)
 
 # Genie
@@ -17,7 +15,7 @@ Genie is compatible with Julia v1.2 and up.
 ---
 
 ## Documentation
-<https://genieframework.github.io/Genie.jl/>
+<https://genieframework.github.io/Genie.jl/dev/>
 
 ---
 
