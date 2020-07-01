@@ -20,8 +20,8 @@ const SUPPORTED_HTML_OUTPUT_FILE_FORMATS = TEMPLATE_EXT
 const HTMLString = String
 const HTMLParser = Gumbo
 
-const MD_SEPARATOR_START = "---\n"
-const MD_SEPARATOR_END   = "---\n"
+const MD_SEPARATOR_START = "---"
+const MD_SEPARATOR_END   = "---"
 
 const NBSP_REPLACEMENT = ("&nbsp;"=>"!!nbsp;;")
 
@@ -213,12 +213,20 @@ end
 Converts the mardown `md` to HTML view code.
 """
 function eval_markdown(md::String; context::Module = @__MODULE__) :: String
-  if startswith(md, MD_SEPARATOR_START)
+  if startswith(md, string(MD_SEPARATOR_START, "\n")) ||
+      startswith(md, string(MD_SEPARATOR_START, "\r")) ||
+        startswith(md, string(MD_SEPARATOR_START, "\r\n"))
     close_sep_pos = findfirst(MD_SEPARATOR_END, md[length(MD_SEPARATOR_START)+1:end])
     metadata = md[length(MD_SEPARATOR_START)+1:close_sep_pos[end]] |> YAML.load
 
-    for (k,v) in metadata
-      task_local_storage(:__vars)[Symbol(k)] = v
+    isa(metadata, Dict) || (@warn "\nFound Markdown YAML metadata but it did not result in a `Dict` \nPlease check your markdown metadata \n$metadata")
+
+    try
+      for (k,v) in metadata
+        task_local_storage(:__vars)[Symbol(k)] = v
+      end
+    catch ex
+      @error ex
     end
 
     md = replace(md[close_sep_pos[end]+length(MD_SEPARATOR_END)+1:end], "\"\"\""=>"\\\"\\\"\\\"")

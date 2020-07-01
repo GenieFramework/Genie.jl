@@ -75,8 +75,11 @@ julia> Genie.serve("public", 8888, async = false, verbose = true)
 ```
 """
 function serve(path::String = Genie.config.server_document_root, params...; kwparams...)
+  cd(path)
+  path = "."
+
   Router.route("/") do
-    Router.serve_static_file("index.html", root = path)
+    Router.serve_static_file(path, root = path)
   end
   Router.route(".*") do
     Router.serve_static_file(Router.@params(:REQUEST).target, root = path)

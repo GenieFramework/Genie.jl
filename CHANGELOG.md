@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.31.5 - 2020-07-01
+
+* fixed issue with emtpy SECRET_TOKEN
+* Session improvements
+* more tests
+* Markdown views fixes
+* fixed `Genie.serve` for serving static websites
+
 ## v0.31.4 - 2020-07-01
 
 * fixed issue with cookie encryption/decryption

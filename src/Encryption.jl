@@ -42,11 +42,20 @@ Generates a pair of key32 and iv16 with salt for encryption/decryption
 """
 function encryption_sauce() :: Tuple{Vector{UInt8},Vector{UInt8}}
   if ! isdefined(Genie, :SECRET_TOKEN)
-    @warn "Encryption error"
+    @error "Encryption error: Genie.SECRET_TOKEN not defined"
 
     if ! Genie.Configuration.isprod()
       @warn "Generating temporary secret token"
       Core.eval(Genie, :(const SECRET_TOKEN = $(Genie.Generator.secret_token())))
+    else
+      error("Can't encrypt - please make sure you run a Genie project and SECRET_TOKEN is defined in config/secrets.jl")
+    end
+  elseif length(Genie.SECRET_TOKEN) < 64
+    @error "Encryption error: Invalid Genie.SECRET_TOKEN"
+
+    if ! Genie.Configuration.isprod()
+      @warn "Regenerating temporary secret token"
+      Core.eval(Genie, :(SECRET_TOKEN = $(Genie.Generator.secret_token())))
     else
       error("Can't encrypt - please make sure you run a Genie project and SECRET_TOKEN is defined in config/secrets.jl")
     end

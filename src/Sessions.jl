@@ -203,7 +203,7 @@ end
 Checks wheter or not `key` exists on the `Session` `s`.
 """
 function isset(s::Union{Session,Nothing}, key::Symbol) :: Bool
-  s != nothing && haskey(s.data, key)
+  s !== nothing && haskey(s.data, key)
 end
 
 

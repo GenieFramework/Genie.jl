@@ -999,16 +999,19 @@ function serve_static_file(resource::String; root = Genie.config.server_document
   f = file_path(resource_path, root = root)
 
   if isfile(f)
-    HTTP.Response(200, file_headers(f), body = read(f, String))
+    return HTTP.Response(200, file_headers(f), body = read(f, String))
+  elseif isdir(f)
+    isfile(joinpath(f, "index.html")) && return serve_static_file(joinpath(f, "index.html"), root = root)
+    isfile(joinpath(f, "index.htm")) && return serve_static_file(joinpath(f, "index.htm"), root = root)
   else
     bundled_path = joinpath(@__DIR__, "..", "files", "static", resource[2:end])
     if isfile(bundled_path)
-      HTTP.Response(200, file_headers(bundled_path), body = read(bundled_path, String))
-    else
-      @error "404 Not Found $f"
-      error(resource, response_mime(), Val(404))
+      return HTTP.Response(200, file_headers(bundled_path), body = read(bundled_path, String))
     end
   end
+
+  @error "404 Not Found $f"
+  error(resource, response_mime(), Val(404))
 end
 
 

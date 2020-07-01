@@ -40,4 +40,11 @@
       "<html><head></head><body><div><h1>Layout header</h1><section><h1>There are 7</h1><p>-> 1      -> 1      -> 2      -> 3      -> 5      -> 8      -> 13</p></section><footer><h4>Layout footer</h4></footer></div></body></html>"
   end
 
+  @safetestset "Markdown rendering with embedded variables" begin
+    using Genie, Genie.Renderer
+    using Genie.Renderer.Html
+
+    @test Html.html(filepath("views/view-vars.jl.md")).body |> String == "<html><head></head><body><h1>There are 7</h1><p>-> 1      -> 1      -> 2      -> 3      -> 5      -> 8      -> 13</p></body></html>"
+  end;
+
 end;
