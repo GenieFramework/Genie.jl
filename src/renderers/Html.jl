@@ -39,9 +39,10 @@ const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :pa
 const CUSTOM_ELEMENTS = [:form, :select]
 
 export HTMLString, html
-export @foreach, @yield, collection
+export @foreach, @yield, collection, view!
 export partial, template
 
+Genie.Renderer.init_task_local_storage()
 task_local_storage(:__yield, "")
 
 
@@ -71,9 +72,6 @@ end
 function normal_element(elem::Any, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   normal_element("", string(elem), attrs...)
 end
-# function normal_element(content::Any, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
-#   normal_element(string(content), string(elem), args, attrs...)
-# end
 function normal_element(elems::Vector, elem::Any, args = [], attrs...) :: HTMLString
   io = IOBuffer()
 
@@ -203,8 +201,18 @@ end
 Includes and renders a markdown view file
 """
 function include_markdown(path::String; context::Module = @__MODULE__)
-  md = read(path, String)
+  content = string("\"\"\"", eval_markdown(read(path, String), context = context), "\"\"\"")
+  injected_vars = Genie.Renderer.injectvars()
+  injected_vars, (Base.include_string(context, string(injected_vars, content)) |> Markdown.parse |> Markdown.html)
+end
 
+
+"""
+    eval_markdown(md::String; context::Module = @__MODULE__) :: String
+
+Converts the mardown `md` to HTML view code.
+"""
+function eval_markdown(md::String; context::Module = @__MODULE__) :: String
   if startswith(md, MD_SEPARATOR_START)
     close_sep_pos = findfirst(MD_SEPARATOR_END, md[length(MD_SEPARATOR_START)+1:end])
     metadata = md[length(MD_SEPARATOR_START)+1:close_sep_pos[end]] |> YAML.load
@@ -216,9 +224,7 @@ function include_markdown(path::String; context::Module = @__MODULE__)
     md = replace(md[close_sep_pos[end]+length(MD_SEPARATOR_END)+1:end], "\"\"\""=>"\\\"\\\"\\\"")
   end
 
-  content = string( "\"\"\"", md, "\"\"\"")
-
-  "", (Base.include_string(context, content) |> Markdown.parse |> Markdown.html)
+  md
 end
 
 
@@ -244,7 +250,7 @@ function get_template(path::String; partial::Bool = true, context::Module = @__M
   if f_stale || ! isdefined(context, f_name)
     content = if extension in MARKDOWN_FILE_EXT
       vars_injection, md = include_markdown(path, context = context)
-      string_to_julia(md, partial = partial, f_name = f_name, prepend = vars_injection)
+      string_to_julia(md, partial = partial, f_name = f_name, prepend = "", vars_included = true) # vars_injection is prepended already in include_markdown
     else
       html_to_julia(path, partial = partial)
     end
@@ -407,6 +413,21 @@ end
 
 
 """
+    html(md::Markdown.MD; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), layout::Union{String,Nothing} = nothing, forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
+
+Markdown view rendering
+"""
+function html(md::Markdown.MD; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), layout::Union{String,Nothing} = nothing, forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
+  data = eval_markdown(string(md)) |> Markdown.parse |> Markdown.html
+  for kv in vars
+    data = replace(data, ":" * string(kv[1]) => "\$" * string(kv[1]))
+  end
+
+  html(data; context = context, status = status, headers = headers, layout = layout, forceparse = forceparse, vars...)
+end
+
+
+"""
     html(viewfile::FilePath; layout::Union{Nothing,FilePath} = nothing,
           context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
 
@@ -557,8 +578,8 @@ end
 
 Converts string view data to Julia code
 """
-function string_to_julia(content::String; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "") :: String
-  to_julia(content, parse_string, partial = partial, f_name = f_name, prepend = prepend)
+function string_to_julia(content::String; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n", vars_included::Bool = false) :: String
+  to_julia(content, parse_string, partial = partial, f_name = f_name, prepend = prepend, vars_included = vars_included)
 end
 
 
@@ -567,11 +588,11 @@ end
 
 Converts an input file to Julia code
 """
-function to_julia(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "\n") :: String
+function to_julia(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n", vars_included::Bool = false) :: String
   f_name = (f_name === nothing) ? Genie.Renderer.function_name(string(input, partial)) : f_name
 
   string("function $(f_name)() \n",
-          Genie.Renderer.injectvars(),
+          (vars_included ? "" : Genie.Renderer.injectvars()),
           prepend,
           f(input, partial = partial),
           "\nend \n")
@@ -898,15 +919,24 @@ Outputs the rendering of the view within the template.
 """
 macro yield()
   quote
-    try
-      task_local_storage(:__yield)
-    catch
-      task_local_storage(:__yield, "")
-    end
+    view!()
   end
 end
 macro yield(value)
-  :(task_local_storage(:__yield, $value))
+  :(view!($value))
+end
+
+
+function view!()
+  try
+    task_local_storage(:__yield)
+  catch
+    task_local_storage(:__yield, "")
+  end
+end
+
+function view!(value)
+  task_local_storage(:__yield, value)
 end
 
 

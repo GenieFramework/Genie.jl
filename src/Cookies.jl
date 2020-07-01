@@ -145,6 +145,7 @@ Attempts to retrieve a cookie value stored at `key` in the `payload object` and 
 """
 function nullablevalue(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}; encrypted::Bool = true) :: Union{Nothing,String}
   for cookie in split(Dict(payload)["cookie"], ';')
+    cookie = strip(cookie)
     if startswith(lowercase(cookie), lowercase(string(key)))
       value = split(cookie, '=')[2] |> String
       encrypted && (value = Genie.Encryption.decrypt(value))

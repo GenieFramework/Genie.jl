@@ -2,6 +2,7 @@
 
   @safetestset "Plain JS rendering" begin
     using Genie
+    using Genie.Renderer
     using Genie.Renderer.Js
 
     script = raw"var app = new Vue({el: '#app', data: { message: 'Hello Vue!' }})"
@@ -10,11 +11,14 @@
 
     @test String(r.body) == "var app = new Vue({el: '#app', data: { message: 'Hello Vue!' }})"
     @test r.headers[1]["Content-Type"] == "application/javascript; charset=utf-8"
+
+    Genie.Renderer.clear_task_storage()
   end;
 
 
   @safetestset "Vars JS rendering" begin
     using Genie
+    using Genie.Renderer
     using Genie.Renderer.Js
     using Genie.Renderer.Json.JSONParser
 
@@ -26,6 +30,8 @@
 
     @test String(r.body) == "var app = new Vue({el: '#app', data: {\"message\":\"Hi Vue\"}})\n"
     @test r.headers[1]["Content-Type"] == "application/javascript; charset=utf-8"
+
+    Genie.Renderer.clear_task_storage()
   end;
 
 end;

@@ -1,50 +1,56 @@
-using Genie.Renderer.Html, Genie.Requests
+@safetestset "Vars rendering" begin
+  using Genie
+  using Genie.Renderer.Html, Genie.Requests
 
-greeting = "Welcome"
-name = "Genie"
+  greeting = "Welcome"
+  name = "Genie"
 
-function htmlviewfile_withvars()
-  raw"
-  <h1>$(@vars(:greeting))</h1>
-  <div>
-    <p>This is a $(@vars(:name)) test</p>
-  </div>
-  <hr />
-  "
-end
-
-function htmltemplatefile_withvars()
-  raw"
-  <!DOCTYPE HTML>
-  <html>
-  <head>
-    <title>$(@vars(:name)) test</title>
-  </head>
-  <body>
-    <div class=\"template\">
-    <% @yield %>
+  function htmlviewfile_withvars()
+    raw"
+    <h1>$(@vars(:greeting))</h1>
+    <div>
+      <p>This is a $(@vars(:name)) test</p>
     </div>
-    <footer>Just a footer</footer>
-  </body>
-  </html>
-  "
-end
+    <hr />
+    "
+  end
 
-@testset "String HTML rendering with vars" begin
-  r = Requests.HTTP.Response()
+  function htmltemplatefile_withvars()
+    raw"
+    <!DOCTYPE HTML>
+    <html>
+    <head>
+      <title>$(@vars(:name)) test</title>
+    </head>
+    <body>
+      <div class=\"template\">
+      <% @yield %>
+      </div>
+      <footer>Just a footer</footer>
+    </body>
+    </html>
+    "
+  end
 
-  @testset "String no layout with vars" begin
-    r = html(htmlviewfile_withvars(), greeting = greeting, name = name)
+  @testset "String HTML rendering with vars" begin
+    using Genie
+    using Genie.Renderer.Html, Genie.Requests
 
-    @test String(r.body) == "<html><head></head><body><h1>$greeting</h1><div><p>This is a $name test</p></div><hr$(Genie.config.html_parser_close_tag)></body></html>"
+    r = Requests.HTTP.Response()
+
+    @testset "String no layout with vars" begin
+      r = html(htmlviewfile_withvars(), greeting = greeting, name = name)
+
+      @test String(r.body) == "<html><head></head><body><h1>$greeting</h1><div><p>This is a $name test</p></div><hr$(Genie.config.html_parser_close_tag)></body></html>"
+    end;
+
+    @testset "String with layout with vars" begin
+      r = html(htmlviewfile_withvars(), layout = htmltemplatefile_withvars(), greeting = "Welcome", name = "Genie")
+
+      @test String(r.body) == "<html><head><title>$name test</title></head><body><div class=\"template\"><h1>$greeting</h1><div><p>This is a $name test</p></div><hr$(Genie.config.html_parser_close_tag)>\n</div><footer>Just a footer</footer></body></html>"
+    end;
+
+    @test r.status == 200
+    @test r.headers[1]["Content-Type"] == "text/html; charset=utf-8"
   end;
-
-  @testset "String with layout with vars" begin
-    r = html(htmlviewfile_withvars(), layout = htmltemplatefile_withvars(), greeting = "Welcome", name = "Genie")
-
-    @test String(r.body) == "<html><head><title>$name test</title></head><body><div class=\"template\"><h1>$greeting</h1><div><p>This is a $name test</p></div><hr$(Genie.config.html_parser_close_tag)>\n</div><footer>Just a footer</footer></body></html>"
-  end;
-
-  @test r.status == 200
-  @test r.headers[1]["Content-Type"] == "text/html; charset=utf-8"
 end;

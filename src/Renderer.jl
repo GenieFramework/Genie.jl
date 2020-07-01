@@ -60,6 +60,7 @@ export WebRenderable
 
 init_task_local_storage() = (haskey(task_local_storage(), :__vars) || task_local_storage(:__vars, Dict{Symbol,Any}()))
 init_task_local_storage()
+clear_task_storage() = task_local_storage(:__vars, Dict{Symbol,Any}())
 
 
 """
@@ -265,7 +266,13 @@ generated view function.
 function injectvars() :: String
   output = ""
   for kv in task_local_storage(:__vars)
+    output *= "$(kv[1]) = try \n"
     output *= "$(kv[1]) = Genie.Renderer.@vars($(repr(kv[1]))) \n"
+    output *= "
+catch ex
+  @error ex
+end
+"
   end
 
   output

@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.31.4 - 2020-07-01
+
+* fixed issue with cookie encryption/decryption
+* support for "inline" markdown views
+* more tests
+
 ## v0.31.3 - 2020-06-30
 
 * fix issue with CORS "*"
