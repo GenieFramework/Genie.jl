@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.32.0 - 2020-07-02
+
+* new html() method, combining string view and file layout
+* removed forgotten debug @show from Plugins
+* fixed issue with <template> tags being stripped away
+* fixed issue with missing <!DOCTYPE>
+* deps update
+* `Router.get_route` warns by default when named route not found (previously errored)
+
 ## v0.31.5 - 2020-07-01
 
 * fixed issue with emtpy SECRET_TOKEN

@@ -53,10 +53,9 @@ mutable struct Route
   path::String
   action::Function
   name::Union{Symbol,Nothing}
-
-  Route(; method = GET, path = "", action = (() -> error("Route not set")), name = nothing) =
-    new(method, path, action, name)
 end
+
+Route(; method = GET, path = "", action = (() -> error("Route not set")), name = nothing) = Route(method, path, action, name)
 
 
 """
@@ -297,8 +296,15 @@ end
 """
 Gets the `Route` correspoding to `routename`
 """
-function get_route(route_name::Symbol) :: Route
-  haskey(named_routes(), route_name) ? named_routes()[route_name] : error("Route named `$route_name` is not defined")
+function get_route(route_name::Symbol; default::Union{Route,Nothing} = Route()) :: Route
+  haskey(named_routes(), route_name) ?
+    named_routes()[route_name] :
+    (if default === nothing
+      Base.error("Route named `$route_name` is not defined")
+    else
+      @warn "Route named `$route_name` is not defined"
+      default
+    end)
 end
 
 
@@ -360,8 +366,12 @@ function to_link(route_name::Symbol, d::Dict{Symbol,T}; preserve_query::Bool = t
     query = URIParser.URI(task_local_storage(:__params)[:REQUEST].target).query
     if ! isempty(query)
       for pair in split(query, '&')
-        parts = split(pair, '=')
-        query_vars[parts[1]] = parts[2]
+        try
+          parts = split(pair, '=')
+          query_vars[parts[1]] = parts[2]
+        catch ex
+          # @error ex
+        end
       end
     end
   end

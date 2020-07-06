@@ -3,7 +3,10 @@ module Html
 
 using Revise
 import Markdown, Logging, Gumbo, Reexport, OrderedCollections, Millboard, HTTP, YAML
-import Genie, Genie.Renderer
+
+Reexport.@reexport using Genie
+
+import Genie.Renderer
 import Genie.Renderer: @vars
 Reexport.@reexport using HttpCommon
 
@@ -34,7 +37,7 @@ const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :articl
                           :del, :ins, :caption, :col, :colgroup, :table, :tbody, :td, :tfoot, :th, :thead, :tr,
                           :button, :datalist, :fieldset, :label, :legend, :meter,
                           :output, :progress, :select, :option, :textarea, :details, :dialog, :menu, :menuitem, :summary,
-                          :slot, :template, :blockquote, :center, :iframe]
+                          :slot, :template, :template_, :blockquote, :center, :iframe] #TODO: Gumbo has a problem and strips away <template>
 const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input]
 const CUSTOM_ELEMENTS = [:form, :select]
 
@@ -166,7 +169,8 @@ end
 Replaces `-` with the char defined to replace dashes, as Julia does not support them in names.
 """
 function denormalize_element(elem::String)
-  replace(string(lowercase(elem)), "-"=>Genie.config.html_parser_char_dash)
+  elem = replace(string(lowercase(elem)), "-"=>Genie.config.html_parser_char_dash)
+  endswith(elem, "_") ? elem[1:end-1] : elem
 end
 
 
@@ -306,7 +310,9 @@ function parseview(data::String; partial = false, context::Module = @__MODULE__)
   f_stale = Genie.Renderer.build_is_stale(f_path, f_path)
 
   if f_stale || ! isdefined(context, func_name)
-    f_stale && Genie.Renderer.build_module(string_to_julia(data, partial = partial), path, mod_name)
+    if f_stale
+      Genie.Renderer.build_module(string_to_julia(data, partial = partial), path, mod_name)
+    end
 
     return Base.include(context, joinpath(Genie.config.path_build, Genie.Renderer.BUILD_NAME, mod_name))
   end
@@ -411,7 +417,9 @@ Content-Type: text/html; charset=utf-8
 </div></body></html>"
 ```
 """
-function html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), layout::Union{String,Nothing} = nothing, forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
+function html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing, forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
+  isa(layout, Genie.Renderer.FilePath) && (layout = read(layout, String))
+
   if occursin(raw"$", data) || occursin("<%", data) || layout !== nothing || forceparse
     Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context = context, layout = layout, vars...), status, headers) |> Genie.Renderer.respond
   else
@@ -489,7 +497,8 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
     end
 
   else
-    print(io, repeat("\t", depth), ( ! invalid_tag ? "Html.$(tag_name)(" : "Html.skip_element(" ))
+    mdl = isdefined(@__MODULE__, Symbol(tag_name)) ? string(@__MODULE__, ".") : ""
+    print(io, repeat("\t", depth), ( ! invalid_tag ? "$mdl$(tag_name)(" : "Html.skip_element(" ))
 
     attributes = IOBuffer()
     attributes_keys = String[]
@@ -602,6 +611,7 @@ function to_julia(input::String, f::Function; partial = true, f_name::Union{Symb
   string("function $(f_name)() \n",
           (vars_included ? "" : Genie.Renderer.injectvars()),
           prepend,
+          (partial ? "" : "\nGenie.Renderer.Html.doctype() * \n"),
           f(input, partial = partial),
           "\nend \n")
 end
