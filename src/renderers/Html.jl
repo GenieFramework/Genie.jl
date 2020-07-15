@@ -37,9 +37,10 @@ const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :articl
                           :del, :ins, :caption, :col, :colgroup, :table, :tbody, :td, :tfoot, :th, :thead, :tr,
                           :button, :datalist, :fieldset, :label, :legend, :meter,
                           :output, :progress, :select, :option, :textarea, :details, :dialog, :menu, :menuitem, :summary,
-                          :slot, :template, :template_, :blockquote, :center, :iframe] #TODO: Gumbo has a problem and strips away <template>
+                          :slot, :template, :blockquote, :center, :iframe] #TODO: Gumbo has a problem and strips away <template>
 const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input]
 const CUSTOM_ELEMENTS = [:form, :select]
+const NON_EXPORTED = [:main]
 
 export HTMLString, html
 export @foreach, @yield, collection, view!
@@ -774,7 +775,7 @@ function register_normal_element(elem::Union{Symbol,String}; context = @__MODULE
     end
   """ |> Meta.parse)
 
-  Core.eval(context, "export $elem" |> Meta.parse)
+  elem in NON_EXPORTED || Core.eval(context, "export $elem" |> Meta.parse)
 
   nothing
 end
@@ -792,7 +793,7 @@ function register_void_element(elem::Union{Symbol,String}; context::Module = @__
     end
   """ |> Meta.parse)
 
-  Core.eval(context, "export $elem" |> Meta.parse)
+  elem in NON_EXPORTED || Core.eval(context, "export $elem" |> Meta.parse)
 
   nothing
 end
@@ -965,5 +966,6 @@ end
 
 register_elements()
 
+const template_ = template
 
 end

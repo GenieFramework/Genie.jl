@@ -279,7 +279,7 @@ function load(; context::Union{Module,Nothing} = nothing) :: Nothing
   replprint("routes", t, prefix = "Loading ")
   load_routes_definitions(context = context)
 
-  replprint("Ready! ", t, clearline = 2, color = :green, bold = :true)
+  replprint("\nReady! \n", t, clearline = 2, color = :green, bold = :true)
   println()
 
   nothing

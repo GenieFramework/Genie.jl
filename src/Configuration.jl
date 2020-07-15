@@ -9,7 +9,7 @@ module Configuration
 
 References the current Genie version number.
 """
-const GENIE_VERSION = v"0.32"
+const GENIE_VERSION = v"1"
 
 import Logging
 import Genie

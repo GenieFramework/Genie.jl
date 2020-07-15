@@ -63,7 +63,7 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
       end
     end
 
-    printstyled("Web Sockets server running at $host:$ws_port \n", color = :light_blue, bold = true)
+    printstyled("\nWeb Sockets server running at $host:$ws_port \n", color = :light_blue, bold = true)
   end
 
   command = () -> begin
@@ -72,14 +72,14 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
     end
   end
 
-  printstyled("Web Server starting at http://$host:$port \n", color = :light_blue, bold = true)
+  printstyled("\nWeb Server starting at http://$host:$port \n", color = :light_blue, bold = true)
 
   if async
     SERVERS.webserver = @async command()
-    printstyled("Web Server running at http://$host:$port \n", color = :light_blue, bold = true)
+    printstyled("\nWeb Server running at http://$host:$port \n", color = :light_blue, bold = true)
   else
     SERVERS.webserver = command()
-    printstyled("Web Server stopped \n", color = :light_blue, bold = true)
+    printstyled("\nWeb Server stopped \n", color = :light_blue, bold = true)
   end
 
   SERVERS
