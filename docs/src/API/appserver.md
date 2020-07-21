@@ -6,6 +6,7 @@ CurrentModule = AppServer
 ServersCollection
 SERVERS
 startup
+up
 down
 update_config
 handle_request

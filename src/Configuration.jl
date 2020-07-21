@@ -126,6 +126,8 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `run_as_server::Bool`: when true the server thread is launched synchronously to avoid that the script exits
 - `websockets_server::Bool`: if true, the websocket server is also started together with the web server
 - `html_parser_close_tag::String`: default " /". Can be changed to an empty string "" so the single tags would not be closed.
+- `ssl_enabled::Bool`: default false. Server runs over SSL/HTTPS in development.
+- `ssl_config::MbedTLS.SSLConfig`: default `nothing`. If not `nothing` and `ssl_enabled`, it will use the config to start the server over HTTPS.
 """
 mutable struct Settings
   server_port::Int

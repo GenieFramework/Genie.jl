@@ -1,5 +1,5 @@
 ```@meta
-CurrentModule = Headers
+CurrentModule = Genie.Headers
 ```
 
 ```@docs

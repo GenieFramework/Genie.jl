@@ -3,5 +3,5 @@ CurrentModule = HTTPUtils
 ```
 
 ```@docs
-Base.Dict
+HTTPUtils.Dict
 ```

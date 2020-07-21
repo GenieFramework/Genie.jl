@@ -4,8 +4,6 @@ CurrentModule = Input
 
 ```@docs
 HttpFile
-HttpPostData
-HttpFiles
 HttpInput
 HttpFormPart
 all

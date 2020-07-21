@@ -58,8 +58,10 @@ makedocs(
           "Commands" => "API/commands.md",
           "Configuration" => "API/configuration.md",
           "Cookies" => "API/cookies.md",
-          "Deploy Docker" => "API/deploy_docker.md",
-          "Deploy Heroku" => "API/deploy_heroku.md",
+          "Deploy" => [
+            "Docker" => "API/deploy_docker.md",
+            "Heroku" => "API/deploy_heroku.md"
+          ],
           "Encryption" => "API/encryption.md",
           "Exceptions" => "API/exceptions.md",
           "FileTemplates" => "API/filetemplates.md",

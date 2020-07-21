@@ -5,7 +5,7 @@ CurrentModule = Cookies
 ```@docs
 get
 set!
-Dict
+Cookies.Dict
 nullablevalue
 getcookies
 ```

@@ -25,5 +25,4 @@ push_subscription
 pop_subscription
 broadcast
 message
-
 ```

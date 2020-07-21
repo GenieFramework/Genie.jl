@@ -5,12 +5,12 @@ CurrentModule = Router
 ```@docs
 Route
 Channel
-Base.show
+Router.show
 Params
 ispayload
 route_request
 route_ws_request
-Base.push!
+Router.push!
 route
 channel
 routename

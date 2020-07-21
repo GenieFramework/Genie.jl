@@ -7,8 +7,8 @@ jsonpayload
 rawpayload
 filespayload
 infilespayload
-Base.write
-Base.read
+Requests.write
+Requests.read
 filename
 postpayload
 getpayload
