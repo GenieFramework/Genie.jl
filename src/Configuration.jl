@@ -3,6 +3,7 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
+using Revise
 
 """
   const GENIE_VERSION
@@ -13,6 +14,7 @@ const GENIE_VERSION = v"1"
 
 import Logging
 import Genie
+import MbedTLS
 
 export isdev, isprod, istest, env
 export Settings, DEV, PROD, TEST
@@ -186,6 +188,9 @@ mutable struct Settings
   html_parser_char_column::String
   html_parser_char_dash::String
 
+  ssl_enabled::Bool
+  ssl_config::Union{MbedTLS.SSLConfig,Nothing}
+
   Settings(;
             server_port                 = (haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : 8000), # default port for binding the web server
             server_host                 = ENV["HOST"],
@@ -251,7 +256,10 @@ mutable struct Settings
             html_parser_char_at = "!!",
             html_parser_char_dot = "!",
             html_parser_char_column = "!",
-            html_parser_char_dash = "__"
+            html_parser_char_dash = "__",
+
+            ssl_enabled = false,
+            ssl_config = nothing
         ) =
               new(
                   server_port, server_host,
@@ -269,7 +277,8 @@ mutable struct Settings
                   path_config, path_env, path_app, path_resources, path_lib, path_helpers, path_log, path_tasks, path_build,
                   path_plugins, path_cache, path_initializers, path_db, path_bin, path_src,
                   webchannels_default_route, webchannels_js_file, webchannels_subscribe_channel, webchannels_unsubscribe_channel, webchannels_autosubscribe,
-                  html_parser_close_tag, html_parser_char_at, html_parser_char_dot, html_parser_char_column, html_parser_char_dash
+                  html_parser_close_tag, html_parser_char_at, html_parser_char_dot, html_parser_char_column, html_parser_char_dash,
+                  ssl_enabled, ssl_config
                 )
 end
 

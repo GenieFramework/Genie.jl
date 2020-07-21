@@ -5,7 +5,7 @@ module AppServer
 
 import Revise
 import HTTP, HTTP.IOExtras, HTTP.Sockets
-import Millboard, URIParser, Sockets, Distributed, Logging
+import Millboard, URIParser, Sockets, Distributed, Logging, MbedTLS
 import Genie
 
 """
@@ -50,12 +50,16 @@ Web Server starting at http://127.0.0.1:8000
 function startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
                   ws_port::Int = Genie.config.websockets_port, async::Bool = ! Genie.config.run_as_server,
                   verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
-                  server::Union{Sockets.TCPServer,Nothing} = nothing) :: ServersCollection
+                  server::Union{Sockets.TCPServer,Nothing} = nothing,
+                  ssl_config::Union{MbedTLS.SSLConfig,Nothing} = Genie.config.ssl_config,
+                  http_kwargs...) :: ServersCollection
 
   update_config(port, host, ws_port)
 
+  protocol = (ssl_config !== nothing && Genie.config.ssl_enabled) ? "https" : "http"
+
   if Genie.config.websockets_server
-    SERVERS.websockets = @async HTTP.listen(host, ws_port) do req
+    SERVERS.websockets = @async HTTP.listen(host, ws_port; sslconfig = ssl_config, http_kwargs...) do req
       if HTTP.WebSockets.is_upgrade(req.message)
         HTTP.WebSockets.upgrade(req) do ws
           setup_ws_handler(req.message, ws)
@@ -67,16 +71,20 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
   end
 
   command = () -> begin
-    HTTP.serve(parse(Sockets.IPAddr, host), port, verbose = verbose, rate_limit = ratelimit, server = server) do req::HTTP.Request
-      setup_http_handler(req)
+    try
+      HTTP.serve(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server, sslconfig = ssl_config, http_kwargs...) do req::HTTP.Request
+        setup_http_handler(req)
+      end
+    catch ex
+      @error ex
     end
   end
 
-  printstyled("\nWeb Server starting at http://$host:$port \n", color = :light_blue, bold = true)
+  printstyled("\nWeb Server starting at $protocol://$host:$port \n", color = :light_blue, bold = true)
 
   if async
     SERVERS.webserver = @async command()
-    printstyled("\nWeb Server running at http://$host:$port \n", color = :light_blue, bold = true)
+    printstyled("\nWeb Server running at $protocol://$host:$port \n", color = :light_blue, bold = true)
   else
     SERVERS.webserver = command()
     printstyled("\nWeb Server stopped \n", color = :light_blue, bold = true)

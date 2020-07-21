@@ -12,7 +12,7 @@
                   <% ]end %>
                 </section>"""
 
-      @test String(html(view).body) == raw"<html><head></head><body><section class=\"block\"><h1>Hello</h1><p>Welcome</p></section></body></html>"
+      @test String(html(view).body) == raw"<!DOCTYPE html><html><head></head><body><section class=\"block\"><h1>Hello</h1><p>Welcome</p></section></body></html>"
     end;
 
     @safetestset "IF false" begin
@@ -27,7 +27,7 @@
                   <% ]end %>
                 </section>"""
 
-      @test String(html(view).body) == raw"""<html><head></head><body><section class="block"></section></body></html>"""
+      @test String(html(view).body) == raw"""<!DOCTYPE html><html><head></head><body><section class="block"></section></body></html>"""
     end;
   end;
 end;

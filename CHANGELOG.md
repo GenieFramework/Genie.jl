@@ -1,5 +1,14 @@
 # Changelog
 
+## v1 - 2020-07-21
+
+* added support for SSL to Genie apps
+* added SSL initializer
+* bundled localhost cert and key
+* automatically forwarding all extra arguments from `Genie.up` to `HTTP.serve` `HTTP.listen`
+* added tests
+* fixed failing tests
+
 ## v0.32.0 - 2020-07-02
 
 * new html() method, combining string view and file layout

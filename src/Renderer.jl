@@ -489,6 +489,7 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Dict{S
 
   if isempty(negotiation_header)
     req, res, params = set_negotiated_content(req, res, params)
+
     return req, res, params
   end
 
@@ -496,6 +497,7 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Dict{S
 
   if isempty(accept_parts)
     req, res, params = set_negotiated_content(req, res, params)
+
     return req, res, params
   end
 
@@ -503,6 +505,7 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Dict{S
 
   if isempty(accept_order_parts)
     req, res, params = set_negotiated_content(req, res, params)
+
     return req, res, params
   end
 

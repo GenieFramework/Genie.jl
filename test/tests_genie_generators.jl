@@ -43,7 +43,7 @@
 
     @test sort(readdir(workdir)) == sort([".gitattributes", ".gitignore", "Manifest.toml", "Project.toml", "bin",
                                           "bootstrap.jl", "config", "genie.jl", "public", "routes.jl", "src"])
-    @test readdir(joinpath(workdir, Genie.config.path_initializers)) == ["converters.jl", "logging.jl"]
+    @test readdir(joinpath(workdir, Genie.config.path_initializers)) == ["autoload.jl", "converters.jl", "logging.jl", "ssl.jl"]
 
     # TODO: add test for files in /src /config /public and /bin
   end;
@@ -63,7 +63,7 @@
     @test sort(readdir(workdir)) == sort([".gitattributes", ".gitignore", "Manifest.toml", "Project.toml", "bin",
                                           "bootstrap.jl", "config", "db", "genie.jl", "public", "routes.jl", "src"])
     @test sort(readdir(joinpath(workdir, Genie.config.path_db))) == sort(["connection.yml", "migrations", "seeds"])
-    @test sort(readdir(joinpath(workdir, Genie.config.path_initializers))) == sort(["converters.jl", "logging.jl", "searchlight.jl"])
+    @test sort(readdir(joinpath(workdir, Genie.config.path_initializers))) == sort(["autoload.jl", "converters.jl", "logging.jl", "searchlight.jl", "ssl.jl"])
   end;
 
 
@@ -80,7 +80,7 @@
 
     @test sort(readdir(workdir)) == sort([".gitattributes", ".gitignore", "Manifest.toml", "Project.toml", "app", "bin", "bootstrap.jl", "config", "genie.jl", "public", "routes.jl", "src"])
     @test sort(readdir(joinpath(workdir, Genie.config.path_app))) == sort(["helpers", "layouts", "resources"])
-    @test sort(readdir(joinpath(workdir, Genie.config.path_initializers))) == sort(["converters.jl", "logging.jl"])
+    @test sort(readdir(joinpath(workdir, Genie.config.path_initializers))) == sort(["autoload.jl", "converters.jl", "logging.jl", "ssl.jl"])
   end;
 
 

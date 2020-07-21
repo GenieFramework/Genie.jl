@@ -13,7 +13,7 @@
 
     r = html(view)
 
-    @test String(r.body) == "<html><head></head><body><ol><li>a</li><li>b</li><li>c</li></ol></body></html>"
+    @test String(r.body) == "<!DOCTYPE html><html><head></head><body><ol><li>a</li><li>b</li><li>c</li></ol></body></html>"
   end;
 
   @safetestset "@foreach macro can not access module variables" begin
@@ -45,7 +45,7 @@
 
     r = html(view, x = 100)
 
-    @test String(r.body) == "<html><head></head><body><ol><li>a = 100</li><li>b = 100</li><li>c = 100</li></ol></body></html>"
+    @test String(r.body) == "<!DOCTYPE html><html><head></head><body><ol><li>a = 100</li><li>b = 100</li><li>c = 100</li></ol></body></html>"
   end;
 
   @safetestset "@foreach macro can access context variables" begin

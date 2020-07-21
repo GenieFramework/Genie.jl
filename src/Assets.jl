@@ -90,6 +90,16 @@ end
 
 
 """
+    embeded_path(path::String) :: String
+
+Returns the path relative to Genie's root package dir
+"""
+function embedded_path(path::String) :: String
+  joinpath(@__DIR__, "..", path) |> normpath
+end
+
+
+"""
     channels() :: String
 
 Outputs the channels.js file included with the Genie package
