@@ -459,6 +459,7 @@ Configures the request, response, and params response content type based on the 
 """
 function set_negotiated_content(req::HTTP.Request, res::HTTP.Response, params::Dict{Symbol,Any})
   req_type = Genie.Router.request_type(req)
+
   params[:response_type] = req_type === nothing ? DEFAULT_CONTENT_TYPE : req_type
   params[Genie.PARAMS_MIME_KEY] = get(MIME_TYPES, params[:response_type], MIME_TYPES[DEFAULT_CONTENT_TYPE])
   push!(res.headers, "Content-Type" => get(CONTENT_TYPES, params[:response_type], "text/html"))
@@ -482,7 +483,7 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Dict{S
 
     res.headers = [k for k in headers]
 
-    return req,res,params
+    return req, res, params
   end
 
   negotiation_header = haskey(headers, "Accept") ? "Accept" : ( haskey(headers, "Content-Type") ? "Content-Type" : "" )

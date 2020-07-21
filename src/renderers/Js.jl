@@ -121,17 +121,17 @@ end
 
 
 function Genie.Router.error(error_message::String, ::Type{MIME"application/javascript"}, ::Val{500}; error_info::String = "") :: HTTP.Response
-  HTTP.Response(Dict("error" => "500 Internal Error - $error_message", "info" => error_info), status = 500)
+  HTTP.Response(Dict("error" => "500 Internal Error - $error_message", "info" => error_info), status = 500) |> js
 end
 
 
 function Genie.Router.error(error_message::String, ::Type{MIME"application/javascript"}, ::Val{404}; error_info::String = "") :: HTTP.Response
-  HTTP.Response(Dict("error" => "404 Not Found - $error_message", "info" => error_info), status = 404)
+  HTTP.Response(Dict("error" => "404 Not Found - $error_message", "info" => error_info), status = 404) |> js
 end
 
 
 function Genie.Router.error(error_code::Int, error_message::String, ::Type{MIME"application/javascript"}; error_info::String = "") :: HTTP.Response
-  HTTP.Response(Dict("error" => "$error_code Error - $error_message", "info" => error_info), status = error_code)
+  HTTP.Response(Dict("error" => "$error_code Error - $error_message", "info" => error_info), status = error_code) |> js
 end
 
 end

@@ -35,7 +35,8 @@ const request_mappings = Dict{Symbol,String}(
   :javascript => "application/javascript",
   :form       => "application/x-www-form-urlencoded",
   :multipart  => "multipart/form-data",
-  :file       => "application/octet-stream"
+  :file       => "application/octet-stream",
+  :xml        => "text/xml"
 )
 
 const pre_match_hooks = Function[]
@@ -756,7 +757,7 @@ end
 Gets the content-type of the request.
 """
 function content_type(req::HTTP.Request) :: String
-  get(Genie.HTTPUtils.Dict(req), "content-type", "")
+  get(Genie.HTTPUtils.Dict(req), "content-type", get(Genie.HTTPUtils.Dict(req), "accept", ""))
 end
 function content_type() :: String
   content_type(_params_(Genie.PARAMS_REQUEST_KEY))
@@ -799,9 +800,11 @@ end
 Gets the request's content type.
 """
 function request_type(req::HTTP.Request) :: Union{Symbol,Nothing}
-  for (k,v) in request_mappings
-    if occursin(v, content_type(req))
-      return k
+  for accepted_encoding in split(content_type(req), ',')
+    for (k,v) in request_mappings
+      if occursin(v, accepted_encoding)
+        return k
+      end
     end
   end
 
@@ -917,7 +920,7 @@ end
 Returns the content-type of the current request-response cycle.
 """
 function response_type(params::Dict{Symbol,T})::Symbol where {T}
-  params[:response_type]
+  get(params, :response_type, request_type())
 end
 function response_type(params::Params) :: Symbol
   response_type(params.collection)
@@ -1055,6 +1058,21 @@ end
 Not implemented function for error response.
 """
 function error end
+
+
+function error(error_message::String, mime::Any, ::Val{500}; error_info::String = "") :: HTTP.Response
+  HTTP.Response(500, ["Content-Type" => string(mime())], body = "500 Internal Error - $error_message. $error_info")
+end
+
+
+function error(error_message::String, mime::Any, ::Val{404}; error_info::String = "") :: HTTP.Response
+  HTTP.Response(500, ["Content-Type" => string(mime())], body = "404 Not Found - $error_message. $error_info")
+end
+
+
+function error(error_code::Int, error_message::String, mime::Any; error_info::String = "") :: HTTP.Response
+  HTTP.Response(error_code, ["Content-Type" => string(mime())], body = "$error_code Error - $error_message. $error_info")
+end
 
 
 """
