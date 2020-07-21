@@ -306,6 +306,7 @@ function install_app_dependencies(app_path::String = "."; testmode::Bool = false
   testmode ? Pkg.develop("Genie") : Pkg.add("Genie")
   Pkg.add("Revise")
   Pkg.add("LoggingExtras")
+  Pkg.add("MbedTLS")
 
   nothing
 end
