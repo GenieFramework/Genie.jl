@@ -102,6 +102,19 @@ Base.getindex(params, keys...) = getindex(Dict(params), keys...)
 
 
 """
+    _params_()
+
+Reference to the request variables collection.
+"""
+function _params_()
+  task_local_storage(:__params)
+end
+function _params_(key::Union{String,Symbol})
+  task_local_storage(:__params)[key]
+end
+
+
+"""
     ispayload(req::HTTP.Request)
 
 True if the request can carry a payload - that is, it's a `POST`, `PUT`, or `PATCH` request
@@ -122,8 +135,6 @@ function route_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 =
     req, res, params.collection = f(req, res, params.collection)
   end
 
-  # @show params
-
   if is_static_file(req.target)
     Genie.config.server_handle_static_files && return serve_static_file(req.target)
 
@@ -135,8 +146,6 @@ function route_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 =
   for f in unique(pre_match_hooks)
     req, res, params.collection = f(req, res, params.collection)
   end
-
-  # @show params
 
   res = match_routes(req, res, params)
 
@@ -464,6 +473,7 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
     occursin(regex_route, uri.path) || parsed_route == "/*" || continue
 
     params.collection = setup_base_params(req, res, params.collection)
+    task_local_storage(:__params, params.collection)
 
     occursin("?", req.target) && extract_get_params(URIParser.URI(to_uri(req.target)), params)
 
@@ -479,13 +489,13 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
 
     params.collection[Genie.PARAMS_ROUTE_KEY] = r
 
-    task_local_storage(:__params, params.collection)
+    get!(params.collection, Genie.PARAMS_MIME_KEY, MIME(request_type(req)))
 
     controller = (r.action |> typeof).name.module
 
     return  try
               run_hook(controller, BEFORE_HOOK)
-              # result =  (Genie.Configuration.isdev() ? Base.invokelatest(r.action) : (r.action)()) |> to_response
+
               result = try
                 (r.action)() |> to_response
               catch
@@ -540,14 +550,13 @@ function match_channels(req, msg::String, ws_client, params::Params) :: String
     (! occursin(regex_channel, uri)) && continue
 
     params.collection = setup_base_params(req, nothing, params.collection)
+    task_local_storage(:__params, params.collection)
 
     extract_uri_params(uri, regex_channel, param_names, param_types, params) || continue
 
     action_controller_params(c.action, params)
 
     params.collection[Genie.PARAMS_CHANNELS_KEY] = c
-
-    task_local_storage(:__params, params.collection)
 
     controller = (c.action |> typeof).name.module
 
@@ -759,9 +768,6 @@ Gets the content-type of the request.
 function content_type(req::HTTP.Request) :: String
   get(Genie.HTTPUtils.Dict(req), "content-type", get(Genie.HTTPUtils.Dict(req), "accept", ""))
 end
-function content_type() :: String
-  content_type(_params_(Genie.PARAMS_REQUEST_KEY))
-end
 
 
 """
@@ -795,12 +801,14 @@ end
 
 
 """
-    request_type(req::HTTP.Request) :: Union{Symbol,Nothing}
+    request_type(req::HTTP.Request) :: Symbol
 
 Gets the request's content type.
 """
-function request_type(req::HTTP.Request) :: Union{Symbol,Nothing}
-  for accepted_encoding in split(content_type(req), ',')
+function request_type(req::HTTP.Request) :: Symbol
+  accepted_encodings = split(content_type(req), ',')
+
+  for accepted_encoding in accepted_encodings
     for (k,v) in request_mappings
       if occursin(v, accepted_encoding)
         return k
@@ -808,10 +816,7 @@ function request_type(req::HTTP.Request) :: Union{Symbol,Nothing}
     end
   end
 
-  return nothing
-end
-function request_type() :: Symbol
-  request_type(_params_(Genie.PARAMS_REQUEST_KEY))
+  Symbol(accepted_encodings[1])
 end
 
 
@@ -877,7 +882,7 @@ The object containing the request variables collection.
 """
 macro params()
   quote
-    haskey(task_local_storage(), :__params) ? task_local_storage(:__params) : setup_base_params()
+    task_local_storage(:__params)
   end
 end
 macro params(key)
@@ -891,25 +896,12 @@ end
 
 
 """
-    _params_()
-
-Reference to the request variables collection.
-"""
-function _params_()
-  task_local_storage(:__params)
-end
-function _params_(key::Union{String,Symbol})
-  task_local_storage(:__params)[key]
-end
-
-
-"""
     @request()
 
 The request object.
 """
 macro request()
-  :(@params(Genie.PARAMS_REQUEST_KEY))
+  :(_params_(Genie.PARAMS_REQUEST_KEY))
 end
 
 
@@ -920,7 +912,7 @@ end
 Returns the content-type of the current request-response cycle.
 """
 function response_type(params::Dict{Symbol,T})::Symbol where {T}
-  get(params, :response_type, request_type())
+  get(params, :response_type, request_type(params[Genie.PARAMS_REQUEST_KEY]))
 end
 function response_type(params::Params) :: Symbol
   response_type(params.collection)
@@ -1043,11 +1035,13 @@ end
 
 Returns the MIME type of the response.
 """
-function response_mime()
-  @params(Genie.PARAMS_MIME_KEY, MIME"text/html")
-end
+function response_mime(params::Dict{Symbol,Any} = _params_())
+  rm = get!(params, Genie.PARAMS_MIME_KEY, request_type(params[Genie.PARAMS_REQUEST_KEY]))
 
-function response_mime(params::Dict{Symbol,Any})
+  if isempty(string(rm()))
+    params[Genie.PARAMS_MIME_KEY] = request_type(params[Genie.PARAMS_REQUEST_KEY])
+  end
+
   params[Genie.PARAMS_MIME_KEY]
 end
 
@@ -1066,7 +1060,7 @@ end
 
 
 function error(error_message::String, mime::Any, ::Val{404}; error_info::String = "") :: HTTP.Response
-  HTTP.Response(500, ["Content-Type" => string(mime())], body = "404 Not Found - $error_message. $error_info")
+  HTTP.Response(404, ["Content-Type" => string(mime())], body = "404 Not Found - $error_message. $error_info")
 end
 
 
