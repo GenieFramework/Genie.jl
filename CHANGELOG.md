@@ -8,6 +8,7 @@
 * automatically forwarding all extra arguments from `Genie.up` to `HTTP.serve` `HTTP.listen`
 * added tests
 * fixed failing tests
+* improved content negotiation and default error responses
 
 ## v0.32.0 - 2020-07-02
 
