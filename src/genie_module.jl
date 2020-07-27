@@ -135,10 +135,8 @@ Loads (includes) the framework's configuration files into the app's module `cont
 The files are set up with `Revise` to be automatically reloaded.
 """
 function load_configurations(root_dir::String = Genie.config.path_config; context::Union{Module,Nothing} = nothing) :: Nothing
-  context = default_context(context)
-
   secrets_path = joinpath(root_dir, Genie.SECRETS_FILE_NAME)
-  isfile(secrets_path) && Revise.track(context, secrets_path, define = true)
+  isfile(secrets_path) && Revise.track(default_context(context), secrets_path, define = true)
 
   nothing
 end
@@ -151,15 +149,13 @@ Loads (includes) the framework's initializers.
 The files are set up with `Revise` to be automatically reloaded.
 """
 function load_initializers(root_dir::String = Genie.config.path_config; context::Union{Module,Nothing} = nothing) :: Nothing
-  context = default_context(context)
-
   dir = joinpath(root_dir, Genie.config.initializers_folder)
 
   isdir(dir) || return nothing
 
   Threads.@threads for i in readdir(dir)
     fi = joinpath(dir, i)
-    endswith(fi, ".jl") && Revise.track(context, fi, define = true)
+    endswith(fi, ".jl") && Revise.track(default_context(context), fi, define = true)
   end
 
   nothing
@@ -172,13 +168,11 @@ end
 Loads (includes) the framework's plugins initializers.
 """
 function load_plugins(root_dir::String = Genie.config.path_plugins; context::Union{Module,Nothing} = nothing) :: Nothing
-  context = default_context(context)
-
   isdir(root_dir) || return nothing
 
   Threads.@threads for i in readdir(root_dir)
     fi = joinpath(root_dir, i)
-    endswith(fi, ".jl") && Revise.track(context, fi, define = true)
+    endswith(fi, ".jl") && Revise.track(default_context(context), fi, define = true)
   end
 
   nothing
@@ -191,10 +185,7 @@ end
 Loads the routes file.
 """
 function load_routes_definitions(routes_file::String = Genie.ROUTES_FILE_NAME; context::Union{Module,Nothing} = nothing, additional_routes_file::String = Genie.APP_FILE_NAME) :: Nothing
-  context = default_context(context)
-
-  isfile(routes_file) && Revise.track(context, routes_file, define = true)
-  isfile(additional_routes_file) && Revise.track(context, additional_routes_file, define = true)
+  isfile(routes_file) && Revise.track(default_context(context), routes_file, define = true)
 
   nothing
 end
