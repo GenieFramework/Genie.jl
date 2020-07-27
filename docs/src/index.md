@@ -10,7 +10,7 @@ Genie is a full-stack MVC web framework that provides a streamlined and efficien
 
 ### Current status
 
-Genie is compatible with Julia v1.2 and up.
+Genie is compatible with Julia v1.3 and up.
 
 ---
 

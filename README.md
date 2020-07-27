@@ -1,7 +1,5 @@
 ![Genie Logo](docs/content/img/genie_logo.png)
 
-![CI](https://github.com/GenieFramework/Genie.jl/workflows/ci/badge.svg)
-
 # Genie
 
 ## The highly productive Julia web framework
