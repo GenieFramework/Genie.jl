@@ -356,7 +356,7 @@ end
 
 
 """
-    newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false, mvcsupport::Bool = false) :: Nothing
+    newapp(app_name::String; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false, mvcsupport::Bool = false) :: Nothing
 
 Scaffolds a new Genie app, setting up the file structure indicated by the various arguments.
 
