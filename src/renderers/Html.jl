@@ -715,7 +715,7 @@ end
 
 Generated functions that represent Julia functions definitions corresponding to HTML elements.
 """
-function register_elements() :: Nothing
+function register_elements(; context = @__MODULE__) :: Nothing
   for elem in NORMAL_ELEMENTS
     register_normal_element(elem)
   end
@@ -726,6 +726,7 @@ function register_elements() :: Nothing
 
   for elem in CUSTOM_ELEMENTS
     Core.eval(@__MODULE__, """include("html/$elem.jl")""" |> Meta.parse)
+    elem in NON_EXPORTED || Core.eval(context, "export $elem" |> Meta.parse)
   end
 
   nothing
