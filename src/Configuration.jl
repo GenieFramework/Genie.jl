@@ -10,7 +10,7 @@ using Revise
 
 References the current Genie version number.
 """
-const GENIE_VERSION = v"1"
+const GENIE_VERSION = v"1.1"
 
 import Logging
 import Genie
