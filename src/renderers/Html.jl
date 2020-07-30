@@ -362,7 +362,7 @@ end
 
 """
 function parsehtml(input::String; partial::Bool = true) :: String
-  parsehtml(HTMLParser.parsehtml(replace(input, NBSP_REPLACEMENT)).root, 0, partial = partial)
+  parsehtml(HTMLParser.parsehtml(replace(input, NBSP_REPLACEMENT), preserve_whitespace = false).root, 0, partial = partial)
 end
 
 
@@ -418,7 +418,8 @@ Content-Type: text/html; charset=utf-8
 </div></body></html>"
 ```
 """
-function html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing, forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
+function html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
+                            layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing, forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
   isa(layout, Genie.Renderer.FilePath) && (layout = read(layout, String))
 
   if occursin(raw"$", data) || occursin("<%", data) || layout !== nothing || forceparse
@@ -966,7 +967,5 @@ end
 
 
 register_elements()
-
-const template_ = template
 
 end

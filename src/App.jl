@@ -41,7 +41,7 @@ function bootstrap(context::Union{Module,Nothing} = Genie.default_context(contex
 
   printstyled("| Web: https://genieframework.com\n", color = :light_black, bold = true)
   printstyled("| GitHub: https://github.com/genieframework/Genie.jl\n", color = :light_black, bold = true)
-  printstyled("| Docs: https://genieframework.github.io/Genie.jl\n", color = :light_black, bold = true)
+  printstyled("| Docs: https://genieframework.github.io/Genie.jl/dev\n", color = :light_black, bold = true)
   printstyled("| Gitter: https://gitter.im/essenciary/Genie.jl\n", color = :light_black, bold = true)
   printstyled("| Twitter: https://twitter.com/GenieMVC\n\n", color = :light_black, bold = true)
 
