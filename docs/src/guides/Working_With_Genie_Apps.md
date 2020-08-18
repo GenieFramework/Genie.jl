@@ -458,7 +458,7 @@ Since practically HTML and Markdown views are HTML and Markdown files with some 
 
 ---
 
-## Accessing databases with `SeachLight` models
+## Accessing databases with `SearchLight` models
 
 You can get the most out of Genie by pairing it with its seamless ORM layer, SearchLight. SearchLight, a native Julia ORM, provides excellent support for working with relational databases. The Genie + SearchLight combo can be used to productively develop CRUD (Create-Read-Update-Delete) apps.
 
