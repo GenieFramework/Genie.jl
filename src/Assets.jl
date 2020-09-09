@@ -3,7 +3,6 @@ Helper functions for working with frontend assets (including JS, CSS, etc files)
 """
 module Assets
 
-import Revise
 import Genie, Genie.Configuration, Genie.Router, Genie.WebChannels
 import Genie.Renderer.Json
 

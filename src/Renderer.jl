@@ -2,7 +2,6 @@ module Renderer
 
 export respond, redirect, render
 
-import Revise
 import HTTP, Markdown, Logging, FilePaths, SHA
 import Genie
 

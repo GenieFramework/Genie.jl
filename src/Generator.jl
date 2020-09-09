@@ -3,7 +3,7 @@ Generates various Genie files.
 """
 module Generator
 
-import Revise, SHA, Dates, Pkg, Logging
+import SHA, Dates, Pkg, Logging
 import Genie
 
 

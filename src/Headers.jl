@@ -3,7 +3,7 @@ Provides functionality for working with HTTP headers in Genie.
 """
 module Headers
 
-import Revise, HTTP
+import HTTP
 import Genie
 
 """

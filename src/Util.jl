@@ -1,6 +1,5 @@
 module Util
 
-import Revise
 import Genie
 
 export expand_nullable, time_to_unixtimestamp

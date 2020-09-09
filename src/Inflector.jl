@@ -3,7 +3,6 @@ Handles the functionality for applying various gramatical rules.
 """
 module Inflector
 
-import Revise
 import Unicode
 import Genie
 
@@ -63,8 +62,8 @@ end
 
 Generates `SnakeCase` form of `word` from `underscore_case`.
 """
-function from_underscores(word::String) :: String
-  mapreduce(x -> uppercasefirst(x), *, split(word, "_"))
+function from_underscores(word::String, underscore::String = "_") :: String
+  mapreduce(x -> uppercasefirst(x), *, split(word, underscore))
 end
 
 

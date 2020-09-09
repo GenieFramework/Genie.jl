@@ -2,7 +2,6 @@ module Toolbox
 
 import Base.string
 
-import Revise
 import Genie, Genie.Util, Millboard, Genie.FileTemplates, Genie.Configuration, Genie.Inflector, Genie.Exceptions, Logging
 
 export TaskResult, VoidTaskResult

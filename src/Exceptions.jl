@@ -1,6 +1,5 @@
 module Exceptions
 
-import Revise
 import Genie
 import HTTP
 

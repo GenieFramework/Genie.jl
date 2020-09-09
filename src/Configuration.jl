@@ -3,14 +3,12 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
-using Revise
-
 """
   const GENIE_VERSION
 
 References the current Genie version number.
 """
-const GENIE_VERSION = v"1.1"
+const GENIE_VERSION = v"1.1.1"
 
 import Logging
 import Genie

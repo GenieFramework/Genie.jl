@@ -3,7 +3,6 @@ Handles WebSockets communication logic.
 """
 module WebChannels
 
-import Revise
 import HTTP, Distributed, Logging
 import Genie, Genie.Renderer
 

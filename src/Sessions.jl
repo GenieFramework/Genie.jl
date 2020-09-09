@@ -1,6 +1,5 @@
 module Sessions
 
-import Revise
 import SHA, HTTP, Dates, Logging
 import Genie
 

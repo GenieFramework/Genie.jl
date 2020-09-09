@@ -389,6 +389,7 @@ const mimetypes = Dict{String,String}([
 ("qxt", "application/vnd.quark.quarkxpress"),
 ("xif", "image/vnd.xiff"),
 ("js", "application/javascript"),
+("mjs", "text/javascript"),
 ("ttl", "text/turtle"),
 ("sti", "application/vnd.sun.xml.impress.template"),
 ("sus", "application/vnd.sus-calendar"),

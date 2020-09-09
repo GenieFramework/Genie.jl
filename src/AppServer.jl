@@ -3,7 +3,6 @@ Handles Http server related functionality, manages requests and responses and th
 """
 module AppServer
 
-import Revise
 import HTTP, HTTP.IOExtras, HTTP.Sockets
 import Millboard, URIParser, Sockets, Distributed, Logging, MbedTLS
 import Genie

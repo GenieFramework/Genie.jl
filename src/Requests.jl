@@ -3,11 +3,10 @@ Collection of utilities for working with Requests data
 """
 module Requests
 
-import Revise
 import Genie, Genie.Router, Genie.Input
 import HTTP, Reexport
 
-export jsonpayload, rawpayload, filespayload, postpayload, getpayload, request, matchedroute, matchedchannel, wsclient
+export jsonpayload, rawpayload, filespayload, postpayload, getpayload, request, getrequest, matchedroute, matchedchannel, wsclient
 export infilespayload, filename, payload
 
 
@@ -173,6 +172,7 @@ function request() :: HTTP.Request
   Router.@params(Genie.PARAMS_REQUEST_KEY)
 end
 
+const getrequest = request
 
 """
     payload() :: Any
@@ -233,5 +233,14 @@ The web sockets client for the current request.
 function wsclient() :: HTTP.WebSockets.WebSocket
   Router.@params(Genie.PARAMS_WS_CLIENT)
 end
+
+
+function getheaders(req::HTTP.Request) :: Dict{String,String}
+  Dict{String,String}(req.headers)
+end
+function getheaders() :: Dict{String,String}
+  getheaders(getrequest())
+end
+
 
 end

@@ -42,7 +42,7 @@ const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :pa
 const CUSTOM_ELEMENTS = [:form, :select]
 const NON_EXPORTED = [:main]
 
-export HTMLString, html
+export HTMLString, html, doc, doctype
 export @foreach, @yield, collection, view!
 export partial, template
 

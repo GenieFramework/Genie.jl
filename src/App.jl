@@ -3,7 +3,6 @@ App level functionality -- loading and managing app-wide components like configs
 """
 module App
 
-import Revise
 import Genie
 
 const ASSET_FINGERPRINT = ""

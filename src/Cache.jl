@@ -3,7 +3,6 @@ Caching functionality for Genie.
 """
 module Cache
 
-import Revise
 import SHA, Logging
 import Genie
 

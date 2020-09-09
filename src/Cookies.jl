@@ -3,7 +3,6 @@ Functionality for dealing with HTTP cookies.
 """
 module Cookies
 
-import Revise
 import HTTP
 import Genie, Genie.Encryption, Genie.HTTPUtils
 
