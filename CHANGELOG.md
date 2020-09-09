@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.2 - 2020-07-21
+
+* added Requests.getheaders
+* added Requests.getrequest
+* deps update
+* removed Revise from where not used
+
 ## v1 - 2020-07-21
 
 * added support for SSL to Genie apps
