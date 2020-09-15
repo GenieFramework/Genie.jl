@@ -2,7 +2,7 @@ module Renderer
 
 export respond, redirect, render
 
-import HTTP, Markdown, Logging, FilePaths, SHA
+import HTTP, Markdown, Logging, FilePathsBase, SHA
 import Genie
 
 const DEFAULT_CHARSET = "charset=utf-8"
@@ -45,12 +45,12 @@ push_content_type(s::Symbol, content_type::String, charset::String = DEFAULT_CHA
 const ResourcePath = Union{String,Symbol}
 const HTTPHeaders = Dict{String,String}
 
-const Path = FilePaths.Path
-const FilePath = Union{FilePaths.PosixPath,FilePaths.WindowsPath}
-const filepath = FilePaths.Path
+const Path = FilePathsBase.Path
+const FilePath = Union{FilePathsBase.PosixPath,FilePathsBase.WindowsPath}
+const filepath = FilePathsBase.Path
 
 macro path_str(s)
-  :(FilePaths.@p_str($s))
+  :(FilePathsBase.@p_str($s))
 end
 
 export FilePath, filepath, Path, @path_str
