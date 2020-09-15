@@ -49,8 +49,9 @@ Web Server starting at http://127.0.0.1:8000
 function startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
                   ws_port::Int = Genie.config.websockets_port, async::Bool = ! Genie.config.run_as_server,
                   verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
-                  server::Union{Sockets.TCPServer,Nothing} = nothing,
+                  server::Union{Sockets.TCPServer,Nothing} = nothing, wsserver::Union{Sockets.TCPServer,Nothing} = nothing,
                   ssl_config::Union{MbedTLS.SSLConfig,Nothing} = Genie.config.ssl_config,
+                  open_browser::Bool = false,
                   http_kwargs...) :: ServersCollection
 
   update_config(port, host, ws_port)
@@ -58,41 +59,54 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
   protocol = (ssl_config !== nothing && Genie.config.ssl_enabled) ? "https" : "http"
 
   if Genie.config.websockets_server
-    SERVERS.websockets = @async HTTP.listen(host, ws_port; sslconfig = ssl_config, http_kwargs...) do req
-      if HTTP.WebSockets.is_upgrade(req.message)
-        HTTP.WebSockets.upgrade(req) do ws
-          setup_ws_handler(req.message, ws)
+    port == ws_port && error("Genie does not yet support HTTP/S and WS/S on the same port.")
+
+    SERVERS.websockets = @async HTTP.listen(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver, sslconfig = ssl_config, http_kwargs...) do http::HTTP.Stream
+      if HTTP.WebSockets.is_upgrade(http.message)
+        HTTP.WebSockets.upgrade(http) do ws
+          setup_ws_handler(http.message, ws)
         end
       end
     end
 
-    printstyled("\nWeb Sockets server running at $host:$ws_port \n", color = :light_blue, bold = true)
+    print_server_status("Web Sockets server running at $host:$ws_port")
   end
 
   command = () -> begin
-    try
-      HTTP.serve(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server, sslconfig = ssl_config, http_kwargs...) do req::HTTP.Request
-        setup_http_handler(req)
-      end
-    catch ex
-      @error ex
+    HTTP.serve(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server, sslconfig = ssl_config, http_kwargs...) do req::HTTP.Request
+      setup_http_handler(req)
     end
   end
 
-  printstyled("\nWeb Server starting at $protocol://$host:$port \n", color = :light_blue, bold = true)
+  server_url = "$protocol://$host:$port"
+  print_server_status("Web Server starting at $server_url")
 
   if async
     SERVERS.webserver = @async command()
-    printstyled("\nWeb Server running at $protocol://$host:$port \n", color = :light_blue, bold = true)
+    print_server_status("Web Server running at $server_url")
   else
     SERVERS.webserver = command()
-    printstyled("\nWeb Server stopped \n", color = :light_blue, bold = true)
+    print_server_status("Web Server stopped")
   end
+
+  open_browser && openbrowser(server_url)
 
   SERVERS
 end
 
 const up = startup
+
+
+print_server_status(status::String) = printstyled("\n $status \n", color = :light_blue, bold = true)
+
+
+@static if Sys.isapple()
+  openbrowser(url::String) = run(`open $url`)
+elseif Sys.islinux()
+  openbrowser(url::String) = run(`xdg-open $url`)
+elseif Sys.iswindows()
+  openbrowser(url::String) = run(`cmd /C start $url`)
+end
 
 
 """
