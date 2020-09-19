@@ -1,4 +1,4 @@
-@testset "Caching" begin
+@safetestset "No Caching" begin
   using Genie, Genie.Cache
 
   function f()
@@ -9,7 +9,7 @@
 
   r0 = f()
 
-  r1 = withcache(:x) do
+  r1 = withcache(:x) do 
     f()
   end
 
@@ -20,9 +20,18 @@
   end
 
   @test r1 != r2 # because cache_duration == 0 so no caching
+end
 
-  Genie.config.cache_duration = 5 # cache for 5s
 
+@safetestset "cache" begin
+  using Genie, Genie.Cache
+
+  function f()
+    rand(1:1_000)
+  end
+  
+  Genie.config.cache_duration = 5
+  
   r1 = withcache(:x) do
     f()
   end
@@ -58,4 +67,4 @@
   end
 
   @test r1 == r2 == r5 != r6
-end;
+end
