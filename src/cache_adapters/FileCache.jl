@@ -1,6 +1,5 @@
 module FileCache
 
-import Revise
 import Serialization
 import Genie, Genie.Cache
 

@@ -1054,18 +1054,27 @@ Not implemented function for error response.
 function error end
 
 
+function trymime(mime::Any)
+  try
+    mime()
+  catch _
+    mime
+  end
+end
+
+
 function error(error_message::String, mime::Any, ::Val{500}; error_info::String = "") :: HTTP.Response
-  HTTP.Response(500, ["Content-Type" => string(mime())], body = "500 Internal Error - $error_message. $error_info")
+  HTTP.Response(500, ["Content-Type" => string(trymime(mime))], body = "500 Internal Error - $error_message. $error_info")
 end
 
 
 function error(error_message::String, mime::Any, ::Val{404}; error_info::String = "") :: HTTP.Response
-  HTTP.Response(404, ["Content-Type" => string(mime())], body = "404 Not Found - $error_message. $error_info")
+  HTTP.Response(404, ["Content-Type" => string(trymime(mime))], body = "404 Not Found - $error_message. $error_info")
 end
 
 
 function error(error_code::Int, error_message::String, mime::Any; error_info::String = "") :: HTTP.Response
-  HTTP.Response(error_code, ["Content-Type" => string(mime())], body = "$error_code Error - $error_message. $error_info")
+  HTTP.Response(error_code, ["Content-Type" => string(trymime(mime))], body = "$error_code Error - $error_message. $error_info")
 end
 
 

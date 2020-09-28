@@ -1,6 +1,5 @@
 module Js
 
-import Revise
 import Logging, HTTP
 using Genie, Genie.Renderer
 

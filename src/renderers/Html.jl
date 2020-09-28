@@ -1,7 +1,5 @@
 module Html
 
-
-using Revise
 import Markdown, Logging, Gumbo, Reexport, OrderedCollections, Millboard, HTTP, YAML
 
 Reexport.@reexport using Genie

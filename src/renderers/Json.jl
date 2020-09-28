@@ -1,6 +1,5 @@
 module Json
 
-import Revise
 import JSON, HTTP
 using Genie, Genie.Renderer
 
