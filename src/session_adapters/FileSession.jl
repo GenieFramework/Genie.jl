@@ -18,14 +18,8 @@ function write(session::Genie.Sessions.Session) :: Genie.Sessions.Session
     mkpath(SESSIONS_PATH)
   end
 
-  try
-    open(joinpath(SESSIONS_PATH, session.id), "w") do (io)
-      Serialization.serialize(io, session)
-    end
-  catch ex
-    @error "Error serializing session"
-
-    rethrow(ex)
+  open(joinpath(SESSIONS_PATH, session.id), "w") do io
+    Serialization.serialize(io, session)
   end
 
   session
