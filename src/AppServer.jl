@@ -99,7 +99,7 @@ function startup(port::Int, host::String = Genie.config.server_host;
   SERVERS
 end
 
-function startup(;port = Genie.config.server_port, ws_port = Genie.config.websockets_port, kwargs...) :: ServersCollection
+function startup(; port = Genie.config.server_port, ws_port = Genie.config.websockets_port, kwargs...) :: ServersCollection
     startup(port; ws_port = ws_port, kwargs...)
 end
 
@@ -134,7 +134,7 @@ end
 
 
 """
-    downdown(; webserver::Bool = true, websockets::Bool = true) :: ServersCollection
+    down(; webserver::Bool = true, websockets::Bool = true) :: ServersCollection
 
 Shuts down the servers optionally indicating which of the `webserver` and `websockets` servers to be stopped.
 """
