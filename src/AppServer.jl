@@ -53,13 +53,10 @@ function startup(port::Int, host::String = Genie.config.server_host;
                   ssl_config::Union{MbedTLS.SSLConfig,Nothing} = Genie.config.ssl_config,
                   open_browser::Bool = false,
                   http_kwargs...) :: ServersCollection
+
   update_config(port, host, ws_port)
 
-  protocol = (ssl_config !== nothing && Genie.config.ssl_enabled) ? "https" : "http"
-
-  if Genie.config.websockets_server
-    port == ws_port && error("Genie does not yet support HTTP/S and WS/S on the same port.")
-
+  if Genie.config.websockets_server && port != ws_port
     SERVERS.websockets = @async HTTP.listen(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver, sslconfig = ssl_config, http_kwargs...) do http::HTTP.Stream
       if HTTP.WebSockets.is_upgrade(http.message)
         HTTP.WebSockets.upgrade(http) do ws
@@ -72,18 +69,20 @@ function startup(port::Int, host::String = Genie.config.server_host;
   end
 
   command = () -> begin
-  HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server, sslconfig = ssl_config, http_kwargs...) do req
-      if Genie.config.websockets_server && HTTP.WebSockets.is_upgrade(req.message)
-        HTTP.WebSockets.upgrade(req) do ws
-          setup_ws_handler(req.message, ws)
+    HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server, sslconfig = ssl_config, http_kwargs...) do http::HTTP.Stream
+      if Genie.config.websockets_server && port == ws_port && HTTP.WebSockets.is_upgrade(http.message)
+        HTTP.WebSockets.upgrade(http) do ws
+          setup_ws_handler(http.message, ws)
         end
+
+        print_server_status("Web Sockets server running at $host:$ws_port")
       else
-        HTTP.handle(HTTP.RequestHandlerFunction(setup_http_handler), req)
+        HTTP.handle(HTTP.RequestHandlerFunction(setup_http_handler), http)
       end
     end
   end
 
-  server_url = "$protocol://$host:$port"
+  server_url = "$( (ssl_config !== nothing && Genie.config.ssl_enabled) ? "https" : "http" )://$host:$port"
   print_server_status("Web Server starting at $server_url")
 
   if async

@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.3 - 2020-09-29
+
+* support for running the HTTP/S and WS/S on the same port
+* Renderer.Http does not output attributes with value `nothing`
+* for new apps `config.server_handle_static_files` is enabled by default in production but warns (previously false)
+* removed outdated asset pipeline files from `files/`
+
 ## v1.2 - 2020-07-21
 
 * added Requests.getheaders

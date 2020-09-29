@@ -126,6 +126,8 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
   a = IOBuffer()
 
   for (k,v) in attrs
+    v === nothing && continue # skip nothing values
+
     if (isa(v, Bool) && v) || isempty(string(v))
       print(a, "$(k |> parseattr) ")
     else
