@@ -73,8 +73,14 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
   end
 
   command = () -> begin
-    HTTP.serve(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server, sslconfig = ssl_config, http_kwargs...) do req::HTTP.Request
-      setup_http_handler(req)
+  HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server, sslconfig = ssl_config, http_kwargs...) do req
+      if HTTP.WebSockets.is_upgrade(req.message)
+        HTTP.WebSockets.upgrade(req) do ws
+          setup_ws_handler(req.message, ws)
+        end
+      else
+        HTTP.handle(HTTP.RequestHandlerFunction(setup_http_handler), req)
+      end
     end
   end
 
@@ -131,7 +137,7 @@ Shuts down the servers optionally indicating which of the `webserver` and `webso
 """
 function down(; webserver::Bool = true, websockets::Bool = true) :: ServersCollection
   webserver && (@async Base.throwto(SERVERS.webserver, InterruptException()))
-  websockets && (@async Base.throwto(SERVERS.websockets, InterruptException()))
+  isnothing(websockets) || (websockets && (@async Base.throwto(SERVERS.websockets, InterruptException())))
 
   SERVERS
 end

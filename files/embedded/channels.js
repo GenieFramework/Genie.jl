@@ -1,6 +1,7 @@
 Genie.WebChannels = {};
 Genie.WebChannels.load_channels = function() {
-  var socket = new WebSocket('ws://' + window.location.hostname + ':' +  window.location.port);
+  let port = Genie.Settings.websockets_port == Genie.Settings.server_port ? window.location.port : Genie.Settings.websockets_port
+  var socket = new WebSocket('ws://' + window.location.hostname + ':' +  port);
   var channels = Genie.WebChannels;
 
   channels.channel = socket;
