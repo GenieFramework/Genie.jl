@@ -23,7 +23,7 @@ Generates a `Dockerfile` optimised for containerizing Genie apps.
 """
 function dockerfile(path::String = "."; filename::String = "Dockerfile", user::String = "genie", env::String = "dev",
                     host = "127.0.0.1", port::Int = 8000, dockerport::Int = 80, force::Bool = false,
-                    websockets_port::Int = 8001, websockets_dockerport::Int = 8001)
+                    websockets_port::Int = port, websockets_dockerport::Int = dockerport)
   filename = normpath(joinpath(path, filename))
   isfile(filename) && force && rm(filename)
   isfile(filename) && error("File $(filename) already exists. Use the `force = true` option to overwrite the existing file.")
@@ -69,7 +69,7 @@ Runs the Docker container named `containername`, binding `hostport` and `contain
 """
 function run(; containername::String = "genieapp", hostport::Int = 80, containerport::Int = 8000, appdir::String = "/home/genie/app",
                 mountapp::Bool = false, image::String = "genie", command::String = "bin/server", rm::Bool = true, it::Bool = true,
-                websockets_hostport::Int = 8001, websockets_containerport::Int = 8001)
+                websockets_hostport::Int = hostport, websockets_containerport::Int = containerport)
   options = []
   it && push!(options, "-it")
   rm && push!(options, "--rm")

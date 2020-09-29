@@ -226,7 +226,7 @@ mutable struct Settings
             run_as_server = false,
 
             websockets_server = false,
-            websockets_port   = server_port + 1,
+            websockets_port   = server_port,
 
             initializers_folder = "initializers",
 

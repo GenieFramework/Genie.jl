@@ -89,13 +89,13 @@ end
 """
     dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::Bool = false, env::String = "dev",
                       filename::String = "Dockerfile", port::Int = 8000, dockerport::Int = 80, host::String = "0.0.0.0",
-                      websockets_port::Int = 8001, websockets_dockerport::Int = 8001)
+                      websockets_port::Int = port, websockets_dockerport::Int = dockerport)
 
 Generates dockerfile for the Genie app.
 """
 function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::Bool = false, env::String = "dev",
                       filename::String = "Dockerfile", port::Int = 8000, dockerport::Int = 80, host::String = "0.0.0.0",
-                      websockets_port::Int = 8001, websockets_dockerport::Int = 8001)
+                      websockets_port::Int = port, websockets_dockerport::Int = dockerport)
   appdir = "/home/$user/app"
 
   """
