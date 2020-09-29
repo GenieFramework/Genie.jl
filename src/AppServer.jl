@@ -46,14 +46,13 @@ julia> up(8000, "127.0.0.1", async = false)
 Web Server starting at http://127.0.0.1:8000
 ```
 """
-function startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
-                  ws_port::Int = Genie.config.websockets_port, async::Bool = ! Genie.config.run_as_server,
+function startup(port::Int, host::String = Genie.config.server_host;
+                  ws_port::Int = port, async::Bool = ! Genie.config.run_as_server,
                   verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
                   server::Union{Sockets.TCPServer,Nothing} = nothing, wsserver::Union{Sockets.TCPServer,Nothing} = nothing,
                   ssl_config::Union{MbedTLS.SSLConfig,Nothing} = Genie.config.ssl_config,
                   open_browser::Bool = false,
                   http_kwargs...) :: ServersCollection
-
   update_config(port, host, ws_port)
 
   protocol = (ssl_config !== nothing && Genie.config.ssl_enabled) ? "https" : "http"
@@ -74,7 +73,7 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
 
   command = () -> begin
   HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server, sslconfig = ssl_config, http_kwargs...) do req
-      if HTTP.WebSockets.is_upgrade(req.message)
+      if Genie.config.websockets_server && HTTP.WebSockets.is_upgrade(req.message)
         HTTP.WebSockets.upgrade(req) do ws
           setup_ws_handler(req.message, ws)
         end
@@ -98,6 +97,10 @@ function startup(port::Int = Genie.config.server_port, host::String = Genie.conf
   open_browser && openbrowser(server_url)
 
   SERVERS
+end
+
+function startup(;port = Genie.config.server_port, ws_port = Genie.config.websockets_port, kwargs...) :: ServersCollection
+    startup(port; ws_port = ws_port, kwargs...)
 end
 
 const up = startup
