@@ -9,18 +9,18 @@
     @test Genie.AppServer.SERVERS.webserver.state == :runnable
 
     servers = Genie.AppServer.down()
-    sleep(1)
+    sleep(2)
     @test servers.webserver.state == :done
     @test Genie.AppServer.SERVERS.webserver.state == :done
 
     servers = Genie.AppServer.startup()
     Genie.AppServer.down(; webserver = false)
-    sleep(1)
+    sleep(2)
     @test servers.webserver.state == :runnable
     @test Genie.AppServer.SERVERS.webserver.state == :runnable
 
     servers = Genie.AppServer.down(; webserver = true)
-    sleep(1)
+    sleep(2)
     @test servers.webserver.state == :done
     @test Genie.AppServer.SERVERS.webserver.state == :done
   end;

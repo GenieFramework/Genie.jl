@@ -74,8 +74,6 @@ function startup(port::Int, host::String = Genie.config.server_host;
         HTTP.WebSockets.upgrade(http) do ws
           setup_ws_handler(http.message, ws)
         end
-
-        print_server_status("Web Sockets server running at $host:$ws_port")
       else
         HTTP.handle(HTTP.RequestHandlerFunction(setup_http_handler), http)
       end
@@ -87,10 +85,8 @@ function startup(port::Int, host::String = Genie.config.server_host;
 
   if async
     SERVERS.webserver = @async command()
-    print_server_status("Web Server running at $server_url")
   else
     SERVERS.webserver = command()
-    print_server_status("Web Server stopped")
   end
 
   open_browser && openbrowser(server_url)
