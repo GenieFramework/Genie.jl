@@ -219,20 +219,59 @@ end
 
 
 """
-    microstack_app(app_path::String = ".") :: Nothing
+    new(app_name::String, app_path::String = abspath(app_name)) :: Nothing
 
-Writes the file necessary to create a microstack app.
+Creates a minimal Genie app.
 """
-function microstack_app(app_path::String = ".") :: Nothing
+function new(app_name::String, app_path::String = "") :: Nothing
+  app_name = validname(app_name)
+  app_path = abspath(app_name)
+
+  scaffold(app_name, app_path)
+
+  post_create(app_path)
+
+  nothing
+end
+
+
+"""
+    scaffold(app_path::String = ".") :: Nothing
+
+Writes the file necessary to scaffold a minimal Genie app.
+"""
+function scaffold(app_name::String, app_path::String = "") :: Nothing
+  app_name = validname(app_name)
+  app_path = abspath(app_name)
+
   isdir(app_path) || mkpath(app_path)
 
-  for f in [Genie.config.path_bin, Genie.config.path_config, Genie.config.server_document_root, Genie.config.path_src,
-            Genie.GENIE_FILE_NAME, Genie.ROUTES_FILE_NAME,
+  for f in [Genie.config.path_src, Genie.GENIE_FILE_NAME, Genie.ROUTES_FILE_NAME,
             ".gitattributes", ".gitignore"]
     cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, f), joinpath(app_path, f))
   end
 
+  write_app_custom_files(app_name, app_path)
+
+  nothing
+end
+
+
+"""
+    microstack_app(app_path::String = ".") :: Nothing
+
+Writes the file necessary to create a microstack app.
+"""
+function microstack_app(app_name::String = ".", app_path::String = ".") :: Nothing
+  isdir(app_path) || mkpath(app_path)
+
+  for f in [Genie.config.path_bin, Genie.config.path_config, Genie.config.server_document_root]
+    cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, f), joinpath(app_path, f))
+  end
+
   remove_fingerprint_initializer(app_path)
+
+  scaffold(app_name, app_path)
 
   nothing
 end
@@ -392,20 +431,18 @@ julia> Genie.newapp("MyGenieApp")
 2019-08-06 16:54:32:DEBUG:Main: Web Server running at http://127.0.0.1:8000
 ```
 """
-function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false, mvcsupport::Bool = false, testmode::Bool = false) :: Nothing
+function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = false,
+                dbsupport::Bool = false, mvcsupport::Bool = false, testmode::Bool = false) :: Nothing
   app_name = validname(app_name)
-
   app_path = abspath(app_name)
 
-  fullstack ? fullstack_app(app_path) : microstack_app(app_path)
+  fullstack ? fullstack_app(app_path) : microstack_app(app_name, app_path)
 
   dbsupport ? (fullstack || db_support(app_path)) : remove_searchlight_initializer(app_path)
 
   mvcsupport && (fullstack || mvc_support(app_path))
 
   write_secrets_file(app_path)
-
-  write_app_custom_files(app_name, app_path)
 
   try
     setup_windows_bin_files(app_path)
@@ -419,10 +456,17 @@ function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = fals
     @error ex
   end
 
-  @info "Done! New app created at $(abspath(app_name))"
+  post_create(app_path)
+
+  nothing
+end
+
+
+function post_create(app_path::String; autostart::Bool = true, testmode::Bool = false)
+  @info "Done! New app created at $app_path"
 
   @info "Changing active directory to $app_path"
-  cd(app_name)
+  cd(app_path)
 
   install_app_dependencies(app_path, testmode = testmode)
 

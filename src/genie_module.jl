@@ -205,11 +205,9 @@ function secret_token(; context::Union{Module,Nothing} = nothing) :: String
     context.SECRET_TOKEN
   else
     @warn "
-          SECRET_TOKEN not configured - please make sure that you have a valid secrets.jl file.
-          You can generate a new secrets.jl file with a random SECRET_TOKEN using Genie.Generator.write_secrets_file()
-          or use the included /app/config/secrets.jl.example file as a model.
+          SECRET_TOKEN not configured. SECRET_TOKEN is used for hashing and encrypting/decrypting sensitive data in Genie.
+          You can generate a new secrets.jl file with a random SECRET_TOKEN using Genie.Generator.write_secrets_file().
 
-          SECRET_TOKEN is used for hashing and encrypting/decrypting sensitive data in Genie.
           I'm now setting up a random SECRET_TOKEN which will be used for this session only.
           Data that is encoded with this SECRET_TOKEN will potentially be lost
           upon restarting the application (like for example the HTTP sessions data).
@@ -225,7 +223,7 @@ end
 
 Sets the module in which the code is loaded (the app's module)
 """
-function default_context(context::Union{Module,Nothing})
+function default_context(context::Union{Module,Nothing} = nothing)
   try
     context === nothing ? Main.UserApp : context
   catch ex

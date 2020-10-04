@@ -22,7 +22,7 @@ function bootstrap(context::Union{Module,Nothing} = Genie.default_context(contex
     isfile(joinpath(Genie.config.path_env, ENV["GENIE_ENV"] * ".jl")) && Base.include(context, joinpath(Genie.config.path_env, ENV["GENIE_ENV"] * ".jl"))
   else
     ENV["GENIE_ENV"] = Genie.Configuration.DEV
-    Core.eval(context, Meta.parse("const config = Genie.Configuration.Settings(app_env = Configuration.DEV)"))
+    Core.eval(context, Meta.parse("const config = Genie.Configuration.Settings(app_env = Genie.Configuration.DEV)"))
   end
 
   for f in fieldnames(typeof(context.config))

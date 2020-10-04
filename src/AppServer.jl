@@ -51,7 +51,7 @@ function startup(port::Int, host::String = Genie.config.server_host;
                   verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
                   server::Union{Sockets.TCPServer,Nothing} = nothing, wsserver::Union{Sockets.TCPServer,Nothing} = nothing,
                   ssl_config::Union{MbedTLS.SSLConfig,Nothing} = Genie.config.ssl_config,
-                  open_browser::Bool = false,
+                  open_browser::Bool = true,
                   http_kwargs...) :: ServersCollection
 
   update_config(port, host, ws_port)
