@@ -1,3 +1,5 @@
+__revise_mode__ = :eval
+
 using Genie.Router
 
 route("/") do
