@@ -1,4 +1,4 @@
-@testset "Create new app" begin
+@safetestset "Create new app" begin
 
   testdir = pwd()
   using Pkg
@@ -8,6 +8,8 @@
     using Genie
 
     workdir = Base.Filesystem.mktempdir()
+
+    cd(workdir)
 
     Genie.newapp(workdir, autostart = false, testmode = true)
 
@@ -39,6 +41,8 @@
 
     workdir = Base.Filesystem.mktempdir()
 
+    cd(workdir)
+
     Genie.newapp(workdir, autostart = false, testmode = true)
 
     @test sort(readdir(workdir)) == sort([".gitattributes", ".gitignore", "Manifest.toml", "Project.toml", "bin",
@@ -58,6 +62,8 @@
 
     workdir = Base.Filesystem.mktempdir()
 
+    cd(workdir)
+
     Genie.newapp(workdir, autostart = false, dbsupport = true, testmode = true)
 
     @test sort(readdir(workdir)) == sort([".gitattributes", ".gitignore", "Manifest.toml", "Project.toml", "bin",
@@ -76,6 +82,8 @@
 
     workdir = Base.Filesystem.mktempdir()
 
+    cd(workdir)
+
     Genie.newapp(workdir, autostart = false, mvcsupport = true, testmode = true)
 
     @test sort(readdir(workdir)) == sort([".gitattributes", ".gitignore", "Manifest.toml", "Project.toml", "app", "bin", "bootstrap.jl", "config", "genie.jl", "public", "routes.jl", "src"])
@@ -92,7 +100,9 @@
     using Genie
 
     workdir = Base.Filesystem.mktempdir()
+
     cd(workdir)
+
     Genie.Generator.newcontroller("Yazoo")
 
     @test isdir(joinpath(workdir, "app", "resources", "yazoo")) == true
@@ -107,7 +117,9 @@
     using Genie
 
     workdir = Base.Filesystem.mktempdir()
+
     cd(workdir)
+
     Genie.newresource("Kazoo")
 
     @test isdir(joinpath(workdir, "app", "resources", "kazoo")) == true
@@ -123,7 +135,9 @@
     using Genie, Genie.Exceptions
 
     workdir = Base.Filesystem.mktempdir()
+
     cd(workdir)
+
     Genie.newtask("Vavoom")
 
     @test isdir(joinpath(workdir, "tasks")) == true

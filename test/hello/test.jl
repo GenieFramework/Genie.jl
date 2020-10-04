@@ -7,7 +7,7 @@ import Genie.Router: route
 route("/hello") do
   "Welcome to Genie!"
 end
-Genie.AppServer.startup()
+Genie.AppServer.startup(; open_browser = false)
 
 HTTP.get("http://localhost:8000/hello")
 

@@ -9,7 +9,7 @@ route("/json-error", method = POST) do
   error("500, sorry")
 end
 
-Genie.AppServer.startup()
+Genie.AppServer.startup(; open_browser = false)
 
 @test_throws HTTP.ExceptionRequest.StatusError HTTP.request("POST", "http://localhost:8000/json-error", [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
 

@@ -14,7 +14,7 @@ route("/jsontest", method = POST) do
     json_request["test"]
 end
 
-Genie.AppServer.startup()
+Genie.AppServer.startup(; open_browser = false)
 
 HTTP.request("POST", "http://localhost:8000/jsonpayload", [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
 HTTP.request("POST", "http://localhost:8000/jsonpayload", [("Content-Type", "application/json")], """{"greeting":"hello"}""")

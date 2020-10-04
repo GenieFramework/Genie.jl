@@ -136,6 +136,7 @@ const newapp = Generator.newapp
 const newapp_webservice = Generator.newapp_webservice
 const newapp_mvc = Generator.newapp_mvc
 const newapp_fullstack = Generator.newapp_fullstack
+const new = Generator.new
 
 
 """

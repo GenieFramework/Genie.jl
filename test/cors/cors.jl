@@ -10,4 +10,4 @@ route("/random", method=POST) do
   (:random => rand(dim,num)) |> json
 end
 
-up()
+up(; open_browser = false)

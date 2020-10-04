@@ -15,4 +15,4 @@ route("/test") do
   "All good"
 end
 
-Genie.AppServer.startup(async = true)
+Genie.AppServer.startup(; open_browser = false, async = true)

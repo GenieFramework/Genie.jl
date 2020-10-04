@@ -27,4 +27,4 @@ route("/", method = POST) do
   @params(:greeting)
 end
 
-Genie.AppServer.startup(async = false)
+Genie.AppServer.startup(; open_browser = false, async = false)

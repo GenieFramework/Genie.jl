@@ -4,7 +4,7 @@
     using Genie
     using Genie.AppServer
 
-    servers = Genie.AppServer.startup()
+    servers = Genie.AppServer.startup(; open_browser = false)
     @test servers.webserver.state == :runnable
     @test Genie.AppServer.SERVERS.webserver.state == :runnable
 
@@ -13,7 +13,7 @@
     @test servers.webserver.state == :done
     @test Genie.AppServer.SERVERS.webserver.state == :done
 
-    servers = Genie.AppServer.startup()
+    servers = Genie.AppServer.startup(; open_browser = false)
     Genie.AppServer.down(; webserver = false)
     sleep(2)
     @test servers.webserver.state == :runnable
@@ -32,7 +32,7 @@
     port = Genie.config.server_port
     ws_port = Genie.config.websockets_port
 
-    Genie.AppServer.up(port+1_000; ws_port = ws_port+1_000)
+    Genie.AppServer.up(port+1_000; ws_port = ws_port+1_000, open_browser = false)
 
     @test Genie.config.server_port == port+1_000
     @test Genie.config.websockets_port == ws_port+1_000

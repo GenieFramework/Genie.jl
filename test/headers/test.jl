@@ -14,7 +14,7 @@ route("/headers", method = OPTIONS) do
   setstatus(200)
 end
 
-Genie.AppServer.startup(verbose = true)
+Genie.AppServer.startup(; open_browser = false, verbose = true)
 
 response = HTTP.request("GET", "http://localhost:8000/headers") # unhandled, should get default response
 @show response

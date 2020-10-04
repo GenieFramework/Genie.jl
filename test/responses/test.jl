@@ -25,7 +25,7 @@ route("/broken") do
  omg!()
 end
 
-Genie.AppServer.startup(verbose = true)
+Genie.AppServer.startup(; open_browser = false, verbose = true)
 
 response = HTTP.request("GET", "http://localhost:8000/responses")
 @show response

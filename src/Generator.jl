@@ -11,7 +11,7 @@ const JULIA_PATH = joinpath(Sys.BINDIR, "julia")
 
 
 function validname(name::String)
-  filter(! isempty, [x.match for x in collect(eachmatch(r"[0-9a-zA-Z_\\/:]*", name))]) |> join
+  filter(! isempty, [x.match for x in collect(eachmatch(r"[0-9a-zA-Z_]*", name))]) |> join
 end
 
 
@@ -214,8 +214,10 @@ end
 
 Writes the files necessary to create a full stack Genie app.
 """
-function fullstack_app(app_path::String = ".") :: Nothing
+function fullstack_app(app_name::String = ".", app_path::String = ".") :: Nothing
   cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH), app_path)
+
+  scaffold(app_name, app_path)
 
   nothing
 end
@@ -251,7 +253,10 @@ function scaffold(app_name::String, app_path::String = "") :: Nothing
 
   for f in [Genie.config.path_src, Genie.GENIE_FILE_NAME, Genie.ROUTES_FILE_NAME,
             ".gitattributes", ".gitignore"]
-    cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, f), joinpath(app_path, f))
+    try
+      cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, f), joinpath(app_path, f))
+    catch ex
+    end
   end
 
   write_app_custom_files(app_name, app_path)
@@ -439,7 +444,7 @@ function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = fals
   app_name = validname(app_name)
   app_path = abspath(app_name)
 
-  fullstack ? fullstack_app(app_path) : microstack_app(app_name, app_path)
+  fullstack ? fullstack_app(app_name, app_path) : microstack_app(app_name, app_path)
 
   dbsupport ? (fullstack || db_support(app_path)) : remove_searchlight_initializer(app_path)
 

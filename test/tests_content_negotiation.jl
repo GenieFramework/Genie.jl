@@ -5,7 +5,7 @@
       using Genie
       using HTTP
 
-      Genie.up()
+      Genie.up(; open_browser = false)
 
       response = try
         HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "text/html"])
@@ -34,7 +34,7 @@
       using Genie
       using HTTP
 
-      Genie.up()
+      Genie.up(; open_browser = false)
 
       response = try
         HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Accept" => "text/html"])
@@ -63,7 +63,7 @@
       using Genie
       using HTTP
 
-      Genie.up()
+      Genie.up(; open_browser = false)
 
       response = try
         HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "application/json"])
@@ -92,7 +92,7 @@
       using Genie
       using HTTP
 
-      Genie.up()
+      Genie.up(; open_browser = false)
 
       response = try
         HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Accept" => "application/json"])
@@ -121,7 +121,7 @@
       using Genie
       using HTTP
 
-      Genie.up()
+      Genie.up(; open_browser = false)
 
       response = try
         HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "text/plain"])
@@ -151,7 +151,7 @@
     using Genie
     using HTTP
 
-    Genie.up()
+    Genie.up(; open_browser = false)
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "text/csv"])
@@ -180,7 +180,7 @@
     using Genie
     using HTTP
 
-    Genie.up()
+    Genie.up(; open_browser = false)
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Accept" => "text/csv"])
@@ -209,7 +209,7 @@
     using Genie
     using HTTP
 
-    Genie.up()
+    Genie.up(; open_browser = false)
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "text/csv"])
@@ -252,7 +252,7 @@
     using Genie
     using HTTP
 
-    Genie.up()
+    Genie.up(; open_browser = false)
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "application/json"])
@@ -295,7 +295,7 @@
     using Genie
     using HTTP
 
-    Genie.up()
+    Genie.up(; open_browser = false)
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Accept" => "text/html, text/plain, application/json, text/csv"])

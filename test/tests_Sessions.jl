@@ -14,7 +14,7 @@
       "$(Sessions.get(sess, :visit_count))"
     end
 
-    Genie.up()
+    Genie.up(; open_browser = false)
 
     # TODO: extend to use the cookie and increment the count
     response = HTTP.get("http://$(Genie.config.server_host):$(Genie.config.server_port)/home")

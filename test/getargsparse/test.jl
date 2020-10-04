@@ -12,7 +12,7 @@ convert(::Type{Date}, s::SubString{String}) = Date(s)
 route("/getparams/:s::String/:f::Float64/:i::Int/:d::Date") do
   @show "s = $(@params(:s)) / f = $(@params(:f)) / i = $(@params(:i)) / $(@params(:d))"
 end
-Genie.AppServer.startup()
+Genie.AppServer.startup(; open_browser = false)
 
 HTTP.get("http://localhost:8000/getparams/foo/23.43/18/2019-02-15")
 

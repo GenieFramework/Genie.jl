@@ -10,4 +10,4 @@ route("/") do
   html(markup)
 end
 
-Genie.AppServer.startup(async = false)
+Genie.AppServer.startup(; open_browser = false, async = false)
