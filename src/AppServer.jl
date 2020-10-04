@@ -51,7 +51,7 @@ function startup(port::Int, host::String = Genie.config.server_host;
                   verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
                   server::Union{Sockets.TCPServer,Nothing} = nothing, wsserver::Union{Sockets.TCPServer,Nothing} = nothing,
                   ssl_config::Union{MbedTLS.SSLConfig,Nothing} = Genie.config.ssl_config,
-                  open_browser::Bool = true,
+                  open_browser::Bool = Genie.Configuration.isdev(),
                   http_kwargs...) :: ServersCollection
 
   update_config(port, host, ws_port)
@@ -81,15 +81,21 @@ function startup(port::Int, host::String = Genie.config.server_host;
   end
 
   server_url = "$( (ssl_config !== nothing && Genie.config.ssl_enabled) ? "https" : "http" )://$host:$port"
-  print_server_status("Web Server starting at $server_url")
 
-  if async
-    SERVERS.webserver = @async command()
+
+  status = if async
+    @async command()
   else
-    SERVERS.webserver = command()
+    command()
   end
 
-  open_browser && openbrowser(server_url)
+  @info status
+
+  if status.state == :runnable
+    SERVERS.webserver = status
+    print_server_status("Web Server running at $server_url")
+    open_browser && openbrowser(server_url)
+  end
 
   SERVERS
 end

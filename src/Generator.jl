@@ -198,7 +198,10 @@ end
 Generates a valid secrets.jl file with a random SECRET_TOKEN.
 """
 function write_secrets_file(app_path::String = ".") :: Nothing
-  open(joinpath(app_path, Genie.config.path_config, Genie.SECRETS_FILE_NAME), "w") do f
+  secrets_path = joinpath(app_path, Genie.config.path_config)
+  ispath(secrets_path) || mkpath(secrets_path)
+
+  open(joinpath(secrets_path, Genie.SECRETS_FILE_NAME), "w") do f
     write(f, """const SECRET_TOKEN = "$(secret_token())" """)
   end
 
