@@ -242,6 +242,8 @@ Main entry point to loading a Genie app.
 function load(; context::Union{Module,Nothing} = nothing) :: Nothing
   context = default_context(context)
 
+  Genie.Configuration.isdev() && Core.eval(context, :(__revise_mode__ = :eval))
+
   App.bootstrap(context)
 
   t = Terminals.TTYTerminal("", stdin, stdout, stderr)
