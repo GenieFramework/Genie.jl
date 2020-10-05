@@ -5,7 +5,6 @@ import HTTP
 
 export ExceptionalResponse, RuntimeException, InternalServerException, NotFoundException, FileExistsException
 
-
 """
     struct ExceptionalResponse <: Exception
 
@@ -28,7 +27,6 @@ end
 Base.show(io::IO, ex::ExceptionalResponse) = print(io, "ExceptionalResponseException: $(ex.response.status) - $(Dict(ex.response.headers))")
 
 ###
-
 
 """
     RuntimeException

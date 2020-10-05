@@ -3,8 +3,7 @@ module Sessions
 import SHA, HTTP, Dates, Logging
 import Genie
 
-const HTTP = HTTP
-
+HTTP = HTTP
 
 """
     mutable struct Session
