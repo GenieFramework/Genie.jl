@@ -21,7 +21,9 @@ a:hover, a:focus, a:active, a:visited {
     text-decoration: none;
 }
 
-/* Buttons override */
+/* ------------------
+	Buttons Override
+------------------ */
 .btn {
 	text-transform: uppercase;
     font-weight: 600;
@@ -142,13 +144,14 @@ a:hover, a:focus, a:active, a:visited {
 	margin-top: 30px;
 }
 .feature span {
-	/* font-size: 5em; */
   color: #016cc7;
 }
 
 .feature.feature-icon {
 	font-size: 5em;
 }
+
+
 
 .speaker .feature {
 	width: 31.333333%;
@@ -187,6 +190,8 @@ a span.ti-twitter-alt {
 	color: #4099ff;
 }
 
+
+
 .tickets {
 	background-color: #fcd93b;
 }
@@ -198,7 +203,6 @@ a span.ti-twitter-alt {
 .tickets .price sup {
 	font-size: 0.4em;
 }
-
 
 .nav-tabs {
     margin-top: 20px;
@@ -218,6 +222,7 @@ a span.ti-twitter-alt {
 	text-transform: uppercase;
 	font-weight: 600;
 }
+
 
 
 .footer {
@@ -247,6 +252,7 @@ ul.footer-menu li a:hover {
 }
 
 
+
 .contact {
     background-color: #3a3a3a;
     color: #fff;
@@ -268,6 +274,10 @@ ul.footer-menu li a:hover {
     top: 15px;
     right: 15px;
 }
+
+/* ------------------
+	Some Animations
+------------------ */
 
 .animated {
     -webkit-animation-duration: 5s;
@@ -301,7 +311,7 @@ ul.footer-menu li a:hover {
     Custom Media Queries
 ======================================== */
 
-/* Mobile */
+/* Responsive (Mobiles) */
 
 @media (max-width: 767px) {
     .hero-header {

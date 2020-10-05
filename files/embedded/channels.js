@@ -1,7 +1,7 @@
-Genie.WebChannels = {};
-Genie.WebChannels.load_channels = function() {
+Genie.WebChannels = new Object;
+Genie.WebChannels.load_channels = () => {
   let port = Genie.Settings.websockets_port == Genie.Settings.server_port ? window.location.port : Genie.Settings.websockets_port
-  var socket = new WebSocket('ws://' + window.location.hostname + ':' +  port);
+  var socket = new WebSocket(`ws://${window.location.hostname}:${port}`);
   var channels = Genie.WebChannels;
 
   channels.channel = socket;
@@ -77,7 +77,7 @@ Genie.WebChannels.messageHandlers.push(function(event){
       window.parse_payload(event.data);
     }
   } catch (ex) {
-    console.log(ex);
+    console.log(`${ex}`);
   }
 });
 

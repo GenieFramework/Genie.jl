@@ -33,6 +33,7 @@ end                 # [GET] /bye => getfield(Main, Symbol("##3#4"))()
 You can just navigate to <http://127.0.0.1:8000/bye> -- the route is instantly available in the app.
 
 ---
+
 **HEADS UP**
 
 The routes are added in the order in which they are defined but are matched from newest to oldest. This means that you can define a new route to overwrite a previously defined one.
