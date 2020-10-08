@@ -126,13 +126,14 @@ Utility to allow users to install a plugin
 """
 function install(path::String, dest::String; force = false)
   isdir(dest) || mkpath(dest)
-
   cd(dest)
-
   isdir(Genie.config.path_plugins) || mkpath(Genie.config.path_plugins)
 
+  root_length = splitpath(path) |> length
   depth = 0
+
   for (root, dirs, files) in walkdir(path)
+    depth = length(splitpath(root)) - root_length
     dest_path = joinpath(abspath(dest), splitpath(root)[end-depth:end]...)
 
     try
@@ -150,8 +151,6 @@ function install(path::String, dest::String; force = false)
         @error "Did not copy $(joinpath(root, f)) to $(joinpath(dest_path, f))"
       end
     end
-
-    depth += 1
   end
 end
 
