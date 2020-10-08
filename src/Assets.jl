@@ -103,8 +103,10 @@ end
 
 Outputs the channels.js file included with the Genie package
 """
-function channels() :: String
-  string(js_settings(), embedded(joinpath("files", "embedded", "channels.js")))
+function channels(channel::String = Genie.config.webchannels_default_route) :: String
+  s = string(js_settings(), embedded(joinpath("files", "embedded", "channels.js")))
+  channel == Genie.config.webchannels_default_route || (s = replace(s, r"""(?<=webchannels_default_route":")[^"]+""" => channel))
+  return s
 end
 
 
@@ -113,38 +115,38 @@ end
 
 Outputs the channels JavaScript content within `<script>...</script>` tags, for embedding into the page.
 """
-function channels_script() :: String
+function channels_script(channel::String = Genie.config.webchannels_default_route) :: String
 """
 <script>
-$(channels())
+$(channels(channel))
 </script>
 """
 end
 
 
 """
-    channels_support() :: String
+    channels_support(channel = Genie.config.webchannels_default_route) :: String
 
 Provides full web channels support, setting up routes for loading support JS files, web sockets subscription and
 returning the `<script>` tag for including the linked JS file into the web page.
 """
-function channels_support() :: String
-  Router.route("/$(Genie.config.webchannels_default_route)/$(Genie.config.webchannels_js_file)") do
-    Genie.Renderer.Js.js(channels())
+function channels_support(channel::String = Genie.config.webchannels_default_route) :: String
+  Router.route("/$(channel)/$(Genie.config.webchannels_js_file)") do
+    Genie.Renderer.Js.js(channels(channel))
   end
 
-  Router.channel("/$(Genie.config.webchannels_default_route)/$(Genie.config.webchannels_subscribe_channel)") do
-    WebChannels.subscribe(Genie.Requests.wsclient(), Genie.config.webchannels_default_route)
+  Router.channel("/$(channel)/$(Genie.config.webchannels_subscribe_channel)") do
+    WebChannels.subscribe(Genie.Requests.wsclient(), channel)
     "Subscription: OK"
   end
 
-  Router.channel("/$(Genie.config.webchannels_default_route)/$(Genie.config.webchannels_unsubscribe_channel)") do
-    WebChannels.unsubscribe(Genie.Requests.wsclient(), Genie.config.webchannels_default_route)
+  Router.channel("/$(channel)/$(Genie.config.webchannels_unsubscribe_channel)") do
+    WebChannels.unsubscribe(Genie.Requests.wsclient(), channel)
     WebChannels.unsubscribe_disconnected_clients()
     "Unsubscription: OK"
   end
-
-  "<script src=\"/$(Genie.config.webchannels_default_route)/$(Genie.config.webchannels_js_file)?v=$(Genie.Configuration.GENIE_VERSION)\"></script>"
+  @info channel
+  "<script src=\"/$(channel)/$(Genie.config.webchannels_js_file)?v=$(Genie.Configuration.GENIE_VERSION)\"></script>"
 end
 
 
