@@ -7,7 +7,7 @@ import Genie, Genie.Configuration, Genie.Router, Genie.WebChannels
 import Genie.Renderer.Json
 
 export include_asset, css_asset, js_asset, js_settings, css, js
-export embedded, channels, channels_script, channels_support
+export embedded, channels_script, channels_support
 export favicon_support
 
 

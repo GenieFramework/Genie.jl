@@ -1,3 +1,5 @@
+#=
+
 @safetestset "Create new app" begin
 
   testdir = pwd()
@@ -151,3 +153,5 @@
 
 
 end;
+
+=#

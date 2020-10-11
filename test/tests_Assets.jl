@@ -19,7 +19,7 @@
   @safetestset "Embedded assets" begin
     using Genie, Genie.Assets
 
-    @test channels()[1:18] == "window.Genie = {};"
+    @test Assets.channels()[1:18] == "window.Genie = {};"
     @test channels_script()[1:27] == "<script>\nwindow.Genie = {};"
 
     @test channels_support() == "<script src=\"/__/channels.js?v=$(Genie.Configuration.GENIE_VERSION)\"></script>"
