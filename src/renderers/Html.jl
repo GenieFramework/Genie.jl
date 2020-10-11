@@ -31,14 +31,14 @@ const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :articl
                           :dd, :div, :d, :dl, :dt, :figcaption, :figure, :li, :main, :ol, :p, :pre, :ul, :span,
                           :a, :abbr, :b, :bdi, :bdo, :cite, :code, :data, :dfn, :em, :i, :kbd, :mark,
                           :q, :rp, :rt, :rtc, :ruby, :s, :samp, :small, :spam, :strong, :sub, :sup, :time,
-                          :u, :var, :wrb, :audio, :map, :void, :embed, :object, :canvas, :noscript, :script,
+                          :u, :var, :wrb, :audio, :void, :embed, :object, :canvas, :noscript, :script,
                           :del, :ins, :caption, :col, :colgroup, :table, :tbody, :td, :tfoot, :th, :thead, :tr,
                           :button, :datalist, :fieldset, :label, :legend, :meter,
                           :output, :progress, :select, :option, :textarea, :details, :dialog, :menu, :menuitem, :summary,
                           :slot, :template, :blockquote, :center, :iframe] #TODO: Gumbo has a problem and strips away <template>
 const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input]
 const CUSTOM_ELEMENTS = [:form, :select]
-const NON_EXPORTED = [:main]
+const NON_EXPORTED = [:main, :map]
 
 export HTMLString, html, doc, doctype
 export @foreach, @yield, collection, view!
