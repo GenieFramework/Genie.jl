@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.7 - 2020-10-10
+
+* reexport Router
+
+
 ## v1.3 - 2020-09-29
 
 * support for running the HTTP/S and WS/S on the same port

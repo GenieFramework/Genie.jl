@@ -15,6 +15,8 @@ include("constants.jl")
 import Sockets
 import Logging, LoggingExtras
 
+using Reexport
+
 include(joinpath(@__DIR__, "genie_types.jl"))
 
 include("HTTPUtils.jl")
@@ -51,8 +53,8 @@ config.cache_storage == :File && include("cache_adapters/FileCache.jl")
 include("Sessions.jl")
 config.session_storage == :File && include("session_adapters/FileSession.jl")
 
-export serve, up, down
-
+export serve, up, down, loadapp
+@reexport using .Router
 
 """
     serve(path::String = Genie.config.server_document_root, params...; kwparams...)
