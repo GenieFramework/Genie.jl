@@ -224,17 +224,17 @@ end
 
 
 """
-    new(app_name::String, app_path::String = abspath(app_name)) :: Nothing
+    new(app_name::String, app_path::String = abspath(app_name), autostart::Bool = true) :: Nothing
 
 Creates a minimal Genie app.
 """
-function new(app_name::String, app_path::String = "") :: Nothing
+function new(app_name::String, app_path::String = "", autostart::Bool = true) :: Nothing
   app_name = validname(app_name)
   app_path = abspath(app_name)
 
   scaffold(app_name, app_path)
 
-  post_create(app_path)
+  post_create(app_path, autostart = autostart)
 
   nothing
 end
