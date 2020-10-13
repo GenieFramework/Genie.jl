@@ -464,7 +464,7 @@ function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = fals
     @error ex
   end
 
-  post_create(app_path)
+  post_create(app_path, autostart = autostart)
 
   nothing
 end
