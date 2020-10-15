@@ -85,7 +85,7 @@ julia> Genie.WebChannels.broadcast("__", "Hey!")
 true
 ```
 
-If you look in the browser's console you will the the "Hey!" message! By default, the client side handler simply outputs the message. We're also informed that we can "Overwrite window.parse_payload to handle messages from the server". Let's do it. Run this in the current REPL (it will overwrite our root route handler):
+If you look in the browser's console you will see the "Hey!" message! By default, the client side handler simply outputs the message. We're also informed that we can "Overwrite window.parse_payload to handle messages from the server". Let's do it. Run this in the current REPL (it will overwrite our root route handler):
 
 ```julia
 route("/") do
