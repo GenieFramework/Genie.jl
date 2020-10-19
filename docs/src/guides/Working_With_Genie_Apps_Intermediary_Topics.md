@@ -24,7 +24,17 @@ The first route will be used to display the page with the new book form. The sec
 Please note that it's configured to match `POST` requests and that we gave it a name. We'll use the name in our form so that Genie will dynamically generate the correct links to the corresponding URL (to avoid hard coding URLs).
 This way we'll make sure that our form will always submit to the right URL, even if we change the route (as long as we don't change the name).
 
-Now, to add the methods in `BooksController`. Add these definition under the `billgatesbooks` function (make sure you add them in `BooksController`, not in `BooksController.API`):
+Now, to add the methods in `BooksController`. Add these definition under t<!-- app/resources/books/views/billgatesbooks.jl.html -->
+<h1>Bill's Gates top $( length(@vars(:books)) ) recommended books</h1>
+<ul>
+<%
+@foreach(@vars(:books)) do book
+%>
+  <li><img src='$( isempty(book.cover) ? "img/docs.png" : book.cover )' width="100px" /> $(book.title) by $(book.author)
+<%
+end
+%>
+</ul>he `billgatesbooks` function (make sure you add them in `BooksController`, not in `BooksController.API`):
 
 ```julia
 # BooksController.jl
@@ -256,7 +266,7 @@ Great, now let's display the images. Let's start with the HTML view - please edi
 <%
 @foreach(@vars(:books)) do book
 %>
-  <li><img src='$( isempty(book.cover) ? "img/docs.png" : book.cover )' width="100px" /> $(book.title) by $(book.author)
+  <li><img src='$( isempty(book.cover) ? "img/docs.png" : book.cover )' width="100px" /> $(book.title) by $(book.author)</li>
 <%
 end
 %>
