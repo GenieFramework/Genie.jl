@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.7.4 - 2020-10-22
+
+* removed broken hooks from web sockets routing
+* better exception handling in FileSessions.jl
+* Secure => true sessions flag
+
 ## v1.7 - 2020-10-10
 
 * reexport Router

@@ -15,11 +15,19 @@ function write(session::Genie.Sessions.Session) :: Genie.Sessions.Session
     @warn "Sessions folder $(abspath(SESSIONS_PATH)) does not exist"
     @info "Creating sessions folder at $(abspath(SESSIONS_PATH))"
 
-    mkpath(SESSIONS_PATH)
+    try
+      mkpath(SESSIONS_PATH)
+    catch ex
+      @error "Can't create session storage path $SESSIONS_PATH"
+    end
   end
 
-  open(joinpath(SESSIONS_PATH, session.id), "w") do io
-    Serialization.serialize(io, session)
+  try
+    open(joinpath(SESSIONS_PATH, session.id), "w") do io
+      Serialization.serialize(io, session)
+    end
+  catch ex
+    @error "Failed to store session data"
   end
 
   session
