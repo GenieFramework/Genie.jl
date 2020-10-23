@@ -96,14 +96,35 @@ server {
   location / {
       proxy_pass http://localhost:8000/;
   }
+
+  location /css/genie {
+      proxy_pass http://localhost:8000/;
+  }
+  location /img/genie {
+      proxy_pass http://localhost:8000/;
+  }
+  location /js/genie {
+      proxy_pass http://localhost:8000/;
+  }
 }
 ```
+
+- `server_name`: refers to the web domain to be used. It can be put to an arbitrary name if the app is only to be served directly from the server public IP.
+- `root`: points to the `public` subfolder where the genie app was cloned.
+- `index`: refers to the site index (the landing page).
+- The various `location` following the initial proxy to the genie app are used to indicate static content folders to be served by nginx. These are needed when the `server_handle_static_file` is set to `false` in the Genie app settings.
 
 To make that config effective, it needs to be present in `sites-enabled`. The `default` config can be removed.
 
 ```
 sudo ln -s /etc/nginx/sites-available/my-genie-app /etc/nginx/sites-enabled/my-genie-app
 ```
+
+Then restart the server to make changes effective:
+
+```
+ sudo systemctl restart nginx
+ ```
 
 ### Enable HTTPS
 
