@@ -48,7 +48,8 @@ makedocs(
           "Working with WebSockets" => "tutorials/17--Working_with_Web_Sockets.md",
           "Force compiling route handlers" => "tutorials/80--Force_Compiling_Routes.md",
           "Deploying to Heroku with Buildpacks" => "tutorials/90--Deploying_With_Heroku_Buildpacks.md",
-          "Deploying to Heroku with Docker" => "tutorials/91--Deploying_Genie_Docker_Apps_on_Heroku.md"
+          "Deploying to Heroku with Docker" => "tutorials/91--Deploying_Genie_Docker_Apps_on_Heroku.md",
+          "Deploying to server with Nginx" => "tutorials/92--Deploying_Genie_Server_Apps_with_Nginx.md"
         ],
         "API" => [
           "App" => "API/app.md",

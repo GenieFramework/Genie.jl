@@ -2,7 +2,7 @@
 
 This tutorial shows how to host a Julia/Genie app using a Heroku Buildpack.
 
-## Prerequesites
+## Prerequisites
 
 This guide assumes you have a Heroku account and are signed into the Heroku CLI. [Information on how to setup the Heroku CLI is available here](https://devcenter.heroku.com/articles/heroku-cli).
 
