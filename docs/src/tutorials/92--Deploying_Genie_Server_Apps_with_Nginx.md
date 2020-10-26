@@ -14,11 +14,9 @@ We assume that a Genie app has been developed and is ready for deployment and th
 
 For example, the app `MyGenieApp` generated through `Genie.newapp("MyGenieApp")` being hosted at `github.com/user/MyGenieApp`.
 
-## All Steps
+The scripts presented in this tutorial are for Ubuntu 20.04.
 
-Assuming the server in running Ubuntu.
-
-### Install the and run the Genie app on the server.
+## Install and run the Genie app on the server
 
 Access the server:
 
@@ -42,7 +40,7 @@ Pkg> instantiate
 exit()
 ```
 
-In order to launch the app and exit the console without shutting down the app, we will launch it from a new screen
+In order to launch the app and exit the console without shutting down the app, we will launch it from a new screen:
 
 ```
 screen -S genie
@@ -62,7 +60,7 @@ Launch the app:
 
 Now the Genie app should be running on the server and be accessible at the following address: `123.123.123.123:8000` (if port 8000 has been open - see instance security settings). Note that only raw content will be returned as the `prod` Genie environments doesn't serve the static content (see the `Settings` option `server_handle_static_file` in `config/env/prod.jl`). Static content will be handled by nginx. We can now detach from the `genie` screen used to launch the app (Ctl+A d).
 
-### Install nginx server
+## Install and configure nginx server
 
 Nginx server will be used as a reverse proxy. It will listen requests made on port 80 (HTTP) and redirect traffic to the Genie app running on port 8000 (default Genie setting that can be changed).
 
@@ -123,10 +121,10 @@ sudo ln -s /etc/nginx/sites-available/my-genie-app /etc/nginx/sites-enabled/my-g
 Then restart the server to make changes effective:
 
 ```
- sudo systemctl restart nginx
- ```
+sudo systemctl restart nginx
+```
 
-### Enable HTTPS
+## Enable HTTPS
 
 To enable HTTP, a site-certificate will be needed for the domain on which the site will be served.
 A practical approach is to use the utilities provided by [certbot](https://certbot.eff.org/).
@@ -143,6 +141,6 @@ Then, using certbot utility, a certificate will be generated and appropriate mod
 
 ```
 sudo certbot --nginx
-````
+```
 
 Note that this steps will check for ownernship of the `test.com` domain mentionned in the nginx config file. For that validation to succeed, it requires to have the `A` record for the domain set to `123.123.123.123`.
