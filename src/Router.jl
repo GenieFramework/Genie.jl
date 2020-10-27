@@ -669,7 +669,7 @@ function extract_uri_params(uri::String, regex_route::Regex, param_names::Vector
   i = 1
   for param_name in param_names
     try
-      params.collection[Symbol(param_name)] = convert(param_types[i], matches[param_name])
+      params.collection[Symbol(param_name)] = parse(param_types[i], matches[param_name])
     catch ex
       @error "Failed to match URI params between $(param_types[i])::$(typeof(param_types[i])) and $(matches[param_name])::$(typeof(matches[param_name]))"
       @error ex
