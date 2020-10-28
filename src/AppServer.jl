@@ -70,12 +70,16 @@ function startup(port::Int, host::String = Genie.config.server_host;
 
   command = () -> begin
     HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server, sslconfig = ssl_config, http_kwargs...) do http::HTTP.Stream
-      if Genie.config.websockets_server && port == ws_port && HTTP.WebSockets.is_upgrade(http.message)
-        HTTP.WebSockets.upgrade(http) do ws
-          setup_ws_handler(http.message, ws)
+      try
+        if Genie.config.websockets_server && port == ws_port && HTTP.WebSockets.is_upgrade(http.message)
+          HTTP.WebSockets.upgrade(http) do ws
+            setup_ws_handler(http.message, ws)
+          end
+        else
+          HTTP.handle(HTTP.RequestHandlerFunction(setup_http_handler), http)
         end
-      else
-        HTTP.handle(HTTP.RequestHandlerFunction(setup_http_handler), http)
+      catch ex
+        @error ex
       end
     end
   end
@@ -209,8 +213,12 @@ end
 Configures the handler for WebSockets requests.
 """
 function setup_ws_handler(req::HTTP.Request, ws_client) :: Nothing
-  while ! eof(ws_client)
-    write(ws_client, String(Distributed.@fetch handle_ws_request(req, String(readavailable(ws_client)), ws_client)))
+  try
+    while ! eof(ws_client)
+      write(ws_client, String(Distributed.@fetch handle_ws_request(req, String(readavailable(ws_client)), ws_client)))
+    end
+  catch ex
+    @error ex
   end
 
   nothing

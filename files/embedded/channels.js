@@ -62,6 +62,12 @@ Genie.WebChannels.load_channels = function() {
 };
 
 window.addEventListener('beforeunload', function (event) {
+  console.log("Preparing to unload");
+
+  if ( Genie.Settings.webchannels_autosubscribe ) {
+    unsubscribe();
+  }
+
   if (Genie.WebChannels.channel.readyState === 1) {
     Genie.WebChannels.channel.close();
   }
@@ -89,6 +95,12 @@ Genie.WebChannels.closeHandlers.push(function(event) {
   console.log("Server closed WebSocket connection");
 });
 
+Genie.WebChannels.openHandlers.push(function(event) {
+  if ( Genie.Settings.webchannels_autosubscribe ) {
+    subscribe();
+  }
+});
+
 function parse_payload(json_data) {
   console.log("Overwrite window.parse_payload to handle messages from the server")
   console.log(json_data);
@@ -107,16 +119,4 @@ function subscribe() {
 function unsubscribe() {
   Genie.WebChannels.sendMessageTo(window.Genie.Settings.webchannels_default_route, window.Genie.Settings.webchannels_unsubscribe_channel);
   console.log("Unsubscription completed");
-};
-
-Genie.WebChannels.openHandlers.push(function(event) {
-  if ( Genie.Settings.webchannels_autosubscribe ) {
-    subscribe();
-  }
-});
-
-window.onbeforeunload = function() {
-  if ( Genie.Settings.webchannels_autosubscribe ) {
-    unsubscribe();
-  }
 };

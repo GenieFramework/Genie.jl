@@ -207,13 +207,16 @@ end
 """
 Pushes `msg` (and `payload`) to all the clients subscribed to the channels in `channels`.
 """
-function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String) :: Bool
+function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String;
+                    except::Union{HTTP.WebSockets.WebSocket,Nothing} = nothing) :: Bool
   isa(channels, Array) || (channels = ChannelName[channels])
 
   for channel in channels
     haskey(SUBSCRIPTIONS, channel) || throw(ChannelNotFoundException(channel))
 
     for client in SUBSCRIPTIONS[channel]
+      client !== nothing && client == except && continue
+
       try
         message(client, msg)
       catch ex
@@ -228,11 +231,11 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String
   isa(channels, Array) || (channels = [channels])
 
   for channel in channels
-    in(channel, keys(SUBSCRIPTIONS)) || continue
+    haskey(SUBSCRIPTIONS, channel) || throw(ChannelNotFoundException(channel))
 
     for client in SUBSCRIPTIONS[channel]
       try
-        message(client, ChannelMessage(channel, client, msg, payload) |> Renderer.JSONParser.json)
+        message(client, ChannelMessage(channel, client, msg, payload) |> Renderer.Json.JSONParser.json)
       catch ex
         @error ex
       end
