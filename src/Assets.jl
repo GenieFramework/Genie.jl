@@ -147,13 +147,14 @@ Provides full web channels support, setting up routes for loading support JS fil
 returning the `<script>` tag for including the linked JS file into the web page.
 """
 function channels_support(channel::String = Genie.config.webchannels_default_route) :: String
-  Router.route("/js/$(Genie.config.webchannels_js_file)") do
+  endpoint = channel == Genie.config.webchannels_default_route ? "/js/$(Genie.config.webchannels_js_file)" : "/js/$(channel)/$(Genie.config.webchannels_js_file)"
+  Router.route(endpoint) do
     Genie.Renderer.Js.js(channels(channel))
   end
 
   channels_subscribe(channel)
 
-  "<script src=\"/js/$(Genie.config.webchannels_js_file)?v=$(Genie.Configuration.GENIE_VERSION)\"></script>"
+  "<script src=\"$(endpoint)?v=$(Genie.Configuration.GENIE_VERSION)\"></script>"
 end
 
 
