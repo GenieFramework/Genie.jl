@@ -4,6 +4,7 @@ module Docker
 
 import Genie, Genie.FileTemplates
 
+const DOCKER = @static Sys.islinux() ? `sudo docker` : `docker`
 
 """
     dockerfile(path::String = "."; user::String = "genie", env::String = "dev",
@@ -44,7 +45,7 @@ end
 Builds the Docker image based on the `Dockerfile`
 """
 function build(path::String = "."; appname::String = "genie")
-  `docker build -t "$appname" $path` |> Base.run
+  `$DOCKER build -t "$appname" $path` |> Base.run
 
   "Docker container successfully built" |> println
 end
@@ -86,9 +87,10 @@ function run(; containername::String = "genieapp", hostport::Int = 80, container
   push!(options, image)
   isempty(command) || push!(options, command)
 
-  "Starting docker container with `docker run $(join(options, " "))`" |> println
+  docker_command = replace(string(DOCKER), "`" => "")
+  "Starting docker container with `$docker_command run $(join(options, " "))`" |> println
 
-  `docker run $options` |> Base.run
+  `$DOCKER run $options` |> Base.run
 end
 
 end # end module Docker
