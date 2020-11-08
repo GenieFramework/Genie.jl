@@ -22,8 +22,8 @@
     @test Assets.channels()[1:18] == "window.Genie = {};"
     @test channels_script()[1:27] == "<script>\nwindow.Genie = {};"
 
-    @test channels_support() == "<script src=\"/__/channels.js?v=$(Genie.Configuration.GENIE_VERSION)\"></script>"
-    @test Genie.Router.routes()[1].path == "/__/channels.js"
+    @test channels_support() == "<script src=\"/js/channels.js?v=$(Genie.Configuration.GENIE_VERSION)\"></script>"
+    @test Genie.Router.routes()[1].path == "/js/channels.js"
     @test Genie.Router.channels()[1].path == "/__/unsubscribe"
     @test Genie.Router.channels()[2].path == "/__/subscribe"
 
