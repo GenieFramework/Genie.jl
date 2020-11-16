@@ -40,6 +40,14 @@ const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :pa
 const CUSTOM_ELEMENTS = [:form, :select]
 const NON_EXPORTED = [:main, :map]
 
+const SVG_ELEMENTS = [:animate, :circle, :animateMotion, :animateTransform, :clipPath, :defs, :desc, :discard,
+                      :ellipse, :feComponentTransfer, :feComposite, :feDiffuseLighting, :feDisplacementMap, :feBlend, :feColorMatrix,
+                      :feConvolveMatrix, :feDisplacementMap, :feDistantLight, :feDropShadow, :feFlood, :feFuncA, :feFuncB, :feFuncG,
+                      :feFuncR, :feGaussianBlur, :feImage, :feMerge, :feMergeNode, :feMorphology, :feOffset, :fePointLight, :feSpecularLighting,
+                      :feSpotLight, :feTile, :feTurbulence, :filter, :foreignObject, :g, :hatch, :hatchpath, :image, :line, :linearGradient,
+                      :marker, :mask, :metadata, :mpath, :path, :pattern, :polygon, :polyline, :radialGradient, :rect, :set, :stop, :svg,
+                      :switch, :symbol, :text, :textPath, :tspan, :use, :view]
+
 export HTMLString, html, doc, doctype
 export @foreach, @yield, collection, view!
 export partial, template
@@ -731,6 +739,18 @@ function register_elements(; context = @__MODULE__) :: Nothing
   end
 
   nothing
+end
+
+
+"""
+    register_svg_slements(; context = @__MODULE__) :: Nothing
+
+Sets up HTML tags for the SVG API.
+"""
+function register_svg_slements(; context = @__MODULE__) :: Nothing
+  for elem in SVG_ELEMENTS
+    register_normal_element(elem)
+  end
 end
 
 
