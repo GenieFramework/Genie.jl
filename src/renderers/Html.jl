@@ -167,8 +167,8 @@ end
 
 Cleans up problematic characters or DOM elements.
 """
-function normalize_element(elem::String)
-  replace(string(lowercase(elem)), Genie.config.html_parser_char_dash=>"-")
+function normalize_element(elem::String) :: String
+  replace(elem, Genie.config.html_parser_char_dash=>"-")
 end
 
 
@@ -177,8 +177,9 @@ end
 
 Replaces `-` with the char defined to replace dashes, as Julia does not support them in names.
 """
-function denormalize_element(elem::String)
-  elem = replace(string(lowercase(elem)), "-"=>Genie.config.html_parser_char_dash)
+function denormalize_element(elem::String) :: String
+  uppercase(elem) == elem && (elem = lowercase(elem))
+  elem = replace(elem, "-"=>Genie.config.html_parser_char_dash)
   endswith(elem, "_") ? elem[1:end-1] : elem
 end
 

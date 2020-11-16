@@ -13,6 +13,9 @@
 
     Html.register_svg_slements()
     @test svg() == "<svg></svg>"
+
+    @test_throws UndefVarError clippath()
+    @test clipPath() == "<clipPath></clipPath>"
   end;
 
 end;
