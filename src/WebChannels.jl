@@ -215,7 +215,7 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String
     haskey(SUBSCRIPTIONS, channel) || throw(ChannelNotFoundException(channel))
 
     for client in SUBSCRIPTIONS[channel]
-      client !== nothing && client == except && continue
+      except !== nothing && client == id(except) && continue
 
       try
         message(client, msg)
