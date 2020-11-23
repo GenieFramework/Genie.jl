@@ -137,7 +137,7 @@ end
 
 ###
 
-function get_multiform_parts!(http_data::Vector{UInt8}, formParts::Array{HttpFormPart}, boundary, boundaryLength::Int64 = length(boundary))
+function get_multiform_parts!(http_data::Vector{UInt8}, formParts::Array{HttpFormPart}, boundary, boundaryLength::Int = length(boundary))
   ### Go through each byte of data, parsing it into POST data and files.
 
   # According to the spec, the boundary chosen by the client must be a unique string
@@ -154,7 +154,7 @@ function get_multiform_parts!(http_data::Vector{UInt8}, formParts::Array{HttpFor
   foundBoundary::Bool = false
   foundFinalBoundary::Bool = false
 
-  bytes::Int64 = length(http_data)
+  bytes::Int = length(http_data)
 
   byteIndexOffset::Int = 0
   testIndex::Int = 1
