@@ -54,6 +54,17 @@ function startup(port::Int, host::String = Genie.config.server_host;
                   open_browser::Bool = false,
                   http_kwargs...) :: ServersCollection
 
+  if server !== nothing
+    try
+      socket_info = Sockets.getsockname(server)
+      port = Int(socket_info[2])
+      host = string(socket_info[1])
+    catch ex
+      @error "Failed parsing `server` parameter info."
+      @error ex
+    end
+  end
+
   update_config(port, host, ws_port)
 
   if Genie.config.websockets_server && port != ws_port
@@ -85,7 +96,6 @@ function startup(port::Int, host::String = Genie.config.server_host;
   end
 
   server_url = "$( (ssl_config !== nothing && Genie.config.ssl_enabled) ? "https" : "http" )://$host:$port"
-
 
   status = if async
     @async command()
@@ -231,7 +241,7 @@ end
 Http server handler function - invoked when the server gets a request.
 """
 function handle_ws_request(req::HTTP.Request, msg::String, ws_client, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: String
-  msg == "" && return "" # keep alive
+  isempty(msg) && return "" # keep alive
   Genie.Router.route_ws_request(req, msg, ws_client, ip)
 end
 
