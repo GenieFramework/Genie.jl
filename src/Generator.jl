@@ -234,7 +234,7 @@ function new(app_name::String, app_path::String = "", autostart::Bool = true) ::
 
   scaffold(app_name, app_path)
 
-  post_create(app_path, autostart = autostart)
+  post_create(app_name, app_path; autostart = autostart)
 
   nothing
 end
@@ -346,13 +346,23 @@ end
 
 Installs the application's dependencies using Julia's Pkg
 """
-function install_app_dependencies(app_path::String = "."; testmode::Bool = false) :: Nothing
+function install_app_dependencies(app_path::String = "."; testmode::Bool = false, dbsupport::Bool = false) :: Nothing
   @info "Installing app dependencies"
   Pkg.activate(".")
 
   testmode ? Pkg.develop("Genie") : Pkg.add("Genie")
-  Pkg.add("LoggingExtras")
-  Pkg.add("MbedTLS")
+  Pkg.add([
+    "Dates",
+    "Logging",
+    "LoggingExtras",
+    "MbedTLS",
+    "Pkg",
+    "Sockets",
+    "Test"
+  ])
+  if dbsupport
+    Pkg.add("SearchLight")
+  end
 
   nothing
 end
@@ -398,6 +408,29 @@ function remove_searchlight_initializer(app_path::String = ".") :: Nothing
   rm(joinpath(app_path, Genie.config.path_initializers, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME), force = true)
 
   nothing
+end
+
+
+"""
+    generate_project(name)
+
+Generate the `Project.toml` with a name and a uuid.
+
+If this file already exists, generate `Project_sample.toml` as a reference instead.
+"""
+function generate_project(name::String)
+  mktempdir() do tmpdir
+    tmp = joinpath(tmpdir, name, "Project.toml")
+    Pkg.project(Pkg.API.Context(), name, tmpdir) # generate tmp
+    if !isfile("Project.toml")
+      mv(tmp, "Project.toml") # move tmp here
+      @info "Project.toml has been generated"
+    else
+      mv(tmp, "Project_sample.toml"; force=true)
+      @warn "$(abspath("."))/Project.toml already exists and will not be replaced. " *
+        "Make sure that it specifies a name and a uuid, using Project_sample.toml as a reference."
+    end
+  end # remove tmpdir on completion
 end
 
 
@@ -464,19 +497,20 @@ function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = fals
     @error ex
   end
 
-  post_create(app_path, autostart = autostart)
+  post_create(app_name, app_path; autostart = autostart, dbsupport = dbsupport)
 
   nothing
 end
 
 
-function post_create(app_path::String; autostart::Bool = true, testmode::Bool = false)
+function post_create(app_name::String, app_path::String; autostart::Bool = true, testmode::Bool = false, dbsupport::Bool = false)
   @info "Done! New app created at $app_path"
 
   @info "Changing active directory to $app_path"
   cd(app_path)
 
-  install_app_dependencies(app_path, testmode = testmode)
+  generate_project(app_name)
+  install_app_dependencies(app_path, testmode = testmode, dbsupport = dbsupport)
 
   autostart_app(app_path, autostart = autostart)
 
