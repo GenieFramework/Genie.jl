@@ -419,6 +419,7 @@ Generate the `Project.toml` with a name and a uuid.
 If this file already exists, generate `Project_sample.toml` as a reference instead.
 """
 function generate_project(name::String)
+  name = Genie.FileTemplates.appmodule(name)[1] # convert to camel case
   mktempdir() do tmpdir
     tmp = joinpath(tmpdir, name, "Project.toml")
     Pkg.project(Pkg.API.Context(), name, tmpdir) # generate tmp
@@ -497,7 +498,7 @@ function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = fals
     @error ex
   end
 
-  post_create(app_name, app_path; autostart = autostart, dbsupport = dbsupport)
+  post_create(app_name, app_path; autostart = autostart, dbsupport = dbsupport, testmode = testmode)
 
   nothing
 end
