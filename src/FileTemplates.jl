@@ -65,22 +65,23 @@ function appmodule(path::String)
   path = replace(path, "-"=>"_") |> strip
   appname = split(path, "/", keepempty = false)[end] |> String |> Inflector.from_underscores
 
-  content = """
-  module $appname
+  content =
+    """
+    module $appname
 
-  using Logging, LoggingExtras
+    using Genie, Logging, LoggingExtras
 
-  function main()
-    Base.eval(Main, :(const UserApp = $appname))
+    function main()
+      Base.eval(Main, :(const UserApp = $appname))
 
-    include(joinpath("..", "genie.jl"))
+      Genie.genie()
 
-    Base.eval(Main, :(const Genie = $appname.Genie))
-    Base.eval(Main, :(using Genie))
-  end; main()
+      Base.eval(Main, :(const Genie = $appname.Genie))
+      Base.eval(Main, :(using Genie))
+    end
 
-  end
-  """
+    end
+    """
 
   (appname, content)
 end

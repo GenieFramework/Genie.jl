@@ -126,19 +126,19 @@ Creates the bin/server and bin/repl binaries for Windows
 """
 function setup_windows_bin_files(path::String = ".") :: Nothing
   open(joinpath(path, Genie.config.path_bin, "repl.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) %*")
+    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) %*")
   end
 
   open(joinpath(path, Genie.config.path_bin, "server.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) s %*")
+    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) s %*")
   end
 
   open(joinpath(path, Genie.config.path_bin, "serverinteractive.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) si %*")
+    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) si %*")
   end
 
   open(joinpath(path, Genie.config.path_bin, "runtask.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -- ../$(Genie.BOOTSTRAP_FILE_NAME) -r %*")
+    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -- ../$(Genie.BOOTSTRAP_FILE_NAME) -r %*")
   end
 
   nothing
@@ -326,15 +326,20 @@ function write_app_custom_files(path::String, app_path::String) :: Nothing
 
   open(joinpath(app_path, Genie.BOOTSTRAP_FILE_NAME), "w") do f
     write(f,
-    """
-      cd(@__DIR__)
-      import Pkg
-      Pkg.activate(".")
+      """
+      using $(moduleinfo[1])
+      $(moduleinfo[1]).main()
+      """)
+  end
 
-      function main()
-        include(joinpath("$(Genie.config.path_src)", "$(moduleinfo[1]).jl"))
-      end; main()
-    """)
+  open(joinpath(app_path, "test", "runtests.jl"), "w") do f
+    write(f,
+      """
+      using $(moduleinfo[1]), Test
+
+      # implement your tests here
+      @test 1 == 1
+      """)
   end
 
   nothing
@@ -350,19 +355,25 @@ function install_app_dependencies(app_path::String = "."; testmode::Bool = false
   @info "Installing app dependencies"
   Pkg.activate(".")
 
-  testmode ? Pkg.develop("Genie") : Pkg.add("Genie")
-  Pkg.add([
-    "Dates",
-    "Logging",
-    "LoggingExtras",
-    "MbedTLS",
-    "Pkg",
-    "Sockets",
-    "Test"
-  ])
-  if dbsupport
-    Pkg.add("SearchLight")
+  pkgs = ["Logging", "LoggingExtras", "MbedTLS"]
+  if testmode
+    Pkg.develop("Genie")
+  else
+    push!(pkgs, "Genie")
   end
+  if dbsupport
+    push!(pkgs, "SearchLight")
+  end
+  Pkg.add(pkgs)
+
+  @info "Installing dependencies for unit tests"
+  push!(pkgs, "Test")
+  if !in("Genie", pkgs)
+    push!(pkgs, "Genie")
+  end
+  Pkg.activate("test")
+  Pkg.add(pkgs)
+  Pkg.activate(".") # return to the main project
 
   nothing
 end
