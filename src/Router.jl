@@ -660,6 +660,9 @@ function parse_channel(channel::String) :: Tuple{String,Vector{String},Vector{An
   "/" * join(parts, "/"), param_names, param_types
 end
 
+_parse_param(param_type::Type{<:Number}, param::AbstractString) = parse(param_type, param)
+_parse_param(param_type::Type{T}, param::S) where {T, S} = convert(param_type, param)
+_parse_param(param_type::Type{Any}, param) = param
 
 """
     extract_uri_params(uri::String, regex_route::Regex, param_names::Vector{String}, param_types::Vector{Any}, params::Params) :: Bool
@@ -672,7 +675,7 @@ function extract_uri_params(uri::String, regex_route::Regex, param_names::Vector
   i = 1
   for param_name in param_names
     try
-      params.collection[Symbol(param_name)] = parse(param_types[i], matches[param_name])
+      params.collection[Symbol(param_name)] = _parse_param(param_types[i], matches[param_name])
     catch ex
       @error "Failed to match URI params between $(param_types[i])::$(typeof(param_types[i])) and $(matches[param_name])::$(typeof(matches[param_name]))"
       @error ex
