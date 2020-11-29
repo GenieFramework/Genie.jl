@@ -1,2 +1,2 @@
 #!/bin/sh
-julia --color=yes --depwarn=no -q -L bootstrap.jl -- "$@"
+julia --color=yes --depwarn=no --project=@. -q -L bootstrap.jl -- "$@"
