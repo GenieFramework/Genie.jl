@@ -662,7 +662,6 @@ end
 
 _parse_param(param_type::Type{<:Number}, param::AbstractString) = parse(param_type, param)
 _parse_param(param_type::Type{T}, param::S) where {T, S} = convert(param_type, param)
-_parse_param(param_type::Type{Any}, param) = param
 
 """
     extract_uri_params(uri::String, regex_route::Regex, param_names::Vector{String}, param_types::Vector{Any}, params::Params) :: Bool
