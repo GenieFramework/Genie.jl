@@ -137,8 +137,8 @@ The files are set up with `Revise` to be automatically reloaded.
 function load_configurations(root_dir::String = Genie.config.path_config; context::Union{Module,Nothing} = nothing) :: Nothing
   secrets_path = joinpath(root_dir, Genie.SECRETS_FILE_NAME)
   isfile(secrets_path) && Revise.includet(default_context(context), secrets_path)
-
-  nothing
+  Genie.secret_token() # emits a warning and re-generates the token if the content of secrets_path is not valid
+  return nothing
 end
 
 
@@ -191,31 +191,45 @@ function load_routes_definitions(routes_file::String = Genie.ROUTES_FILE_NAME; c
 end
 
 
+const SECRET_TOKEN = Ref{String}("") # global state
+
 """
     secret_token(; context::Union{Module,Nothing} = nothing) :: String
 
-Wrapper around /config/secrets.jl SECRET_TOKEN `const`.
-Sets up the secret token used in the app for encryption and salting.
-If there isn't a valid secrets file, a temporary secret token is generated for the current session only.
+Return the secret token used in the app for encryption and salting.
+
+Usually, this token is defined through `Genie.secret_token!` in the `config/secrets.jl` file.
+If no token is defined, a new one is generated for the current session only.
 """
-function secret_token(; context::Union{Module,Nothing} = nothing) :: String
-  context = default_context(context)
-
-  if isdefined(context, :SECRET_TOKEN) && ! isempty(context.SECRET_TOKEN)
-    context.SECRET_TOKEN
-  else
-    @warn "
-          The SECRET_TOKEN is not configured. The SECRET_TOKEN is used for hashing and encrypting/decrypting
-          sensitive data in Genie, including cookie and session data.
-
-          If your app relies on cookies or sessions make sure you generate a valid SECRET_TOKEN otherwise
-          the encrypted data will become unreadable between app restarts.
-
-          You can generate a new secrets.jl file with a random SECRET_TOKEN using `Genie.Generator.write_secrets_file()`.
-          "
-
-    SECRET_TOKEN = Generator.secret_token()
+function secret_token(; context::Union{Module,Nothing} = nothing)
+  if context != nothing
+    @warn "secret_token not context-dependent any more; the context argument is deprecated"
   end
+  if isempty(SECRET_TOKEN[])
+    @warn "
+          No secret token is defined through `Genie.secret_token!(\"token\")`. Such a token
+          is needed to hash and to encrypt/decrypt sensitive data in Genie, including cookie
+          and session data.
+
+          If your app relies on cookies or sessions make sure you generate a valid token,
+          otherwise the encrypted data will become unreadable between app restarts.
+
+          You can resolve this issue by generating a valid `config/secrets.jl` file with a
+          random token, calling `Genie.Generator.write_secrets_file()`.
+          "
+    secret_token!()
+  end
+  return SECRET_TOKEN[]
+end
+
+"""
+    secret_token!(value=Generator.secret_token())
+
+Define the secret token used in the app for encryption and salting.
+"""
+function secret_token!(value::String=Generator.secret_token())
+  SECRET_TOKEN[] = value
+  return value
 end
 
 
@@ -250,7 +264,6 @@ function load(; context::Union{Module,Nothing} = nothing) :: Nothing
 
   load_configurations(context = context)
 
-  global SECRET_TOKEN = secret_token(context = context)
   global ASSET_FINGERPRINT = App.ASSET_FINGERPRINT
 
   replprint("initializers", t, clearline = 0, prefix = "Loading ")

@@ -41,29 +41,17 @@ end
 Generates a pair of key32 and iv16 with salt for encryption/decryption
 """
 function encryption_sauce() :: Tuple{Vector{UInt8},Vector{UInt8}}
-  if ! isdefined(Genie, :SECRET_TOKEN)
-    @error "Encryption error: Genie.SECRET_TOKEN not defined"
-
-    if ! Genie.Configuration.isprod()
-      @warn "Generating temporary secret token"
-      Core.eval(Genie, :(const SECRET_TOKEN = $(Genie.Generator.secret_token())))
+  if length(Genie.secret_token()) < 64
+    if !Genie.Configuration.isprod()
+      @error "Invalid Genie.secret_token() with less than 64 characters; using a temporary token"
+      Genie.secret_token!()
     else
-      error("Can't encrypt - please make sure you run a Genie project and SECRET_TOKEN is defined in config/secrets.jl")
-    end
-  elseif length(Genie.SECRET_TOKEN) < 64
-    @error "Encryption error: Invalid Genie.SECRET_TOKEN"
-
-    if ! Genie.Configuration.isprod()
-      @warn "Regenerating temporary secret token"
-      Core.eval(Genie, :(SECRET_TOKEN = $(Genie.Generator.secret_token())))
-    else
-      error("Can't encrypt - please make sure you run a Genie project and SECRET_TOKEN is defined in config/secrets.jl")
+      error("Can't encrypt - make sure that secret_token!(token) is called in config/secrets.jl")
     end
   end
-
-  passwd = Genie.SECRET_TOKEN[1:32]
-  salt = hex2bytes(Genie.SECRET_TOKEN[33:64])
-
+  token = Genie.secret_token()
+  passwd = token[1:32]
+  salt = hex2bytes(token[33:64])
   Nettle.gen_key32_iv16(Vector{UInt8}(passwd), salt)
 end
 

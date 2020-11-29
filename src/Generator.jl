@@ -187,7 +187,7 @@ end
 """
     secret_token() :: String
 
-Generates a random secret token to be used for configuring the SECRET_TOKEN const.
+Generates a random secret token to be used for configuring the call to `Genie.secret_token!`.
 """
 function secret_token() :: String
   SHA.sha256("$(randn()) $(Dates.now())") |> bytes2hex
@@ -195,14 +195,16 @@ end
 
 
 """
-Generates a valid secrets.jl file with a random SECRET_TOKEN.
+    write_secrets_file(app_path=".")
+
+Generates a valid `config/secrets.jl` file with a random secret token.
 """
 function write_secrets_file(app_path::String = ".") :: Nothing
   secrets_path = joinpath(app_path, Genie.config.path_config)
   ispath(secrets_path) || mkpath(secrets_path)
 
   open(joinpath(secrets_path, Genie.SECRETS_FILE_NAME), "w") do f
-    write(f, """const SECRET_TOKEN = "$(secret_token())" """)
+    write(f, """Genie.secret_token!("$(secret_token())") """)
   end
 
   nothing
@@ -464,7 +466,7 @@ function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = fals
     @error ex
   end
 
-  post_create(app_path, autostart = autostart)
+  post_create(app_path; autostart = autostart, testmode = testmode)
 
   nothing
 end
