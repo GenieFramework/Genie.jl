@@ -137,7 +137,19 @@ The files are set up with `Revise` to be automatically reloaded.
 function load_configurations(root_dir::String = Genie.config.path_config; context::Union{Module,Nothing} = nothing) :: Nothing
   secrets_path = joinpath(root_dir, Genie.SECRETS_FILE_NAME)
   isfile(secrets_path) && Revise.includet(default_context(context), secrets_path)
-  Genie.secret_token() # emits a warning and re-generates the token if the content of secrets_path is not valid
+
+  # check that the secrets_path has called Genie.secret_token!
+  if isempty(Genie.secret_token(false)) # do not generate a temporary token in this check
+    match_deprecated = match(r"SECRET_TOKEN\s*=\s*\"(.*)\"", readline(secrets_path))
+    if match_deprecated != nothing # does the file use the deprecated syntax?
+      Genie.secret_token!(match_deprecated.captures[1]) # resolve the issue for now
+      @warn "
+        $(secrets_path) is using a deprecated syntax to set the secret token.
+        Call Genie.Generator.migrate_secrets_file() to resolve this warning.
+      "
+    end
+    Genie.secret_token() # emits a warning and re-generates the token if secrets_path is not valid
+  end
   return nothing
 end
 
@@ -194,18 +206,19 @@ end
 const SECRET_TOKEN = Ref{String}("") # global state
 
 """
-    secret_token(; context::Union{Module,Nothing} = nothing) :: String
+    secret_token(generate_if_missing=true) :: String
 
 Return the secret token used in the app for encryption and salting.
 
 Usually, this token is defined through `Genie.secret_token!` in the `config/secrets.jl` file.
-If no token is defined, a new one is generated for the current session only.
+Here, a temporary one is generated for the current session if no other token is defined and
+`generate_if_missing` is true.
 """
-function secret_token(; context::Union{Module,Nothing} = nothing)
+function secret_token(generate_if_missing::Bool=true; context::Union{Module,Nothing}=nothing)
   if context != nothing
     @warn "secret_token not context-dependent any more; the context argument is deprecated"
   end
-  if isempty(SECRET_TOKEN[])
+  if isempty(SECRET_TOKEN[]) && generate_if_missing
     @warn "
           No secret token is defined through `Genie.secret_token!(\"token\")`. Such a token
           is needed to hash and to encrypt/decrypt sensitive data in Genie, including cookie
@@ -227,7 +240,7 @@ end
 
 Define the secret token used in the app for encryption and salting.
 """
-function secret_token!(value::String=Generator.secret_token())
+function secret_token!(value::AbstractString=Generator.secret_token())
   SECRET_TOKEN[] = value
   return value
 end
