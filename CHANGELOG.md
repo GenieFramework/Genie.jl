@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.9.1 - 2020-12-02
+
+* generation of testable Genie apps
+* better loading of secrets
+* bug fixes
+
 ## v1.7.4 - 2020-10-22
 
 * removed broken hooks from web sockets routing
@@ -9,7 +15,6 @@
 ## v1.7 - 2020-10-10
 
 * reexport Router
-
 
 ## v1.3 - 2020-09-29
 
