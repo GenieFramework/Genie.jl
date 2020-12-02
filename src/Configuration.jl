@@ -17,7 +17,12 @@ pkginfo(pkg::String) = filter(x -> x.name == pkg && x.is_direct_dep, values(Pkg.
 
 References the current Genie version number.
 """
-const GENIE_VERSION = pkginfo("Genie")[1].version
+const GENIE_VERSION = try
+  pkginfo("Genie")[1].version
+catch _
+  @error "Can't determine Genie version"
+  v"1"
+end
 
 import Logging
 import Genie
