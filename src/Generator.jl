@@ -187,7 +187,7 @@ end
 """
     secret_token() :: String
 
-Generates a random secret token to be used for configuring the SECRET_TOKEN const.
+Generates a random secret token to be used for configuring the call to `Genie.secret_token!`.
 """
 function secret_token() :: String
   SHA.sha256("$(randn()) $(Dates.now())") |> bytes2hex
@@ -195,17 +195,50 @@ end
 
 
 """
-Generates a valid secrets.jl file with a random SECRET_TOKEN.
+    write_secrets_file(app_path=".")
+
+Generates a valid `config/secrets.jl` file with a random secret token.
 """
 function write_secrets_file(app_path::String = ".") :: Nothing
   secrets_path = joinpath(app_path, Genie.config.path_config)
   ispath(secrets_path) || mkpath(secrets_path)
 
   open(joinpath(secrets_path, Genie.SECRETS_FILE_NAME), "w") do f
-    write(f, """const SECRET_TOKEN = "$(secret_token())" """)
+    write(f, """Genie.secret_token!("$(secret_token())") """)
   end
 
   nothing
+end
+
+"""
+    migrate_secrets_file(app_path=".")
+
+Replace the previous content of `config/secrets.jl` with the new syntax but the same token.
+
+Specifically, the previous syntax of the file is the following, which is now deprecated:
+
+    const SECRET_TOKEN = "token"
+
+This syntax is replaced by the new syntax:
+
+    Genie.secret_token!("token")
+"""
+function migrate_secrets_file(app_path::String = ".") :: Nothing
+  secrets_path = joinpath(app_path, Genie.config.path_config, Genie.SECRETS_FILE_NAME)
+  if isfile(secrets_path)
+    match_deprecated = match(r"SECRET_TOKEN\s*=\s*\"(.*)\"", readline(secrets_path))
+    if match_deprecated != nothing # does the file use the deprecated syntax?
+      open(secrets_path, "w") do f
+        write(f, """Genie.secret_token!("$(match_deprecated.captures[1])") """)
+      end # replace the previous content of the file
+      @info "Successfully migrated $(secrets_path) to a valid syntax."
+    else
+      error("No migration possible; $(secrets_path) is not using a migrate-able syntax.")
+    end
+  else
+    error("No migration possible; $(secrets_path) is not a file.")
+  end
+  return nothing
 end
 
 
@@ -464,7 +497,7 @@ function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = fals
     @error ex
   end
 
-  post_create(app_path, autostart = autostart)
+  post_create(app_path; autostart = autostart, testmode = testmode)
 
   nothing
 end

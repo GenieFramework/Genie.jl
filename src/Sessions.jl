@@ -23,8 +23,8 @@ export Session
 struct InvalidSessionIdException <: Exception
   msg::String
 end
-
-InvalidSessionIdException() = InvalidSessionIdException("Can't compute session id - please make sure SECRET_TOKEN is defined in config/secrets.jl")
+InvalidSessionIdException() =
+  InvalidSessionIdException("Can't compute session id - make sure that secret_token!(token) is called in config/secrets.jl")
 
 
 """
@@ -33,19 +33,22 @@ InvalidSessionIdException() = InvalidSessionIdException("Can't compute session i
 Generates a new session id.
 """
 function id() :: String
-  if ! isdefined(Genie, :SECRET_TOKEN)
-    @error "Session error"
-
-    if ! Genie.Configuration.isprod()
-      @warn "Generating temporary secret token"
-      Core.eval(Genie, :(const SECRET_TOKEN = $(Genie.Generator.secret_token())))
+  if isempty(Genie.secret_token())
+    if !Genie.Configuration.isprod()
+      @error "Empty Genie.secret_token(); using a temporary token"
+      Genie.secret_token!()
     else
       throw(InvalidSessionIdException())
     end
   end
 
   try
-    Genie.SECRET_TOKEN * ":" * bytes2hex(SHA.sha1(string(Dates.now()))) * ":" * string(rand()) * ":" * string(hash(Genie)) |> SHA.sha256 |> bytes2hex
+    return join([
+      Genie.secret_token(),
+      bytes2hex(SHA.sha1(string(Dates.now()))),
+      string(rand()),
+      string(hash(Genie))
+    ], ":") |> SHA.sha256 |> bytes2hex
   catch ex
     @error ex
     throw(InvalidSessionIdException())
