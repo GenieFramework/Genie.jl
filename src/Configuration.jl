@@ -3,12 +3,21 @@ Core genie configuration / settings functionality.
 """
 module Configuration
 
+import Pkg
+
 """
-  const GENIE_VERSION
+    pkginfo(pkg::String)
+
+Returns installed package information for `pkg`
+"""
+pkginfo(pkg::String) = filter(x -> x.name == pkg && x.is_direct_dep, values(Pkg.dependencies()) |> collect)
+
+"""
+    const GENIE_VERSION
 
 References the current Genie version number.
 """
-const GENIE_VERSION = v"1.9"
+const GENIE_VERSION = pkginfo("Genie")[1].version
 
 import Logging
 import Genie
