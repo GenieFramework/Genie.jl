@@ -74,7 +74,7 @@ function appmodule(path::String)
     function main()
       Base.eval(Main, :(const UserApp = $appname))
 
-      Genie.genie()
+      Genie.genie(; context = @__MODULE__)
 
       Base.eval(Main, :(const Genie = $appname.Genie))
       Base.eval(Main, :(using Genie))

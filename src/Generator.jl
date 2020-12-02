@@ -126,19 +126,19 @@ Creates the bin/server and bin/repl binaries for Windows
 """
 function setup_windows_bin_files(path::String = ".") :: Nothing
   open(joinpath(path, Genie.config.path_bin, "repl.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) %*")
+    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -i -- $(Genie.BOOTSTRAP_FILE_NAME) %*")
   end
 
   open(joinpath(path, Genie.config.path_bin, "server.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) s %*")
+    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -i -- $(Genie.BOOTSTRAP_FILE_NAME) s %*")
   end
 
   open(joinpath(path, Genie.config.path_bin, "serverinteractive.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) si %*")
+    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -i -- $(Genie.BOOTSTRAP_FILE_NAME) si %*")
   end
 
   open(joinpath(path, Genie.config.path_bin, "runtask.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -- ../$(Genie.BOOTSTRAP_FILE_NAME) -r %*")
+    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -- $(Genie.BOOTSTRAP_FILE_NAME) -r %*")
   end
 
   nothing
@@ -153,6 +153,8 @@ Creates the bin/server and bin/repl binaries for *nix systems
 function setup_nix_bin_files(app_path::String = ".") :: Nothing
   chmod(joinpath(app_path, Genie.config.path_bin, "server"), 0o700)
   chmod(joinpath(app_path, Genie.config.path_bin, "repl"), 0o700)
+  chmod(joinpath(app_path, Genie.config.path_bin, "runtask"), 0o700)
+  chmod(joinpath(app_path, Genie.config.path_bin, "serverinteractive"), 0o700)
 
   nothing
 end
@@ -332,6 +334,7 @@ function write_app_custom_files(path::String, app_path::String) :: Nothing
       """)
   end
 
+  isdir(joinpath(app_path, "test")) || mkpath(joinpath(app_path, "test"))
   open(joinpath(app_path, "test", "runtests.jl"), "w") do f
     write(f,
       """
@@ -355,24 +358,18 @@ function install_app_dependencies(app_path::String = "."; testmode::Bool = false
   @info "Installing app dependencies"
   Pkg.activate(".")
 
-  pkgs = ["Logging", "LoggingExtras", "MbedTLS"]
-  if testmode
-    Pkg.develop("Genie")
-  else
-    push!(pkgs, "Genie")
-  end
-  if dbsupport
-    push!(pkgs, "SearchLight")
-  end
-  Pkg.add(pkgs)
+  pkgs = ["Dates", "Logging", "LoggingExtras", "MbedTLS"]
+
+  testmode ? Pkg.develop("Genie") : push!(pkgs, "Genie")
+
+  dbsupport ? push!(pkgs, "SearchLight") : Pkg.add(pkgs)
 
   @info "Installing dependencies for unit tests"
-  push!(pkgs, "Test")
-  if !in("Genie", pkgs)
-    push!(pkgs, "Genie")
-  end
+
   Pkg.activate("test")
-  Pkg.add(pkgs)
+
+  Pkg.add("Test")
+
   Pkg.activate(".") # return to the main project
 
   nothing
@@ -429,11 +426,14 @@ Generate the `Project.toml` with a name and a uuid.
 
 If this file already exists, generate `Project_sample.toml` as a reference instead.
 """
-function generate_project(name::String)
+function generate_project(name::String) :: Nothing
   name = Genie.FileTemplates.appmodule(name)[1] # convert to camel case
+
   mktempdir() do tmpdir
     tmp = joinpath(tmpdir, name, "Project.toml")
+
     Pkg.project(Pkg.API.Context(), name, tmpdir) # generate tmp
+
     if !isfile("Project.toml")
       mv(tmp, "Project.toml") # move tmp here
       @info "Project.toml has been generated"
@@ -443,6 +443,8 @@ function generate_project(name::String)
         "Make sure that it specifies a name and a uuid, using Project_sample.toml as a reference."
     end
   end # remove tmpdir on completion
+
+  nothing
 end
 
 
@@ -522,6 +524,7 @@ function post_create(app_name::String, app_path::String; autostart::Bool = true,
   cd(app_path)
 
   generate_project(app_name)
+
   install_app_dependencies(app_path, testmode = testmode, dbsupport = dbsupport)
 
   autostart_app(app_path, autostart = autostart)

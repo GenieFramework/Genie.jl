@@ -238,8 +238,9 @@ end
 
 Formerly, this has been `genie.jl` in an app's base directory.
 """
-function genie()
+function genie(; context = @__MODULE__)
   haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = "dev")
+
   if !haskey(ENV, "HOST")
     ENV["HOST"] = (ENV["GENIE_ENV"] == "dev") ? "127.0.0.1" : "0.0.0.0"
   end
@@ -263,7 +264,7 @@ function genie()
   ROOT_PATH = pwd()
   push!(LOAD_PATH, ROOT_PATH, "src")
 
-  load(context = @__MODULE__)
+  load(context = context)
   run(server = EARLYBINDING)
 end
 
