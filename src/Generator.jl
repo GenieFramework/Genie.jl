@@ -126,19 +126,19 @@ Creates the bin/server and bin/repl binaries for Windows
 """
 function setup_windows_bin_files(path::String = ".") :: Nothing
   open(joinpath(path, Genie.config.path_bin, "repl.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) %*")
+    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -i -- %~dp0../$(Genie.BOOTSTRAP_FILE_NAME) %*")
   end
 
   open(joinpath(path, Genie.config.path_bin, "server.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) s %*")
+    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -i -- %~dp0../$(Genie.BOOTSTRAP_FILE_NAME) s %*")
   end
 
   open(joinpath(path, Genie.config.path_bin, "serverinteractive.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -i -- ../$(Genie.BOOTSTRAP_FILE_NAME) si %*")
+    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -i -- %~dp0../$(Genie.BOOTSTRAP_FILE_NAME) si %*")
   end
 
   open(joinpath(path, Genie.config.path_bin, "runtask.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -- ../$(Genie.BOOTSTRAP_FILE_NAME) -r %*")
+    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -- %~dp0../$(Genie.BOOTSTRAP_FILE_NAME) -r %*")
   end
 
   nothing
