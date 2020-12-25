@@ -31,6 +31,8 @@
     r = Genie.Requests.HTTP.request("GET", "http://localhost:8000/test")
 
     @test occursin(content, String(r.body)) == true
+
+    down()
   end;
 
   cd(testdir)

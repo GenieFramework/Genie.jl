@@ -146,11 +146,11 @@ end
 
 
 """
-    setup_nix_bin_files(app_path::String = ".") :: Nothing
+    setup_nix_bin_files(path::String = ".") :: Nothing
 
 Creates the bin/server and bin/repl binaries for *nix systems
 """
-function setup_nix_bin_files(app_path::String = ".") :: Nothing
+function setup_nix_bin_files(path::String = ".") :: Nothing
   open(joinpath(path, Genie.config.path_bin, "repl"), "w") do f
     write(f, raw"#!/bin/sh\njulia --color=yes --depwarn=no -q -L $(dirname $0)/../bootstrap.jl -- \"$@\"")
   end
@@ -166,10 +166,12 @@ function setup_nix_bin_files(app_path::String = ".") :: Nothing
   open(joinpath(path, Genie.config.path_bin, "runtask"), "w") do f
     write(f, raw"#!/bin/sh\njulia --color=yes --depwarn=no -q -- $(dirname $0)/../bootstrap.jl -r \"$@\"")
   end
-  
-  chmod(joinpath(app_path, Genie.config.path_bin, "server"), 0o700)
-  chmod(joinpath(app_path, Genie.config.path_bin, "repl"), 0o700)
-  
+
+  chmod(joinpath(path, Genie.config.path_bin, "server"), 0o700)
+  chmod(joinpath(path, Genie.config.path_bin, "repl"), 0o700)
+  chmod(joinpath(path, Genie.config.path_bin, "serverinteractive"), 0o700)
+  chmod(joinpath(path, Genie.config.path_bin, "runtask"), 0o700)
+
   nothing
 end
 

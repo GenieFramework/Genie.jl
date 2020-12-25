@@ -894,7 +894,11 @@ The collection containing the request variables collection.
 """
 macro params()
   quote
-    task_local_storage(:__params)
+    try
+      task_local_storage(:__params)
+    catch _
+      Dict()
+    end
   end
 end
 macro params(key)
@@ -914,7 +918,11 @@ The collection containing the query request variables collection (GET params).
 """
 macro query()
   quote
-    @params(Genie.PARAMS_GET_KEY)
+    try
+      @params(Genie.PARAMS_GET_KEY)
+    catch _
+      Dict()
+    end
   end
 end
 macro query(key)
@@ -934,7 +942,11 @@ The collection containing the POST request variables collection.
 """
 macro post()
   quote
-    @params(Genie.PARAMS_POST_KEY)
+    try
+      @params(Genie.PARAMS_POST_KEY)
+    catch _
+      Dict()
+    end
   end
 end
 macro post(key)

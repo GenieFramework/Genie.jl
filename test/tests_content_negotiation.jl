@@ -5,7 +5,7 @@
       using Genie
       using HTTP
 
-      Genie.up(; open_browser = false)
+      up(; open_browser = false)
 
       response = try
         HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "text/html"])
@@ -27,14 +27,15 @@
       @test occursin("Sorry, we can not find", String(response.body)) == true
       @test Dict(response.headers)["Content-Type"] == "text/html"
 
-      Genie.down()
+      down()
+      sleep(1)
     end
 
     @safetestset "Not found matches request type -- Accept -- custom HTML Genie page" begin
       using Genie
       using HTTP
 
-      Genie.up(; open_browser = false)
+      up(; open_browser = false)
 
       response = try
         HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Accept" => "text/html"])
@@ -56,14 +57,15 @@
       @test occursin("Sorry, we can not find", String(response.body)) == true
       @test Dict(response.headers)["Content-Type"] == "text/html"
 
-      Genie.down()
+      down()
+      sleep(1)
     end
 
     @safetestset "Not found matches request type -- Content-Type -- custom JSON Genie handler" begin
       using Genie
       using HTTP
 
-      Genie.up(; open_browser = false)
+      up(; open_browser = false)
 
       response = try
         HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "application/json"])
@@ -85,14 +87,15 @@
       @test occursin("404 Not Found", String(response.body)) == true
       @test Dict(response.headers)["Content-Type"] == "application/json; charset=utf-8"
 
-      Genie.down()
+      down()
+      sleep(1)
     end
 
     @safetestset "Not found matches request type -- Accept -- custom JSON Genie handler" begin
       using Genie
       using HTTP
 
-      Genie.up(; open_browser = false)
+      up(; open_browser = false)
 
       response = try
         HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Accept" => "application/json"])
@@ -114,14 +117,15 @@
       @test occursin("404 Not Found", String(response.body)) == true
       @test Dict(response.headers)["Content-Type"] == "application/json; charset=utf-8"
 
-      Genie.down()
+      down()
+      sleep(1)
     end
 
     @safetestset "Not found matches request type -- Content-Type -- custom text Genie handler" begin
       using Genie
       using HTTP
 
-      Genie.up(; open_browser = false)
+      up(; open_browser = false)
 
       response = try
         HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "text/plain"])
@@ -143,7 +147,8 @@
       @test occursin("404 Not Found", String(response.body)) == true
       @test Dict(response.headers)["Content-Type"] == "text/plain"
 
-      Genie.down()
+      down()
+      sleep(1)
     end
   end;
 
@@ -151,7 +156,7 @@
     using Genie
     using HTTP
 
-    Genie.up(; open_browser = false)
+    up(; open_browser = false)
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "text/csv"])
@@ -173,14 +178,15 @@
     @test occursin("404 Not Found", String(response.body)) == true
     @test Dict(response.headers)["Content-Type"] == "text/csv"
 
-    Genie.down()
+    down()
+    sleep(1)
   end
 
   @safetestset "Not found matches request type -- Accept -- unknown content type get same response" begin
     using Genie
     using HTTP
 
-    Genie.up(; open_browser = false)
+    up(; open_browser = false)
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Accept" => "text/csv"])
@@ -202,14 +208,15 @@
     @test occursin("404 Not Found", String(response.body)) == true
     @test Dict(response.headers)["Content-Type"] == "text/csv"
 
-    Genie.down()
+    down()
+    sleep(1)
   end
 
   @safetestset "Custom error handler for unknown types" begin
     using Genie
     using HTTP
 
-    Genie.up(; open_browser = false)
+    up(; open_browser = false)
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "text/csv"])
@@ -245,14 +252,15 @@
     @test occursin("Search CSV and you shall find", String(response.body)) == true
     @test Dict(response.headers)["Content-Type"] == "text/csv"
 
-    Genie.down()
+    down()
+    sleep(1)
   end
 
   @safetestset "Custom error handler for known types" begin
     using Genie
     using HTTP
 
-    Genie.up(; open_browser = false)
+    up(; open_browser = false)
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "application/json"])
@@ -288,14 +296,15 @@
     @test occursin("Search CSV and you shall find", String(response.body)) == true
     @test Dict(response.headers)["Content-Type"] == "application/json"
 
-    Genie.down()
+    down()
+    sleep(1)
   end
 
   @safetestset "Order of accept preferences" begin
     using Genie
     using HTTP
 
-    Genie.up(; open_browser = false)
+    up(; open_browser = false)
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Accept" => "text/html, text/plain, application/json, text/csv"])
@@ -353,7 +362,8 @@
 
     @test Dict(response.headers)["Content-Type"] == "text/csv"
 
-    Genie.down()
+    down()
+    sleep(1)
   end
 
 end;

@@ -15,6 +15,7 @@
     @test Genie.config.run_as_server   == false
 
     down()
+    sleep(1)
 
     up(9000, "0.0.0.0", ws_port = 9999; open_browser = false)
 
@@ -24,6 +25,7 @@
     @test Genie.config.run_as_server   == false
 
     down()
+    sleep(1)
 
     Genie.config.server_port  = 8000
     Genie.config.server_host  = "127.0.0.1"
@@ -31,5 +33,6 @@
     Genie.config.run_as_server   = false
 
     down()
+    sleep(1)
   end;
 end;

@@ -13,7 +13,7 @@
   @safetestset "Expose settings" begin
     using Genie, Genie.Assets
 
-    @test js_settings() == "window.Genie = {};\nGenie.Settings = {\"webchannels_autosubscribe\":true,\"server_host\":\"127.0.0.1\",\"webchannels_subscribe_channel\":\"subscribe\",\"server_port\":8000,\"webchannels_default_route\":\"__\",\"webchannels_unsubscribe_channel\":\"unsubscribe\",\"websockets_port\":8000}\n"
+    @test js_settings() == "window.Genie = {};\nGenie.Settings = {\"webchannels_autosubscribe\":true,\"server_host\":\"127.0.0.1\",\"webchannels_subscribe_channel\":\"subscribe\",\"server_port\":$(Genie.config.server_port),\"webchannels_default_route\":\"__\",\"webchannels_unsubscribe_channel\":\"unsubscribe\",\"websockets_port\":$(Genie.config.websockets_port)}\n"
   end
 
   @safetestset "Embedded assets" begin

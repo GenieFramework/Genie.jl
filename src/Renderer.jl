@@ -265,8 +265,8 @@ generated view function.
 function injectvars() :: String
   output = ""
   for kv in task_local_storage(:__vars)
-    output *= "$(kv[1]) = try \n"
-    output *= "$(kv[1]) = Genie.Renderer.@vars($(repr(kv[1]))) \n"
+    output *= "try \n"
+    output *= "global $(kv[1]) = Genie.Renderer.@vars($(repr(kv[1]))) \n"
     output *= "
 catch ex
   @error ex
@@ -280,7 +280,7 @@ end
 
 function injectvars(context::Module) :: Nothing
   for kv in task_local_storage(:__vars)
-    Core.eval(context, Meta.parse("$(kv[1]) = Renderer.@vars($(repr(kv[1])))"))
+    Core.eval(context, Meta.parse("global $(kv[1]) = Renderer.@vars($(repr(kv[1])))"))
   end
 
   nothing
