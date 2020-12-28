@@ -133,10 +133,6 @@ function setup_windows_bin_files(path::String = ".") :: Nothing
     write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -i -- \"%~dp0..\\$(Genie.BOOTSTRAP_FILE_NAME)\" s %*")
   end
 
-  open(joinpath(path, Genie.config.path_bin, "serverinteractive.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -i -- \"%~dp0..\\$(Genie.BOOTSTRAP_FILE_NAME)\" si %*")
-  end
-
   open(joinpath(path, Genie.config.path_bin, "runtask.bat"), "w") do f
     write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -- \"%~dp0..\\$(Genie.BOOTSTRAP_FILE_NAME)\" -r %*")
   end
@@ -159,17 +155,12 @@ function setup_nix_bin_files(path::String = ".") :: Nothing
     write(f, raw"#!/bin/sh\njulia --color=yes --depwarn=no -q -i -- $(dirname $0)/../bootstrap.jl s \"$@\"")
   end
 
-  open(joinpath(path, Genie.config.path_bin, "serverinteractive"), "w") do f
-    write(f, raw"#!/bin/sh\njulia --color=yes --depwarn=no -q -i -- $(dirname $0)/../bootstrap.jl si \"$@\"")
-  end
-
   open(joinpath(path, Genie.config.path_bin, "runtask"), "w") do f
     write(f, raw"#!/bin/sh\njulia --color=yes --depwarn=no -q -- $(dirname $0)/../bootstrap.jl -r \"$@\"")
   end
 
   chmod(joinpath(path, Genie.config.path_bin, "server"), 0o700)
   chmod(joinpath(path, Genie.config.path_bin, "repl"), 0o700)
-  chmod(joinpath(path, Genie.config.path_bin, "serverinteractive"), 0o700)
   chmod(joinpath(path, Genie.config.path_bin, "runtask"), 0o700)
 
   nothing
@@ -354,7 +345,7 @@ end
 Writes files used for interacting with the SearchLight ORM.
 """
 function db_support(app_path::String = ".") :: Nothing
-  cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_db), joinpath(app_path, Genie.config.path_db))
+  cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_db), joinpath(app_path, Genie.config.path_db), force = true)
 
   initializer_path = joinpath(app_path, Genie.config.path_initializers, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME)
   isfile(initializer_path) || cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_initializers, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME), initializer_path)
@@ -397,13 +388,46 @@ end
 
 Installs the application's dependencies using Julia's Pkg
 """
-function install_app_dependencies(app_path::String = "."; testmode::Bool = false) :: Nothing
+function install_app_dependencies(app_path::String = "."; testmode::Bool = false, dbsupport::Bool = false) :: Nothing
   @info "Installing app dependencies"
   Pkg.activate(".")
 
   testmode ? Pkg.develop("Genie") : Pkg.add("Genie")
   Pkg.add("LoggingExtras")
   Pkg.add("MbedTLS")
+
+  if dbsupport
+    try
+      Pkg.add("SearchLight")
+      testmode || install_searchlight_dependencies()
+    catch ex
+      @error ex
+    end
+  end
+
+  nothing
+end
+
+
+function install_searchlight_dependencies() :: Nothing # TODO: move this to SearchLight post install
+  backends = ["SQLite", "MySQL", "PostgreSQL"]
+
+  println("Please choose the DB backend you want to use: ")
+  for i in 1:length(backends)
+    println("$i. $(backends[i])")
+  end
+  println("Input $(join([1:length(backends)...], ", ", " or ")) and press ENTER to confirm")
+  println()
+
+  choice = try
+    parse(Int, readline())
+  catch _
+    0
+  end
+
+  (choice in [1, 2, 3]) || return install_searchlight_dependencies()
+
+  Pkg.add("SearchLight$(backends[choice])")
 
   nothing
 end
@@ -497,7 +521,7 @@ function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = fals
 
   fullstack ? fullstack_app(app_name, app_path) : microstack_app(app_name, app_path)
 
-  dbsupport ? (fullstack || db_support(app_path)) : remove_searchlight_initializer(app_path)
+  (dbsupport || fullstack) ? db_support(app_path) : remove_searchlight_initializer(app_path)
 
   mvcsupport && (fullstack || mvc_support(app_path))
 
@@ -515,19 +539,19 @@ function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = fals
     @error ex
   end
 
-  post_create(app_path; autostart = autostart, testmode = testmode)
+  post_create(app_path; autostart = autostart, testmode = testmode, dbsupport = (dbsupport || fullstack))
 
   nothing
 end
 
 
-function post_create(app_path::String; autostart::Bool = true, testmode::Bool = false)
+function post_create(app_path::String; autostart::Bool = true, testmode::Bool = false, dbsupport::Bool = false)
   @info "Done! New app created at $app_path"
 
   @info "Changing active directory to $app_path"
   cd(app_path)
 
-  install_app_dependencies(app_path, testmode = testmode)
+  install_app_dependencies(app_path, testmode = testmode, dbsupport = dbsupport)
 
   autostart_app(app_path, autostart = autostart)
 
