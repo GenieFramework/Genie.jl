@@ -126,15 +126,15 @@ Creates the bin/server and bin/repl binaries for Windows
 """
 function setup_windows_bin_files(path::String = ".") :: Nothing
   open(joinpath(path, Genie.config.path_bin, "repl.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -i -- \"%~dp0..\\$(Genie.BOOTSTRAP_FILE_NAME)\" %*")
+    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -i -- \"%~dp0..\\$(Genie.BOOTSTRAP_FILE_NAME)\" %*")
   end
 
   open(joinpath(path, Genie.config.path_bin, "server.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -i -- \"%~dp0..\\$(Genie.BOOTSTRAP_FILE_NAME)\" s %*")
+    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -i -- \"%~dp0..\\$(Genie.BOOTSTRAP_FILE_NAME)\" s %*")
   end
 
   open(joinpath(path, Genie.config.path_bin, "runtask.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no -q -- \"%~dp0..\\$(Genie.BOOTSTRAP_FILE_NAME)\" -r %*")
+    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -- \"%~dp0..\\$(Genie.BOOTSTRAP_FILE_NAME)\" -r %*")
   end
 
   nothing
@@ -148,15 +148,15 @@ Creates the bin/server and bin/repl binaries for *nix systems
 """
 function setup_nix_bin_files(path::String = ".") :: Nothing
   open(joinpath(path, Genie.config.path_bin, "repl"), "w") do f
-    write(f, raw"#!/bin/sh\njulia --color=yes --depwarn=no -q -L $(dirname $0)/../bootstrap.jl -- \"$@\"")
+    write(f, raw"#!/bin/sh\njulia --color=yes --depwarn=no --project=@. -q -L $(dirname $0)/../bootstrap.jl -- \"$@\"")
   end
 
   open(joinpath(path, Genie.config.path_bin, "server"), "w") do f
-    write(f, raw"#!/bin/sh\njulia --color=yes --depwarn=no -q -i -- $(dirname $0)/../bootstrap.jl s \"$@\"")
+    write(f, raw"#!/bin/sh\njulia --color=yes --depwarn=no --project=@. -q -i -- $(dirname $0)/../bootstrap.jl s \"$@\"")
   end
 
   open(joinpath(path, Genie.config.path_bin, "runtask"), "w") do f
-    write(f, raw"#!/bin/sh\njulia --color=yes --depwarn=no -q -- $(dirname $0)/../bootstrap.jl -r \"$@\"")
+    write(f, raw"#!/bin/sh\njulia --color=yes --depwarn=no --project=@. -q -- $(dirname $0)/../bootstrap.jl -r \"$@\"")
   end
 
   chmod(joinpath(path, Genie.config.path_bin, "server"), 0o700)
@@ -276,7 +276,7 @@ function new(app_name::String, app_path::String = "", autostart::Bool = true) ::
 
   scaffold(app_name, app_path)
 
-  post_create(app_path, autostart = autostart)
+  post_create(app_name, app_path, autostart = autostart)
 
   nothing
 end
@@ -369,14 +369,19 @@ function write_app_custom_files(path::String, app_path::String) :: Nothing
   open(joinpath(app_path, Genie.BOOTSTRAP_FILE_NAME), "w") do f
     write(f,
     """
-      cd(@__DIR__)
-      import Pkg
-      Pkg.activate(".")
-
-      function main()
-        include(joinpath("$(Genie.config.path_src)", "$(moduleinfo[1]).jl"))
-      end; main()
+    using $(moduleinfo[1])
+    $(moduleinfo[1]).main()
     """)
+  end
+
+  isdir(joinpath(app_path, "test")) || mkpath(joinpath(app_path, "test"))
+  open(joinpath(app_path, "test", "runtests.jl"), "w") do f
+    write(f,
+      """
+      using $(moduleinfo[1]), Test
+      # implement your tests here
+      @test 1 == 1
+      """)
   end
 
   nothing
@@ -392,9 +397,11 @@ function install_app_dependencies(app_path::String = "."; testmode::Bool = false
   @info "Installing app dependencies"
   Pkg.activate(".")
 
-  testmode ? Pkg.develop("Genie") : Pkg.add("Genie")
-  Pkg.add("LoggingExtras")
-  Pkg.add("MbedTLS")
+  pkgs = ["Dates", "Logging", "LoggingExtras", "MbedTLS"]
+
+  testmode ? Pkg.develop("Genie") : push!(pkgs, "Genie")
+
+  Pkg.add(pkgs)
 
   if dbsupport
     try
@@ -404,6 +411,42 @@ function install_app_dependencies(app_path::String = "."; testmode::Bool = false
       @error ex
     end
   end
+
+  @info "Installing dependencies for unit tests"
+
+  Pkg.activate("test")
+
+  Pkg.add("Test")
+
+  Pkg.activate(".") # return to the main project
+
+  nothing
+end
+
+
+"""
+    generate_project(name)
+
+Generate the `Project.toml` with a name and a uuid.
+If this file already exists, generate `Project_sample.toml` as a reference instead.
+"""
+function generate_project(name::String) :: Nothing
+  name = Genie.FileTemplates.appmodule(name)[1] # convert to camel case
+
+  mktempdir() do tmpdir
+    tmp = joinpath(tmpdir, name, "Project.toml")
+
+    Pkg.project(Pkg.API.Context(), name, tmpdir) # generate tmp
+
+    if !isfile("Project.toml")
+      mv(tmp, "Project.toml") # move tmp here
+      @info "Project.toml has been generated"
+    else
+      mv(tmp, "Project_sample.toml"; force = true)
+      @warn "$(abspath("."))/Project.toml already exists and will not be replaced. " *
+        "Make sure that it specifies a name and a uuid, using Project_sample.toml as a reference."
+    end
+  end # remove tmpdir on completion
 
   nothing
 end
@@ -539,17 +582,19 @@ function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = fals
     @error ex
   end
 
-  post_create(app_path; autostart = autostart, testmode = testmode, dbsupport = (dbsupport || fullstack))
+  post_create(app_name, app_path; autostart = autostart, testmode = testmode, dbsupport = (dbsupport || fullstack))
 
   nothing
 end
 
 
-function post_create(app_path::String; autostart::Bool = true, testmode::Bool = false, dbsupport::Bool = false)
+function post_create(app_name::String, app_path::String; autostart::Bool = true, testmode::Bool = false, dbsupport::Bool = false)
   @info "Done! New app created at $app_path"
 
   @info "Changing active directory to $app_path"
   cd(app_path)
+
+  generate_project(app_name)
 
   install_app_dependencies(app_path, testmode = testmode, dbsupport = dbsupport)
 
