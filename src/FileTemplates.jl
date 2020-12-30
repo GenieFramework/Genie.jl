@@ -77,7 +77,7 @@ function appmodule(path::String)
 
     Base.eval(Main, :(const Genie = $appname.Genie))
     Base.eval(Main, :(using Genie))
-  end; main()
+  end
 
   end
   """
