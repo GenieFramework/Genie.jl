@@ -598,7 +598,22 @@ function post_create(app_name::String, app_path::String; autostart::Bool = true,
 
   install_app_dependencies(app_path, testmode = testmode, dbsupport = dbsupport)
 
+  set_files_mod()
+
   autostart_app(app_path, autostart = autostart)
+
+  nothing
+end
+
+
+function set_files_mod() :: Nothing
+  for f in ["Manifest.toml", "Project.toml", "routes.jl"]
+    try
+      chmod(f, 0o700)
+    catch _
+      @warn "Can't change mod for $f. File might be read-only."
+    end
+  end
 
   nothing
 end
