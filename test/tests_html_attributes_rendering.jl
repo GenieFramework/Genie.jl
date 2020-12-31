@@ -166,6 +166,6 @@
     @test String(r.body) == """<!DOCTYPE html><html><head></head><body><span disabled></span></body></html>"""
 
     r = html("""<span $("foo=$(string(:disabled))")></span>""", forceparse = true)
-    @test_broken String(r.body) == """<!DOCTYPE html><html><head></head><body><span foo="disabled"></span></body></html>"""
+    @test_skip String(r.body) == """<!DOCTYPE html><html><head></head><body><span foo="disabled"></span></body></html>"""
   end;
 end;
