@@ -12,16 +12,23 @@ import Genie
 Configures the response headers.
 """
 function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.Response) :: HTTP.Response
-  if req.method == Genie.Router.OPTIONS || req.method == Genie.Router.GET || req.method == Genie.Router.POST
-    request_origin = get(Dict(req.headers), "Origin", "")
+  request_origin = get(Dict(req.headers), "Origin", "")
 
+  if !isempty(request_origin)
     allowed_origin_dict = Dict("Access-Control-Allow-Origin" =>
       in(request_origin, Genie.config.cors_allowed_origins) || in("*", Genie.config.cors_allowed_origins)
       ? request_origin
       : strip(Genie.config.cors_headers["Access-Control-Allow-Origin"])
     )
 
-    app_response.headers = [d for d in merge(Genie.config.cors_headers, allowed_origin_dict, Dict(res.headers), Dict(app_response.headers))]
+    app_response.headers = [d for d in
+                              merge(
+                                Genie.config.cors_headers,
+                                allowed_origin_dict,
+                                Dict(res.headers),
+                                Dict(app_response.headers)
+                              )
+                            ]
   end
 
   app_response.headers = [d for d in
