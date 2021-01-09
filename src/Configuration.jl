@@ -164,6 +164,7 @@ mutable struct Settings
 
   session_key_name::String
   session_storage::Symbol
+  session_options::Dict{String,Any}
 
   inflector_irregulars::Vector{Tuple{String,String}}
 
@@ -234,6 +235,7 @@ mutable struct Settings
 
             session_key_name    = "__geniesid",
             session_storage     = :File,
+            session_options     = Dict(),
 
             inflector_irregulars = Tuple{String,String}[],
 
@@ -283,7 +285,7 @@ mutable struct Settings
                   cache_duration, cache_storage,
                   log_level, log_to_file,
                   assets_fingerprinted,
-                  session_key_name, session_storage,
+                  session_key_name, session_storage, session_options,
                   inflector_irregulars,
                   run_as_server,
                   websockets_server, websockets_port,
