@@ -35,8 +35,9 @@ function write(session::Genie.Sessions.Session) :: Genie.Sessions.Session
   try
     @warn "Resetting session"
 
-    session = Sessions.Session(Sessions.id())
+    session = Genie.Sessions.Session(Genie.Sessions.id())
     write_session(session)
+    Genie.Router._params_(Genie.PARAMS_SESSION_KEY, session)
 
     return session
   catch ex

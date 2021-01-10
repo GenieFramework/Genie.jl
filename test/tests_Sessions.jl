@@ -1,11 +1,9 @@
 @testset "Sessions functionality" begin
 
-  @testset "Assets paths" begin
+  @testset "Simple session setting and getting" begin
     using Genie, Genie.Sessions
     using Genie.Router
     using HTTP
-
-    Sessions.init()
 
     route("/home") do
       sess = Sessions.session(Genie.Router.@params)
