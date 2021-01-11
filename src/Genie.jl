@@ -64,7 +64,7 @@ The `params` and `kwparams` arguments are forwarded to `Genie.startup()`.
 # Arguments
 - `path::String`: the folder of static files to be served by the server
 - `params`: additional arguments which are passed to `Genie.startup` to control the web server
-- `kwparams`: additionak keyword arguments which are passed to `Genie.startup` to control the web server
+- `kwparams`: additional keyword arguments which are passed to `Genie.startup` to control the web server
 
 # Examples
 ```julia-repl
