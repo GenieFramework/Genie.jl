@@ -5,6 +5,9 @@
     using Genie.Router
     using HTTP
 
+    Genie.config.session_storage = :File
+    Sessions.init()
+
     route("/home") do
       sess = Sessions.session(Genie.Router.@params)
       Sessions.set!(sess, :visit_count, Sessions.get(sess, :visit_count, 0)+1)

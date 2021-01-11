@@ -36,12 +36,13 @@ function write(session::Genie.Sessions.Session) :: Genie.Sessions.Session
     @warn "Resetting session"
 
     session = Genie.Sessions.Session(Genie.Sessions.id())
+    Genie.Cookies.set!(Genie.Router._params_(Genie.PARAMS_RESPONSE_KEY), Genie.config.session_key_name, session.id, Genie.config.session_options)
     write_session(session)
     Genie.Router._params_(Genie.PARAMS_SESSION_KEY, session)
 
     return session
   catch ex
-    @error "Failed to regenerated and store session data. Giving up."
+    @error "Failed to regenerate and store session data. Giving up."
     @error ex
   end
 
@@ -63,6 +64,8 @@ end
 Attempts to read from file the session object serialized as `session_id`.
 """
 function read(session_id::Union{String,Symbol}) :: Union{Nothing,Genie.Sessions.Session}
+  isfile(joinpath(SESSIONS_PATH, session_id)) || return nothing
+
   try
     open(joinpath(SESSIONS_PATH, session_id), "r") do (io)
       Serialization.deserialize(io)

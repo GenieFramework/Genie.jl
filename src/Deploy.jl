@@ -72,19 +72,28 @@ function run(; containername::String = "genieapp", hostport::Int = 80, container
                 mountapp::Bool = false, image::String = "genie", command::String = "bin/server", rm::Bool = true, it::Bool = true,
                 websockets_hostport::Int = hostport, websockets_containerport::Int = containerport)
   options = []
+
   it && push!(options, "-it")
   rm && push!(options, "--rm")
+
   push!(options, "-p")
   push!(options, "$hostport:$containerport")
-  push!(options, "-p")
-  push!(options, "$websockets_hostport:$websockets_containerport")
+
+  if websockets_hostport != hostport || websockets_containerport != containerport
+    push!(options, "-p")
+    push!(options, "$websockets_hostport:$websockets_containerport")
+  end
+
   push!(options, "--name")
   push!(options, "$containername")
+
   if mountapp
     push!(options, "-v")
     push!(options,  "$(pwd()):$appdir")
   end
+
   push!(options, image)
+
   isempty(command) || push!(options, command)
 
   docker_command = replace(string(DOCKER), "`" => "")

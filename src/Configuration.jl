@@ -155,7 +155,7 @@ mutable struct Settings
   cors_allowed_origins::Vector{String}
 
   cache_duration::Int
-  cache_storage::Symbol
+  cache_storage::Union{Symbol,Nothing}
 
   log_level::Logging.LogLevel
   log_to_file::Bool
@@ -203,7 +203,7 @@ mutable struct Settings
   ssl_config::Union{MbedTLS.SSLConfig,Nothing}
 
   session_key_name::String
-  session_storage::Symbol
+  session_storage::Union{Symbol,Nothing}
   session_options::Dict{String,Any}
 
   Settings(;
@@ -226,7 +226,7 @@ mutable struct Settings
             cors_allowed_origins = String[],
 
             cache_duration    = 0,
-            cache_storage     = :File,
+            cache_storage     = nothing,
 
             log_level     = Logging.Debug,
             log_to_file   = false,
@@ -274,7 +274,7 @@ mutable struct Settings
             ssl_config = nothing,
 
             session_key_name    = "__geniesid",
-            session_storage     = :File,
+            session_storage     = nothing,
             session_options     = Dict("Path" => "/", "HttpOnly" => true, "Secure" => ssl_enabled)
         ) =
               new(

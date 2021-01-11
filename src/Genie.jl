@@ -51,7 +51,6 @@ include("Cache.jl")
 config.cache_storage == :File && include("cache_adapters/FileCache.jl")
 
 include("Sessions.jl")
-config.session_storage == :File && include("session_adapters/FileSession.jl")
 
 export serve, up, down, loadapp, genie
 @reexport using .Router
