@@ -148,15 +148,15 @@ Creates the bin/server and bin/repl binaries for *nix systems
 """
 function setup_nix_bin_files(path::String = ".") :: Nothing
   open(joinpath(path, Genie.config.path_bin, "repl"), "w") do f
-    write(f, raw"#!/bin/sh\njulia --color=yes --depwarn=no --project=@. -q -L $(dirname $0)/../bootstrap.jl -- \"$@\"")
+    write(f, "#!/bin/sh\n" * raw"julia --color=yes --depwarn=no --project=@. -q -L $(dirname $0)/../bootstrap.jl -- \"$@\"")
   end
 
   open(joinpath(path, Genie.config.path_bin, "server"), "w") do f
-    write(f, raw"#!/bin/sh\njulia --color=yes --depwarn=no --project=@. -q -i -- $(dirname $0)/../bootstrap.jl s \"$@\"")
+    write(f, "#!/bin/sh\n" * raw"julia --color=yes --depwarn=no --project=@. -q -i -- $(dirname $0)/../bootstrap.jl s \"$@\"")
   end
 
   open(joinpath(path, Genie.config.path_bin, "runtask"), "w") do f
-    write(f, raw"#!/bin/sh\njulia --color=yes --depwarn=no --project=@. -q -- $(dirname $0)/../bootstrap.jl -r \"$@\"")
+    write(f, "#!/bin/sh\n" * raw"julia --color=yes --depwarn=no --project=@. -q -- $(dirname $0)/../bootstrap.jl -r \"$@\"")
   end
 
   chmod(joinpath(path, Genie.config.path_bin, "server"), 0o700)
