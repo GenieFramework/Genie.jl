@@ -113,7 +113,6 @@ function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::B
 
   RUN chmod +x bin/repl
   RUN chmod +x bin/server
-  RUN chmod +x bin/serverinteractive
   RUN chmod +x bin/runtask
 
   USER $user
