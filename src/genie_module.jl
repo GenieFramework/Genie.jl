@@ -141,16 +141,18 @@ function load_configurations(root_dir::String = Genie.config.path_config; contex
   # check that the secrets_path has called Genie.secret_token!
   if isempty(Genie.secret_token(false)) # do not generate a temporary token in this check
     match_deprecated = isfile(secrets_path) ? match(r"SECRET_TOKEN\s*=\s*\"(.*)\"", readline(secrets_path)) : nothing
-    if match_deprecated != nothing # does the file use the deprecated syntax?
+    if match_deprecated !== nothing # does the file use the deprecated syntax?
       Genie.secret_token!(match_deprecated.captures[1]) # resolve the issue for now
       @warn "
         $(secrets_path) is using a deprecated syntax to set the secret token.
         Call Genie.Generator.migrate_secrets_file() to resolve this warning.
       "
     end
+        
     Genie.secret_token() # emits a warning and re-generates the token if secrets_path is not valid
   end
-  return nothing
+    
+  nothing
 end
 
 
