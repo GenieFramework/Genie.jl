@@ -119,21 +119,31 @@ function write_resource_file(resource_path::String, file_name::String, resource_
 end
 
 
+function binfolderpath(path::String) :: String
+  bin_folder_path = joinpath(path, Genie.config.path_bin)
+  isdir(bin_folder_path) || mkpath(bin_folder_path)
+
+  bin_folder_path
+end
+
+
 """
     setup_windows_bin_files(path::String = ".") :: Nothing
 
 Creates the bin/server and bin/repl binaries for Windows
 """
 function setup_windows_bin_files(path::String = ".") :: Nothing
-  open(joinpath(path, Genie.config.path_bin, "repl.bat"), "w") do f
+  bin_folder_path = binfolderpath(path)
+
+  open(joinpath(bin_folder_path, "repl.bat"), "w") do f
     write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -i -- \"%~dp0..\\$(Genie.BOOTSTRAP_FILE_NAME)\" %*")
   end
 
-  open(joinpath(path, Genie.config.path_bin, "server.bat"), "w") do f
+  open(joinpath(bin_folder_path, "server.bat"), "w") do f
     write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -i -- \"%~dp0..\\$(Genie.BOOTSTRAP_FILE_NAME)\" s %*")
   end
 
-  open(joinpath(path, Genie.config.path_bin, "runtask.bat"), "w") do f
+  open(joinpath(bin_folder_path, "runtask.bat"), "w") do f
     write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -- \"%~dp0..\\$(Genie.BOOTSTRAP_FILE_NAME)\" -r %*")
   end
 
@@ -147,21 +157,23 @@ end
 Creates the bin/server and bin/repl binaries for *nix systems
 """
 function setup_nix_bin_files(path::String = ".") :: Nothing
-  open(joinpath(path, Genie.config.path_bin, "repl"), "w") do f
+  bin_folder_path = binfolderpath(path)
+
+  open(joinpath(bin_folder_path, "repl"), "w") do f
     write(f, "#!/bin/sh\n" * raw"julia --color=yes --depwarn=no --project=@. -q -L $(dirname $0)/../bootstrap.jl -- \"$@\"")
   end
 
-  open(joinpath(path, Genie.config.path_bin, "server"), "w") do f
+  open(joinpath(bin_folder_path, "server"), "w") do f
     write(f, "#!/bin/sh\n" * raw"julia --color=yes --depwarn=no --project=@. -q -i -- $(dirname $0)/../bootstrap.jl s \"$@\"")
   end
 
-  open(joinpath(path, Genie.config.path_bin, "runtask"), "w") do f
+  open(joinpath(bin_folder_path, "runtask"), "w") do f
     write(f, "#!/bin/sh\n" * raw"julia --color=yes --depwarn=no --project=@. -q -- $(dirname $0)/../bootstrap.jl -r \"$@\"")
   end
 
-  chmod(joinpath(path, Genie.config.path_bin, "server"), 0o700)
-  chmod(joinpath(path, Genie.config.path_bin, "repl"), 0o700)
-  chmod(joinpath(path, Genie.config.path_bin, "runtask"), 0o700)
+  chmod(joinpath(bin_folder_path, "server"), 0o700)
+  chmod(joinpath(bin_folder_path, "repl"), 0o700)
+  chmod(joinpath(bin_folder_path, "runtask"), 0o700)
 
   nothing
 end

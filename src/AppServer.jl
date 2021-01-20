@@ -100,10 +100,11 @@ function startup(port::Int, host::String = Genie.config.server_host;
   status = if async
     @async command()
   else
+    print_server_status("Web Server starting at $server_url - press Ctrl/Cmd+C to stop the server.")
     command()
   end
 
-  if status.state == :runnable
+  if status !== nothing && status.state == :runnable
     SERVERS.webserver = status
 
     print_server_status("Web Server running at $server_url")
