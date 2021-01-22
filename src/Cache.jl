@@ -11,7 +11,7 @@ export purge, purgeall
 
 
 function init() :: Nothing
-  @eval Genie.config.cache_storage === nothing && (Genie.config.cache_storage = :File)
+  @eval isnothing(Genie.config.cache_storage) && (Genie.config.cache_storage = :File)
   @eval Genie.config.cache_storage == :File && include(joinpath(@__DIR__, "cache_adapters", "FileCache.jl"))
 
   nothing

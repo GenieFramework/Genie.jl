@@ -42,7 +42,7 @@ channels() = collect(keys(SUBSCRIPTIONS))
 function connected_clients(channel::ChannelName) :: Vector{ChannelClient}
   clients = ChannelClient[]
   for client_id in SUBSCRIPTIONS[channel]
-    ! (CLIENTS[client_id].client.txclosed && CLIENTS[client_id].client.rxclosed) && push!(clients, CLIENTS[client_id])
+    !(CLIENTS[client_id].client.txclosed && CLIENTS[client_id].client.rxclosed) && push!(clients, CLIENTS[client_id])
   end
 
   clients
@@ -162,7 +162,7 @@ Adds a new subscription for `client` to `channel`.
 """
 function push_subscription(client_id::ClientId, channel::ChannelName) :: ChannelSubscriptionsCollection
   if haskey(SUBSCRIPTIONS, channel)
-    ! in(client_id, SUBSCRIPTIONS[channel]) && push!(SUBSCRIPTIONS[channel], client_id)
+    !in(client_id, SUBSCRIPTIONS[channel]) && push!(SUBSCRIPTIONS[channel], client_id)
   else
     SUBSCRIPTIONS[channel] = ClientId[client_id]
   end
@@ -215,7 +215,7 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String
     haskey(SUBSCRIPTIONS, channel) || throw(ChannelNotFoundException(channel))
 
     for client in SUBSCRIPTIONS[channel]
-      except !== nothing && client == id(except) && continue
+      !isnothing(except) && client == id(except) && continue
 
       try
         message(client, msg)
@@ -250,7 +250,7 @@ end
 Pushes `msg` (and `payload`) to all the clients subscribed to all the channels.
 """
 function broadcast(msg::String, payload::Union{Dict,Nothing} = nothing) :: Bool
-  payload === nothing ?
+  isnothing(payload) ?
     broadcast(collect(keys(SUBSCRIPTIONS)), msg) :
     broadcast(collect(keys(SUBSCRIPTIONS)), msg, payload)
 end
@@ -260,7 +260,7 @@ end
 Pushes `msg` (and `payload`) to `channel`.
 """
 function message(channel::ChannelName, msg::String, payload::Union{Dict,Nothing} = nothing) :: Bool
-  payload === nothing ?
+  isnothing(payload) ?
     broadcast(channel, msg) :
     broadcast(channel, msg, payload)
 end

@@ -29,7 +29,7 @@ const SERVERS = ServersCollection(nothing, nothing)
 
 """
     startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
-        ws_port::Int = Genie.config.websockets_port, async::Bool = ! Genie.config.run_as_server) :: ServersCollection
+        ws_port::Int = Genie.config.websockets_port, async::Bool = !Genie.config.run_as_server) :: ServersCollection
 
 Starts the web server.
 
@@ -47,14 +47,14 @@ Web Server starting at http://127.0.0.1:8000
 ```
 """
 function startup(port::Int, host::String = Genie.config.server_host;
-                  ws_port::Int = port, async::Bool = ! Genie.config.run_as_server,
+                  ws_port::Int = port, async::Bool = !Genie.config.run_as_server,
                   verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
                   server::Union{Sockets.TCPServer,Nothing} = nothing, wsserver::Union{Sockets.TCPServer,Nothing} = nothing,
                   ssl_config::Union{MbedTLS.SSLConfig,Nothing} = Genie.config.ssl_config,
                   open_browser::Bool = false,
                   http_kwargs...) :: ServersCollection
 
-  if server !== nothing
+  if !isnothing(server)
     try
       socket_info = Sockets.getsockname(server)
       port = Int(socket_info[2])
@@ -95,7 +95,7 @@ function startup(port::Int, host::String = Genie.config.server_host;
     end
   end
 
-  server_url = "$( (ssl_config !== nothing && Genie.config.ssl_enabled) ? "https" : "http" )://$host:$port"
+  server_url = "$( (!isnothing(ssl_config) && Genie.config.ssl_enabled) ? "https" : "http" )://$host:$port"
 
   status = if async
     @async command()
@@ -104,7 +104,7 @@ function startup(port::Int, host::String = Genie.config.server_host;
     command()
   end
 
-  if status !== nothing && status.state == :runnable
+  if !isnothing(status) && status.state == :runnable
     SERVERS.webserver = status
 
     print_server_status("Web Server running at $server_url")
@@ -225,7 +225,7 @@ Configures the handler for WebSockets requests.
 """
 function setup_ws_handler(req::HTTP.Request, ws_client) :: Nothing
   try
-    while ! eof(ws_client)
+    while !eof(ws_client)
       write(ws_client, String(Distributed.@fetch handle_ws_request(req, String(readavailable(ws_client)), ws_client)))
     end
   catch ex

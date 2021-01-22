@@ -37,7 +37,7 @@ function execute(config::Genie.Configuration.Settings; server::Union{Sockets.TCP
 
     try
       task = getfield(Main.UserApp, Symbol(taskname))
-      if parsed_args["a"] !== nothing
+      if !isnothing(parsed_args["a"])
         @info Base.invokelatest(task.runtask, parsed_args["a"])
       else
         @info Base.invokelatest(task.runtask)
@@ -98,7 +98,7 @@ end
 Checks whether or not a certain command was invoked by looking at the command line args.
 """
 function called_command(args::Dict{String,Any}, key::String) :: Bool
-  haskey(args, key) && (args[key] == "true" || args["s"] == key || args[key] !== nothing)
+  haskey(args, key) && (args[key] == "true" || args["s"] == key || !isnothing(args[key]))
 end
 
 end

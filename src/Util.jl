@@ -12,7 +12,7 @@ export expand_nullable, time_to_unixtimestamp
 Returns `value` if it is not `nothing` - otherwise `default`.
 """
 function expand_nullable(value::Union{Nothing,T}, default::T)::T where T
-  value === nothing ? default : value
+  isnothing(value) ? default : value
 end
 
 
@@ -38,7 +38,7 @@ function walk_dir(dir, paths = String[]; only_extensions = ["jl"], only_files = 
     full_path = joinpath(dir, i)
 
     if isdir(full_path)
-      (! only_files || only_dirs) && push!(paths, full_path)
+      (!only_files || only_dirs) && push!(paths, full_path)
       walk_dir(full_path, paths)
     else
       only_dirs && continue

@@ -44,7 +44,7 @@ end
 
   @test r1 == r2
 
-  r3 = withcache(:x, condition = false) do # disable caching cause ! condition
+  r3 = withcache(:x, condition = false) do # disable caching cause !condition
     f()
   end
 

@@ -205,7 +205,7 @@ end
 function route(path::String, action::Function; method = GET, named::Union{Symbol,Nothing} = nothing) :: Route
   r = Route(method = method, path = path, action = action, name = named)
 
-  if named === nothing
+  if isnothing(named)
     r.name = routename(r)
   end
 
@@ -222,7 +222,7 @@ end
 function channel(path::String, action::Function; named::Union{Symbol,Nothing} = nothing) :: Channel
   c = Channel(path = path, action = action, name = named)
 
-  if named === nothing
+  if isnothing(named)
     c.name = channelname(c)
   end
 
@@ -311,7 +311,7 @@ Gets the `Route` correspoding to `routename`
 function get_route(route_name::Symbol; default::Union{Route,Nothing} = Route()) :: Route
   haskey(named_routes(), route_name) ?
     named_routes()[route_name] :
-    (if default === nothing
+    (if isnothing(default)
       Base.error("Route named `$route_name` is not defined")
     else
       @warn "Route named `$route_name` is not defined"
@@ -364,7 +364,7 @@ function to_link(route_name::Symbol, d::Dict{Symbol,T}; preserve_query::Bool = t
 
     if startswith(part, ":")
       var_name = split(part, "::")[1][2:end] |> Symbol
-      ( isempty(d) || ! haskey(d, var_name) ) && error("Route $route_name expects param $var_name")
+      ( isempty(d) || !haskey(d, var_name) ) && error("Route $route_name expects param $var_name")
       push!(result, pathify(d[var_name]))
       Base.delete!(d, var_name)
       continue
@@ -376,7 +376,7 @@ function to_link(route_name::Symbol, d::Dict{Symbol,T}; preserve_query::Bool = t
   query_vars = Dict{String,String}()
   if preserve_query && haskey(task_local_storage(), :__params) && haskey(task_local_storage(:__params), :REQUEST)
     query = URIParser.URI(task_local_storage(:__params)[:REQUEST].target).query
-    if ! isempty(query)
+    if !isempty(query)
       for pair in split(query, '&')
         try
           parts = split(pair, '=')
@@ -397,7 +397,7 @@ function to_link(route_name::Symbol, d::Dict{Symbol,T}; preserve_query::Bool = t
     push!(qv, "$k=$v")
   end
 
-  join(result, "/") * ( ! isempty(qv) ? "?" : "" ) * join(qv, "&")
+  join(result, "/") * ( !isempty(qv) ? "?" : "" ) * join(qv, "&")
 end
 
 
@@ -549,7 +549,7 @@ function match_channels(req, msg::String, ws_client, params::Params) :: String
 
     regex_channel = Regex("^" * parsed_channel * "\$")
 
-    (! occursin(regex_channel, uri)) && continue
+    (!occursin(regex_channel, uri)) && continue
 
     params.collection = setup_base_params(req, nothing, params.collection)
     task_local_storage(:__params, params.collection)
@@ -699,10 +699,10 @@ Extracts query vars and adds them to the execution `params` `Dict`.
 """
 function extract_get_params(uri::URIParser.URI, params::Params) :: Bool
   # GET params
-  if ! isempty(uri.query)
+  if !isempty(uri.query)
     for query_part in split(uri.query, "&")
       qp = split(query_part, "=")
-      (size(qp)[1] == 1) && (push!(qp, ""))
+      isone(size(qp)[1]) && (push!(qp, ""))
 
       k = Symbol(URIParser.unescape(qp[1]))
       v = URIParser.unescape(qp[2])
@@ -804,7 +804,7 @@ end
 Checks if the request content-type is of a certain type.
 """
 function request_type_is(req::HTTP.Request, request_type::Symbol) :: Bool
-  ! in(request_type, keys(request_mappings) |> collect) && error("Unknown request type $request_type - expected one of $(keys(request_mappings) |> collect).")
+  !in(request_type, keys(request_mappings) |> collect) && error("Unknown request type $request_type - expected one of $(keys(request_mappings) |> collect).")
 
   occursin(request_mappings[request_type], content_type(req)) && return true
 
@@ -846,8 +846,8 @@ function nested_keys(k::String, v, params::Params) :: Nothing
     nested_val_key = Symbol(parts[1])
 
     if haskey(params.collection, nested_val_key) && isa(params.collection[nested_val_key], Dict)
-      ! haskey(params.collection[nested_val_key], Symbol(parts[2])) && (params.collection[nested_val_key][Symbol(parts[2])] = v)
-    elseif ! haskey(params.collection, nested_val_key)
+      !haskey(params.collection[nested_val_key], Symbol(parts[2])) && (params.collection[nested_val_key][Symbol(parts[2])] = v)
+    elseif !haskey(params.collection, nested_val_key)
       params.collection[nested_val_key] = Dict()
       params.collection[nested_val_key][Symbol(parts[2])] = v
     end

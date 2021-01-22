@@ -42,7 +42,7 @@ end
 Checks if there's any value on the flash storage
 """
 function flash_has_message() :: Bool
-  ! isempty(flash())
+  !isempty(flash())
 end
 
 end

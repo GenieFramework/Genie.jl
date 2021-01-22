@@ -30,7 +30,7 @@ Retrieves from cache the object stored under the `key` key if the `expiration` d
 function fromcache(key::Union{String,Symbol}, expiration::Int; dir::String = "") :: Union{Nothing,Any}
   file_path = cache_path(string(key), dir = dir)
 
-  ( ! isfile(file_path) || stat(file_path).ctime + expiration < time() ) && return nothing
+  ( !isfile(file_path) || stat(file_path).ctime + expiration < time() ) && return nothing
 
   output = open(file_path) do io
     Serialization.deserialize(io)
@@ -47,7 +47,7 @@ Computes the path to a cache `key` based on current cache settings.
 """
 function cache_path(key::Union{String,Symbol}; dir::String = "") :: String
   path = joinpath(Genie.config.path_cache, dir)
-  ! isdir(path) && mkpath(path)
+  !isdir(path) && mkpath(path)
 
   joinpath(path, string(key))
 end
@@ -66,11 +66,11 @@ The optional `dir` param is used to designate the folder where the cache will be
 If `condition` is `false` caching will be skipped.
 """
 function Genie.Cache.withcache(f::Function, key::Union{String,Symbol}, expiration::Int = Genie.config.cache_duration; dir::String = "", condition::Bool = true)
-  ( expiration == 0 || ! condition ) && return f()
+  ( iszero(expiration) || !condition ) && return f()
 
   cached_data = fromcache(Genie.Cache.cachekey(key), expiration, dir = dir)
 
-  if cached_data === nothing
+  if isnothing(cached_data)
     output = f()
     tocache(Genie.Cache.cachekey(key), output, dir = dir)
 

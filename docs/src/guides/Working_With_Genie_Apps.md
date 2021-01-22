@@ -755,7 +755,7 @@ using SearchLight
 try
   SearchLight.Configuration.load()
 
-  if SearchLight.config.db_config_settings["adapter"] !== nothing
+  if !isnothing(SearchLight.config.db_config_settings["adapter"])
     eval(Meta.parse("using SearchLight$(SearchLight.config.db_config_settings["adapter"])"))
     SearchLight.connect()
   end

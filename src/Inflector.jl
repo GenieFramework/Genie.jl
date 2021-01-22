@@ -15,8 +15,8 @@ const vowels = ["a", "e", "i", "o", "u"]
 Returns the singural form of `word`.
 """
 function to_singular(word::String; is_irregular::Bool = Inflector.is_irregular(word)) :: Union{Nothing,String}
-  ( is_irregular || ! endswith(word, "s") ) && return to_singular_irregular(word)
-  endswith(word, "ies") && ! in(word[end-3], vowels) && return (word[1:end-3] * "y")
+  ( is_irregular || !endswith(word, "s") ) && return to_singular_irregular(word)
+  endswith(word, "ies") && !in(word[end-3], vowels) && return (word[1:end-3] * "y")
   endswith(word, "s") && return (word[1:end-1])
 
   nothing
@@ -30,7 +30,7 @@ Returns the singular form of the irregular word `word`.
 """
 function to_singular_irregular(word::String) :: Union{Nothing,String}
   irr = irregular(word)
-  irr !== nothing ? (irr)[1] : nothing
+  !isnothing(irr) ? (irr)[1] : nothing
 end
 
 
@@ -41,7 +41,7 @@ Returns the plural form of `word`.
 """
 function to_plural(word::String; is_irregular::Bool = Inflector.is_irregular(word)) :: Union{Nothing,String}
   is_irregular && return to_plural_irregular(word)
-  endswith(word, "y") && ! in(word[end-1], vowels) && return (word[1:end-1] * "ies") # category -> categories // story -> stories
+  endswith(word, "y") && !in(word[end-1], vowels) && return (word[1:end-1] * "ies") # category -> categories // story -> stories
   is_singular(word) ? (word * "s") : (word)
 end
 
@@ -53,7 +53,7 @@ Returns the plural form of the irregular word `word`.
 """
 function to_plural_irregular(word::String) :: Union{Nothing,String}
   irr = irregular(word)
-  irr !== nothing ? (irr)[2] : nothing
+  !isnothing(irr) ? (irr)[2] : nothing
 end
 
 
@@ -73,7 +73,7 @@ end
 Returns wether or not `word` is a singular.
 """
 function is_singular(word::String) :: Bool
-  ! is_plural(word)
+  !is_plural(word)
 end
 
 
@@ -85,8 +85,8 @@ Returns wether or not `word` is a plural.
 function is_plural(word::String) :: Bool
   word = Unicode.normalize(word, casefold = true)
   irr_word = irregular(word)
-  (irr_word === nothing || word != (irr_word)[1]) ||
-    (irr_word === nothing || word == (irr_word)[2]) ||
+  (isnothing(irr_word) || word != (irr_word)[1]) ||
+    (isnothing(irr_word) || word == (irr_word)[2]) ||
     endswith(word, "s")
 end
 
@@ -123,7 +123,7 @@ end
 Whether or not `word` has a singular or plural irregular form.
 """
 function is_irregular(word::String) :: Bool
-  (irregular(word) !== nothing) ? true : false
+  !isnothing(irregular(word))
 end
 
 

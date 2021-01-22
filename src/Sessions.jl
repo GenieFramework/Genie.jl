@@ -63,8 +63,8 @@ Attempts to retrieve the session id from the provided `payload` object.
 If that is not available, a new session id is created.
 """
 function id(payload::Union{HTTP.Request,HTTP.Response}) :: String
-  (Genie.Cookies.get(payload, Genie.config.session_key_name) !== nothing) &&
-    ! isempty(Genie.Cookies.get(payload, Genie.config.session_key_name)) &&
+  !isnothing(Genie.Cookies.get(payload, Genie.config.session_key_name)) &&
+    !isempty(Genie.Cookies.get(payload, Genie.config.session_key_name)) &&
       return Genie.Cookies.get(payload, Genie.config.session_key_name)
 
   id()
@@ -80,7 +80,7 @@ If that is not available, a new session id is created.
 function id(req::HTTP.Request, res::HTTP.Response) :: String
   for r in [req, res]
     val = Genie.Cookies.get(r, Genie.config.session_key_name)
-    (val !== nothing) && ! isempty(val) &&
+    !isnothing(val) && !isempty(val) &&
       return val
   end
 
@@ -94,7 +94,7 @@ end
 Sets up the session functionality, if configured.
 """
 function init() :: Nothing
-  @eval Genie.config.session_storage === nothing && (Genie.config.session_storage = :File)
+  @eval isnothing(Genie.config.session_storage) && (Genie.config.session_storage = :File)
   @eval Genie.config.session_storage == :File && include(joinpath(@__DIR__, "session_adapters", "FileSession.jl"))
 
   push!(Genie.Router.pre_match_hooks, Genie.Sessions.start)
@@ -137,9 +137,9 @@ function start(req::HTTP.Request, res::HTTP.Response, params::Dict{Symbol,Any} =
 
   params[Genie.PARAMS_SESSION_KEY]   = session
   params[Genie.PARAMS_FLASH_KEY]     = begin
-                                          if session !== nothing
+                                          if !isnothing(session)
                                             s = get(session, Genie.PARAMS_FLASH_KEY)
-                                            if s === nothing
+                                            if isnothing(s)
                                               ""
                                             else
                                               unset!(session, Genie.PARAMS_FLASH_KEY)
@@ -185,7 +185,7 @@ If the value is not set, it returns the `default`.
 function get(s::Session, key::Symbol, default::T) :: T where T
   val = get(s, key)
 
-  val === nothing ? default : val
+  isnothing(val) ? default : val
 end
 
 
@@ -207,7 +207,7 @@ end
 Checks wheter or not `key` exists on the `Session` `s`.
 """
 function isset(s::Union{Session,Nothing}, key::Symbol) :: Bool
-  s !== nothing && haskey(s.data, key)
+  !isnothing(s) && haskey(s.data, key)
 end
 
 
@@ -233,7 +233,7 @@ function load end
 Returns the `Session` object associated with the current HTTP request.
 """
 function session(params::Dict{Symbol,Any}) :: Sessions.Session
-  ( (! haskey(params, Genie.PARAMS_SESSION_KEY) || params[Genie.PARAMS_SESSION_KEY] === nothing) ) &&
+  ( (!haskey(params, Genie.PARAMS_SESSION_KEY) || isnothing(params[Genie.PARAMS_SESSION_KEY])) ) &&
       (params[Genie.PARAMS_SESSION_KEY] = Sessions.start(params[Genie.PARAMS_REQUEST_KEY], params[Genie.PARAMS_RESPONSE_KEY])[1])
 
   params[Genie.PARAMS_SESSION_KEY]

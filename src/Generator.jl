@@ -11,7 +11,7 @@ const JULIA_PATH = joinpath(Sys.BINDIR, "julia")
 
 
 function validname(name::String)
-  filter(! isempty, [x.match for x in collect(eachmatch(r"[0-9a-zA-Z_]*", name))]) |> join
+  filter(!isempty, [x.match for x in collect(eachmatch(r"[0-9a-zA-Z_]*", name))]) |> join
 end
 
 
@@ -26,7 +26,7 @@ function newcontroller(resource_name::String; path::Union{String,Nothing} = noth
   Genie.Inflector.is_singular(resource_name) && pluralize && (resource_name = Genie.Inflector.to_plural(resource_name))
   resource_name = uppercasefirst(resource_name)
 
-  resource_path = path === nothing ? setup_resource_path(resource_name, path = ".") : (ispath(path) ? path : mkpath(path))
+  resource_path = isnothing(path) ? setup_resource_path(resource_name, path = ".") : (ispath(path) ? path : mkpath(path))
   cfn = controller_file_name(resource_name)
   write_resource_file(resource_path, cfn, resource_name, :controller, pluralize = pluralize) &&
     @info "New controller created at $(abspath(joinpath(resource_path, cfn)))"
@@ -69,7 +69,7 @@ function setup_resource_path(resource_name::String; path::String = ".") :: Strin
 
   resource_path = joinpath(path, Genie.config.path_resources, lowercase(resource_name))
 
-  if ! isdir(resource_path)
+  if !isdir(resource_path)
     mkpath(resource_path)
     push!(LOAD_PATH, resource_path)
   end
@@ -248,7 +248,7 @@ function migrate_secrets_file(app_path::String = ".") :: Nothing
   secrets_path = joinpath(app_path, Genie.config.path_config, Genie.SECRETS_FILE_NAME)
   if isfile(secrets_path)
     match_deprecated = match(r"SECRET_TOKEN\s*=\s*\"(.*)\"", readline(secrets_path))
-    if match_deprecated != nothing # does the file use the deprecated syntax?
+    if !isnothing(match_deprecated) # does the file use the deprecated syntax?
       open(secrets_path, "w") do f
         write(f, """Genie.secret_token!("$(match_deprecated.captures[1])") """)
       end # replace the previous content of the file

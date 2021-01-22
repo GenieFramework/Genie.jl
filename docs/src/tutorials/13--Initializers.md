@@ -45,7 +45,7 @@ using SearchLight, SearchLight.QueryBuilder
 
 SearchLight.Configuration.load()
 
-if SearchLight.config.db_config_settings["adapter"] !== nothing
+if !isnothing(SearchLight.config.db_config_settings["adapter"])
   SearchLight.Database.setup_adapter()
   SearchLight.Database.connect()
   SearchLight.load_resources()

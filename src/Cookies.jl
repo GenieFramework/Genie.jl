@@ -21,7 +21,7 @@ If the `key` is not set, the `default` value is returned.
 """
 function get(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}, default::T; encrypted::Bool = true)::T where T
   val = get(payload, key, encrypted = encrypted)
-  val === nothing ? default : parse(T, val)
+  isnothing(val) ? default : parse(T, val)
 end
 
 

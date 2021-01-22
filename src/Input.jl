@@ -63,9 +63,9 @@ end
 function post_from_request!(request::HTTP.Request, input::HttpInput)
   headers = Dict(request.headers)
 
-  if first(something(findfirst("application/x-www-form-urlencoded", get(headers, "Content-Type", "")), 0:-1)) != 0
+  if !iszero(first(something(findfirst("application/x-www-form-urlencoded", get(headers, "Content-Type", "")), 0:-1)))
     post_url_encoded!(request.body, input.post)
-  elseif first(something(findfirst("multipart/form-data", get(headers, "Content-Type", "")), 0:-1)) != 0
+  elseif !iszero(first(something(findfirst("multipart/form-data", get(headers, "Content-Type", "")), 0:-1)))
     post_multipart!(request, input.post, input.files)
   end
 
@@ -100,18 +100,18 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
         fileFieldName::String = ""
 
         for (field::String, values::Dict{String,String}) in part.headers
-          if field == "Content-Disposition" && getkey(values, "form-data", nothing) != nothing
+          if field == "Content-Disposition" && !isnothing(getkey(values, "form-data", nothing))
 
             # Check to see whether this part is a file upload
             # Otherwise, treat as basic POST data
 
-            if getkey(values, "filename", nothing) != nothing
+            if !isnothing(getkey(values, "filename", nothing))
               if length(values["filename"]) > 0
                 fileFieldName = values["name"]
                 file.name = values["filename"]
                 hasFile = true
               end
-            elseif getkey(values, "name", nothing) != nothing
+            elseif !isnothing(getkey(values, "name", nothing))
               post_data[values["name"]] = String(part.data)
             end
           elseif field == "Content-Type"
@@ -302,13 +302,13 @@ function parse_seicolon_fields(dataString::String)
     # character = dataString[charIndex]
     character = dataString[utfIndex]
 
-    if ! inSingleQuotes && character == '"' && prevCharacter != '\\'
-      inDoubleQuotes = ! inDoubleQuotes
+    if !inSingleQuotes && character == '"' && prevCharacter != '\\'
+      inDoubleQuotes = !inDoubleQuotes
       ignore = true
     end
 
-    if ! inDoubleQuotes && character == '\'' && prevCharacter != '\\'
-      inSingleQuotes = ! inSingleQuotes
+    if !inDoubleQuotes && character == '\'' && prevCharacter != '\\'
+      inSingleQuotes = !inSingleQuotes
       ignore = true
     end
 
@@ -318,7 +318,7 @@ function parse_seicolon_fields(dataString::String)
       if length(workingString) > 0
         decoded = parse_quoted_params(workingString)
 
-        if decoded != nothing
+        if !isnothing(decoded)
           (key, value) = decoded
 
           data[key] = value
@@ -328,7 +328,7 @@ function parse_seicolon_fields(dataString::String)
 
         workingString = ""
       end
-    elseif ! ignore
+    elseif !ignore
       workingString = workingString * string(character)
     end
 

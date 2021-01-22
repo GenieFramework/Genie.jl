@@ -11,7 +11,7 @@ const SESSIONS_PATH = "sessions"
 Persists the `Session` object to the file system, using the configured sessions folder and returns it.
 """
 function write(session::Genie.Sessions.Session) :: Genie.Sessions.Session
-  if ! isdir(joinpath(SESSIONS_PATH))
+  if !isdir(joinpath(SESSIONS_PATH))
     @warn "Sessions folder $(abspath(SESSIONS_PATH)) does not exist"
     @info "Creating sessions folder at $(abspath(SESSIONS_PATH))"
 
@@ -103,7 +103,7 @@ Loads session data from persistent storage.
 function Genie.Sessions.load(session_id::String) :: Genie.Sessions.Session
   session = read(session_id)
 
-  session === nothing ? Genie.Sessions.Session(session_id) : (session)
+  isnothing(session) ? Genie.Sessions.Session(session_id) : (session)
 end
 
 end

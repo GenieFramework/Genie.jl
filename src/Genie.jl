@@ -194,7 +194,7 @@ end
 
 """
     startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
-        ws_port::Int = Genie.config.websockets_port, async::Bool = ! Genie.config.run_as_server) :: Nothing
+        ws_port::Int = Genie.config.websockets_port, async::Bool = !Genie.config.run_as_server) :: Nothing
 
 Starts the web server. Alias for `AppServer.startup`
 

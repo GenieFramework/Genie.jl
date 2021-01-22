@@ -39,8 +39,10 @@ function tasks(context::Module; filter_type_name::Union{Symbol,Nothing} = nothin
 
       ti = TaskInfo(i, module_name, taskdocs(module_name, context = context))
 
-      if ( filter_type_name === nothing ) push!(tasks, ti)
-      elseif ( filter_type_name == module_name ) return TaskInfo[ti]
+      if isnothing(filter_type_name)
+        push!(tasks, ti)
+      elseif filter_type_name == module_name
+        return TaskInfo[ti]
       end
     end
   end
@@ -151,8 +153,8 @@ Checks if the name of the task passed as the command line arg is valid task iden
 Returns the potentially modified `parsed_args` `Dict`.
 """
 function isvalidtask!(parsed_args::Dict{String,Any}) :: Dict{String,Any}
-  haskey(parsed_args, "task:new") && isa(parsed_args["task:new"], String) && ! endswith(parsed_args["task:new"], TASK_SUFFIX) && (parsed_args["task:new"] *= TASK_SUFFIX)
-  haskey(parsed_args, "task:run") && isa(parsed_args["task:run"], String) &&! endswith(parsed_args["task:run"], TASK_SUFFIX) && (parsed_args["task:run"] *= TASK_SUFFIX)
+  haskey(parsed_args, "task:new") && isa(parsed_args["task:new"], String) && !endswith(parsed_args["task:new"], TASK_SUFFIX) && (parsed_args["task:new"] *= TASK_SUFFIX)
+  haskey(parsed_args, "task:run") && isa(parsed_args["task:run"], String) && !endswith(parsed_args["task:run"], TASK_SUFFIX) && (parsed_args["task:run"] *= TASK_SUFFIX)
 
   parsed_args
 end

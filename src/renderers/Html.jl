@@ -86,7 +86,7 @@ function normal_element(elems::Vector, elem::Any, args = [], attrs...) :: HTMLSt
   io = IOBuffer()
 
   for e in elems
-    e === nothing && continue
+    isnothing(e) && continue
 
     if isa(e, Vector)
       print(io, join(e))
@@ -118,7 +118,7 @@ function prepare_template(s::String) :: String
 end
 function prepare_template(v::Vector{T})::String where {T}
   filter!(v) do (x)
-    ! isa(x, Nothing)
+    !isa(x, Nothing)
   end
 
   join(v)
@@ -134,7 +134,7 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
   a = IOBuffer()
 
   for (k,v) in attrs
-    v === nothing && continue # skip nothing values
+    isnothing(v) && continue # skip nothing values
 
     if (isa(v, Bool) && v) || isempty(string(v))
       print(a, "$(k |> parseattr) ")
@@ -269,7 +269,7 @@ function get_template(path::String; partial::Bool = true, context::Module = @__M
   f_path = joinpath(Genie.config.path_build, Genie.Renderer.BUILD_NAME, mod_name)
   f_stale = Genie.Renderer.build_is_stale(path, f_path)
 
-  if f_stale || ! isdefined(context, f_name)
+  if f_stale || !isdefined(context, f_name)
     content = if extension in MARKDOWN_FILE_EXT
       vars_injection, md = include_markdown(path, context = context)
       string_to_julia(md, partial = partial, f_name = f_name, prepend = "", vars_included = true) # vars_injection is prepended already in include_markdown
@@ -319,7 +319,7 @@ function parseview(data::String; partial = false, context::Module = @__MODULE__)
   f_path = joinpath(Genie.config.path_build, Genie.Renderer.BUILD_NAME, mod_name)
   f_stale = Genie.Renderer.build_is_stale(f_path, f_path)
 
-  if f_stale || ! isdefined(context, func_name)
+  if f_stale || !isdefined(context, func_name)
     if f_stale
       Genie.Renderer.build_module(string_to_julia(data, partial = partial), path, mod_name)
     end
@@ -339,7 +339,7 @@ Renders the string as an HTML view.
 function render(data::String; context::Module = @__MODULE__, layout::Union{String,Nothing} = nothing, vars...) :: Function
   Genie.Renderer.registervars(vars...)
 
-  if layout !== nothing
+  if !isnothing(layout)
     task_local_storage(:__yield, parseview(data, partial = true, context = context))
     parseview(layout, partial = false, context = context)
   else
@@ -356,7 +356,7 @@ Renders the template file as an HTML view.
 function render(viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.Renderer.FilePath} = nothing, context::Module = @__MODULE__, vars...) :: Function
   Genie.Renderer.registervars(vars...)
 
-  if layout !== nothing
+  if !isnothing(layout)
     task_local_storage(:__yield, get_template(string(viewfile), partial = true, context = context))
     get_template(string(layout), partial = false, context = context)
   else
@@ -431,7 +431,7 @@ function html(data::String; context::Module = @__MODULE__, status::Int = 200, he
                             layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing, forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
   isa(layout, Genie.Renderer.FilePath) && (layout = read(layout, String))
 
-  if occursin(raw"$", data) || occursin("<%", data) || layout !== nothing || forceparse
+  if occursin(raw"$", data) || occursin("<%", data) || !isnothing(layout) || forceparse
     Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context = context, layout = layout, vars...), status, headers) |> Genie.Renderer.respond
   else
     Genie.Renderer.WebRenderable(body = data, status = status, headers = headers) |> Genie.Renderer.respond
@@ -509,7 +509,7 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
 
   else
     mdl = isdefined(@__MODULE__, Symbol(tag_name)) ? string(@__MODULE__, ".") : ""
-    print(io, repeat("\t", depth), ( ! invalid_tag ? "$mdl$(tag_name)(" : "Html.skip_element(" ))
+    print(io, repeat("\t", depth), ( !invalid_tag ? "$mdl$(tag_name)(" : "Html.skip_element(" ))
 
     attributes = IOBuffer()
     attributes_keys = String[]
@@ -544,13 +544,13 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
     endswith(attributes_string, ", ") && (attributes_string = attributes_string[1:end-2])
 
     print(io, attributes_string)
-    ! isempty(attributes_string) && ! isempty(attributes_keys) && print(io, ", ")
-    ! isempty(attributes_keys) &&
-      print(io, "; NamedTuple{($(join(attributes_keys, ", "))$(length(attributes_keys) == 1 ? ", " : ""))}(($(join(attributes_values, ", "))$(length(attributes_keys) == 1 ? ", " : "")))...")
+    !isempty(attributes_string) && !isempty(attributes_keys) && print(io, ", ")
+    !isempty(attributes_keys) &&
+      print(io, "; NamedTuple{($(join(attributes_keys, ", "))$(isone(length(attributes_keys)) ? ", " : ""))}(($(join(attributes_values, ", "))$(isone(length(attributes_keys)) ? ", " : "")))...")
     print(io, ")")
 
     inner = ""
-    if ! isempty(HTMLParser.children(elem))
+    if !isempty(HTMLParser.children(elem))
       children_count = size(HTMLParser.children(elem))[1]
 
       print(io, " do;[\n")
@@ -562,14 +562,14 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
         if idx < children_count
           if  ( isa(child, HTMLParser.HTMLText) ) ||
               ( isa(child, HTMLParser.HTMLElement) &&
-              ( ! in("type", collect(keys(HTMLParser.attrs(child)))) ||
+              ( !in("type", collect(keys(HTMLParser.attrs(child)))) ||
                 ( in("type", collect(keys(HTMLParser.attrs(child)))) && (HTMLParser.attrs(child)["type"] != "julia/eval") ) ) )
               isempty(inner) || (inner = string(repeat("\t", depth), inner, "\n"))
           end
         end
       end
 
-      if ! isempty(inner)
+      if !isempty(inner)
         endswith(inner, "\n\n") && (inner = inner[1:end-2])
         print(io, inner, repeat("\t", depth))
       end
@@ -617,7 +617,7 @@ end
 Converts an input file to Julia code
 """
 function to_julia(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n", vars_included::Bool = false) :: String
-  f_name = (f_name === nothing) ? Genie.Renderer.function_name(string(input, partial)) : f_name
+  f_name = isnothing(f_name) ? Genie.Renderer.function_name(string(input, partial)) : f_name
 
   string("function $(f_name)() \n",
           (vars_included ? "" : Genie.Renderer.injectvars()),

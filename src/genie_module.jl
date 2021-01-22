@@ -141,7 +141,7 @@ function load_configurations(root_dir::String = Genie.config.path_config; contex
   # check that the secrets_path has called Genie.secret_token!
   if isempty(Genie.secret_token(false)) # do not generate a temporary token in this check
     match_deprecated = isfile(secrets_path) ? match(r"SECRET_TOKEN\s*=\s*\"(.*)\"", readline(secrets_path)) : nothing
-    if match_deprecated !== nothing # does the file use the deprecated syntax?
+    if !isnothing(match_deprecated) # does the file use the deprecated syntax?
       Genie.secret_token!(match_deprecated.captures[1]) # resolve the issue for now
       @warn "
         $(secrets_path) is using a deprecated syntax to set the secret token.
@@ -217,7 +217,7 @@ Here, a temporary one is generated for the current session if no other token is 
 `generate_if_missing` is true.
 """
 function secret_token(generate_if_missing::Bool=true; context::Union{Module,Nothing}=nothing)
-  if context != nothing
+  if !isnothing(context)
     @warn "secret_token not context-dependent any more; the context argument is deprecated"
   end
   if isempty(SECRET_TOKEN[]) && generate_if_missing
@@ -255,7 +255,7 @@ Sets the module in which the code is loaded (the app's module)
 """
 function default_context(context::Union{Module,Nothing} = nothing)
   try
-    context === nothing ? Main.UserApp : context
+    isnothing(context) ? Main.UserApp : context
   catch ex
     @error ex
     @__MODULE__
