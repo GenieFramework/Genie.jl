@@ -138,7 +138,7 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
 
     if (isa(v, Bool) && v) || isempty(string(v))
       print(a, "$(k |> parseattr) ")
-    elseif typeof(v) <: AbstractString
+    elseif v isa AbstractString
       print(a, "$(k |> parseattr)=\"$(v)\" ")
     elseif typeof(v) == Genie.Renderer.Json.JSONParser.JSONText
       if startswith(v.s, ":")
