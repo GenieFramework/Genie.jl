@@ -155,15 +155,12 @@ mutable struct Settings
   cors_allowed_origins::Vector{String}
 
   cache_duration::Int
-  cache_storage::Symbol
+  cache_storage::Union{Symbol,Nothing}
 
   log_level::Logging.LogLevel
   log_to_file::Bool
 
   assets_fingerprinted::Bool
-
-  session_key_name::String
-  session_storage::Symbol
 
   inflector_irregulars::Vector{Tuple{String,String}}
 
@@ -205,6 +202,10 @@ mutable struct Settings
   ssl_enabled::Bool
   ssl_config::Union{MbedTLS.SSLConfig,Nothing}
 
+  session_key_name::String
+  session_storage::Union{Symbol,Nothing}
+  session_options::Dict{String,Any}
+
   Settings(;
             server_port                 = (haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : 8000), # default port for binding the web server
             server_host                 = ENV["HOST"],
@@ -225,15 +226,12 @@ mutable struct Settings
             cors_allowed_origins = String[],
 
             cache_duration    = 0,
-            cache_storage     = :File,
+            cache_storage     = nothing,
 
             log_level     = Logging.Debug,
             log_to_file   = false,
 
             assets_fingerprinted  = false,
-
-            session_key_name    = "__geniesid",
-            session_storage     = :File,
 
             inflector_irregulars = Tuple{String,String}[],
 
@@ -273,7 +271,11 @@ mutable struct Settings
             html_parser_char_dash = "__",
 
             ssl_enabled = false,
-            ssl_config = nothing
+            ssl_config = nothing,
+
+            session_key_name    = "__geniesid",
+            session_storage     = nothing,
+            session_options     = Dict("Path" => "/", "HttpOnly" => true, "Secure" => ssl_enabled)
         ) =
               new(
                   server_port, server_host,
@@ -283,7 +285,6 @@ mutable struct Settings
                   cache_duration, cache_storage,
                   log_level, log_to_file,
                   assets_fingerprinted,
-                  session_key_name, session_storage,
                   inflector_irregulars,
                   run_as_server,
                   websockets_server, websockets_port,
@@ -292,7 +293,8 @@ mutable struct Settings
                   path_plugins, path_cache, path_initializers, path_db, path_bin, path_src,
                   webchannels_default_route, webchannels_js_file, webchannels_subscribe_channel, webchannels_unsubscribe_channel, webchannels_autosubscribe,
                   html_parser_close_tag, html_parser_char_at, html_parser_char_dot, html_parser_char_column, html_parser_char_dash,
-                  ssl_enabled, ssl_config
+                  ssl_enabled, ssl_config,
+                  session_key_name, session_storage, session_options
                 )
 end
 

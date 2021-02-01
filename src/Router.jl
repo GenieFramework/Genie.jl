@@ -113,6 +113,9 @@ end
 function _params_(key::Union{String,Symbol})
   task_local_storage(:__params)[key]
 end
+function _params_(key::Union{String,Symbol}, value::Any)
+  task_local_storage(:__params)[key] = value
+end
 
 
 """

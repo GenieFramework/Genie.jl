@@ -1,6 +1,8 @@
 @safetestset "No Caching" begin
   using Genie, Genie.Cache
 
+  Cache.init()
+
   function f()
     rand(1:1_000)
   end
@@ -9,7 +11,7 @@
 
   r0 = f()
 
-  r1 = withcache(:x) do 
+  r1 = withcache(:x) do
     f()
   end
 
@@ -29,9 +31,9 @@ end
   function f()
     rand(1:1_000)
   end
-  
+
   Genie.config.cache_duration = 5
-  
+
   r1 = withcache(:x) do
     f()
   end

@@ -8,6 +8,11 @@ import Genie
 export flash, flash_has_message
 
 
+function init()
+  Genie.Sessions.init()
+end
+
+
 """
     flash()
 

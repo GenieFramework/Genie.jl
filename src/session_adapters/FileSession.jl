@@ -19,18 +19,41 @@ function write(session::Genie.Sessions.Session) :: Genie.Sessions.Session
       mkpath(SESSIONS_PATH)
     catch ex
       @error "Can't create session storage path $SESSIONS_PATH"
+      @error ex
     end
   end
 
   try
-    open(joinpath(SESSIONS_PATH, session.id), "w") do io
-      Serialization.serialize(io, session)
-    end
+    write_session(session)
+
+    return session
   catch ex
     @error "Failed to store session data"
+    @error ex
+  end
+
+  try
+    @warn "Resetting session"
+
+    session = Genie.Sessions.Session(Genie.Sessions.id())
+    Genie.Cookies.set!(Genie.Router._params_(Genie.PARAMS_RESPONSE_KEY), Genie.config.session_key_name, session.id, Genie.config.session_options)
+    write_session(session)
+    Genie.Router._params_(Genie.PARAMS_SESSION_KEY, session)
+
+    return session
+  catch ex
+    @error "Failed to regenerate and store session data. Giving up."
+    @error ex
   end
 
   session
+end
+
+
+function write_session(session::Genie.Sessions.Session)
+  open(joinpath(SESSIONS_PATH, session.id), "w") do io
+    Serialization.serialize(io, session)
+  end
 end
 
 
@@ -41,14 +64,7 @@ end
 Attempts to read from file the session object serialized as `session_id`.
 """
 function read(session_id::Union{String,Symbol}) :: Union{Nothing,Genie.Sessions.Session}
-  try
-    isfile(joinpath(SESSIONS_PATH, session_id)) || return write(Genie.Sessions.Session(session_id))
-  catch ex
-    @error "Can't check session file"
-    @error ex
-
-    write(Genie.Sessions.Session(session_id))
-  end
+  isfile(joinpath(SESSIONS_PATH, session_id)) || return nothing
 
   try
     open(joinpath(SESSIONS_PATH, session_id), "r") do (io)
@@ -57,8 +73,6 @@ function read(session_id::Union{String,Symbol}) :: Union{Nothing,Genie.Sessions.
   catch ex
     @error "Can't read session"
     @error ex
-
-    write(Genie.Sessions.Session(session_id))
   end
 end
 

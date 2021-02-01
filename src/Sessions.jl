@@ -94,6 +94,9 @@ end
 Sets up the session functionality, if configured.
 """
 function init() :: Nothing
+  @eval Genie.config.session_storage === nothing && (Genie.config.session_storage = :File)
+  @eval Genie.config.session_storage == :File && include(joinpath(@__DIR__, "session_adapters", "FileSession.jl"))
+
   push!(Genie.Router.pre_match_hooks, Genie.Sessions.start)
   push!(Genie.Router.pre_response_hooks, Genie.Sessions.persist)
 
@@ -112,8 +115,7 @@ Initiates a new HTTP session with the provided `session_id`.
 - `res::HTTP.Response`: the response object
 - `options::Dict{String,String}`: extra options for setting the session cookie, such as `Path` and `HttpOnly`
 """
-function start(session_id::String, req::HTTP.Request, res::HTTP.Response; options::Dict{String,String} = Dict{String,String}()) :: Tuple{Session,HTTP.Response}
-  options = merge(Dict("Path" => "/", "HttpOnly" => true, "Secure" => true), options)
+function start(session_id::String, req::HTTP.Request, res::HTTP.Response; options::Dict{String,Any} = Genie.config.session_options) :: Tuple{Session,HTTP.Response}
   Genie.Cookies.set!(res, Genie.config.session_key_name, session_id, options)
 
   load(session_id), res
@@ -130,8 +132,8 @@ Initiates a new default session object, generating a new session id.
 - `res::HTTP.Response`: the response object
 - `options::Dict{String,String}`: extra options for setting the session cookie, such as `Path` and `HttpOnly`
 """
-function start(req::HTTP.Request, res::HTTP.Response, params::Dict{Symbol,Any} = Dict{Symbol,Any}(); options::Dict{String,String} = Dict{String,String}()) :: Tuple{HTTP.Request,HTTP.Response,Dict{Symbol,Any}}
-  session, res = start(id(req, res), req, res, options = options)
+function start(req::HTTP.Request, res::HTTP.Response, params::Dict{Symbol,Any} = Dict{Symbol,Any}(); options::Dict{String,Any} = Genie.config.session_options) :: Tuple{HTTP.Request,HTTP.Response,Dict{Symbol,Any}}
+  session, res = start(id(req, res), req, res; options)
 
   params[Genie.PARAMS_SESSION_KEY]   = session
   params[Genie.PARAMS_FLASH_KEY]     = begin
