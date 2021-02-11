@@ -13,7 +13,7 @@ const config = Configuration.Settings(app_env = ENV["GENIE_ENV"])
 include("constants.jl")
 
 import Sockets
-import Logging, LoggingExtras
+import Logging
 
 using Reexport
 
