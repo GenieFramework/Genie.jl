@@ -381,6 +381,8 @@ function write_app_custom_files(path::String, app_path::String) :: Nothing
   open(joinpath(app_path, Genie.BOOTSTRAP_FILE_NAME), "w") do f
     write(f,
     """
+    pwd() == joinpath(@__DIR__, "bin") && cd(@__DIR__) # allow starting app from bin/ dir
+
     using $(moduleinfo[1])
     $(moduleinfo[1]).main()
     """)
