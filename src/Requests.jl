@@ -235,6 +235,16 @@ function wsclient() :: HTTP.WebSockets.WebSocket
 end
 
 
+"""
+    wsclient() :: HTTP.WebSockets.WebSocket
+
+The web sockets client for the current request.
+"""
+function wtclient() :: UInt
+  Router.@params(:wtclient) |> hash
+end
+
+
 function getheaders(req::HTTP.Request) :: Dict{String,String}
   Dict{String,String}(req.headers)
 end

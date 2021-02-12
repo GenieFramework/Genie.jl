@@ -49,7 +49,7 @@ Genie.WebChannels.load_channels = function() {
   });
 
   // A message maps to a channel route so that channel + message = /action/controller
-  // The payload is the data made exposed in the Channel Controller
+  // The payload is the data exposed in the Channel Controller
   function sendMessageTo(channel, message, payload = {}) {
     if (socket.readyState === 1) {
       socket.send(JSON.stringify({
