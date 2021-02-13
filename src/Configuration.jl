@@ -269,10 +269,10 @@ mutable struct Settings
             webchannels_unsubscribe_channel = "unsubscribe",
             webchannels_autosubscribe       = true,
 
-            webthreads_default_route        = "____",
+            webthreads_default_route        = "__",
             webthreads_js_file              = "webthreads.js",
-            webthreads_pull_route           = "--",
-            webthreads_push_route           = "++",
+            webthreads_pull_route           = "pull",
+            webthreads_push_route           = "push",
 
             html_parser_close_tag = " /",
             html_parser_char_at = "!!",

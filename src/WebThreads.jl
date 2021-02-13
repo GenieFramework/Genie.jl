@@ -141,6 +141,12 @@ function unsubscribe_disconnected_clients(channel::ChannelName) :: ChannelClient
 end
 
 
+function unsubscribe_clients()
+  empty!(CLIENTS)
+  empty!(SUBSCRIPTIONS)
+end
+
+
 """
 Adds a new subscription for `client` to `channel`.
 """
@@ -192,7 +198,7 @@ end
 Pushes `msg` (and `payload`) to all the clients subscribed to the channels in `channels`.
 """
 function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String;
-                    except::Union{HTTP.WebSockets.WebSocket,Nothing} = nothing) :: Bool
+                    except::Union{HTTP.WebSockets.WebSocket,Nothing,UInt} = nothing) :: Bool
   isa(channels, Array) || (channels = ChannelName[channels])
 
   for channel in channels
@@ -263,7 +269,7 @@ end
 
 function pull(wt::UInt, channel::ChannelName)
   output = ""
-  if ! isempty(MESSAGE_QUEUE[wt])
+  if haskey(MESSAGE_QUEUE, wt) && ! isempty(MESSAGE_QUEUE[wt])
     output = MESSAGE_QUEUE[wt] |> Renderer.Json.JSONParser.json
     empty!(MESSAGE_QUEUE[wt])
   end
@@ -272,13 +278,7 @@ function pull(wt::UInt, channel::ChannelName)
 end
 
 function push(wt::UInt, channel::ChannelName, message::String)
-  output = ""
-  if ! isempty(MESSAGE_QUEUE[wt])
-    output = MESSAGE_QUEUE[wt] |> Renderer.Json.JSONParser.json
-    empty!(MESSAGE_QUEUE[wt])
-  end
-
-  output
+  Genie.Router.route_ws_request(Genie.Router.@params(Genie.PARAMS_REQUEST_KEY), message, wt)
 end
 
 end

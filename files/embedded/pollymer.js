@@ -493,11 +493,11 @@ ____DOLLAR______System.register('2', [], function (_export) {
                 console["error"] = console["log"];
             }
 
-            consoleInfo = console.info.bind(console);
+            consoleInfo = function(_){}; // console.info.bind(console);
 
             _export('consoleInfo', consoleInfo);
 
-            consoleError = console.error.bind(console);
+            consoleError = function(_){}; console.error.bind(console);
 
             _export('consoleError', consoleError);
         }

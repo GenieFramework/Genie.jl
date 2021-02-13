@@ -1,4 +1,5 @@
 Genie.WebChannels = {};
+var tm = null;
 
 Genie.WebChannels.load_channels = function() {
   let port = window.location.port;
@@ -17,7 +18,7 @@ Genie.WebChannels.load_channels = function() {
   channels.messageHandlers = [];
   channels.errorHandlers = [];
 
-  socket.maxTries = 2; // try twice
+  socket.maxTries = 1;
 
   socket.on('finished', function(code, result, headers) {
     for (var i = 0; i < channels.messageHandlers.length; i++) {
@@ -41,7 +42,8 @@ Genie.WebChannels.load_channels = function() {
   // A message maps to a channel route so that channel + message = /action/controller
   // The payload is the data exposed in the Channel Controller
   function sendMessageTo(channel, message, payload = {}, headers = {}) {
-    push(JSON.stringify({
+    push(
+      JSON.stringify({
       'channel': channel,
       'message': message,
       'payload': payload
@@ -66,8 +68,6 @@ window.addEventListener('beforeunload', function (event) {
 });
 
 window.addEventListener('load', function (event) {
-  console.log("Loading web threads");
-
   if ( Genie.Settings.webchannels_autosubscribe ) {
     subscribe();
   }
@@ -79,60 +79,68 @@ function subscribe() {
   if (document.readyState === "complete" || document.readyState === "interactive") {
     Genie.WebChannels.channel.start('GET', Genie.WebChannels.server_uri + '/' + Genie.Settings.webthreads_default_route + '/' + Genie.Settings.webchannels_subscribe_channel + '?wtclient=' + Genie.WebChannels.wtid, {}, '');
     console.log("Subscription ready");
-    setTimeout(pull, Genie.WebChannels.poll_interval);
+    tm = setTimeout(pull, Genie.WebChannels.poll_interval);
   } else {
     console.log("Queuing subscription");
-    setTimeout(subscribe, Genie.WebChannels.poll_interval);
+    tm = setTimeout(subscribe, Genie.WebChannels.poll_interval);
   }
 }
 
 function unsubscribe() {
   if (document.readyState === "complete" || document.readyState === "interactive") {
     Genie.WebChannels.channel.start('GET', Genie.WebChannels.server_uri + '/' + Genie.Settings.webthreads_default_route + '/' + Genie.Settings.webchannels_unsubscribe_channel + '?wtclient=' + Genie.WebChannels.wtid, {}, '');
+
     console.log("Unsubscribed");
+
     Genie.WebChannels.channel.abort();
+    clearTimeout(tm);
   } else {
     console.log("Queuing unsubscription");
-    setTimeout(unsubscribe, Genie.WebChannels.poll_interval);
+
+    tm = setTimeout(unsubscribe, Genie.WebChannels.poll_interval);
   }
 }
 
 function pull() {
   if (document.readyState === "complete" || document.readyState === "interactive") {
     Genie.WebChannels.channel.start('POST', Genie.WebChannels.server_uri + '/' + Genie.Settings.webthreads_default_route + '/' + Genie.Settings.webthreads_pull_route + '?wtclient=' + Genie.WebChannels.wtid, {}, '');
-    console.log("Pulled");
   } else {
     console.log("Queuing pull");
   }
-  setTimeout(pull, Genie.WebChannels.poll_interval);
+
+  tm = setTimeout(pull, Genie.WebChannels.poll_interval);
 }
 
 function push(body, headers = {}) {
   if (document.readyState === "complete" || document.readyState === "interactive") {
     Genie.WebChannels.channel.abort();
-    Genie.WebChannels.channel.start('POST', Genie.WebChannels.server_uri + '/' + Genie.Settings.webthreads_default_route + '/' + Genie.Settings.webthreads_push_route + '?wtclient=' + Genie.WebChannels.wtid, {}, '');
+    Genie.WebChannels.channel.start('POST', Genie.WebChannels.server_uri + '/' + Genie.Settings.webthreads_default_route + '/' + Genie.Settings.webthreads_push_route + '?wtclient=' + Genie.WebChannels.wtid, headers, body);
     console.log("Pushed");
   } else {
     console.log("Queuing push");
   }
-  setTimeout(pull, Genie.WebChannels.poll_interval);
+
+  tm = setTimeout(pull, Genie.WebChannels.poll_interval);
 }
 
 Genie.WebChannels.messageHandlers.push(function(code, result, headers){
-  try {
-    if (result.startsWith('{') && result.endsWith('}')) {
-      window.parse_payload(JSON.parse(result));
-    } else {
-      window.parse_payload(result);
+  for ( i=0; i<result.length; i++ ) {
+    message = result[i].trim();
+    try {
+      if (message.startsWith('{') && message.endsWith('}')) {
+        window.parse_payload(JSON.parse(message));
+      } else {
+        window.parse_payload(message);
+      }
+    } catch (ex) {
+      console.log(ex);
     }
-  } catch (ex) {
-    console.log(ex);
   }
 });
 
 Genie.WebChannels.errorHandlers.push(function(event) {
   console.log("Error: ", event);
-  setTimeout(pull, Genie.WebChannels.poll_interval * 10);
+  tm = setTimeout(pull, Genie.WebChannels.poll_interval * 2);
 });
 
 function parse_payload(json_data) {

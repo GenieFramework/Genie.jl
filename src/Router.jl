@@ -458,12 +458,13 @@ end
 Matches the invoked URL to the corresponding route, sets up the execution environment and invokes the controller method.
 """
 function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: HTTP.Response
+  uri = URIParser.URI(to_uri(req.target))
+
   for r in routes()
     r.method != req.method && continue
 
     parsed_route, param_names, param_types = parse_route(r.path)
 
-    uri = URIParser.URI(to_uri(req.target))
     regex_route = try
       Regex("^" * parsed_route * "\$")
     catch
@@ -533,17 +534,17 @@ end
 Matches the invoked URL to the corresponding channel, sets up the execution environment and invokes the channel controller method.
 """
 function match_channels(req, msg::String, ws_client, params::Params) :: String
+  payload::Dict{String,Any} = try
+    JSON.parse(msg)
+  catch ex
+    Dict{String,Any}()
+  end
+
+  uri = haskey(payload, "channel") ? "/" * payload["channel"] : "/"
+  uri = haskey(payload, "message") ? uri * "/" * payload["message"] : uri
+
   for c in channels()
     parsed_channel, param_names, param_types = parse_channel(c.path)
-
-    payload::Dict{String,Any} = try
-                                  JSON.parse(msg)
-                                catch ex
-                                  Dict{String,Any}()
-                                end
-
-    uri = haskey(payload, "channel") ? "/" * payload["channel"] : "/"
-    uri = haskey(payload, "message") ? uri * "/" * payload["message"] : uri
 
     haskey(payload, "payload") && (params.collection[:payload] = payload["payload"])
 

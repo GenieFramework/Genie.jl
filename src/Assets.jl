@@ -175,7 +175,7 @@ Outputs the webthreads.js file included with the Genie package
 """
 function webthreads(channel::String = Genie.config.webthreads_default_route) :: String
   string(js_settings(channel),
-          embedded(joinpath("files", "embedded", "pollymer.js")),
+          embedded(joinpath("files", "embedded", "pollymer.min.js")),
           embedded(joinpath("files", "embedded", "webthreads.js")))
 end
 
@@ -198,14 +198,14 @@ function webthreads_subscribe(channel::String = Genie.config.webthreads_default_
   Router.route("/$(channel)/$(Genie.config.webchannels_subscribe_channel)", method = Router.GET) do
     WebThreads.subscribe(Genie.Requests.wtclient(), channel)
 
-    """{"Subscription":"OK"}"""
+    Dict("Subscription" => "OK") |> Genie.Renderer.Json.json
   end
 
   Router.route("/$(channel)/$(Genie.config.webchannels_unsubscribe_channel)", method = Router.GET) do
     WebThreads.unsubscribe(Genie.Requests.wtclient(), channel)
     WebThreads.unsubscribe_disconnected_clients()
 
-    """{"Unubscription":"OK"}"""
+    Dict("Unubscription" => "OK") |> Genie.Renderer.Json.json
   end
 
   nothing
@@ -218,7 +218,7 @@ function webthreads_push_pull(channel::String = Genie.config.webthreads_default_
   end
 
   Router.route("/$(channel)/$(Genie.config.webthreads_push_route)", method = Router.POST) do
-    WebThreads.push(Genie.Requests.wtclient(), channel)
+    WebThreads.push(Genie.Requests.wtclient(), channel, Router.@params(Genie.PARAMS_RAW_PAYLOAD))
   end
 
   nothing

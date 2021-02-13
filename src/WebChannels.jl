@@ -208,7 +208,7 @@ end
 Pushes `msg` (and `payload`) to all the clients subscribed to the channels in `channels`.
 """
 function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String;
-                    except::Union{HTTP.WebSockets.WebSocket,Nothing} = nothing) :: Bool
+                    except::Union{HTTP.WebSockets.WebSocket,Nothing,UInt} = nothing) :: Bool
   isa(channels, Array) || (channels = ChannelName[channels])
 
   for channel in channels
