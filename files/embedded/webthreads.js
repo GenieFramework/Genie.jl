@@ -78,26 +78,19 @@ Genie.WebChannels.load_channels();
 function subscribe() {
   if (document.readyState === "complete" || document.readyState === "interactive") {
     Genie.WebChannels.channel.start('GET', Genie.WebChannels.server_uri + '/' + Genie.Settings.webthreads_default_route + '/' + Genie.Settings.webchannels_subscribe_channel + '?wtclient=' + Genie.WebChannels.wtid, {}, '');
-    console.log("Subscription ready");
-    // tm = setTimeout(pull, Genie.WebChannels.poll_interval);
     pull();
   } else {
-    console.log("Queuing subscription");
     tm = setTimeout(subscribe, Genie.WebChannels.poll_interval);
   }
 }
 
 function unsubscribe() {
+  clearTimeout(tm);
+  Genie.WebChannels.channel.abort();
+
   if (document.readyState === "complete" || document.readyState === "interactive") {
     Genie.WebChannels.channel.start('GET', Genie.WebChannels.server_uri + '/' + Genie.Settings.webthreads_default_route + '/' + Genie.Settings.webchannels_unsubscribe_channel + '?wtclient=' + Genie.WebChannels.wtid, {}, '');
-
-    console.log("Unsubscribed");
-
-    Genie.WebChannels.channel.abort();
-    clearTimeout(tm);
   } else {
-    console.log("Queuing unsubscription");
-
     tm = setTimeout(unsubscribe, Genie.WebChannels.poll_interval);
   }
 }
@@ -105,8 +98,6 @@ function unsubscribe() {
 function pull() {
   if (document.readyState === "complete" || document.readyState === "interactive") {
     Genie.WebChannels.channel.start('POST', Genie.WebChannels.server_uri + '/' + Genie.Settings.webthreads_default_route + '/' + Genie.Settings.webthreads_pull_route + '?wtclient=' + Genie.WebChannels.wtid, {}, '');
-  } else {
-    console.log("Queuing pull");
   }
 
   tm = setTimeout(pull, Genie.WebChannels.poll_interval);
@@ -118,8 +109,6 @@ function push(body, headers = {}) {
 
   if (document.readyState === "complete" || document.readyState === "interactive") {
     Genie.WebChannels.channel.start('POST', Genie.WebChannels.server_uri + '/' + Genie.Settings.webthreads_default_route + '/' + Genie.Settings.webthreads_push_route + '?wtclient=' + Genie.WebChannels.wtid, headers, body);
-  } else {
-    console.log("Queuing push");
   }
 
   pull();
