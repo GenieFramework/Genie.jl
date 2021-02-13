@@ -4,6 +4,7 @@ Core genie configuration / settings functionality.
 module Configuration
 
 import Pkg
+import Dates
 
 """
     pkginfo(pkg::String)
@@ -197,6 +198,7 @@ mutable struct Settings
   webthreads_js_file::String
   webthreads_pull_route::String
   webthreads_push_route::String
+  webthreads_connection_threshold::Dates.Millisecond
 
   html_parser_close_tag::String
   html_parser_char_at::String
@@ -273,6 +275,7 @@ mutable struct Settings
             webthreads_js_file              = "webthreads.js",
             webthreads_pull_route           = "pull",
             webthreads_push_route           = "push",
+            webthreads_connection_threshold = Dates.Millisecond(60_000), # 1 minute
 
             html_parser_close_tag = " /",
             html_parser_char_at = "!!",
@@ -302,7 +305,7 @@ mutable struct Settings
                   path_config, path_env, path_app, path_resources, path_lib, path_helpers, path_log, path_tasks, path_build,
                   path_plugins, path_cache, path_initializers, path_db, path_bin, path_src,
                   webchannels_default_route, webchannels_js_file, webchannels_subscribe_channel, webchannels_unsubscribe_channel, webchannels_autosubscribe,
-                  webthreads_default_route, webthreads_js_file, webthreads_pull_route, webthreads_push_route,
+                  webthreads_default_route, webthreads_js_file, webthreads_pull_route, webthreads_push_route, webthreads_connection_threshold,
                   html_parser_close_tag, html_parser_char_at, html_parser_char_dot, html_parser_char_column, html_parser_char_dash,
                   ssl_enabled, ssl_config,
                   session_key_name, session_storage, session_options

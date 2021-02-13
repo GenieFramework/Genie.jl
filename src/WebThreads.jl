@@ -6,18 +6,16 @@ module WebThreads
 import HTTP, Distributed, Logging, Dates
 import Genie, Genie.Renderer
 
+
 const MESSAGE_QUEUE = Dict{UInt,Vector{String}}()
 
 const ClientId = UInt # session id
 const ChannelName = String
 
-struct WebThreadNotFoundException <: Exception
-  name::ChannelName
-end
-
 mutable struct ChannelClient
   client::UInt
   channels::Vector{ChannelName}
+  last_active::Dates.DateTime
 end
 
 const ChannelClientsCollection = Dict{ClientId,ChannelClient} # { uint => { :client => ws, :channels => ["foo", "bar", "baz"] } }
@@ -44,7 +42,7 @@ channels() = collect(keys(SUBSCRIPTIONS))
 function connected_clients(channel::ChannelName) :: Vector{ChannelClient}
   clients = ChannelClient[]
   for client_id in SUBSCRIPTIONS[channel]
-    push!(clients, CLIENTS[client_id])
+    ((Dates.now() - CLIENTS[client_id].last_active) <= Genie.config.webthreads_connection_threshold) && push!(clients, CLIENTS[client_id])
   end
 
   clients
@@ -60,10 +58,20 @@ end
 
 
 function disconnected_clients(channel::ChannelName) :: Vector{ChannelClient}
-  ChannelClient[]
+  clients = ChannelClient[]
+  for client_id in SUBSCRIPTIONS[channel]
+    ((Dates.now() - CLIENTS[client_id].last_active) > Genie.config.webthreads_connection_threshold) && push!(clients, CLIENTS[client_id])
+  end
+
+  clients
 end
 function disconnected_clients() :: Vector{ChannelClient}
-  ChannelClient[]
+  clients = ChannelClient[]
+  for ch in channels()
+    clients = vcat(clients, disconnected_clients(ch))
+  end
+
+  clients
 end
 
 
@@ -74,7 +82,7 @@ function subscribe(wt::UInt, channel::ChannelName) :: ChannelClientsCollection
   if haskey(CLIENTS, wt)
     in(channel, CLIENTS[wt].channels) || push!(CLIENTS[wt].channels, channel)
   else
-    CLIENTS[wt] = ChannelClient(wt, ChannelName[channel])
+    CLIENTS[wt] = ChannelClient(wt, ChannelName[channel], Dates.now())
   end
 
   push_subscription(wt, channel)
@@ -147,6 +155,13 @@ function unsubscribe_clients()
 end
 
 
+function timestamp_client(client_id::ClientId) :: Nothing
+  haskey(CLIENTS, client_id) && (CLIENTS[client_id].last_active = Dates.now())
+
+  nothing
+end
+
+
 """
 Adds a new subscription for `client` to `channel`.
 """
@@ -156,6 +171,8 @@ function push_subscription(client_id::ClientId, channel::ChannelName) :: Channel
   else
     SUBSCRIPTIONS[channel] = ClientId[client_id]
   end
+
+  timestamp_client(client_id)
 
   SUBSCRIPTIONS
 end
@@ -174,6 +191,8 @@ function pop_subscription(client::ClientId, channel::ChannelName) :: ChannelSubs
     end
     isempty(SUBSCRIPTIONS[channel]) && delete!(SUBSCRIPTIONS, channel)
   end
+
+  timestamp_client(client)
 
   SUBSCRIPTIONS
 end
@@ -202,7 +221,7 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String
   isa(channels, Array) || (channels = ChannelName[channels])
 
   for channel in channels
-    haskey(SUBSCRIPTIONS, channel) || throw(ChannelNotFoundException(channel))
+    haskey(SUBSCRIPTIONS, channel) || throw(Genie.WebChannels.ChannelNotFoundException(channel))
 
     for client in SUBSCRIPTIONS[channel]
       except !== nothing && client == except && continue
@@ -221,7 +240,7 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String
   isa(channels, Array) || (channels = [channels])
 
   for channel in channels
-    haskey(SUBSCRIPTIONS, channel) || throw(ChannelNotFoundException(channel))
+    haskey(SUBSCRIPTIONS, channel) || throw(Genie.WebChannels.ChannelNotFoundException(channel))
 
     for client in SUBSCRIPTIONS[channel]
       try
@@ -274,10 +293,14 @@ function pull(wt::UInt, channel::ChannelName)
     empty!(MESSAGE_QUEUE[wt])
   end
 
+  timestamp_client(wt)
+
   output
 end
 
 function push(wt::UInt, channel::ChannelName, message::String)
+  timestamp_client(wt)
+
   Genie.Router.route_ws_request(Genie.Router.@params(Genie.PARAMS_REQUEST_KEY), message, wt)
 end
 

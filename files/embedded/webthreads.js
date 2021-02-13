@@ -5,7 +5,7 @@ Genie.WebChannels.load_channels = function() {
   let port = window.location.port;
   var socket = new Pollymer.Request();
   var channels = Genie.WebChannels;
-  var poll_interval = 10000;
+  var poll_interval = 1000;
   var server_uri = window.location.protocol + '//' + window.location.hostname + ':' +  port;
 
   channels.channel = socket;
@@ -79,7 +79,8 @@ function subscribe() {
   if (document.readyState === "complete" || document.readyState === "interactive") {
     Genie.WebChannels.channel.start('GET', Genie.WebChannels.server_uri + '/' + Genie.Settings.webthreads_default_route + '/' + Genie.Settings.webchannels_subscribe_channel + '?wtclient=' + Genie.WebChannels.wtid, {}, '');
     console.log("Subscription ready");
-    tm = setTimeout(pull, Genie.WebChannels.poll_interval);
+    // tm = setTimeout(pull, Genie.WebChannels.poll_interval);
+    pull();
   } else {
     console.log("Queuing subscription");
     tm = setTimeout(subscribe, Genie.WebChannels.poll_interval);
@@ -112,15 +113,16 @@ function pull() {
 }
 
 function push(body, headers = {}) {
+  clearTimeout(tm);
+  Genie.WebChannels.channel.abort();
+
   if (document.readyState === "complete" || document.readyState === "interactive") {
-    Genie.WebChannels.channel.abort();
     Genie.WebChannels.channel.start('POST', Genie.WebChannels.server_uri + '/' + Genie.Settings.webthreads_default_route + '/' + Genie.Settings.webthreads_push_route + '?wtclient=' + Genie.WebChannels.wtid, headers, body);
-    console.log("Pushed");
   } else {
     console.log("Queuing push");
   }
 
-  tm = setTimeout(pull, Genie.WebChannels.poll_interval);
+  pull();
 }
 
 Genie.WebChannels.messageHandlers.push(function(code, result, headers){
