@@ -160,6 +160,7 @@ mutable struct Settings
 
   log_level::Logging.LogLevel
   log_to_file::Bool
+  log_requests::Bool
 
   assets_fingerprinted::Bool
 
@@ -237,6 +238,7 @@ mutable struct Settings
 
             log_level     = Logging.Debug,
             log_to_file   = false,
+            log_requests  = true,
 
             assets_fingerprinted  = false,
 
@@ -296,7 +298,7 @@ mutable struct Settings
                   app_env,
                   cors_headers, cors_allowed_origins,
                   cache_duration, cache_storage,
-                  log_level, log_to_file,
+                  log_level, log_to_file, log_requests,
                   assets_fingerprinted,
                   inflector_irregulars,
                   run_as_server,

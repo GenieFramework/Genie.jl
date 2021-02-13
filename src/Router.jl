@@ -161,10 +161,12 @@ function route_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 =
 
   reqstatus = "$(req.target) $(res.status)\n"
 
-  if res.status < 400
-    @info reqstatus
-  else
-    @error reqstatus
+  if Genie.config.log_requests
+    if res.status < 400
+      @info reqstatus
+    else
+      @error reqstatus
+    end
   end
 
   req.method == HEAD && (res.body = UInt8[])
