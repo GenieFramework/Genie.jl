@@ -128,13 +128,13 @@ end
 
 
 function channels_subscribe(channel::String = Genie.config.webchannels_default_route) :: Nothing
-  Router.channel("$(Genie.config.base_path)$(channel)/$(Genie.config.webchannels_subscribe_channel)") do
+  Router.channel("/$(channel)/$(Genie.config.webchannels_subscribe_channel)") do
     WebChannels.subscribe(Genie.Requests.wsclient(), channel)
 
     "Subscription: OK"
   end
 
-  Router.channel("$(Genie.config.base_path)$(channel)/$(Genie.config.webchannels_unsubscribe_channel)") do
+  Router.channel("/$(channel)/$(Genie.config.webchannels_unsubscribe_channel)") do
     WebChannels.unsubscribe(Genie.Requests.wsclient(), channel)
     WebChannels.unsubscribe_disconnected_clients()
 
@@ -153,15 +153,15 @@ returning the `<script>` tag for including the linked JS file into the web page.
 """
 function channels_support(channel::String = Genie.config.webchannels_default_route) :: String
   endpoint = (channel == Genie.config.webchannels_default_route) ?
-              "$(Genie.config.base_path)js/$(Genie.config.webchannels_js_file)" :
-              "$(Genie.config.base_path)js/$(channel)/$(Genie.config.webchannels_js_file)"
+              "/js/$(Genie.config.webchannels_js_file)" :
+              "/js/$(channel)/$(Genie.config.webchannels_js_file)"
   Router.route(endpoint) do
     Genie.Renderer.Js.js(channels(channel))
   end
 
   channels_subscribe(channel)
 
-  "<script src=\"$(endpoint)?v=$(Genie.Configuration.GENIE_VERSION)\"></script>"
+  "<script src=\"$(Genie.config.base_path)$(endpoint[2:end])?v=$(Genie.Configuration.GENIE_VERSION)\"></script>"
 end
 
 
@@ -233,8 +233,8 @@ returning the `<script>` tag for including the linked JS file into the web page.
 """
 function webthreads_support(channel::String = Genie.config.webthreads_default_route) :: String
   endpoint = (channel == Genie.config.webthreads_default_route) ?
-              "$(Genie.config.base_path)js/$(Genie.config.webthreads_js_file)" :
-              "$(Genie.config.base_path)js/$(channel)/$(Genie.config.webthreads_js_file)"
+              "/js/$(Genie.config.webthreads_js_file)" :
+              "/js/$(channel)/$(Genie.config.webthreads_js_file)"
 
   Router.route(endpoint) do
     Genie.Renderer.Js.js(webthreads(channel))
@@ -243,7 +243,7 @@ function webthreads_support(channel::String = Genie.config.webthreads_default_ro
   webthreads_subscribe(channel)
   webthreads_push_pull(channel)
 
-  "<script src=\"$(endpoint)?v=$(Genie.Configuration.GENIE_VERSION)\"></script>"
+  "<script src=\"$(Genie.config.base_path)$(endpoint[2:end])?v=$(Genie.Configuration.GENIE_VERSION)\"></script>"
 end
 
 
