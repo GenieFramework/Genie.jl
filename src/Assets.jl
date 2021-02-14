@@ -74,6 +74,8 @@ function js_settings(channel::String = Genie.config.webchannels_default_route) :
     :webthreads_js_file               => Genie.config.webthreads_js_file,
     :webthreads_pull_route            => Genie.config.webthreads_pull_route,
     :webthreads_push_route            => Genie.config.webthreads_push_route,
+
+    :base_path                        => Genie.config.base_path,
   ))
 
   """
