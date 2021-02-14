@@ -26,7 +26,7 @@ Utility function to copy plugin files from package dir to app.
 """
 function recursive_copy(path::String, dest::String; only_hidden = true, force = false)
   for (root, dirs, files) in walkdir(path)
-    dest_path = joinpath(dest, replace(root, (path_prefix * "/")=>""))
+    dest_path = joinpath(dest, replace(root, (path_prefix * '/')=>""))
 
     try
       mkpath(dest_path)

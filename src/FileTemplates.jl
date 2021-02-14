@@ -62,8 +62,8 @@ end
 Generates a custom app module when a new app is bootstrapped.
 """
 function appmodule(path::String)
-  path = replace(path, "-"=>"_") |> strip
-  appname = split(path, "/", keepempty = false)[end] |> String |> Inflector.from_underscores
+  path = replace(path, '-'=>'_') |> strip
+  appname = split(path, '/', keepempty = false)[end] |> String |> Inflector.from_underscores
 
   content = """
   module $appname

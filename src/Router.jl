@@ -258,7 +258,7 @@ end
 Generates default names for routes and channels.
 """
 function baptizer(params::Union{Route,Channel}, parts::Vector{String}) :: Symbol
-  for uri_part in split(params.path, "/", keepempty = false)
+  for uri_part in split(params.path, '/', keepempty = false)
     startswith(uri_part, ":") && continue # we ignore named params
     push!(parts, lowercase(uri_part))
   end
@@ -359,7 +359,7 @@ function to_link(route_name::Symbol, d::Dict{Symbol,T}; preserve_query::Bool = t
   route = get_route(route_name)
 
   result = String[]
-  for part in split(route.path, "/")
+  for part in split(route.path, '/')
     if occursin("#", part)
       part = split(part, "#")[1]
     end
@@ -399,7 +399,7 @@ function to_link(route_name::Symbol, d::Dict{Symbol,T}; preserve_query::Bool = t
     push!(qv, "$k=$v")
   end
 
-  join(result, "/") * ( ! isempty(qv) ? "?" : "" ) * join(qv, "&")
+  join(result, '/') * ( ! isempty(qv) ? '?' : "" ) * join(qv, '&')
 end
 
 
@@ -542,8 +542,8 @@ function match_channels(req, msg::String, ws_client, params::Params) :: String
     Dict{String,Any}()
   end
 
-  uri = haskey(payload, "channel") ? "/" * payload["channel"] : "/"
-  uri = haskey(payload, "message") ? uri * "/" * payload["message"] : uri
+  uri = haskey(payload, "channel") ? Genie.config.base_path * payload["channel"] : Genie.config.base_path
+  uri = haskey(payload, "message") ? uri * '/' * payload["message"] : uri
 
   for c in channels()
     parsed_channel, param_names, param_types = parse_channel(c.path)
@@ -599,7 +599,7 @@ function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
   if occursin('#', route) || occursin(':', route)
     validation_match = "[\\w\\-\\.\\+\\,\\s\\%]+"
 
-    for rp in split(route, "/", keepempty = false)
+    for rp in split(route, '/', keepempty = false)
       if occursin("#", rp)
         x = split(rp, "#")
         rp = x[1]
@@ -625,10 +625,10 @@ function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
       push!(parts, rp)
     end
   else
-    parts = split(route, "/", keepempty = false)
+    parts = split(route, '/', keepempty = false)
   end
 
-  "/" * join(parts, "/"), param_names, param_types
+  Genie.config.base_path * join(parts, '/'), param_names, param_types
 end
 
 
@@ -643,7 +643,7 @@ function parse_channel(channel::String) :: Tuple{String,Vector{String},Vector{An
   param_types = Any[]
 
   if occursin(':', channel)
-    for rp in split(channel, "/", keepempty = false)
+    for rp in split(channel, '/', keepempty = false)
       if startswith(rp, ":")
         param_type =  if occursin("::", rp)
                         x = split(rp, "::")
@@ -660,10 +660,10 @@ function parse_channel(channel::String) :: Tuple{String,Vector{String},Vector{An
       push!(parts, rp)
     end
   else
-    parts = split(channel, "/", keepempty = false)
+    parts = split(channel, '/', keepempty = false)
   end
 
-  "/" * join(parts, "/"), param_names, param_types
+  Genie.config.base_path * join(parts, '/'), param_names, param_types
 end
 
 parse_param(param_type::Type{<:Number}, param::AbstractString) = parse(param_type, param)
@@ -1049,7 +1049,7 @@ function to_uri(resource::String) :: URIParser.URI
     URIParser.URI(resource)
   catch ex
     qp = URIParser.query_params(resource) |> keys |> collect
-    escaped_resource = join(map( x -> ( startswith(x, "/") ? escape_resource_path(string(x)) : URIParser.escape(string(x)) ) * "=" * URIParser.escape(URIParser.query_params(resource)[string(x)]), qp ), "&")
+    escaped_resource = join(map( x -> ( startswith(x, '/') ? escape_resource_path(string(x)) : URIParser.escape(string(x)) ) * "=" * URIParser.escape(URIParser.query_params(resource)[string(x)]), qp ), "&")
 
     URIParser.URI(escaped_resource)
   end
@@ -1062,10 +1062,10 @@ end
 Cleans up paths to resources.
 """
 function escape_resource_path(resource::String)
-  startswith(resource, "/") || return resource
+  startswith(resource, Genie.config.base_path) || return resource
   resource = resource[2:end]
 
-  "/" * join(map(x -> URIParser.escape(x), split(resource, "?")), "?")
+  Genie.config.base_path * join(map(x -> URIParser.escape(x), split(resource, '?')), '?')
 end
 
 
@@ -1075,7 +1075,7 @@ end
 Reads the static file and returns the content as a `Response`.
 """
 function serve_static_file(resource::String; root = Genie.config.server_document_root) :: HTTP.Response
-  startswith(resource, "/") || (resource = "/$resource")
+  startswith(resource, Genie.config.base_path) || (resource = "$(Genie.config.base_path)$(resource)")
   resource_path = try
                     URIParser.URI(resource).path
                   catch ex
@@ -1165,7 +1165,7 @@ Returns the path to a resource file. If `within_doc_root` it will automatically 
 """
 function file_path(resource::String; within_doc_root = true, root = Genie.config.server_document_root) :: String
   within_doc_root = within_doc_root && root == Genie.config.server_document_root
-  joinpath(within_doc_root ? Genie.config.server_document_root : root, resource[(startswith(resource, "/") ? 2 : 1):end])
+  joinpath(within_doc_root ? Genie.config.server_document_root : root, resource[(startswith(resource, Genie.config.base_path) ? length(Genie.config.base_path)+1 : 1):end])
 end
 const filepath = file_path
 

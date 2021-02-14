@@ -27,7 +27,7 @@ function include_asset(asset_type::Union{String,Symbol}, file_name::Union{String
   file_name = string(file_name)
 
   suffix = fingerprinted ? "-" * Genie.ASSET_FINGERPRINT * ".$asset_type" : ".$asset_type"
-  "/$asset_type/$(file_name)$(suffix)"
+  "$(Genie.config.base_path)$(asset_type)/$(file_name)$(suffix)"
 end
 
 
@@ -128,13 +128,13 @@ end
 
 
 function channels_subscribe(channel::String = Genie.config.webchannels_default_route) :: Nothing
-  Router.channel("/$(channel)/$(Genie.config.webchannels_subscribe_channel)") do
+  Router.channel("$(Genie.config.base_path)$(channel)/$(Genie.config.webchannels_subscribe_channel)") do
     WebChannels.subscribe(Genie.Requests.wsclient(), channel)
 
     "Subscription: OK"
   end
 
-  Router.channel("/$(channel)/$(Genie.config.webchannels_unsubscribe_channel)") do
+  Router.channel("$(Genie.config.base_path)$(channel)/$(Genie.config.webchannels_unsubscribe_channel)") do
     WebChannels.unsubscribe(Genie.Requests.wsclient(), channel)
     WebChannels.unsubscribe_disconnected_clients()
 
@@ -153,8 +153,8 @@ returning the `<script>` tag for including the linked JS file into the web page.
 """
 function channels_support(channel::String = Genie.config.webchannels_default_route) :: String
   endpoint = (channel == Genie.config.webchannels_default_route) ?
-              "/js/$(Genie.config.webchannels_js_file)" :
-              "/js/$(channel)/$(Genie.config.webchannels_js_file)"
+              "$(Genie.config.base_path)js/$(Genie.config.webchannels_js_file)" :
+              "$(Genie.config.base_path)js/$(channel)/$(Genie.config.webchannels_js_file)"
   Router.route(endpoint) do
     Genie.Renderer.Js.js(channels(channel))
   end
@@ -233,8 +233,8 @@ returning the `<script>` tag for including the linked JS file into the web page.
 """
 function webthreads_support(channel::String = Genie.config.webthreads_default_route) :: String
   endpoint = (channel == Genie.config.webthreads_default_route) ?
-              "/js/$(Genie.config.webthreads_js_file)" :
-              "/js/$(channel)/$(Genie.config.webthreads_js_file)"
+              "$(Genie.config.base_path)js/$(Genie.config.webthreads_js_file)" :
+              "$(Genie.config.base_path)js/$(channel)/$(Genie.config.webthreads_js_file)"
 
   Router.route(endpoint) do
     Genie.Renderer.Js.js(webthreads(channel))
@@ -265,7 +265,7 @@ function favicon_support() :: String
     )
   end
 
-  "<link rel=\"icon\" type=\"image/x-icon\" href=\"/favicon.ico\" />"
+  "<link rel=\"icon\" type=\"image/x-icon\" href=\"$(Genie.config.base_path)favicon.ico\" />"
 end
 
 end

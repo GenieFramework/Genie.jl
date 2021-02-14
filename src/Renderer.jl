@@ -510,8 +510,8 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Dict{S
   end
 
   for mime in accept_order_parts
-    if occursin("/", mime)
-      content_type = split(mime, "/")[2] |> lowercase |> Symbol
+    if occursin('/', mime)
+      content_type = split(mime, '/')[2] |> lowercase |> Symbol
       if haskey(CONTENT_TYPES, content_type)
         params[:response_type] = content_type
         params[Genie.PARAMS_MIME_KEY] = MIME_TYPES[params[:response_type]]

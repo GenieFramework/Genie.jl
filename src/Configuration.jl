@@ -214,6 +214,8 @@ mutable struct Settings
   session_storage::Union{Symbol,Nothing}
   session_options::Dict{String,Any}
 
+  base_path::String
+
   Settings(;
             server_port                 = (haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : 8000), # default port for binding the web server
             server_host                 = ENV["HOST"],
@@ -290,7 +292,9 @@ mutable struct Settings
 
             session_key_name    = "__geniesid",
             session_storage     = nothing,
-            session_options     = Dict("Path" => "/", "HttpOnly" => true, "Secure" => ssl_enabled)
+            session_options     = Dict("Path" => "/", "HttpOnly" => true, "Secure" => ssl_enabled),
+
+            base_path = "/"
         ) =
               new(
                   server_port, server_host,
@@ -310,7 +314,8 @@ mutable struct Settings
                   webthreads_default_route, webthreads_js_file, webthreads_pull_route, webthreads_push_route, webthreads_connection_threshold,
                   html_parser_close_tag, html_parser_char_at, html_parser_char_dot, html_parser_char_column, html_parser_char_dash,
                   ssl_enabled, ssl_config,
-                  session_key_name, session_storage, session_options
+                  session_key_name, session_storage, session_options,
+                  base_path
                 )
 end
 
