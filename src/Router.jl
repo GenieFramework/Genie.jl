@@ -542,7 +542,7 @@ function match_channels(req, msg::String, ws_client, params::Params) :: String
     Dict{String,Any}()
   end
 
-  uri = haskey(payload, "channel") ? Genie.config.base_path * payload["channel"] : Genie.config.base_path
+  uri = haskey(payload, "channel") ? '/' * payload["channel"] : '/'
   uri = haskey(payload, "message") ? uri * '/' * payload["message"] : uri
 
   for c in channels()
@@ -628,7 +628,7 @@ function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
     parts = split(route, '/', keepempty = false)
   end
 
-  Genie.config.base_path * join(parts, '/'), param_names, param_types
+  '/' * join(parts, '/'), param_names, param_types
 end
 
 
@@ -663,7 +663,7 @@ function parse_channel(channel::String) :: Tuple{String,Vector{String},Vector{An
     parts = split(channel, '/', keepempty = false)
   end
 
-  Genie.config.base_path * join(parts, '/'), param_names, param_types
+  '/' * join(parts, '/'), param_names, param_types
 end
 
 parse_param(param_type::Type{<:Number}, param::AbstractString) = parse(param_type, param)
@@ -1062,10 +1062,10 @@ end
 Cleans up paths to resources.
 """
 function escape_resource_path(resource::String)
-  startswith(resource, Genie.config.base_path) || return resource
+  startswith(resource, '/') || return resource
   resource = resource[2:end]
 
-  Genie.config.base_path * join(map(x -> URIParser.escape(x), split(resource, '?')), '?')
+  '/' * join(map(x -> URIParser.escape(x), split(resource, '?')), '?')
 end
 
 
@@ -1075,7 +1075,7 @@ end
 Reads the static file and returns the content as a `Response`.
 """
 function serve_static_file(resource::String; root = Genie.config.server_document_root) :: HTTP.Response
-  startswith(resource, Genie.config.base_path) || (resource = "$(Genie.config.base_path)$(resource)")
+  startswith(resource, '/') || (resource = "/$(resource)")
   resource_path = try
                     URIParser.URI(resource).path
                   catch ex
@@ -1165,7 +1165,7 @@ Returns the path to a resource file. If `within_doc_root` it will automatically 
 """
 function file_path(resource::String; within_doc_root = true, root = Genie.config.server_document_root) :: String
   within_doc_root = within_doc_root && root == Genie.config.server_document_root
-  joinpath(within_doc_root ? Genie.config.server_document_root : root, resource[(startswith(resource, Genie.config.base_path) ? length(Genie.config.base_path)+1 : 1):end])
+  joinpath(within_doc_root ? Genie.config.server_document_root : root, resource[(startswith(resource, '/') ? 2 : 1):end])
 end
 const filepath = file_path
 
