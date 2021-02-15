@@ -133,7 +133,7 @@ Initiates a new default session object, generating a new session id.
 - `options::Dict{String,String}`: extra options for setting the session cookie, such as `Path` and `HttpOnly`
 """
 function start(req::HTTP.Request, res::HTTP.Response, params::Dict{Symbol,Any} = Dict{Symbol,Any}(); options::Dict{String,Any} = Genie.config.session_options) :: Tuple{HTTP.Request,HTTP.Response,Dict{Symbol,Any}}
-  session, res = start(id(req, res), req, res; options)
+  session, res = start(id(req, res), req, res; options = options)
 
   params[Genie.PARAMS_SESSION_KEY]   = session
   params[Genie.PARAMS_FLASH_KEY]     = begin
