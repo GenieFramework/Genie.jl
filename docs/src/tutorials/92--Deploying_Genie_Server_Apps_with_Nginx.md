@@ -1,4 +1,4 @@
-# Deploying Genie apps with Heroku Buildpacks
+# Deploying Genie apps to server with Nginx
 
 This tutorial shows how to host a Julia/Genie app on with Nginx.
 
