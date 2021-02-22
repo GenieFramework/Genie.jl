@@ -151,4 +151,4 @@ Got this payload: Received: Hello!
 
 ## Summary
 
-This concludes our intro to working with WebSockets in Genie. You know have the knowledge to set up the communication between client and server, send messages from both server and clients, and perform various tasks using the `WebChannels` API.
+This concludes our intro to working with WebSockets in Genie. You now have the knowledge to set up the communication between client and server, send messages from both server and clients, and perform various tasks using the `WebChannels` API.
