@@ -21,7 +21,6 @@ References the current Genie version number.
 const GENIE_VERSION = try
   pkginfo("Genie")[1].version
 catch _
-  @warn "Can't determine Genie version"
   v"1"
 end
 

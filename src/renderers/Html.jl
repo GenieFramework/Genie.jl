@@ -158,7 +158,7 @@ end
 """
     parseattr(attr) :: String
 
-Converts Julia keyword arguments to HTML attributes which illegal Julia chars.
+Converts Julia keyword arguments to HTML attributes with illegal Julia chars.
 """
 function parseattr(attr) :: String
   attr = string(attr)
@@ -166,6 +166,7 @@ function parseattr(attr) :: String
   endswith(attr, Genie.config.html_parser_char_column) && (attr = string(":", attr[1:end-(length(Genie.config.html_parser_char_column))]))
 
   attr = replace(attr, Regex(Genie.config.html_parser_char_dash)=>"-")
+  attr = replace(attr, Regex(Genie.config.html_parser_char_column * Genie.config.html_parser_char_column)=>":")
   replace(attr, Regex(Genie.config.html_parser_char_dot)=>".")
 end
 

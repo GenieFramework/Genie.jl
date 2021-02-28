@@ -159,7 +159,7 @@ function route_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 =
     req, res, params.collection = f(req, res, params.collection)
   end
 
-  reqstatus = "$(req.target) $(res.status)\n"
+  reqstatus = "$(req.method) $(req.target) $(res.status)\n"
 
   if Genie.config.log_requests
     if res.status < 400
