@@ -83,11 +83,14 @@ end
 Returns wether or not `word` is a plural.
 """
 function is_plural(word::String) :: Bool
-  word = Unicode.normalize(word, casefold = true)
   irr_word = irregular(word)
-  (irr_word === nothing || word != (irr_word)[1]) ||
-    (irr_word === nothing || word == (irr_word)[2]) ||
-    endswith(word, "s")
+
+  if irr_word !== nothing # irregular
+    word == (irr_word)[1] && return false
+    word == (irr_word)[2] && return true
+  else
+    return endswith(word, "s")
+  end
 end
 
 

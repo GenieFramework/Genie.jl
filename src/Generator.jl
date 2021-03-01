@@ -201,7 +201,7 @@ end
 Computes the controller file name based on the resource name.
 """
 function controller_file_name(resource_name::Union{String,Symbol}) :: String
-  string(resource_name) * Genie.GENIE_CONTROLLER_FILE_POSTFIX
+  uppercasefirst(string(resource_name)) * Genie.GENIE_CONTROLLER_FILE_POSTFIX
 end
 
 
