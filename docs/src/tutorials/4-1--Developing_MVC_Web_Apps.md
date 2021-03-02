@@ -1,4 +1,5 @@
 Here is a complete walk-through of developing a feature rich MVC app with Genie, including both user facing web pages, a REST API endpoint, and user authentication. 
+You can see and clone the full app here: https://github.com/essenciary/genie-watch-tonight
 
 ---
 
