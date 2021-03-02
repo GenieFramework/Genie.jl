@@ -233,7 +233,13 @@ Add CSV.jl as a dependency of the project:
 pkg> add CSV
 ```
 
-And now to seed the db:
+And download the dataset: 
+
+```julia
+julia> download("https://raw.githubusercontent.com/essenciary/genie-watch-tonight/main/db/seeds/netflix_titles.csv", joinpath("db", "seeds", "netflix_titles.csv"))
+```
+
+Now, to seed the db:
 
 ```julia
 julia> include(joinpath("db", "seeds", "seed_movies.jl"))
