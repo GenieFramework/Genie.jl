@@ -1,4 +1,4 @@
-Here is a complete walk-through of developing a complete MVC app with Genie, including both user facing web pages, a REST API endpoint, and user authentication. 
+Here is a complete walk-through of developing a feature rich MVC app with Genie, including both user facing web pages, a REST API endpoint, and user authentication. 
 
 ---
 
