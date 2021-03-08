@@ -95,7 +95,7 @@ Generates dockerfile for the Genie app.
 """
 function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::Bool = false, env::String = "dev",
                       filename::String = "Dockerfile", port::Int = 8000, dockerport::Int = 80, host::String = "0.0.0.0",
-                      websockets_port::Int = port, websockets_dockerport::Int = dockerport)
+                      websockets_port::Int = port, websockets_dockerport::Int = dockerport, earlybind::Bool = true)
   appdir = "/home/$user/app"
 
   """
@@ -131,6 +131,7 @@ function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::B
   ENV GENIE_ENV "$env"
   ENV HOST "$host"
   ENV PORT "$port"
+  ENV PORT "$earlybind"
 
   CMD ["bin/server"]
   """

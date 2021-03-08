@@ -1,5 +1,19 @@
 module Deploy
 
+
+function run(command::Cmd)
+  try Base.run(command)
+
+  catch ex
+    if isa(ex, IOError)
+      @error "Can not find $(command.exec[1]). Please make sure that $(command.exec[1]) is installed and accessible."
+    end
+
+    rethrow(ex)
+  end
+end
+
+
 module Docker
 
 import Genie, Genie.FileTemplates
@@ -23,8 +37,8 @@ Generates a `Dockerfile` optimised for containerizing Genie apps.
 - `force::Bool`: if the file already exists, when `force` is `true`, it will be overwritten
 """
 function dockerfile(path::String = "."; filename::String = "Dockerfile", user::String = "genie", env::String = "dev",
-                    host = "127.0.0.1", port::Int = 8000, dockerport::Int = 80, force::Bool = false,
-                    websockets_port::Int = port, websockets_dockerport::Int = dockerport)
+                    host = "0.0.0.0", port::Int = 8000, dockerport::Int = 80, force::Bool = false,
+                    websockets_port::Int = port, websockets_dockerport::Int = dockerport, earlybind::Bool = true)
   filename = normpath(joinpath(path, filename))
   isfile(filename) && force && rm(filename)
   isfile(filename) && error("File $(filename) already exists. Use the `force = true` option to overwrite the existing file.")
@@ -45,7 +59,7 @@ end
 Builds the Docker image based on the `Dockerfile`
 """
 function build(path::String = "."; appname::String = "genie")
-  `$DOCKER build -t "$appname" $path` |> Base.run
+  `$DOCKER build -t "$appname" $path` |> Genie.Deploy.run
 
   "Docker container successfully built" |> println
 end
@@ -99,7 +113,7 @@ function run(; containername::String = "genieapp", hostport::Int = 80, container
   docker_command = replace(string(DOCKER), "`" => "")
   "Starting docker container with `$docker_command run $(join(options, " "))`" |> println
 
-  `$DOCKER run $options` |> Base.run
+  `$DOCKER run $options` |> Genie.Deploy.run
 end
 
 end # end module Docker
@@ -107,6 +121,8 @@ end # end module Docker
 ########
 
 module Heroku
+
+import Genie
 
 const HEROKU = @static Sys.iswindows() ? `heroku.cmd` : `heroku`
 
@@ -117,7 +133,7 @@ Runs the `heroku create` command to create a new app in the indicated region.
 See https://devcenter.heroku.com/articles/heroku-cli-commands#heroku-apps-create-app
 """
 function createapp(appname::String; region::String = "us")
-  `$HEROKU create $(lowercase(appname)) --region $region` |> Base.run
+  `$HEROKU create $(lowercase(appname)) --region $region` |> Genie.Deploy.run
 end
 
 
@@ -128,7 +144,7 @@ Invokes the `heroku container:push` which builds, then pushes Docker images to d
 See https://devcenter.heroku.com/articles/heroku-cli-commands#heroku-container-push
 """
 function push(appname::String; apptype::String = "web")
-  `$HEROKU container:push $apptype -a $appname` |> Base.run
+  `$HEROKU container:push $apptype -a $appname` |> Genie.Deploy.run
 end
 
 
@@ -139,7 +155,7 @@ Invokes the `keroku container:release` which releases previously pushed Docker i
 See https://devcenter.heroku.com/articles/heroku-cli-commands#heroku-container-push
 """
 function release(appname::String; apptype::String = "web")
-  `$HEROKU container:release $apptype -a $appname` |> Base.run
+  `$HEROKU container:release $apptype -a $appname` |> Genie.Deploy.run
 end
 
 
@@ -150,7 +166,7 @@ Invokes the `heroku open` command which open the app in a web browser.
 See https://devcenter.heroku.com/articles/heroku-cli-commands#heroku-apps-open-path
 """
 function open(appname::String)
-  `$HEROKU open -a $appname` |> Base.run
+  `$HEROKU open -a $appname` |> Genie.Deploy.run
 end
 
 
@@ -161,7 +177,7 @@ Invokes the `heroku container:login` to log in to Heroku Container Registry,
 See https://devcenter.heroku.com/articles/heroku-cli-commands#heroku-container-login
 """
 function login()
-  `$HEROKU container:login` |> Base.run
+  `$HEROKU container:login` |> Genie.Deploy.run
 end
 
 
@@ -172,7 +188,7 @@ Display recent heroku log output.
 https://devcenter.heroku.com/articles/heroku-cli-commands#heroku-logs
 """
 function logs(appname::String; lines::Int = 1_000)
-  `$HEROKU logs --tail -a $appname -n $lines` |> Base.run
+  `$HEROKU logs --tail -a $appname -n $lines` |> Genie.Deploy.run
 end
 
 end # end module Heroku
