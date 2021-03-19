@@ -75,6 +75,16 @@ function normal_element(children::Union{String,Vector{String}}, elem::Any, args:
 end
 function normal_element(children::Union{String,Vector{String}}, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   children = join(children)
+
+  idx = findfirst(x -> x == :inner, getindex.(attrs, 1))
+  if !isnothing(idx)
+    children *= string(attrs[idx][2])
+    deleteat!(attrs, idx)
+  end
+  
+  ii = (x -> x isa Symbol && occursin("__", "$x")).(args)
+  args[ii] .= Symbol.(replace.(string.(args[ii]), Ref("__"=>"-")))
+
   elem = normalize_element(string(elem))
   attribs = rstrip(attributes(attrs))
   string("<", elem, (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), ">", prepare_template(children), "</", elem, ">")
