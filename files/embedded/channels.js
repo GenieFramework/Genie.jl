@@ -78,7 +78,13 @@ Genie.WebChannels.load_channels();
 Genie.WebChannels.messageHandlers.push(function(event){
   try {
     if (event.data.startsWith('{') && event.data.endsWith('}')) {
-      window.parse_payload(JSON.parse(event.data));
+      window.parse_payload(JSON.parse(event.data, function (key, value) {
+        if (value == "__undefined__") {
+          return undefined;
+        } else {
+          return value;
+        }
+      }));
     } else {
       window.parse_payload(event.data);
     }

@@ -18,7 +18,8 @@ struct Undefined
 end
 
 const UNDEFINED = Undefined()
-Genie.Renderer.Json.JSON.show_json(io::Genie.Renderer.Json.JSON.Writer.StructuralContext, context::Genie.Renderer.Json.JSON.Serializations.CommonSerialization, x::Undefined) = Base.print(io, "undefined")
+# Genie.Renderer.Json.JSON.show_json(io::Genie.Renderer.Json.JSON.Writer.StructuralContext, context::Genie.Renderer.Json.JSON.Serializations.CommonSerialization, x::Undefined) = Base.print(io, "undefined")
+Genie.Renderer.Json.JSON.lower(x::Undefined) = "__undefined__"
 Base.show(io::IO, x::Undefined) = Base.print(io, "undefined")
 
 
