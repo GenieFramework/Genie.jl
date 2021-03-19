@@ -14,6 +14,13 @@ const NBSP_REPLACEMENT = ("&nbsp;"=>"!!nbsp;;")
 
 export js
 
+struct Undefined
+end
+
+const UNDEFINED = Undefined()
+Genie.Renderer.Json.JSON.show_json(io::Genie.Renderer.Json.JSON.Writer.StructuralContext, context::Genie.Renderer.Json.JSON.Serializations.CommonSerialization, x::Undefined) = Base.print(io, "undefined")
+Base.show(io::IO, x::Undefined) = Base.print(io, "undefined")
+
 
 function get_template(path::String; context::Module = @__MODULE__) :: Function
   orig_path = path
