@@ -81,9 +81,9 @@ function normal_element(children::Union{String,Vector{String}}, elem::Any, args:
     children *= string(attrs[idx][2])
     deleteat!(attrs, idx)
   end
-  
+
   ii = (x -> x isa Symbol && occursin("__", "$x")).(args)
-  args[ii] .= Symbol.(replace.(string.(args[ii]), Ref("__"=>"-")))
+  args[ii] .= Symbol.(replace.(string.(args[ii]), Ref(Genie.config.html_parser_char_dash=>"-")))
 
   elem = normalize_element(string(elem))
   attribs = rstrip(attributes(attrs))
