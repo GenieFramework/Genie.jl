@@ -100,6 +100,7 @@ Params() = Params(setup_base_params())
 Base.Dict(params::Params) = params.collection
 
 Base.getindex(params::Params, keys...) = getindex(Dict(params), keys...)
+Base.getindex(params::Pair, keys...) = getindex(Dict(params), keys...)
 
 
 """
