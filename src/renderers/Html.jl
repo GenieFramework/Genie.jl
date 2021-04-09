@@ -82,7 +82,7 @@ function normal_element(children::Union{String,Vector{String}}, elem::Any, args:
     deleteat!(attrs, idx)
   end
 
-  ii = (x -> x isa Symbol && occursin("__", "$x")).(args)
+  ii = (x -> x isa Symbol && occursin(Genie.config.html_parser_char_dash, "$x")).(args)
   args[ii] .= Symbol.(replace.(string.(args[ii]), Ref(Genie.config.html_parser_char_dash=>"-")))
 
   elem = normalize_element(string(elem))
