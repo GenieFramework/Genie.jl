@@ -7,11 +7,11 @@
     @test_throws UndefVarError svg()
   end;
 
-  @safetestset "Update config when custom startup args" begin
+  @safetestset "Loading SVG support makes SVG API available" begin
     using Genie
     using Genie.Renderer.Html
 
-    Html.register_svg_slements()
+    Html.register_svg_elements()
     @test svg() == "<svg></svg>"
 
     @test_throws UndefVarError clippath()

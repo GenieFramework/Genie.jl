@@ -356,11 +356,21 @@ end
 
 Writes files used for interacting with the SearchLight ORM.
 """
-function db_support(app_path::String = ".") :: Nothing
+function db_support(app_path::String = ".", include_env::Bool = true, add_dependencies::Bool = true;
+                    testmode::Bool = false) :: Nothing
   cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_db), joinpath(app_path, Genie.config.path_db), force = true)
 
-  initializer_path = joinpath(app_path, Genie.config.path_initializers, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME)
-  isfile(initializer_path) || cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_initializers, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME), initializer_path)
+  initializers_dir = joinpath(app_path, Genie.config.path_initializers)
+  initializer_path = joinpath(initializers_dir, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME)
+  source_path = joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_initializers, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME) |> normpath
+
+  if !isfile(initializer_path)
+    ispath(initializers_dir) || mkpath(initializers_dir)
+    include_env && cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_env), joinpath(app_path, Genie.config.path_env), force = true)
+    cp(source_path, initializer_path)
+  end
+
+  add_dependencies && install_db_dependencies(testmode = testmode)
 
   nothing
 end
@@ -417,14 +427,7 @@ function install_app_dependencies(app_path::String = "."; testmode::Bool = false
 
   Pkg.add(pkgs)
 
-  if dbsupport
-    try
-      Pkg.add("SearchLight")
-      testmode || install_searchlight_dependencies()
-    catch ex
-      @error ex
-    end
-  end
+  dbsupport && install_db_dependencies(testmode = testmode)
 
   @info "Installing dependencies for unit tests"
 
@@ -461,6 +464,18 @@ function generate_project(name::String) :: Nothing
         "Make sure that it specifies a name and a uuid, using Project_sample.toml as a reference."
     end
   end # remove tmpdir on completion
+
+  nothing
+end
+
+
+function install_db_dependencies(; testmode::Bool = false) :: Nothing
+  try
+    Pkg.add("SearchLight")
+    testmode || install_searchlight_dependencies()
+  catch ex
+    @error ex
+  end
 
   nothing
 end
@@ -578,7 +593,7 @@ function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = fals
 
   fullstack ? fullstack_app(app_name, app_path) : microstack_app(app_name, app_path)
 
-  (dbsupport || fullstack) ? db_support(app_path) : remove_searchlight_initializer(app_path)
+  (dbsupport || fullstack) ? db_support(app_path, testmode = testmode) : remove_searchlight_initializer(app_path)
 
   mvcsupport && (fullstack || mvc_support(app_path))
 

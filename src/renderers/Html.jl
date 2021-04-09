@@ -763,15 +763,17 @@ end
 
 
 """
-    register_svg_slements(; context = @__MODULE__) :: Nothing
+    register_svg_elements(; context = @__MODULE__) :: Nothing
 
 Sets up HTML tags for the SVG API.
 """
-function register_svg_slements(; context = @__MODULE__) :: Nothing
+function register_svg_elements(; context = @__MODULE__) :: Nothing
   for elem in SVG_ELEMENTS
     register_normal_element(elem)
   end
 end
+
+const register_svg_slements = register_svg_elements # todo: remove in v2
 
 
 """

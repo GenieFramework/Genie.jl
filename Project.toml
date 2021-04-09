@@ -1,7 +1,7 @@
 name = "Genie"
 uuid = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
 authors = ["Adrian Salceanu <e@essenciary.com>"]
-version = "1.17.1"
+version = "1.18"
 
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
@@ -61,4 +61,4 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TestSetExtensions = "98d24dd4-01ad-11ea-1b02-c9a08f80db04"
 
 [targets]
-test = ["SafeTestsets", "Test", "TestSetExtensions", "Pkg", "Random", "Revise", "Logging", "LoggingExtras", "Sockets", "Dates", "HTTP", "Markdown"]
+test = ["SafeTestsets", "Test", "TestSetExtensions", "Pkg", "Random", "Revise", "Logging", "LoggingExtras", "Sockets", "Dates", "HTTP", "Markdown", "SearchLight", "SearchLightSQLite"]

@@ -1,4 +1,4 @@
-env:
+env: ENV["GENIE_ENV"]
 
 dev:
   adapter:
