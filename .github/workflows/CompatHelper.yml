@@ -3,7 +3,7 @@ name: CompatHelper
 on:
   schedule:
     - cron: '00 * * * *'
-  issues:
+  pull_request:
     types: [opened, reopened]
 
 jobs:
