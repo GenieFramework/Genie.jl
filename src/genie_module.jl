@@ -148,10 +148,10 @@ function load_configurations(root_dir::String = Genie.config.path_config; contex
         Call Genie.Generator.migrate_secrets_file() to resolve this warning.
       "
     end
-        
+
     Genie.secret_token() # emits a warning and re-generates the token if secrets_path is not valid
   end
-    
+
   nothing
 end
 
@@ -216,10 +216,11 @@ Usually, this token is defined through `Genie.secret_token!` in the `config/secr
 Here, a temporary one is generated for the current session if no other token is defined and
 `generate_if_missing` is true.
 """
-function secret_token(generate_if_missing::Bool=true; context::Union{Module,Nothing}=nothing)
+function secret_token(generate_if_missing::Bool = true; context::Union{Module,Nothing} = nothing)
   if context != nothing
     @warn "secret_token not context-dependent any more; the context argument is deprecated"
   end
+
   if isempty(SECRET_TOKEN[]) && generate_if_missing
     @warn "
           No secret token is defined through `Genie.secret_token!(\"token\")`. Such a token
@@ -234,7 +235,8 @@ function secret_token(generate_if_missing::Bool=true; context::Union{Module,Noth
           "
     secret_token!()
   end
-  return SECRET_TOKEN[]
+
+  SECRET_TOKEN[]
 end
 
 """
@@ -242,9 +244,10 @@ end
 
 Define the secret token used in the app for encryption and salting.
 """
-function secret_token!(value::AbstractString=Generator.secret_token())
+function secret_token!(value::AbstractString = Generator.secret_token())
   SECRET_TOKEN[] = value
-  return value
+
+  value
 end
 
 
