@@ -78,7 +78,7 @@ function normal_element(children::Union{String,Vector{String}}, elem::Any, args:
 
   idx = findfirst(x -> x == :inner, getindex.(attrs, 1))
   if !isnothing(idx)
-    children *= string(attrs[idx][2])
+    children *= join(attrs[idx][2])
     deleteat!(attrs, idx)
   end
 
