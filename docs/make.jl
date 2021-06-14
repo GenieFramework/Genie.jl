@@ -6,7 +6,7 @@ using Genie, Genie.App, Genie.AppServer, Genie.Assets
 using Genie.Cache, Genie.Commands, Genie.Configuration, Genie.Cookies
 using Genie.Deploy, Genie.Encryption, Genie.Exceptions
 using Genie.FileTemplates, Genie.Flash, Genie.Generator
-using Genie.Headers, Genie.HTTPUtils, Genie.Inflector, Genie.Input, Genie.Plugins
+using Genie.Headers, Genie.HTTPUtils, Genie.Input, Genie.Plugins
 using Genie.Renderer, Genie.Requests, Genie.Responses, Genie.Router
 using Genie.Sessions, Genie.Toolbox, Genie.Util, Genie.WebChannels
 
@@ -71,7 +71,6 @@ makedocs(
           "Genie" => "API/genie.md",
           "Headers" => "API/headers.md",
           "HttpUtils" => "API/httputils.md",
-          "Inflector" => "API/inflector.md",
           "Input" => "API/input.md",
           "Plugins" => "API/plugins.md",
           "Renderer" => "API/renderer.md",

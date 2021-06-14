@@ -7,6 +7,8 @@ import Revise
 
 push!(LOAD_PATH, @__DIR__)
 
+import Inflector
+
 include("Configuration.jl")
 const config = Configuration.Settings(app_env = ENV["GENIE_ENV"])
 
@@ -23,7 +25,6 @@ include("HTTPUtils.jl")
 include("Exceptions.jl")
 include("App.jl")
 include("genie_module.jl")
-include("Inflector.jl")
 include("Util.jl")
 include("FileTemplates.jl")
 include("Toolbox.jl")

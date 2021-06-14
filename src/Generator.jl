@@ -4,6 +4,7 @@ Generates various Genie files.
 module Generator
 
 import SHA, Dates, Pkg, Logging
+import Inflector
 import Genie
 
 
@@ -23,7 +24,7 @@ Generates a new Genie controller file and persists it to the resources folder.
 function newcontroller(resource_name::String; path::Union{String,Nothing} = nothing, pluralize::Bool = true) :: Nothing
   resource_name = validname(resource_name)
 
-  Genie.Inflector.is_singular(resource_name) && pluralize && (resource_name = Genie.Inflector.to_plural(resource_name))
+  Inflector.is_singular(resource_name) && pluralize && (resource_name = Inflector.to_plural(resource_name))
   resource_name = uppercasefirst(resource_name)
 
   resource_path = path === nothing ? setup_resource_path(resource_name, path = ".") : (ispath(path) ? path : mkpath(path))
@@ -43,8 +44,8 @@ Generates all the files associated with a new resource and persists them to the 
 function newresource(resource_name::String; path::String = ".", pluralize::Bool = true) :: Nothing
   resource_name = validname(resource_name)
 
-  Genie.Inflector.is_singular(resource_name) && pluralize &&
-    (resource_name = Genie.Inflector.to_plural(resource_name))
+  Inflector.is_singular(resource_name) && pluralize &&
+    (resource_name = Inflector.to_plural(resource_name))
 
   resource_path = setup_resource_path(resource_name, path = path)
   for (resource_file, resource_type) in [(controller_file_name(resource_name), :controller)]
@@ -84,7 +85,7 @@ end
 Generates all resouce files and persists them to disk.
 """
 function write_resource_file(resource_path::String, file_name::String, resource_name::String, resource_type::Symbol; pluralize::Bool = true) :: Bool
-  resource_name = (pluralize ? (Genie.Inflector.to_plural(resource_name)) : resource_name) |> Genie.Inflector.from_underscores
+  resource_name = (pluralize ? (Inflector.to_plural(resource_name)) : resource_name) |> Inflector.from_underscores
 
   try
     if resource_type == :controller
@@ -101,7 +102,7 @@ function write_resource_file(resource_path::String, file_name::String, resource_
     if resource_type == :test
       resource_does_not_exist(resource_path, file_name) || return true
       open(joinpath(resource_path, file_name), "w") do f
-        name = pluralize ? (Genie.Inflector.to_singular(resource_name)) : resource_name
+        name = pluralize ? (Inflector.to_singular(resource_name)) : resource_name
         write(f, Genie.FileTemplates.newtest(resource_name,  name))
       end
     end
@@ -424,6 +425,7 @@ function install_app_dependencies(app_path::String = "."; testmode::Bool = false
   pkgs = ["Dates", "Logging", "LoggingExtras", "MbedTLS"]
 
   testmode ? Pkg.develop("Genie") : push!(pkgs, "Genie")
+  testmode ? Pkg.develop("Inflector") : push!(pkgs, "Inflector")
 
   Pkg.add(pkgs)
 
