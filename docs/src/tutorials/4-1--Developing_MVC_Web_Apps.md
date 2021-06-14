@@ -57,7 +57,7 @@ dev:
 Now let's manually load the database configuration:
 
 ```julia
-julia> include(joinpath("config", "initializers", "searchlight.jl")
+julia> include(joinpath("config", "initializers", "searchlight.jl"))
 SQLite.DB("db/netflix_catalog.sqlite")
 ```
 
