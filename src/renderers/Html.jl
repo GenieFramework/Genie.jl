@@ -38,18 +38,17 @@ const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :articl
                           :slot, :template, :blockquote, :center, :iframe] #TODO: Gumbo has a problem and strips away <template>
 const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input]
 const CUSTOM_ELEMENTS = [:form, :select]
-const NON_EXPORTED = [:main, :map]
-
+const NON_EXPORTED = [:main, :map, :filter]
 const SVG_ELEMENTS = [:animate, :circle, :animateMotion, :animateTransform, :clipPath, :defs, :desc, :discard,
-                      :ellipse, :feComponentTransfer, :feComposite, :feDiffuseLighting, :feDisplacementMap, :feBlend, :feColorMatrix,
+                      :ellipse, :feComponentTransfer, :feComposite, :feDiffuseLighting, :feBlend, :feColorMatrix,
                       :feConvolveMatrix, :feDisplacementMap, :feDistantLight, :feDropShadow, :feFlood, :feFuncA, :feFuncB, :feFuncG,
                       :feFuncR, :feGaussianBlur, :feImage, :feMerge, :feMergeNode, :feMorphology, :feOffset, :fePointLight, :feSpecularLighting,
-                      :feSpotLight, :feTile, :feTurbulence, :filter, :foreignObject, :g, :hatch, :hatchpath, :image, :line, :linearGradient,
+                      :feSpotLight, :feTile, :feTurbulence, :foreignObject, :g, :hatch, :hatchpath, :image, :line, :linearGradient,
                       :marker, :mask, :metadata, :mpath, :path, :pattern, :polygon, :polyline, :radialGradient, :rect, :set, :stop, :svg,
                       :switch, :symbol, :text, :textPath, :tspan, :use, :view]
 
 export HTMLString, html, doc, doctype
-export @foreach, @yield, collection, view!
+export @foreach, @yield, collection, view!, for_each
 export partial, template
 
 Genie.Renderer.init_task_local_storage()
@@ -758,22 +757,12 @@ function register_elements(; context = @__MODULE__) :: Nothing
     elem in NON_EXPORTED || Core.eval(context, "export $elem" |> Meta.parse)
   end
 
-  nothing
-end
-
-
-"""
-    register_svg_elements(; context = @__MODULE__) :: Nothing
-
-Sets up HTML tags for the SVG API.
-"""
-function register_svg_elements(; context = @__MODULE__) :: Nothing
   for elem in SVG_ELEMENTS
     register_normal_element(elem)
   end
-end
 
-const register_svg_slements = register_svg_elements # todo: remove in v2
+  nothing
+end
 
 
 """
@@ -844,12 +833,13 @@ end
 
 
 """
-    @attr(attr)
+    for_each(f::Function, v)
 
-Returns an HTML attribute string.
+Iterates over the `v` Vector and applies function `f` for each element.
+The results of each iteration are concatenated and the final string is returned.
 """
-macro attr(attr)
-  "$(string(attr))"
+function for_each(f::Function, v)
+  [f(x) for x in v] |> join
 end
 
 

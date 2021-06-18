@@ -295,7 +295,6 @@ end
 Extracts path and extension info about a file
 """
 function view_file_info(path::String, supported_extensions::Vector{String}) :: Tuple{String,String}
-
   _path, _extension = "", ""
 
   if isfile(path)

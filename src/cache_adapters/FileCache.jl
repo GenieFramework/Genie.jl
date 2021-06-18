@@ -3,8 +3,6 @@ module FileCache
 import Serialization
 import Genie, Genie.Cache
 
-const SESSIONS_FOLDER = "sessions"
-
 #===#
 # IMPLEMENTATION #
 

@@ -26,9 +26,6 @@ const DELETE  = "DELETE"
 const OPTIONS = "OPTIONS"
 const HEAD    = "HEAD"
 
-const BEFORE_HOOK  = :before
-const AFTER_HOOK   = :after
-
 const request_mappings = Dict{Symbol,String}(
   :text       => "text/plain",
   :html       => "text/html",
@@ -442,20 +439,6 @@ end
 
 
 """
-    run_hook(controller::Module, hook_type::Symbol) :: Bool
-
-Invokes the designated hook.
-"""
-function run_hook(controller::Module, hook_type::Symbol) :: Bool
-  isdefined(controller, hook_type) || return false
-
-  getfield(controller, hook_type) |> Base.invokelatest
-
-  true
-end
-
-
-"""
     match_routes(req::Request, res::Response, params::Params) :: Response
 
 Matches the invoked URL to the corresponding route, sets up the execution environment and invokes the controller method.
@@ -500,18 +483,11 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
     controller = (r.action |> typeof).name.module
 
     return  try
-              run_hook(controller, BEFORE_HOOK)
-
-              result = try
+              try
                 (r.action)() |> to_response
               catch
                 Base.invokelatest(r.action) |> to_response
               end
-
-              run_hook(controller, AFTER_HOOK)
-
-              result
-
             catch ex
               if isa(ex, Genie.Exceptions.ExceptionalResponse)
                 return ex.response
@@ -567,15 +543,11 @@ function match_channels(req, msg::String, ws_client, params::Params) :: String
     controller = (c.action |> typeof).name.module
 
     return  try
-                run_hook(controller, BEFORE_HOOK)
-
                 result = try
                   (c.action)() |> string
                 catch
                   Base.invokelatest(c.action) |> string
                 end
-
-                run_hook(controller, AFTER_HOOK)
 
                 result
               catch ex
