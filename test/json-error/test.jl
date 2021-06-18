@@ -2,7 +2,7 @@ using Pkg
 Pkg.activate(".")
 
 using Genie, HTTP, Test
-import Genie.Router: route, POST, @params
+import Genie.Router: route, POST, params
 import Genie.Requests: jsonpayload
 
 route("/json-error", method = POST) do

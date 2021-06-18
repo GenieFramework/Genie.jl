@@ -9,7 +9,7 @@
     Sessions.init()
 
     route("/home") do
-      sess = Sessions.session(Genie.Router.@params)
+      sess = Sessions.session(Genie.Router.params)
       Sessions.set!(sess, :visit_count, Sessions.get(sess, :visit_count, 0)+1)
 
       "$(Sessions.get(sess, :visit_count))"

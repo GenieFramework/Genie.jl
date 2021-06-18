@@ -5,8 +5,8 @@
   port = rand(8500:8900)
 
   route("/") do
-    isempty(@query()) && return ""
-    isempty(@params(:GET)) && return ""
+    isempty(query()) && return ""
+    isempty(params(:GET)) && return ""
 
     "error"
   end
@@ -34,7 +34,7 @@ end
   port = rand(8500:8900)
 
   route("/") do
-    @query(:a)
+    query(:a)
   end
 
   up(port; open_browser = false)
@@ -59,7 +59,7 @@ end
   port = rand(8500:8900)
 
   route("/") do
-    @query(:x, "10") * @query(:y, "20")
+    query(:x, "10") * query(:y, "20")
   end
 
   up(port; open_browser = false)
@@ -131,7 +131,7 @@ end
   port = rand(8500:8900)
 
   route("/") do
-    @query(:x)
+    query(:x)
   end
 
   up(port; open_browser = false)
@@ -201,7 +201,7 @@ end
   port = rand(8500:8900)
 
   route("/") do
-    @query(:x, "10") * join(@query(Symbol("x[]"), "100"))
+    query(:x, "10") * join(query(Symbol("x[]"), "100"))
   end
 
   up(port; open_browser = false)

@@ -2,11 +2,11 @@ using Pkg
 Pkg.activate(".")
 
 using Genie, HTTP
-import Genie.Router: route, POST, @params
+import Genie.Router: route, POST, params
 import Genie.Requests: jsonpayload
 
 route("/jsonpayload", method = POST) do
-  @show @params(:JSON_PAYLOAD)
+  @show params(:JSON_PAYLOAD)
 end
 
 route("/jsontest", method = POST) do

@@ -56,7 +56,7 @@ macro path_str(s)
 end
 
 export FilePath, filepath, Path, @path_str
-export @vars
+export vars
 export WebRenderable
 
 init_task_local_storage() = (haskey(task_local_storage(), :__vars) || task_local_storage(:__vars, Dict{Symbol,Any}()))
@@ -246,13 +246,13 @@ end
 
 
 """
-    registervars(vars...) :: Nothing
+    registervars(vs...) :: Nothing
 
 Loads the rendering vars into the task's scope
 """
-function registervars(vars...) :: Nothing
+function registervars(vs...) :: Nothing
   init_task_local_storage()
-  task_local_storage(:__vars, merge(task_local_storage(:__vars), Dict{Symbol,Any}(vars)))
+  task_local_storage(:__vars, merge(vars(), Dict{Symbol,Any}(vs)))
 
   nothing
 end
@@ -266,9 +266,9 @@ generated view function.
 """
 function injectvars() :: String
   output = ""
-  for kv in task_local_storage(:__vars)
+  for kv in vars()
     output *= "try \n"
-    output *= "global $(kv[1]) = Genie.Renderer.@vars($(repr(kv[1]))) \n"
+    output *= "global $(kv[1]) = Genie.Renderer.vars($(repr(kv[1]))) \n"
     output *= "
 catch ex
   @error ex
@@ -281,8 +281,8 @@ end
 
 
 function injectvars(context::Module) :: Nothing
-  for kv in task_local_storage(:__vars)
-    Core.eval(context, Meta.parse("global $(kv[1]) = Renderer.@vars($(repr(kv[1])))"))
+  for kv in vars()
+    Core.eval(context, Meta.parse("global $(kv[1]) = Renderer.vars($(repr(kv[1])))"))
   end
 
   nothing
@@ -416,38 +416,35 @@ end
 
 
 """
-    @vars
+    function vars
 
-Utility macro for accessing view vars
+Utility for accessing view vars
 """
-macro vars()
-  :(task_local_storage(:__vars))
+function vars()
+  haskey(task_local_storage(), :__vars) ? task_local_storage(:__vars) : Dict()
 end
 
 
 """
-    @vars(key)
+    function vars(key)
 
-Utility macro for accessing view vars stored under `key`
+Utility for accessing view vars stored under `key`
 """
-macro vars(key)
-  :(task_local_storage(:__vars)[$key])
+function vars(key)
+  task_local_storage(:__vars)[key]
 end
 
 
 """
-    @vars(key, value)
+    function vars(key, value)
 
-Utility macro for setting a new view var, as `key` => `value`
+Utility for setting a new view var, as `key` => `value`
 """
-macro vars(key, value)
-  quote
-    try
-      task_local_storage(:__vars)[$key] = $(esc(value))
-    catch
-      init_task_local_storage()
-      task_local_storage(:__vars)[$key] = $(esc(value))
-    end
+function vars(key, value)
+  if haskey(task_local_storage, :__vars)
+    task_local_storage(:__vars)[key] = value
+  else
+    task_local_storage(:__vars, Dict(key => value))
   end
 end
 

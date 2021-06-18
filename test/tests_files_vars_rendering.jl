@@ -9,9 +9,9 @@
 
   function htmlviewfile_withvars()
     raw"
-    <h1>$(@vars(:greeting))</h1>
+    <h1>$(vars(:greeting))</h1>
     <div>
-      <p>This is a $(@vars(:name)) test</p>
+      <p>This is a $(vars(:name)) test</p>
     </div>
     <hr />
     "
@@ -22,7 +22,7 @@
     <!DOCTYPE HTML>
     <html>
     <head>
-      <title>$(@vars(:name)) test</title>
+      <title>$(vars(:name)) test</title>
     </head>
     <body>
       <div class=\"template\">

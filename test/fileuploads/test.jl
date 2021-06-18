@@ -16,15 +16,15 @@ route("/") do
 end
 
 route("/", method = POST) do
-  for (name,file) in @params(:FILES)
+  for (name,file) in params(:FILES)
     write(file.name, IOBuffer(file.data))
   end
 
-  write("-" * @params(:FILES)["fileupload"].name, IOBuffer(@params(:FILES)["fileupload"].data))
+  write("-" * params(:FILES)["fileupload"].name, IOBuffer(params(:FILES)["fileupload"].data))
 
-  @show @params(:greeting)
+  @show params(:greeting)
 
-  @params(:greeting)
+  params(:greeting)
 end
 
 Genie.AppServer.startup(; open_browser = false, async = false)

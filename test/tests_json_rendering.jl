@@ -4,7 +4,7 @@
       using Genie, Genie.Renderer, Genie.Renderer.Json
 
       jsonview = raw"
-      Dict(@vars(:root) => Dict(lang => greet for (lang,greet) in @vars(:greetings)))
+      Dict(vars(:root) => Dict(lang => greet for (lang,greet) in vars(:greetings)))
       "
 
       viewfile = mktemp()

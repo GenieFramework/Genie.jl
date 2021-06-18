@@ -14,7 +14,7 @@ include("mimetypes.jl")
 export route, routes, channel, channels, serve_static_file
 export GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
 export tolink, linkto, responsetype, toroute
-export @params, @routes, @channels, @query, @post, @headers, @request
+export params, query, post, headers, request
 
 Reexport.@reexport using HttpCommon
 
@@ -127,7 +127,7 @@ ispayload(req::HTTP.Request) = req.method in [POST, PUT, PATCH]
 """
     route_request(req::Request, res::Response, ip::IPv4 = Genie.config.server_host) :: Response
 
-First step in handling a request: sets up @params collection, handles query vars, negotiates content.
+First step in handling a request: sets up params collection, handles query vars, negotiates content.
 """
 function route_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: HTTP.Response
   params = Params()
@@ -176,7 +176,7 @@ end
 """
     route_ws_request(req::Request, msg::String, ws_client::HTTP.WebSockets.WebSocket, ip::IPv4 = Genie.config.server_host) :: String
 
-First step in handling a web socket request: sets up @params collection, handles query vars.
+First step in handling a web socket request: sets up params collection, handles query vars.
 """
 function route_ws_request(req, msg::String, ws_client, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: String
   params = Params()
@@ -275,16 +275,6 @@ const namedroutes = named_routes
 
 
 """
-    @routes
-
-Collection of named routes
-"""
-macro routes()
-  _routes
-end
-
-
-"""
     named_channels() :: Dict{Symbol,Any}
 
 The list of the defined named channels.
@@ -293,16 +283,6 @@ function named_channels() :: OrderedCollections.OrderedDict{Symbol,Channel}
   _channels
 end
 const namedchannels = named_channels
-
-
-"""
-    @channels
-
-Collection of named channels.
-"""
-macro channels()
-  _channels
-end
 
 
 """
@@ -739,7 +719,7 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
       params.collection[Genie.PARAMS_JSON_PAYLOAD] = JSON.parse(params.collection[Genie.PARAMS_RAW_PAYLOAD])
     catch ex
       @error sprint(showerror, ex)
-      @warn "Setting @params(:JSON_PAYLOAD) to Nothing"
+      @warn "Setting params(:JSON_PAYLOAD) to Nothing"
 
       params.collection[Genie.PARAMS_JSON_PAYLOAD] = nothing
     end
@@ -867,94 +847,70 @@ to_response(action_result::Any)::HTTP.Response = HTTP.Response(string(action_res
 
 
 """
-    @params
+    function params()
 
 The collection containing the request variables collection.
 """
-macro params()
-  quote
-    try
-      task_local_storage(:__params)
-    catch _
-      Dict()
-    end
-  end
+function params()
+  haskey(task_local_storage(), :__params) ? task_local_storage(:__params) : Dict()
 end
-macro params(key)
-  :((@params)[$key])
+function params(key)
+  params()[key]
 end
-macro params(key, default)
-  quote
-    haskey(@params, $key) ? @params($key) : $default
-  end
+function params(key, default)
+  get(params(), key, default)
 end
 
 
 """
-    @query
+    function query
 
 The collection containing the query request variables collection (GET params).
 """
-macro query()
-  quote
-    try
-      @params(Genie.PARAMS_GET_KEY)
-    catch _
-      Dict()
-    end
-  end
+function query()
+  haskey(params(), Genie.PARAMS_GET_KEY) ? params(params(Genie.PARAMS_GET_KEY)) : Dict()
 end
-macro query(key)
-  :((@query)[$key])
+function query(key)
+  query()[key]
 end
-macro query(key, default)
-  quote
-    haskey(@query, $key) ? @query($key) : $default
-  end
+function query(key, default)
+  get(query(), key, default)
 end
 
 
 """
-    @post
+    function post
 
 The collection containing the POST request variables collection.
 """
-macro post()
-  quote
-    try
-      @params(Genie.PARAMS_POST_KEY)
-    catch _
-      Dict()
-    end
-  end
+function post()
+  haskey(params(), Genie.PARAMS_POST_KEY) ? params(Genie.PARAMS_POST_KEY) : Dict()
 end
-macro post(key)
-  :((@post)[$key])
+function post(key)
+  post()[key]
 end
-macro post(key, default)
-  quote
-    haskey(@post, $key) ? @post($key) : $default
-  end
+function post(key, default)
+  get(post(), key, default)
 end
 
 
 """
-    @request()
+    function request()
 
 The request object.
 """
-macro request()
-  :(_params_(Genie.PARAMS_REQUEST_KEY))
+function request()
+  params(Genie.PARAMS_REQUEST_KEY)
 end
 
 
 """
-    @headers()
+    function headers()
 
 The current request's headers (as a Dict)
 """
-macro headers()
-  Dict{String,String}(@request().headers)
+function headers()
+  Dict{String,String}(request().headers)
 end
 
 
@@ -971,7 +927,7 @@ function response_type(params::Params) :: Symbol
   response_type(params.collection)
 end
 function response_type() :: Symbol
-  response_type(@params())
+  response_type(params())
 end
 
 

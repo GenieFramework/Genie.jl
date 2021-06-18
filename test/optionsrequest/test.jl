@@ -5,7 +5,7 @@ using Genie, HTTP
 using Genie.Router
 
 route("/options", method = OPTIONS) do
-  push!(@params(:RESPONSE).headers, "X-Foo-Bar"=>"Baz")
+  push!(params(:RESPONSE).headers, "X-Foo-Bar"=>"Baz")
 end
 Genie.AppServer.startup(; open_browser = false, verbose = true)
 

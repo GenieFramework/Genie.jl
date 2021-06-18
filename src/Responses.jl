@@ -10,7 +10,7 @@ export getresponse, getheaders, setheaders, setheaders!, getstatus, setstatus, s
 
 
 function getresponse() :: HTTP.Response
-  Router.@params(Genie.PARAMS_RESPONSE_KEY)
+  Router.params(Genie.PARAMS_RESPONSE_KEY)
 end
 
 

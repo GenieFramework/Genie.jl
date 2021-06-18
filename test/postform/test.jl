@@ -17,11 +17,11 @@ route("/") do
 end
 
 route("/", method = POST) do
-  @show @params
+  @show params
 
-  @show @params(:greeting)
+  @show params(:greeting)
 
-  @params(:greeting)
+  params(:greeting)
 end
 
 Genie.AppServer.startup(; open_browser = false, async = false)

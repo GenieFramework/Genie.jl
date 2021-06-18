@@ -5,7 +5,7 @@ import Markdown, Logging, Gumbo, Reexport, OrderedCollections, Millboard, HTTP, 
 Reexport.@reexport using Genie
 
 import Genie.Renderer
-import Genie.Renderer: @vars
+import Genie.Renderer: vars
 Reexport.@reexport using HttpCommon
 
 
@@ -48,7 +48,7 @@ const SVG_ELEMENTS = [:animate, :circle, :animateMotion, :animateTransform, :cli
                       :switch, :symbol, :text, :textPath, :tspan, :use, :view]
 
 export HTMLString, html, doc, doctype
-export @foreach, @yield, collection, view!, for_each
+export @yield, collection, view!, for_each
 export partial, template
 
 Genie.Renderer.init_task_local_storage()
@@ -435,7 +435,7 @@ Parses the `data` input as HTML, returning a HTML HTTP Response.
 
 # Example
 ```jldoctest
-julia> html("<h1>Welcome \$(@vars(:name))</h1>", layout = "<div><% @yield %></div>", name = "Adrian")
+julia> html("<h1>Welcome \$(vars(:name))</h1>", layout = "<div><% @yield %></div>", name = "Adrian")
 HTTP.Messages.Response:
 "
 HTTP/1.1 200 OK
@@ -844,39 +844,12 @@ end
 
 
 """
-    @foreach(f, arr)
-
-Iterates over the `arr` Array and applies function `f` for each element.
-The results of each iteration are concatenated and the final string is returned.
-
-## Examples
-
-@foreach(@vars(:translations)) do t
-  t
-end
-"""
-macro foreach(f, arr)
-  e = quote
-    isempty($(esc(arr))) && return ""
-
-    mapreduce(*, $(esc(arr))) do _s
-      $(esc(f))(_s)
-    end
-  end
-
-  quote
-    Core.eval($__module__, $e)
-  end
-end
-
-
-"""
     collection(template::Function, collection::Vector{T})::String where {T}
 
 Creates a view fragment by repeateadly applying a function to each element of the collection.
 """
 function collection(template::Function, collection::Vector{T})::String where {T}
-  @foreach(collection) do item
+  for_each(collection) do item
     template(item) |> string
   end
 end
@@ -938,7 +911,7 @@ function serve_error_file(error_code::Int, error_message::String = ""; error_inf
 
       error_message = if Genie.Configuration.isdev()
                       """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                                     $("\n" ^ 3)""" *
-                      """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(Genie.Router.@params))                        $("\n" ^ 3)""" *
+                      """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(Genie.Router.params))                        $("\n" ^ 3)""" *
                       """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Genie.Router.named_routes() |> Dict))  $("\n" ^ 3)""" *
                       """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$ENV                                               $("\n" ^ 1)"""
       else

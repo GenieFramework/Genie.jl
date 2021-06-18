@@ -17,7 +17,7 @@ Processes an `application/json` `POST` request.
 If it fails to successfully parse the `JSON` data it returns `nothing`. The original payload can still be accessed invoking `rawpayload()`
 """
 function jsonpayload()
-  Router.@params(Genie.PARAMS_JSON_PAYLOAD)
+  Router.params(Genie.PARAMS_JSON_PAYLOAD)
 end
 
 
@@ -28,7 +28,7 @@ Processes an `application/json` `POST` request attempting to convert the payload
 If it fails to successfully parse and convert the `JSON` data, it throws an exception. The original payload can still be accessed invoking `rawpayload()`
 """
 function jsonpayload(::Type{T})::T where {T}
-  Router.@params(Genie.PARAMS_JSON_PAYLOAD)::T
+  Router.params(Genie.PARAMS_JSON_PAYLOAD)::T
 end
 
 
@@ -38,7 +38,7 @@ end
 Returns the raw `POST` payload as a `String`.
 """
 function rawpayload() :: String
-  Router.@params(Genie.PARAMS_RAW_PAYLOAD)
+  Router.params(Genie.PARAMS_RAW_PAYLOAD)
 end
 
 
@@ -48,7 +48,7 @@ end
 Collection of form uploaded files.
 """
 function filespayload() :: Dict{String,Input.HttpFile}
-  Router.@params(Genie.PARAMS_FILES)
+  Router.params(Genie.PARAMS_FILES)
 end
 
 
@@ -58,7 +58,7 @@ end
 Returns the `HttpFile` uploaded through the `key` input name.
 """
 function filespayload(key::Union{String,Symbol}) :: Input.HttpFile
-  Router.@params(Genie.PARAMS_FILES)[string(key)]
+  Router.params(Genie.PARAMS_FILES)[string(key)]
 end
 
 
@@ -109,7 +109,7 @@ end
 A dict representing the POST variables payload of the request (corresponding to a `form-data` request)
 """
 function postpayload() :: Dict{Symbol,Any}
-  Router.@params(Genie.PARAMS_POST_KEY)
+  Router.params(Genie.PARAMS_POST_KEY)
 end
 
 
@@ -139,7 +139,7 @@ end
 A dict representing the GET/query variables payload of the request (the part correspoding to `?foo=bar&baz=moo`)
 """
 function getpayload() :: Dict{Symbol,Any}
-  Router.@params(Genie.PARAMS_GET_KEY)
+  Router.params(Genie.PARAMS_GET_KEY)
 end
 
 
@@ -169,7 +169,7 @@ end
 Returns the raw HTTP.Request object associated with the request.
 """
 function request() :: HTTP.Request
-  Router.@params(Genie.PARAMS_REQUEST_KEY)
+  Router.params(Genie.PARAMS_REQUEST_KEY)
 end
 
 const getrequest = request
@@ -177,31 +177,31 @@ const getrequest = request
 """
     payload() :: Any
 
-Utility function for accessing the `@params` collection, which holds the request variables.
+Utility function for accessing the `params` collection, which holds the request variables.
 """
 function payload() :: Dict
-  Router.@params
+  Router.params()
 end
 
 
 """
     payload(key::Symbol) :: Any
 
-Utility function for accessing the `key` value within the `@params` collection of request variables.
+Utility function for accessing the `key` value within the `params` collection of request variables.
 """
 function payload(key::Symbol) :: Any
-  Router.@params()[key]
+  Router.params()[key]
 end
 
 
 """
     payload(key::Symbol, default_value::T) :: Any
 
-Utility function for accessing the `key` value within the `@params` collection of request variables.
+Utility function for accessing the `key` value within the `params` collection of request variables.
 If `key` is not defined, `default_value` is returned.
 """
 function payload(key::Symbol, default_value::T)::T where {T}
-  haskey(Router.@params(), key) ? Router.@params()[key] : default_value
+  haskey(Router.params(), key) ? Router.params()[key] : default_value
 end
 
 
@@ -211,7 +211,7 @@ end
 Returns the `Route` object which was matched for the current request.
 """
 function matchedroute() :: Genie.Router.Route
-  Router.@params(Genie.PARAMS_ROUTE_KEY)
+  Router.params(Genie.PARAMS_ROUTE_KEY)
 end
 
 
@@ -221,7 +221,7 @@ end
 Returns the `Channel` object which was matched for the current request.
 """
 function matchedchannel() :: Genie.Router.Channel
-  Router.@params(Genie.PARAMS_CHANNELS_KEY)
+  Router.params(Genie.PARAMS_CHANNELS_KEY)
 end
 
 
@@ -231,7 +231,7 @@ end
 The web sockets client for the current request.
 """
 function wsclient() :: HTTP.WebSockets.WebSocket
-  Router.@params(Genie.PARAMS_WS_CLIENT)
+  Router.params(Genie.PARAMS_WS_CLIENT)
 end
 
 
@@ -241,7 +241,7 @@ end
 The web sockets client for the current request.
 """
 function wtclient() :: UInt
-  Router.@params(:wtclient) |> hash
+  Router.params(:wtclient) |> hash
 end
 
 
