@@ -637,8 +637,7 @@ Converts an input file to Julia code
 function to_julia(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n", vars_included::Bool = false) :: String
   f_name = (f_name === nothing) ? Genie.Renderer.function_name(string(input, partial)) : f_name
 
-  string("function $(f_name)() \n",
-          (vars_included ? "" : Genie.Renderer.injectvars()),
+  string("function $(f_name)(; $((vars_included ? "" : Genie.Renderer.injectkwvars()))) \n",
           prepend,
           (partial ? "" : "\nGenie.Renderer.Html.doctype() * \n"),
           f(input, partial = partial),

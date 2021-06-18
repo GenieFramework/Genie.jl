@@ -259,6 +259,22 @@ end
 
 
 """
+    injectkwvars() :: String
+
+Sets up variables passed into the view, making them available in the
+generated view function as kw arguments for the rendering function.
+"""
+function injectkwvars() :: String
+  output = String[]
+  for kv in vars()
+    push!(output, "$(kv[1]) = Genie.Renderer.vars($(repr(kv[1])))")
+  end
+
+  join(output, ',')
+end
+
+
+"""
     injectvars() :: String
 
 Sets up variables passed into the view, making them available in the
