@@ -332,8 +332,6 @@ function microstack_app(app_name::String = ".", app_path::String = ".") :: Nothi
     cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, f), joinpath(app_path, f))
   end
 
-  remove_fingerprint_initializer(app_path)
-
   scaffold(app_name, app_path)
 
   nothing
@@ -521,18 +519,6 @@ function autostart_app(path::String = "."; autostart::Bool = true) :: Nothing
         Run \njulia> Genie.loadapp() \nto load the app's environment
         and then \njulia> up() \nto start the web server on port 8000.")
   end
-
-  nothing
-end
-
-
-"""
-    remove_fingerprint_initializer(app_path::String = ".") :: Nothing
-
-Removes the asset fingerprint initializers if it's not used
-"""
-function remove_fingerprint_initializer(app_path::String = ".") :: Nothing
-  rm(joinpath(app_path, Genie.config.path_initializers, Genie.ASSETS_FINGERPRINT_INITIALIZER_FILE_NAME), force = true)
 
   nothing
 end

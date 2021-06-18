@@ -13,17 +13,6 @@ Returns installed package information for `pkg`
 """
 pkginfo(pkg::String) = filter(x -> x.name == pkg && x.is_direct_dep, values(Pkg.dependencies()) |> collect)
 
-"""
-    const GENIE_VERSION
-
-References the current Genie version number.
-"""
-const GENIE_VERSION = try
-  pkginfo("Genie")[1].version
-catch _
-  v"1"
-end
-
 import Logging
 import Genie
 import MbedTLS
@@ -131,7 +120,6 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `cache_duraction::Int`: cache expiration time in seconds
 - `log_level::Logging.LogLevel`: logging severity level
 - `log_to_file::Bool`: if true, information will be logged to file besides REPL
-- `assets_fingerprinted::Bool`: if true, asset fingerprinting is used in the asset pipeline
 - `session_key_name::String`: the name of the session cookie
 - `session_storage::Symbol`: the backend adapter for session storage (default File)
 - `inflector_irregulars::Vector{Tuple{String,String}}`: additional irregular singular-plural forms to be used by the Inflector
@@ -141,181 +129,83 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `ssl_enabled::Bool`: default false. Server runs over SSL/HTTPS in development.
 - `ssl_config::MbedTLS.SSLConfig`: default `nothing`. If not `nothing` and `ssl_enabled`, it will use the config to start the server over HTTPS.
 """
-mutable struct Settings
-  server_port::Int
-  server_host::String
-  server_document_root::String
+Base.@kwdef mutable struct Settings
+  server_port::Int                                    = (haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : 8000) # default port for binding the web server
+  server_host::String                                 = ENV["HOST"]
+  server_document_root::String                        = "public"
+  server_handle_static_files::Bool                    = true
+  server_signature::String                            = "Genie::Julia@$VERSION"
 
-  server_handle_static_files::Bool
-  server_signature::String
+  app_env::String                                     = ENV["GENIE_ENV"]
 
-  app_env::String
+  cors_headers::Dict{String,String}                   = Dict{String,String}(
+                                                          "Access-Control-Allow-Origin"       => "", # ex: "*" or "http://mozilla.org"
+                                                          "Access-Control-Expose-Headers"     => "", # ex: "X-My-Custom-Header, X-Another-Custom-Header"
+                                                          "Access-Control-Max-Age"            => "86400", # 24 hours
+                                                          "Access-Control-Allow-Credentials"  => "", # "true" or "false"
+                                                          "Access-Control-Allow-Methods"      => "", # ex: "POST, GET"
+                                                          "Access-Control-Allow-Headers"      => "", # ex: "X-PINGOTHER, Content-Type"
+                                                        )
+  cors_allowed_origins::Vector{String}                = String[]
 
-  cors_headers::Dict{String,String}
-  cors_allowed_origins::Vector{String}
+  cache_duration::Int                                 = 0
+  cache_storage::Union{Symbol,Nothing}                = nothing
 
-  cache_duration::Int
-  cache_storage::Union{Symbol,Nothing}
+  log_level::Logging.LogLevel                         = Logging.Debug
+  log_to_file::Bool                                   = false
+  log_requests::Bool                                  = true
 
-  log_level::Logging.LogLevel
-  log_to_file::Bool
-  log_requests::Bool
+  inflector_irregulars::Vector{Tuple{String,String}}  = Tuple{String,String}[]
 
-  assets_fingerprinted::Bool
+  run_as_server::Bool                                 = false
 
-  inflector_irregulars::Vector{Tuple{String,String}}
+  websockets_server::Bool                             = false
+  websockets_port::Int                                = server_port
 
-  run_as_server::Bool
+  initializers_folder::String                         = "initializers"
 
-  websockets_server::Bool
-  websockets_port::Int
+  path_config::String                                 = "config"
+  path_env::String                                    = joinpath(path_config, "env")
+  path_app::String                                    = "app"
+  path_resources::String                              = joinpath(path_app, "resources")
+  path_lib::String                                    = "lib"
+  path_helpers::String                                = joinpath(path_app, "helpers")
+  path_log::String                                    = "log"
+  path_tasks::String                                  = "tasks"
+  path_build::String                                  = buildpath()
+  path_plugins::String                                = "plugins"
+  path_cache::String                                  = "cache"
+  path_initializers::String                           = joinpath(path_config, initializers_folder)
+  path_db::String                                     = "db"
+  path_bin::String                                    = "bin"
+  path_src::String                                    = "src"
 
-  initializers_folder::String
+  webchannels_default_route::String                   = "__"
+  webchannels_js_file::String                         = "channels.js"
+  webchannels_subscribe_channel::String               = "subscribe"
+  webchannels_unsubscribe_channel::String             = "unsubscribe"
+  webchannels_autosubscribe::Bool                     = true
 
-  path_config::String
-  path_env::String
-  path_app::String
-  path_resources::String
-  path_lib::String
-  path_helpers::String
-  path_log::String
-  path_tasks::String
-  path_build::String
-  path_plugins::String
-  path_cache::String
-  path_initializers::String
-  path_db::String
-  path_bin::String
-  path_src::String
+  webthreads_default_route::String                    = "__"
+  webthreads_js_file::String                          = "webthreads.js"
+  webthreads_pull_route::String                       = "pull"
+  webthreads_push_route::String                       = "push"
+  webthreads_connection_threshold::Dates.Millisecond  = Dates.Millisecond(60_000) # 1 minute
 
-  webchannels_default_route::String
-  webchannels_js_file::String
-  webchannels_subscribe_channel::String
-  webchannels_unsubscribe_channel::String
-  webchannels_autosubscribe::Bool
+  html_parser_close_tag::String                       = " /"
+  html_parser_char_at::String                         = "!!"
+  html_parser_char_dot::String                        = "!"
+  html_parser_char_column::String                     = "!"
+  html_parser_char_dash::String                       = "__"
 
-  webthreads_default_route::String
-  webthreads_js_file::String
-  webthreads_pull_route::String
-  webthreads_push_route::String
-  webthreads_connection_threshold::Dates.Millisecond
+  ssl_enabled::Bool                                   = false
+  ssl_config::Union{MbedTLS.SSLConfig,Nothing}        = nothing
 
-  html_parser_close_tag::String
-  html_parser_char_at::String
-  html_parser_char_dot::String
-  html_parser_char_column::String
-  html_parser_char_dash::String
+  session_key_name::String                            = "__geniesid"
+  session_storage::Union{Symbol,Nothing}              = nothing
+  session_options::Dict{String,Any}                   = Dict{String,Any}("Path" => "/", "HttpOnly" => true, "Secure" => ssl_enabled)
 
-  ssl_enabled::Bool
-  ssl_config::Union{MbedTLS.SSLConfig,Nothing}
-
-  session_key_name::String
-  session_storage::Union{Symbol,Nothing}
-  session_options::Dict{String,Any}
-
-  base_path::String
-
-  Settings(;
-            server_port                 = (haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : 8000), # default port for binding the web server
-            server_host                 = ENV["HOST"],
-            server_document_root        = "public",
-            server_handle_static_files  = true,
-            server_signature            = "Genie/$GENIE_VERSION/Julia/$VERSION",
-
-            app_env                     = ENV["GENIE_ENV"],
-
-            cors_headers  = Dict{String,String}(
-              "Access-Control-Allow-Origin"       => "", # ex: "*" or "http://mozilla.org"
-              "Access-Control-Expose-Headers"     => "", # ex: "X-My-Custom-Header, X-Another-Custom-Header"
-              "Access-Control-Max-Age"            => "86400", # 24 hours
-              "Access-Control-Allow-Credentials"  => "", # "true" or "false"
-              "Access-Control-Allow-Methods"      => "", # ex: "POST, GET"
-              "Access-Control-Allow-Headers"      => "", # ex: "X-PINGOTHER, Content-Type"
-            ),
-            cors_allowed_origins = String[],
-
-            cache_duration    = 0,
-            cache_storage     = nothing,
-
-            log_level     = Logging.Debug,
-            log_to_file   = false,
-            log_requests  = true,
-
-            assets_fingerprinted  = false,
-
-            inflector_irregulars = Tuple{String,String}[],
-
-            run_as_server = false,
-
-            websockets_server = false,
-            websockets_port   = server_port,
-
-            initializers_folder = "initializers",
-
-            path_config         = "config",
-            path_env            = joinpath(path_config, "env"),
-            path_app            = "app",
-            path_resources      = joinpath(path_app, "resources"),
-            path_lib            = "lib",
-            path_helpers        = joinpath(path_app, "helpers"),
-            path_log            = "log",
-            path_tasks          = "tasks",
-            path_build          = buildpath(),
-            path_plugins        = "plugins",
-            path_cache          = "cache",
-            path_initializers   = joinpath(path_config, initializers_folder),
-            path_db             = "db",
-            path_bin            = "bin",
-            path_src            = "src",
-
-            webchannels_default_route       = "__",
-            webchannels_js_file             = "channels.js",
-            webchannels_subscribe_channel   = "subscribe",
-            webchannels_unsubscribe_channel = "unsubscribe",
-            webchannels_autosubscribe       = true,
-
-            webthreads_default_route        = "__",
-            webthreads_js_file              = "webthreads.js",
-            webthreads_pull_route           = "pull",
-            webthreads_push_route           = "push",
-            webthreads_connection_threshold = Dates.Millisecond(60_000), # 1 minute
-
-            html_parser_close_tag = " /",
-            html_parser_char_at = "!!",
-            html_parser_char_dot = "!",
-            html_parser_char_column = "!",
-            html_parser_char_dash = "__",
-
-            ssl_enabled = false,
-            ssl_config = nothing,
-
-            session_key_name    = "__geniesid",
-            session_storage     = nothing,
-            session_options     = Dict("Path" => "/", "HttpOnly" => true, "Secure" => ssl_enabled),
-
-            base_path = "/"
-        ) =
-        new(
-          server_port, server_host,
-          server_document_root, server_handle_static_files, server_signature,
-          app_env,
-          cors_headers, cors_allowed_origins,
-          cache_duration, cache_storage,
-          log_level, log_to_file, log_requests,
-          assets_fingerprinted,
-          inflector_irregulars,
-          run_as_server,
-          websockets_server, websockets_port,
-          initializers_folder,
-          path_config, path_env, path_app, path_resources, path_lib, path_helpers, path_log, path_tasks, path_build,
-          path_plugins, path_cache, path_initializers, path_db, path_bin, path_src,
-          webchannels_default_route, webchannels_js_file, webchannels_subscribe_channel, webchannels_unsubscribe_channel, webchannels_autosubscribe,
-          webthreads_default_route, webthreads_js_file, webthreads_pull_route, webthreads_push_route, webthreads_connection_threshold,
-          html_parser_close_tag, html_parser_char_at, html_parser_char_dot, html_parser_char_column, html_parser_char_dash,
-          ssl_enabled, ssl_config,
-          session_key_name, session_storage, session_options,
-          base_path
-        )
+  base_path::String                                   = "/"
 end
 
 end

@@ -62,8 +62,6 @@ function parse_commandline_args(config::Genie.Configuration.Settings) :: Dict{St
 
   settings.description = "Genie web framework CLI"
   settings.epilog = "Visit https://genieframework.com for more info"
-  settings.version = string(Genie.Configuration.GENIE_VERSION)
-  settings.add_version = true
 
   ArgParse.@add_arg_table! settings begin
     "s"

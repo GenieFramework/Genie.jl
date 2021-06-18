@@ -5,8 +5,6 @@ module App
 
 import Genie
 
-const ASSET_FINGERPRINT = ""
-
 
 ### PRIVATE ###
 

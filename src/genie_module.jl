@@ -282,8 +282,6 @@ function load(; context::Union{Module,Nothing} = nothing) :: Nothing
 
   load_configurations(context = context)
 
-  global ASSET_FINGERPRINT = App.ASSET_FINGERPRINT
-
   replprint("initializers", t, clearline = 0, prefix = "Loading ")
   load_initializers(context = context)
 

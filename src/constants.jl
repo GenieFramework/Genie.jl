@@ -4,7 +4,6 @@ const GENIE_CONTROLLER_FILE_POSTFIX             = "Controller.jl"
 
 const ROUTES_FILE_NAME                          = "routes.jl"
 const APP_FILE_NAME                             = "app.jl"
-const ASSETS_FINGERPRINT_INITIALIZER_FILE_NAME  = "assets_fingerprint.jl"
 const SEARCHLIGHT_INITIALIZER_FILE_NAME         = "searchlight.jl"
 const SECRETS_FILE_NAME                         = "secrets.jl"
 const BOOTSTRAP_FILE_NAME                       = "bootstrap.jl"
@@ -26,5 +25,3 @@ const PARAMS_FILES          = :FILES
 const PARAMS_ROUTE_KEY      = :ROUTE
 const PARAMS_CHANNELS_KEY   = :CHANNEL
 const PARAMS_MIME_KEY       = :MIME
-
-ASSET_FINGERPRINT = ""
