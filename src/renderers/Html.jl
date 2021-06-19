@@ -472,11 +472,8 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
 
   invalid_tag = partial && (tag_name == "html" || tag_name == "head" || tag_name == "body")
 
-  if tag_name == "script" && in("type", collect(keys(HTMLParser.attrs(elem))))
-    if HTMLParser.attrs(elem)["type"] == "julia/eval"
-      isempty(HTMLParser.children(elem)) || print(io, repeat("\t", depth), string(HTMLParser.children(elem)[1].text), "\n")
-    end
-
+  if tag_name == "script" && in("type", collect(keys(HTMLParser.attrs(elem)))) && HTMLParser.attrs(elem)["type"] == "julia/eval"
+    isempty(HTMLParser.children(elem)) || print(io, repeat("\t", depth), string(HTMLParser.children(elem)[1].text), "\n")
   else
     mdl = isdefined(@__MODULE__, Symbol(tag_name)) ? string(@__MODULE__, ".") : ""
     print(io, repeat("\t", depth), ( ! invalid_tag ? "$mdl$(tag_name)(" : "Html.skip_element(" ))
@@ -486,8 +483,9 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
     attributes_values = String[]
 
     for (k,v) in HTMLParser.attrs(elem)
-      x = v
+      # x = v
       k = string(k) |> lowercase
+      occursin("\"", v) && (v = replace(string(v), "\"" => "\\\"")) # we need to escape " as this will be inside julia strings
 
       if startswith(k, raw"$") # do not process embedded julia code
         print(attributes, k[2:end], ", ") # strip the $, this is rendered directly in Julia code
@@ -602,13 +600,9 @@ end
 
 Renders (includes) a view partial within a larger view or layout file.
 """
-function partial(path::String; context::Module = @__MODULE__, vars...) :: String
-  for (k,v) in vars
-    try
-      vars()[k] = v
-    catch
-      vars()[k] = v
-    end
+function partial(path::String; context::Module = @__MODULE__, kwvars...) :: String
+  for (k,v) in kwvars
+    vars()[k] = v
   end
 
   template(path, partial = true, context = context)
