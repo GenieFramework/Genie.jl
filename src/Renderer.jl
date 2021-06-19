@@ -250,9 +250,8 @@ end
 
 Loads the rendering vars into the task's scope
 """
-function registervars(vs...) :: Nothing
-  init_task_local_storage()
-  task_local_storage(:__vars, merge(vars(), Dict{Symbol,Any}(vs)))
+function registervars(; context::Module = @__MODULE__, vs...) :: Nothing
+  task_local_storage(:__vars, merge(vars(), Dict{Symbol,Any}(vs), Dict{Symbol,Any}(:context => context)))
 
   nothing
 end
@@ -266,42 +265,12 @@ generated view function as kw arguments for the rendering function.
 """
 function injectkwvars() :: String
   output = String[]
+
   for kv in vars()
     push!(output, "$(kv[1]) = Genie.Renderer.vars($(repr(kv[1])))")
   end
 
   join(output, ',')
-end
-
-
-"""
-    injectvars() :: String
-
-Sets up variables passed into the view, making them available in the
-generated view function.
-"""
-function injectvars() :: String
-  output = ""
-  for kv in vars()
-    output *= "try \n"
-    output *= "global $(kv[1]) = Genie.Renderer.vars($(repr(kv[1]))) \n"
-    output *= "
-catch ex
-  @error ex
-end
-"
-  end
-
-  output
-end
-
-
-function injectvars(context::Module) :: Nothing
-  for kv in vars()
-    Core.eval(context, Meta.parse("global $(kv[1]) = Renderer.vars($(repr(kv[1])))"))
-  end
-
-  nothing
 end
 
 
@@ -325,6 +294,8 @@ function view_file_info(path::String, supported_extensions::Vector{String}) :: T
     end
   end
 
+  isfile(_path) || error("Template file \"$path\" with extensions $supported_extensions does not exist")
+
   return _path, _extension
 end
 
@@ -336,7 +307,7 @@ Collects the names of the view vars in order to create a unique hash/salt to ide
 compiled views with different vars.
 """
 function vars_signature() :: String
-  task_local_storage(:__vars) |> keys |> collect |> sort |> string
+  vars() |> keys |> collect |> sort |> string
 end
 
 
@@ -437,7 +408,7 @@ end
 Utility for accessing view vars
 """
 function vars()
-  haskey(task_local_storage(), :__vars) ? task_local_storage(:__vars) : Dict()
+  haskey(task_local_storage(), :__vars) ? task_local_storage(:__vars) : init_task_local_storage()
 end
 
 
@@ -447,7 +418,7 @@ end
 Utility for accessing view vars stored under `key`
 """
 function vars(key)
-  task_local_storage(:__vars)[key]
+  vars()[key]
 end
 
 
@@ -457,8 +428,8 @@ end
 Utility for setting a new view var, as `key` => `value`
 """
 function vars(key, value)
-  if haskey(task_local_storage, :__vars)
-    task_local_storage(:__vars)[key] = value
+  if haskey(task_local_storage(), :__vars)
+    vars()[key] = value
   else
     task_local_storage(:__vars, Dict(key => value))
   end

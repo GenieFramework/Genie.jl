@@ -48,8 +48,7 @@ end
 
 
 function to_js(data::String; prepend = "\n") :: String
-  string("function $(Genie.Renderer.function_name(data))() \n",
-          Genie.Renderer.injectvars(),
+  string("function $(Genie.Renderer.function_name(data))($(Genie.Renderer.injectkwvars())) \n",
           prepend,
           "\"\"\"
           $data
@@ -59,7 +58,7 @@ end
 
 
 function render(data::String; context::Module = @__MODULE__, vars...) :: Function
-  Genie.Renderer.registervars(vars...)
+  Genie.Renderer.registervars(; context = context, vars...)
 
   data_hash = hash(data)
   path = "Genie_" * string(data_hash)
@@ -80,7 +79,7 @@ end
 
 
 function render(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__, vars...) :: Function
-  Genie.Renderer.registervars(vars...)
+  Genie.Renderer.registervars(; context = context, vars...)
 
   get_template(string(viewfile), partial = false, context = context)
 end

@@ -1,5 +1,6 @@
 module Json
 
+using Base: invokelatest
 import JSON, HTTP
 using Genie, Genie.Renderer
 
@@ -11,10 +12,28 @@ export JSONString, json
 
 
 function render(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__, vars...) :: Function
-  Genie.Renderer.registervars(vars...)
-  Genie.Renderer.injectvars(context)
+  Genie.Renderer.registervars(; context = context, vars...)
 
-  () -> (Base.include(context, string(viewfile)) |> JSONParser.json)
+  path = viewfile |> string
+  partial = true
+
+  f_name = Genie.Renderer.function_name(string(path, partial)) |> Symbol
+  mod_name = Genie.Renderer.m_name(string(path, partial)) * ".jl"
+  f_path = joinpath(Genie.config.path_build, Genie.Renderer.BUILD_NAME, mod_name)
+  f_stale = Genie.Renderer.build_is_stale(path, f_path)
+
+  if f_stale || ! isdefined(context, f_name)
+    Genie.Renderer.build_module(
+      Genie.Renderer.Html.to_julia(read(path, String), nothing, partial = partial, f_name = f_name),
+      path,
+      mod_name,
+      output_path = false
+    )
+
+    Base.include(context, f_path)
+  end
+
+  return () -> getfield(context, f_name) |> Base.invokelatest |> JSONParser.json
 end
 
 

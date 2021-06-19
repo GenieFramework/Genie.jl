@@ -48,7 +48,7 @@ export HTMLString, html, doc, doctype
 export @yield, collection, view!, for_each
 export partial, template
 
-Genie.Renderer.init_task_local_storage()
+
 task_local_storage(:__yield, "")
 
 
@@ -233,11 +233,7 @@ end
 Resolves the inclusion and rendering of a template file
 """
 function get_template(path::String; partial::Bool = true, context::Module = @__MODULE__) :: Function
-  orig_path = path
-
   path, extension = Genie.Renderer.view_file_info(path, SUPPORTED_HTML_OUTPUT_FILE_FORMATS)
-
-  isfile(path) || Base.error("Template file \"$orig_path\" with extensions $SUPPORTED_HTML_OUTPUT_FILE_FORMATS does not exist")
 
   extension in HTML_FILE_EXT && return (() -> Base.include(context, path))
 
@@ -251,9 +247,7 @@ function get_template(path::String; partial::Bool = true, context::Module = @__M
       path = MdHtml.md_to_html(path, context = context)
     end
 
-    content = html_to_julia(path, partial = partial)
-
-    f_stale && Genie.Renderer.build_module(content, path, mod_name)
+    f_stale && Genie.Renderer.build_module(html_to_julia(path, partial = partial), path, mod_name)
 
     return Base.include(context, joinpath(Genie.config.path_build, Genie.Renderer.BUILD_NAME, mod_name))
   end
@@ -313,7 +307,7 @@ end
 Renders the string as an HTML view.
 """
 function render(data::String; context::Module = @__MODULE__, layout::Union{String,Nothing} = nothing, vars...) :: Function
-  Genie.Renderer.registervars(vars...)
+  Genie.Renderer.registervars(; context = context, vars...)
 
   if layout !== nothing
     task_local_storage(:__yield, parseview(data, partial = true, context = context))
@@ -330,7 +324,7 @@ end
 Renders the template file as an HTML view.
 """
 function render(viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.Renderer.FilePath} = nothing, context::Module = @__MODULE__, vars...) :: Function
-  Genie.Renderer.registervars(vars...)
+  Genie.Renderer.registervars(; context = context, vars...)
 
   if layout !== nothing
     task_local_storage(:__yield, get_template(string(viewfile), partial = true, context = context))
@@ -582,8 +576,8 @@ end
 
 Converts string view data to Julia code
 """
-function string_to_julia(content::String; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n", vars_included::Bool = false) :: String
-  to_julia(content, parse_string, partial = partial, f_name = f_name, prepend = prepend, vars_included = vars_included)
+function string_to_julia(content::String; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n") :: String
+  to_julia(content, parse_string, partial = partial, f_name = f_name, prepend = prepend)
 end
 
 
@@ -592,13 +586,13 @@ end
 
 Converts an input file to Julia code
 """
-function to_julia(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n", vars_included::Bool = false) :: String
+function to_julia(input::String, f::Union{Function,Nothing}; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n") :: String
   f_name = (f_name === nothing) ? Genie.Renderer.function_name(string(input, partial)) : f_name
 
-  string("function $(f_name)(; $((vars_included ? "" : Genie.Renderer.injectkwvars()))) \n",
+  string("function $(f_name)(; $(Genie.Renderer.injectkwvars())) \n",
           prepend,
           (partial ? "" : "\nGenie.Renderer.Html.doctype() * \n"),
-          f(input, partial = partial),
+          f !== nothing ? f(input, partial = partial) : input,
           "\nend \n")
 end
 
@@ -611,10 +605,9 @@ Renders (includes) a view partial within a larger view or layout file.
 function partial(path::String; context::Module = @__MODULE__, vars...) :: String
   for (k,v) in vars
     try
-      task_local_storage(:__vars)[k] = v
+      vars()[k] = v
     catch
-      Genie.Renderer.init_task_local_storage()
-      task_local_storage(:__vars)[k] = v
+      vars()[k] = v
     end
   end
 

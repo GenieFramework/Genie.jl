@@ -2,16 +2,24 @@ module MdHtml
 
 using Genie
 using Markdown
+import Genie.Renderer: vars
 
 const MD_SEPARATOR_START = "---"
 const MD_SEPARATOR_END   = "---"
 
 
 function md_to_html(path::String; context::Module = @__MODULE__) :: String
-  content = string("\"\"\"", eval_markdown(read(path, String), context = context), "\"\"\"")
-
   Genie.Renderer.build_module(
-    Base.include_string(context, string(content)) |> Markdown.parse |> Markdown.html,
+"""
+<%
+Base.include_string(context,
+\"\"\"
+\\\"\\\"\\\"
+$(eval_markdown(read(path, String), context = context))
+\\\"\\\"\\\"
+\"\"\") |> Markdown.parse |> Markdown.html
+%>
+\n""",
     joinpath(Genie.config.path_build, Genie.Renderer.BUILD_NAME, path),
     string(hash(path), ".html"),
     output_path = false
@@ -33,7 +41,7 @@ function eval_markdown(md::String; context::Module = @__MODULE__) :: String
 
     try
       for (k,v) in metadata
-        task_local_storage(:__vars)[Symbol(k)] = v
+        vars()[Symbol(k)] = v
       end
     catch ex
       @error ex
