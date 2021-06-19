@@ -17,7 +17,7 @@ route("/") do
 end
 
 route("/", method = POST) do
-  @show params
+  @show params()
 
   @show params(:greeting)
 

@@ -131,7 +131,7 @@ function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::B
   ENV GENIE_ENV "$env"
   ENV HOST "$host"
   ENV PORT "$port"
-  ENV PORT "$earlybind"
+  ENV EARLYBIND "$earlybind"
 
   CMD ["bin/server"]
   """

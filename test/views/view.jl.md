@@ -1,7 +1,7 @@
 # There are $(length(numbers))
 
 $(
-  @foreach(numbers) do number
+  for_each(numbers) do number
     " -> $number
     "
   end

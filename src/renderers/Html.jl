@@ -415,7 +415,7 @@ end
 Markdown view rendering
 """
 function html(md::Markdown.MD; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), layout::Union{String,Nothing} = nothing, forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
-  data = eval_markdown(string(md)) |> Markdown.parse |> Markdown.html
+  data = MdHtml.eval_markdown(string(md)) |> Markdown.parse |> Markdown.html
   for kv in vars
     data = replace(data, ":" * string(kv[1]) => "\$" * string(kv[1]))
   end
@@ -861,7 +861,7 @@ function serve_error_file(error_code::Int, error_message::String = ""; error_inf
 
       error_message = if Genie.Configuration.isdev()
                       """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                                     $("\n" ^ 3)""" *
-                      """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(Genie.Router.params))                        $("\n" ^ 3)""" *
+                      """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(Genie.Router.params()))                        $("\n" ^ 3)""" *
                       """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Genie.Router.named_routes() |> Dict))  $("\n" ^ 3)""" *
                       """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$ENV                                               $("\n" ^ 1)"""
       else

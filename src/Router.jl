@@ -852,13 +852,13 @@ to_response(action_result::Any)::HTTP.Response = HTTP.Response(string(action_res
 The collection containing the request variables collection.
 """
 function params()
-  haskey(task_local_storage(), :__params) ? task_local_storage(:__params) : Dict()
+  haskey(task_local_storage(), :__params) ? task_local_storage(:__params) : task_local_storage(:__params, Dict{Symbol,Any}())
 end
 function params(key)
-  params()[key]
+  _params_()[key]
 end
 function params(key, default)
-  get(params(), key, default)
+  get(_params_(), key, default)
 end
 
 
@@ -868,7 +868,7 @@ end
 The collection containing the query request variables collection (GET params).
 """
 function query()
-  haskey(params(), Genie.PARAMS_GET_KEY) ? params(params(Genie.PARAMS_GET_KEY)) : Dict()
+  haskey(params(), Genie.PARAMS_GET_KEY) ? params(Genie.PARAMS_GET_KEY) : Dict()
 end
 function query(key)
   query()[key]

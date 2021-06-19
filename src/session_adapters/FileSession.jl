@@ -36,9 +36,9 @@ function write(session::Genie.Sessions.Session) :: Genie.Sessions.Session
     @warn "Resetting session"
 
     session = Genie.Sessions.Session(Genie.Sessions.id())
-    Genie.Cookies.set!(Genie.Router._params_(Genie.PARAMS_RESPONSE_KEY), Genie.config.session_key_name, session.id, Genie.config.session_options)
+    Genie.Cookies.set!(Genie.Router.params(Genie.PARAMS_RESPONSE_KEY), Genie.config.session_key_name, session.id, Genie.config.session_options)
     write_session(session)
-    Genie.Router._params_(Genie.PARAMS_SESSION_KEY, session)
+    Genie.Router.params(Genie.PARAMS_SESSION_KEY, session)
 
     return session
   catch ex
