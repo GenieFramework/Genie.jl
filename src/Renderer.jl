@@ -381,13 +381,13 @@ end
 
 Persists compiled Julia view data to file and returns the path
 """
-function build_module(content::String, path::String, mod_name::String) :: String
+function build_module(content::String, path::String, mod_name::String; output_path::Bool = true) :: String
   module_path = joinpath(Genie.config.path_build, BUILD_NAME, mod_name)
 
   isdir(dirname(module_path)) || mkpath(dirname(module_path))
 
   open(module_path, "w") do io
-    write(io, "# $path \n\n")
+    output_path && write(io, "# $path \n\n")
     write(io, content)
   end
 
