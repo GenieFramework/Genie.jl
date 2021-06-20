@@ -7,6 +7,7 @@ Once you have `Genie` into scope, you can define a new `route`.
 A `route` maps a URL to a function.
 
 ```julia
+julia> using Genie
 julia> import Genie.Router: route
 julia> route("/") do
          "Hi there!"
