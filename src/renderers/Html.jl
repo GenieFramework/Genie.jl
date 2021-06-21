@@ -44,6 +44,9 @@ const SVG_ELEMENTS = [:animate, :circle, :animateMotion, :animateTransform, :cli
                       :marker, :mask, :metadata, :mpath, :path, :pattern, :polygon, :polyline, :radialGradient, :rect, :set, :stop, :svg,
                       :switch, :symbol, :text, :textPath, :tspan, :use, :view]
 
+const EMBEDDED_JULIA_PLACEHOLDER = "~~~~~|~~~~~"
+
+
 export HTMLString, html, doc, doctype
 export @yield, collection, view!, for_each
 export partial, template
@@ -485,7 +488,34 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
     for (k,v) in HTMLParser.attrs(elem)
       # x = v
       k = string(k) |> lowercase
-      occursin("\"", v) && (v = replace(string(v), "\"" => "\\\"")) # we need to escape " as this will be inside julia strings
+      if occursin("\"", v)
+        # we need to escape double quotes but only if it's not embedded Julia code
+        mx = collect(eachmatch(r"\$\((.*?)\)|<%(.*?)%>", string(v)))
+        if ! isempty(mx)
+          index = 1
+          for value in mx
+            value === nothing && continue
+
+            label = "$(EMBEDDED_JULIA_PLACEHOLDER)_$(index)"
+            v = replace(string(v), value.match => label)
+            index += 1
+          end
+
+          if occursin("\"", v) # do we still need to escape double quotes?
+            v = replace(string(v), "\"" => "\\\"") # we need to escape " as this will be inside julia strings
+          end
+
+          # now we need to put back the embedded Julia
+          index = 1
+          for value in mx
+            value === nothing && continue
+
+            label = "$(EMBEDDED_JULIA_PLACEHOLDER)_$(index)"
+            v = replace(string(v), label => value.match)
+            index += 1
+          end
+        end
+      end
 
       if startswith(k, raw"$") # do not process embedded julia code
         print(attributes, k[2:end], ", ") # strip the $, this is rendered directly in Julia code
