@@ -3,8 +3,8 @@ Handles Http server related functionality, manages requests and responses and th
 """
 module AppServer
 
-import HTTP, HTTP.IOExtras, HTTP.Sockets
-import Millboard, URIParser, Sockets, Distributed, Logging, MbedTLS
+using HTTP, Sockets
+import Millboard, Distributed, Logging, MbedTLS
 import Genie
 
 """
@@ -87,7 +87,7 @@ function startup(port::Int, host::String = Genie.config.server_host;
             setup_ws_handler(http.message, ws)
           end
         else
-          HTTP.handle(HTTP.RequestHandlerFunction(setup_http_handler), http)
+          setup_http_streamer(http)
         end
       catch ex
         @error ex
@@ -168,11 +168,11 @@ end
 
 
 """
-    handle_request(req::HTTP.Request, res::HTTP.Response, ip::IPv4 = IPv4(Genie.config.server_host)) :: HTTP.Response
+    handle_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
 
 Http server handler function - invoked when the server gets a request.
 """
-function handle_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: HTTP.Response
+function handle_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
   try
     req = Genie.Headers.normalize_headers(req)
   catch ex
@@ -180,7 +180,7 @@ function handle_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 
   end
 
   try
-    Genie.Headers.set_headers!(req, res, Genie.Router.route_request(req, res, ip))
+    Genie.Headers.set_headers!(req, res, Genie.Router.route_request(req, res))
   catch ex
     @error ex
     rethrow(ex)
@@ -188,12 +188,23 @@ function handle_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 
 end
 
 
+function setup_http_streamer(http::HTTP.Stream)
+  try
+    task_local_storage(:peer, Sockets.getpeername( HTTP.IOExtras.tcpsocket(HTTP.Streams.getrawstream(http)) ))
+  catch ex
+    @error ex
+  end
+
+  HTTP.handle(HTTP.RequestHandlerFunction(setup_http_listener), http)
+end
+
+
 """
-    setup_http_handler(req::HTTP.Request, res::HTTP.Response = HTTP.Response()) :: HTTP.Response
+    setup_http_listener(req::HTTP.Request, res::HTTP.Response = HTTP.Response()) :: HTTP.Response
 
 Configures the handler for the HTTP Request and handles errors.
 """
-function setup_http_handler(req::HTTP.Request, res::HTTP.Response = HTTP.Response()) :: HTTP.Response
+function setup_http_listener(req::HTTP.Request, res::HTTP.Response = HTTP.Response()) :: HTTP.Response
   try
     Distributed.@fetch handle_request(req, res)
   catch ex # ex is a Distributed.RemoteException
@@ -237,13 +248,13 @@ end
 
 
 """
-    handle_ws_request(req::HTTP.Request, msg::String, ws_client, ip::IPv4 = IPv4(Genie.config.server_host)) :: String
+    handle_ws_request(req::HTTP.Request, msg::String, ws_client) :: String
 
 Http server handler function - invoked when the server gets a request.
 """
-function handle_ws_request(req::HTTP.Request, msg::String, ws_client, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: String
+function handle_ws_request(req::HTTP.Request, msg::String, ws_client) :: String
   isempty(msg) && return "" # keep alive
-  Genie.Router.route_ws_request(req, msg, ws_client, ip)
+  Genie.Router.route_ws_request(req, msg, ws_client)
 end
 
 end

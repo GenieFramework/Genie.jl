@@ -35,16 +35,27 @@
     using Genie, Genie.Renderer
     using Genie.Renderer.Html
 
-    @test Html.html(filepath("views/view.jl.md"), numbers = [1, 1, 2, 3, 5, 8, 13]).body |> String == "<!DOCTYPE html><html><head></head><body><h1>There are 7</h1><p>-> 1      -> 1      -> 2      -> 3      -> 5      -> 8      -> 13</p></body></html>"
+    @test Html.html(filepath("views/view.jl.md"), numbers = [1, 1, 2, 3, 5, 8, 13]).body |> String ==
+    """
+      <!DOCTYPE html><html><head></head><body><h1>There are 7</h1>
+      <p>-&gt; 1 -&gt; 1 -&gt; 2 -&gt; 3 -&gt; 5 -&gt; 8 -&gt; 13</p>
+      </body></html>"""
     @test Html.html(filepath("views/view.jl.md"), layout = filepath("views/layout.jl.html"), numbers = [1, 1, 2, 3, 5, 8, 13]).body |> String ==
-      "<!DOCTYPE html><html><head></head><body><div><h1>Layout header</h1><section><h1>There are 7</h1><p>-> 1      -> 1      -> 2      -> 3      -> 5      -> 8      -> 13</p></section><footer><h4>Layout footer</h4></footer></div></body></html>"
+    """
+      <!DOCTYPE html><html><head></head><body><div><h1>Layout header</h1><section><h1>There are 7</h1>
+      <p>-&gt; 1 -&gt; 1 -&gt; 2 -&gt; 3 -&gt; 5 -&gt; 8 -&gt; 13</p>
+      </section><footer><h4>Layout footer</h4></footer></div></body></html>"""
   end
 
   @safetestset "Markdown rendering with embedded variables" begin
     using Genie, Genie.Renderer
     using Genie.Renderer.Html
 
-    @test Html.html(filepath("views/view-vars.jl.md")).body |> String == "<!DOCTYPE html><html><head></head><body><h1>There are 7</h1><p>-> 1      -> 1      -> 2      -> 3      -> 5      -> 8      -> 13</p></body></html>"
+    @test Html.html(filepath("views/view-vars.jl.md")).body |> String ==
+      """
+      <!DOCTYPE html><html><head></head><body><h1>There are 7</h1>
+      <p>-&gt; 1 -&gt; 1 -&gt; 2 -&gt; 3 -&gt; 5 -&gt; 8 -&gt; 13</p>
+      </body></html>"""
   end;
 
 end;

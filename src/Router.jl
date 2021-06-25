@@ -6,7 +6,7 @@ module Router
 
 import Revise
 import Reexport, Logging
-import HTTP, URIParser, HttpCommon, Sockets, Millboard, Dates, OrderedCollections, JSON
+import HTTP, HttpCommon, Sockets, Millboard, Dates, OrderedCollections, JSON
 import Genie
 
 include("mimetypes.jl")
@@ -14,7 +14,7 @@ include("mimetypes.jl")
 export route, routes, channel, channels, serve_static_file
 export GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
 export tolink, linkto, responsetype, toroute
-export params, query, post, headers, request
+export params, query, post, headers, request, peer
 
 Reexport.@reexport using HttpCommon
 
@@ -117,6 +117,22 @@ end
 
 
 """
+    function peer()
+
+Returns information about the requesting client's IP address as a NamedTuple{(:ip,), Tuple{String}}
+If the client IP address can not be retrieved, the `ip` field will return an empty string `""`.
+"""
+function peer() :: NamedTuple{(:ip,), Tuple{String}}
+  try
+    haskey(task_local_storage(), :peer) && (ip = string(task_local_storage(:peer)[1]), )
+  catch ex
+    @error ex
+    (ip = "", )
+  end
+end
+
+
+"""
     ispayload(req::HTTP.Request)
 
 True if the request can carry a payload - that is, it's a `POST`, `PUT`, or `PATCH` request
@@ -125,13 +141,12 @@ ispayload(req::HTTP.Request) = req.method in [POST, PUT, PATCH]
 
 
 """
-    route_request(req::Request, res::Response, ip::IPv4 = Genie.config.server_host) :: Response
+    route_request(req::Request, res::Response) :: Response
 
 First step in handling a request: sets up params collection, handles query vars, negotiates content.
 """
-function route_request(req::HTTP.Request, res::HTTP.Response, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: HTTP.Response
+function route_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
   params = Params()
-  params.collection[:request_ipv4] = ip
 
   for f in unique(content_negotiation_hooks)
     req, res, params.collection = f(req, res, params.collection)
@@ -174,16 +189,16 @@ end
 
 
 """
-    route_ws_request(req::Request, msg::String, ws_client::HTTP.WebSockets.WebSocket, ip::IPv4 = Genie.config.server_host) :: String
+    route_ws_request(req::Request, msg::String, ws_client::HTTP.WebSockets.WebSocket) :: String
 
 First step in handling a web socket request: sets up params collection, handles query vars.
 """
-function route_ws_request(req, msg::String, ws_client, ip::Sockets.IPv4 = Sockets.IPv4(Genie.config.server_host)) :: String
+function route_ws_request(req, msg::String, ws_client) :: String
   params = Params()
 
   params.collection[Genie.PARAMS_WS_CLIENT] = ws_client
 
-  extract_get_params(URIParser.URI(req.target), params)
+  extract_get_params(HTTP.URIs.URI(req.target), params)
 
   Genie.Configuration.isdev() && Revise.revise()
 
@@ -355,7 +370,7 @@ function to_link(route_name::Symbol, d::Dict{Symbol,T}; preserve_query::Bool = t
 
   query_vars = Dict{String,String}()
   if preserve_query && haskey(task_local_storage(), :__params) && haskey(task_local_storage(:__params), :REQUEST)
-    query = URIParser.URI(task_local_storage(:__params)[:REQUEST].target).query
+    query = HTTP.URIs.URI(task_local_storage(:__params)[:REQUEST].target).query
     if ! isempty(query)
       for pair in split(query, '&')
         try
@@ -424,7 +439,7 @@ end
 Matches the invoked URL to the corresponding route, sets up the execution environment and invokes the controller method.
 """
 function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: HTTP.Response
-  uri = URIParser.URI(to_uri(req.target))
+  uri = HTTP.URIs.URI(req.target)
 
   for r in routes()
     r.method != req.method && continue
@@ -439,14 +454,14 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
       continue
     end
 
-    occursin(regex_route, uri.path) || parsed_route == "/*" || continue
+    occursin(regex_route, string(uri.path)) || parsed_route == "/*" || continue
 
     params.collection = setup_base_params(req, res, params.collection)
     task_local_storage(:__params, params.collection)
 
-    occursin("?", req.target) && extract_get_params(URIParser.URI(to_uri(req.target)), params)
+    occursin("?", req.target) && extract_get_params(HTTP.URIs.URI(req.target), params)
 
-    extract_uri_params(uri.path, regex_route, param_names, param_types, params) || continue
+    extract_uri_params(uri.path |> string, regex_route, param_names, param_types, params) || continue
 
     ispayload(req) && extract_post_params(req, params)
     ispayload(req) && extract_request_params(req, params)
@@ -635,9 +650,6 @@ function extract_uri_params(uri::String, regex_route::Regex, param_names::Vector
     try
       params.collection[Symbol(param_name)] = parse_param(param_types[i], matches[param_name])
     catch _
-      # @error "Failed to match URI params between $(param_types[i])::$(typeof(param_types[i])) and $(matches[param_name])::$(typeof(matches[param_name]))"
-      # @error ex
-
       return false
     end
 
@@ -653,29 +665,38 @@ end
 
 Extracts query vars and adds them to the execution `params` `Dict`.
 """
-function extract_get_params(uri::URIParser.URI, params::Params) :: Bool
+function extract_get_params(uri::HTTP.URIs.URI, params::Params) :: Bool
   # GET params
   if ! isempty(uri.query)
-    for query_part in split(uri.query, "&")
-      qp = split(query_part, "=")
-      (size(qp)[1] == 1) && (push!(qp, ""))
+    if occursin("[]", uri.query)
+      for query_part in split(uri.query, "&")
+        qp = split(query_part, "=")
+        (size(qp)[1] == 1) && (push!(qp, ""))
 
-      k = Symbol(URIParser.unescape(qp[1]))
-      v = URIParser.unescape(qp[2])
+        k = Symbol(HTTP.URIs.unescapeuri(qp[1]))
+        v = HTTP.URIs.unescapeuri(qp[2])
 
-      # collect values like x[] in an array
-      if endswith(string(k), "[]") && haskey(params.collection, k)
-        if isa(params.collection, Vector)
-          push!(params.collection[k], v)
-          params.collection[Genie.PARAMS_GET_KEY][k] = params.collection[k]
+        # collect values like x[] in an array
+        if endswith(string(k), "[]") && haskey(params.collection, k)
+          if isa(params.collection, Vector)
+            push!(params.collection[k], v)
+            params.collection[Genie.PARAMS_GET_KEY][k] = params.collection[k]
+          else
+            params.collection[k] = params.collection[Genie.PARAMS_GET_KEY][k] = [params.collection[k], v]
+          end
         else
-          params.collection[k] = params.collection[Genie.PARAMS_GET_KEY][k] = [params.collection[k], v]
+          params.collection[k] = params.collection[Genie.PARAMS_GET_KEY][k] = v
         end
-      else
+      end
+    else
+      for (k,v) in HTTP.URIs.queryparams(uri)
+        k = Symbol(k)
         params.collection[k] = params.collection[Genie.PARAMS_GET_KEY][k] = v
       end
     end
   end
+
+  # @show params
 
   true # this must be bool cause it's used in bool context for chaining
 end
@@ -964,24 +985,7 @@ end
 Checks if the requested resource is a static file.
 """
 function is_static_file(resource::String) :: Bool
-  isfile(file_path(to_uri(resource).path))
-end
-
-
-"""
-    to_uri(resource::String) :: URI
-
-Attempts to convert `resource` to URI
-"""
-function to_uri(resource::String) :: URIParser.URI
-  try
-    URIParser.URI(resource)
-  catch ex
-    qp = URIParser.query_params(resource) |> keys |> collect
-    escaped_resource = join(map( x -> ( startswith(x, '/') ? escape_resource_path(string(x)) : URIParser.escape(string(x)) ) * "=" * URIParser.escape(URIParser.query_params(resource)[string(x)]), qp ), "&")
-
-    URIParser.URI(escaped_resource)
-  end
+  isfile(file_path(HTTP.URIs.URI(resource).path |> string))
 end
 
 
@@ -994,7 +998,7 @@ function escape_resource_path(resource::String)
   startswith(resource, '/') || return resource
   resource = resource[2:end]
 
-  '/' * join(map(x -> URIParser.escape(x), split(resource, '?')), '?')
+  '/' * join(map(x -> HTTP.URIs.escapeuri(x), split(resource, '?')), '?')
 end
 
 
@@ -1006,7 +1010,7 @@ Reads the static file and returns the content as a `Response`.
 function serve_static_file(resource::String; root = Genie.config.server_document_root) :: HTTP.Response
   startswith(resource, '/') || (resource = "/$(resource)")
   resource_path = try
-                    URIParser.URI(resource).path
+                    HTTP.URIs.URI(resource).path |> string
                   catch ex
                     resource
                   end
@@ -1104,7 +1108,7 @@ const filepath = file_path
 
 Returns a proper URI path from a string `x`.
 """
-pathify(x) :: String = replace(string(x), " "=>"-") |> lowercase |> URIParser.escape
+pathify(x) :: String = replace(string(x), " "=>"-") |> lowercase |> HTTP.URIs.escapeuri
 
 
 """

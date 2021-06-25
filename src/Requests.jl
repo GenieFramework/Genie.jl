@@ -236,7 +236,7 @@ end
 
 
 """
-    wsclient() :: HTTP.WebSockets.WebSocket
+    wtclient() :: HTTP.WebSockets.WebSocket
 
 The web sockets client for the current request.
 """

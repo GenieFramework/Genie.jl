@@ -12,11 +12,11 @@ Reexport.@reexport using HttpCommon
 const DEFAULT_LAYOUT_FILE = :app
 const LAYOUTS_FOLDER = "layouts"
 
-const HTML_FILE_EXT = [".flax.jl", "html.jl"]
-const TEMPLATE_EXT  = [".flax.html", ".jl.html"]
+const HTML_FILE_EXT = "html.jl"
+const TEMPLATE_EXT  = ".jl.html"
 const MARKDOWN_FILE_EXT = [".md", ".jl.md"]
 
-const SUPPORTED_HTML_OUTPUT_FILE_FORMATS = TEMPLATE_EXT
+const SUPPORTED_HTML_OUTPUT_FILE_FORMATS = [TEMPLATE_EXT]
 
 const HTMLString = String
 const HTMLParser = Gumbo
@@ -238,7 +238,7 @@ Resolves the inclusion and rendering of a template file
 function get_template(path::String; partial::Bool = true, context::Module = @__MODULE__) :: Function
   path, extension = Genie.Renderer.view_file_info(path, SUPPORTED_HTML_OUTPUT_FILE_FORMATS)
 
-  extension in HTML_FILE_EXT && return (() -> Base.include(context, path))
+  extension == HTML_FILE_EXT && return (() -> Base.include(context, path))
 
   f_name = Genie.Renderer.function_name(string(path, partial)) |> Symbol
   mod_name = Genie.Renderer.m_name(string(path, partial)) * ".jl"
@@ -344,7 +344,9 @@ end
 
 """
 function parsehtml(input::String; partial::Bool = true) :: String
-  parsehtml(HTMLParser.parsehtml(replace(input, NBSP_REPLACEMENT), preserve_whitespace = false).root, 0, partial = partial)
+  parsehtml(
+    HTMLParser.parsehtml(replace(input, NBSP_REPLACEMENT), preserve_whitespace = false).root,
+    0, partial = partial)
 end
 
 
@@ -572,7 +574,7 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
         print(io, inner, repeat("\t", depth))
       end
 
-      print(io, "]end\n")
+      print(io, "; ]end\n")
     end
 
   end
@@ -614,13 +616,14 @@ end
 
 Converts an input file to Julia code
 """
-function to_julia(input::String, f::Union{Function,Nothing}; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n") :: String
+  function to_julia(input::String, f::Union{Function,Nothing};
+                  partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n") :: String
   f_name = (f_name === nothing) ? Genie.Renderer.function_name(string(input, partial)) : f_name
 
   string("function $(f_name)(; $(Genie.Renderer.injectkwvars())) \n",
           prepend,
           (partial ? "" : "\nGenie.Renderer.Html.doctype() * \n"),
-          f !== nothing ? f(input, partial = partial) : input,
+          f !== nothing ? f(input; partial = partial) : input,
           "\nend \n")
 end
 
@@ -676,7 +679,7 @@ end
 Parses a HTML file into Julia code.
 """
 function parse_template(file_path::String; partial::Bool = true) :: String
-  parse(read_template_file(file_path), partial = partial)
+  parse(read_template_file(file_path)::String; partial = partial)
 end
 
 

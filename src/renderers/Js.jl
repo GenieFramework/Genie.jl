@@ -4,9 +4,9 @@ import Logging, HTTP
 using Genie, Genie.Renderer
 
 const JS_FILE_EXT   = ["js.jl"]
-const TEMPLATE_EXT  = [".flax.js", ".jl.js"]
+const TEMPLATE_EXT  = ".jl.js"
 
-const SUPPORTED_JS_OUTPUT_FILE_FORMATS = TEMPLATE_EXT
+const SUPPORTED_JS_OUTPUT_FILE_FORMATS = [TEMPLATE_EXT]
 
 const JSString = String
 

@@ -6,7 +6,6 @@ numbers: [1, 1, 2, 3, 5, 8, 13]
 
 $(
   for_each(numbers) do number
-    " -> $number
-    "
+    " -> $number"
   end
 )

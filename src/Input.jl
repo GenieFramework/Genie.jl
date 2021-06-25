@@ -3,7 +3,7 @@ Handles input coming through Http server requests.
 """
 module Input
 
-import HttpCommon, URIParser, HTTP
+import HttpCommon, HTTP
 
 export post, files, HttpInput, HttpPostData, HttpFiles, HttpFile
 
@@ -73,7 +73,7 @@ function post_from_request!(request::HTTP.Request, input::HttpInput)
 end
 
 function post_url_encoded!(http_data::Array{UInt8, 1}, post_data::HttpPostData)
-  params::Dict{String,String} = URIParser.query_params(String(http_data))
+  params::Dict{String,String} = HTTP.URIs.queryparams(String(http_data))
 
   for (key::String, value::String) in params
     post_data[key] = value
@@ -250,7 +250,7 @@ function get_multiform_parts!(http_data::Vector{UInt8}, formParts::Array{HttpFor
               if length(header) > 0
                 headerParts = split(header, ": "; limit=2)
 
-                valueDecoded = parse_seicolon_fields(String(headerParts[2]));
+                valueDecoded = parse_semicolon_fields(String(headerParts[2]));
 
                 if length(valueDecoded) > 0
                   part.headers[headerParts[1]] = valueDecoded
@@ -280,7 +280,7 @@ end
 
 ###
 
-function parse_seicolon_fields(dataString::String)
+function parse_semicolon_fields(dataString::String)
   dataString = dataString * ";"
 
   data = Dict{String,String}()
