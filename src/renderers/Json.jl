@@ -3,6 +3,24 @@ module Json
 import JSON, HTTP
 using Genie, Genie.Renderer
 
+#=== begin
+module JSONParser
+
+import JSON3
+
+const parse = JSON3.read
+
+const json = JSON3.write
+
+const JSONText = JSON3.write
+
+end
+
+using .JSONParser
+
+const JSON = JSONParser
+===#
+
 const JSONParser = JSON
 const JSON_FILE_EXT = ".json.jl"
 const JSONString = String

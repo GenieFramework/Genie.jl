@@ -22,7 +22,7 @@
     using Genie.Renderer.Js
     using Genie.Renderer.Json.JSONParser
 
-    data = JSON.json(("message" => "Hi Vue"))
+    data = JSONParser.json(("message" => "Hi Vue"))
 
     script = raw"var app = new Vue({el: '#app', data: $data})"
 
