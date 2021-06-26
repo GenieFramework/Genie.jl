@@ -3,7 +3,7 @@ Generates various Genie files.
 """
 module Generator
 
-import SHA, Dates, Pkg, Logging
+import SHA, Dates, Pkg, Logging, UUIDs
 import Inflector
 import Genie
 
@@ -453,7 +453,9 @@ function generate_project(name::String) :: Nothing
   mktempdir() do tmpdir
     tmp = joinpath(tmpdir, name, "Project.toml")
 
-    Pkg.project(Pkg.API.Context(), name, tmpdir) # generate tmp
+    pkgproject(Pkg.API.Context(), name, tmpdir) # generate tmp
+
+    # Pkg.project(Pkg.stdout_f(), name, tmpdir) # generate tmp
 
     if !isfile("Project.toml")
       mv(tmp, "Project.toml") # move tmp here
@@ -466,6 +468,54 @@ function generate_project(name::String) :: Nothing
   end # remove tmpdir on completion
 
   nothing
+end
+
+
+function pkgproject(ctx::Pkg.API.Context, pkg::String, dir::String) :: Nothing
+  name = email = nothing
+
+  gitname = Pkg.LibGit2.getconfig("user.name", "")
+  isempty(gitname) || (name = gitname)
+
+  gitmail = Pkg.LibGit2.getconfig("user.email", "")
+  isempty(gitmail) || (email = gitmail)
+
+  if name === nothing
+      for env in ["GIT_AUTHOR_NAME", "GIT_COMMITTER_NAME", "USER", "USERNAME", "NAME"]
+          name = get(ENV, env, nothing)
+          name !== nothing && break
+      end
+  end
+
+  name === nothing && (name = "Unknown")
+
+  if email === nothing
+      for env in ["GIT_AUTHOR_EMAIL", "GIT_COMMITTER_EMAIL", "EMAIL"];
+          email = get(ENV, env, nothing)
+          email !== nothing && break
+      end
+  end
+
+  authors = ["$name " * (email === nothing ? "" : "<$email>")]
+
+  uuid = UUIDs.uuid4()
+
+  pkggenfile(ctx, pkg, dir, "Project.toml") do io
+      toml = Dict{String,Any}("authors" => authors,
+                              "name" => pkg,
+                              "uuid" => string(uuid),
+                              "version" => "0.1.0",
+                              )
+      Pkg.TOML.print(io, toml, sorted=true, by=key -> (Pkg.Types.project_key_order(key), key))
+  end
+end
+
+
+function pkggenfile(f::Function, ctx::Pkg.API.Context, pkg::String, dir::String, file::String) :: Nothing
+  path = joinpath(dir, pkg, file)
+  println(ctx.io, "    $(Base.contractuser(path))")
+  mkpath(dirname(path))
+  open(f, path, "w")
 end
 
 

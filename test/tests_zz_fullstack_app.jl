@@ -40,6 +40,8 @@
 
     cd(testdir)
     Pkg.activate(".")
+
+    Logging.global_logger(NullLogger())
   end;
 
 end;

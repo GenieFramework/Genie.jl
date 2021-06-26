@@ -90,7 +90,7 @@ function startup(port::Int, host::String = Genie.config.server_host;
           setup_http_streamer(http)
         end
       catch ex
-        @error ex
+        isa(ex, Base.IOError) || @error ex
       end
     end
   end
