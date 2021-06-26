@@ -1,9 +1,9 @@
 module Json
 
-import JSON, HTTP
+import JSON3, HTTP
 using Genie, Genie.Renderer
 
-#=== begin
+
 module JSONParser
 
 import JSON3
@@ -19,9 +19,6 @@ end
 using .JSONParser
 
 const JSON = JSONParser
-===#
-
-const JSONParser = JSON
 const JSON_FILE_EXT = ".json.jl"
 const JSONString = String
 
