@@ -1,9 +1,12 @@
 @safetestset "Fullstack app" begin
 
-  testdir = pwd()
-  using Pkg
-
   @safetestset "Create and run a full stack app with resources" begin
+    using Logging
+    Logging.global_logger(NullLogger())
+
+    testdir = pwd()
+    using Pkg
+
     using Genie
 
     content = "Test OK!"
@@ -34,9 +37,9 @@
 
     down()
     sleep(1)
-  end;
 
-  cd(testdir)
-  Pkg.activate(".")
+    cd(testdir)
+    Pkg.activate(".")
+  end;
 
 end;

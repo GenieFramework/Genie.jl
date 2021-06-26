@@ -45,8 +45,6 @@
       ex.response
     end
 
-    @show String(response.body)
-
     @test Genie.config.features_peerinfo == true
     @test response.status == 200
     @test_broken String(response.body) == "127.0.0.1-$port"
