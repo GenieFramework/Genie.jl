@@ -14,7 +14,7 @@ include("mimetypes.jl")
 export route, routes, channel, channels, serve_static_file
 export GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
 export tolink, linkto, responsetype, toroute
-export params, query, post, headers, request, peer
+export params, query, post, headers, request
 
 Reexport.@reexport using HttpCommon
 
@@ -25,6 +25,9 @@ const PATCH   = "PATCH"
 const DELETE  = "DELETE"
 const OPTIONS = "OPTIONS"
 const HEAD    = "HEAD"
+
+const ROUTE_CATCH_ALL = "/*"
+const ROUTE_CACHE = Dict{String,Tuple{String,Vector{String},Vector{Any}}}()
 
 const request_mappings = Dict{Symbol,String}(
   :text       => "text/plain",
@@ -113,22 +116,6 @@ function _params_(key::Union{String,Symbol})
 end
 function _params_(key::Union{String,Symbol}, value::Any)
   task_local_storage(:__params)[key] = value
-end
-
-
-"""
-    function peer()
-
-Returns information about the requesting client's IP address as a NamedTuple{(:ip,), Tuple{String}}
-If the client IP address can not be retrieved, the `ip` field will return an empty string `""`.
-"""
-function peer() :: NamedTuple{(:ip,), Tuple{String}}
-  try
-    haskey(task_local_storage(), :peer) && (ip = string(task_local_storage(:peer)[1]), )
-  catch ex
-    @error ex
-    (ip = "", )
-  end
 end
 
 
@@ -433,6 +420,8 @@ function action_controller_params(action::Function, params::Params) :: Nothing
 end
 
 
+
+
 """
     match_routes(req::Request, res::Response, params::Params) :: Response
 
@@ -442,9 +431,10 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
   uri = HTTP.URIs.URI(req.target)
 
   for r in routes()
-    r.method != req.method && continue
+    # method must match but we can also handle HEAD requests with GET routes
+    (r.method == req.method) || (r.method == GET && req.method == HEAD) || continue
 
-    parsed_route, param_names, param_types = parse_route(r.path)
+    parsed_route, param_names, param_types = Genie.Configuration.isprod() ? get!(ROUTE_CACHE, r.path, parse_route(r.path)) : parse_route(r.path)
 
     regex_route = try
       Regex("^" * parsed_route * "\$")
@@ -454,7 +444,7 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
       continue
     end
 
-    occursin(regex_route, string(uri.path)) || parsed_route == "/*" || continue
+    occursin(regex_route, string(uri.path)) || parsed_route == ROUTE_CATCH_ALL || continue
 
     params.collection = setup_base_params(req, res, params.collection)
     task_local_storage(:__params, params.collection)
@@ -480,8 +470,12 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
     return  try
               try
                 (r.action)() |> to_response
-              catch
-                Base.invokelatest(r.action) |> to_response
+              catch ex1
+                if isa(ex1, MethodError)
+                  Base.invokelatest(r.action) |> to_response
+                else
+                  rethrow(ex1)
+                end
               end
             catch ex
               if isa(ex, Genie.Exceptions.ExceptionalResponse)
@@ -540,8 +534,12 @@ function match_channels(req, msg::String, ws_client, params::Params) :: String
     return  try
                 result = try
                   (c.action)() |> string
-                catch
-                  Base.invokelatest(c.action) |> string
+                catch ex1
+                  if isa(ex1, MethodError)
+                    Base.invokelatest(c.action) |> string
+                  else
+                    rethrow(ex1)
+                  end
                 end
 
                 result

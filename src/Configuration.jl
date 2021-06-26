@@ -134,7 +134,7 @@ Base.@kwdef mutable struct Settings
   server_host::String                                 = ENV["HOST"]
   server_document_root::String                        = "public"
   server_handle_static_files::Bool                    = true
-  server_signature::String                            = "Genie::Julia@$VERSION"
+  server_signature::String                            = "Genie/Julia/$VERSION"
 
   app_env::String                                     = ENV["GENIE_ENV"]
 
@@ -206,6 +206,8 @@ Base.@kwdef mutable struct Settings
   session_options::Dict{String,Any}                   = Dict{String,Any}("Path" => "/", "HttpOnly" => true, "Secure" => ssl_enabled)
 
   base_path::String                                   = "/"
+
+  features_peerinfo::Bool                             = false
 end
 
 end

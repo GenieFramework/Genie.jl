@@ -1,4 +1,6 @@
-@testset "No query params" begin
+@safetestset "Query params" begin
+
+@safetestset "No query params" begin
   using Genie
   using HTTP
 
@@ -11,7 +13,7 @@
     "error"
   end
 
-  up(port; open_browser = false)
+  server = up(port)
 
   response = try
     HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
@@ -24,10 +26,11 @@
 
   down()
   sleep(1)
+  server = nothing
 end
 
 
-@testset "No defaults errors out" begin
+@safetestset "No defaults errors out" begin
   using Genie
   using HTTP
 
@@ -37,7 +40,7 @@ end
     query(:a)
   end
 
-  up(port; open_browser = false)
+  server = up(port)
 
   response = try
     HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
@@ -49,10 +52,11 @@ end
 
   down()
   sleep(1)
+  server = nothing
 end
 
 
-@testset "Defaults when no query params" begin
+@safetestset "Defaults when no query params" begin
   using Genie
   using HTTP
 
@@ -62,7 +66,7 @@ end
     query(:x, "10") * query(:y, "20")
   end
 
-  up(port; open_browser = false)
+  server = up(port)
 
   # ====
 
@@ -121,10 +125,11 @@ end
 
   down()
   sleep(1)
+  server = nothing
 end
 
 
-@testset "Query params processing" begin
+@safetestset "Query params processing" begin
   using Genie
   using HTTP
 
@@ -134,7 +139,7 @@ end
     query(:x)
   end
 
-  up(port; open_browser = false)
+  server = up(port)
 
   response = try
     HTTP.request("GET", "http://127.0.0.1:$port?x=1", ["Content-Type" => "text/html"])
@@ -191,10 +196,11 @@ end
 
   down()
   sleep(1)
+  server = nothing
 end
 
 
-@testset "Array query params" begin
+@safetestset "Array query params" begin
   using Genie
   using HTTP
 
@@ -204,7 +210,7 @@ end
     query(:x, "10") * join(query(Symbol("x[]"), "100"))
   end
 
-  up(port; open_browser = false)
+  server = up(port)
 
   # ====
 
@@ -263,4 +269,7 @@ end
 
   down()
   sleep(1)
+  server = nothing
+end
+
 end

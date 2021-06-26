@@ -157,8 +157,12 @@ end
 function WebRenderable(f::Function, args...)
   fr::String = try
     f()::String
-  catch
-    Base.invokelatest(f)::String
+  catch ex
+    if isa(ex, MethodError)
+      Base.invokelatest(f)::String
+    else
+      rethrow(ex)
+    end
   end
 
   WebRenderable(fr, args...)

@@ -6,8 +6,9 @@ module Requests
 import Genie, Genie.Router, Genie.Input
 import HTTP, Reexport
 
-export jsonpayload, rawpayload, filespayload, postpayload, getpayload, request, getrequest, matchedroute, matchedchannel, wsclient
-export infilespayload, filename, payload
+export jsonpayload, rawpayload, filespayload, postpayload, getpayload
+export request, getrequest, matchedroute, matchedchannel, wsclient
+export infilespayload, filename, payload, peer
 
 
 """
@@ -250,6 +251,28 @@ function getheaders(req::HTTP.Request) :: Dict{String,String}
 end
 function getheaders() :: Dict{String,String}
   getheaders(getrequest())
+end
+
+
+"""
+    function peer()
+
+Returns information about the requesting client's IP address as a NamedTuple{(:ip,), Tuple{String}}
+If the client IP address can not be retrieved, the `ip` field will return an empty string `""`.
+"""
+function peer() :: NamedTuple{(:ip,:port), Tuple{String,String}}
+  unset_peer = (ip = "", port = "")
+
+  if haskey(task_local_storage(), :peer)
+    try
+      (ip = string(task_local_storage(:peer)[1]), port = string(task_local_storage(:peer)[2]))
+    catch ex
+      @error ex
+      unset_peer
+    end
+  else
+    unset_peer
+  end
 end
 
 

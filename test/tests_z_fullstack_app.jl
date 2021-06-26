@@ -33,6 +33,7 @@
     @test occursin(content, String(r.body)) == true
 
     down()
+    sleep(1)
   end;
 
   cd(testdir)

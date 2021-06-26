@@ -127,7 +127,7 @@ end
 const up = startup
 
 
-print_server_status(status::String) = printstyled("\n $status \n", color = :light_blue, bold = true)
+print_server_status(status::String) = @info "\n$status \n"
 
 
 @static if Sys.isapple()
@@ -182,17 +182,18 @@ function handle_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
   try
     Genie.Headers.set_headers!(req, res, Genie.Router.route_request(req, res))
   catch ex
-    @error ex
     rethrow(ex)
   end
 end
 
 
 function setup_http_streamer(http::HTTP.Stream)
-  try
-    task_local_storage(:peer, Sockets.getpeername( HTTP.IOExtras.tcpsocket(HTTP.Streams.getrawstream(http)) ))
-  catch ex
-    @error ex
+  if Genie.config.features_peerinfo
+    try
+      task_local_storage(:peer, Sockets.getpeername( HTTP.IOExtras.tcpsocket(HTTP.Streams.getrawstream(http)) ))
+    catch ex
+      @error ex
+    end
   end
 
   HTTP.handle(HTTP.RequestHandlerFunction(setup_http_listener), http)

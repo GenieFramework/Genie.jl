@@ -1,5 +1,38 @@
 @safetestset "HEAD requests" begin
-  using Genie
+  @safetestset "HEAD requests should be by default handled by GET" begin
+    using Genie
+    using HTTP
+
+    port = rand(8500:8900)
+
+    route("/") do
+      "GET request"
+    end
+
+    server = up(port)
+
+    response = try
+      HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+    catch ex
+      ex.response
+    end
+
+    @test response.status == 200
+    @test String(response.body) == "GET request"
+
+    response = try
+      HTTP.request("HEAD", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+    catch ex
+      ex.response
+    end
+
+    @test response.status == 200
+    @test String(response.body) == ""
+
+    down()
+    sleep(1)
+    server = nothing
+  end;
 
   @safetestset "HEAD requests have no body" begin
     using Genie
@@ -33,41 +66,6 @@
     end
     @test response.status == 200
     @test isempty(String(response.body)) == true
-
-    down()
-    sleep(1)
-    server = nothing
-  end;
-
-  @safetestset "HEAD requests should be by default handled by GET" begin
-    using Genie
-    using HTTP
-
-    port = rand(8500:8900)
-
-    route("/") do
-      "GET request"
-    end
-
-    server = up(port)
-
-    response = try
-      HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
-    catch ex
-      ex.response
-    end
-
-    @test response.status == 200
-    @test String(response.body) == "GET request"
-
-    response = try
-      HTTP.request("HEAD", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
-    catch ex
-      ex.response
-    end
-
-    @test response.status == 200
-    @test String(response.body) == ""
 
     down()
     sleep(1)
@@ -118,6 +116,4 @@
     server = nothing
   end;
 
-  Genie.config.server_port = 8000
-  Genie.config.websockets_port = 8000
 end;

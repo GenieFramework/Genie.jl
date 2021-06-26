@@ -1,6 +1,5 @@
 module Json
 
-using Base: invokelatest
 import JSON, HTTP
 using Genie, Genie.Renderer
 
@@ -33,7 +32,15 @@ function render(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__
     Base.include(context, f_path)
   end
 
-  return () -> getfield(context, f_name) |> Base.invokelatest |> JSONParser.json
+  () -> try
+    getfield(context, f_name)()
+  catch ex
+    if isa(ex, MethodError)
+      getfield(context, f_name) |> Base.invokelatest
+    else
+      rethrow(ex)
+    end
+  end |> JSONParser.json
 end
 
 

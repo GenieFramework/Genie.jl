@@ -5,7 +5,7 @@
       using Genie
       using HTTP
 
-      up(; open_browser = false)
+      server = up(; open_browser = false)
 
       response = try
         HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "text/html"])
@@ -29,13 +29,14 @@
 
       down()
       sleep(1)
+      server = nothing
     end
 
     @safetestset "Not found matches request type -- Accept -- custom HTML Genie page" begin
       using Genie
       using HTTP
 
-      up(; open_browser = false)
+      server = up(; open_browser = false)
 
       response = try
         HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Accept" => "text/html"])
@@ -59,13 +60,14 @@
 
       down()
       sleep(1)
+      server = nothing
     end
 
     @safetestset "Not found matches request type -- Content-Type -- custom JSON Genie handler" begin
       using Genie
       using HTTP
 
-      up(; open_browser = false)
+      server = up(; open_browser = false)
 
       response = try
         HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "application/json"])
@@ -89,13 +91,14 @@
 
       down()
       sleep(1)
+      server = nothing
     end
 
     @safetestset "Not found matches request type -- Accept -- custom JSON Genie handler" begin
       using Genie
       using HTTP
 
-      up(; open_browser = false)
+      server = up(; open_browser = false)
 
       response = try
         HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Accept" => "application/json"])
@@ -119,13 +122,14 @@
 
       down()
       sleep(1)
+      server = nothing
     end
 
     @safetestset "Not found matches request type -- Content-Type -- custom text Genie handler" begin
       using Genie
       using HTTP
 
-      up(; open_browser = false)
+      server = up(; open_browser = false)
 
       response = try
         HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "text/plain"])
@@ -149,6 +153,7 @@
 
       down()
       sleep(1)
+      server = nothing
     end
   end;
 
@@ -156,7 +161,7 @@
     using Genie
     using HTTP
 
-    up(; open_browser = false)
+    server = up(; open_browser = false)
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "text/csv"])
@@ -180,13 +185,14 @@
 
     down()
     sleep(1)
+    server = nothing
   end
 
   @safetestset "Not found matches request type -- Accept -- unknown content type get same response" begin
     using Genie
     using HTTP
 
-    up(; open_browser = false)
+    server = up(; open_browser = false)
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Accept" => "text/csv"])
@@ -210,13 +216,14 @@
 
     down()
     sleep(1)
+    server = nothing
   end
 
   @safetestset "Custom error handler for unknown types" begin
     using Genie
     using HTTP
 
-    up(; open_browser = false)
+    server = up(; open_browser = false)
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "text/csv"])
@@ -254,13 +261,14 @@
 
     down()
     sleep(1)
+    server = nothing
   end
 
   @safetestset "Custom error handler for known types" begin
     using Genie
     using HTTP
 
-    up(; open_browser = false)
+    server = up(; open_browser = false)
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Content-Type" => "application/json"])
@@ -298,13 +306,14 @@
 
     down()
     sleep(1)
+    server = nothing
   end
 
   @safetestset "Order of accept preferences" begin
     using Genie
     using HTTP
 
-    up(; open_browser = false)
+    server = up(; open_browser = false)
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:8000/notexisting", ["Accept" => "text/html, text/plain, application/json, text/csv"])
@@ -364,6 +373,7 @@
 
     down()
     sleep(1)
+    server = nothing
   end
 
 end;
