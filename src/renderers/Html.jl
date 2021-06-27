@@ -148,22 +148,28 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
   for (k,v) in attrs
     v === nothing && continue # skip nothing values
 
-    if (isa(v, Bool) && v) || isempty(string(v))
-      print(a, "$(k |> parseattr) ")
-    elseif v isa AbstractString || v isa Symbol
-      print(a, "$(k |> parseattr)=\"$(v)\" ")
-    elseif v isa Genie.Renderer.Json.JSONParser.JSONText
-      if startswith(v.s, ":")
-        print(a, ":$(k |> parseattr)=$(v.s[2:end]) ")
-      else
-        print(a, "$(k |> parseattr)=$(v.s) ")
-      end
-    else
-      print(a, "$(k |> parseattr)=$(v) ")
-    end
+    print(a, attrparser(k, v))
   end
 
   String(take!(a))
+end
+
+
+function attrparser(k::Symbol, v::Bool) :: String
+  v ? "$(k |> parseattr) " : default_attrparser(k, v)
+end
+
+function attrparser(k::Symbol, v::Union{AbstractString,Symbol}) :: String
+  isempty(string(v)) && return attrparser(k, true)
+  "$(k |> parseattr)=\"$(v)\" "
+end
+
+function attrparser(k::Symbol, v::Any) :: String
+  default_attrparser(k, v)
+end
+
+function default_attrparser(k::Symbol, v::Any) :: String
+  "$(k |> parseattr)=$(v) "
 end
 
 

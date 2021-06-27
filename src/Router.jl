@@ -503,7 +503,7 @@ Matches the invoked URL to the corresponding channel, sets up the execution envi
 """
 function match_channels(req, msg::String, ws_client, params::Params) :: String
   payload::Dict{String,Any} = try
-    JSON3.read(msg)
+    JSON3.read(msg, Dict{String,Any})
   catch ex
     Dict{String,Any}()
   end
@@ -735,7 +735,7 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
 
   if request_type_is(req, :json) && content_length(req) > 0
     try
-      params.collection[Genie.PARAMS_JSON_PAYLOAD] = JSON3.read(params.collection[Genie.PARAMS_RAW_PAYLOAD])
+      params.collection[Genie.PARAMS_JSON_PAYLOAD] = JSON3.read(params.collection[Genie.PARAMS_RAW_PAYLOAD], Dict{String,Any})
     catch ex
       @error sprint(showerror, ex)
       @warn "Setting params(:JSON_PAYLOAD) to Nothing"
