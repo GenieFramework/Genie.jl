@@ -736,8 +736,9 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
   if request_type_is(req, :json) && content_length(req) > 0
     try
       params.collection[Genie.PARAMS_JSON_PAYLOAD] = JSON3.read(params.collection[Genie.PARAMS_RAW_PAYLOAD], Dict{String,Any})
+      params.collection[Genie.PARAMS_POST_KEY] = params.collection[Genie.PARAMS_JSON_PAYLOAD]
     catch ex
-      @error sprint(showerror, ex)
+      @error ex
       @warn "Setting params(:JSON_PAYLOAD) to Nothing"
 
       params.collection[Genie.PARAMS_JSON_PAYLOAD] = nothing

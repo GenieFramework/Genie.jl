@@ -23,13 +23,12 @@ end
 
 
 """
-    jsonpayload(::Type{T}) where {T}
+    jsonpayload(v)
 
-Processes an `application/json` `POST` request attempting to convert the payload into a value of type `T`.
-If it fails to successfully parse and convert the `JSON` data, it throws an exception. The original payload can still be accessed invoking `rawpayload()`
+Processes an `application/json` `POST` request attempting to return value corresponding to key v.
 """
-function jsonpayload(::Type{T})::T where {T}
-  Router.params(Genie.PARAMS_JSON_PAYLOAD)::T
+function jsonpayload(v)
+  jsonpayload()[v]
 end
 
 
