@@ -19,7 +19,6 @@ build_module
 preparebuilds
 purgebuilds
 changebuilds
-@vars
 set_negotiated_content
 negotiate_content
 ```

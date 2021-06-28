@@ -8,7 +8,7 @@ A `route` maps a URL to a function.
 
 ```julia
 julia> using Genie
-julia> import Genie.Router: route
+
 julia> route("/") do
          "Hi there!"
        end
@@ -38,9 +38,8 @@ You can now visit <http://localhost:8000/hello/world> in the browser.
 Of course we can access GET params:
 
 ```julia
-julia> import Genie.Router: @params
 julia> route("/echo/:message") do
-         @params(:message)
+         params(:message)
        end
 ```
 
@@ -50,7 +49,7 @@ And we can even match by types:
 
 ```julia
 julia> route("/sum/:x::Int/:y::Int") do
-         @params(:x) + @params(:y)
+         params(:x) + params(:y)
        end
 ```
 
@@ -61,18 +60,18 @@ For the above to work, we also need to tell Genie how to perform the conversion:
 
 ```julia
 julia> import Base.convert
-julia> convert(::Type{Int}, s::SubString{String}) = parse(Int, s)
+julia> convert(::Type{Int}, s::AbstractString) = parse(Int, s)
 ```
 
 Now if we access <http://localhost:8000/sum/2/3> we should see `5`
 
 ## Handling query string params
 
-Query string params, which look like `...?foo=bar&baz=2` are automatically unpacked by Genie and placed into the `@params` collection. For example:
+Query string params, which look like `...?foo=bar&baz=2` are automatically unpacked by Genie and placed into the `params` collection. For example:
 
 ```julia
 julia> route("/sum/:x::Int/:y::Int") do
-         @params(:x) + @params(:y) + parse(Int, get(@params, :initial_value, "0"))
+         params(:x) + params(:y) + parse(Int, get(params, :initial_value, "0"))
        end
 ```
 

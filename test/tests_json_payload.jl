@@ -1,37 +1,37 @@
 @safetestset "JSON payload" begin
 
   using Genie, HTTP
-  import Genie.Requests: jsonpayload
 
   route("/jsonpayload", method = POST) do
-    jsonpayload()
+    Genie.Requests.jsonpayload()
   end
 
   route("/jsontest", method = POST) do
-    jsonpayload("test")
+    Genie.Requests.jsonpayload("test")
   end
 
-  server = up(; open_browser = false)
+  port = rand(8500:8900)
 
-  response = try
-    HTTP.request("POST", "http://localhost:8000/jsonpayload",
+  server = up(port; open_browser = false)
+
+  response = HTTP.request("POST", "http://localhost:$port/jsonpayload",
                   [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
-  catch ex
-    ex.response
-  end
 
   @test response.status == 200
   @test String(response.body) == """Dict{String, Any}("greeting" => "hello")"""
 
-  response = try
-    HTTP.request("POST", "http://localhost:8000/jsontest",
+  response = HTTP.request("POST", "http://localhost:$port/jsontest",
                   [("Content-Type", "application/json; charset=utf-8")], """{"test":[1,2,3]}""")
-  catch ex
-    ex.response
+
+  @test response.status == 200
+  @test String(response.body) == "[1, 2, 3]"
+
+
+  route("/json-error", method = POST) do
+    error("500, sorry")
   end
 
-  @test_broken response.status == 200
-  @test_broken String(response.body) == """[1,2,3]"""
+  @test_throws HTTP.ExceptionRequest.StatusError HTTP.request("POST", "http://localhost:$port/json-error", [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
 
   down()
   sleep(1)

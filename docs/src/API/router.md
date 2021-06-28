@@ -48,7 +48,6 @@ nested_keys
 setup_base_params
 to_response
 params
-@params
 _params_
 request
 response_type

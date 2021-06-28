@@ -1,6 +1,6 @@
 # Reading POST payloads
 
-Genie makes it easy to work with `POST` payloads. First, we need to register a dedicated route to handle `POST` requests. Then, once a `POST` request is received, Genie will automatically extract the payload, making it accessible throughout the `Requests.postpayload` method -- and appending it to the `Router.@params(:POST)` collection.
+Genie makes it easy to work with `POST` payloads. First, we need to register a dedicated route to handle `POST` requests. Then, once a `POST` request is received, Genie will automatically extract the payload, making it accessible throughout the `Requests.postpayload` method -- and appending it to the `Router.params(:POST)` collection.
 
 ## Handling `form-data` payloads
 

@@ -55,9 +55,10 @@ mutable struct Route
   path::String
   action::Function
   name::Union{Symbol,Nothing}
+  context::Module
 end
 
-Route(; method = GET, path = "", action = (() -> error("Route not set")), name = nothing) = Route(method, path, action, name)
+Route(; method::String = GET, path::String = "", action::Function = (() -> error("Route not set")), name::Union{Symbol,Nothing} = nothing, context::Module = @__MODULE__) = Route(method, path, action, name, context)
 
 
 """
@@ -201,11 +202,11 @@ end
 """
 Named Genie routes constructors.
 """
-function route(action::Function, path::String; method = GET, named::Union{Symbol,Nothing} = nothing) :: Route
-  route(path, action, method = method, named = named)
+function route(action::Function, path::String; method = GET, named::Union{Symbol,Nothing} = nothing, context::Module = @__MODULE__) :: Route
+  route(path, action, method = method, named = named, context = context)
 end
-function route(path::String, action::Function; method = GET, named::Union{Symbol,Nothing} = nothing) :: Route
-  r = Route(method = method, path = path, action = action, name = named)
+function route(path::String, action::Function; method = GET, named::Union{Symbol,Nothing} = nothing, context::Module = @__MODULE__) :: Route
+  r = Route(method = method, path = path, action = action, name = named, context = context)
 
   if named === nothing
     r.name = routename(r)
@@ -341,7 +342,7 @@ function to_link(route_name::Symbol, d::Dict{Symbol,T}; preserve_query::Bool = t
   result = String[]
   for part in split(route.path, '/')
     if occursin("#", part)
-      part = split(part, "#")[1]
+      part = split(part, "#")[1] |> string
     end
 
     if startswith(part, ":")
@@ -434,7 +435,7 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
     # method must match but we can also handle HEAD requests with GET routes
     (r.method == req.method) || (r.method == GET && req.method == HEAD) || continue
 
-    parsed_route, param_names, param_types = Genie.Configuration.isprod() ? get!(ROUTE_CACHE, r.path, parse_route(r.path)) : parse_route(r.path)
+    parsed_route, param_names, param_types = Genie.Configuration.isprod() ? get!(ROUTE_CACHE, r.path, parse_route(r.path, context = r.context)) : parse_route(r.path, context = r.context)
 
     regex_route = try
       Regex("^" * parsed_route * "\$")
@@ -478,21 +479,32 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
                 end
               end
             catch ex
-              if isa(ex, Genie.Exceptions.ExceptionalResponse)
-                return ex.response
-              elseif isa(ex, Genie.Exceptions.RuntimeException)
-                rethrow(ex)
-              elseif isa(ex, Genie.Exceptions.InternalServerException)
-                return error(ex.message, response_mime(), Val(500))
-              elseif isa(ex, Genie.Exceptions.NotFoundException)
-                return error(ex.resource, response_mime(), Val(404))
-              elseif isa(ex, Exception)
-                rethrow(ex)
-              end
+              return handle_exception(ex)
             end
   end
 
   error(req.target, response_mime(params.collection), Val(404))
+end
+
+
+function handle_exception(ex::Genie.Exceptions.ExceptionalResponse)
+  ex.response
+end
+
+function handle_exception(ex::Genie.Exceptions.RuntimeException)
+  rethrow(ex)
+end
+
+function handle_exception(ex::Genie.Exceptions.InternalServerException)
+  error(ex.message, response_mime(), Val(500))
+end
+
+function handle_exception(ex::Genie.Exceptions.NotFoundException)
+  error(ex.resource, response_mime(), Val(404))
+end
+
+function handle_exception(ex::Exception)
+  rethrow(ex)
 end
 
 
@@ -553,11 +565,11 @@ end
 
 
 """
-    parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
+    parse_route(route::String, context::Module = @__MODULE__) :: Tuple{String,Vector{String},Vector{Any}}
 
-Parses a route and extracts its named params and types.
+Parses a route and extracts its named params and types. `context` is used to access optional route parts types.
 """
-function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
+function parse_route(route::String; context::Module = @__MODULE__) :: Tuple{String,Vector{String},Vector{Any}}
   parts = String[]
   param_names = String[]
   param_types = Any[]
@@ -568,19 +580,19 @@ function parse_route(route::String) :: Tuple{String,Vector{String},Vector{Any}}
     for rp in split(route, '/', keepempty = false)
       if occursin("#", rp)
         x = split(rp, "#")
-        rp = x[1]
+        rp = x[1] |> string
         validation_match = x[2]
       end
 
       if startswith(rp, ":")
         param_type =  if occursin("::", rp)
                         x = split(rp, "::")
-                        rp = x[1]
-                        getfield(@__MODULE__, Symbol(x[2]))
+                        rp = x[1] |> string
+                        getfield(context, Symbol(x[2]))
                       else
                         Any
                       end
-        param_name = rp[2:end]
+        param_name = rp[2:end] |> string
 
         rp = """(?P<$param_name>$validation_match)"""
 
@@ -613,12 +625,12 @@ function parse_channel(channel::String) :: Tuple{String,Vector{String},Vector{An
       if startswith(rp, ":")
         param_type =  if occursin("::", rp)
                         x = split(rp, "::")
-                        rp = x[1]
+                        rp = x[1] |> string
                         getfield(@__MODULE__, Symbol(x[2]))
                       else
                         Any
                       end
-        param_name = rp[2:end]
+        param_name = rp[2:end] |> string
         rp = """(?P<$param_name>[\\w\\-]+)"""
         push!(param_names, param_name)
         push!(param_types, param_type)
@@ -694,8 +706,6 @@ function extract_get_params(uri::HTTP.URIs.URI, params::Params) :: Bool
     end
   end
 
-  # @show params
-
   true # this must be bool cause it's used in bool context for chaining
 end
 
@@ -708,16 +718,20 @@ Parses POST variables and adds the to the `params` `Dict`.
 function extract_post_params(req::HTTP.Request, params::Params) :: Nothing
   ispayload(req) || return nothing
 
-  input = Genie.Input.all(req)
+  try
+    input = Genie.Input.all(req)
 
-  for (k, v) in input.post
-    nested_keys(k, v, params)
+    for (k, v) in input.post
+      nested_keys(k, v, params)
 
-    k = Symbol(k)
-    params.collection[k] = params.collection[Genie.PARAMS_POST_KEY][k] = v
+      k = Symbol(k)
+      params.collection[k] = params.collection[Genie.PARAMS_POST_KEY][k] = v
+    end
+
+    params.collection[Genie.PARAMS_FILES] = input.files
+  catch ex
+    @error ex
   end
-
-  params.collection[Genie.PARAMS_FILES] = input.files
 
   nothing
 end
@@ -731,12 +745,14 @@ Sets up the `params` key-value pairs corresponding to a JSON payload.
 function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
   ispayload(req) || return nothing
 
-  params.collection[Genie.PARAMS_RAW_PAYLOAD] = String(req.body)
+  req_body = String(req.body)
+
+  params.collection[Genie.PARAMS_RAW_PAYLOAD] = req_body
 
   if request_type_is(req, :json) && content_length(req) > 0
     try
-      params.collection[Genie.PARAMS_JSON_PAYLOAD] = JSON3.read(params.collection[Genie.PARAMS_RAW_PAYLOAD], Dict{String,Any})
-      params.collection[Genie.PARAMS_POST_KEY] = params.collection[Genie.PARAMS_JSON_PAYLOAD]
+      params.collection[Genie.PARAMS_JSON_PAYLOAD] = JSON3.read(req_body) |> Dict
+      params.collection[Genie.PARAMS_POST_KEY][Genie.PARAMS_JSON_PAYLOAD] = params.collection[Genie.PARAMS_JSON_PAYLOAD]
     catch ex
       @error ex
       @warn "Setting params(:JSON_PAYLOAD) to Nothing"
@@ -748,6 +764,17 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
   end
 
   nothing
+end
+
+
+function Dict(o::JSON3.Object) :: Dict{String,Any}
+  r = Dict{String,Any}()
+
+  for f in keys(o)
+    r[string(f)] = o[string(f)]
+  end
+
+  r
 end
 
 

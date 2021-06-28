@@ -48,7 +48,7 @@ end
 
 Makes request headers case insensitive.
 """
-function normalize_headers(req::HTTP.Request) :: HTTP.Request
+function normalize_headers(req::Union{HTTP.Request,HTTP.Response})
   headers = Dict(req.headers)
   normalized_headers = Dict{String,String}()
 
@@ -70,5 +70,6 @@ Brings header keys to standard casing.
 function normalize_header_key(key::String) :: String
   join(map(x -> uppercasefirst(lowercase(x)), split(key, '-')), '-')
 end
+
 
 end

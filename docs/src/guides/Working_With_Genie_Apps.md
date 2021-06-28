@@ -150,7 +150,7 @@ function billgatesbooks()
       "Bill Gates' list of recommended books"
     end
     Html.ul() do
-      @foreach(BillGatesBooks) do book
+      for_each(BillGatesBooks) do book
         Html.li() do
           book.title * " by " * book.author
         end
@@ -160,7 +160,7 @@ function billgatesbooks()
 end
 ```
 
-The `@foreach` macro iterates over a collection and concatenates the output of each loop into the result of the loop. We'll talk about it more soon.
+The `for_each` macro iterates over a collection and concatenates the output of each loop into the result of the loop. We'll talk about it more soon.
 
 ---
 
@@ -203,7 +203,7 @@ Now all we need to do is to move the HTML code out of the controller and into th
 <!-- billgatesbooks.jl.html -->
 <h1>Bill Gates' top $(length(books)) recommended books</h1>
 <ul>
-  <% @foreach(books) do book %>
+  <% for_each(books) do book %>
     <li>$(book.title) by $(book.author)</li>
   <% end %>
 </ul>
@@ -211,7 +211,7 @@ Now all we need to do is to move the HTML code out of the controller and into th
 
 As you can see, it's just plain HTML with embedded Julia. We can add Julia code by using the `<% ... %>` code block tags – these should be used for more complex, multiline expressions. Or by using plain Julia string interpolation with `$(...)` – for simple values outputting.
 
-To make HTML generation more efficient, Genie provides a series of helpers, like the above `@foreach` macro which allows iterating over a collection, passing the current item into the processing function.
+To make HTML generation more efficient, Genie provides a series of helpers, like the above `for_each` macro which allows iterating over a collection, passing the current item into the processing function.
 
 ---
 **HEADS UP**
@@ -255,16 +255,16 @@ Now edit the file and make sure it looks like this:
 
 ```md
 <!-- app/resources/books/views/billgatesbooks.jl.md -->
-# Bill Gates' $(length(@vars(:books))) recommended books
+# Bill Gates' $(length(books)) recommended books
 
 $(
-  @foreach(@vars(:books)) do book
+  for_each(books) do book
     "* $(book.title) by $(book.author) \n"
   end
 )
 ```
 
-Notice that Markdown views do not support Genie's embedded Julia tags `<% ... %>`. Only string interpolation `$(...)` is accepted, but it works across multiple lines. Another notable difference is that at the moment, markdown views support access to variables only through the `@vars` collection (the `@vars` collection can be used in HTML views as well, but it's not necessary, as the variables can be accessed directly as well).
+Notice that Markdown views do not support Genie's embedded Julia tags `<% ... %>`. Only string interpolation `$(...)` is accepted, but it works across multiple lines.
 
 If you reload the page now, however, Genie will still load the HTML view. The reason is that, _if we have only one view file_, Genie will manage.
 But if there's more than one, the framework won't know which one to pick. It won't error out but will pick the preferred one, which is the HTML version.

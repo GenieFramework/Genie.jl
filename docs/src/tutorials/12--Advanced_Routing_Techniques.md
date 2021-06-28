@@ -45,7 +45,7 @@ Unlike Julia's multiple dispatch, Genie's router won't match the most specific r
 
 Static routing works great for fixed URLs. But what if we have dynamic URLs, where the components map to information in the backend (like database IDs) and vary with each request? For example, how would we handle a URL like "/customers/57943/orders/458230", where 57943 is the customer id and 458230 is the order id.
 
-Such situations are handled through dynamic routing or route parameters. For the previous example, "/customers/57943/orders/458230", we can define a dynamic route as "/customers/:customer_id/orders/:order_id". Upon matching the request, the Router will unpack the values and expose them in the `@params` collection.
+Such situations are handled through dynamic routing or route parameters. For the previous example, "/customers/57943/orders/458230", we can define a dynamic route as "/customers/:customer_id/orders/:order_id". Upon matching the request, the Router will unpack the values and expose them in the `params` collection.
 
 ### Example
 
@@ -300,6 +300,6 @@ route("/$LOCALE", TranslationsController.index, named = :get_index)
 
 ---
 
-## The `@params` collection
+## The `params` collection
 
-It's good to know that the router bundles all the parameters of the current request into the `@params` collection (a `Dict{Symbol,Any}`). This contains valuable information, such as route parameters, query params, POST payload, the original HTTP.Request and HTTP.Response objects, etcetera. In general it's recommended not to access the `@params` collection directly but through the utility methods defined by `Genie.Requests` and `Genie.Responses` -- but knowing about `@params` might come in handy for advanced users.
+It's good to know that the router bundles all the parameters of the current request into the `params` collection (a `Dict{Symbol,Any}`). This contains valuable information, such as route parameters, query params, POST payload, the original HTTP.Request and HTTP.Response objects, etcetera. In general it's recommended not to access the `params` collection directly but through the utility methods defined by `Genie.Requests` and `Genie.Responses` -- but knowing about `params` might come in handy for advanced users.

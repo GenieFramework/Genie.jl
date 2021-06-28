@@ -37,7 +37,7 @@ register_element
 register_normal_element
 register_void_element
 attr
-@foreach
+for_each
 collection
 Genie.Router.error
 serve_error_file

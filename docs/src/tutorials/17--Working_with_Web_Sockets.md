@@ -133,7 +133,7 @@ We can also push messages from client to server. As we don't have a UI, we'll us
 
 ```julia
 channel("/__/echo") do
-  "Received: $(@params(:payload))"
+  "Received: $(params(:payload))"
 end
 ```
 

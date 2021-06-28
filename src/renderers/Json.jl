@@ -12,8 +12,6 @@ const parse = JSON3.read
 
 const json = JSON3.write
 
-const JSONText = JSON3.write
-
 end
 
 using .JSONParser

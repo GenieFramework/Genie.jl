@@ -24,17 +24,7 @@ The first route will be used to display the page with the new book form. The sec
 Please note that it's configured to match `POST` requests and that we gave it a name. We'll use the name in our form so that Genie will dynamically generate the correct links to the corresponding URL (to avoid hard coding URLs).
 This way we'll make sure that our form will always submit to the right URL, even if we change the route (as long as we don't change the name).
 
-Now, to add the methods in `BooksController`. Add these definition under t<!-- app/resources/books/views/billgatesbooks.jl.html -->
-<h1>Bill's Gates top $( length(@vars(:books)) ) recommended books</h1>
-<ul>
-<%
-@foreach(@vars(:books)) do book
-%>
-  <li><img src='$( isempty(book.cover) ? "img/docs.png" : book.cover )' width="100px" /> $(book.title) by $(book.author)
-<%
-end
-%>
-</ul>he `billgatesbooks` function (make sure you add them in `BooksController`, not in `BooksController.API`):
+Now, to add the methods in `BooksController`. Add these definition under the `billgatesbooks` function (make sure you add them in `BooksController`, not in `BooksController.API`):
 
 ```julia
 # BooksController.jl
@@ -79,14 +69,14 @@ We should also update the `BooksController.create` method to do something useful
 using Genie.Router, Genie.Renderer
 
 function create()
-  Book(title = @params(:book_title), author = @params(:book_author)) |> save && redirect(:get_bgbooks)
+  Book(title = params(:book_title), author = params(:book_author)) |> save && redirect(:get_bgbooks)
 end
 ```
 
 A few things are worth pointing out in this snippet:
 
-* again, we're accessing the `@params` collection to extract the request data, in this case passing in the names of our form's inputs as parameters.
-We need to bring `Genie.Router` into scope in order to access `@params`;
+* again, we're accessing the `params` collection to extract the request data, in this case passing in the names of our form's inputs as parameters.
+We need to bring `Genie.Router` into scope in order to access `params`;
 * we're using the `redirect` method to perform a HTTP redirect. As the argument we're passing in the name of the route, just like we did with the form's action.
 However, we didn't set any route to use this name. It turns out that Genie gives default names to all the routes.
 We can use these – but a word of notice: **these names are generated using the properties of the route, so if the route changes it's possible that the name will change too**.
@@ -193,7 +183,7 @@ As a quick test we can extend our JSON view and see that all goes well - make it
 # app/resources/books/views/billgatesbooks.json.jl
 "Bill's Gates list of recommended books" => [Dict("author" => b.author,
                                                   "title" => b.title,
-                                                  "cover" => b.cover) for b in @vars(:books)]
+                                                  "cover" => b.cover) for b in books]
 ```
 
 If we navigate <http://localhost:8000/api/v1/bgbooks> you should see the newly added "cover" property (empty, but present).
@@ -244,8 +234,8 @@ function create()
       ""
   end
 
-  Book( title = @params(:book_title),
-        author = @params(:book_author),
+  Book( title = params(:book_title),
+        author = params(:book_author),
         cover = cover_path) |> save && redirect(:get_bgbooks)
 end
 ```
@@ -261,10 +251,10 @@ Great, now let's display the images. Let's start with the HTML view - please edi
 
 ```html
 <!-- app/resources/books/views/billgatesbooks.jl.html -->
-<h1>Bill's Gates top $( length(@vars(:books)) ) recommended books</h1>
+<h1>Bill's Gates top $( length(books) ) recommended books</h1>
 <ul>
 <%
-@foreach(@vars(:books)) do book
+for_each(books) do book
 %>
   <li><img src='$( isempty(book.cover) ? "img/docs.png" : book.cover )' width="100px" /> $(book.title) by $(book.author)</li>
 <%
@@ -326,12 +316,12 @@ This line, as the `partial` function suggests, includes a view partial, which is
 You can reload the `new` page to make sure that everything still works: <http://localhost:8000/bgbooks/new>
 
 Now, let's add an Edit option to our list of books. Please go back to our list view file, `billgatesbooks.jl.html`.
-Here, for each iteration, within the `@foreach` block we'll want to dynamically link to the edit page for the corresponding book.
+Here, for each iteration, within the `for_each` block we'll want to dynamically link to the edit page for the corresponding book.
 
-##### `@foreach` with view partials
+##### `for_each` with view partials
 
-However, this `@foreach` which renders a Julia string is very ugly - and we now know how to refactor it, by using a view partial.
-Let's do it. First, replace the body of the `@foreach` block:
+However, this `for_each` which renders a Julia string is very ugly - and we now know how to refactor it, by using a view partial.
+Let's do it. First, replace the body of the `for_each` block:
 
 ```html
 <!-- app/resources/books/views/billgatesbooks.jl.html -->
@@ -344,7 +334,7 @@ with:
 partial("app/resources/books/views/book.jl.html", book = book, context = @__MODULE__)
 ```
 
-Notice that we are using the `partial` function and we pass the book object into our view, under the name `book` (will be accessible in `@vars(:book)` inside the view partial). Again, we're passing the scope's `context` (our controller object).
+Notice that we are using the `partial` function and we pass the book object into our view, under the name `book` (will be accessible in `book` inside the view partial). Again, we're passing the scope's `context` (our controller object).
 
 Next, create the `book.jl.html` in `app/resources/books/views/`, for example with
 
