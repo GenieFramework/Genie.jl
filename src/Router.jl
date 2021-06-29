@@ -472,7 +472,7 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
               try
                 (r.action)() |> to_response
               catch ex1
-                if isa(ex1, MethodError)
+                if isa(ex1, MethodError) && string(ex1.f) == string(r.action)
                   Base.invokelatest(r.action) |> to_response
                 else
                   rethrow(ex1)
@@ -547,7 +547,7 @@ function match_channels(req, msg::String, ws_client, params::Params) :: String
                 result = try
                   (c.action)() |> string
                 catch ex1
-                  if isa(ex1, MethodError)
+                  if isa(ex1, MethodError) && string(ex1.f) == string(c.action)
                     Base.invokelatest(c.action) |> string
                   else
                     rethrow(ex1)

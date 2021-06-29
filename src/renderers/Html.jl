@@ -657,8 +657,8 @@ function template(path::String; partial::Bool = true, context::Module = @__MODUL
   try
     get_template(path, partial = partial, context = context)()
   catch ex
-    if isa(ex, MethodError)
-      Base.invokelatest(get_template(path, partial = partial, context = context))::String
+    if isa(ex, MethodError) && string(ex.f) == "get_template"
+      Base.@invokelatest(get_template(path, partial = partial, context = context))::String
     else
       rethrow(ex)
     end

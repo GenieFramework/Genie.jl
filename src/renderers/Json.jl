@@ -48,8 +48,8 @@ function render(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__
   () -> try
     getfield(context, f_name)()
   catch ex
-    if isa(ex, MethodError)
-      getfield(context, f_name) |> Base.invokelatest
+    if isa(ex, MethodError) && string(ex.f) == string(f_name)
+      Base.invokelatest(getfield(context, f_name))
     else
       rethrow(ex)
     end

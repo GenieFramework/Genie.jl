@@ -158,7 +158,7 @@ function WebRenderable(f::Function, args...)
   fr::String = try
     f()::String
   catch ex
-    if isa(ex, MethodError)
+    if isa(ex, MethodError) && string(ex.f) == string(f)
       Base.invokelatest(f)::String
     else
       rethrow(ex)
