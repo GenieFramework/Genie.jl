@@ -156,10 +156,10 @@ end
 
 function WebRenderable(f::Function, args...)
   fr::String = try
-    f()::String
+    f() |> join
   catch ex
     if isa(ex, MethodError) && string(ex.f) == string(f)
-      Base.invokelatest(f)::String
+      Base.invokelatest(f) |> join
     else
       rethrow(ex)
     end

@@ -147,6 +147,7 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
 
   for (k,v) in attrs
     v === nothing && continue # skip nothing values
+    v == "false" && (v = false)
 
     print(a, attrparser(k, v))
   end
@@ -156,7 +157,7 @@ end
 
 
 function attrparser(k::Symbol, v::Bool) :: String
-  v ? "$(k |> parseattr) " : default_attrparser(k, v)
+  v ? "$(k |> parseattr) " : ""
 end
 
 function attrparser(k::Symbol, v::Union{AbstractString,Symbol}) :: String
@@ -219,20 +220,6 @@ Generates a void HTML element in the form <...>
 function void_element(elem::String, args = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   attribs = rstrip(attributes(attrs))
   string("<", normalize_element(elem), (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), Genie.config.html_parser_close_tag, ">")
-end
-
-
-"""
-    skip_element(f::Function) :: HTMLString
-    skip_element() :: HTMLString
-
-Cleans up empty elements.
-"""
-function skip_element(f::Function) :: HTMLString
-  "$(prepare_template(f()))"
-end
-function skip_element() :: HTMLString
-  ""
 end
 
 
@@ -487,7 +474,7 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
     isempty(HTMLParser.children(elem)) || print(io, repeat("\t", depth), string(HTMLParser.children(elem)[1].text), "\n")
   else
     mdl = isdefined(@__MODULE__, Symbol(tag_name)) ? string(@__MODULE__, ".") : ""
-    print(io, repeat("\t", depth), ( ! invalid_tag ? "$mdl$(tag_name)(" : "Html.skip_element(" ))
+    print(io, repeat("\t", depth), ( invalid_tag ? "" : "$mdl$(tag_name)(" ) )
 
     attributes = IOBuffer()
     attributes_keys = String[]
@@ -553,13 +540,14 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
     ! isempty(attributes_string) && ! isempty(attributes_keys) && print(io, ", ")
     ! isempty(attributes_keys) &&
       print(io, "; NamedTuple{($(join(attributes_keys, ", "))$(length(attributes_keys) == 1 ? ", " : ""))}(($(join(attributes_values, ", "))$(length(attributes_keys) == 1 ? ", " : "")))...")
-    print(io, ")")
+
+    invalid_tag || print(io, ")")
 
     inner = ""
     if ! isempty(HTMLParser.children(elem))
       children_count = size(HTMLParser.children(elem))[1]
 
-      print(io, " do;[\n")
+      invalid_tag ? print(io, " \n") : print(io, " do;[\n")
 
       idx = 0
       for child in HTMLParser.children(elem)
@@ -580,7 +568,7 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
         print(io, inner, repeat("\t", depth))
       end
 
-      print(io, "; ]end\n")
+      invalid_tag ? print(io, "\n") : print(io, ";]end\n")
     end
 
   end
@@ -627,10 +615,20 @@ Converts an input file to Julia code
   f_name = (f_name === nothing) ? Genie.Renderer.function_name(string(input, partial)) : f_name
 
   string("function $(f_name)(; $(Genie.Renderer.injectkwvars())) \n",
+          "
+          [
+          ",
+
           prepend,
-          (partial ? "" : "\nGenie.Renderer.Html.doctype() * \n"),
+
+          (partial ? "" : "\nGenie.Renderer.Html.doctype() \n"),
+
           f !== nothing ? f(input; partial = partial) : input,
-          "\nend \n")
+
+          "
+          ]
+          end
+          ")
 end
 
 
@@ -655,10 +653,10 @@ Renders a template file.
 """
 function template(path::String; partial::Bool = true, context::Module = @__MODULE__) :: String
   try
-    get_template(path, partial = partial, context = context)()
+    get_template(path, partial = partial, context = context)() |> join
   catch ex
     if isa(ex, MethodError) && (string(ex.f) == "get_template" || startswith(string(ex.f), "func_"))
-      Base.invokelatest(get_template(path, partial = partial, context = context))::String
+      Base.invokelatest(get_template(path, partial = partial, context = context)) |> join
     else
       rethrow(ex)
     end
@@ -931,9 +929,7 @@ end
 Outputs the rendering of the view within the template.
 """
 macro yield()
-  quote
-    view!()
-  end
+  :(view!()() |> join)
 end
 macro yield(value)
   :(view!($value))
@@ -941,11 +937,7 @@ end
 
 
 function view!()
-  try
-    task_local_storage(:__yield)
-  catch
-    task_local_storage(:__yield, "")
-  end
+  haskey(task_local_storage(), :__yield) ? task_local_storage(:__yield) : task_local_storage(:__yield, String[])
 end
 
 function view!(value)

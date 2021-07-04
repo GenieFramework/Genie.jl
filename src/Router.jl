@@ -676,9 +676,8 @@ end
 Extracts query vars and adds them to the execution `params` `Dict`.
 """
 function extract_get_params(uri::HTTP.URIs.URI, params::Params) :: Bool
-  # GET params
   if ! isempty(uri.query)
-    if occursin("[]", uri.query)
+    if occursin("%5B%5D", uri.query) || occursin("[]", uri.query) # array values []
       for query_part in split(uri.query, "&")
         qp = split(query_part, "=")
         (size(qp)[1] == 1) && (push!(qp, ""))
@@ -687,18 +686,16 @@ function extract_get_params(uri::HTTP.URIs.URI, params::Params) :: Bool
         v = HTTP.URIs.unescapeuri(qp[2])
 
         # collect values like x[] in an array
-        if endswith(string(k), "[]") && haskey(params.collection, k)
-          if isa(params.collection, Vector)
-            push!(params.collection[k], v)
-            params.collection[Genie.PARAMS_GET_KEY][k] = params.collection[k]
-          else
-            params.collection[k] = params.collection[Genie.PARAMS_GET_KEY][k] = [params.collection[k], v]
-          end
+        if endswith(string(k), "[]")
+          (haskey(params.collection, k) && isa(params.collection[k], Vector)) || (params.collection[k] = String[])
+          push!(params.collection[k], v)
+          params.collection[Genie.PARAMS_GET_KEY][k] = params.collection[k]
         else
           params.collection[k] = params.collection[Genie.PARAMS_GET_KEY][k] = v
         end
       end
-    else
+
+    else # no array values
       for (k,v) in HTTP.URIs.queryparams(uri)
         k = Symbol(k)
         params.collection[k] = params.collection[Genie.PARAMS_GET_KEY][k] = v

@@ -85,7 +85,7 @@
         rm("build", force = true, recursive = true)
         r = html(htmlviewfile(), layout = htmltemplatefile())
 
-        @test String(r.body) == "<!DOCTYPE html><html><head><title>$name test</title></head><body><div class=\"template\"><h1>$greeting</h1><div><p>This is a $name test</p></div><hr$(Genie.config.html_parser_close_tag)>\n</div><footer>Just a footer</footer></body></html>"
+        @test String(r.body) == "<!DOCTYPE html><html><head><title>$name test</title></head><body><div class=\"template\"><h1>$greeting</h1><div><p>This is a $name test</p></div><hr$(Genie.config.html_parser_close_tag)></div><footer>Just a footer</footer></body></html>"
       end;
 
       @test r.status == 200

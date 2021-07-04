@@ -40,7 +40,7 @@ end
 
 
 function to_js(data::String; prepend = "\n") :: String
-  string("function $(Genie.Renderer.function_name(data))($(Genie.Renderer.injectkwvars())) \n",
+  string("function $(Genie.Renderer.function_name(data))($(Genie.Renderer.injectkwvars())) :: String \n",
           prepend,
           "\"\"\"
           $data
