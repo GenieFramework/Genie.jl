@@ -71,12 +71,12 @@ function appmodule(path::String)
   using Genie, Logging, LoggingExtras
 
   function main()
-    Base.eval(Main, :(const UserApp = $appname))
+    Core.eval(Main, :(const UserApp = \$(@__MODULE__)))
 
     Genie.genie(; context = @__MODULE__)
 
-    Base.eval(Main, :(const Genie = $appname.Genie))
-    Base.eval(Main, :(using Genie))
+    Core.eval(Main, :(const Genie = UserApp.Genie))
+    Core.eval(Main, :(using Genie))
   end
 
   end

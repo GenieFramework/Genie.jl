@@ -23,14 +23,11 @@ function execute(config::Genie.Configuration.Settings; server::Union{Sockets.TCP
 
   if called_command(parsed_args, "s")
     Genie.config.run_as_server = true
-    Genie.up(Genie.config.server_port, Genie.config.server_host, server = server)
-
-  elseif called_command(parsed_args, "si")
-    Genie.up(Genie.config.server_port, Genie.config.server_host, server = server)
+    Base.@invokelatest Genie.up(Genie.config.server_port, Genie.config.server_host, server = server)
 
   elseif called_command(parsed_args, "r")
     endswith(parsed_args["r"], "Task") || (parsed_args["r"] *= "Task")
-    Genie.Toolbox.loadtasks(Main.UserApp)
+    Base.@invokelatest Genie.Toolbox.loadtasks(Main.UserApp)
     taskname = parsed_args["r"]
 
     @info "Running task $taskname with args $(parsed_args["a"])"

@@ -7,11 +7,11 @@ import Genie, Genie.Cache
 # IMPLEMENTATION #
 
 """
-    tocache(key::Union{String,Symbol}, content::Any; dir::String = "") :: Nothing
+    tocache(key::Any, content::Any; dir::String = "") :: Nothing
 
 Persists `content` onto the file system under the `key` key.
 """
-function tocache(key::Union{String,Symbol}, content::Any; dir::String = "") :: Nothing
+function tocache(key::Any, content::Any; dir::String = "") :: Nothing
   open(cache_path(string(key), dir = dir), "w") do io
     Serialization.serialize(io, content)
   end
@@ -21,11 +21,11 @@ end
 
 
 """
-    fromcache(key::Union{String,Symbol}, expiration::Int; dir::String = "") :: Union{Nothing,Any}
+    fromcache(key::Any, expiration::Int; dir::String = "") :: Union{Nothing,Any}
 
 Retrieves from cache the object stored under the `key` key if the `expiration` delta (in seconds) is in the future.
 """
-function fromcache(key::Union{String,Symbol}, expiration::Int; dir::String = "") :: Union{Nothing,Any}
+function fromcache(key::Any, expiration::Int; dir::String = "") :: Union{Nothing,Any}
   file_path = cache_path(string(key), dir = dir)
 
   ( ! isfile(file_path) || stat(file_path).ctime + expiration < time() ) && return nothing
@@ -39,11 +39,11 @@ end
 
 
 """
-    cache_path(key::Union{String,Symbol}; dir::String = "") :: String
+    cache_path(key::Any; dir::String = "") :: String
 
 Computes the path to a cache `key` based on current cache settings.
 """
-function cache_path(key::Union{String,Symbol}; dir::String = "") :: String
+function cache_path(key::Any; dir::String = "") :: String
   path = joinpath(Genie.config.path_cache, dir)
   ! isdir(path) && mkpath(path)
 
@@ -56,21 +56,21 @@ end
 
 
 """
-    withcache(f::Function, key::Union{String,Symbol}, expiration::Int = Genie.config.cache_duration; dir = "", condition::Bool = true)
+    withcache(f::Function, key::Any, expiration::Int = Genie.config.cache_duration; dir = "", condition::Bool = true)
 
 Executes the function `f` and stores the result into the cache for the duration (in seconds) of `expiration`. Next time the function is invoked,
 if the cache has not expired, the cached result is returned skipping the function execution.
 The optional `dir` param is used to designate the folder where the cache will be stored (within the configured cache folder).
 If `condition` is `false` caching will be skipped.
 """
-function Genie.Cache.withcache(f::Function, key::Union{String,Symbol}, expiration::Int = Genie.config.cache_duration; dir::String = "", condition::Bool = true)
+function Genie.Cache.withcache(f::Function, key::Any, expiration::Int = Genie.config.cache_duration; dir::String = "", condition::Bool = true)
   ( expiration == 0 || ! condition ) && return f()
 
-  cached_data = fromcache(Genie.Cache.cachekey(key), expiration, dir = dir)
+  cached_data = fromcache(Genie.Cache.cachekey(string(key)), expiration, dir = dir)
 
   if cached_data === nothing
     output = f()
-    tocache(Genie.Cache.cachekey(key), output, dir = dir)
+    tocache(Genie.Cache.cachekey(string(key)), output, dir = dir)
 
     return output
   end
@@ -80,12 +80,12 @@ end
 
 
 """
-    purge(key::Union{String,Symbol}) :: Nothing
+    purge(key::Any) :: Nothing
 
 Removes the cache data stored under the `key` key.
 """
-function Genie.Cache.purge(key::Union{String,Symbol}; dir::String = "") :: Nothing
-  rm(cache_path(Genie.Cache.cachekey(key), dir = dir))
+function Genie.Cache.purge(key::Any; dir::String = "") :: Nothing
+  rm(cache_path(Genie.Cache.cachekey(string(key)), dir = dir))
 
   nothing
 end
