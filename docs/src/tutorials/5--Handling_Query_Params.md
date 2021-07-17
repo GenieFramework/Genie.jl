@@ -1,6 +1,6 @@
 # Handling query params (GET variables)
 
-Genie makes it easy to access query params, which are values sent as part of the URL over GET requests (ex: mywebsite.com/index?foo=1&bar=2 `foo` and `bar` are query params corresponding to the variables `foo = 1` and `bar = 2`). All these values are automatically collected by Genie and exposed in the `params` collection (which is part of the `Router` module).
+Genie makes it easy to access query params, which are values sent as part of the URL over GET requests (ex: mywebsite.com/index?foo=1&bar=2 `foo` and `bar` are query params corresponding to the variables `foo = 1` and `bar = 2`). All these values are automatically collected by Genie and exposed in the `params()` collection (which is part of the `Router` module).
 
 ### Example
 
@@ -8,7 +8,7 @@ Genie makes it easy to access query params, which are values sent as part of the
 using Genie, Genie.Router
 
 route("/hi") do
-  name = haskey(params, :name) ? params(:name) : "Anon"
+  name = params(:name, "Anon")
 
   "Hello $name"
 end

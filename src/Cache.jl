@@ -6,7 +6,7 @@ module Cache
 import SHA, Logging
 import Genie
 
-export cachekey, withcache, @cachekey
+export cachekey, withcache, @cache
 export purge, purgeall
 
 
@@ -43,6 +43,15 @@ function purge end
 Removes all cached data.
 """
 function purgeall end
+
+
+macro cache(expr)
+  quote
+    withcache($(esc(string(expr)))) do
+      $(esc(expr))
+    end
+  end
+end
 
 
 ### PRIVATE ###
