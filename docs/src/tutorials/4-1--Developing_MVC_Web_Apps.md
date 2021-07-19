@@ -458,7 +458,7 @@ Now, to install the plugin files:
 julia> GenieAuthentication.install(@__DIR__)
 ```
 
-The plugin has created a create table migration that we need to run UP:
+The plugin has created a create table migration that we need to run `UP`:
 
 ```julia
 julia> SearchLight.Migration.up("CreateTableUsers")
@@ -470,10 +470,11 @@ Let's generate an Admin controller that we'll want to protect by login:
 julia> Genie.Generator.newcontroller("Admin", pluralize = false)
 ```
 
-And manually load the plugin file:
+Only this time, let's load the plugin into the app manually. Upon restarting the application, the plugin will be automatically
+loaded by `Genie`:
 
 ```julia
-include(joinpath("plugins", "genie_authentication.jl"))
+julia> include(joinpath("plugins", "genie_authentication.jl"))
 ```
 
 Time to create an admin user for logging in:
@@ -499,9 +500,8 @@ module AdminController
 
 using GenieAuthentication, Genie.Renderer, Genie.Exceptions, Genie.Renderer.Html
 
-before() = authenticated() || throw(ExceptionalResponse(redirect(:show_login)))
-
 function index()
+  @authenticated!
   h1("Welcome Admin") |> html
 end
 
