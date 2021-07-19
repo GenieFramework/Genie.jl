@@ -33,8 +33,7 @@ function newresource(resource_name::Union{String,Symbol}; path::String = ".", pl
   Generator.newresource(string(resource_name), path = path, pluralize = pluralize)
 
   try
-    pluralize || error("SearchLight resources need to be pluralized")
-    Core.eval(context, :(SearchLight.Generator.newresource(uppercasefirst($resource_name)))) # SearchLight resources don't work on singular
+    Core.eval(context, :(SearchLight.Generator.newresource(uppercasefirst($resource_name))))
   catch ex
     # @error ex
     @warn "Skipping SearchLight"
