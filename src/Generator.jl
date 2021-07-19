@@ -359,6 +359,15 @@ function db_support(app_path::String = ".", include_env::Bool = true, add_depend
                     testmode::Bool = false) :: Nothing
   cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_db), joinpath(app_path, Genie.config.path_db), force = true)
 
+  db_intializer(app_path, include_env)
+
+  add_dependencies && install_db_dependencies(testmode = testmode)
+
+  nothing
+end
+
+
+function db_intializer(app_path::String = ".", include_env::Bool = false)
   initializers_dir = joinpath(app_path, Genie.config.path_initializers)
   initializer_path = joinpath(initializers_dir, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME)
   source_path = joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_initializers, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME) |> normpath
@@ -368,10 +377,6 @@ function db_support(app_path::String = ".", include_env::Bool = true, add_depend
     include_env && cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_env), joinpath(app_path, Genie.config.path_env), force = true)
     cp(source_path, initializer_path)
   end
-
-  add_dependencies && install_db_dependencies(testmode = testmode)
-
-  nothing
 end
 
 
