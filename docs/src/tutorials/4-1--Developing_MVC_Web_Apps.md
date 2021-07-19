@@ -480,6 +480,8 @@ julia> include(joinpath("plugins", "genie_authentication.jl"))
 Time to create an admin user for logging in:
 
 ```julia
+julia> using Users
+
 julia> u = User(email = "admin@admin", name = "Admin", password = Users.hash_password("admin"), username = "admin")
 
 julia> save!(u)
