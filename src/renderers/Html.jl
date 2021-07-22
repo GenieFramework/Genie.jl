@@ -509,6 +509,8 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
             v = replace(string(v), label => value.match)
             index += 1
           end
+        elseif occursin("\"", v) # do we still need to escape double quotes?
+          v = replace(string(v), "\"" => "'") #
         end
       end
 

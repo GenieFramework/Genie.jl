@@ -40,8 +40,8 @@
     @test_throws LoadError Html.html(filepath("views/argsencoded2.jl.html")).body |> String ==
       """<!DOCTYPE html><html><head></head><body><p onclick="alert("Hello");">Greetings</p></body></html>"""
 
-    @test_throws LoadError Html.html(filepath("views/argsencoded3.jl.html")).body |> String ==
-      """<!DOCTYPE html><html><head></head><body><p onclick='alert("Hello");'>Greetings</p></body></html>"""
+    @test Html.html(filepath("views/argsencoded3.jl.html")).body |> String ==
+      """<!DOCTYPE html><html><head></head><body><p onclick="alert('Hello');">Greetings</p></body></html>"""
 
 
     @test Html.html(filepath("views/argsencoded1.jl.html"), layout=filepath("views/layoutargsencoding.jl.html")).body |> String ==

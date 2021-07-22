@@ -115,7 +115,8 @@ Initiates a new HTTP session with the provided `session_id`.
 - `res::HTTP.Response`: the response object
 - `options::Dict{String,String}`: extra options for setting the session cookie, such as `Path` and `HttpOnly`
 """
-function start(session_id::String, req::HTTP.Request, res::HTTP.Response; options::Dict{String,Any} = Genie.config.session_options) :: Tuple{Session,HTTP.Response}
+function start(session_id::String, req::HTTP.Request, res::HTTP.Response;
+                options::Dict{String,Any} = Genie.config.session_options) :: Tuple{Session,HTTP.Response}
   Genie.Cookies.set!(res, Genie.config.session_key_name, session_id, options)
 
   load(session_id), res
