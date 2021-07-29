@@ -117,7 +117,7 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `app_env::String`: the environment in which the app is running (dev, test, or prod)
 - `cors_headers::Dict{String,String}`: default `Access-Control-*` CORS settings
 - `cors_allowed_origins::Vector{String}`: allowed origin hosts for CORS settings
-- `cache_duraction::Int`: cache expiration time in seconds
+- `cache_duration::Int`: cache expiration time in seconds
 - `log_level::Logging.LogLevel`: logging severity level
 - `log_to_file::Bool`: if true, information will be logged to file besides REPL
 - `session_key_name::String`: the name of the session cookie
