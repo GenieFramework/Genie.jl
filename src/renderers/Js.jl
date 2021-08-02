@@ -3,7 +3,7 @@ module Js
 import Logging, HTTP
 using Genie, Genie.Renderer
 
-const JS_FILE_EXT   = ["js.jl"]
+const JS_FILE_EXT   = ".jl"
 const TEMPLATE_EXT  = ".jl.js"
 
 const SUPPORTED_JS_OUTPUT_FILE_FORMATS = [TEMPLATE_EXT]
@@ -15,14 +15,12 @@ const NBSP_REPLACEMENT = ("&nbsp;"=>"!!nbsp;;")
 export js
 
 
-function get_template(path::String; context::Module = @__MODULE__) :: Function
+function get_template(path::String; context::Module = @__MODULE__, vars...) :: Function
   orig_path = path
 
   path, extension = Genie.Renderer.view_file_info(path, SUPPORTED_JS_OUTPUT_FILE_FORMATS)
 
   isfile(path) || error("JS file \"$orig_path\" with extensions $SUPPORTED_JS_OUTPUT_FILE_FORMATS does not exist")
-
-  extension in JS_FILE_EXT && return (() -> Base.include(context, path))
 
   f_name = Genie.Renderer.function_name(path) |> Symbol
   mod_name = Genie.Renderer.m_name(path) * ".jl"
@@ -30,7 +28,7 @@ function get_template(path::String; context::Module = @__MODULE__) :: Function
   f_stale = Genie.Renderer.build_is_stale(path, f_path)
 
   if f_stale || ! isdefined(context, f_name)
-    f_stale && Genie.Renderer.build_module(to_js(read(path, String)), path, mod_name)
+    f_stale && Genie.Renderer.build_module(to_js(read(path, String), extension = extension), path, mod_name)
 
     return Base.include(context, joinpath(Genie.config.path_build, Genie.Renderer.BUILD_NAME, mod_name))
   end
@@ -39,13 +37,20 @@ function get_template(path::String; context::Module = @__MODULE__) :: Function
 end
 
 
-function to_js(data::String; prepend = "\n") :: String
-  string("function $(Genie.Renderer.function_name(data))($(Genie.Renderer.injectkwvars())) :: String \n",
-          prepend,
+function to_js(data::String; prepend = "\n", extension = TEMPLATE_EXT) :: String
+  output = string("function $(Genie.Renderer.function_name(data))($(Genie.Renderer.injectkwvars())) :: String \n", prepend)
+
+  output *= if extension == TEMPLATE_EXT
           "\"\"\"
           $data
-          \"\"\"",
-          "\nend \n")
+          \"\"\""
+  elseif extension == JS_FILE_EXT
+    data
+  else
+    error("Unsuported template extension $extension")
+  end
+
+  string(output, "\nend \n")
 end
 
 
@@ -73,7 +78,7 @@ end
 function render(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__, vars...) :: Function
   Genie.Renderer.registervars(; context = context, vars...)
 
-  get_template(string(viewfile), partial = false, context = context)
+  get_template(string(viewfile); partial = false, context = context, vars...)
 end
 
 

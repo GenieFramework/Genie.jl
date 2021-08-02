@@ -12,7 +12,7 @@ Reexport.@reexport using HttpCommon
 const DEFAULT_LAYOUT_FILE = :app
 const LAYOUTS_FOLDER = "layouts"
 
-const HTML_FILE_EXT = "html.jl"
+const HTML_FILE_EXT = ".jl"
 const TEMPLATE_EXT  = ".jl.html"
 const MARKDOWN_FILE_EXT = [".md", ".jl.md"]
 
@@ -224,14 +224,12 @@ end
 
 
 """
-    get_template(path::String; partial::Bool = true, context::Module = @__MODULE__) :: Function
+    get_template(path::String; partial::Bool = true, context::Module = @__MODULE__, vars...) :: Function
 
 Resolves the inclusion and rendering of a template file
 """
-function get_template(path::String; partial::Bool = true, context::Module = @__MODULE__) :: Function
+function get_template(path::String; partial::Bool = true, context::Module = @__MODULE__, vars...) :: Function
   path, extension = Genie.Renderer.view_file_info(path, SUPPORTED_HTML_OUTPUT_FILE_FORMATS)
-
-  extension == HTML_FILE_EXT && return (() -> Base.include(context, path))
 
   f_name = Genie.Renderer.function_name(string(path, partial)) |> Symbol
   mod_name = Genie.Renderer.m_name(string(path, partial)) * ".jl"
@@ -243,7 +241,7 @@ function get_template(path::String; partial::Bool = true, context::Module = @__M
       path = MdHtml.md_to_html(path, context = context)
     end
 
-    f_stale && Genie.Renderer.build_module(html_to_julia(path, partial = partial), path, mod_name)
+    f_stale && Genie.Renderer.build_module(html_to_julia(path, partial = partial, extension = extension), path, mod_name)
 
     return Base.include(context, joinpath(Genie.config.path_build, Genie.Renderer.BUILD_NAME, mod_name))
   end
@@ -323,10 +321,10 @@ function render(viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.R
   Genie.Renderer.registervars(; context = context, vars...)
 
   if layout !== nothing
-    task_local_storage(:__yield, get_template(string(viewfile), partial = true, context = context))
-    get_template(string(layout), partial = false, context = context)
+    task_local_storage(:__yield, get_template(string(viewfile); partial = true, context = context, vars...))
+    get_template(string(layout); partial = false, context = context, vars...)
   else
-    get_template(string(viewfile), partial = false, context = context)
+    get_template(string(viewfile); partial = false, context = context, vars...)
   end
 end
 
@@ -592,8 +590,8 @@ end
 
 Converts a HTML document to Julia code.
 """
-function html_to_julia(file_path::String; partial = true) :: String
-  to_julia(file_path, parse_template, partial = partial)
+function html_to_julia(file_path::String; partial = true, extension = TEMPLATE_EXT) :: String
+  to_julia(file_path, parse_template; partial = partial, extension = extension)
 end
 
 
@@ -613,7 +611,7 @@ end
 Converts an input file to Julia code
 """
   function to_julia(input::String, f::Union{Function,Nothing};
-                  partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n") :: String
+                  partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n", extension = TEMPLATE_EXT) :: String
   f_name = (f_name === nothing) ? Genie.Renderer.function_name(string(input, partial)) : f_name
 
   string("function $(f_name)(; $(Genie.Renderer.injectkwvars())) \n",
@@ -625,7 +623,7 @@ Converts an input file to Julia code
 
           (partial ? "" : "\nGenie.Renderer.Html.doctype() \n"),
 
-          f !== nothing ? f(input; partial = partial) : input,
+          f !== nothing ? f(input; partial = partial, extension = extension) : input,
 
           "
           ]
@@ -649,16 +647,16 @@ end
 
 
 """
-    template(path::String; partial::Bool = true, context::Module = @__MODULE__) :: String
+    template(path::String; partial::Bool = true, context::Module = @__MODULE__, vars...) :: String
 
 Renders a template file.
 """
-function template(path::String; partial::Bool = true, context::Module = @__MODULE__) :: String
+function template(path::String; partial::Bool = true, context::Module = @__MODULE__, vars...) :: String
   try
-    get_template(path, partial = partial, context = context)() |> join
+    get_template(path; partial = partial, context = context, vars...)() |> join
   catch ex
     if isa(ex, MethodError) && (string(ex.f) == "get_template" || startswith(string(ex.f), "func_"))
-      Base.invokelatest(get_template(path, partial = partial, context = context)) |> join
+      Base.invokelatest(get_template(path; partial = partial, context = context, vars...)) |> join
     else
       rethrow(ex)
     end
@@ -671,13 +669,22 @@ end
 
 Reads `file_path` template from disk.
 """
-function read_template_file(file_path::String) :: String
+function read_template_file(file_path::String; extension = TEMPLATE_EXT) :: String
   io = IOBuffer()
+
+  extension == HTML_FILE_EXT && print(io, """
+  \"\"\"
+  """)
+
   open(file_path) do f
     for line in enumerate(eachline(f))
       print(io, parsetags(line), "\n")
     end
   end
+
+  extension == HTML_FILE_EXT && print(io, """
+  \"\"\"
+  """)
 
   String(take!(io))
 end
@@ -688,8 +695,8 @@ end
 
 Parses a HTML file into Julia code.
 """
-function parse_template(file_path::String; partial::Bool = true) :: String
-  parse(read_template_file(file_path)::String; partial = partial)
+function parse_template(file_path::String; partial::Bool = true, extension = TEMPLATE_EXT) :: String
+  parse(read_template_file(file_path; extension = extension)::String; partial = partial)
 end
 
 
@@ -698,7 +705,7 @@ end
 
 Parses a HTML string into Julia code.
 """
-function parse_string(data::String; partial::Bool = true) :: String
+function parse_string(data::String; partial::Bool = true, extension = TEMPLATE_EXT) :: String
   parse(parsetags(data), partial = partial)
 end
 
