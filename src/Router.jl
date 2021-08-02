@@ -105,22 +105,6 @@ Base.getindex(params::Pair, keys...) = getindex(Dict(params), keys...)
 
 
 """
-    _params_()
-
-Reference to the request variables collection.
-"""
-function _params_()
-  task_local_storage(:__params)
-end
-function _params_(key::Union{String,Symbol})
-  task_local_storage(:__params)[key]
-end
-function _params_(key::Union{String,Symbol}, value::Any)
-  task_local_storage(:__params)[key] = value
-end
-
-
-"""
     ispayload(req::HTTP.Request)
 
 True if the request can carry a payload - that is, it's a `POST`, `PUT`, or `PATCH` request
@@ -794,7 +778,7 @@ function content_length(req::HTTP.Request) :: Int
   parse(Int, get(Genie.HTTPUtils.Dict(req), "content-length", "0"))
 end
 function content_length() :: Int
-  content_length(_params_(Genie.PARAMS_REQUEST_KEY))
+  content_length(params(Genie.PARAMS_REQUEST_KEY))
 end
 
 
@@ -811,7 +795,7 @@ function request_type_is(req::HTTP.Request, request_type::Symbol) :: Bool
   false
 end
 function request_type_is(request_type::Symbol) :: Bool
-  request_type_is(_params_(Genie.PARAMS_REQUEST_KEY), request_type)
+  request_type_is(params(Genie.PARAMS_REQUEST_KEY), request_type)
 end
 
 
@@ -899,10 +883,13 @@ function params()
   haskey(task_local_storage(), :__params) ? task_local_storage(:__params) : task_local_storage(:__params, Dict{Symbol,Any}())
 end
 function params(key)
-  _params_()[key]
+  params()[key]
 end
 function params(key, default)
-  get(_params_(), key, default)
+  get(params(), key, default)
+end
+function params!(key, value)
+  task_local_storage(:__params)[key] = value
 end
 
 
@@ -1071,7 +1058,7 @@ end
 
 Returns the MIME type of the response.
 """
-function response_mime(params::Dict{Symbol,Any} = _params_())
+function response_mime(params::Dict{Symbol,Any} = params())
   rm = get!(params, Genie.PARAMS_MIME_KEY, request_type(params[Genie.PARAMS_REQUEST_KEY]))
 
   if isempty(string(rm()))
