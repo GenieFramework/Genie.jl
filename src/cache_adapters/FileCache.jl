@@ -30,11 +30,14 @@ function fromcache(key::Any, expiration::Int; dir::String = "") :: Union{Nothing
 
   ( ! isfile(file_path) || stat(file_path).ctime + expiration < time() ) && return nothing
 
-  output = open(file_path) do io
-    Serialization.deserialize(io)
+  try
+    open(file_path) do io
+      Serialization.deserialize(io)
+    end
+  catch ex
+    @warn ex
+    nothing
   end
-
-  output
 end
 
 
