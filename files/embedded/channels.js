@@ -99,6 +99,10 @@ Genie.WebChannels.errorHandlers.push(function(event) {
 
 Genie.WebChannels.closeHandlers.push(function(event) {
   console.log("Server closed WebSocket connection");
+  if ( Genie.Settings.webchannels_autosubscribe ) {
+    console.log("Attempting WebSocket reconnection...");
+    subscribe();
+  }
 });
 
 Genie.WebChannels.openHandlers.push(function(event) {

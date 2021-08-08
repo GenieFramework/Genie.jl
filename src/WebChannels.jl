@@ -207,7 +207,9 @@ end
 """
 Pushes `msg` (and `payload`) to all the clients subscribed to the channels in `channels`.
 """
-function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String;
+function broadcast(channels::Union{ChannelName,Vector{ChannelName}},
+                    msg::String,
+                    payload::Union{Dict,Nothing} = nothing;
                     except::Union{HTTP.WebSockets.WebSocket,Nothing,UInt} = nothing) :: Bool
   isa(channels, Array) || (channels = ChannelName[channels])
 
@@ -216,28 +218,13 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String
 
     for client in SUBSCRIPTIONS[channel]
       except !== nothing && client == id(except) && continue
+      CLIENTS[client].client.txclosed && CLIENTS[client].client.rxclosed && continue
 
       try
-        message(client, msg)
-      catch ex
-        @error ex
-      end
-    end
-  end
-
-  true
-end
-function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String, payload::Dict) :: Bool
-  isa(channels, Array) || (channels = [channels])
-
-  for channel in channels
-    haskey(SUBSCRIPTIONS, channel) || throw(ChannelNotFoundException(channel))
-
-    for client in SUBSCRIPTIONS[channel]
-      try
-        message(client, ChannelMessage(channel, client, msg, payload) |> Renderer.Json.JSONParser.json)
-      catch ex
-        @error ex
+        payload !== nothing ?
+          message(client, ChannelMessage(channel, client, msg, payload) |> Renderer.Json.JSONParser.json) :
+          message(client, msg)
+      catch
       end
     end
   end
@@ -253,16 +240,6 @@ function broadcast(msg::String, payload::Union{Dict,Nothing} = nothing) :: Bool
   payload === nothing ?
     broadcast(collect(keys(SUBSCRIPTIONS)), msg) :
     broadcast(collect(keys(SUBSCRIPTIONS)), msg, payload)
-end
-
-
-"""
-Pushes `msg` (and `payload`) to `channel`.
-"""
-function message(channel::ChannelName, msg::String, payload::Union{Dict,Nothing} = nothing) :: Bool
-  payload === nothing ?
-    broadcast(channel, msg) :
-    broadcast(channel, msg, payload)
 end
 
 
