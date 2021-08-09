@@ -64,7 +64,7 @@ include("MdHtml.jl")
 Generates a HTML element in the form <...></...>
 """
 function normal_element(f::Function, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
-  normal_element(f(), string(elem), args, attrs...)
+  normal_element(Base.invokelatest(f), string(elem), args, attrs...)
 end
 function normal_element(children::Union{String,Vector{String}}, elem::Any, args::Vector, attrs::Pair{Symbol,Any}) :: HTMLString
   normal_element(children, string(elem), args, Pair{Symbol,Any}[attrs])
