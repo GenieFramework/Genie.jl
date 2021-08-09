@@ -24,8 +24,94 @@ ServersCollection constant containing references to the current app's web and we
 """
 const SERVERS = ServersCollection(nothing, nothing)
 
-### PRIVATE ###
+function isinitialized(server::Symbol = :webserver) :: Bool
+  getfield(SERVERS, server) !== nothing
+end
 
+function isrunning(server::Symbol = :webserver) :: Bool
+  isinitialized(server) && ! istaskdone(getfield(SERVERS, server))
+end
+
+function upwebsockets(host::String = Genie.config.server_host; ws_port::Int = port,
+                      verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
+                      wsserver::Union{Sockets.TCPServer,Nothing} = nothing,
+                      ssl_config::Union{MbedTLS.SSLConfig,Nothing} = Genie.config.ssl_config,
+                      http_kwargs...) :: Nothing
+  print_server_status("Web Sockets server starting at $host:$ws_port")
+
+  SERVERS.websockets = @async HTTP.listen(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver, sslconfig = ssl_config, http_kwargs...) do http::HTTP.Stream
+    if HTTP.WebSockets.is_upgrade(http.message)
+      HTTP.WebSockets.upgrade(http) do ws
+        setup_ws_handler(http.message, ws)
+      end
+    end
+  end
+
+  server_status(:websockets)
+
+  nothing
+end
+
+function server_status(server::Symbol) :: Nothing
+  if isrunning(server)
+    @info("✔️ $server is running.")
+  else
+    @error("❌ $server is not running.")
+    isinitialized(server) && isa(getfield(SERVERS, server), Task) && fetch(getfield(SERVERS, server))
+  end
+
+  nothing
+end
+
+function upwebserver(port::Int, host::String = Genie.config.server_host;
+                      ws_port::Int = port, async::Bool = ! Genie.config.run_as_server,
+                      verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
+                      server::Union{Sockets.TCPServer,Nothing} = nothing, wsserver::Union{Sockets.TCPServer,Nothing} = nothing,
+                      ssl_config::Union{MbedTLS.SSLConfig,Nothing} = Genie.config.ssl_config,
+                      open_browser::Bool = false,
+                      http_kwargs...) :: Nothing
+  command = () -> begin
+    HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server, sslconfig = ssl_config, http_kwargs...) do http::HTTP.Stream
+      try
+        if Genie.config.websockets_server && port == ws_port && HTTP.WebSockets.is_upgrade(http.message)
+          HTTP.WebSockets.upgrade(http) do ws
+            setup_ws_handler(http.message, ws)
+          end
+        else
+          setup_http_streamer(http)
+        end
+      catch ex
+        isa(ex, Base.IOError) || @error ex
+      end
+    end
+  end
+
+  server_url = "$( (ssl_config !== nothing && Genie.config.ssl_enabled) ? "https" : "http" )://$host:$port"
+
+  status = if async
+    print_server_status("Web Server starting at $server_url")
+    @async command()
+  else
+    print_server_status("Web Server starting at $server_url - press Ctrl/Cmd+C to stop the server.")
+    command()
+  end
+
+  if status !== nothing && status.state == :runnable
+    SERVERS.webserver = status
+
+    try
+      open_browser && openbrowser(server_url)
+    catch ex
+      @error "Failed to open browser"
+      @error ex
+    end
+  end
+
+  sleep(1)
+  server_status(:webserver)
+
+  nothing
+end
 
 """
     startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
@@ -68,53 +154,18 @@ function startup(port::Int, host::String = Genie.config.server_host;
   update_config(port, host, ws_port)
 
   if Genie.config.websockets_server && port != ws_port
-    SERVERS.websockets = @async HTTP.listen(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver, sslconfig = ssl_config, http_kwargs...) do http::HTTP.Stream
-      if HTTP.WebSockets.is_upgrade(http.message)
-        HTTP.WebSockets.upgrade(http) do ws
-          setup_ws_handler(http.message, ws)
-        end
-      end
-    end
-
-    print_server_status("Web Sockets server running at $host:$ws_port")
-  end
-
-  command = () -> begin
-    HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server, sslconfig = ssl_config, http_kwargs...) do http::HTTP.Stream
-      try
-        if Genie.config.websockets_server && port == ws_port && HTTP.WebSockets.is_upgrade(http.message)
-          HTTP.WebSockets.upgrade(http) do ws
-            setup_ws_handler(http.message, ws)
-          end
-        else
-          setup_http_streamer(http)
-        end
-      catch ex
-        isa(ex, Base.IOError) || @error ex
-      end
+    if isrunning(:websockets)
+      @warn("✖️ WebSockets server is already up and running. Skipping.")
+    else
+      upwebsockets(host; ws_port = ws_port, verbose = verbose, ratelimit = ratelimit, wsserver = wsserver, ssl_config = ssl_config, http_kwargs...)
     end
   end
 
-  server_url = "$( (ssl_config !== nothing && Genie.config.ssl_enabled) ? "https" : "http" )://$host:$port"
-
-  status = if async
-    @async command()
+  if isrunning(:webserver)
+    @warn("✖️ Web server is already up and running. Skipping.")
   else
-    print_server_status("Web Server starting at $server_url - press Ctrl/Cmd+C to stop the server.")
-    command()
-  end
-
-  if status !== nothing && status.state == :runnable
-    SERVERS.webserver = status
-
-    print_server_status("Web Server running at $server_url")
-
-    try
-      open_browser && openbrowser(server_url)
-    catch ex
-      @error "Failed to open browser"
-      @error ex
-    end
+    upwebserver(port, host; ws_port = ws_port, async = async, verbose = verbose, ratelimit = ratelimit, server = server,
+                ssl_config = ssl_config, open_browser = open_browser, http_kwargs...)
   end
 
   SERVERS
