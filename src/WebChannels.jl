@@ -205,7 +205,7 @@ end
 
 
 """
-Pushes `msg` (and `payload`) to all the clients subscribed to the channels in `channels`.
+Pushes `msg` (and `payload`) to all the clients subscribed to the channels in `channels`, with the exception of `except`.
 """
 function broadcast(channels::Union{ChannelName,Vector{ChannelName}},
                     msg::String,
@@ -234,12 +234,24 @@ end
 
 
 """
-Pushes `msg` (and `payload`) to all the clients subscribed to all the channels.
+Pushes `msg` (and `payload`) to all the clients subscribed to the channels in `channels`, with the exception of `except`.
 """
-function broadcast(msg::String, payload::Union{Dict,Nothing} = nothing) :: Bool
-  payload === nothing ?
-    broadcast(collect(keys(SUBSCRIPTIONS)), msg) :
-    broadcast(collect(keys(SUBSCRIPTIONS)), msg, payload)
+function broadcast(msg::String;
+                    channels::Union{Union{ChannelName,Vector{ChannelName}},Nothing} = nothing,
+                    payload::Union{Dict,Nothing} = nothing,
+                    except::Union{HTTP.WebSockets.WebSocket,Nothing,UInt} = nothing) :: Bool
+  channels === nothing && (channels = collect(keys(SUBSCRIPTIONS)))
+  broadcast(channels, msg, payload; except = except)
+end
+
+
+"""
+Pushes `js_code` (a JavaScript piece of code) to be executed by all the clients subscribed to the channels in `channels`,
+with the exception of `except`.
+"""
+function jscomm(js_code::String, channels::Union{Union{ChannelName,Vector{ChannelName}},Nothing} = nothing;
+            except::Union{HTTP.WebSockets.WebSocket,Nothing,UInt} = nothing)
+  broadcast(string(Genie.config.webchannels_eval_command, js_code); channels = channels, except = except)
 end
 
 

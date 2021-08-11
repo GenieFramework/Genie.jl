@@ -261,8 +261,8 @@ function setup_http_listener(req::HTTP.Request, res::HTTP.Response = HTTP.Respon
     Distributed.@fetch handle_request(req, res)
   catch ex # ex is a Distributed.RemoteException
     if isa(ex, Distributed.RemoteException) &&
-        isa(ex.captured, Distributed.CapturedException) &&
-          isa(ex.captured.ex, Genie.Exceptions.RuntimeException)
+        hasfield(typeof(ex), :captured) && isa(ex.captured, Distributed.CapturedException) &&
+          hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, Genie.Exceptions.RuntimeException)
 
       @error ex.captured.ex
       return Genie.Router.error(ex.captured.ex.code, ex.captured.ex.message, Genie.Router.response_mime(),
@@ -292,7 +292,11 @@ function setup_ws_handler(req::HTTP.Request, ws_client) :: Nothing
       write(ws_client, String(Distributed.@fetch handle_ws_request(req, String(readavailable(ws_client)), ws_client)))
     end
   catch ex
-    @error ex
+    if isa(ex, Distributed.RemoteException) &&
+      hasfield(typeof(ex), :captured) && isa(ex.captured, Distributed.CapturedException) &&
+        hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, Genie.Exceptions.RuntimeException)
+      @error ex.captured.ex
+    end
   end
 
   nothing

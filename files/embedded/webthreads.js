@@ -5,7 +5,7 @@ Genie.WebChannels.load_channels = function() {
   let port = window.location.port;
   var socket = new Pollymer.Request();
   var channels = Genie.WebChannels;
-  var poll_interval = 1000;
+  var poll_interval = Genie.Settings.webchannels_timeout;
   var server_uri = window.location.protocol + '//' + window.location.hostname + ':' +  port;
 
   channels.channel = socket;
@@ -126,8 +126,8 @@ Genie.WebChannels.messageHandlers.push(function(code, result, headers){
             return value;
           }
         }));
-      } else if (message.startsWith('eval:')) {
-        return Function('"use strict";return (' + message.substring(5) + ')')();
+      } else if (message.startsWith(Genie.Settings.webchannels_eval_command)) {
+        return Function('"use strict";return (' + message.substring(Genie.Settings.webchannels_eval_command.length).trim() + ')')();
       } else {
         window.parse_payload(message);
       }

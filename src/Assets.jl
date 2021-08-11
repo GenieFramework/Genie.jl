@@ -55,11 +55,14 @@ function js_settings(channel::String = Genie.config.webchannels_default_route) :
   settings = Json.JSONParser.json(Dict(
     :server_host                      => Genie.config.server_host,
     :server_port                      => Genie.config.server_port,
+
     :websockets_port                  => Genie.config.websockets_port,
     :webchannels_default_route        => channel,
     :webchannels_subscribe_channel    => Genie.config.webchannels_subscribe_channel,
     :webchannels_unsubscribe_channel  => Genie.config.webchannels_unsubscribe_channel,
     :webchannels_autosubscribe        => Genie.config.webchannels_autosubscribe,
+    :webchannels_eval_command         => Genie.config.webchannels_eval_command,
+    :webchannels_timeout              => Genie.config.webchannels_timeout,
 
     :webthreads_default_route         => Genie.config.webthreads_default_route,
     :webthreads_js_file               => Genie.config.webthreads_js_file,

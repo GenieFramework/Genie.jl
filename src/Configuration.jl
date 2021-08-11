@@ -185,6 +185,8 @@ Base.@kwdef mutable struct Settings
   webchannels_subscribe_channel::String               = "subscribe"
   webchannels_unsubscribe_channel::String             = "unsubscribe"
   webchannels_autosubscribe::Bool                     = true
+  webchannels_eval_command::String                    = ">eval:"
+  webchannels_timeout::Int                            = 1_000
 
   webthreads_default_route::String                    = "__"
   webthreads_js_file::String                          = "webthreads.js"
