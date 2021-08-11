@@ -85,6 +85,8 @@ Genie.WebChannels.messageHandlers.push(function(event){
           return value;
         }
       }));
+    } else if (event.data.startsWith('eval:')) {
+      return Function('"use strict";return (' + event.data.substring(5) + ')')();
     } else {
       window.parse_payload(event.data);
     }

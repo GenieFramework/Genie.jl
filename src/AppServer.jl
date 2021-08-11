@@ -266,7 +266,7 @@ function setup_http_listener(req::HTTP.Request, res::HTTP.Response = HTTP.Respon
 
       @error ex.captured.ex
       return Genie.Router.error(ex.captured.ex.code, ex.captured.ex.message, Genie.Router.response_mime(),
-                              error_info = string(ex.captured.ex.code, " ", ex.captured.ex.info))
+                                error_info = string(ex.captured.ex.code, " ", ex.captured.ex.info))
     end
 
     error_message = string(sprint(showerror, ex), "\n\n")

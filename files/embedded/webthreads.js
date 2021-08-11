@@ -119,7 +119,15 @@ Genie.WebChannels.messageHandlers.push(function(code, result, headers){
     message = result[i].trim();
     try {
       if (message.startsWith('{') && message.endsWith('}')) {
-        window.parse_payload(JSON.parse(message));
+        window.parse_payload(JSON.parse(message, function (key, value) {
+          if (value == "__undefined__") {
+            return undefined;
+          } else {
+            return value;
+          }
+        }));
+      } else if (message.startsWith('eval:')) {
+        return Function('"use strict";return (' + message.substring(5) + ')')();
       } else {
         window.parse_payload(message);
       }
