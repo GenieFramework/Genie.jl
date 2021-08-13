@@ -1,9 +1,9 @@
 module MdHtml
 
-using Genie
-using Markdown
-using YAML
-import Genie.Renderer: vars
+import Reexport, Markdown, YAML
+
+Reexport.@reexport using Genie
+Reexport.@reexport using Genie.Renderer
 
 const MD_SEPARATOR_START = "---"
 const MD_SEPARATOR_END   = "---"

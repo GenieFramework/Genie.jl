@@ -1,7 +1,9 @@
 module Js
 
-import Logging, HTTP
-using Genie, Genie.Renderer
+import Logging, HTTP, Reexport
+
+Reexport.@reexport using Genie
+Reexport.@reexport using Genie.Renderer
 
 const JS_FILE_EXT   = ".jl"
 const TEMPLATE_EXT  = ".jl.js"

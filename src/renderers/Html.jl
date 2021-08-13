@@ -3,9 +3,7 @@ module Html
 import Markdown, Logging, Gumbo, Reexport, OrderedCollections, Millboard, HTTP, YAML
 
 Reexport.@reexport using Genie
-
-import Genie.Renderer
-import Genie.Renderer: vars
+Reexport.@reexport using Genie.Renderer
 Reexport.@reexport using HttpCommon
 
 
@@ -645,6 +643,9 @@ function partial(path::String; context::Module = @__MODULE__, kwvars...) :: Stri
   template(path, partial = true, context = context)
 end
 
+function partial(path::Genie.Renderer.FilePath; context::Module = @__MODULE__, kwvars...)
+  partial(string(path); context = context, kwvars...)
+end
 
 """
     template(path::String; partial::Bool = true, context::Module = @__MODULE__, vars...) :: String

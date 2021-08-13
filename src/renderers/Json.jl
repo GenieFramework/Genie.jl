@@ -1,8 +1,9 @@
 module Json
 
-import JSON3, HTTP
-using Genie, Genie.Renderer
+import JSON3, HTTP, Reexport
 
+Reexport.@reexport using Genie
+Reexport.@reexport using Genie.Renderer
 
 module JSONParser
 
