@@ -57,7 +57,9 @@ Genie.WebChannels.load_channels = function() {
         'message': message,
         'payload': payload
       }));
-    } else {
+    }
+    /*
+    else {
       console.log("WebSocket is not ready");
 
       setTimeout(function() {
@@ -71,6 +73,7 @@ Genie.WebChannels.load_channels = function() {
         sendMessageTo(channel, message, payload)
       }, Genie.Settings.webchannels_timeout);
     }
+    */
   }
 };
 
@@ -116,12 +119,6 @@ Genie.WebChannels.errorHandlers.push(function(event) {
 
 Genie.WebChannels.closeHandlers.push(function(event) {
   console.log("Server closed WebSocket connection");
-  if ( Genie.Settings.webchannels_autosubscribe ) {
-    console.log("Attempting WebSocket reconnection...");
-
-    Genie.WebChannels.socket = new WebSocket(window.location.protocol.replace("http", "ws") + '//' + window.location.hostname + ':' + Genie.WebChannels.port);
-    subscribe();
-  }
 });
 
 Genie.WebChannels.openHandlers.push(function(event) {

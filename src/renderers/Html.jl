@@ -1,6 +1,6 @@
 module Html
 
-import Markdown, Logging, Gumbo, Reexport, OrderedCollections, Millboard, HTTP, YAML
+import EzXML, HTTP, Logging, Markdown, Millboard, OrderedCollections, Reexport, YAML
 
 Reexport.@reexport using Genie
 Reexport.@reexport using Genie.Renderer
@@ -16,8 +16,8 @@ const MARKDOWN_FILE_EXT = [".md", ".jl.md"]
 
 const SUPPORTED_HTML_OUTPUT_FILE_FORMATS = [TEMPLATE_EXT]
 
-const HTMLString = String
-const HTMLParser = Gumbo
+const HTMLString  = String
+const HTMLParser  = EzXML
 
 const NBSP_REPLACEMENT = ("&nbsp;"=>"!!nbsp;;")
 
@@ -30,7 +30,7 @@ const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :articl
                           :del, :ins, :caption, :col, :colgroup, :table, :tbody, :td, :tfoot, :th, :thead, :tr,
                           :button, :datalist, :fieldset, :label, :legend, :meter,
                           :output, :progress, :select, :option, :textarea, :details, :dialog, :menu, :menuitem, :summary,
-                          :slot, :template, :blockquote, :center, :iframe] #TODO: Gumbo has a problem and strips away <template>
+                          :slot, :template, :blockquote, :center, :iframe]
 const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input]
 const CUSTOM_ELEMENTS = [:form, :select]
 const NON_EXPORTED = [:main, :map, :filter]
@@ -48,7 +48,6 @@ const EMBEDDED_JULIA_PLACEHOLDER = "~~~~~|~~~~~"
 export HTMLString, html, doc, doctype
 export @yield, collection, view!, for_each
 export partial, template
-
 
 task_local_storage(:__yield, "")
 
@@ -179,7 +178,12 @@ Converts Julia keyword arguments to HTML attributes with illegal Julia chars.
 """
 function parseattr(attr) :: String
   attr = string(attr)
-  endswith(attr, Genie.config.html_parser_char_at) && (attr = string("@", attr[1:end-(length(Genie.config.html_parser_char_at))]))
+
+  for (k,v) in Genie.config.html_attributes_replacements
+    attr = replace(attr, k=>v)
+  end
+
+  endswith(attr, Genie.config.html_parser_char_at) && (attr = string("v-on:", attr[1:end-(length(Genie.config.html_parser_char_at))]))
   endswith(attr, Genie.config.html_parser_char_column) && (attr = string(":", attr[1:end-(length(Genie.config.html_parser_char_column))]))
 
   attr = replace(attr, Regex(Genie.config.html_parser_char_dash)=>"-")
@@ -333,9 +337,7 @@ end
 
 """
 function parsehtml(input::String; partial::Bool = true) :: String
-  parsehtml(
-    HTMLParser.parsehtml(replace(input, NBSP_REPLACEMENT), preserve_whitespace = false).root,
-    0, partial = partial)
+  parsehtml(HTMLParser.parsehtml(replace(input, NBSP_REPLACEMENT)).root, 0, partial = partial)
 end
 
 
@@ -454,108 +456,143 @@ function safe_attr(attr) :: String
 end
 
 
+function parse_attributes!(elem_attributes, io::IOBuffer) :: IOBuffer
+  attributes = IOBuffer()
+  attributes_keys = String[]
+  attributes_values = String[]
+
+  for (k,v) in elem_attributes
+    # x = v
+    k = string(k) |> lowercase
+    if occursin("\"", v)
+      # we need to escape double quotes but only if it's not embedded Julia code
+      mx = collect(eachmatch(r"\$\((.*?)\)|<%(.*?)%>", string(v)))
+      if ! isempty(mx)
+        index = 1
+        for value in mx
+          value === nothing && continue
+
+          label = "$(EMBEDDED_JULIA_PLACEHOLDER)_$(index)"
+          v = replace(string(v), value.match => label)
+          index += 1
+        end
+
+        if occursin("\"", v) # do we still need to escape double quotes?
+          v = replace(string(v), "\"" => "\\\"") # we need to escape " as this will be inside julia strings
+        end
+
+        # now we need to put back the embedded Julia
+        index = 1
+        for value in mx
+          value === nothing && continue
+
+          label = "$(EMBEDDED_JULIA_PLACEHOLDER)_$(index)"
+          v = replace(string(v), label => value.match)
+          index += 1
+        end
+      elseif occursin("\"", v) # do we still need to escape double quotes?
+        v = replace(string(v), "\"" => "'") #
+      end
+    end
+
+    if startswith(k, raw"$") # do not process embedded julia code
+      print(attributes, k[2:end], ", ") # strip the $, this is rendered directly in Julia code
+      continue
+    end
+
+    if occursin("-", k) ||
+        occursin(":", k) ||
+        occursin("@", k) ||
+        occursin(".", k) ||
+        occursin("for", k)
+
+      push!(attributes_keys, Symbol(k) |> repr)
+
+      v = string(v) |> repr
+      occursin(raw"\$", v) && (v = replace(v, raw"\$"=>raw"$"))
+      push!(attributes_values, v)
+    else
+      print(attributes, """$k="$v" """, ", ")
+    end
+  end
+
+  attributes_string = String(take!(attributes))
+  endswith(attributes_string, ", ") && (attributes_string = attributes_string[1:end-2])
+
+  print(io, attributes_string)
+  ! isempty(attributes_string) && ! isempty(attributes_keys) && print(io, ", ")
+  ! isempty(attributes_keys) &&
+    print(io, "; NamedTuple{($(join(attributes_keys, ", "))$(length(attributes_keys) == 1 ? ", " : ""))}(($(join(attributes_values, ", "))$(length(attributes_keys) == 1 ? ", " : "")))...")
+
+  io
+end
+
+
 """
     parsehtml(elem, output, depth; partial = true) :: String
 
 Parses a HTML tree structure into a `string` of Julia code.
 """
-function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool = true) :: String
+function parsehtml(elem::HTMLParser.Node, depth::Int = 0; partial::Bool = true) :: String
   io = IOBuffer()
 
-  tag_name = denormalize_element(string(HTMLParser.tag(elem)))
+  tag_name = denormalize_element(string(elem.name))
 
   invalid_tag = partial && (tag_name == "html" || tag_name == "head" || tag_name == "body")
 
-  if tag_name == "script" && in("type", collect(keys(HTMLParser.attrs(elem)))) && HTMLParser.attrs(elem)["type"] == "julia/eval"
-    isempty(HTMLParser.children(elem)) || print(io, repeat("\t", depth), string(HTMLParser.children(elem)[1].text), "\n")
+  if tag_name == "script" && haskey(elem, "type") && elem["type"] == "julia/eval"
+    if ! isempty(HTMLParser.nodes(elem))
+      print(io, repeat("\t", depth), string(HTMLParser.nodes(elem)[1] |> HTMLParser.nodecontent), "\n")
+    end
   else
     mdl = isdefined(@__MODULE__, Symbol(tag_name)) ? string(@__MODULE__, ".") : ""
     print(io, repeat("\t", depth), ( invalid_tag ? "" : "$mdl$(tag_name)(" ) )
 
-    attributes = IOBuffer()
-    attributes_keys = String[]
-    attributes_values = String[]
+    if (elem.type == HTMLParser.ELEMENT_NODE)
+      attrs_dict = Dict{String,String}()
+      for a in HTMLParser.attributes(elem)
+        try
+          attrs_dict[a.name] = elem[a.name]
+        catch ex
+          parts = split(string(a), '=')
 
-    for (k,v) in HTMLParser.attrs(elem)
-      # x = v
-      k = string(k) |> lowercase
-      if occursin("\"", v)
-        # we need to escape double quotes but only if it's not embedded Julia code
-        mx = collect(eachmatch(r"\$\((.*?)\)|<%(.*?)%>", string(v)))
-        if ! isempty(mx)
-          index = 1
-          for value in mx
-            value === nothing && continue
-
-            label = "$(EMBEDDED_JULIA_PLACEHOLDER)_$(index)"
-            v = replace(string(v), value.match => label)
-            index += 1
+          if length(parts) == 2
+            val = strip(parts[2])
+            (startswith(val, '"') || startswith(val, "'")) && (val = val[2:end])
+            (endswith(val, '"') || endswith(val, "'")) && (val = val[1:end-1])
+            attrs_dict[strip(parts[1])] = val
+          elseif length(parts) == 1
+            attrs_dict[strip(parts[1])] = strip(parts[1])
+          else
+            error("Invalid attribute $(string(a))")
           end
-
-          if occursin("\"", v) # do we still need to escape double quotes?
-            v = replace(string(v), "\"" => "\\\"") # we need to escape " as this will be inside julia strings
-          end
-
-          # now we need to put back the embedded Julia
-          index = 1
-          for value in mx
-            value === nothing && continue
-
-            label = "$(EMBEDDED_JULIA_PLACEHOLDER)_$(index)"
-            v = replace(string(v), label => value.match)
-            index += 1
-          end
-        elseif occursin("\"", v) # do we still need to escape double quotes?
-          v = replace(string(v), "\"" => "'") #
         end
       end
 
-      if startswith(k, raw"$") # do not process embedded julia code
-        print(attributes, k[2:end], ", ") # strip the $, this is rendered directly in Julia code
-        continue
-      end
-
-      if occursin("-", k) ||
-          occursin(":", k) ||
-          occursin("@", k) ||
-          occursin(".", k) ||
-          occursin("for", k)
-
-        push!(attributes_keys, Symbol(k) |> repr)
-
-        v = string(v) |> repr
-        occursin(raw"\$", v) && (v = replace(v, raw"\$"=>raw"$"))
-        push!(attributes_values, v)
-      else
-        print(attributes, """$k="$v" """, ", ")
-      end
+      io = parse_attributes!(attrs_dict, io)
     end
-
-    attributes_string = String(take!(attributes))
-    endswith(attributes_string, ", ") && (attributes_string = attributes_string[1:end-2])
-
-    print(io, attributes_string)
-    ! isempty(attributes_string) && ! isempty(attributes_keys) && print(io, ", ")
-    ! isempty(attributes_keys) &&
-      print(io, "; NamedTuple{($(join(attributes_keys, ", "))$(length(attributes_keys) == 1 ? ", " : ""))}(($(join(attributes_values, ", "))$(length(attributes_keys) == 1 ? ", " : "")))...")
 
     invalid_tag || print(io, ")")
 
     inner = ""
-    if ! isempty(HTMLParser.children(elem))
-      children_count = size(HTMLParser.children(elem))[1]
+    if ! isempty(HTMLParser.nodes(elem))
+      children_count = HTMLParser.countnodes(elem)
 
-      invalid_tag ? print(io, " \n") : print(io, " do;[\n")
+      invalid_tag ? print(io, "") : print(io, " do;[\n")
 
       idx = 0
-      for child in HTMLParser.children(elem)
+      for child in HTMLParser.nodes(elem)
         idx += 1
-        inner *= isa(child, HTMLParser.HTMLText) ? parsehtml(child, depth + 1) : parsehtml(child, depth + 1, partial = partial)
+        inner *= (child.type == HTMLParser.TEXT_NODE || child.type == HTMLParser.CDATA_SECTION_NODE ||
+                    child.type == HTMLParser.COMMENT_NODE) ?
+                  parsenode(child, depth + 1) :
+                  parsehtml(child, depth + 1, partial = partial)
         if idx < children_count
-          if  ( isa(child, HTMLParser.HTMLText) ) ||
-              ( isa(child, HTMLParser.HTMLElement) &&
-              ( ! in("type", collect(keys(HTMLParser.attrs(child)))) ||
-                ( in("type", collect(keys(HTMLParser.attrs(child)))) && (HTMLParser.attrs(child)["type"] != "julia/eval") ) ) )
+          if  ( child.type == HTMLParser.TEXT_NODE || child.type == HTMLParser.CDATA_SECTION_NODE ||
+                child.type == HTMLParser.COMMENT_NODE) ||
+              ( child.type == HTMLParser.ELEMENT_NODE &&
+              ( ! haskey(elem, "type") ||
+                ( haskey(elem, "type") && (elem["type"] == "julia/eval") ) ) )
               isempty(inner) || (inner = string(repeat("\t", depth), inner, "\n"))
           end
         end
@@ -563,10 +600,10 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
 
       if ! isempty(inner)
         endswith(inner, "\n\n") && (inner = inner[1:end-2])
-        print(io, inner, repeat("\t", depth))
+        print(io, inner, repeat("\t", depth), " ; ")
       end
 
-      invalid_tag ? print(io, "\n") : print(io, ";]end\n")
+      invalid_tag ? print(io, "") : print(io, " ]end\n")
     end
 
   end
@@ -575,10 +612,12 @@ function parsehtml(elem::HTMLParser.HTMLElement, depth::Int = 0; partial::Bool =
 end
 
 
-function parsehtml(elem::HTMLParser.HTMLText, depth::Int = 0; partial::Bool = true) :: String
-  content = elem.text
+function parsenode(elem::HTMLParser.Node, depth::Int = 0; partial::Bool = true) :: String
+  content = elem |> HTMLParser.nodecontent
   endswith(content, "\"") && (content *= Char(0x0))
   content = replace(content, NBSP_REPLACEMENT[2]=>NBSP_REPLACEMENT[1])
+  isempty(strip(content)) && return ""
+  elem.type == HTMLParser.COMMENT_NODE && return string(repeat("\t", depth), "\"\"\"<!-- $(content) -->\"\"\"")
   string(repeat("\t", depth), "\"\"\"$(content)\"\"\"")
 end
 

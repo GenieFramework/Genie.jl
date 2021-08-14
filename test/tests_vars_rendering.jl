@@ -41,7 +41,7 @@
     @testset "String no layout with vars" begin
       r = html(htmlviewfile_withvars(), greeting = greeting, name = name)
 
-      @test String(r.body) == "<!DOCTYPE html><html><head></head><body><h1>$greeting</h1><div><p>This is a $name test</p></div><hr$(Genie.config.html_parser_close_tag)></body></html>"
+      @test String(r.body) == "<!DOCTYPE html><html><body><h1>$greeting</h1><div><p>This is a $name test</p></div><hr$(Genie.config.html_parser_close_tag)></body></html>"
     end;
 
     @testset "String with layout with vars" begin

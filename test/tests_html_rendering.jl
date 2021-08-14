@@ -78,7 +78,7 @@
         rm("build", force = true, recursive = true)
         r = html(htmlviewfile(), forceparse = true)
 
-        @test String(r.body) == "<!DOCTYPE html><html><head></head><body><h1>$greeting</h1><div><p>This is a $name test</p></div><hr$(Genie.config.html_parser_close_tag)></body></html>"
+        @test String(r.body) == "<!DOCTYPE html><html><body><h1>$greeting</h1><div><p>This is a $name test</p></div><hr$(Genie.config.html_parser_close_tag)></body></html>"
       end;
 
       @testset "String with layout" begin
