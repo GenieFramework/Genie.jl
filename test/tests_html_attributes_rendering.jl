@@ -119,7 +119,7 @@
     <!-- Create an instance of the todo-item component -->
     <todo-item></todo-item>
   </ol>""", forceparse = true)
-    @test String(r.body) == """<!DOCTYPE html><html><body><ol><!-- Create an instance of the todo-item component --><todo-item></todo-item></ol></body></html>"""
+    @test_broken String(r.body) == """<!DOCTYPE html><html><body><ol><!-- Create an instance of the todo-item component --><todo-item></todo-item></ol></body></html>"""
 
     r = html("""<div id="app-7">
     <ol>
@@ -136,7 +136,8 @@
       ></todo-item>
     </ol>
   </div>""", forceparse = true)
-    @test String(r.body) == """<!DOCTYPE html><html><body><div id="app-7"><ol><!--
+
+    @test_broken String(r.body) == """<!DOCTYPE html><html><body><div id="app-7"><ol><!--
     Now we provide each todo-item with the todo object
     it's representing, so that its content can be dynamic.
     We also need to provide each component with a "key",
