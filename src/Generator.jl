@@ -232,37 +232,6 @@ function write_secrets_file(app_path::String = ".") :: Nothing
   nothing
 end
 
-"""
-    migrate_secrets_file(app_path=".")
-
-Replace the previous content of `config/secrets.jl` with the new syntax but the same token.
-
-Specifically, the previous syntax of the file is the following, which is now deprecated:
-
-    const SECRET_TOKEN = "token"
-
-This syntax is replaced by the new syntax:
-
-    Genie.secret_token!("token")
-"""
-function migrate_secrets_file(app_path::String = ".") :: Nothing
-  secrets_path = joinpath(app_path, Genie.config.path_config, Genie.SECRETS_FILE_NAME)
-  if isfile(secrets_path)
-    match_deprecated = match(r"SECRET_TOKEN\s*=\s*\"(.*)\"", readline(secrets_path))
-    if match_deprecated != nothing # does the file use the deprecated syntax?
-      open(secrets_path, "w") do f
-        write(f, """Genie.secret_token!("$(match_deprecated.captures[1])") """)
-      end # replace the previous content of the file
-      @info "Successfully migrated $(secrets_path) to a valid syntax."
-    else
-      error("No migration possible; $(secrets_path) is not using a migrate-able syntax.")
-    end
-  else
-    error("No migration possible; $(secrets_path) is not a file.")
-  end
-  return nothing
-end
-
 
 """
     fullstack_app(app_path::String = ".") :: Nothing
@@ -398,6 +367,7 @@ function write_app_custom_files(path::String, app_path::String) :: Nothing
     pwd() == joinpath(@__DIR__, "bin") && cd(@__DIR__) # allow starting app from bin/ dir
 
     using $(moduleinfo[1])
+    push!(Base.modules_warned_for, Base.PkgId($(moduleinfo[1])))
     $(moduleinfo[1]).main()
     """)
   end

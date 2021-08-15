@@ -3,7 +3,7 @@ Handles WebSockets communication logic.
 """
 module WebChannels
 
-import HTTP, Distributed, Logging
+import HTTP, Distributed, Logging, JSON3
 import Genie, Genie.Renderer
 
 const ClientId = UInt # web socket hash
@@ -27,6 +27,10 @@ mutable struct ChannelMessage
   client::ClientId
   message::String
   payload::MessagePayload
+end
+
+function JSON3.StructTypes.StructType(::Type{T}) where {T<:ChannelMessage}
+  JSON3.StructTypes.Struct()
 end
 
 const CLIENTS = ChannelClientsCollection()

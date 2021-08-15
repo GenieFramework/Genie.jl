@@ -34,9 +34,7 @@ function newresource(resource_name::Union{String,Symbol}; path::String = ".", pl
 
   try
     Core.eval(context, :(SearchLight.Generator.newresource(uppercasefirst($resource_name))))
-  catch ex
-    # @error ex
-    @warn "Skipping SearchLight"
+  catch
   end
 
   load_resources()
