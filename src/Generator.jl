@@ -248,11 +248,11 @@ end
 
 
 """
-    new(app_name::String, app_path::String = abspath(app_name), autostart::Bool = true) :: Nothing
+    minimal(app_name::String, app_path::String = abspath(app_name), autostart::Bool = true) :: Nothing
 
 Creates a minimal Genie app.
 """
-function new(app_name::String, app_path::String = "", autostart::Bool = true) :: Nothing
+function minimal(app_name::String, app_path::String = "", autostart::Bool = true) :: Nothing
   app_name = validname(app_name)
   app_path = abspath(app_name)
 

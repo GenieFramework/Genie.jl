@@ -133,13 +133,12 @@ julia> Genie.newapp("MyGenieApp")
 2019-08-06 16:54:32:DEBUG:Main: Web Server running at http://127.0.0.1:8000
 ```
 """
-const newapp = Generator.newapp
-
+const newapp  = Generator.newapp
+const new     = Generator.newapp
 
 const newapp_webservice = Generator.newapp_webservice
 const newapp_mvc = Generator.newapp_mvc
 const newapp_fullstack = Generator.newapp_fullstack
-const new = Generator.new
 
 
 """

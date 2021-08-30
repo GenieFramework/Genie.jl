@@ -15,6 +15,7 @@ export route, routes, channel, channels, serve_static_file
 export GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
 export tolink, linkto, responsetype, toroute
 export params, query, post, headers, request
+export ispayload
 
 Reexport.@reexport using HttpCommon
 
@@ -58,7 +59,8 @@ mutable struct Route
   context::Module
 end
 
-Route(; method::String = GET, path::String = "", action::Function = (() -> error("Route not set")), name::Union{Symbol,Nothing} = nothing, context::Module = @__MODULE__) = Route(method, path, action, name, context)
+Route(; method::String = GET, path::String = "", action::Function = (() -> error("Route not set")),
+        name::Union{Symbol,Nothing} = nothing, context::Module = @__MODULE__) = Route(method, path, action, name, context)
 
 
 """
@@ -110,6 +112,14 @@ Base.getindex(params::Pair, keys...) = getindex(Dict(params), keys...)
 True if the request can carry a payload - that is, it's a `POST`, `PUT`, or `PATCH` request
 """
 ispayload(req::HTTP.Request) = req.method in [POST, PUT, PATCH]
+
+
+"""
+    ispayload()
+
+True if the request can carry a payload - that is, it's a `POST`, `PUT`, or `PATCH` request
+"""
+ispayload() = params()[:REQUEST].method in [POST, PUT, PATCH]
 
 
 """

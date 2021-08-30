@@ -19,7 +19,7 @@ end
 Returns the `flash` dict object associated with the current HTTP request.
 """
 function flash()
-  Genie.Requests.payload()[Genie.PARAMS_FLASH_KEY]
+  get(Genie.Requests.payload(), Genie.PARAMS_FLASH_KEY, "")
 end
 
 

@@ -39,7 +39,7 @@ function walk_dir(dir, paths = String[]; only_extensions = ["jl"], only_files = 
 
     if isdir(full_path)
       (! only_files || only_dirs) && push!(paths, full_path)
-      walk_dir(full_path, paths)
+      walk_dir(full_path, paths; only_extensions = only_extensions)
     else
       only_dirs && continue
 
