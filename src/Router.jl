@@ -341,9 +341,10 @@ function to_link(route_name::Symbol, d::Dict{Symbol,T}; preserve_query::Bool = t
 
     if startswith(part, ":")
       var_name = split(part, "::")[1][2:end] |> Symbol
-      ( isempty(d) || ! haskey(d, var_name) ) && error("Route $route_name expects param $var_name")
+      ( isempty(d) || ! haskey(d, var_name) ) && Base.error("Route $route_name expects param $var_name")
       push!(result, pathify(d[var_name]))
       Base.delete!(d, var_name)
+
       continue
     end
 

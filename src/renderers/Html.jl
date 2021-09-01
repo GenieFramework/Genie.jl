@@ -337,7 +337,9 @@ end
 
 """
 function parsehtml(input::String; partial::Bool = true) :: String
-  parsehtml(HTMLParser.parsehtml(replace(input, NBSP_REPLACEMENT)).root, 0, partial = partial)
+  content = replace(input, NBSP_REPLACEMENT)
+  isempty(content) && return ""
+  parsehtml(HTMLParser.parsehtml(content).root, 0, partial = partial)
 end
 
 
