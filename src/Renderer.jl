@@ -298,7 +298,12 @@ function view_file_info(path::String, supported_extensions::Vector{String}) :: T
     end
   end
 
-  isfile(_path) || error("Template file \"$path\" with extensions $supported_extensions does not exist")
+  if ! isfile(_path)
+    error_message = length(supported_extensions) == 1 ?
+                      """Template file "$path$(supported_extensions[1])" does not exist""" :
+                      """Template file "$path" with extensions $supported_extensions does not exist"""
+    error(error_message)
+  end
 
   return _path, _extension
 end

@@ -22,7 +22,12 @@ function get_template(path::String; context::Module = @__MODULE__, vars...) :: F
 
   path, extension = Genie.Renderer.view_file_info(path, SUPPORTED_JS_OUTPUT_FILE_FORMATS)
 
-  isfile(path) || error("JS file \"$orig_path\" with extensions $SUPPORTED_JS_OUTPUT_FILE_FORMATS does not exist")
+  if ! isfile(path)
+    error_message = length(SUPPORTED_JS_OUTPUT_FILE_FORMATS) == 1 ?
+                    """JS file "$orig_path$(SUPPORTED_JS_OUTPUT_FILE_FORMATS[1])" does not exist""" :
+                    """JS file "$orig_path" with extensions $SUPPORTED_JS_OUTPUT_FILE_FORMATS does not exist"""
+    error(error_message)
+  end
 
   f_name = Genie.Renderer.function_name(path) |> Symbol
   mod_name = Genie.Renderer.m_name(path) * ".jl"
