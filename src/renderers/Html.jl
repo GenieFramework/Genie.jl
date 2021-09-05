@@ -76,7 +76,7 @@ function normal_element(children::Union{String,Vector{String}}, elem::Any, args:
   children = join(children)
 
   idx = findfirst(x -> x == :inner, getindex.(attrs, 1))
-  if !isnothing(idx)
+  if idx !== nothing
     children *= join(attrs[idx][2])
     deleteat!(attrs, idx)
   end
@@ -84,9 +84,18 @@ function normal_element(children::Union{String,Vector{String}}, elem::Any, args:
   ii = (x -> x isa Symbol && occursin(Genie.config.html_parser_char_dash, "$x")).(args)
   args[ii] .= Symbol.(replace.(string.(args[ii]), Ref(Genie.config.html_parser_char_dash=>"-")))
 
+  htmlsourceindent = extractindent!(attrs)
+
   elem = normalize_element(string(elem))
   attribs = rstrip(attributes(attrs))
-  string("<", elem, (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), ">", prepare_template(children), "</", elem, ">")
+
+  string(
+    htmlsourceindent, # indentation opening tag
+    "<", elem, (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), ">", (Genie.config.format_html_output ? "\n" : ""), # opening tag
+    prepare_template(children), (Genie.config.format_html_output ? "\n" : ""), # content/children
+    htmlsourceindent, # indentation closing tag
+    "</", elem, ">", (Genie.config.format_html_output ? "\n" : "") # closing tag
+  )
 end
 function normal_element(elem::Any, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   normal_element("", string(elem), attrs...)
@@ -100,9 +109,9 @@ function normal_element(elems::Vector, elem::Any, args = [], attrs...) :: HTMLSt
     if isa(e, Vector)
       print(io, join(e))
     elseif isa(e, Function)
-      print(io, e(), "\n")
+      print(io, e())
     else
-      print(io, e, "\n")
+      print(io, e)
     end
   end
 
@@ -111,8 +120,27 @@ end
 function normal_element(_::Nothing, __::Any) :: HTMLString
   ""
 end
-function normal_element(children::Vector{T} where T, elem::Any, args::Vector{T} where T) :: HTMLString
+function normal_element(children::Vector{T}, elem::Any, args::Vector{T})::HTMLString where {T}
   normal_element(join([(isa(f, Function) ? f() : string(f)) for f in children]), elem, args)
+end
+
+
+function extractindent!(attrs) :: String
+  indent = if Genie.config.format_html_output
+    htmlsidx = findfirst(x -> x == :htmlsourceindent, getindex.(attrs, 1))
+    if htmlsidx !== nothing
+      indent = Base.parse(Int, attrs[htmlsidx][2])
+      deleteat!(attrs, htmlsidx)
+
+      indent
+    else
+      0
+    end
+  else
+    0
+  end
+
+  repeat(Genie.config.format_html_indentation_string, indent)
 end
 
 
@@ -220,8 +248,12 @@ end
 Generates a void HTML element in the form <...>
 """
 function void_element(elem::String, args = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+  htmlsourceindent = extractindent!(attrs)
   attribs = rstrip(attributes(attrs))
-  string("<", normalize_element(elem), (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), Genie.config.html_parser_close_tag, ">")
+  string(
+    htmlsourceindent, # tag indentation
+    "<", normalize_element(elem), (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), Genie.config.html_parser_close_tag, ">", (Genie.config.format_html_output ? "\n" : "")
+  )
 end
 
 
@@ -255,8 +287,8 @@ end
 """
 Outputs document's doctype.
 """
-function doctype(doctype::Symbol = :html) :: HTMLString
-  "<!DOCTYPE $doctype>"
+@inline function doctype(doctype::Symbol = :html) :: HTMLString
+  string("<!DOCTYPE $doctype>", Genie.config.format_html_output ? "\n" : "")
 end
 
 
@@ -264,10 +296,10 @@ end
 Outputs document's doctype.
 """
 function doc(html::String) :: HTMLString
-  doctype() * "\n" * html
+  string(doctype(), html)
 end
 function doc(doctype::Symbol, html::String) :: HTMLString
-  doctype(doctype) * "\n" * html
+  string(doctype(doctype), html)
 end
 
 
@@ -339,7 +371,7 @@ end
 function parsehtml(input::String; partial::Bool = true) :: String
   content = replace(input, NBSP_REPLACEMENT)
   isempty(content) && return ""
-  parsehtml(HTMLParser.parsehtml(content).root, 0, partial = partial)
+  parsehtml(HTMLParser.parsehtml(content).root, partial = partial)
 end
 
 
@@ -466,7 +498,7 @@ function parse_attributes!(elem_attributes, io::IOBuffer) :: IOBuffer
   for (k,v) in elem_attributes
     # x = v
     k = string(k) |> lowercase
-    if occursin("\"", v)
+    if isa(v, AbstractString) && occursin("\"", v)
       # we need to escape double quotes but only if it's not embedded Julia code
       mx = collect(eachmatch(r"\$\((.*?)\)|<%(.*?)%>", string(v)))
       if ! isempty(mx)
@@ -531,11 +563,11 @@ end
 
 
 """
-    parsehtml(elem, output, depth; partial = true) :: String
+    parsehtml(elem, output; partial = true) :: String
 
 Parses a HTML tree structure into a `string` of Julia code.
 """
-function parsehtml(elem::HTMLParser.Node, depth::Int = 0; partial::Bool = true) :: String
+function parsehtml(elem::HTMLParser.Node; partial::Bool = true, indent = 0) :: String
   io = IOBuffer()
 
   tag_name = denormalize_element(string(elem.name))
@@ -544,14 +576,15 @@ function parsehtml(elem::HTMLParser.Node, depth::Int = 0; partial::Bool = true) 
 
   if tag_name == "script" && haskey(elem, "type") && elem["type"] == "julia/eval"
     if ! isempty(HTMLParser.nodes(elem))
-      print(io, repeat("\t", depth), string(HTMLParser.nodes(elem)[1] |> HTMLParser.nodecontent), "\n")
+      print(io, string(HTMLParser.nodes(elem)[1] |> HTMLParser.nodecontent), "\n")
     end
   else
     mdl = isdefined(@__MODULE__, Symbol(tag_name)) ? string(@__MODULE__, ".") : ""
-    print(io, repeat("\t", depth), ( invalid_tag ? "" : "$mdl$(tag_name)(" ) )
+
+    invalid_tag || print(io, "$mdl$(tag_name)(" )
 
     if (elem.type == HTMLParser.ELEMENT_NODE)
-      attrs_dict = Dict{String,String}()
+      attrs_dict = Dict{String,Any}()
       for a in HTMLParser.attributes(elem)
         try
           attrs_dict[a.name] = elem[a.name]
@@ -571,10 +604,12 @@ function parsehtml(elem::HTMLParser.Node, depth::Int = 0; partial::Bool = true) 
         end
       end
 
+      ! invalid_tag && Genie.config.format_html_output && (attrs_dict["htmlsourceindent"] = indent)
+
       io = parse_attributes!(attrs_dict, io)
     end
 
-    invalid_tag || print(io, ")")
+    invalid_tag || print(io, " )")
 
     inner = ""
     if ! isempty(HTMLParser.nodes(elem))
@@ -583,26 +618,27 @@ function parsehtml(elem::HTMLParser.Node, depth::Int = 0; partial::Bool = true) 
       invalid_tag ? print(io, "") : print(io, " do;[\n")
 
       idx = 0
+      indent += 1
       for child in HTMLParser.nodes(elem)
         idx += 1
         inner *= (child.type == HTMLParser.TEXT_NODE || child.type == HTMLParser.CDATA_SECTION_NODE ||
                     child.type == HTMLParser.COMMENT_NODE) ?
-                  parsenode(child, depth + 1) :
-                  parsehtml(child, depth + 1, partial = partial)
+                  parsenode(child) :
+                  parsehtml(child; partial = partial, indent = indent)
         if idx < children_count
           if  ( child.type == HTMLParser.TEXT_NODE || child.type == HTMLParser.CDATA_SECTION_NODE ||
                 child.type == HTMLParser.COMMENT_NODE) ||
               ( child.type == HTMLParser.ELEMENT_NODE &&
               ( ! haskey(elem, "type") ||
                 ( haskey(elem, "type") && (elem["type"] == "julia/eval") ) ) )
-              isempty(inner) || (inner = string(repeat("\t", depth), inner, "\n"))
+              isempty(inner) || (inner = string(inner, "\n"))
           end
         end
       end
 
       if ! isempty(inner)
         endswith(inner, "\n\n") && (inner = inner[1:end-2])
-        print(io, inner, repeat("\t", depth), " ; ")
+        print(io, inner, " ; ")
       end
 
       invalid_tag ? print(io, "") : print(io, " ]end\n")
@@ -614,13 +650,13 @@ function parsehtml(elem::HTMLParser.Node, depth::Int = 0; partial::Bool = true) 
 end
 
 
-function parsenode(elem::HTMLParser.Node, depth::Int = 0; partial::Bool = true) :: String
+function parsenode(elem::HTMLParser.Node; partial::Bool = true) :: String
   content = elem |> HTMLParser.nodecontent
   endswith(content, "\"") && (content *= Char(0x0))
   content = replace(content, NBSP_REPLACEMENT[2]=>NBSP_REPLACEMENT[1])
   isempty(strip(content)) && return ""
-  elem.type == HTMLParser.COMMENT_NODE && return string(repeat("\t", depth), "\"\"\"<!-- $(content) -->\"\"\"")
-  string(repeat("\t", depth), "\"\"\"$(content)\"\"\"")
+  elem.type == HTMLParser.COMMENT_NODE && return string("\"\"\"<!-- $(content) -->\"\"\"")
+  string("\"\"\"$(content)\"\"\"")
 end
 
 
@@ -719,8 +755,9 @@ function read_template_file(file_path::String; extension = TEMPLATE_EXT) :: Stri
   """)
 
   open(file_path) do f
-    for line in enumerate(eachline(f))
-      print(io, parsetags(line), "\n")
+    for line in eachline(f)
+      isempty(strip(line)) && continue
+      print(io, parse_embed_tags(line), "\n")
     end
   end
 
@@ -748,7 +785,7 @@ end
 Parses a HTML string into Julia code.
 """
 function parse_string(data::String; partial::Bool = true, extension = TEMPLATE_EXT) :: String
-  parse(parsetags(data), partial = partial)
+  parse(parse_embed_tags(data), partial = partial)
 end
 
 
@@ -757,17 +794,7 @@ function parse(input::String; partial::Bool = true) :: String
 end
 
 
-"""
-    parsetags(line::Tuple{Int,String}, strip_close_tag = false) :: String
-
-Parses special HTML+Julia tags.
-"""
-function parsetags(line::Tuple{Int,String}) :: String
-  parsetags(line[2])
-end
-
-
-function parsetags(code::String) :: String
+function parse_embed_tags(code::String) :: String
   replace(
     replace(code, "<%"=>"""<script type="julia/eval">"""),
     "%>"=>"""</script>""")

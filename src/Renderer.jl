@@ -2,7 +2,7 @@ module Renderer
 
 export respond, redirect, render
 
-import HTTP, Markdown, Logging, FilePathsBase, SHA
+import EzXML, FilePathsBase, HTTP, JuliaFormatter, Logging, Markdown, SHA
 import Genie
 
 const DEFAULT_CHARSET = "charset=utf-8"
@@ -368,7 +368,14 @@ function build_module(content::String, path::String, mod_name::String; output_pa
 
   open(module_path, "w") do io
     output_path && write(io, "# $path \n\n")
-    write(io, content)
+    write(io,
+      Genie.config.format_julia_builds ?
+      (try
+        JuliaFormatter.format_text(content)
+      catch ex
+        @error ex
+        content
+      end) : content)
   end
 
   module_path

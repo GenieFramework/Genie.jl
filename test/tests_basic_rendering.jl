@@ -15,9 +15,9 @@ const content2 = "efgh"
     @test String(r.body) == ""
   end;
 
-  @testset "Empty string force parse" begin
-    @test_throws ArgumentError html("", forceparse = true)
-  end;
+  # @testset "Empty string force parse" begin
+  #   @test_throws ArgumentError html("", forceparse = true)
+  # end;
 
 
   @testset "String no spaces" begin

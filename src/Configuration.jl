@@ -211,6 +211,10 @@ Base.@kwdef mutable struct Settings
   base_path::String                                   = "/"
 
   features_peerinfo::Bool                             = false
+
+  format_julia_builds::Bool                           = true
+  format_html_output::Bool                            = true
+  format_html_indentation_string::String              = "  "
 end
 
 end
