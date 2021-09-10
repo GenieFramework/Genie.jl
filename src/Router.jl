@@ -424,7 +424,7 @@ end
 Matches the invoked URL to the corresponding route, sets up the execution environment and invokes the controller method.
 """
 function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: HTTP.Response
-  endswith(req.target, "/") && (req.target = req.target[1:end-1])
+  endswith(req.target, "/") && req.target != "/" && (req.target = req.target[1:end-1])
   uri = HTTP.URIs.URI(req.target)
 
   for r in routes()
