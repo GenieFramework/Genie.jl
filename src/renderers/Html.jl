@@ -395,10 +395,11 @@ function Genie.Renderer.render(::Type{MIME"text/html"}, viewfile::Genie.Renderer
 end
 
 
-function html(resource::Genie.Renderer.ResourcePath, action::Genie.Renderer.ResourcePath; layout::Genie.Renderer.ResourcePath = DEFAULT_LAYOUT_FILE,
+function html(resource::Genie.Renderer.ResourcePath, action::Genie.Renderer.ResourcePath;
+                layout::Union{Genie.Renderer.ResourcePath,Nothing} = DEFAULT_LAYOUT_FILE,
                 context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
   html(Genie.Renderer.Path(joinpath(Genie.config.path_resources, string(resource), Renderer.VIEWS_FOLDER, string(action)));
-        layout = Genie.Renderer.Path(joinpath(Genie.config.path_app, LAYOUTS_FOLDER, string(layout))),
+        layout = (layout === nothing ? nothing : Genie.Renderer.Path(joinpath(Genie.config.path_app, LAYOUTS_FOLDER, string(layout)))),
         context = context, status = status, headers = headers, vars...)
 end
 

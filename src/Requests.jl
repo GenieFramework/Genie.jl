@@ -254,7 +254,7 @@ end
 
 
 """
-    function peer()
+    peer()
 
 Returns information about the requesting client's IP address as a NamedTuple{(:ip,), Tuple{String}}
 If the client IP address can not be retrieved, the `ip` field will return an empty string `""`.
@@ -274,5 +274,19 @@ function peer() :: NamedTuple{(:ip,:port), Tuple{String,String}}
   end
 end
 
+
+"""
+    isajax(req::HTTP.Request = getrequest()) :: Bool
+
+Attempts to determine if a request is Ajax by sniffing the headers.
+"""
+function isajax(req::HTTP.Request = getrequest()) :: Bool
+  for (k,v) in getheaders(req)
+    k = replace(k, r"_|-"=>"") |> lowercase
+    occursin("requestedwith", k) && occursin("xmlhttp", lowercase(v)) && return true
+  end
+
+  return false
+end
 
 end
