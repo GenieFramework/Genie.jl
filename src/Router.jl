@@ -424,6 +424,7 @@ end
 Matches the invoked URL to the corresponding route, sets up the execution environment and invokes the controller method.
 """
 function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: HTTP.Response
+  endswith(req.target, "/") && (req.target = req.target[1:end-1])
   uri = HTTP.URIs.URI(req.target)
 
   for r in routes()
@@ -431,7 +432,6 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
     (r.method == req.method) || (r.method == GET && req.method == HEAD) || continue
 
     parsed_route, param_names, param_types = Genie.Configuration.isprod() ? get!(ROUTE_CACHE, r.path, parse_route(r.path, context = r.context)) : parse_route(r.path, context = r.context)
-
     regex_route = try
       Regex("^" * parsed_route * "\$")
     catch
