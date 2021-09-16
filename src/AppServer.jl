@@ -155,18 +155,18 @@ function startup(port::Int, host::String = Genie.config.server_host;
 
   if Genie.config.websockets_server && port != ws_port
     if isrunning(:websockets)
-      @warn("✖️ WebSockets server is already up and running. Skipping.")
-    else
-      upwebsockets(host; ws_port = ws_port, verbose = verbose, ratelimit = ratelimit, wsserver = wsserver, ssl_config = ssl_config, http_kwargs...)
+      @warn("✖️ A WebSockets server is already up and running.")
     end
+
+    upwebsockets(host; ws_port = ws_port, verbose = verbose, ratelimit = ratelimit, wsserver = wsserver, ssl_config = ssl_config, http_kwargs...)
   end
 
   if isrunning(:webserver)
-    @warn("✖️ Web server is already up and running. Skipping.")
-  else
-    upwebserver(port, host; ws_port = ws_port, async = async, verbose = verbose, ratelimit = ratelimit, server = server,
-                ssl_config = ssl_config, open_browser = open_browser, http_kwargs...)
+    @warn("✖️ A web server is already up and running.")
   end
+
+  upwebserver(port, host; ws_port = ws_port, async = async, verbose = verbose, ratelimit = ratelimit, server = server,
+                ssl_config = ssl_config, open_browser = open_browser, http_kwargs...)
 
   SERVERS
 end
