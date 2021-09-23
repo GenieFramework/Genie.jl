@@ -133,7 +133,7 @@ Runs the `heroku create` command to create a new app in the indicated region.
 See https://devcenter.heroku.com/articles/heroku-cli-commands#heroku-apps-create-app
 """
 function createapp(appname::String; region::String = "us")
-  `$HEROKU create $(lowercase(appname)) --region $region` |> Genie.Deploy.run
+  `$HEROKU create $(appname) --region $region` |> Genie.Deploy.run
 end
 
 

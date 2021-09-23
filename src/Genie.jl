@@ -54,7 +54,7 @@ config.cache_storage == :File && include("cache_adapters/FileCache.jl")
 
 include("Sessions.jl")
 
-export serve, up, down, loadapp, genie
+export serve, up, down, loadapp, genie, bootstrap
 @reexport using .Router
 
 """
@@ -235,26 +235,24 @@ end
 
 
 """
-    genie() :: Nothing
-
-Formerly, this has been `genie.jl` in an app's base directory.
+    genie() :: Union{Nothing,Sockets.TCPServer}
 """
-function genie(; context = @__MODULE__) :: Nothing
+function genie(; context = @__MODULE__) :: Union{Nothing,Sockets.TCPServer}
   haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = "dev")
 
-  if !haskey(ENV, "HOST")
+  if ! haskey(ENV, "HOST")
     ENV["HOST"] = (ENV["GENIE_ENV"] == "dev") ? "127.0.0.1" : "0.0.0.0"
   end
 
   ### EARLY BIND TO PORT FOR HOSTS WITH TIMEOUT ###
   EARLYBINDING = if haskey(ENV, "EARLYBIND") && lowercase(ENV["EARLYBIND"]) == "true" && haskey(ENV, "PORT")
-    printstyled("\nEarly binding to host $(ENV["HOST"]) and port $(ENV["PORT"]) \n", color = :light_blue, bold = true)
+    @info "Binding to host $(ENV["HOST"]) and port $(ENV["PORT"]) \n"
     try
       Sockets.listen(parse(Sockets.IPAddr, ENV["HOST"]), parse(Int, ENV["PORT"]))
     catch ex
-      @show ex
+      @error ex
 
-      printstyled("\nFailed early binding!\n", color = :red, bold = true)
+      @warn "Failed binding! \n"
       nothing
     end
   else
@@ -262,14 +260,14 @@ function genie(; context = @__MODULE__) :: Nothing
   end
 
   ### OFF WE GO! ###
-  ROOT_PATH = pwd()
-  push!(LOAD_PATH, ROOT_PATH, "src")
+  push!(LOAD_PATH, pwd(), "src")
 
   load(context = context)
   run(server = EARLYBINDING)
 
-  nothing
+  EARLYBINDING
 end
 
+const bootstrap = genie
 
 end
