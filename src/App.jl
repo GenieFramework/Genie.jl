@@ -23,8 +23,8 @@ function bootstrap(context::Union{Module,Nothing} = Genie.default_context(contex
     isdefined(context, :config) || Core.eval(context, Meta.parse("const config = Genie.Configuration.Settings(app_env = Genie.Configuration.DEV)"))
   end
 
-  haskey(ENV, "PORT") && (context.config.server_port = ENV["PORT"])
-  haskey(ENV, "WSPORT") && (context.config.websockets_port = ENV["WSPORT"])
+  haskey(ENV, "PORT") && (context.config.server_port = parse(Int, ENV["PORT"]))
+  haskey(ENV, "WSPORT") && (context.config.websockets_port = parse(Int, ENV["WSPORT"]))
   haskey(ENV, "HOST") && (context.config.server_host = ENV["HOST"])
 
   for f in fieldnames(typeof(context.config))
