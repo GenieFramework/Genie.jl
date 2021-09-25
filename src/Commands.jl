@@ -19,6 +19,7 @@ function execute(config::Genie.Configuration.Settings; server::Union{Sockets.TCP
   # overwrite env settings with command line arguments
   Genie.config.app_env = ENV["GENIE_ENV"]
   Genie.config.server_port = haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : parse(Int, parsed_args["p"])
+  Genie.config.websockets_port = haskey(ENV, "WSPORT") ? parse(Int, ENV["WSPORT"]) : parse(Int, parsed_args["wsp"])
   Genie.config.server_host = parsed_args["l"]
 
   if called_command(parsed_args, "s")
@@ -66,6 +67,10 @@ function parse_commandline_args(config::Genie.Configuration.Settings) :: Dict{St
 
     "-p"
     help = "HTTP server port"
+    default = "$(config.server_port)"
+
+    "-wsp"
+    help = "Web Sockets server port"
     default = "$(config.server_port)"
 
     "-l"
