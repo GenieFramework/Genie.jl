@@ -58,8 +58,12 @@ end
 
 Builds the Docker image based on the `Dockerfile`
 """
-function build(path::String = "."; appname::String = "genie")
-  `$DOCKER build -t "$appname" $path` |> Genie.Deploy.run
+function build(path::String = "."; appname::String = "genie", nocache::Bool = true)
+  if nocache
+    `$DOCKER build --no-cache -t "$appname" $path`
+  else
+    `$DOCKER build -t "$appname" $path`
+  end |> Genie.Deploy.run
 
   "Docker container successfully built" |> println
 end
