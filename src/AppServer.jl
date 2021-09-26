@@ -32,26 +32,6 @@ function isrunning(server::Symbol = :webserver) :: Bool
   isinitialized(server) && ! istaskdone(getfield(SERVERS, server))
 end
 
-function upwebsockets(host::String = Genie.config.server_host; ws_port::Int = port,
-                      verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
-                      wsserver::Union{Sockets.TCPServer,Nothing} = nothing,
-                      ssl_config::Union{MbedTLS.SSLConfig,Nothing} = Genie.config.ssl_config,
-                      http_kwargs...) :: Nothing
-  print_server_status("Web Sockets server starting at $host:$ws_port")
-
-  SERVERS.websockets = @async HTTP.listen(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver, sslconfig = ssl_config, http_kwargs...) do http::HTTP.Stream
-    if HTTP.WebSockets.is_upgrade(http.message)
-      HTTP.WebSockets.upgrade(http) do ws
-        setup_ws_handler(http.message, ws)
-      end
-    end
-  end
-
-  server_status(:websockets)
-
-  nothing
-end
-
 function server_status(server::Symbol) :: Nothing
   if isrunning(server)
     @info("✔️ $server is running.")
@@ -59,56 +39,6 @@ function server_status(server::Symbol) :: Nothing
     @error("❌ $server is not running.")
     isinitialized(server) && isa(getfield(SERVERS, server), Task) && fetch(getfield(SERVERS, server))
   end
-
-  nothing
-end
-
-function upwebserver(port::Int, host::String = Genie.config.server_host;
-                      ws_port::Int = port, async::Bool = ! Genie.config.run_as_server,
-                      verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
-                      server::Union{Sockets.TCPServer,Nothing} = nothing, wsserver::Union{Sockets.TCPServer,Nothing} = nothing,
-                      ssl_config::Union{MbedTLS.SSLConfig,Nothing} = Genie.config.ssl_config,
-                      open_browser::Bool = false,
-                      http_kwargs...) :: Nothing
-  command = () -> begin
-    HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server, sslconfig = ssl_config, http_kwargs...) do http::HTTP.Stream
-      try
-        if Genie.config.websockets_server && port == ws_port && HTTP.WebSockets.is_upgrade(http.message)
-          HTTP.WebSockets.upgrade(http) do ws
-            setup_ws_handler(http.message, ws)
-          end
-        else
-          setup_http_streamer(http)
-        end
-      catch ex
-        isa(ex, Base.IOError) || @error ex
-      end
-    end
-  end
-
-  server_url = "$( (ssl_config !== nothing && Genie.config.ssl_enabled) ? "https" : "http" )://$host:$port"
-
-  status = if async
-    print_server_status("Web Server starting at $server_url")
-    @async command()
-  else
-    print_server_status("Web Server starting at $server_url - press Ctrl/Cmd+C to stop the server.")
-    command()
-  end
-
-  if status !== nothing && status.state == :runnable
-    SERVERS.webserver = status
-
-    try
-      open_browser && openbrowser(server_url)
-    catch ex
-      @error "Failed to open browser"
-      @error ex
-    end
-  end
-
-  sleep(1)
-  server_status(:webserver)
 
   nothing
 end
@@ -158,15 +88,65 @@ function startup(port::Int, host::String = Genie.config.server_host;
       @warn("✖️ A WebSockets server is already up and running.")
     end
 
-    upwebsockets(host; ws_port = ws_port, verbose = verbose, ratelimit = ratelimit, wsserver = wsserver, ssl_config = ssl_config, http_kwargs...)
+    print_server_status("Web Sockets server starting at $host:$ws_port")
+
+    SERVERS.websockets = @async HTTP.listen(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver, sslconfig = ssl_config, http_kwargs...) do http::HTTP.Stream
+      if HTTP.WebSockets.is_upgrade(http.message)
+        HTTP.WebSockets.upgrade(http) do ws
+          setup_ws_handler(http.message, ws)
+        end
+      end
+    end
+
+    server_status(:websockets)
   end
 
   if isrunning(:webserver)
     @warn("✖️ A web server is already up and running.")
   end
 
-  upwebserver(port, host; ws_port = ws_port, async = async, verbose = verbose, ratelimit = ratelimit, server = server,
-                ssl_config = ssl_config, open_browser = open_browser, http_kwargs...)
+  command = () -> begin
+    HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server, sslconfig = ssl_config, http_kwargs...) do http::HTTP.Stream
+      try
+        if Genie.config.websockets_server && port == ws_port && HTTP.WebSockets.is_upgrade(http.message)
+          HTTP.WebSockets.upgrade(http) do ws
+            setup_ws_handler(http.message, ws)
+          end
+        else
+          setup_http_streamer(http)
+        end
+      catch ex
+        isa(ex, Base.IOError) || @error ex
+        nothing
+      end
+    end
+  end
+
+  server_url = "$( (ssl_config !== nothing && Genie.config.ssl_enabled) ? "https" : "http" )://$host:$port"
+
+  status = if async
+    print_server_status("Web Server starting at $server_url")
+    @async command()
+  else
+    print_server_status("Web Server starting at $server_url - press Ctrl/Cmd+C to stop the server.")
+    command()
+  end
+
+  @info status
+
+  if status !== nothing && status.state == :runnable
+    SERVERS.webserver = status
+
+    try
+      open_browser && openbrowser(server_url)
+    catch ex
+      @error "Failed to open browser"
+      @error ex
+    end
+  end
+
+  sleep(1)
+  server_status(:webserver)
 
   SERVERS
 end
@@ -213,9 +193,6 @@ Shuts down the servers optionally indicating which of the `webserver` and `webso
 function down(; webserver::Bool = true, websockets::Bool = true) :: ServersCollection
   webserver && (@async Base.throwto(SERVERS.webserver, InterruptException()))
   isnothing(websockets) || (websockets && (@async Base.throwto(SERVERS.websockets, InterruptException())))
-
-  SERVERS.webserver = nothing
-  SERVERS.websockets = nothing
 
   SERVERS
 end
@@ -264,12 +241,12 @@ function setup_http_listener(req::HTTP.Request, res::HTTP.Response = HTTP.Respon
     Distributed.@fetch handle_request(req, res)
   catch ex # ex is a Distributed.RemoteException
     if isa(ex, Distributed.RemoteException) &&
-        hasfield(typeof(ex), :captured) && isa(ex.captured, Distributed.CapturedException) &&
-          hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, Genie.Exceptions.RuntimeException)
+      hasfield(typeof(ex), :captured) && isa(ex.captured, Distributed.CapturedException) &&
+        hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, Genie.Exceptions.RuntimeException)
 
       @error ex.captured.ex
       return Genie.Router.error(ex.captured.ex.code, ex.captured.ex.message, Genie.Router.response_mime(),
-                                error_info = string(ex.captured.ex.code, " ", ex.captured.ex.info))
+                              error_info = string(ex.captured.ex.code, " ", ex.captured.ex.info))
     end
 
     error_message = string(sprint(showerror, ex), "\n\n")

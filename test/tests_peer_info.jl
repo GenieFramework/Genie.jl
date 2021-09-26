@@ -3,13 +3,13 @@
     using Genie, Genie.Requests
     using HTTP
 
+    port = nothing
     port = rand(8500:8900)
 
     route("/") do
       "$(peer().ip)-$(peer().port)"
     end
 
-    port = nothing
     server = up(port)
 
     response = try
