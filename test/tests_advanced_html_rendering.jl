@@ -3,6 +3,7 @@
   @safetestset "for_each renders local variables" begin
     using Genie
     using Genie.Renderer.Html
+    import Genie.Util: fws
 
     view = raw"""
 <ol>
@@ -13,7 +14,8 @@
 
     r = html(view)
 
-    @test String(r.body) == "<!DOCTYPE html><html><body><ol><li>a</li><li>b</li><li>c</li></ol></body></html>"
+    @test String(r.body) |> fws ==
+          "<!DOCTYPE html><html><body><ol><li>a</li><li>b</li><li>c</li></ol></body></html>" |> fws
   end;
 
   @safetestset "for_each can not access module variables" begin
@@ -35,6 +37,7 @@
   @safetestset "for_each can access view variables" begin
     using Genie
     using Genie.Renderer.Html
+    import Genie.Util: fws
 
     view = raw"""
 <ol>
@@ -45,12 +48,14 @@
 
     r = html(view, x = 100)
 
-    @test String(r.body) == "<!DOCTYPE html><html><body><ol><li>a = 100</li><li>b = 100</li><li>c = 100</li></ol></body></html>"
+    @test String(r.body) |> fws ==
+          "<!DOCTYPE html><html><body><ol><li>a = 100</li><li>b = 100</li><li>c = 100</li></ol></body></html>" |> fws
   end;
 
   @safetestset "for_each can access context variables" begin
     using Genie
     using Genie.Renderer.Html
+    import Genie.Util: fws
 
     view = raw"""
 <ol>
@@ -61,6 +66,7 @@
 
     r = html(view, context = @__MODULE__, x = 200)
 
-    @test String(r.body) == "<!DOCTYPE html><html><body><ol><li>a = 200</li><li>b = 200</li><li>c = 200</li></ol></body></html>"
+    @test String(r.body) |> fws ==
+          "<!DOCTYPE html><html><body><ol><li>a = 200</li><li>b = 200</li><li>c = 200</li></ol></body></html>" |> fws
   end;
 end;

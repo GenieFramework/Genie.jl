@@ -3,6 +3,7 @@
     @safetestset "IF true" begin
       using Genie
       using Genie.Renderer.Html
+      import Genie.Util: fws
 
       view = raw"""
                 <section class='block'>
@@ -12,12 +13,14 @@
                   <% ]end %>
                 </section>"""
 
-      @test String(html(view).body) == raw"<!DOCTYPE html><html><body><section class=\"block\"><h1>Hello</h1><p>Welcome</p></section></body></html>"
+      @test String(html(view).body) |> fws ==
+            """<!DOCTYPE html><html><body><section class="block"><h1>Hello</h1><p>Welcome</p></section></body></html>""" |> fws
     end;
 
     @safetestset "IF false" begin
       using Genie
       using Genie.Renderer.Html
+      import Genie.Util: fws
 
       view = raw"""
                 <section class='block'>
@@ -27,7 +30,8 @@
                   <% ]end %>
                 </section>"""
 
-      @test String(html(view).body) == raw"""<!DOCTYPE html><html><body><section class="block"></section></body></html>"""
+      @test String(html(view).body) |> fws ==
+            """<!DOCTYPE html><html><body><section class="block"></section></body></html>""" |> fws
     end;
   end;
 end;

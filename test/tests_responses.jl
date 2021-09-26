@@ -15,7 +15,7 @@
 
   port = rand(8500:8900)
 
-  up(port; open_browser = false)
+  server = up(port)
 
   response = HTTP.request("GET", "http://localhost:$port/responses")
   @test response.status == 301
@@ -26,5 +26,7 @@
 
   @test_throws HTTP.ExceptionRequest.StatusError HTTP.request("GET", "http://localhost:$port/broken", ["Content-Type"=>"text/plain"])
 
-
+  down(server)
+  slepp(1)
+  server = nothing
 end

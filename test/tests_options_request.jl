@@ -8,7 +8,8 @@
 
   port = rand(8500:8900)
 
-  up(port; open_browser = false)
+  server = up(port)
+  sleep(1)
 
   response = HTTP.request("OPTIONS", "http://localhost:$port") # unhandled, should get default response
   @test response.status == 200
@@ -18,4 +19,7 @@
   @test response.status == 200
   @test get(Dict(response.headers), "X-Foo-Bar", nothing) == "Baz"
 
+  down()
+  sleep(1)
+  server = nothing
 end

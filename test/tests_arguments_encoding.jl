@@ -33,18 +33,21 @@
   @safetestset "Arguments in templates" begin
     using Genie, Genie.Renderer
     using Genie.Renderer.Html
+    import Genie.Util: fws
 
-    @test Html.html(filepath("views/argsencoded1.jl.html")).body |> String ==
-      """<!DOCTYPE html><html><body><p onclick="alert('Hello');">Greetings</p></body></html>"""
+    @test Html.html(filepath("views/argsencoded1.jl.html")).body |> String |> fws ==
+          """<!DOCTYPE html><html><body><p onclick="alert('Hello');">Greetings</p></body></html>""" |> fws
 
     @test_throws LoadError Html.html(filepath("views/argsencoded2.jl.html")).body |> String ==
-      """<!DOCTYPE html><html><body><p onclick="alert("Hello");">Greetings</p></body></html>"""
+                  """<!DOCTYPE html><html><body><p onclick="alert("Hello");">Greetings</p></body></html>"""
 
-    @test Html.html(filepath("views/argsencoded3.jl.html")).body |> String ==
-      """<!DOCTYPE html><html><body><p onclick="alert('Hello');">Greetings</p></body></html>"""
+    @test Html.html(filepath("views/argsencoded3.jl.html")).body |> String |> fws ==
+          """<!DOCTYPE html><html><body><p onclick="alert('Hello');">Greetings</p></body></html>""" |> fws
 
 
-    @test Html.html(filepath("views/argsencoded1.jl.html"), layout=filepath("views/layoutargsencoding.jl.html")).body |> String ==
-      """<!DOCTYPE html><html><body><div style="width: '100px'"><h1>Layout header</h1><section><p onclick="alert('Hello');">Greetings</p></section><footer><h4>Layout footer</h4></footer></div></body></html>"""
+    @test Html.html(filepath("views/argsencoded1.jl.html"), layout=filepath("views/layoutargsencoding.jl.html")).body |> String |> fws ==
+          """<!DOCTYPE html><html><body><div style="width: '100px'"><h1>Layout header</h1><section>
+              <p onclick="alert('Hello');">Greetings</p></section><footer><h4>Layout footer</h4></footer></div></body>
+              </html>""" |> fws
   end
 end

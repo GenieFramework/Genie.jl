@@ -1,6 +1,7 @@
 @safetestset "JSON payload" begin
 
   using Genie, HTTP
+  import Genie.Util: fws
 
   route("/jsonpayload", method = POST) do
     Genie.Requests.jsonpayload()
@@ -12,20 +13,19 @@
 
   port = rand(8500:8900)
 
-  server = up(port; open_browser = false)
+  server = up(port)
 
   response = HTTP.request("POST", "http://localhost:$port/jsonpayload",
                   [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
 
   @test response.status == 200
-  @test String(response.body) == """Dict{String, Any}("greeting" => "hello")"""
+  @test String(response.body) |> fws == """Dict{String, Any}("greeting" => "hello")""" |> fws
 
   response = HTTP.request("POST", "http://localhost:$port/jsontest",
                   [("Content-Type", "application/json; charset=utf-8")], """{"test":[1,2,3]}""")
 
   @test response.status == 200
   @test String(response.body) == "[1, 2, 3]"
-
 
   route("/json-error", method = POST) do
     error("500, sorry")

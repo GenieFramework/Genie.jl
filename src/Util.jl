@@ -52,12 +52,24 @@ end
 
 
 """
+    time_to_unixtimestamp(t::Float64 = time()) :: Int
+
+Converts a time value to the corresponding unix timestamp.
 """
-function time_to_unixtimestamp(t::Float64)
+function time_to_unixtimestamp(t::Float64 = time()) :: Int
   floor(t) |> Int
 end
-function time_to_unixtimestamp()
-  time_to_unixtimestamp(time())
+
+
+"""
+    filterwhitespace(s::String, allowed::Vector{Char} = Char[]) :: String
+
+Removes whitespaces from `s`, whith the exception of the characters in `allowed`.
+"""
+function filterwhitespace(s::String, allowed::Vector{Char} = Char[]) :: String
+  filter(x -> (x in allowed) || ! isspace(x), s)
 end
+
+const fws = filterwhitespace
 
 end
