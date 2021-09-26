@@ -24,24 +24,24 @@ ServersCollection constant containing references to the current app's web and we
 """
 const SERVERS = ServersCollection(nothing, nothing)
 
-function isinitialized(server::Symbol = :webserver) :: Bool
-  getfield(SERVERS, server) !== nothing
-end
+# function isinitialized(server::Symbol = :webserver) :: Bool
+#   getfield(SERVERS, server) !== nothing
+# end
 
-function isrunning(server::Symbol = :webserver) :: Bool
-  isinitialized(server) && ! istaskdone(getfield(SERVERS, server))
-end
+# function isrunning(server::Symbol = :webserver) :: Bool
+#   isinitialized(server) && ! istaskdone(getfield(SERVERS, server))
+# end
 
-function server_status(server::Symbol) :: Nothing
-  if isrunning(server)
-    @info("✔️ $server is running.")
-  else
-    @error("❌ $server is not running.")
-    isinitialized(server) && isa(getfield(SERVERS, server), Task) && fetch(getfield(SERVERS, server))
-  end
+# function server_status(server::Symbol) :: Nothing
+#   if isrunning(server)
+#     @info("✔️ $server is running.")
+#   else
+#     @error("❌ $server is not running.")
+#     isinitialized(server) && isa(getfield(SERVERS, server), Task) && fetch(getfield(SERVERS, server))
+#   end
 
-  nothing
-end
+#   nothing
+# end
 
 """
     startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
@@ -84,9 +84,9 @@ function startup(port::Int, host::String = Genie.config.server_host;
   update_config(port, host, ws_port)
 
   if Genie.config.websockets_server && port != ws_port
-    if isrunning(:websockets)
-      @warn("✖️ A WebSockets server is already up and running.")
-    end
+    # if isrunning(:websockets)
+    #   @warn("✖️ A WebSockets server is already up and running.")
+    # end
 
     print_server_status("Web Sockets server starting at $host:$ws_port")
 
@@ -98,12 +98,12 @@ function startup(port::Int, host::String = Genie.config.server_host;
       end
     end
 
-    server_status(:websockets)
+    # server_status(:websockets)
   end
 
-  if isrunning(:webserver)
-    @warn("✖️ A web server is already up and running.")
-  end
+  # if isrunning(:webserver)
+  #   @warn("✖️ A web server is already up and running.")
+  # end
 
   command = () -> begin
     HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server, sslconfig = ssl_config, http_kwargs...) do http::HTTP.Stream
@@ -132,8 +132,6 @@ function startup(port::Int, host::String = Genie.config.server_host;
     command()
   end
 
-  @info status
-
   if status !== nothing && status.state == :runnable
     SERVERS.webserver = status
 
@@ -145,8 +143,8 @@ function startup(port::Int, host::String = Genie.config.server_host;
     end
   end
 
-  sleep(1)
-  server_status(:webserver)
+  # sleep(1)
+  # server_status(:webserver)
 
   SERVERS
 end
