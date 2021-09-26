@@ -8,9 +8,10 @@
     message
   end
 
+  port = nothing
   port = rand(8500:8900)
 
-  up(port; open_browser = false)
+  up(port)
 
   response = HTTP.get("http://localhost:$port/hello")
 
@@ -20,5 +21,5 @@
   down()
   sleep(1)
   server = nothing
-
+  port = nothing
 end

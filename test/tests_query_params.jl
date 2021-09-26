@@ -4,6 +4,7 @@
   using Genie
   using HTTP
 
+  port = nothing
   port = rand(8500:8900)
 
   route("/") do
@@ -27,6 +28,7 @@
   down()
   sleep(1)
   server = nothing
+  port = nothing
 end
 
 
@@ -34,6 +36,7 @@ end
   using Genie
   using HTTP
 
+  port = nothing
   port = rand(8500:8900)
 
   route("/") do
@@ -53,6 +56,7 @@ end
   down()
   sleep(1)
   server = nothing
+  port = nothing
 end
 
 
@@ -60,6 +64,7 @@ end
   using Genie
   using HTTP
 
+  port = nothing
   port = rand(8500:8900)
 
   route("/") do
@@ -126,6 +131,7 @@ end
   down()
   sleep(1)
   server = nothing
+  port = nothing
 end
 
 
@@ -133,6 +139,7 @@ end
   using Genie
   using HTTP
 
+  port = nothing
   port = rand(8500:8900)
 
   route("/") do
@@ -197,6 +204,7 @@ end
   down()
   sleep(1)
   server = nothing
+  port = nothing
 end
 
 
@@ -204,6 +212,7 @@ end
   using Genie
   using HTTP
 
+  port = nothing
   port = rand(8500:8900)
 
   route("/") do
@@ -270,6 +279,7 @@ end
   down()
   sleep(1)
   server = nothing
+  port = nothing
 end
 
 end

@@ -9,6 +9,7 @@
       "$(peer().ip)-$(peer().port)"
     end
 
+    port = nothing
     server = up(port)
 
     response = try
@@ -30,6 +31,7 @@
     using Genie, Genie.Requests
     using HTTP
 
+    port = nothing
     port = rand(8500:8900)
     Genie.config.features_peerinfo = true
 
@@ -52,6 +54,7 @@
     down()
     sleep(1)
     server = nothing
+    port = nothing
   end;
 
 end

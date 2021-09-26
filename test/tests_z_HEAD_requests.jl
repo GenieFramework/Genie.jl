@@ -3,6 +3,7 @@
     using Genie
     using HTTP
 
+    port = nothing
     port = rand(8500:8900)
 
     route("/") do
@@ -32,12 +33,14 @@
     down()
     sleep(1)
     server = nothing
+    port = nothing
   end;
 
   @safetestset "HEAD requests have no body" begin
     using Genie
     using HTTP
 
+    port = nothing
     port = rand(8500:8900)
 
     route("/") do
@@ -70,12 +73,14 @@
     down()
     sleep(1)
     server = nothing
+    port = nothing
   end;
 
   @safetestset "HEAD requests should overwrite GET" begin
     using Genie
     using HTTP
 
+    port = nothing
     port = rand(8500:8900)
 
     request_method = ""
@@ -114,6 +119,7 @@
     down()
     sleep(1)
     server = nothing
+    port = nothing
   end;
 
 end;

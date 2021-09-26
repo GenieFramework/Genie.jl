@@ -4,6 +4,7 @@
     using Genie
     using HTTP
 
+    port = nothing
     port = rand(8500:8900)
 
     route("/✔/🧞/♥/❤") do
@@ -30,6 +31,7 @@
     using Genie
     using HTTP
 
+    port = nothing
     port = rand(8500:8900)
 
     route("/✔") do
@@ -50,12 +52,14 @@
     down()
     sleep(1)
     server = nothing
+    port = nothing
   end;
 
   @safetestset "Emoji routing with params" begin
     using Genie, Genie.Requests
     using HTTP
 
+    port = nothing
     port = rand(8500:8900)
 
     route("/:check/:genie/:smallheart/:bigheart") do
@@ -76,6 +80,7 @@
     down()
     sleep(1)
     server = nothing
+    port = nothing
   end;
 
 end

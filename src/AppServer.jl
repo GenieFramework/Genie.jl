@@ -214,6 +214,9 @@ function down(; webserver::Bool = true, websockets::Bool = true) :: ServersColle
   webserver && (@async Base.throwto(SERVERS.webserver, InterruptException()))
   isnothing(websockets) || (websockets && (@async Base.throwto(SERVERS.websockets, InterruptException())))
 
+  SERVERS.webserver = nothing
+  SERVERS.websockets = nothing
+
   SERVERS
 end
 

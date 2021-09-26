@@ -16,6 +16,7 @@
     "OOKK"
   end
 
+  port = nothing
   port = rand(8500:8900)
 
   up(port; open_browser = false, verbose = true)
@@ -35,5 +36,5 @@
   down()
   sleep(1)
   server = nothing
-
+  port = nothing
 end

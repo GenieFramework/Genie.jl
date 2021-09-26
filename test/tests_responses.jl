@@ -13,6 +13,7 @@
     omg!()
   end
 
+  port = nothing
   port = rand(8500:8900)
 
   server = up(port)
@@ -26,7 +27,8 @@
 
   @test_throws HTTP.ExceptionRequest.StatusError HTTP.request("GET", "http://localhost:$port/broken", ["Content-Type"=>"text/plain"])
 
-  down(server)
-  slepp(1)
+  down()
+  sleep(1)
   server = nothing
+  port = nothing
 end

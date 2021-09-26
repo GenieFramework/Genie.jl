@@ -3,6 +3,7 @@
     using Genie
     using HTTP
 
+    port = nothing
     port = rand(8500:8900)
 
     route("/") do
@@ -23,12 +24,14 @@
     down()
     sleep(1)
     server = nothing
+    port = nothing
   end;
 
   @safetestset "<a%20b> should be <a b>" begin
     using Genie
     using HTTP
 
+    port = nothing
     port = rand(8500:8900)
 
     route("/") do
@@ -49,12 +52,14 @@
     down()
     sleep(1)
     server = nothing
+    port = nothing
   end;
 
   @safetestset "<a%2Bb> should be <a+b>" begin
     using Genie
     using HTTP
 
+    port = nothing
     port = rand(8500:8900)
 
     route("/") do
@@ -75,12 +80,14 @@
     down()
     sleep(1)
     server = nothing
+    port = nothing
   end;
 
   @safetestset "emoji support" begin
     using Genie
     using HTTP
 
+    port = nothing
     port = rand(8500:8900)
 
     route("/") do
@@ -101,6 +108,7 @@
     down()
     sleep(1)
     server = nothing
+    port = nothing
   end;
 
 end

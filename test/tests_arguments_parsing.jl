@@ -10,6 +10,7 @@
     "s = $(params(:s)) / f = $(params(:f)) / i = $(params(:i)) / $(params(:d))"
   end
 
+  port = nothing
   port = rand(8500:8900)
 
   server = up(port; open_browser = false)
@@ -22,5 +23,5 @@
   down()
   sleep(1)
   server = nothing
-
+  port = nothing
 end
