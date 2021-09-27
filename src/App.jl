@@ -26,6 +26,7 @@ function bootstrap(context::Union{Module,Nothing} = Genie.default_context(contex
   haskey(ENV, "PORT") && (! isempty(ENV["PORT"])) && (context.config.server_port = parse(Int, ENV["PORT"]))
   haskey(ENV, "WSPORT") && (! isempty(ENV["WSPORT"])) && (context.config.websockets_port = parse(Int, ENV["WSPORT"]))
   haskey(ENV, "HOST") && (! isempty(ENV["HOST"])) && (context.config.server_host = ENV["HOST"])
+  haskey(ENV, "HOST") || (ENV["HOST"] = context.config.server_host)
 
   for f in fieldnames(typeof(context.config))
     setfield!(Genie.config, f, getfield(context.config, f))

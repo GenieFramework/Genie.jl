@@ -131,6 +131,15 @@ import Genie
 const HEROKU = @static Sys.iswindows() ? `heroku.cmd` : `heroku`
 
 """
+    apps()
+
+Returns list of apps available on Heroku account.
+"""
+function apps()
+  `$HEROKU apps` |> Genie.Deploy.run
+end
+
+"""
     createapp(appname::String; region::String = "us")
 
 Runs the `heroku create` command to create a new app in the indicated region.
