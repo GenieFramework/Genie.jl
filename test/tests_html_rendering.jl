@@ -4,6 +4,9 @@
   greeting = "Welcome"
   name = "Genie"
 
+  """  
+  $TYPEDSIGNATURES
+  """
   function htmlviewfile()
     "
     <h1>$greeting</h1>
@@ -14,6 +17,9 @@
     "
   end
 
+  """  
+  $TYPEDSIGNATURES
+  """
   function htmltemplatefile()
     "
     <!DOCTYPE HTML>

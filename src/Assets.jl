@@ -2,6 +2,7 @@
 Helper functions for working with frontend assets (including JS, CSS, etc files).
 """
 module Assets
+using DocStringExtensionsMock
 
 import Genie, Genie.Configuration, Genie.Router, Genie.WebChannels, Genie.WebThreads
 import Genie.Renderer.Json
@@ -15,7 +16,7 @@ export favicon_support
 
 
 """
-    include_asset(asset_type::Union{String,Symbol}, file_name::Union{String,Symbol}) :: String
+$TYPEDSIGNATURES
 
 Returns the path to an asset. `asset_type` can be one of `:js`, `:css`. The `file_name` should not include the extension.
 """
@@ -25,7 +26,7 @@ end
 
 
 """
-    css_asset(file_name::String) :: String
+$TYPEDSIGNATURES
 
 Path to a css asset. The `file_name` should not include the extension.
 """
@@ -36,7 +37,7 @@ const css = css_asset
 
 
 """
-    js_asset(file_name::String) :: String
+$TYPEDSIGNATURES
 
 Path to a js asset. `file_name` should not include the extension.
 """
@@ -47,7 +48,7 @@ const js = js_asset
 
 
 """
-    js_settings() :: string
+$TYPEDSIGNATURES
 
 Sets up a `window.Genie.Settings` JavaScript object which exposes relevant Genie app settings from `Genie.config`
 """
@@ -80,7 +81,7 @@ end
 
 
 """
-    embeded(path::String) :: String
+$TYPEDSIGNATURES
 
 Reads and outputs the file at `path` within Genie's root package dir
 """
@@ -90,7 +91,7 @@ end
 
 
 """
-    embeded_path(path::String) :: String
+$TYPEDSIGNATURES
 
 Returns the path relative to Genie's root package dir
 """
@@ -100,7 +101,7 @@ end
 
 
 """
-    channels() :: String
+$TYPEDSIGNATURES
 
 Outputs the channels.js file included with the Genie package
 """
@@ -110,7 +111,7 @@ end
 
 
 """
-    channels_script() :: String
+$TYPEDSIGNATURES
 
 Outputs the channels JavaScript content within `<script>...</script>` tags, for embedding into the page.
 """
@@ -123,6 +124,9 @@ $(channels(channel))
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function channels_subscribe(channel::String = Genie.config.webchannels_default_route) :: Nothing
   Router.channel("/$(channel)/$(Genie.config.webchannels_subscribe_channel)") do
     WebChannels.subscribe(Genie.Requests.wsclient(), channel)
@@ -142,7 +146,7 @@ end
 
 
 """
-    channels_support(channel = Genie.config.webchannels_default_route) :: String
+$TYPEDSIGNATURES
 
 Provides full web channels support, setting up routes for loading support JS files, web sockets subscription and
 returning the `<script>` tag for including the linked JS file into the web page.
@@ -165,7 +169,7 @@ end
 
 
 """
-    webthreads() :: String
+$TYPEDSIGNATURES
 
 Outputs the webthreads.js file included with the Genie package
 """
@@ -177,7 +181,7 @@ end
 
 
 """
-    webthreads_script() :: String
+$TYPEDSIGNATURES
 
 Outputs the channels JavaScript content within `<script>...</script>` tags, for embedding into the page.
 """
@@ -190,6 +194,9 @@ $(webthreads(channel))
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function webthreads_subscribe(channel::String = Genie.config.webthreads_default_route) :: Nothing
   Router.route("/$(channel)/$(Genie.config.webchannels_subscribe_channel)", method = Router.GET) do
     WebThreads.subscribe(Genie.Requests.wtclient(), channel)
@@ -208,6 +215,9 @@ function webthreads_subscribe(channel::String = Genie.config.webthreads_default_
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function webthreads_push_pull(channel::String = Genie.config.webthreads_default_route) :: Nothing
   Router.route("/$(channel)/$(Genie.config.webthreads_pull_route)", method = Router.POST) do
     WebThreads.pull(Genie.Requests.wtclient(), channel)
@@ -222,7 +232,7 @@ end
 
 
 """
-    webthreads_support(channel = Genie.config.webthreads_default_route) :: String
+$TYPEDSIGNATURES
 
 Provides full web channels support, setting up routes for loading support JS files, web sockets subscription and
 returning the `<script>` tag for including the linked JS file into the web page.
@@ -247,7 +257,7 @@ end
 
 
 """
-    favicon_support() :: String
+$TYPEDSIGNATURES
 
 Outputs the `<link>` tag for referencing the favicon file embedded with Genie.
 """

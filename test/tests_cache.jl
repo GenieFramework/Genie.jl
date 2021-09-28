@@ -3,6 +3,9 @@
 
   Cache.init()
 
+  """  
+  $TYPEDSIGNATURES
+  """
   function f()
     rand(1:1_000)
   end
@@ -28,6 +31,9 @@ end
 @safetestset "cache" begin
   using Genie, Genie.Cache
 
+  """  
+  $TYPEDSIGNATURES
+  """
   function f()
     rand(1:1_000)
   end

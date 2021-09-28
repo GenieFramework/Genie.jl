@@ -1,5 +1,7 @@
 module Js
 
+using DocStringExtensionsMock
+
 import Logging, HTTP, Reexport
 
 Reexport.@reexport using Genie
@@ -17,6 +19,9 @@ const NBSP_REPLACEMENT = ("&nbsp;"=>"!!nbsp;;")
 export js
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function get_template(path::String; context::Module = @__MODULE__, vars...) :: Function
   orig_path = path
 
@@ -44,6 +49,9 @@ function get_template(path::String; context::Module = @__MODULE__, vars...) :: F
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function to_js(data::String; prepend = "\n", extension = TEMPLATE_EXT) :: String
   output = string("function $(Genie.Renderer.function_name(data))($(Genie.Renderer.injectkwvars())) :: String \n", prepend)
 
@@ -61,6 +69,9 @@ function to_js(data::String; prepend = "\n", extension = TEMPLATE_EXT) :: String
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function render(data::String; context::Module = @__MODULE__, vars...) :: Function
   Genie.Renderer.registervars(; context = context, vars...)
 
@@ -82,6 +93,9 @@ function render(data::String; context::Module = @__MODULE__, vars...) :: Functio
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function render(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__, vars...) :: Function
   Genie.Renderer.registervars(; context = context, vars...)
 
@@ -89,6 +103,9 @@ function render(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function render(::Type{MIME"application/javascript"}, data::String; context::Module = @__MODULE__, vars...) :: Genie.Renderer.WebRenderable
   try
     Genie.Renderer.WebRenderable(render(data; context = context, vars...), :javascript)
@@ -99,6 +116,9 @@ function render(::Type{MIME"application/javascript"}, data::String; context::Mod
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function render(::Type{MIME"application/javascript"}, viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__, vars...) :: Genie.Renderer.WebRenderable
   try
     Genie.Renderer.WebRenderable(render(viewfile; context = context, vars...), :javascript)
@@ -109,6 +129,9 @@ function render(::Type{MIME"application/javascript"}, viewfile::Genie.Renderer.F
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function js(data::String; context::Module = @__MODULE__, status::Int = 200,
             headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders("Content-Type" => Genie.Renderer.CONTENT_TYPES[:javascript]),
             forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
@@ -120,6 +143,9 @@ function js(data::String; context::Module = @__MODULE__, status::Int = 200,
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function js(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__, status::Int = 200,
             headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders("Content-Type" => Genie.Renderer.CONTENT_TYPES[:javascript]), vars...) :: Genie.Renderer.HTTP.Response
   Genie.Renderer.WebRenderable(render(MIME"application/javascript", viewfile; context = context, vars...), :javascript, status, headers) |> Genie.Renderer.respond
@@ -130,16 +156,25 @@ end
 ### EXCEPTIONS ###
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function Genie.Router.error(error_message::String, ::Type{MIME"application/javascript"}, ::Val{500}; error_info::String = "") :: HTTP.Response
   HTTP.Response(Dict("error" => "500 Internal Error - $error_message", "info" => error_info), status = 500) |> js
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function Genie.Router.error(error_message::String, ::Type{MIME"application/javascript"}, ::Val{404}; error_info::String = "") :: HTTP.Response
   HTTP.Response(Dict("error" => "404 Not Found - $error_message", "info" => error_info), status = 404) |> js
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function Genie.Router.error(error_code::Int, error_message::String, ::Type{MIME"application/javascript"}; error_info::String = "") :: HTTP.Response
   HTTP.Response(Dict("error" => "$error_code Error - $error_message", "info" => error_info), status = error_code) |> js
 end

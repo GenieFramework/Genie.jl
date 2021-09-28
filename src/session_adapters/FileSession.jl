@@ -6,7 +6,7 @@ import Serialization, Logging
 const SESSIONS_PATH = "sessions"
 
 """
-    write(session::Genie.Sessions.Session) :: Genie.Sessions.Session
+$TYPEDSIGNATURES
 
 Persists the `Session` object to the file system, using the configured sessions folder and returns it.
 """
@@ -50,6 +50,9 @@ function write(session::Genie.Sessions.Session) :: Genie.Sessions.Session
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function write_session(session::Genie.Sessions.Session)
   open(joinpath(SESSIONS_PATH, session.id), "w") do io
     Serialization.serialize(io, session)
@@ -58,8 +61,7 @@ end
 
 
 """
-    read(session_id::Union{String,Symbol}) :: Union{Nothing,Genie.Sessions.Session}
-    read(session::Genie.Sessions.Session) :: Union{Nothing,Genie.Sessions.Session}
+$TYPEDSIGNATURES
 
 Attempts to read from file the session object serialized as `session_id`.
 """
@@ -76,6 +78,9 @@ function read(session_id::Union{String,Symbol}) :: Union{Nothing,Genie.Sessions.
   end
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function read(session::Genie.Sessions.Session) :: Union{Nothing,Genie.Sessions.Session}
   read(session.id)
 end
@@ -84,7 +89,7 @@ end
 # IMPLEMENTATION
 
 """
-    persist(s::Session) :: Session
+$TYPEDSIGNATURES
 
 Generic method for persisting session data - delegates to the underlying `SessionAdapter`.
 """
@@ -96,7 +101,7 @@ end
 
 
 """
-    load(session_id::String) :: Session
+$TYPEDSIGNATURES
 
 Loads session data from persistent storage.
 """

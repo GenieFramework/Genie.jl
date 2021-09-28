@@ -2,6 +2,7 @@
 Handles command line arguments for the genie.jl script.
 """
 module Commands
+using DocStringExtensionsMock
 
 import Sockets
 import ArgParse
@@ -9,7 +10,7 @@ import Genie
 using Logging
 
 """
-    execute(config::Settings) :: Nothing
+$TYPEDSIGNATURES
 
 Runs the requested Genie app command, based on the `args` passed to the script.
 """
@@ -50,7 +51,7 @@ end
 
 
 """
-    parse_commandline_args() :: Dict{String,Any}
+$TYPEDSIGNATURES
 
 Extracts the command line args passed into the app and returns them as a `Dict`, possibly setting up defaults.
 Also, it is used by the ArgParse module to populate the command line help for the app `-h`.
@@ -93,7 +94,7 @@ end
 
 
 """
-    called_command(args::Dict, key::String) :: Bool
+$TYPEDSIGNATURES
 
 Checks whether or not a certain command was invoked by looking at the command line args.
 """

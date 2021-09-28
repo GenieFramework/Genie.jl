@@ -2,12 +2,13 @@
 Functionality for handling the defautl conent of the various Genie files (migrations, models, controllers, etc).
 """
 module FileTemplates
+using DocStringExtensionsMock
 
 import Inflector
 
 
 """
-    newtask(module_name::String) :: String
+$TYPEDSIGNATURES
 
 Default content for a new Genie Toolbox task.
 """
@@ -28,7 +29,7 @@ end
 
 
 """
-    newcontroller(controller_name::String) :: String
+$TYPEDSIGNATURES
 
 Default content for a new Genie controller.
 """
@@ -42,7 +43,7 @@ end
 
 
 """
-    newtest(plural_name::String, singular_name::String) :: String
+$TYPEDSIGNATURES
 
 Default content for a new test file.
 """
@@ -57,7 +58,7 @@ end
 
 
 """
-    appmodule(path::String)
+$TYPEDSIGNATURES
 
 Generates a custom app module when a new app is bootstrapped.
 """
@@ -87,9 +88,7 @@ end
 
 
 """
-    dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::Bool = false, env::String = "dev",
-                      filename::String = "Dockerfile", port::Int = 8000, dockerport::Int = 80, host::String = "0.0.0.0",
-                      websockets_port::Int = port, websockets_dockerport::Int = dockerport)
+$TYPEDSIGNATURES
 
 Generates dockerfile for the Genie app.
 """

@@ -2,6 +2,9 @@ import Genie
 import Logging, LoggingExtras
 import Dates
 
+"""
+$TYPEDSIGNATURES
+"""
 function initialize_logging()
   date_format = "yyyy-mm-dd HH:MM:SS"
 

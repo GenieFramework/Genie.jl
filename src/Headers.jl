@@ -3,11 +3,12 @@ Provides functionality for working with HTTP headers in Genie.
 """
 module Headers
 
+using DocStringExtensionsMock
 import HTTP
 import Genie
 
 """
-    set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.Response) :: HTTP.Response
+$TYPEDSIGNATURES
 
 Configures the response headers.
 """
@@ -44,7 +45,7 @@ end
 
 
 """
-    normalize_headers(req::HTTP.Request)
+$TYPEDSIGNATURES
 
 Makes request headers case insensitive.
 """
@@ -63,7 +64,7 @@ end
 
 
 """
-    normalize_header_key(key::String) :: String
+$TYPEDSIGNATURES
 
 Brings header keys to standard casing.
 """

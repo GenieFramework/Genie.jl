@@ -2,6 +2,7 @@
 Core genie configuration / settings functionality.
 """
 module Configuration
+using DocStringExtensionsMock
 
 import Pkg
 import Dates

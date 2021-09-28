@@ -2,6 +2,7 @@
 App level functionality -- loading and managing app-wide components like configs, models, initializers, etc.
 """
 module App
+using DocStringExtensionsMock
 
 import Genie
 
@@ -10,7 +11,7 @@ import Genie
 
 
 """
-    bootstrap(context::Union{Module,Nothing} = nothing) :: Nothing
+$TYPEDSIGNATURES
 
 Kickstarts the loading of a Genie app by loading the environment settings.
 """

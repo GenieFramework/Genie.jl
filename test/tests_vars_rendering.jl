@@ -5,6 +5,9 @@
   greeting = "Welcome"
   name = "Genie"
 
+  """  
+  $TYPEDSIGNATURES
+  """
   function htmlviewfile_withvars()
     raw"
     <h1>$(vars(:greeting))</h1>
@@ -15,6 +18,9 @@
     "
   end
 
+  """  
+  $TYPEDSIGNATURES
+  """
   function htmltemplatefile_withvars()
     raw"
     <!DOCTYPE HTML>

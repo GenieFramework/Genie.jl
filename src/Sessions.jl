@@ -1,4 +1,5 @@
 module Sessions
+using DocStringExtensionsMock
 
 import SHA, HTTP, Dates, Logging
 import Genie
@@ -28,7 +29,7 @@ InvalidSessionIdException() =
 
 
 """
-    id() :: String
+$TYPEDSIGNATURES
 
 Generates a new session id.
 """
@@ -57,7 +58,7 @@ end
 
 
 """
-    id(payload::Union{HTTP.Request,HTTP.Response}) :: String
+$TYPEDSIGNATURES
 
 Attempts to retrieve the session id from the provided `payload` object.
 If that is not available, a new session id is created.
@@ -72,7 +73,7 @@ end
 
 
 """
-    id(req::HTTP.Request, res::HTTP.Response) :: String
+$TYPEDSIGNATURES
 
 Attempts to retrieve the session id from the provided request and response objects.
 If that is not available, a new session id is created.
@@ -89,7 +90,7 @@ end
 
 
 """
-    init() :: Nothing
+$TYPEDSIGNATURES
 
 Sets up the session functionality, if configured.
 """
@@ -105,7 +106,7 @@ end
 
 
 """
-    start(session_id::String, req::HTTP.Request, res::HTTP.Response; options = Dict{String,String}()) :: Tuple{Session,HTTP.Response}
+$TYPEDSIGNATURES
 
 Initiates a new HTTP session with the provided `session_id`.
 
@@ -124,7 +125,7 @@ end
 
 
 """
-    start(req::HTTP.Request, res::HTTP.Response; options::Dict{String,String} = Dict{String,String}()) :: Session
+$TYPEDSIGNATURES
 
 Initiates a new default session object, generating a new session id.
 
@@ -156,7 +157,7 @@ end
 
 
 """
-    set!(s::Session, key::Symbol, value::Any) :: Session
+$TYPEDSIGNATURES
 
 Stores `value` as `key` on the `Session` object `s`.
 """
@@ -168,7 +169,7 @@ end
 
 
 """
-    get(s::Session, key::Symbol) :: Union{Nothing,Any}
+$TYPEDSIGNATURES
 
 Returns the value stored on the `Session` object `s` as `key`, wrapped in a `Union{Nothing,Any}`.
 """
@@ -178,7 +179,7 @@ end
 
 
 """
-    get(s::Session, key::Symbol, default::T) :: T where T
+$TYPEDSIGNATURES
 
 Attempts to retrive the value stored on the `Session` object `s` as `key`.
 If the value is not set, it returns the `default`.
@@ -191,7 +192,7 @@ end
 
 
 """
-    unset!(s::Session, key::Symbol) :: Session
+$TYPEDSIGNATURES
 
 Removes the value stored on the `Session` `s` as `key`.
 """
@@ -203,7 +204,7 @@ end
 
 
 """
-    isset(s::Session, key::Symbol) :: Bool
+$TYPEDSIGNATURES
 
 Checks wheter or not `key` exists on the `Session` `s`.
 """
@@ -213,7 +214,7 @@ end
 
 
 """
-    persist(s::Session) :: Session
+$TYPEDSIGNATURES
 
 Generic method for persisting session data - delegates to the underlying `SessionAdapter`.
 """
@@ -221,7 +222,7 @@ function persist end
 
 
 """
-    load(session_id::String) :: Session
+$TYPEDSIGNATURES
 
 Loads session data from persistent storage - delegates to the underlying `SessionAdapter`.
 """
@@ -229,7 +230,7 @@ function load end
 
 
 """
-    session(params::Dict{Symbol,Any}) :: Sessions.Session
+$TYPEDSIGNATURES
 
 Returns the `Session` object associated with the current HTTP request.
 """

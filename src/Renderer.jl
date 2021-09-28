@@ -1,4 +1,5 @@
 module Renderer
+using DocStringExtensionsMock
 
 export respond, redirect, render
 
@@ -127,7 +128,7 @@ WebRenderable(; body::String = "", content_type::Symbol = DEFAULT_CONTENT_TYPE,
 
 
 """
-    WebRenderable(wr::WebRenderable, status::Int, headers::HTTPHeaders)
+$TYPEDSIGNATURES
 
 Returns `wr` overwriting its `status` and `headers` fields with the passed arguments.
 
@@ -145,6 +146,9 @@ function WebRenderable(wr::WebRenderable, status::Int, headers::HTTPHeaders)
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function WebRenderable(wr::WebRenderable, content_type::Symbol, status::Int, headers::HTTPHeaders)
   wr.content_type = content_type
   wr.status = status
@@ -154,6 +158,9 @@ function WebRenderable(wr::WebRenderable, content_type::Symbol, status::Int, hea
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function WebRenderable(f::Function, args...)
   fr::String = try
     f() |> join
@@ -170,7 +177,7 @@ end
 
 
 """
-    render
+$TYPEDSIGNATURES
 
 Abstract function that needs to be specialized by individual renderers.
 """
@@ -180,19 +187,24 @@ function render end
 ### REDIRECT RESPONSES ###
 
 """
-Sets redirect headers and prepares the `Response`.
+$TYPEDSIGNATURES
+
+Sets redirect headers and prepares the `Response`
 """
 function redirect(location::String, code::Int = 302, headers::HTTPHeaders = HTTPHeaders()) :: HTTP.Response
   headers["Location"] = location
   WebRenderable("Redirecting you to $location", :text, code, headers) |> respond
 end
+"""
+$TYPEDSIGNATURES
+"""
 function redirect(named_route::Symbol, code::Int = 302, headers::HTTPHeaders = HTTPHeaders(); route_args...) :: HTTP.Response
   redirect(Genie.Router.linkto(named_route; route_args...), code, headers)
 end
 
 
 """
-    hasrequested(content_type::Symbol) :: Bool
+$TYPEDSIGNATURES
 
 Checks wheter or not the requested content type matches `content_type`.
 """
@@ -205,6 +217,8 @@ end
 
 
 """
+$TYPEDSIGNATURES
+
 Constructs a `Response` corresponding to the Content-Type of the request.
 """
 function respond(r::WebRenderable) :: HTTP.Response
@@ -214,11 +228,17 @@ function respond(r::WebRenderable) :: HTTP.Response
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function respond(response::HTTP.Response) :: HTTP.Response
   response
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function respond(body::String, params::Dict{Symbol,T})::HTTP.Response where {T}
   r = params[:RESPONSE]
   r.data = body
@@ -227,11 +247,17 @@ function respond(body::String, params::Dict{Symbol,T})::HTTP.Response where {T}
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function respond(err::T, content_type::Union{Symbol,String} = Genie.Router.responsetype(), code::Int = 500) :: T where {T<:Exception}
   T
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function respond(body::String, content_type::Union{Symbol,String} = Genie.Router.responsetype(), code::Int = 200) :: HTTP.Response
   HTTP.Response(code,
                 (isa(content_type, Symbol) ? ["Content-Type" => CONTENT_TYPES[content_type]] : ["Content-Type" => content_type]),
@@ -239,18 +265,24 @@ function respond(body::String, content_type::Union{Symbol,String} = Genie.Router
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function respond(body, code::Int = 200, headers::HTTPHeaders = HTTPHeaders())
   HTTP.Response(code, [h for h in headers], body = string(body))
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function respond(f::Function, code::Int = 200, headers::HTTPHeaders = HTTPHeaders())
   respond(f(), code, headers)
 end
 
 
 """
-    registervars(vs...) :: Nothing
+$TYPEDSIGNATURES
 
 Loads the rendering vars into the task's scope
 """
@@ -262,7 +294,7 @@ end
 
 
 """
-    injectkwvars() :: String
+$TYPEDSIGNATURES
 
 Sets up variables passed into the view, making them available in the
 generated view function as kw arguments for the rendering function.
@@ -279,7 +311,7 @@ end
 
 
 """
-    view_file_info(path::String, supported_extensions::Vector{String}) :: Tuple{String,String}
+$TYPEDSIGNATURES
 
 Extracts path and extension info about a file
 """
@@ -310,7 +342,7 @@ end
 
 
 """
-    vars_signature() :: String
+$TYPEDSIGNATURES
 
 Collects the names of the view vars in order to create a unique hash/salt to identify
 compiled views with different vars.
@@ -321,7 +353,7 @@ end
 
 
 """
-    function_name(file_path::String)
+$TYPEDSIGNATURES
 
 Generates function name for generated HTML+Julia views.
 """
@@ -331,7 +363,7 @@ end
 
 
 """
-    m_name(file_path::String)
+$TYPEDSIGNATURES
 
 Generates module name for generated HTML+Julia views.
 """
@@ -341,7 +373,7 @@ end
 
 
 """
-    build_is_stale(file_path::String, build_path::String) :: Bool
+$TYPEDSIGNATURES
 
 Checks if the view template has been changed since the last time the template was compiled.
 """
@@ -357,7 +389,7 @@ end
 
 
 """
-    build_module(content::String, path::String, mod_name::String) :: String
+$TYPEDSIGNATURES
 
 Persists compiled Julia view data to file and returns the path
 """
@@ -383,7 +415,7 @@ end
 
 
 """
-    preparebuilds() :: Bool
+$TYPEDSIGNATURES
 
 Sets up the build folder and the build module file for generating the compiled views.
 """
@@ -396,7 +428,7 @@ end
 
 
 """
-    purgebuilds(subfolder = BUILD_NAME) :: Bool
+$TYPEDSIGNATURES
 
 Removes the views builds folders with all the generated views.
 """
@@ -408,7 +440,7 @@ end
 
 
 """
-    changebuilds(subfolder = BUILD_NAME) :: Bool
+$TYPEDSIGNATURES
 
 Changes/creates a new builds folder.
 """
@@ -419,7 +451,7 @@ end
 
 
 """
-    function vars
+$TYPEDSIGNATURES
 
 Utility for accessing view vars
 """
@@ -429,7 +461,7 @@ end
 
 
 """
-    function vars(key)
+$TYPEDSIGNATURES
 
 Utility for accessing view vars stored under `key`
 """
@@ -439,7 +471,7 @@ end
 
 
 """
-    function vars(key, value)
+$TYPEDSIGNATURES
 
 Utility for setting a new view var, as `key` => `value`
 """
@@ -453,7 +485,7 @@ end
 
 
 """
-    set_negotiated_content(req::HTTP.Request, res::HTTP.Response, params::Dict{Symbol,Any})
+$TYPEDSIGNATURES
 
 Configures the request, response, and params response content type based on the request and defaults.
 """
@@ -469,7 +501,7 @@ end
 
 
 """
-    negotiate_content(req::Request, res::Response, params::Params) :: Response
+$TYPEDSIGNATURES
 
 Computes the content-type of the `Response`, based on the information in the `Request`.
 """

@@ -1,5 +1,7 @@
 module Html
 
+using DocStringExtensionsMock
+
 import EzXML, HTTP, Logging, Markdown, Millboard, OrderedCollections, Reexport, YAML
 
 Reexport.@reexport using Genie
@@ -56,22 +58,34 @@ include("MdHtml.jl")
 
 
 """
-    normal_element(f::Function, elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+$TYPEDSIGNATURES
 
 Generates a HTML element in the form <...></...>
 """
 function normal_element(f::Function, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   normal_element(Base.invokelatest(f), string(elem), args, attrs...)
 end
+"""
+$TYPEDSIGNATURES
+"""
 function normal_element(children::Union{String,Vector{String}}, elem::Any, args::Vector, attrs::Pair{Symbol,Any}) :: HTMLString
   normal_element(children, string(elem), args, Pair{Symbol,Any}[attrs])
 end
+"""
+$TYPEDSIGNATURES
+"""
 function normal_element(children::Tuple, elem::Any, args::Vector, attrs::Pair{Symbol,Any}) :: HTMLString
   normal_element([children...], string(elem), args, Pair{Symbol,Any}[attrs])
 end
+"""
+$TYPEDSIGNATURES
+"""
 function normal_element(children::Union{String,Vector{String}}, elem::Any, args::Vector, attrs...) :: HTMLString
   normal_element(children, string(elem), args, Pair{Symbol,Any}[attrs...])
 end
+"""
+$TYPEDSIGNATURES
+"""
 function normal_element(children::Union{String,Vector{String}}, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   children = join(children)
 
@@ -97,9 +111,15 @@ function normal_element(children::Union{String,Vector{String}}, elem::Any, args:
     "</", elem, ">", (Genie.config.format_html_output ? "\n" : "") # closing tag
   )
 end
+"""
+$TYPEDSIGNATURES
+"""
 function normal_element(elem::Any, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   normal_element("", string(elem), attrs...)
 end
+"""
+$TYPEDSIGNATURES
+"""
 function normal_element(elems::Vector, elem::Any, args = [], attrs...) :: HTMLString
   io = IOBuffer()
 
@@ -117,14 +137,23 @@ function normal_element(elems::Vector, elem::Any, args = [], attrs...) :: HTMLSt
 
   normal_element(String(take!(io)), string(elem), args, attrs...)
 end
+"""
+$TYPEDSIGNATURES
+"""
 function normal_element(_::Nothing, __::Any) :: HTMLString
   ""
 end
+"""
+$TYPEDSIGNATURES
+"""
 function normal_element(children::Vector{T}, elem::Any, args::Vector{T})::HTMLString where {T}
   normal_element(join([(isa(f, Function) ? f() : string(f)) for f in children]), elem, args)
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function extractindent!(attrs) :: String
   indent = if Genie.config.format_html_output
     htmlsidx = findfirst(x -> x == :htmlsourceindent, getindex.(attrs, 1))
@@ -145,14 +174,18 @@ end
 
 
 """
-    prepare_template(s::String)
-    prepare_template{T}(v::Vector{T})
+$TYPEDSIGNATURES
+
+prepare_template{T}(v::Vector{T})
 
 Cleans up the template before rendering (ex by removing empty nodes).
 """
 function prepare_template(s::String) :: String
   s
 end
+"""
+$TYPEDSIGNATURES
+"""
 function prepare_template(v::Vector{T})::String where {T}
   filter!(v) do (x)
     ! isa(x, Nothing)
@@ -163,7 +196,7 @@ end
 
 
 """
-    attributes(attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: Vector{String}
+$TYPEDSIGNATURES
 
 Parses HTML attributes.
 """
@@ -181,26 +214,38 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function attrparser(k::Symbol, v::Bool) :: String
   v ? "$(k |> parseattr) " : ""
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function attrparser(k::Symbol, v::Union{AbstractString,Symbol}) :: String
   isempty(string(v)) && return attrparser(k, true)
   "$(k |> parseattr)=\"$(v)\" "
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function attrparser(k::Symbol, v::Any) :: String
   default_attrparser(k, v)
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function default_attrparser(k::Symbol, v::Any) :: String
   "$(k |> parseattr)=$(v) "
 end
 
 
 """
-    parseattr(attr) :: String
+$TYPEDSIGNATURES
 
 Converts Julia keyword arguments to HTML attributes with illegal Julia chars.
 """
@@ -221,7 +266,7 @@ end
 
 
 """
-    normalize_element(elem::String)
+$TYPEDSIGNATURES
 
 Cleans up problematic characters or DOM elements.
 """
@@ -231,7 +276,7 @@ end
 
 
 """
-    denormalize_element(elem::String)
+$TYPEDSIGNATURES
 
 Replaces `-` with the char defined to replace dashes, as Julia does not support them in names.
 """
@@ -243,7 +288,7 @@ end
 
 
 """
-    void_element(elem::String, attrs::Vector{Pair{Symbol,String}} = Vector{Pair{Symbol,String}}()) :: HTMLString
+$TYPEDSIGNATURES
 
 Generates a void HTML element in the form <...>
 """
@@ -258,7 +303,7 @@ end
 
 
 """
-    get_template(path::String; partial::Bool = true, context::Module = @__MODULE__, vars...) :: Function
+$TYPEDSIGNATURES
 
 Resolves the inclusion and rendering of a template file
 """
@@ -293,18 +338,21 @@ end
 
 
 """
-Outputs document's doctype.
+$TYPEDSIGNATURES
 """
 function doc(html::String) :: HTMLString
   string(doctype(), html)
 end
+"""
+$TYPEDSIGNATURES
+"""
 function doc(doctype::Symbol, html::String) :: HTMLString
   string(doctype(doctype), html)
 end
 
 
 """
-    parseview(data::String; partial = false, context::Module = @__MODULE__) :: Function
+$TYPEDSIGNATURES
 
 Parses a view file, returning a rendering function. If necessary, the function is JIT-compiled, persisted and loaded into memory.
 """
@@ -330,7 +378,7 @@ end
 
 
 """
-    render(data::String; context::Module = @__MODULE__, layout::Union{String,Nothing} = nothing, vars...) :: Function
+$TYPEDSIGNATURES
 
 Renders the string as an HTML view.
 """
@@ -347,7 +395,7 @@ end
 
 
 """
-    render(viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.Renderer.FilePath} = nothing, context::Module = @__MODULE__, vars...) :: Function
+$TYPEDSIGNATURES
 
 Renders the template file as an HTML view.
 """
@@ -364,9 +412,7 @@ end
 
 
 """
-    parsehtml(input::String; partial::Bool = true) :: String
-
-
+$TYPEDSIGNATURES
 """
 function parsehtml(input::String; partial::Bool = true) :: String
   content = replace(input, NBSP_REPLACEMENT)
@@ -375,6 +421,9 @@ function parsehtml(input::String; partial::Bool = true) :: String
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function Genie.Renderer.render(::Type{MIME"text/html"}, data::String; context::Module = @__MODULE__, layout::Union{String,Nothing} = nothing, vars...) :: Genie.Renderer.WebRenderable
   try
     render(data; context = context, layout = layout, vars...) |> Genie.Renderer.WebRenderable
@@ -385,6 +434,9 @@ function Genie.Renderer.render(::Type{MIME"text/html"}, data::String; context::M
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function Genie.Renderer.render(::Type{MIME"text/html"}, viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.Renderer.FilePath} = nothing, context::Module = @__MODULE__, vars...) :: Genie.Renderer.WebRenderable
   try
     render(viewfile; layout = layout, context = context, vars...) |> Genie.Renderer.WebRenderable
@@ -395,6 +447,9 @@ function Genie.Renderer.render(::Type{MIME"text/html"}, viewfile::Genie.Renderer
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function html(resource::Genie.Renderer.ResourcePath, action::Genie.Renderer.ResourcePath;
                 layout::Union{Genie.Renderer.ResourcePath,Nothing} = DEFAULT_LAYOUT_FILE,
                 context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
@@ -405,7 +460,7 @@ end
 
 
 """
-    html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), layout::Union{String,Nothing} = nothing, vars...) :: HTTP.Response
+$TYPEDSIGNATURES
 
 Parses the `data` input as HTML, returning a HTML HTTP Response.
 
@@ -441,7 +496,7 @@ end
 
 
 """
-    html(md::Markdown.MD; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), layout::Union{String,Nothing} = nothing, forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
+$TYPEDSIGNATURES
 
 Markdown view rendering
 """
@@ -456,8 +511,7 @@ end
 
 
 """
-    html(viewfile::FilePath; layout::Union{Nothing,FilePath} = nothing,
-          context::Module = @__MODULE__, status::Int = 200, headers::HTTPHeaders = HTTPHeaders(), vars...) :: HTTP.Response
+$TYPEDSIGNATURES
 
 Parses and renders the HTML `viewfile`, optionally rendering it within the `layout` file. Valid file format is `.html.jl`.
 
@@ -475,7 +529,7 @@ end
 
 
 """
-    safe_attr(attr) :: String
+$TYPEDSIGNATURES
 
 Replaces illegal Julia characters from HTML attributes with safe ones, to be used as keyword arguments.
 """
@@ -491,6 +545,9 @@ function safe_attr(attr) :: String
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function parse_attributes!(elem_attributes, io::IOBuffer) :: IOBuffer
   attributes = IOBuffer()
   attributes_keys = String[]
@@ -564,7 +621,7 @@ end
 
 
 """
-    parsehtml(elem, output; partial = true) :: String
+$TYPEDSIGNATURES
 
 Parses a HTML tree structure into a `string` of Julia code.
 """
@@ -651,6 +708,9 @@ function parsehtml(elem::HTMLParser.Node; partial::Bool = true, indent = 0) :: S
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function parsenode(elem::HTMLParser.Node; partial::Bool = true) :: String
   content = elem |> HTMLParser.nodecontent
   endswith(content, "\"") && (content *= Char(0x0))
@@ -662,7 +722,7 @@ end
 
 
 """
-    html_to_julia(file_path::String; partial = true) :: String
+$TYPEDSIGNATURES
 
 Converts a HTML document to Julia code.
 """
@@ -672,7 +732,7 @@ end
 
 
 """
-    string_to_julia(content::String; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "") :: String
+$TYPEDSIGNATURES
 
 Converts string view data to Julia code
 """
@@ -681,11 +741,11 @@ function string_to_julia(content::String; partial = true, f_name::Union{Symbol,N
 end
 
 
-"""
-    to_julia(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "") :: String
-
-Converts an input file to Julia code
-"""
+  """  
+  $TYPEDSIGNATURES
+  
+  Converts an input file to Julia code
+  """
   function to_julia(input::String, f::Union{Function,Nothing};
                   partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n", extension = TEMPLATE_EXT) :: String
   f_name = (f_name === nothing) ? Genie.Renderer.function_name(string(input, partial)) : f_name
@@ -709,7 +769,7 @@ end
 
 
 """
-    partial(path::String; context::Module = @__MODULE__, vars...) :: String
+$TYPEDSIGNATURES
 
 Renders (includes) a view partial within a larger view or layout file.
 """
@@ -721,12 +781,15 @@ function partial(path::String; context::Module = @__MODULE__, kwvars...) :: Stri
   template(path, partial = true, context = context)
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function partial(path::Genie.Renderer.FilePath; context::Module = @__MODULE__, kwvars...)
   partial(string(path); context = context, kwvars...)
 end
 
 """
-    template(path::String; partial::Bool = true, context::Module = @__MODULE__, vars...) :: String
+$TYPEDSIGNATURES
 
 Renders a template file.
 """
@@ -744,7 +807,7 @@ end
 
 
 """
-    read_template_file(file_path::String) :: String
+$TYPEDSIGNATURES
 
 Reads `file_path` template from disk.
 """
@@ -771,7 +834,7 @@ end
 
 
 """
-    parse_template(file_path::String; partial = true) :: String
+$TYPEDSIGNATURES
 
 Parses a HTML file into Julia code.
 """
@@ -781,7 +844,7 @@ end
 
 
 """
-    parse_string(data::String; partial = true) :: String
+$TYPEDSIGNATURES
 
 Parses a HTML string into Julia code.
 """
@@ -790,11 +853,17 @@ function parse_string(data::String; partial::Bool = true, extension = TEMPLATE_E
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function parse(input::String; partial::Bool = true) :: String
   parsehtml(input, partial = partial)
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function parse_embed_tags(code::String) :: String
   replace(
     replace(code, "<%"=>"""<script type="julia/eval">"""),
@@ -803,7 +872,7 @@ end
 
 
 """
-    register_elements() :: Nothing
+$TYPEDSIGNATURES
 
 Generated functions that represent Julia functions definitions corresponding to HTML elements.
 """
@@ -830,7 +899,7 @@ end
 
 
 """
-    register_element(elem::Union{Symbol,String}, elem_type::Union{Symbol,String} = :normal; context = @__MODULE__) :: Nothing
+$TYPEDSIGNATURES
 
 Generates a Julia function representing an HTML element.
 """
@@ -843,7 +912,7 @@ end
 
 
 """
-    register_normal_element(elem::Union{Symbol,String}; context = @__MODULE__) :: Nothing
+$TYPEDSIGNATURES
 
 Generates a Julia function representing a "normal" HTML element: that is an element with a closing tag, <tag>...</tag>
 """
@@ -879,7 +948,7 @@ end
 
 
 """
-    register_void_element(elem::Union{Symbol,String}; context::Module = @__MODULE__) :: Nothing
+$TYPEDSIGNATURES
 
 Generates a Julia function representing a "void" HTML element: that is an element without a closing tag, <tag />
 """
@@ -897,7 +966,7 @@ end
 
 
 """
-    for_each(f::Function, v)
+$TYPEDSIGNATURES
 
 Iterates over the `v` Vector and applies function `f` for each element.
 The results of each iteration are concatenated and the final string is returned.
@@ -908,7 +977,7 @@ end
 
 
 """
-    collection(template::Function, collection::Vector{T})::String where {T}
+$TYPEDSIGNATURES
 
 Creates a view fragment by repeateadly applying a function to each element of the collection.
 """
@@ -924,7 +993,7 @@ end
 
 
 """
-    Genie.Router.error(error_message::String, ::Type{MIME"text/html"}, ::Val{500}; error_info::String = "") :: HTTP.Response
+$TYPEDSIGNATURES
 
 Returns a 500 error response as an HTML doc.
 """
@@ -934,7 +1003,7 @@ end
 
 
 """
-    Genie.Router.error(error_message::String, ::Type{MIME"text/html"}, ::Val{404}; error_info::String = "") :: HTTP.Response
+$TYPEDSIGNATURES
 
 Returns a 404 error response as an HTML doc.
 """
@@ -944,7 +1013,7 @@ end
 
 
 """
-    Genie.Router.error(error_code::Int, error_message::String, ::Type{MIME"text/html"}; error_info::String = "") :: HTTP.Response
+$TYPEDSIGNATURES
 
 Returns an error response as an HTML doc.
 """
@@ -954,7 +1023,7 @@ end
 
 
 """
-    serve_error_file(error_code::Int, error_message::String = "", params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Response
+$TYPEDSIGNATURES
 
 Serves the error file correspoding to `error_code` and current environment.
 """
@@ -1015,15 +1084,24 @@ macro yield(value)
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function view!()
   haskey(task_local_storage(), :__yield) ? task_local_storage(:__yield) : task_local_storage(:__yield, String[])
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function view!(value)
   task_local_storage(:__yield, value)
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function el(; vars...)
   OrderedCollections.OrderedDict(vars)
 end

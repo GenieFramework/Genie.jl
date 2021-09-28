@@ -2,10 +2,16 @@ function form(f::Function, args...; attrs...) :: HTMLString
   normal_element(f, "form", [args...], attr(attrs...))
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function form(children::Union{String,Vector{String}} = "", args...; attrs...) :: HTMLString
   normal_element(children, "form", [args...], attr(attrs...))
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function attr(attrs...)
   attrs = Pair{Symbol,Any}[attrs...]
 

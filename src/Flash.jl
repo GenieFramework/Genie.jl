@@ -2,19 +2,23 @@
 Various utility functions for using across models, controllers and views.
 """
 module Flash
+using DocStringExtensionsMock
 
 import Genie
 
 export flash, flash_has_message
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function init()
   Genie.Sessions.init()
 end
 
 
 """
-    flash()
+$TYPEDSIGNATURES
 
 Returns the `flash` dict object associated with the current HTTP request.
 """
@@ -24,7 +28,7 @@ end
 
 
 """
-    flash(value::Any) :: Nothing
+$TYPEDSIGNATURES
 
 Stores `value` onto the flash.
 """
@@ -37,7 +41,7 @@ end
 
 
 """
-    flash_has_message() :: Bool
+$TYPEDSIGNATURES
 
 Checks if there's any value on the flash storage
 """

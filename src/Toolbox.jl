@@ -1,4 +1,5 @@
 module Toolbox
+using DocStringExtensionsMock
 
 import Base.string
 
@@ -23,7 +24,7 @@ end
 
 
 """
-    tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
+$TYPEDSIGNATURES
 
 Returns a vector of all registered Genie tasks.
 """
@@ -51,13 +52,16 @@ end
 const loadtasks = tasks
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function VoidTaskResult()
   TaskResult(0, "", nothing)
 end
 
 
 """
-    validtaskname(task_name::String) :: String
+$TYPEDSIGNATURES
 
 Attempts to convert a potentially invalid (partial) `task_name` into a valid one.
 """
@@ -71,6 +75,8 @@ end
 
 
 """
+$TYPEDSIGNATURES
+
 Prints a list of all the registered Genie tasks to the standard output.
 """
 function printtasks(context::Module) :: Nothing
@@ -86,7 +92,7 @@ end
 
 
 """
-    task_docs(module_name::Module) :: String
+$TYPEDSIGNATURES
 
 Retrieves the docstring of the runtask method and returns it as a string.
 """
@@ -104,7 +110,7 @@ end
 
 
 """
-    new(task_name::String) :: Nothing
+$TYPEDSIGNATURES
 
 Generates a new Genie task file.
 """
@@ -126,7 +132,7 @@ end
 
 
 """
-    task_file_name(cmd_args::Dict{String,Any}, config::Settings) :: String
+$TYPEDSIGNATURES
 
 Computes the name of a Genie task based on the command line input.
 """
@@ -136,7 +142,7 @@ end
 
 
 """
-    task_module_name(underscored_task_name::String) :: String
+$TYPEDSIGNATURES
 
 Computes the name of a Genie task based on the command line input.
 """
@@ -146,7 +152,7 @@ end
 
 
 """
-    isvalidtask!(parsed_args::Dict{String,Any}) :: Dict{String,Any}
+$TYPEDSIGNATURES
 
 Checks if the name of the task passed as the command line arg is valid task identifier -- if not, attempts to address it, by appending the TASK_SUFFIX suffix.
 Returns the potentially modified `parsed_args` `Dict`.

@@ -7,7 +7,7 @@ import Genie, Genie.Cache
 # IMPLEMENTATION #
 
 """
-    tocache(key::Any, content::Any; dir::String = "") :: Nothing
+$TYPEDSIGNATURES
 
 Persists `content` onto the file system under the `key` key.
 """
@@ -21,7 +21,7 @@ end
 
 
 """
-    fromcache(key::Any, expiration::Int; dir::String = "") :: Union{Nothing,Any}
+$TYPEDSIGNATURES
 
 Retrieves from cache the object stored under the `key` key if the `expiration` delta (in seconds) is in the future.
 """
@@ -42,7 +42,7 @@ end
 
 
 """
-    cache_path(key::Any; dir::String = "") :: String
+$TYPEDSIGNATURES
 
 Computes the path to a cache `key` based on current cache settings.
 """
@@ -59,7 +59,7 @@ end
 
 
 """
-    withcache(f::Function, key::Any, expiration::Int = Genie.config.cache_duration; dir = "", condition::Bool = true)
+$TYPEDSIGNATURES
 
 Executes the function `f` and stores the result into the cache for the duration (in seconds) of `expiration`. Next time the function is invoked,
 if the cache has not expired, the cached result is returned skipping the function execution.
@@ -83,7 +83,7 @@ end
 
 
 """
-    purge(key::Any) :: Nothing
+$TYPEDSIGNATURES
 
 Removes the cache data stored under the `key` key.
 """
@@ -95,7 +95,7 @@ end
 
 
 """
-    purgeall(; dir::String = "") :: Nothing
+$TYPEDSIGNATURES
 
 Removes all cached data.
 """

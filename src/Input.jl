@@ -2,6 +2,7 @@
 Handles input coming through Http server requests.
 """
 module Input
+using DocStringExtensionsMock
 
 import HttpCommon, HTTP
 
@@ -39,6 +40,9 @@ HttpFormPart() = HttpFormPart(Dict{String,Dict{String,String}}(), UInt8[])
 
 ###
 
+"""
+$TYPEDSIGNATURES
+"""
 function all(request::HTTP.Request) :: HttpInput
   input::HttpInput = HttpInput()
   post_from_request!(request, input)
@@ -46,12 +50,18 @@ function all(request::HTTP.Request) :: HttpInput
   input
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function post(request::HTTP.Request)
   input::HttpInput = all(request)
 
   input.post
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function files(request::HTTP.Request)
   input::HttpInput = all(request)
 
@@ -60,6 +70,9 @@ end
 
 ###
 
+"""
+$TYPEDSIGNATURES
+"""
 function post_from_request!(request::HTTP.Request, input::HttpInput)
   headers = Dict(request.headers)
 
@@ -72,6 +85,9 @@ function post_from_request!(request::HTTP.Request, input::HttpInput)
   nothing
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function post_url_encoded!(http_data::Array{UInt8, 1}, post_data::HttpPostData)
   params::Dict{String,String} = HTTP.URIs.queryparams(String(http_data))
 
@@ -80,6 +96,9 @@ function post_url_encoded!(http_data::Array{UInt8, 1}, post_data::HttpPostData)
   end
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::HttpFiles) :: Nothing
   headers = Dict(request.headers)
   boundary::String = headers["Content-Type"][(findfirst("boundary=", headers["Content-Type"])[end] + 1):end]
@@ -137,6 +156,9 @@ end
 
 ###
 
+"""
+$TYPEDSIGNATURES
+"""
 function get_multiform_parts!(http_data::Vector{UInt8}, formParts::Array{HttpFormPart}, boundary, boundaryLength::Int = length(boundary))
   ### Go through each byte of data, parsing it into POST data and files.
 
@@ -280,6 +302,9 @@ end
 
 ###
 
+"""
+$TYPEDSIGNATURES
+"""
 function parse_semicolon_fields(dataString::String)
   dataString = dataString * ";"
 
@@ -344,6 +369,9 @@ function parse_semicolon_fields(dataString::String)
   return data
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function parse_quoted_params(data::String)
   tokens = split(data, "="; limit=2)
 

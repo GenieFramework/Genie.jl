@@ -1,5 +1,8 @@
 using Genie, MbedTLS
 
+"""
+$TYPEDSIGNATURES
+"""
 function configure_dev_ssl()
   cert = Genie.Assets.embedded_path(joinpath("files", "ssl", "localhost.crt")) |> MbedTLS.crt_parse_file
   key = Genie.Assets.embedded_path(joinpath("files", "ssl", "localhost.key")) |> MbedTLS.parse_keyfile

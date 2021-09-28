@@ -2,6 +2,7 @@
 Collection of utilities for working with Requests data
 """
 module Requests
+using DocStringExtensionsMock
 
 import Genie, Genie.Router, Genie.Input
 import HTTP, Reexport
@@ -12,7 +13,7 @@ export infilespayload, filename, payload, peer
 
 
 """
-    jsonpayload()
+$TYPEDSIGNATURES
 
 Processes an `application/json` `POST` request.
 If it fails to successfully parse the `JSON` data it returns `nothing`. The original payload can still be accessed invoking `rawpayload()`
@@ -23,7 +24,7 @@ end
 
 
 """
-    jsonpayload(v)
+$TYPEDSIGNATURES
 
 Processes an `application/json` `POST` request attempting to return value corresponding to key v.
 """
@@ -33,7 +34,7 @@ end
 
 
 """
-    rawpayload() :: String
+$TYPEDSIGNATURES
 
 Returns the raw `POST` payload as a `String`.
 """
@@ -43,7 +44,7 @@ end
 
 
 """
-    filespayload() :: Dict{String,HttpFile}
+$TYPEDSIGNATURES
 
 Collection of form uploaded files.
 """
@@ -53,7 +54,7 @@ end
 
 
 """
-    filespayload(filename::Union{String,Symbol}) :: HttpFile
+$TYPEDSIGNATURES
 
 Returns the `HttpFile` uploaded through the `key` input name.
 """
@@ -63,7 +64,7 @@ end
 
 
 """
-    infilespayload(key::Union{String,Symbol}) :: Bool
+$TYPEDSIGNATURES
 
 Checks if the collection of uploaded files contains a file stored under the `key` name.
 """
@@ -73,7 +74,7 @@ end
 
 
 """
-    Base.write(filename::String = file.name; file::Input.HttpFile) :: IntBase.write(file::HttpFile, filename::String = file.name)
+$TYPEDSIGNATURES
 
 Writes uploaded `HttpFile` `file` to local storage under the `name` filename.
 Returns number of bytes written.
@@ -84,7 +85,7 @@ end
 
 
 """
-    read(file::HttpFile)
+$TYPEDSIGNATURES
 
 Returns the content of `file` as string.
 """
@@ -94,7 +95,7 @@ end
 
 
 """
-    filename(file::HttpFile) :: String
+$TYPEDSIGNATURES
 
 Original filename of the uploaded `HttpFile` `file`.
 """
@@ -104,7 +105,7 @@ end
 
 
 """
-    postpayload() :: Dict{Symbol,Any}
+$TYPEDSIGNATURES
 
 A dict representing the POST variables payload of the request (corresponding to a `form-data` request)
 """
@@ -114,7 +115,7 @@ end
 
 
 """
-    postpayload(key::Symbol) :: Any
+$TYPEDSIGNATURES
 
 Returns the value of the POST variables `key`.
 """
@@ -124,7 +125,7 @@ end
 
 
 """
-    postpayload(key::Symbol, default::Any)
+$TYPEDSIGNATURES
 
 Returns the value of the POST variables `key` or the `default` value if `key` is not defined.
 """
@@ -134,7 +135,7 @@ end
 
 
 """
-    getpayload() :: Dict{Symbol,Any}
+$TYPEDSIGNATURES
 
 A dict representing the GET/query variables payload of the request (the part correspoding to `?foo=bar&baz=moo`)
 """
@@ -144,7 +145,7 @@ end
 
 
 """
-    getpayload(key::Symbol) :: Any
+$TYPEDSIGNATURES
 
 The value of the GET/query variable `key`, as in `?key=value`
 """
@@ -154,7 +155,7 @@ end
 
 
 """
-    getpayload(key::Symbol, default::Any) :: Any
+$TYPEDSIGNATURES
 
 The value of the GET/query variable `key`, as in `?key=value`. If `key` is not defined, `default` is returned.
 """
@@ -164,7 +165,7 @@ end
 
 
 """
-    request() :: HTTP.Request
+$TYPEDSIGNATURES
 
 Returns the raw HTTP.Request object associated with the request.
 """
@@ -175,7 +176,7 @@ end
 const getrequest = request
 
 """
-    payload() :: Any
+$TYPEDSIGNATURES
 
 Utility function for accessing the `params` collection, which holds the request variables.
 """
@@ -185,7 +186,7 @@ end
 
 
 """
-    payload(key::Symbol) :: Any
+$TYPEDSIGNATURES
 
 Utility function for accessing the `key` value within the `params` collection of request variables.
 """
@@ -195,7 +196,7 @@ end
 
 
 """
-    payload(key::Symbol, default_value::T) :: Any
+$TYPEDSIGNATURES
 
 Utility function for accessing the `key` value within the `params` collection of request variables.
 If `key` is not defined, `default_value` is returned.
@@ -206,7 +207,7 @@ end
 
 
 """
-    matchedroute() :: Route
+$TYPEDSIGNATURES
 
 Returns the `Route` object which was matched for the current request.
 """
@@ -216,7 +217,7 @@ end
 
 
 """
-    matchedchannel() :: Channel
+$TYPEDSIGNATURES
 
 Returns the `Channel` object which was matched for the current request.
 """
@@ -226,7 +227,7 @@ end
 
 
 """
-    wsclient() :: HTTP.WebSockets.WebSocket
+$TYPEDSIGNATURES
 
 The web sockets client for the current request.
 """
@@ -236,7 +237,7 @@ end
 
 
 """
-    wtclient() :: HTTP.WebSockets.WebSocket
+$TYPEDSIGNATURES
 
 The web sockets client for the current request.
 """
@@ -245,16 +246,22 @@ function wtclient() :: UInt
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function getheaders(req::HTTP.Request) :: Dict{String,String}
   Dict{String,String}(req.headers)
 end
+"""
+$TYPEDSIGNATURES
+"""
 function getheaders() :: Dict{String,String}
   getheaders(getrequest())
 end
 
 
 """
-    peer()
+$TYPEDSIGNATURES
 
 Returns information about the requesting client's IP address as a NamedTuple{(:ip,), Tuple{String}}
 If the client IP address can not be retrieved, the `ip` field will return an empty string `""`.
@@ -276,7 +283,7 @@ end
 
 
 """
-    isajax(req::HTTP.Request = getrequest()) :: Bool
+$TYPEDSIGNATURES
 
 Attempts to determine if a request is Ajax by sniffing the headers.
 """

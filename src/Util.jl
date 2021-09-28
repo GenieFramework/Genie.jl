@@ -1,4 +1,5 @@
 module Util
+using DocStringExtensionsMock
 
 import Genie
 
@@ -7,7 +8,7 @@ export expand_nullable, time_to_unixtimestamp
 
 
 """
-    expand_nullable{T}(value::Union{Nothing,T}, default::T) :: T
+$TYPEDSIGNATURES
 
 Returns `value` if it is not `nothing` - otherwise `default`.
 """
@@ -17,7 +18,7 @@ end
 
 
 """
-    file_name_without_extension(file_name, extension = ".jl") :: String
+$TYPEDSIGNATURES
 
 Removes the file extension `extension` from `file_name`.
 """
@@ -27,7 +28,7 @@ end
 
 
 """
-    function walk_dir(dir, paths = String[]; only_extensions = ["jl"], only_files = true, only_dirs = false) :: Vector{String}
+$TYPEDSIGNATURES
 
 Recursively walks dir and `produce`s non directories. If `only_files`, directories will be skipped. If `only_dirs`, files will be skipped.
 """
@@ -52,7 +53,7 @@ end
 
 
 """
-    time_to_unixtimestamp(t::Float64 = time()) :: Int
+$TYPEDSIGNATURES
 
 Converts a time value to the corresponding unix timestamp.
 """
@@ -62,7 +63,7 @@ end
 
 
 """
-    filterwhitespace(s::String, allowed::Vector{Char} = Char[]) :: String
+$TYPEDSIGNATURES
 
 Removes whitespaces from `s`, whith the exception of the characters in `allowed`.
 """

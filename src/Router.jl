@@ -3,6 +3,7 @@ Parses requests and extracts parameters, setting up the call variables and invok
 the appropiate route handler function.
 """
 module Router
+using DocStringExtensionsMock
 
 import Revise
 import Reexport, Logging
@@ -78,9 +79,15 @@ mutable struct Channel
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function Base.show(io::IO, r::Route)
   print(io, "[$(r.method)] $(r.path) => $(r.action) | :$(r.name)")
 end
+"""
+$TYPEDSIGNATURES
+"""
 function Base.show(io::IO, c::Channel)
   print(io, "[WS] $(c.path) => $(c.action) | :$(c.name)")
 end
@@ -107,7 +114,7 @@ Base.getindex(params::Pair, keys...) = getindex(Dict(params), keys...)
 
 
 """
-    ispayload(req::HTTP.Request)
+$TYPEDSIGNATURES
 
 True if the request can carry a payload - that is, it's a `POST`, `PUT`, or `PATCH` request
 """
@@ -115,7 +122,7 @@ ispayload(req::HTTP.Request) = req.method in [POST, PUT, PATCH]
 
 
 """
-    ispayload()
+$TYPEDSIGNATURES
 
 True if the request can carry a payload - that is, it's a `POST`, `PUT`, or `PATCH` request
 """
@@ -123,7 +130,7 @@ ispayload() = params()[:REQUEST].method in [POST, PUT, PATCH]
 
 
 """
-    route_request(req::Request, res::Response) :: Response
+$TYPEDSIGNATURES
 
 First step in handling a request: sets up params collection, handles query vars, negotiates content.
 """
@@ -171,7 +178,7 @@ end
 
 
 """
-    route_ws_request(req::Request, msg::String, ws_client::HTTP.WebSockets.WebSocket) :: String
+$TYPEDSIGNATURES
 
 First step in handling a web socket request: sets up params collection, handles query vars.
 """
@@ -188,17 +195,25 @@ function route_ws_request(req, msg::String, ws_client) :: String
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function Base.push!(collection, name::Symbol, item::Union{Route,Channel})
   collection[name] = item
 end
 
 
 """
+$TYPEDSIGNATURES
+
 Named Genie routes constructors.
 """
 function route(action::Function, path::String; method = GET, named::Union{Symbol,Nothing} = nothing, context::Module = @__MODULE__) :: Route
   route(path, action, method = method, named = named, context = context)
 end
+"""
+$TYPEDSIGNATURES
+"""
 function route(path::String, action::Function; method = GET, named::Union{Symbol,Nothing} = nothing, context::Module = @__MODULE__) :: Route
   r = Route(method = method, path = path, action = action, name = named, context = context)
 
@@ -211,11 +226,17 @@ end
 
 
 """
+$TYPEDSIGNATURES
+
 Named Genie channels constructors.
 """
 function channel(action::Function, path::String; named::Union{Symbol,Nothing} = nothing) :: Channel
   channel(path, action, named = named)
 end
+
+"""
+$TYPEDSIGNATURES
+"""
 function channel(path::String, action::Function; named::Union{Symbol,Nothing} = nothing) :: Channel
   c = Channel(path = path, action = action, name = named)
 
@@ -228,7 +249,7 @@ end
 
 
 """
-    routename(params) :: Symbol
+$TYPEDSIGNATURES
 
 Computes the name of a route.
 """
@@ -238,7 +259,7 @@ end
 
 
 """
-    channelname(params) :: Symbol
+$TYPEDSIGNATURES
 
 Computes the name of a channel.
 """
@@ -248,7 +269,7 @@ end
 
 
 """
-    baptizer(params::Union{Route,Channel}, parts::Vector{String}) :: Symbol
+$TYPEDSIGNATURES
 
 Generates default names for routes and channels.
 """
@@ -263,6 +284,8 @@ end
 
 
 """
+$TYPEDSIGNATURES
+
 The list of the defined named routes.
 """
 function named_routes() :: OrderedCollections.OrderedDict{Symbol,Route}
@@ -272,7 +295,7 @@ const namedroutes = named_routes
 
 
 """
-    named_channels() :: Dict{Symbol,Any}
+$TYPEDSIGNATURES
 
 The list of the defined named channels.
 """
@@ -283,6 +306,8 @@ const namedchannels = named_channels
 
 
 """
+$TYPEDSIGNATURES
+
 Gets the `Route` correspoding to `routename`
 """
 function get_route(route_name::Symbol; default::Union{Route,Nothing} = Route()) :: Route
@@ -298,7 +323,7 @@ end
 
 
 """
-    routes() :: Vector{Route}
+$TYPEDSIGNATURES
 
 Returns a vector of defined routes.
 """
@@ -308,7 +333,7 @@ end
 
 
 """
-    channels() :: Vector{Channel}
+$TYPEDSIGNATURES
 
 Returns a vector of defined channels.
 """
@@ -318,7 +343,7 @@ end
 
 
 """
-    delete!(routes, route_name::Symbol)
+$TYPEDSIGNATURES
 
 Removes the route with the corresponding name from the routes collection and returns the collection of remaining routes.
 """
@@ -328,6 +353,8 @@ end
 
 
 """
+$TYPEDSIGNATURES
+
 Generates the HTTP link corresponding to `route_name` using the parameters in `d`.
 """
 function to_link(route_name::Symbol, d::Dict{Symbol,T}; preserve_query::Bool = true, extra_query::Dict = Dict())::String where {T}
@@ -380,6 +407,8 @@ end
 
 
 """
+$TYPEDSIGNATURES
+
 Generates the HTTP link corresponding to `route_name` using the parameters in `route_params`.
 """
 function to_link(route_name::Symbol; preserve_query::Bool = true, extra_query::Dict = Dict(), route_params...) :: String
@@ -393,7 +422,7 @@ const toroute = to_link
 
 
 """
-    route_params_to_dict(route_params)
+$TYPEDSIGNATURES
 
 Converts the route params to a `Dict`.
 """
@@ -403,7 +432,7 @@ end
 
 
 """
-    action_controller_params(action::Function, params::Params) :: Nothing
+$TYPEDSIGNATURES
 
 Sets up the :action_controller, :action, and :controller key - value pairs of the `params` collection.
 """
@@ -419,7 +448,7 @@ end
 
 
 """
-    match_routes(req::Request, res::Response, params::Params) :: Response
+$TYPEDSIGNATURES
 
 Matches the invoked URL to the corresponding route, sets up the execution environment and invokes the controller method.
 """
@@ -482,29 +511,44 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function handle_exception(ex::Genie.Exceptions.ExceptionalResponse)
   ex.response
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function handle_exception(ex::Genie.Exceptions.RuntimeException)
   rethrow(ex)
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function handle_exception(ex::Genie.Exceptions.InternalServerException)
   error(ex.message, response_mime(), Val(500))
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function handle_exception(ex::Genie.Exceptions.NotFoundException)
   error(ex.resource, response_mime(), Val(404))
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function handle_exception(ex::Exception)
   rethrow(ex)
 end
 
 
 """
-    match_channels(req::Request, msg::String, ws_client::HTTP.WebSockets.WebSocket, params::Params) :: String
+$TYPEDSIGNATURES
 
 Matches the invoked URL to the corresponding channel, sets up the execution environment and invokes the channel controller method.
 """
@@ -560,7 +604,7 @@ end
 
 
 """
-    parse_route(route::String, context::Module = @__MODULE__) :: Tuple{String,Vector{String},Vector{Any}}
+$TYPEDSIGNATURES
 
 Parses a route and extracts its named params and types. `context` is used to access optional route parts types.
 """
@@ -606,7 +650,7 @@ end
 
 
 """
-    parse_channel(channel::String) :: Tuple{String,Vector{String},Vector{Any}}
+$TYPEDSIGNATURES
 
 Parses a channel and extracts its named parms and types.
 """
@@ -643,7 +687,7 @@ parse_param(param_type::Type{<:Number}, param::AbstractString) = parse(param_typ
 parse_param(param_type::Type{T}, param::S) where {T, S} = convert(param_type, param)
 
 """
-    extract_uri_params(uri::String, regex_route::Regex, param_names::Vector{String}, param_types::Vector{Any}, params::Params) :: Bool
+$TYPEDSIGNATURES
 
 Extracts params from request URI and sets up the `params` `Dict`.
 """
@@ -666,7 +710,7 @@ end
 
 
 """
-    extract_get_params(uri::URI, params::Params) :: Bool
+$TYPEDSIGNATURES
 
 Extracts query vars and adds them to the execution `params` `Dict`.
 """
@@ -703,7 +747,7 @@ end
 
 
 """
-    extract_post_params(req::Request, params::Params) :: Nothing
+$TYPEDSIGNATURES
 
 Parses POST variables and adds the to the `params` `Dict`.
 """
@@ -730,7 +774,7 @@ end
 
 
 """
-    extract_request_params(req::HTTP.Request, params::Params) :: Nothing
+$TYPEDSIGNATURES
 
 Sets up the `params` key-value pairs corresponding to a JSON payload.
 """
@@ -759,6 +803,9 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function Dict(o::JSON3.Object) :: Dict{String,Any}
   r = Dict{String,Any}()
 
@@ -771,7 +818,7 @@ end
 
 
 """
-    content_type(req::HTTP.Request) :: String
+$TYPEDSIGNATURES
 
 Gets the content-type of the request.
 """
@@ -781,20 +828,23 @@ end
 
 
 """
-    content_length(req::HTTP.Request) :: Int
+$TYPEDSIGNATURES
 
 Gets the content-length of the request.
 """
 function content_length(req::HTTP.Request) :: Int
   parse(Int, get(Genie.HTTPUtils.Dict(req), "content-length", "0"))
 end
+"""
+$TYPEDSIGNATURES
+"""
 function content_length() :: Int
   content_length(params(Genie.PARAMS_REQUEST_KEY))
 end
 
 
 """
-    request_type_is(req::HTTP.Request, request_type::Symbol) :: Bool
+$TYPEDSIGNATURES
 
 Checks if the request content-type is of a certain type.
 """
@@ -805,13 +855,16 @@ function request_type_is(req::HTTP.Request, request_type::Symbol) :: Bool
 
   false
 end
+"""
+$TYPEDSIGNATURES
+"""
 function request_type_is(request_type::Symbol) :: Bool
   request_type_is(params(Genie.PARAMS_REQUEST_KEY), request_type)
 end
 
 
 """
-    request_type(req::HTTP.Request) :: Symbol
+$TYPEDSIGNATURES
 
 Gets the request's content type.
 """
@@ -831,7 +884,7 @@ end
 
 
 """
-    nested_keys(k::String, v, params::Params) :: Nothing
+$TYPEDSIGNATURES
 
 Utility function to process nested keys and set them up in `params`.
 """
@@ -853,7 +906,7 @@ end
 
 
 """
-    setup_base_params(req::Request, res::Response, params::Dict{Symbol,Any}) :: Dict{Symbol,Any}
+$TYPEDSIGNATURES
 
 Populates `params` with default environment vars.
 """
@@ -871,11 +924,11 @@ end
 
 
 """
-    to_response(action_result) :: Response
+$TYPEDSIGNATURES
 
 Converts the result of invoking the controller action to a `Response`.
-"""
-to_response(action_result::HTTP.Response)::HTTP.Response = action_result
+"""    
+to_response(action_result::HTTP.Response)::HTTP.Response = action_result    
 to_response(action_result::Tuple)::HTTP.Response = HTTP.Response(action_result...)
 to_response(action_result::Vector)::HTTP.Response = HTTP.Response(join(action_result))
 to_response(action_result::Nothing)::HTTP.Response = HTTP.Response("")
@@ -884,9 +937,8 @@ to_response(action_result::Genie.Exceptions.ExceptionalResponse)::HTTP.Response 
 to_response(action_result::Exception)::HTTP.Response = throw(action_result)
 to_response(action_result::Any)::HTTP.Response = HTTP.Response(string(action_result))
 
-
 """
-    function params()
+$TYPEDSIGNATURES
 
 The collection containing the request variables collection.
 """
@@ -903,9 +955,8 @@ function params!(key, value)
   task_local_storage(:__params)[key] = value
 end
 
-
 """
-    function query
+$TYPEDSIGNATURES
 
 The collection containing the query request variables collection (GET params).
 """
@@ -921,7 +972,7 @@ end
 
 
 """
-    function post
+$TYPEDSIGNATURES
 
 The collection containing the POST request variables collection.
 """
@@ -935,9 +986,8 @@ function post(key, default)
   get(post(), key, default)
 end
 
-
 """
-    function request()
+$TYPEDSIGNATURES
 
 The request object.
 """
@@ -945,9 +995,8 @@ function request()
   params(Genie.PARAMS_REQUEST_KEY)
 end
 
-
 """
-    function headers()
+$TYPEDSIGNATURES
 
 The current request's headers (as a Dict)
 """
@@ -957,24 +1006,29 @@ end
 
 
 """
-    response_type{T}(params::Dict{Symbol,T}) :: Symbol
-    response_type(params::Params) :: Symbol
+$TYPEDSIGNATURES
 
 Returns the content-type of the current request-response cycle.
 """
 function response_type(params::Dict{Symbol,T})::Symbol where {T}
   get(params, :response_type, request_type(params[Genie.PARAMS_REQUEST_KEY]))
 end
+"""
+$TYPEDSIGNATURES
+"""
 function response_type(params::Params) :: Symbol
   response_type(params.collection)
 end
+"""
+$TYPEDSIGNATURES
+"""
 function response_type() :: Symbol
   response_type(params())
 end
 
 
 """
-    response_type{T}(check::Symbol, params::Dict{Symbol,T}) :: Bool
+$TYPEDSIGNATURES
 
 Checks if the content-type of the current request-response cycle matches `check`.
 """
@@ -987,7 +1041,7 @@ const responsetype = response_type
 
 
 """
-    append_to_routes_file(content::String) :: Nothing
+$TYPEDSIGNATURES
 
 Appends `content` to the app's route file.
 """
@@ -1001,7 +1055,7 @@ end
 
 
 """
-    is_static_file(resource::String) :: Bool
+$TYPEDSIGNATURES
 
 Checks if the requested resource is a static file.
 """
@@ -1011,7 +1065,7 @@ end
 
 
 """
-    escape_resource_path(resource::String)
+$TYPEDSIGNATURES
 
 Cleans up paths to resources.
 """
@@ -1024,7 +1078,7 @@ end
 
 
 """
-    serve_static_file(resource::String) :: Response
+$TYPEDSIGNATURES
 
 Reads the static file and returns the content as a `Response`.
 """
@@ -1055,7 +1109,7 @@ end
 
 
 """
-preflight_response() :: HTTP.Response
+$TYPEDSIGNATURES
 
 Sets up the preflight CORS response header.
 """
@@ -1065,7 +1119,7 @@ end
 
 
 """
-    response_mime()
+$TYPEDSIGNATURES
 
 Returns the MIME type of the response.
 """
@@ -1081,13 +1135,16 @@ end
 
 
 """
-    error
+$TYPEDSIGNATURES
 
 Not implemented function for error response.
 """
 function error end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function trymime(mime::Any)
   try
     mime()
@@ -1097,23 +1154,32 @@ function trymime(mime::Any)
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function error(error_message::String, mime::Any, ::Val{500}; error_info::String = "") :: HTTP.Response
   HTTP.Response(500, ["Content-Type" => string(trymime(mime))], body = "500 Internal Error - $error_message. $error_info")
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function error(error_message::String, mime::Any, ::Val{404}; error_info::String = "") :: HTTP.Response
   HTTP.Response(404, ["Content-Type" => string(trymime(mime))], body = "404 Not Found - $error_message. $error_info")
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function error(error_code::Int, error_message::String, mime::Any; error_info::String = "") :: HTTP.Response
   HTTP.Response(error_code, ["Content-Type" => string(trymime(mime))], body = "$error_code Error - $error_message. $error_info")
 end
 
 
 """
-    file_path(resource::String; within_doc_root = true) :: String
+$TYPEDSIGNATURES
 
 Returns the path to a resource file. If `within_doc_root` it will automatically prepend the document root to `resource`.
 """
@@ -1141,7 +1207,7 @@ file_extension(f) :: String = ormatch(match(r"(?<=\.)[^\.\\/]*$", f), "")
 
 
 """
-    file_headers(f) :: Dict{String,String}
+$TYPEDSIGNATURES
 
 Returns the file headers of `f`.
 """

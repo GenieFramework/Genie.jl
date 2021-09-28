@@ -1,4 +1,5 @@
 module Exceptions
+using DocStringExtensionsMock
 
 import Genie
 import HTTP

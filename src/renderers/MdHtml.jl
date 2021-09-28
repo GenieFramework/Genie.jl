@@ -1,4 +1,5 @@
 module MdHtml
+using DocStringExtensionsMock
 
 import Reexport, Markdown, YAML
 
@@ -9,6 +10,9 @@ const MD_SEPARATOR_START = "---"
 const MD_SEPARATOR_END   = "---"
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function md_to_html(path::String; context::Module = @__MODULE__) :: String
   Genie.Renderer.build_module(
 """
@@ -32,7 +36,7 @@ end
 
 
 """
-    eval_markdown(md::String; context::Module = @__MODULE__) :: String
+$TYPEDSIGNATURES
 
 Converts the mardown `md` to HTML view code.
 """

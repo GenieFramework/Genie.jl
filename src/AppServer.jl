@@ -2,6 +2,7 @@
 Handles Http server related functionality, manages requests and responses and their logging.
 """
 module AppServer
+using DocStringExtensionsMock
 
 using HTTP, Sockets
 import Millboard, Distributed, Logging, MbedTLS
@@ -44,8 +45,7 @@ const SERVERS = ServersCollection(nothing, nothing)
 # end
 
 """
-    startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
-        ws_port::Int = Genie.config.websockets_port, async::Bool = ! Genie.config.run_as_server) :: ServersCollection
+$TYPEDSIGNATURES
 
 Starts the web server.
 
@@ -149,6 +149,9 @@ function startup(port::Int, host::String = Genie.config.server_host;
   SERVERS
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function startup(; port = Genie.config.server_port, ws_port = Genie.config.websockets_port, kwargs...) :: ServersCollection
     startup(port; ws_port = ws_port, kwargs...)
 end
@@ -169,7 +172,7 @@ end
 
 
 """
-    update_config(port::Int, host::String, ws_port::Int) :: Nothing
+$TYPEDSIGNATURES
 
 Updates the corresponding Genie configurations to the corresponding values for
   `port`, `host`, and `ws_port`, if these are passed as arguments when starting up the server.
@@ -184,7 +187,7 @@ end
 
 
 """
-    down(; webserver::Bool = true, websockets::Bool = true) :: ServersCollection
+$TYPEDSIGNATURES
 
 Shuts down the servers optionally indicating which of the `webserver` and `websockets` servers to be stopped.
 """
@@ -197,7 +200,7 @@ end
 
 
 """
-    handle_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
+$TYPEDSIGNATURES
 
 Http server handler function - invoked when the server gets a request.
 """
@@ -216,6 +219,9 @@ function handle_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function setup_http_streamer(http::HTTP.Stream)
   if Genie.config.features_peerinfo
     try
@@ -230,7 +236,7 @@ end
 
 
 """
-    setup_http_listener(req::HTTP.Request, res::HTTP.Response = HTTP.Response()) :: HTTP.Response
+$TYPEDSIGNATURES
 
 Configures the handler for the HTTP Request and handles errors.
 """
@@ -260,7 +266,7 @@ end
 
 
 """
-    setup_ws_handler(req::HTTP.Request, ws_client) :: Nothing
+$TYPEDSIGNATURES
 
 Configures the handler for WebSockets requests.
 """
@@ -282,7 +288,7 @@ end
 
 
 """
-    handle_ws_request(req::HTTP.Request, msg::String, ws_client) :: String
+$TYPEDSIGNATURES
 
 Http server handler function - invoked when the server gets a request.
 """

@@ -2,13 +2,14 @@
 Functionality for dealing with HTTP cookies.
 """
 module Cookies
+using DocStringExtensionsMock
 
 import HTTP
 import Genie, Genie.Encryption, Genie.HTTPUtils
 
 
 """
-    get(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}, default::T; encrypted::Bool = true)::T where T
+$TYPEDSIGNATURES
 
 Attempts to get the Cookie value stored at `key` within `payload`.
 If the `key` is not set, the `default` value is returned.
@@ -26,7 +27,7 @@ end
 
 
 """
-    get(res::HTTP.Response, key::Union{String,Symbol}) :: Union{Nothing,String}
+$TYPEDSIGNATURES
 
 Retrieves a value stored on the cookie as `key` from the `Respose` object.
 
@@ -43,7 +44,7 @@ end
 
 
 """
-    get(req::Request, key::Union{String,Symbol}) :: Union{Nothing,String}
+$TYPEDSIGNATURES
 
 Retrieves a value stored on the cookie as `key` from the `Request` object.
 
@@ -60,7 +61,7 @@ end
 
 
 """
-    set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attributes::Dict; encrypted::Bool = true) :: HTTP.Response
+$TYPEDSIGNATURES
 
 Sets `value` under the `key` label on the `Cookie`.
 
@@ -96,7 +97,7 @@ end
 
 
 """
-    Dict(req::Request) :: Dict{String,String}
+$TYPEDSIGNATURES
 
 Extracts the `Cookie` and `Set-Cookie` data from the `Request` and `Response` objects and converts it into a Dict.
 """
@@ -133,7 +134,7 @@ end
 
 
 """
-    nullablevalue(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}; encrypted::Bool = true)
+$TYPEDSIGNATURES
 
 Attempts to retrieve a cookie value stored at `key` in the `payload object` and returns a `Union{Nothing,String}`
 
@@ -158,7 +159,7 @@ end
 
 
 """
-    getcookies(req::HTTP.Request) :: Vector{HTTP.Cookies.Cookie}
+$TYPEDSIGNATURES
 
 Extracts cookies from within `req`
 """
@@ -168,7 +169,7 @@ end
 
 
 """
-    getcookies(req::HTTP.Request) :: Vector{HTTP.Cookies.Cookie}
+$TYPEDSIGNATURES
 
 Extracts cookies from within `req`, filtering them by `matching` name.
 """

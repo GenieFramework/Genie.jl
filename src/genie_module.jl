@@ -9,7 +9,7 @@ import REPL, REPL.Terminals
 
 
 """
-    newcontroller(controller_name::Union{String,Symbol}) :: Nothing
+$TYPEDSIGNATURES
 
 Creates a new `controller` file. If `pluralize` is `false`, the name of the controller is not automatically pluralized.
 """
@@ -22,7 +22,7 @@ end
 
 
 """
-    newresource(resource_name::Union{String,Symbol}; pluralize::Bool = true, context::Union{Module,Nothing} = nothing) :: Nothing
+$TYPEDSIGNATURES
 
 Creates all the files associated with a new resource.
 If `pluralize` is `false`, the name of the resource is not automatically pluralized.
@@ -44,7 +44,7 @@ end
 
 
 """
-    newtask(task_name::Union{String,Symbol}) :: Nothing
+$TYPEDSIGNATURES
 
 Creates a new Genie `Task` file.
 """
@@ -61,7 +61,7 @@ end
 
 
 """
-    load_libs(root_dir::String = Genie.config.path_lib) :: Nothing
+$TYPEDSIGNATURES
 
 Recursively adds subfolders of `lib/` to LOAD_PATH.
 The `lib/` folder, if present, is designed to host user code in the form of .jl files.
@@ -84,7 +84,7 @@ end
 
 
 """
-    load_resources(root_dir::String = Genie.config.path_resources) :: Nothing
+$TYPEDSIGNATURES
 
 Recursively adds subfolders of `resources/` to LOAD_PATH.
 """
@@ -105,7 +105,7 @@ end
 
 
 """
-    load_helpers(root_dir::String = Genie.config.path_helpers) :: Nothing
+$TYPEDSIGNATURES
 
 Recursively adds subfolders of `helpers/` to LOAD_PATH.
 """
@@ -126,7 +126,7 @@ end
 
 
 """
-    load_configurations(root_dir::String = Genie.config.path_config; context::Union{Module,Nothing} = nothing) :: Nothing
+$TYPEDSIGNATURES
 
 Loads (includes) the framework's configuration files into the app's module `context`.
 The files are set up with `Revise` to be automatically reloaded.
@@ -154,7 +154,7 @@ end
 
 
 """
-    load_initializers(root_dir::String = Genie.config.path_config; context::Union{Module,Nothing} = nothing) :: Nothing
+$TYPEDSIGNATURES
 
 Loads (includes) the framework's initializers.
 The files are set up with `Revise` to be automatically reloaded.
@@ -174,7 +174,7 @@ end
 
 
 """
-    load_plugins(root_dir::String = Genie.config.path_plugins; context::Union{Module,Nothing} = nothing) :: Nothing
+$TYPEDSIGNATURES
 
 Loads (includes) the framework's plugins initializers.
 """
@@ -191,7 +191,7 @@ end
 
 
 """
-    load_routes_definitions(routes_file::String = Genie.ROUTES_FILE_NAME; context::Union{Module,Nothing} = nothing) :: Nothing
+$TYPEDSIGNATURES
 
 Loads the routes file.
 """
@@ -205,7 +205,7 @@ end
 const SECRET_TOKEN = Ref{String}("") # global state
 
 """
-    secret_token(generate_if_missing=true) :: String
+$TYPEDSIGNATURES
 
 Return the secret token used in the app for encryption and salting.
 
@@ -237,7 +237,7 @@ function secret_token(generate_if_missing::Bool = true; context::Union{Module,No
 end
 
 """
-    secret_token!(value=Generator.secret_token())
+$TYPEDSIGNATURES
 
 Define the secret token used in the app for encryption and salting.
 """
@@ -249,7 +249,7 @@ end
 
 
 """
-    default_context(context::Union{Module,Nothing})
+$TYPEDSIGNATURES
 
 Sets the module in which the code is loaded (the app's module)
 """
@@ -264,7 +264,7 @@ end
 
 
 """
-    load(; context::Union{Module,Nothing} = nothing) :: Nothing
+$TYPEDSIGNATURES
 
 Main entry point to loading a Genie app.
 """
@@ -305,9 +305,7 @@ end
 
 
 """
-    replprint(output::String, terminal;
-                    newline::Int = 0, clearline::Int = 1, color::Symbol = :white, bold::Bool = false, sleep_time::Float64 = 0.2,
-                    prefix::String = "", prefix_color::Symbol = :green, prefix_bold::Bool = true)
+$TYPEDSIGNATURES
 
 Prints app loading progress to the console.
 """

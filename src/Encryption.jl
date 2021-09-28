@@ -2,6 +2,7 @@
 Provides Genie with encryption and decryption capabilities.
 """
 module Encryption
+using DocStringExtensionsMock
 
 import Genie, Nettle
 
@@ -9,7 +10,7 @@ const ENCRYPTION_METHOD = "AES256"
 
 
 """
-    encrypt{T}(s::T) :: String
+$TYPEDSIGNATURES
 
 Encrypts `s`.
 """
@@ -22,7 +23,7 @@ end
 
 
 """
-    decrypt(s::String) :: String
+$TYPEDSIGNATURES
 
 Decrypts `s` (a `string` previously encrypted by Genie).
 """
@@ -36,7 +37,7 @@ end
 
 
 """
-    encryption_sauce() :: Tuple{Vector{UInt8},Vector{UInt8}}
+$TYPEDSIGNATURES
 
 Generates a pair of key32 and iv16 with salt for encryption/decryption
 """

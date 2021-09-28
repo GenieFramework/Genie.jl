@@ -5,11 +5,17 @@ Base.@kwdef struct Option
   text::String = value
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function option(disabled::Bool, selected::Bool, value::String, text::String)
   Option(; disabled = disabled, selected = selected, value = value, text = text)
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function Base.string(o::Option) :: HTMLString
   attributes = String[]
 
@@ -21,6 +27,9 @@ function Base.string(o::Option) :: HTMLString
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function select(options::Vector{Option}, args...; attrs...) :: HTMLString
   children = String[]
 
@@ -32,16 +41,25 @@ function select(options::Vector{Option}, args...; attrs...) :: HTMLString
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function select(options::Vector, args...; attrs...) :: HTMLString
   select([option(o) for o in options], args...; attrs...)
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function select(options::Tuple, args...; attrs...) :: HTMLString
   select([option(o) for o in [options...]], args...; attrs...)
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function optgroup(options::Vector{Option}, args...; attrs...) :: HTMLString
   children = String[]
 

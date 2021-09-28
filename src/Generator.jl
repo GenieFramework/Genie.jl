@@ -2,6 +2,7 @@
 Generates various Genie files.
 """
 module Generator
+using DocStringExtensionsMock
 
 import SHA, Dates, Pkg, Logging, UUIDs
 import Inflector
@@ -11,13 +12,16 @@ import Genie
 const JULIA_PATH = joinpath(Sys.BINDIR, "julia")
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function validname(name::String)
   filter(! isempty, [x.match for x in collect(eachmatch(r"[0-9a-zA-Z_]*", name))]) |> join
 end
 
 
 """
-    newcontroller(resource_name::String) :: Nothing
+$TYPEDSIGNATURES
 
 Generates a new Genie controller file and persists it to the resources folder.
 """
@@ -37,7 +41,7 @@ end
 
 
 """
-    newresource(resource_name::String, config::Settings) :: Nothing
+$TYPEDSIGNATURES
 
 Generates all the files associated with a new resource and persists them to the resources folder.
 """
@@ -61,7 +65,7 @@ end
 
 
 """
-    setup_resource_path(resource_name::String) :: String
+$TYPEDSIGNATURES
 
 Computes and creates the directories structure needed to persist a new resource.
 """
@@ -80,7 +84,7 @@ end
 
 
 """
-    write_resource_file(resource_path::String, file_name::String, resource_name::String) :: Bool
+$TYPEDSIGNATURES
 
 Generates all resouce files and persists them to disk.
 """
@@ -120,6 +124,9 @@ function write_resource_file(resource_path::String, file_name::String, resource_
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function binfolderpath(path::String) :: String
   bin_folder_path = joinpath(path, Genie.config.path_bin)
   isdir(bin_folder_path) || mkpath(bin_folder_path)
@@ -129,7 +136,7 @@ end
 
 
 """
-    setup_windows_bin_files(path::String = ".") :: Nothing
+$TYPEDSIGNATURES
 
 Creates the bin/server and bin/repl binaries for Windows
 """
@@ -153,7 +160,7 @@ end
 
 
 """
-    setup_nix_bin_files(path::String = ".") :: Nothing
+$TYPEDSIGNATURES
 
 Creates the bin/server and bin/repl binaries for *nix systems
 """
@@ -181,7 +188,7 @@ end
 
 
 """
-    resource_does_not_exist(resource_path::String, file_name::String) :: Bool
+$TYPEDSIGNATURES
 
 Returns `true` if the indicated resources does not exists - false otherwise.
 """
@@ -197,7 +204,7 @@ end
 
 
 """
-    controller_file_name(resource_name::Union{String,Symbol})
+$TYPEDSIGNATURES
 
 Computes the controller file name based on the resource name.
 """
@@ -207,7 +214,7 @@ end
 
 
 """
-    secret_token() :: String
+$TYPEDSIGNATURES
 
 Generates a random secret token to be used for configuring the call to `Genie.secret_token!`.
 """
@@ -217,7 +224,7 @@ end
 
 
 """
-    write_secrets_file(app_path=".")
+$TYPEDSIGNATURES
 
 Generates a valid `config/secrets.jl` file with a random secret token.
 """
@@ -234,7 +241,7 @@ end
 
 
 """
-    fullstack_app(app_path::String = ".") :: Nothing
+$TYPEDSIGNATURES
 
 Writes the files necessary to create a full stack Genie app.
 """
@@ -248,7 +255,7 @@ end
 
 
 """
-    minimal(app_name::String, app_path::String = abspath(app_name), autostart::Bool = true) :: Nothing
+$TYPEDSIGNATURES
 
 Creates a minimal Genie app.
 """
@@ -265,7 +272,7 @@ end
 
 
 """
-    scaffold(app_path::String = ".") :: Nothing
+$TYPEDSIGNATURES
 
 Writes the file necessary to scaffold a minimal Genie app.
 """
@@ -290,7 +297,7 @@ end
 
 
 """
-    microstack_app(app_path::String = ".") :: Nothing
+$TYPEDSIGNATURES
 
 Writes the file necessary to create a microstack app.
 """
@@ -308,7 +315,7 @@ end
 
 
 """
-    mvc_support(app_path::String = ".") :: Nothing
+$TYPEDSIGNATURES
 
 Writes the files used for rendering resources using the MVC stack and the Genie templating system.
 """
@@ -320,7 +327,7 @@ end
 
 
 """
-    db_support(app_path::String = ".") :: Nothing
+$TYPEDSIGNATURES
 
 Writes files used for interacting with the SearchLight ORM.
 """
@@ -336,6 +343,9 @@ function db_support(app_path::String = ".", include_env::Bool = true, add_depend
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function db_intializer(app_path::String = ".", include_env::Bool = false)
   initializers_dir = joinpath(app_path, Genie.config.path_initializers)
   initializer_path = joinpath(initializers_dir, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME)
@@ -350,7 +360,7 @@ end
 
 
 """
-    write_app_custom_files(path::String, app_path::String) :: Nothing
+$TYPEDSIGNATURES
 
 Writes the Genie app main module file.
 """
@@ -387,7 +397,7 @@ end
 
 
 """
-    install_app_dependencies(app_path::String = ".") :: Nothing
+$TYPEDSIGNATURES
 
 Installs the application's dependencies using Julia's Pkg
 """
@@ -417,7 +427,7 @@ end
 
 
 """
-    generate_project(name)
+$TYPEDSIGNATURES
 
 Generate the `Project.toml` with a name and a uuid.
 If this file already exists, generate `Project_sample.toml` as a reference instead.
@@ -446,6 +456,9 @@ function generate_project(name::String) :: Nothing
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function pkgproject(ctx::Pkg.API.Context, pkg::String, dir::String) :: Nothing
   name = email = nothing
 
@@ -486,6 +499,9 @@ function pkgproject(ctx::Pkg.API.Context, pkg::String, dir::String) :: Nothing
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function pkggenfile(f::Function, ctx::Pkg.API.Context, pkg::String, dir::String, file::String) :: Nothing
   path = joinpath(dir, pkg, file)
   println(ctx.io, "    $(Base.contractuser(path))")
@@ -494,6 +510,9 @@ function pkggenfile(f::Function, ctx::Pkg.API.Context, pkg::String, dir::String,
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function install_db_dependencies(; testmode::Bool = false) :: Nothing
   try
     Pkg.add("SearchLight")
@@ -506,6 +525,9 @@ function install_db_dependencies(; testmode::Bool = false) :: Nothing
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function install_searchlight_dependencies() :: Nothing # TODO: move this to SearchLight post install
   backends = ["SQLite", "MySQL", "PostgreSQL"]
 
@@ -531,7 +553,7 @@ end
 
 
 """
-    autostart_app(path::String = "."; autostart::Bool = true) :: Nothing
+$TYPEDSIGNATURES
 
 If `autostart` is `true`, the newly generated Genie app will be automatically started.
 """
@@ -550,7 +572,7 @@ end
 
 
 """
-    remove_searchlight_initializer(app_path::String = ".") :: Nothing
+$TYPEDSIGNATURES
 
 Removes the SearchLight initializer file if it's unused
 """
@@ -562,7 +584,7 @@ end
 
 
 """
-    newapp(app_name::String; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false, mvcsupport::Bool = false) :: Nothing
+$TYPEDSIGNATURES
 
 Scaffolds a new Genie app, setting up the file structure indicated by the various arguments.
 
@@ -630,6 +652,9 @@ function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = fals
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function post_create(app_name::String, app_path::String; autostart::Bool = true, testmode::Bool = false, dbsupport::Bool = false)
   @info "Done! New app created at $app_path"
 
@@ -648,6 +673,9 @@ function post_create(app_name::String, app_path::String; autostart::Bool = true,
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function set_files_mod() :: Nothing
   for f in ["Manifest.toml", "Project.toml", "routes.jl"]
     try
@@ -662,7 +690,7 @@ end
 
 
 """
-    newapp_webservice(path::String = "."; autostart::Bool = true, dbsupport::Bool = false) :: Nothing
+$TYPEDSIGNATURES
 
 Template for scaffolding a new Genie app suitable for nimble web services.
 
@@ -677,7 +705,7 @@ end
 
 
 """
-    newapp_mvc(path::String = "."; autostart::Bool = true) :: Nothing
+$TYPEDSIGNATURES
 
 Template for scaffolding a new Genie app suitable for MVC web applications (includes MVC structure and DB support).
 
@@ -691,7 +719,7 @@ end
 
 
 """
-    newapp_fullstack(path::String = "."; autostart::Bool = true) :: Nothing
+$TYPEDSIGNATURES
 
 Template for scaffolding a new Genie app suitable for full stack web applications (includes MVC structure, DB support, and frontend asset pipeline).
 

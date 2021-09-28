@@ -2,6 +2,7 @@
 Handles WebSockets communication logic.
 """
 module WebChannels
+using DocStringExtensionsMock
 
 import HTTP, Distributed, Logging, JSON3
 import Genie, Genie.Renderer
@@ -29,6 +30,9 @@ mutable struct ChannelMessage
   payload::MessagePayload
 end
 
+"""
+$TYPEDSIGNATURES
+"""
 function JSON3.StructTypes.StructType(::Type{T}) where {T<:ChannelMessage}
   JSON3.StructTypes.Struct()
 end
@@ -43,6 +47,9 @@ websockets() = map(c -> c.client, clients())
 channels() = collect(keys(SUBSCRIPTIONS))
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function connected_clients(channel::ChannelName) :: Vector{ChannelClient}
   clients = ChannelClient[]
   for client_id in SUBSCRIPTIONS[channel]
@@ -51,6 +58,9 @@ function connected_clients(channel::ChannelName) :: Vector{ChannelClient}
 
   clients
 end
+"""
+$TYPEDSIGNATURES
+"""
 function connected_clients() :: Vector{ChannelClient}
   clients = ChannelClient[]
   for ch in channels()
@@ -61,6 +71,9 @@ function connected_clients() :: Vector{ChannelClient}
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function disconnected_clients(channel::ChannelName) :: Vector{ChannelClient}
   clients = ChannelClient[]
   for client_id in SUBSCRIPTIONS[channel]
@@ -69,6 +82,9 @@ function disconnected_clients(channel::ChannelName) :: Vector{ChannelClient}
 
   clients
 end
+"""
+$TYPEDSIGNATURES
+"""
 function disconnected_clients() :: Vector{ChannelClient}
   clients = ChannelClient[]
   for ch in channels()
@@ -80,6 +96,8 @@ end
 
 
 """
+$TYPEDSIGNATURES
+
 Subscribes a web socket client `ws` to `channel`.
 """
 function subscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelName) :: ChannelClientsCollection
@@ -95,12 +113,17 @@ function subscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelName) :: Chann
 end
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function id(ws::HTTP.WebSockets.WebSocket) :: UInt
   hash(ws)
 end
 
 
 """
+$TYPEDSIGNATURES
+
 Unsubscribes a web socket client `ws` from `channel`.
 """
 function unsubscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelName) :: ChannelClientsCollection
@@ -109,12 +132,17 @@ function unsubscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelName) :: Cha
 
   CLIENTS
 end
+"""
+$TYPEDSIGNATURES
+"""
 function unsubscribe(channel_client::ChannelClient, channel::ChannelName) :: ChannelClientsCollection
   unsubscribe(channel_client.client, channel)
 end
 
 
 """
+$TYPEDSIGNATURES
+
 Unsubscribes a web socket client `ws` from all the channels.
 """
 function unsubscribe_client(ws::HTTP.WebSockets.WebSocket) :: ChannelClientsCollection
@@ -128,11 +156,17 @@ function unsubscribe_client(ws::HTTP.WebSockets.WebSocket) :: ChannelClientsColl
 
   CLIENTS
 end
+"""
+$TYPEDSIGNATURES
+"""
 function unsubscribe_client(client_id::ClientId) :: ChannelClientsCollection
   unsubscribe_client(CLIENTS[client_id].client)
 
   CLIENTS
 end
+"""
+$TYPEDSIGNATURES
+"""
 function unsubscribe_client(channel_client::ChannelClient) :: ChannelClientsCollection
   unsubscribe_client(channel_client.client)
 
@@ -141,7 +175,7 @@ end
 
 
 """
-unsubscribe_disconnected_clients() :: ChannelClientsCollection
+$TYPEDSIGNATURES
 
 Unsubscribes clients which are no longer connected.
 """
@@ -152,6 +186,9 @@ function unsubscribe_disconnected_clients() :: ChannelClientsCollection
 
   CLIENTS
 end
+"""
+$TYPEDSIGNATURES
+"""
 function unsubscribe_disconnected_clients(channel::ChannelName) :: ChannelClientsCollection
   for channel_client in disconnected_clients(channel)
     unsubscribe(channel_client, channel)
@@ -162,6 +199,8 @@ end
 
 
 """
+$TYPEDSIGNATURES
+
 Adds a new subscription for `client` to `channel`.
 """
 function push_subscription(client_id::ClientId, channel::ChannelName) :: ChannelSubscriptionsCollection
@@ -173,12 +212,17 @@ function push_subscription(client_id::ClientId, channel::ChannelName) :: Channel
 
   SUBSCRIPTIONS
 end
+"""
+$TYPEDSIGNATURES
+"""
 function push_subscription(channel_client::ChannelClient, channel::ChannelName) :: ChannelSubscriptionsCollection
   push_subscription(id(channel_client.client), channel)
 end
 
 
 """
+$TYPEDSIGNATURES
+
 Removes the subscription of `client` to `channel`.
 """
 function pop_subscription(client::ClientId, channel::ChannelName) :: ChannelSubscriptionsCollection
@@ -191,12 +235,17 @@ function pop_subscription(client::ClientId, channel::ChannelName) :: ChannelSubs
 
   SUBSCRIPTIONS
 end
+"""
+$TYPEDSIGNATURES
+"""
 function pop_subscription(channel_client::ChannelClient, channel::ChannelName) :: ChannelSubscriptionsCollection
   pop_subscription(id(channel_client.client), channel)
 end
 
 
 """
+$TYPEDSIGNATURES
+
 Removes all subscriptions of `client`.
 """
 function pop_subscription(channel::ChannelName) :: ChannelSubscriptionsCollection
@@ -209,6 +258,8 @@ end
 
 
 """
+$TYPEDSIGNATURES
+
 Pushes `msg` (and `payload`) to all the clients subscribed to the channels in `channels`, with the exception of `except`.
 """
 function broadcast(channels::Union{ChannelName,Vector{ChannelName}},
@@ -238,6 +289,8 @@ end
 
 
 """
+$TYPEDSIGNATURES
+
 Pushes `msg` (and `payload`) to all the clients subscribed to the channels in `channels`, with the exception of `except`.
 """
 function broadcast(msg::String;
@@ -250,6 +303,8 @@ end
 
 
 """
+$TYPEDSIGNATURES
+
 Pushes `js_code` (a JavaScript piece of code) to be executed by all the clients subscribed to the channels in `channels`,
 with the exception of `except`.
 """
@@ -260,14 +315,22 @@ end
 
 
 """
+$TYPEDSIGNATURES
+
 Writes `msg` to web socket for `client`.
 """
 function message(ws::HTTP.WebSockets.WebSocket, msg::String) :: Int
   write(ws, msg)
 end
+"""
+$TYPEDSIGNATURES
+"""
 function message(client::ClientId, msg::String) :: Int
   message(CLIENTS[client].client, msg)
 end
+"""
+$TYPEDSIGNATURES
+"""
 function message(client::ChannelClient, msg::String) :: Int
   message(client.client, msg)
 end

@@ -2,12 +2,12 @@
 Genie utilities for working over HTTP.
 """
 module HTTPUtils
+using DocStringExtensionsMock
 
 import HTTP
 
-
 """
-    Base.Dict(req::HTTP.Request) :: Dict{String,String}
+$TYPEDSIGNATURES
 
 Converts a `HTTP.Request` to a `Dict`.
 """

@@ -2,6 +2,7 @@
 Functionality for creating and working with Genie plugins.
 """
 module Plugins
+using DocStringExtensionsMock
 
 import Genie
 import Pkg, Markdown, Logging
@@ -20,7 +21,7 @@ const FOLDERS = [ joinpath(path_prefix, APP_FOLDER),
 
 
 """
-    recursive_copy(path::String, dest::String; only_hidden = true, force = false)
+$TYPEDSIGNATURES
 
 Utility function to copy plugin files from package dir to app.
 """
@@ -49,7 +50,7 @@ end
 
 
 """
-    congrats()
+$TYPEDSIGNATURES
 
 Shows success message and instructions when scaffolding a plugin.
 """
@@ -80,7 +81,7 @@ end
 
 
 """
-    scaffold(plugin_name::String, dest::String = "."; force = false)
+$TYPEDSIGNATURES
 
 Scaffolds a new plugin as a Julia project
 """
@@ -120,7 +121,7 @@ end
 
 
 """
-    install(path::String, dest::String; force = false)
+$TYPEDSIGNATURES
 
 Utility to allow users to install a plugin
 """

@@ -1,6 +1,9 @@
 module Deploy
+using DocStringExtensionsMock
 
-
+"""
+$TYPEDSIGNATURES
+"""
 function run(command::Cmd)
   try Base.run(command)
 
@@ -15,14 +18,14 @@ end
 
 
 module Docker
+using DocStringExtensionsMock
 
 import Genie, Genie.FileTemplates
 
 const DOCKER = @static Sys.islinux() ? `sudo docker` : `docker`
 
 """
-    dockerfile(path::String = "."; user::String = "genie", env::String = "dev",
-              filename::String = "Dockerfile", port::Int = 8000, dockerport::Int = 80, force::Bool = false)
+$TYPEDSIGNATURES
 
 Generates a `Dockerfile` optimised for containerizing Genie apps.
 
@@ -54,7 +57,7 @@ end
 
 
 """
-    build(path::String = "."; appname = "genie")
+$TYPEDSIGNATURES
 
 Builds the Docker image based on the `Dockerfile`
 """
@@ -70,8 +73,7 @@ end
 
 
 """
-    run(; containername::String = "genieapp", hostport::Int = 80, containerport::Int = 8000, appdir::String = "/home/genie/app",
-        mountapp::Bool = false, image::String = "genie", command::String = "bin/server", rm::Bool = true, it::Bool = true)
+$TYPEDSIGNATURES
 
 Runs the Docker container named `containername`, binding `hostport` and `containerport`.
 
@@ -125,13 +127,14 @@ end # end module Docker
 ########
 
 module Heroku
+using DocStringExtensionsMock
 
 import Genie
 
 const HEROKU = @static Sys.iswindows() ? `heroku.cmd` : `heroku`
 
 """
-    apps()
+$TYPEDSIGNATURES
 
 Returns list of apps available on Heroku account.
 """
@@ -140,7 +143,7 @@ function apps()
 end
 
 """
-    createapp(appname::String; region::String = "us")
+$TYPEDSIGNATURES
 
 Runs the `heroku create` command to create a new app in the indicated region.
 See https://devcenter.heroku.com/articles/heroku-cli-commands#heroku-apps-create-app
@@ -151,7 +154,7 @@ end
 
 
 """
-    push(appname::String; apptype::String = "web")
+$TYPEDSIGNATURES
 
 Invokes the `heroku container:push` which builds, then pushes Docker images to deploy your Heroku app.
 See https://devcenter.heroku.com/articles/heroku-cli-commands#heroku-container-push
@@ -162,7 +165,7 @@ end
 
 
 """
-    release(appname::String; apptype::String = "web")
+$TYPEDSIGNATURES
 
 Invokes the `keroku container:release` which releases previously pushed Docker images to your Heroku app.
 See https://devcenter.heroku.com/articles/heroku-cli-commands#heroku-container-push
@@ -173,7 +176,7 @@ end
 
 
 """
-    open(appname::String)
+$TYPEDSIGNATURES
 
 Invokes the `heroku open` command which open the app in a web browser.
 See https://devcenter.heroku.com/articles/heroku-cli-commands#heroku-apps-open-path
@@ -184,7 +187,7 @@ end
 
 
 """
-    login()
+$TYPEDSIGNATURES
 
 Invokes the `heroku container:login` to log in to Heroku Container Registry,
 See https://devcenter.heroku.com/articles/heroku-cli-commands#heroku-container-login
@@ -195,7 +198,7 @@ end
 
 
 """
-    logs(appname::String; lines::Int = 1_000)
+$TYPEDSIGNATURES
 
 Display recent heroku log output.
 https://devcenter.heroku.com/articles/heroku-cli-commands#heroku-logs

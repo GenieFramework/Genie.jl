@@ -3,6 +3,9 @@ Loads dependencies and bootstraps a Genie app. Exposes core Genie functionality.
 """
 module Genie
 
+include("DocStringExtensionsMock.jl")
+using .DocStringExtensionsMock
+
 import Revise
 
 push!(LOAD_PATH, @__DIR__)
@@ -58,7 +61,7 @@ export serve, up, down, loadapp, genie, bootstrap
 @reexport using .Router
 
 """
-    serve(path::String = Genie.config.server_document_root, params...; kwparams...)
+$TYPEDSIGNATURES
 
 Serves a folder of static files located at `path`. Allows Genie to be used as a static files web server.
 The `params` and `kwparams` arguments are forwarded to `Genie.startup()`.
@@ -142,7 +145,7 @@ const newapp_fullstack = Generator.newapp_fullstack
 
 
 """
-    loadapp(path::String = "."; autostart::Bool = false) :: Nothing
+$TYPEDSIGNATURES
 
 Loads an existing Genie app from the file system, within the current Julia REPL session.
 
@@ -222,7 +225,7 @@ const down = AppServer.down
 ### PRIVATE ###
 
 """
-    run() :: Nothing
+$TYPEDSIGNATURES
 
 Runs the Genie app by parsing the command line args and invoking the corresponding actions.
 Used internally to parse command line arguments.
@@ -235,7 +238,7 @@ end
 
 
 """
-    genie() :: Union{Nothing,Sockets.TCPServer}
+$TYPEDSIGNATURES
 """
 function genie(; context = @__MODULE__) :: Union{Nothing,Sockets.TCPServer}
   haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = "dev")

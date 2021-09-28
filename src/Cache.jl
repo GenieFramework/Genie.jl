@@ -2,6 +2,7 @@
 Caching functionality for Genie.
 """
 module Cache
+using DocStringExtensionsMock
 
 import SHA, Logging
 import Genie
@@ -10,6 +11,9 @@ export cachekey, withcache, @cache
 export purge, purgeall
 
 
+"""
+$TYPEDSIGNATURES
+"""
 function init() :: Nothing
   @eval Genie.config.cache_storage === nothing && (Genie.config.cache_storage = :File)
   @eval Genie.config.cache_storage == :File && include(joinpath(@__DIR__, "cache_adapters", "FileCache.jl"))
@@ -19,7 +23,7 @@ end
 
 
 """
-    withcache(f::Function, key::Union{String,Symbol}, expiration::Int = Genie.config.cache_duration; dir = "", condition::Bool = true)
+$TYPEDSIGNATURES
 
 Executes the function `f` and stores the result into the cache for the duration (in seconds) of `expiration`. Next time the function is invoked,
 if the cache has not expired, the cached result is returned skipping the function execution.
@@ -30,7 +34,7 @@ function withcache end
 
 
 """
-    purge()
+$TYPEDSIGNATURES
 
 Removes the cache data stored under the `key` key.
 """
@@ -38,7 +42,7 @@ function purge end
 
 
 """
-    purgeall()
+$TYPEDSIGNATURES
 
 Removes all cached data.
 """
@@ -58,7 +62,7 @@ end
 
 
 """
-    cachekey(args...) :: String
+$TYPEDSIGNATURES
 
 Computes a unique cache key based on `args`. Used to generate unique `key`s for storing data in cache.
 """
