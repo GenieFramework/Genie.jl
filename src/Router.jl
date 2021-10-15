@@ -570,7 +570,7 @@ function parse_route(route::String; context::Module = @__MODULE__) :: Tuple{Stri
   param_types = Any[]
 
   if occursin('#', route) || occursin(':', route)
-    validation_match = "[\\w\\-\\.\\+\\,\\s\\%]+"
+    validation_match = "[\\w\\-\\.\\+\\,\\s\\%\\:]+"
 
     for rp in split(route, '/', keepempty = false)
       if occursin("#", rp)
