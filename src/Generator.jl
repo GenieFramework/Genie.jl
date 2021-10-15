@@ -325,12 +325,12 @@ end
 Writes files used for interacting with the SearchLight ORM.
 """
 function db_support(app_path::String = ".", include_env::Bool = true, add_dependencies::Bool = true;
-                    testmode::Bool = false) :: Nothing
+                    testmode::Bool = false, dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing
   cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_db), joinpath(app_path, Genie.config.path_db), force = true)
 
   db_intializer(app_path, include_env)
 
-  add_dependencies && install_db_dependencies(testmode = testmode)
+  add_dependencies && install_db_dependencies(testmode = testmode, dbadapter = dbadapter)
 
   nothing
 end
@@ -391,7 +391,8 @@ end
 
 Installs the application's dependencies using Julia's Pkg
 """
-function install_app_dependencies(app_path::String = "."; testmode::Bool = false, dbsupport::Bool = false) :: Nothing
+function install_app_dependencies(app_path::String = "."; testmode::Bool = false,
+                                  dbsupport::Bool = false, dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing
   @info "Installing app dependencies"
   Pkg.activate(".")
 
@@ -402,7 +403,7 @@ function install_app_dependencies(app_path::String = "."; testmode::Bool = false
 
   Pkg.add(pkgs)
 
-  dbsupport && install_db_dependencies(testmode = testmode)
+  dbsupport && install_db_dependencies(testmode = testmode, dbadapter = dbadapter)
 
   @info "Installing dependencies for unit tests"
 
@@ -494,10 +495,10 @@ function pkggenfile(f::Function, ctx::Pkg.API.Context, pkg::String, dir::String,
 end
 
 
-function install_db_dependencies(; testmode::Bool = false) :: Nothing
+function install_db_dependencies(; testmode::Bool = false, dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing
   try
     Pkg.add("SearchLight")
-    testmode || install_searchlight_dependencies()
+    testmode || install_searchlight_dependencies(dbadapter)
   catch ex
     @error ex
   end
@@ -506,25 +507,39 @@ function install_db_dependencies(; testmode::Bool = false) :: Nothing
 end
 
 
-function install_searchlight_dependencies() :: Nothing # TODO: move this to SearchLight post install
-  backends = ["SQLite", "MySQL", "PostgreSQL"]
+function install_searchlight_dependencies(dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing # TODO: move this to SearchLight post install
+  backends = ["SQLite", "MySQL", "PostgreSQL"] # todo: this should be dynamic somehow -- maybe by using the future plugins REST API
 
-  println("Please choose the DB backend you want to use: ")
-  for i in 1:length(backends)
-    println("$i. $(backends[i])")
+  adapter::String = if dbadapter === nothing
+    println("Please choose the DB backend you want to use: ")
+    for i in 1:length(backends)
+      println("$i. $(backends[i])")
+    end
+    println("$(length(backends)+1). Other")
+
+    println("Input $(join([1:(length(backends)+1)...], ", ", " or ")) and press ENTER to confirm")
+    println()
+
+    choice = try
+      parse(Int, readline())
+    catch
+      return install_searchlight_dependencies()
+    end
+
+    if choice == (length(backends)+1)
+      println("Please input DB adapter (ex: Oracle, ODBC, JDBC, etc)")
+      println()
+
+      readline()
+    else
+      backends[choice]
+    end
+  else
+    string(dbadapter)
   end
-  println("Input $(join([1:length(backends)...], ", ", " or ")) and press ENTER to confirm")
-  println()
 
-  choice = try
-    parse(Int, readline())
-  catch _
-    0
-  end
-
-  (choice in [1, 2, 3]) || return install_searchlight_dependencies()
-
-  Pkg.add("SearchLight$(backends[choice])")
+  Pkg.activate(".")
+  Pkg.add("SearchLight$adapter")
 
   nothing
 end
@@ -572,6 +587,9 @@ Scaffolds a new Genie app, setting up the file structure indicated by the variou
 - `fullstack::Bool`: the type of app to be bootstrapped. The fullstack app includes MVC structure, DB connection code, and asset pipeline files.
 - `dbsupport::Bool`: bootstrap the files needed for DB connection setup via the SearchLight ORM
 - `mvcsupport::Bool`: adds the files used for HTML+Julia view templates rendering and working with resources
+- `dbadapter::Union{String,Symbol,Nothing} = nothing` : pass the SearchLight database adapter to be used by default
+(one of :MySQL, :SQLite, or :PostgreSQL)`. If `dbadapter` is `nothing`, an adapter will have to be selected interactivel
+at the REPL, during the app creation process.
 
 # Examples
 ```julia-repl
@@ -600,13 +618,14 @@ julia> Genie.newapp("MyGenieApp")
 ```
 """
 function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = false,
-                dbsupport::Bool = false, mvcsupport::Bool = false, testmode::Bool = false) :: Nothing
+                dbsupport::Bool = false, mvcsupport::Bool = false, testmode::Bool = false,
+                dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing
   app_name = validname(app_name)
   app_path = abspath(app_name)
 
   fullstack ? fullstack_app(app_name, app_path) : microstack_app(app_name, app_path)
 
-  (dbsupport || fullstack) ? db_support(app_path, testmode = testmode) : remove_searchlight_initializer(app_path)
+  (dbsupport || fullstack) ? db_support(app_path, testmode = testmode, dbadapter = dbadapter) : remove_searchlight_initializer(app_path)
 
   mvcsupport && (fullstack || mvc_support(app_path))
 
@@ -624,13 +643,15 @@ function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = fals
     @error ex
   end
 
-  post_create(app_name, app_path; autostart = autostart, testmode = testmode, dbsupport = (dbsupport || fullstack))
+  post_create(app_name, app_path; autostart = autostart, testmode = testmode,
+              dbsupport = (dbsupport || fullstack), dbadapter = dbadapter)
 
   nothing
 end
 
 
-function post_create(app_name::String, app_path::String; autostart::Bool = true, testmode::Bool = false, dbsupport::Bool = false)
+function post_create(app_name::String, app_path::String; autostart::Bool = true, testmode::Bool = false,
+                      dbsupport::Bool = false, dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing
   @info "Done! New app created at $app_path"
 
   @info "Changing active directory to $app_path"
@@ -638,7 +659,7 @@ function post_create(app_name::String, app_path::String; autostart::Bool = true,
 
   generate_project(app_name)
 
-  install_app_dependencies(app_path, testmode = testmode, dbsupport = dbsupport)
+  install_app_dependencies(app_path, testmode = testmode, dbsupport = dbsupport, dbadapter = dbadapter)
 
   set_files_mod()
 
@@ -670,9 +691,12 @@ Template for scaffolding a new Genie app suitable for nimble web services.
 - `path::String`: the name of the app and the path where to bootstrap it
 - `autostart::Bool`: automatically start the app once the file structure is created
 - `dbsupport::Bool`: bootstrap the files needed for DB connection setup via the SearchLight ORM
+- `dbadapter::Union{String,Symbol,Nothing} = nothing` : pass the SearchLight database adapter to be used by default
+(one of :MySQL, :SQLite, or :PostgreSQL)`. If `dbadapter` is `nothing`, an adapter will have to be selected interactivel
+at the REPL, during the app creation process.
 """
-function newapp_webservice(path::String = "."; autostart::Bool = true, dbsupport::Bool = false) :: Nothing
-  newapp(path, autostart = autostart, fullstack = false, dbsupport = dbsupport, mvcsupport = false)
+function newapp_webservice(path::String = "."; autostart::Bool = true, dbsupport::Bool = false, dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing
+  newapp(path, autostart = autostart, fullstack = false, dbsupport = dbsupport, mvcsupport = false, dbadapter = dbadapter)
 end
 
 
@@ -684,9 +708,12 @@ Template for scaffolding a new Genie app suitable for MVC web applications (incl
 # Arguments
 - `path::String`: the name of the app and the path where to bootstrap it
 - `autostart::Bool`: automatically start the app once the file structure is created
+- `dbadapter::Union{String,Symbol,Nothing} = nothing` : pass the SearchLight database adapter to be used by default
+(one of :MySQL, :SQLite, or :PostgreSQL)`. If `dbadapter` is `nothing`, an adapter will have to be selected interactivel
+at the REPL, during the app creation process.
 """
-function newapp_mvc(path::String = "."; autostart::Bool = true) :: Nothing
-  newapp(path, autostart = autostart, fullstack = false, dbsupport = true, mvcsupport = true)
+function newapp_mvc(path::String = "."; autostart::Bool = true, dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing
+  newapp(path, autostart = autostart, fullstack = false, dbsupport = true, mvcsupport = true, dbadapter = dbadapter)
 end
 
 
@@ -698,9 +725,12 @@ Template for scaffolding a new Genie app suitable for full stack web application
 # Arguments
 - `path::String`: the name of the app and the path where to bootstrap it
 - `autostart::Bool`: automatically start the app once the file structure is created
+- `dbadapter::Union{String,Symbol,Nothing} = nothing` : pass the SearchLight database adapter to be used by default
+(one of :MySQL, :SQLite, or :PostgreSQL)`. If `dbadapter` is `nothing`, an adapter will have to be selected interactivel
+at the REPL, during the app creation process.
 """
-function newapp_fullstack(path::String = "."; autostart::Bool = true) :: Nothing
-  newapp(path, autostart = autostart, fullstack = true, dbsupport = true, mvcsupport = true)
+function newapp_fullstack(path::String = "."; autostart::Bool = true, dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing
+  newapp(path, autostart = autostart, fullstack = true, dbsupport = true, mvcsupport = true, dbadapter = dbadapter)
 end
 
 
