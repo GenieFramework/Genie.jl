@@ -28,6 +28,7 @@ const TEST  = "test"
 
 haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = DEV)
 haskey(ENV, "HOST") || (ENV["HOST"] = "127.0.0.1")
+haskey(ENV, "BASEPATH") || (ENV["BASEPATH"] = "/")
 
 
 """
@@ -208,7 +209,7 @@ Base.@kwdef mutable struct Settings
   session_storage::Union{Symbol,Nothing}              = nothing
   session_options::Dict{String,Any}                   = Dict{String,Any}("Path" => "/", "HttpOnly" => true, "Secure" => ssl_enabled)
 
-  base_path::String                                   = "/"
+  base_path::String                                   = ENV["BASEPATH"]
 
   features_peerinfo::Bool                             = false
 

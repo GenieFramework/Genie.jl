@@ -295,6 +295,7 @@ function get_route(route_name::Symbol; default::Union{Route,Nothing} = Route()) 
       default
     end)
 end
+const getroute = get_route
 
 
 """

@@ -13,6 +13,25 @@ export favicon_support
 
 ### PUBLIC ###
 
+"""
+
+"""
+function external_assets() :: Bool
+  startswith(Genie.config.base_path, "http")
+end
+
+"""
+    asset_path(...)
+
+Generates the path to an asset file.
+"""
+function asset_path(; host::String = Genie.config.base_path, package::String = "", version::String = "",
+                      type::String = "", path::String = "", file::String = "", ext::String = ".$type") :: String
+  join(filter([host, package, version, type, path, file, ext]) do part
+    ! isempty(part)
+  end, '/')
+end
+
 
 """
     include_asset(asset_type::Union{String,Symbol}, file_name::Union{String,Symbol}) :: String
@@ -20,7 +39,7 @@ export favicon_support
 Returns the path to an asset. `asset_type` can be one of `:js`, `:css`. The `file_name` should not include the extension.
 """
 function include_asset(asset_type::Union{String,Symbol}, file_name::Union{String,Symbol}) :: String
-  "$(Genie.config.base_path)$(string(asset_type))/$(string(file_name))$(".$asset_type")"
+  asset_path(type = string(asset_type), file = string(file_name))
 end
 
 
@@ -151,13 +170,20 @@ function channels_support(channel::String = Genie.config.webchannels_default_rou
   endpoint = (channel == Genie.config.webchannels_default_route) ?
               "/js/$(Genie.config.webchannels_js_file)" :
               "/js/$(channel)/$(Genie.config.webchannels_js_file)"
-  Router.route(endpoint) do
-    Genie.Renderer.Js.js(channels(channel))
+
+  if ! external_assets()
+    Router.route(endpoint) do
+      Genie.Renderer.Js.js(channels(channel))
+    end
   end
 
   channels_subscribe(channel)
 
-  "<script src=\"$(Genie.config.base_path)$(endpoint[2:end])\"></script>"
+  if ! external_assets()
+    Genie.Renderer.html.script(src="$(Genie.config.base_path)$(endpoint[2:end])")
+  else
+    Genie.Renderer.Html.script([channels(channel)])
+  end
 end
 
 
