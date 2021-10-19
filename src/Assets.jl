@@ -180,7 +180,7 @@ function channels_support(channel::String = Genie.config.webchannels_default_rou
   channels_subscribe(channel)
 
   if ! external_assets()
-    Genie.Renderer.html.script(src="$(Genie.config.base_path)$(endpoint[2:end])")
+    Genie.Renderer.Html.script(src="$(Genie.config.base_path)$(endpoint[2:end])")
   else
     Genie.Renderer.Html.script([channels(channel)])
   end
@@ -258,14 +258,20 @@ function webthreads_support(channel::String = Genie.config.webthreads_default_ro
               "/js/$(Genie.config.webthreads_js_file)" :
               "/js/$(channel)/$(Genie.config.webthreads_js_file)"
 
-  Router.route(endpoint) do
-    Genie.Renderer.Js.js(webthreads(channel))
+  if ! external_assets()
+    Router.route(endpoint) do
+      Genie.Renderer.Js.js(webthreads(channel))
+    end
   end
 
   webthreads_subscribe(channel)
   webthreads_push_pull(channel)
 
-  "<script src=\"$(Genie.config.base_path)$(endpoint[2:end])\"></script>"
+  if ! external_assets()
+    Genie.Renderer.html.script(src="$(Genie.config.base_path)$(endpoint[2:end])")
+  else
+    Genie.Renderer.Html.script([webthreads(channel)])
+  end
 end
 
 
