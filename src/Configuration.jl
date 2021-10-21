@@ -25,11 +25,6 @@ const DEV   = "dev"
 const PROD  = "prod"
 const TEST  = "test"
 
-
-haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = DEV)
-haskey(ENV, "HOST") || (ENV["HOST"] = "127.0.0.1")
-
-
 """
     isdev()  :: Bool
 
@@ -131,12 +126,12 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 """
 Base.@kwdef mutable struct Settings
   server_port::Int                                    = (haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : 8000) # default port for binding the web server
-  server_host::String                                 = ENV["HOST"]
+  server_host::String                                 = haskey(ENV, "HOST") ? ENV["HOST"] : "127.0.0.1"
   server_document_root::String                        = "public"
   server_handle_static_files::Bool                    = true
   server_signature::String                            = "Genie/Julia/$VERSION"
 
-  app_env::String                                     = ENV["GENIE_ENV"]
+  app_env::String                                     = haskey(ENV, "GENIE_ENV") ? ENV["GENIE_ENV"] : DEV
 
   cors_headers::Dict{String,String}                   = Dict{String,String}(
                                                           "Access-Control-Allow-Origin"       => "", # ex: "*" or "http://mozilla.org"
@@ -208,7 +203,7 @@ Base.@kwdef mutable struct Settings
   session_storage::Union{Symbol,Nothing}              = nothing
   session_options::Dict{String,Any}                   = Dict{String,Any}("Path" => "/", "HttpOnly" => true, "Secure" => ssl_enabled)
 
-  base_path::String                                   = "/"
+  base_path::String                                   = haskey(ENV, "BASEPATH") ? ENV["BASEPATH"] : ""
 
   features_peerinfo::Bool                             = false
 

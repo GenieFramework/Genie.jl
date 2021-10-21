@@ -14,13 +14,55 @@ export favicon_support
 ### PUBLIC ###
 
 
+Base.@kwdef mutable struct AssetsConfig
+  host::String = Genie.config.base_path
+  package::String = "Genie.jl"
+  version::String = "master"
+end
+
+const assets_config = AssetsConfig()
+
+
+"""
+
+"""
+function external_assets(host::String) :: Bool
+  startswith(host, "http")
+end
+function external_assets(ac::AssetsConfig = AssetsConfig()) :: Bool
+  external_assets(ac.host)
+end
+
+"""
+    asset_path(...)
+
+Generates the path to an asset file.
+"""
+function asset_path(; host::String = Genie.config.base_path, package::String = "", version::String = "",
+                      type::String = "", path::String = "", file::String = "", ext::String = ".$type") :: String
+  (external_assets(host) ? "" : "/") * join(filter([host, package, version, "assets", type, path, file*ext]) do part
+    ! isempty(part)
+  end, '/') |> lowercase
+end
+function asset_path(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "", file::String = "", ext::String = ".$type") :: String
+  asset_path(host = ac.host, package = ac.package, version = ac.version, type = type, path = path, file = file, ext = ext)
+end
+
+
+function asset_file(; cwd = "", type::String = "", path::String = "", file::String = "", ext::String = ".$type") :: String
+  joinpath((filter([cwd, "assets", type, path, file*ext]) do part
+    ! isempty(part)
+  end)...) |> abspath
+end
+
+
 """
     include_asset(asset_type::Union{String,Symbol}, file_name::Union{String,Symbol}) :: String
 
 Returns the path to an asset. `asset_type` can be one of `:js`, `:css`. The `file_name` should not include the extension.
 """
 function include_asset(asset_type::Union{String,Symbol}, file_name::Union{String,Symbol}) :: String
-  "$(Genie.config.base_path)$(string(asset_type))/$(string(file_name))$(".$asset_type")"
+  asset_path(type = string(asset_type), file = string(file_name))
 end
 
 
@@ -151,13 +193,20 @@ function channels_support(channel::String = Genie.config.webchannels_default_rou
   endpoint = (channel == Genie.config.webchannels_default_route) ?
               "/js/$(Genie.config.webchannels_js_file)" :
               "/js/$(channel)/$(Genie.config.webchannels_js_file)"
-  Router.route(endpoint) do
-    Genie.Renderer.Js.js(channels(channel))
+
+  if ! external_assets()
+    Router.route(endpoint) do
+      Genie.Renderer.Js.js(channels(channel))
+    end
   end
 
   channels_subscribe(channel)
 
-  "<script src=\"$(Genie.config.base_path)$(endpoint[2:end])\"></script>"
+  if ! external_assets()
+    Genie.Renderer.Html.script(src="$(Genie.config.base_path)$(endpoint[2:end])")
+  else
+    Genie.Renderer.Html.script([channels(channel)])
+  end
 end
 
 
@@ -232,14 +281,20 @@ function webthreads_support(channel::String = Genie.config.webthreads_default_ro
               "/js/$(Genie.config.webthreads_js_file)" :
               "/js/$(channel)/$(Genie.config.webthreads_js_file)"
 
-  Router.route(endpoint) do
-    Genie.Renderer.Js.js(webthreads(channel))
+  if ! external_assets()
+    Router.route(endpoint) do
+      Genie.Renderer.Js.js(webthreads(channel))
+    end
   end
 
   webthreads_subscribe(channel)
   webthreads_push_pull(channel)
 
-  "<script src=\"$(Genie.config.base_path)$(endpoint[2:end])\"></script>"
+  if ! external_assets()
+    Genie.Renderer.html.script(src="$(Genie.config.base_path)$(endpoint[2:end])")
+  else
+    Genie.Renderer.Html.script([webthreads(channel)])
+  end
 end
 
 
