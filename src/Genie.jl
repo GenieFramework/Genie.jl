@@ -10,7 +10,9 @@ push!(LOAD_PATH, @__DIR__)
 import Inflector
 
 include("Configuration.jl")
-const config = Configuration.Settings(app_env = ENV["GENIE_ENV"])
+using .Configuration
+
+const config = Configuration.Settings()
 
 include("constants.jl")
 

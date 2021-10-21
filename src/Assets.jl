@@ -13,11 +13,24 @@ export favicon_support
 
 ### PUBLIC ###
 
+
+Base.@kwdef mutable struct AssetsConfig
+  host::String = Genie.config.base_path
+  package::String = "Genie.jl"
+  version::String = "master"
+end
+
+const assets_config = AssetsConfig()
+
+
 """
 
 """
-function external_assets() :: Bool
-  startswith(Genie.config.base_path, "http")
+function external_assets(host::String) :: Bool
+  startswith(host, "http")
+end
+function external_assets(ac::AssetsConfig = AssetsConfig()) :: Bool
+  external_assets(ac.host)
 end
 
 """
@@ -27,9 +40,19 @@ Generates the path to an asset file.
 """
 function asset_path(; host::String = Genie.config.base_path, package::String = "", version::String = "",
                       type::String = "", path::String = "", file::String = "", ext::String = ".$type") :: String
-  join(filter([host, package, version, type, path, file, ext]) do part
+  (external_assets(host) ? "" : "/") * join(filter([host, package, version, "assets", type, path, file*ext]) do part
     ! isempty(part)
-  end, '/')
+  end, '/') |> lowercase
+end
+function asset_path(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "", file::String = "", ext::String = ".$type") :: String
+  asset_path(host = ac.host, package = ac.package, version = ac.version, type = type, path = path, file = file, ext = ext)
+end
+
+
+function asset_file(; cwd = "", type::String = "", path::String = "", file::String = "", ext::String = ".$type") :: String
+  joinpath((filter([cwd, "assets", type, path, file*ext]) do part
+    ! isempty(part)
+  end)...) |> abspath
 end
 
 
