@@ -29,8 +29,11 @@ const assets_config = AssetsConfig()
 function external_assets(host::String) :: Bool
   startswith(host, "http")
 end
-function external_assets(ac::AssetsConfig = AssetsConfig()) :: Bool
+function external_assets(ac::AssetsConfig) :: Bool
   external_assets(ac.host)
+end
+function external_assets() :: Bool
+  external_assets(assets_config)
 end
 
 """
@@ -38,8 +41,8 @@ end
 
 Generates the path to an asset file.
 """
-function asset_path(; host::String = Genie.config.base_path, package::String = "", version::String = "",
-                      type::String = "", path::String = "", file::String = "", ext::String = ".$type") :: String
+function asset_path(; file::String, host::String = Genie.config.base_path, package::String = "", version::String = "",
+                      type::String = "$(split(file, '.')[end])", path::String = "", ext::String = "$(endswith(file, type) ? "" : ".$type")") :: String
   (external_assets(host) ? "" : "/") * join(filter([host, package, version, "assets", type, path, file*ext]) do part
     ! isempty(part)
   end, '/') |> lowercase
@@ -49,10 +52,11 @@ function asset_path(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = s
 end
 
 
-function asset_file(; cwd = "", type::String = "", path::String = "", file::String = "", ext::String = ".$type") :: String
+function asset_file(; cwd = "", file::String, path::String = "", type::String = "$(split(file, '.')[end])",
+                      ext::String = "$(endswith(file, type) ? "" : ".$type")") :: String
   joinpath((filter([cwd, "assets", type, path, file*ext]) do part
     ! isempty(part)
-  end)...) |> abspath
+  end)...) |> normpath
 end
 
 
@@ -116,7 +120,7 @@ function js_settings(channel::String = Genie.config.webchannels_default_route) :
 
   """
   window.Genie = {};
-  Genie.Settings = $settings
+  Genie.Settings = $(settings);
   """
 end
 
@@ -127,7 +131,7 @@ end
 Reads and outputs the file at `path` within Genie's root package dir
 """
 function embedded(path::String) :: String
-  read(joinpath(@__DIR__, "..", path) |> normpath, String)
+  read(joinpath(path) |> normpath, String)
 end
 
 
@@ -147,7 +151,7 @@ end
 Outputs the channels.js file included with the Genie package
 """
 function channels(channel::String = Genie.config.webchannels_default_route) :: String
-  string(js_settings(channel), embedded(joinpath("files", "embedded", "channels.js")))
+  string(js_settings(channel), embedded(Genie.Assets.asset_file(cwd=normpath(joinpath(@__DIR__, "..")), type="js", file="channels")))
 end
 
 
@@ -190,9 +194,7 @@ Provides full web channels support, setting up routes for loading support JS fil
 returning the `<script>` tag for including the linked JS file into the web page.
 """
 function channels_support(channel::String = Genie.config.webchannels_default_route) :: String
-  endpoint = (channel == Genie.config.webchannels_default_route) ?
-              "/js/$(Genie.config.webchannels_js_file)" :
-              "/js/$(channel)/$(Genie.config.webchannels_js_file)"
+  endpoint = Genie.Assets.asset_path(assets_config, :js, file=Genie.config.webchannels_js_file, path=channel)
 
   if ! external_assets()
     Router.route(endpoint) do
@@ -220,8 +222,8 @@ Outputs the webthreads.js file included with the Genie package
 """
 function webthreads(channel::String = Genie.config.webthreads_default_route) :: String
   string(js_settings(channel),
-          embedded(joinpath("files", "embedded", "pollymer.min.js")),
-          embedded(joinpath("files", "embedded", "webthreads.js")))
+          embedded(Genie.Assets.asset_file(cwd=normpath(joinpath(@__DIR__, "..")), file="pollymer.js")),
+          embedded(Genie.Assets.asset_file(cwd=normpath(joinpath(@__DIR__, "..")), file="webthreads.js")))
 end
 
 
@@ -277,9 +279,7 @@ Provides full web channels support, setting up routes for loading support JS fil
 returning the `<script>` tag for including the linked JS file into the web page.
 """
 function webthreads_support(channel::String = Genie.config.webthreads_default_route) :: String
-  endpoint = (channel == Genie.config.webthreads_default_route) ?
-              "/js/$(Genie.config.webthreads_js_file)" :
-              "/js/$(channel)/$(Genie.config.webthreads_js_file)"
+  endpoint = Genie.Assets.asset_path(assets_config, :js, file=Genie.config.webthreads_js_file, path=channel)
 
   if ! external_assets()
     Router.route(endpoint) do
@@ -291,7 +291,7 @@ function webthreads_support(channel::String = Genie.config.webthreads_default_ro
   webthreads_push_pull(channel)
 
   if ! external_assets()
-    Genie.Renderer.html.script(src="$(Genie.config.base_path)$(endpoint[2:end])")
+    Genie.Renderer.Html.script(src="$(Genie.config.base_path)$(endpoint[2:end])")
   else
     Genie.Renderer.Html.script([webthreads(channel)])
   end
@@ -310,7 +310,7 @@ function favicon_support() :: String
   Router.route("/favicon.ico") do
     Genie.Renderer.respond(
       Genie.Renderer.WebRenderable(
-        body = embedded(joinpath("files", "new_app", "public", "favicon.ico")),
+        body = embedded(joinpath(@__DIR__, "..", "files", "new_app", "public", "favicon.ico") |> normpath |> abspath),
         content_type = :favicon
       )
     )

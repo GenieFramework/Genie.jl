@@ -6,7 +6,7 @@ Genie.WebChannels.load_channels = function() {
   var socket = new Pollymer.Request();
   var channels = Genie.WebChannels;
   var poll_interval = Genie.Settings.webchannels_timeout;
-  var server_uri = window.location.protocol + '//' + window.location.hostname + ':' +  port;
+  var server_uri = window.location.protocol + '//' + window.location.hostname + ':' + port;
 
   channels.channel = socket;
   channels.sendMessageTo = sendMessageTo;
@@ -75,9 +75,13 @@ window.addEventListener('load', function (event) {
 
 Genie.WebChannels.load_channels();
 
+function uri_factory(endpoint) {
+  return Genie.WebChannels.server_uri + (Genie.Settings.base_path == "" ? "/" : Genie.Settings.base_path) + Genie.Settings.webthreads_default_route + '/' + endpoint + '?wtclient=' + Genie.WebChannels.wtid;
+}
+
 function subscribe() {
   if (document.readyState === "complete" || document.readyState === "interactive") {
-    Genie.WebChannels.channel.start('GET', Genie.WebChannels.server_uri + Genie.Settings.base_path + Genie.Settings.webthreads_default_route + '/' + Genie.Settings.webchannels_subscribe_channel + '?wtclient=' + Genie.WebChannels.wtid, {}, '');
+    Genie.WebChannels.channel.start('GET', uri_factory(Genie.Settings.webchannels_subscribe_channel), {}, '');
     pull();
   } else {
     tm = setTimeout(subscribe, Genie.WebChannels.poll_interval);
@@ -89,7 +93,7 @@ function unsubscribe() {
   Genie.WebChannels.channel.abort();
 
   if (document.readyState === "complete" || document.readyState === "interactive") {
-    Genie.WebChannels.channel.start('GET', Genie.WebChannels.server_uri + Genie.Settings.base_path + Genie.Settings.webthreads_default_route + '/' + Genie.Settings.webchannels_unsubscribe_channel + '?wtclient=' + Genie.WebChannels.wtid, {}, '');
+    Genie.WebChannels.channel.start('GET', uri_factory(Genie.Settings.webchannels_unsubscribe_channel), {}, '');
   } else {
     tm = setTimeout(unsubscribe, Genie.WebChannels.poll_interval);
   }
@@ -97,7 +101,7 @@ function unsubscribe() {
 
 function pull() {
   if (document.readyState === "complete" || document.readyState === "interactive") {
-    Genie.WebChannels.channel.start('POST', Genie.WebChannels.server_uri + Genie.Settings.base_path + Genie.Settings.webthreads_default_route + '/' + Genie.Settings.webthreads_pull_route + '?wtclient=' + Genie.WebChannels.wtid, {}, '');
+    Genie.WebChannels.channel.start('POST', uri_factory(Genie.Settings.webthreads_pull_route), {}, '');
   }
 
   tm = setTimeout(pull, Genie.WebChannels.poll_interval);
@@ -108,7 +112,7 @@ function push(body, headers = {}) {
   Genie.WebChannels.channel.abort();
 
   if (document.readyState === "complete" || document.readyState === "interactive") {
-    Genie.WebChannels.channel.start('POST', Genie.WebChannels.server_uri + Genie.Settings.base_path + Genie.Settings.webthreads_default_route + '/' + Genie.Settings.webthreads_push_route + '?wtclient=' + Genie.WebChannels.wtid, headers, body);
+    Genie.WebChannels.channel.start('POST', uri_factory(Genie.Settings.webthreads_push_route), headers, body);
   }
 
   pull();

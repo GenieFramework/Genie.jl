@@ -59,6 +59,8 @@ include("Sessions.jl")
 export serve, up, down, loadapp, genie, bootstrap
 @reexport using .Router
 
+const assets_config = Genie.Assets.assets_config
+
 """
     serve(path::String = Genie.config.server_document_root, params...; kwparams...)
 
