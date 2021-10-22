@@ -13,7 +13,12 @@ export favicon_support
 
 ### PUBLIC ###
 
+"""
+    mutable struct AssetsConfig
 
+Manages the assets configuration for the current package. Define your own instance of AssetsConfig if you want to
+add support for asset management for your package through Genie.Assets.
+"""
 Base.@kwdef mutable struct AssetsConfig
   host::String = Genie.config.base_path
   package::String = "Genie.jl"
@@ -22,9 +27,33 @@ end
 
 const assets_config = AssetsConfig()
 
+"""
+    assets_config!(packages::Vector{Module}; config...) :: Nothing
+
+Utility function which allows bulk configuration of the assets.
+
+### Example
+
+```julia
+Genie.Assets.assets_config!([Genie, Stipple, StippleUI], host = "https://cdn.statically.io/gh/GenieFramework")
+```
+"""
+function assets_config!(packages::Vector{Module}; config...) :: Nothing
+  for p in packages
+    package_config = getfield(p, :assets_config)
+
+    for (k,v) in config
+      setfield!(package_config, k, v)
+    end
+  end
+
+  nothing
+end
 
 """
+    external_assets(...) :: Bool
 
+Returns true if the current package is using external assets.
 """
 function external_assets(host::String) :: Bool
   startswith(host, "http")
@@ -37,7 +66,7 @@ function external_assets() :: Bool
 end
 
 """
-    asset_path(...)
+    asset_path(...) :: String
 
 Generates the path to an asset file.
 """
@@ -52,6 +81,11 @@ function asset_path(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = s
 end
 
 
+"""
+    asset_file(...) :: String
+
+Generates the file system path to an asset file.
+"""
 function asset_file(; cwd = "", file::String, path::String = "", type::String = "$(split(file, '.')[end])",
                       ext::String = "$(endswith(file, type) ? "" : ".$type")") :: String
   joinpath((filter([cwd, "assets", type, path, file*ext]) do part
