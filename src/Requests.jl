@@ -289,4 +289,21 @@ function isajax(req::HTTP.Request = getrequest()) :: Bool
   return false
 end
 
+
+"""
+    currenturl() :: String
+
+Returns the URL of the current page/request, starting from the path and including the query string.
+
+### Example
+
+```julia
+currenturl()
+"/products?promotions=yes"
+```
+"""
+function currenturl(req::HTTP.Request = getrequest()) :: String
+  req.target
+end
+
 end
