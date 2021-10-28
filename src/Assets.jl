@@ -71,13 +71,15 @@ end
 Generates the path to an asset file.
 """
 function asset_path(; file::String, host::String = Genie.config.base_path, package::String = "", version::String = "",
-                      type::String = "$(split(file, '.')[end])", path::String = "", ext::String = "$(endswith(file, type) ? "" : ".$type")") :: String
-  (external_assets(host) ? "" : "/") * join(filter([host, package, version, "assets", type, path, file*ext]) do part
+                      type::String = "$(split(file, '.')[end])", path::String = "",
+                      ext::String = "$(endswith(file, type) ? "" : ".$type")", skip_ext::Bool = false) :: String
+  (external_assets(host) ? "" : "/") * join(filter([host, package, version, "assets", type, path, file*(skip_ext ? "" : ext)]) do part
     ! isempty(part)
   end, '/') |> lowercase
 end
-function asset_path(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "", file::String = "", ext::String = ".$type") :: String
-  asset_path(host = ac.host, package = ac.package, version = ac.version, type = type, path = path, file = file, ext = ext)
+function asset_path(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "",
+                    file::String = "", ext::String = ".$type", skip_ext::Bool = false) :: String
+  asset_path(host = ac.host, package = ac.package, version = ac.version, type = type, path = path, file = file, ext = ext, skip_ext = skip_ext)
 end
 
 
@@ -87,8 +89,8 @@ end
 Generates the file system path to an asset file.
 """
 function asset_file(; cwd = "", file::String, path::String = "", type::String = "$(split(file, '.')[end])",
-                      ext::String = "$(endswith(file, type) ? "" : ".$type")") :: String
-  joinpath((filter([cwd, "assets", type, path, file*ext]) do part
+                      ext::String = "$(endswith(file, type) ? "" : ".$type")", skip_ext::Bool = false) :: String
+  joinpath((filter([cwd, "assets", type, path, file*(skip_ext ? "" : ext)]) do part
     ! isempty(part)
   end)...) |> normpath
 end
@@ -228,7 +230,7 @@ Provides full web channels support, setting up routes for loading support JS fil
 returning the `<script>` tag for including the linked JS file into the web page.
 """
 function channels_support(channel::String = Genie.config.webchannels_default_route) :: String
-  endpoint = Genie.Assets.asset_path(assets_config, :js, file=Genie.config.webchannels_js_file, path=channel)
+  endpoint = Genie.Assets.asset_path(assets_config, :js, file=Genie.config.webchannels_js_file, path=channel, skip_ext = true)
 
   if ! external_assets()
     Router.route(endpoint) do
@@ -350,7 +352,7 @@ function favicon_support() :: String
     )
   end
 
-  "<link rel=\"icon\" type=\"image/x-icon\" href=\"$(Genie.config.base_path)favicon.ico\" />"
+  "<link rel=\"icon\" type=\"image/x-icon\" href=\"$(Genie.config.base_path)/favicon.ico\" />"
 end
 
 end

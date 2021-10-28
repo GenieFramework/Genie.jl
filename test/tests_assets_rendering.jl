@@ -5,7 +5,7 @@
     using Genie.Renderer
     using Genie.Assets
 
-    @test (Assets.js_settings() * Assets.embedded(joinpath("files", "embedded", "channels.js"))) == Assets.channels()
+    @test (Assets.js_settings() * Assets.embedded(Genie.Assets.asset_file(cwd=normpath(joinpath(@__DIR__, "..")), type="js", file="channels"))) == Assets.channels()
 
     @test Assets.channels()[1:18] == "window.Genie = {};"
 

@@ -184,20 +184,20 @@ end
 
 Shuts down the servers optionally indicating which of the `webserver` and `websockets` servers to be stopped.
 """
-function down(; webserver::Bool = true, websockets::Bool = true) :: Nothing
+function down(; webserver::Bool = true, websockets::Bool = true) :: Vector{ServersCollection}
   for i in 1:length(SERVERS)
     down(SERVERS[i]; webserver, websockets)
   end
 
-  nothing
+  SERVERS
 end
 
 
-function down(server::ServersCollection; webserver::Bool = true, websockets::Bool = true) :: Nothing
+function down(server::ServersCollection; webserver::Bool = true, websockets::Bool = true) :: ServersCollection
   webserver && (@async Base.throwto(server.webserver, InterruptException()))
   isnothing(websockets) || (websockets && (@async Base.throwto(server.websockets, InterruptException())))
 
-  nothing
+  server
 end
 
 
