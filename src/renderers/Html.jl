@@ -55,6 +55,11 @@ task_local_storage(:__yield, "")
 include("MdHtml.jl")
 
 
+function contentargs(args...)
+  join(join.(filter((x -> isa(x, AbstractArray)), args)), ""), [filter((x -> !isa(x, AbstractArray)), args)...]
+end
+
+
 """
     normal_element(f::Function, elem::String, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
 
@@ -73,7 +78,8 @@ function normal_element(children::Union{String,Vector{String}}, elem::Any, args:
   normal_element(children, string(elem), args, Pair{Symbol,Any}[attrs...])
 end
 function normal_element(children::Union{String,Vector{String}}, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
-  children = join(children)
+  content_args, args = contentargs(args...)
+  children = string(join(children), content_args)
 
   idx = findfirst(x -> x == :inner, getindex.(attrs, 1))
   if idx !== nothing
@@ -371,7 +377,11 @@ end
 function parsehtml(input::String; partial::Bool = true) :: String
   content = replace(input, NBSP_REPLACEMENT)
   isempty(content) && return ""
-  parsehtml(HTMLParser.parsehtml(content).root, partial = partial)
+
+  # let's get rid of the annoying xml parser warnings
+  Logging.with_logger(Logging.SimpleLogger(stdout, Logging.Error)) do
+    parsehtml(HTMLParser.parsehtml(content).root, partial = partial)
+  end
 end
 
 

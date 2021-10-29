@@ -12,9 +12,9 @@ import Genie
 
 Represents a object containing references to Genie's web and websockets servers.
 """
-mutable struct ServersCollection
-  webserver::Union{Task,Nothing}
-  websockets::Union{Task,Nothing}
+Base.@kwdef mutable struct ServersCollection
+  webserver::Union{Task,Nothing} = nothing
+  websockets::Union{Task,Nothing} = nothing
 end
 
 """
@@ -22,26 +22,25 @@ end
 
 ServersCollection constant containing references to the current app's web and websockets servers.
 """
-const SERVERS = ServersCollection(nothing, nothing)
+const SERVERS = ServersCollection[]
+const Servers = SERVERS
 
-# function isinitialized(server::Symbol = :webserver) :: Bool
-#   getfield(SERVERS, server) !== nothing
-# end
 
-# function isrunning(server::Symbol = :webserver) :: Bool
-#   isinitialized(server) && ! istaskdone(getfield(SERVERS, server))
-# end
+function isrunning(server::ServersCollection, prop::Symbol = :webserver) :: Bool
+  isa(getfield(server, prop), Task) && ! istaskdone(getfield(server, prop))
+end
 
-# function server_status(server::Symbol) :: Nothing
-#   if isrunning(server)
-#     @info("✔️ $server is running.")
-#   else
-#     @error("❌ $server is not running.")
-#     isinitialized(server) && isa(getfield(SERVERS, server), Task) && fetch(getfield(SERVERS, server))
-#   end
+function server_status(server::ServersCollection, prop::Symbol) :: Nothing
+  if isrunning(server)
+    @info("✔️ server is running.")
+  else
+    @error("❌ $server is not running.")
+    isa(getfield(server, prop), Task) && fetch(getfield(server, prop))
+  end
 
-#   nothing
-# end
+  nothing
+end
+
 
 """
     startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
@@ -63,11 +62,15 @@ Web Server starting at http://127.0.0.1:8000
 ```
 """
 function startup(port::Int, host::String = Genie.config.server_host;
-                  ws_port::Int = port, async::Bool = ! Genie.config.run_as_server,
-                  verbose::Bool = false, ratelimit::Union{Rational{Int},Nothing} = nothing,
-                  server::Union{Sockets.TCPServer,Nothing} = nothing, wsserver::Union{Sockets.TCPServer,Nothing} = server,
+                  ws_port::Int = port,
+                  async::Bool = ! Genie.config.run_as_server,
+                  verbose::Bool = false,
+                  ratelimit::Union{Rational{Int},Nothing} = nothing,
+                  server::Union{Sockets.TCPServer,Nothing} = nothing,
+                  wsserver::Union{Sockets.TCPServer,Nothing} = server,
                   ssl_config::Union{MbedTLS.SSLConfig,Nothing} = Genie.config.ssl_config,
                   open_browser::Bool = false,
+                  reuseaddr::Bool = false,
                   http_kwargs...) :: ServersCollection
 
   if server !== nothing
@@ -83,30 +86,24 @@ function startup(port::Int, host::String = Genie.config.server_host;
 
   update_config(port, host, ws_port)
 
-  if Genie.config.websockets_server && port != ws_port
-    # if isrunning(:websockets)
-    #   @warn("✖️ A WebSockets server is already up and running.")
-    # end
+  new_server = ServersCollection()
 
+  if Genie.config.websockets_server && port != ws_port
     print_server_status("Web Sockets server starting at $host:$ws_port")
 
-    SERVERS.websockets = @async HTTP.listen(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver, sslconfig = ssl_config, http_kwargs...) do http::HTTP.Stream
+    new_server.websockets = @async HTTP.listen(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver,
+                                                sslconfig = ssl_config, reuseaddr = reuseaddr, http_kwargs...) do http::HTTP.Stream
       if HTTP.WebSockets.is_upgrade(http.message)
         HTTP.WebSockets.upgrade(http) do ws
           setup_ws_handler(http.message, ws)
         end
       end
     end
-
-    # server_status(:websockets)
   end
 
-  # if isrunning(:webserver)
-  #   @warn("✖️ A web server is already up and running.")
-  # end
-
   command = () -> begin
-    HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server, sslconfig = ssl_config, http_kwargs...) do http::HTTP.Stream
+    HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server,
+                sslconfig = ssl_config, reuseaddr = reuseaddr, http_kwargs...) do http::HTTP.Stream
       try
         if Genie.config.websockets_server && port == ws_port && HTTP.WebSockets.is_upgrade(http.message)
           HTTP.WebSockets.upgrade(http) do ws
@@ -133,7 +130,7 @@ function startup(port::Int, host::String = Genie.config.server_host;
   end
 
   if status !== nothing && status.state == :runnable
-    SERVERS.webserver = status
+    new_server.webserver = status
 
     try
       open_browser && openbrowser(server_url)
@@ -143,10 +140,9 @@ function startup(port::Int, host::String = Genie.config.server_host;
     end
   end
 
-  # sleep(1)
-  # server_status(:webserver)
+  push!(SERVERS, new_server)
 
-  SERVERS
+  new_server
 end
 
 function startup(; port = Genie.config.server_port, ws_port = Genie.config.websockets_port, kwargs...) :: ServersCollection
@@ -188,11 +184,20 @@ end
 
 Shuts down the servers optionally indicating which of the `webserver` and `websockets` servers to be stopped.
 """
-function down(; webserver::Bool = true, websockets::Bool = true) :: ServersCollection
-  webserver && (@async Base.throwto(SERVERS.webserver, InterruptException()))
-  isnothing(websockets) || (websockets && (@async Base.throwto(SERVERS.websockets, InterruptException())))
+function down(; webserver::Bool = true, websockets::Bool = true) :: Vector{ServersCollection}
+  for i in 1:length(SERVERS)
+    down(SERVERS[i]; webserver, websockets)
+  end
 
   SERVERS
+end
+
+
+function down(server::ServersCollection; webserver::Bool = true, websockets::Bool = true) :: ServersCollection
+  webserver && (@async Base.throwto(server.webserver, InterruptException()))
+  isnothing(websockets) || (websockets && (@async Base.throwto(server.websockets, InterruptException())))
+
+  server
 end
 
 

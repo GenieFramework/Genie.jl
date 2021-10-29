@@ -13,7 +13,12 @@ export favicon_support
 
 ### PUBLIC ###
 
+"""
+    mutable struct AssetsConfig
 
+Manages the assets configuration for the current package. Define your own instance of AssetsConfig if you want to
+add support for asset management for your package through Genie.Assets.
+"""
 Base.@kwdef mutable struct AssetsConfig
   host::String = Genie.config.base_path
   package::String = "Genie.jl"
@@ -22,9 +27,33 @@ end
 
 const assets_config = AssetsConfig()
 
+"""
+    assets_config!(packages::Vector{Module}; config...) :: Nothing
+
+Utility function which allows bulk configuration of the assets.
+
+### Example
+
+```julia
+Genie.Assets.assets_config!([Genie, Stipple, StippleUI], host = "https://cdn.statically.io/gh/GenieFramework")
+```
+"""
+function assets_config!(packages::Vector{Module}; config...) :: Nothing
+  for p in packages
+    package_config = getfield(p, :assets_config)
+
+    for (k,v) in config
+      setfield!(package_config, k, v)
+    end
+  end
+
+  nothing
+end
 
 """
+    external_assets(...) :: Bool
 
+Returns true if the current package is using external assets.
 """
 function external_assets(host::String) :: Bool
   startswith(host, "http")
@@ -37,24 +66,31 @@ function external_assets() :: Bool
 end
 
 """
-    asset_path(...)
+    asset_path(...) :: String
 
 Generates the path to an asset file.
 """
 function asset_path(; file::String, host::String = Genie.config.base_path, package::String = "", version::String = "",
-                      type::String = "$(split(file, '.')[end])", path::String = "", ext::String = "$(endswith(file, type) ? "" : ".$type")") :: String
-  (external_assets(host) ? "" : "/") * join(filter([host, package, version, "assets", type, path, file*ext]) do part
+                      type::String = "$(split(file, '.')[end])", path::String = "",
+                      ext::String = "$(endswith(file, type) ? "" : ".$type")", skip_ext::Bool = false) :: String
+  (external_assets(host) ? "" : "/") * join(filter([host, package, version, "assets", type, path, file*(skip_ext ? "" : ext)]) do part
     ! isempty(part)
   end, '/') |> lowercase
 end
-function asset_path(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "", file::String = "", ext::String = ".$type") :: String
-  asset_path(host = ac.host, package = ac.package, version = ac.version, type = type, path = path, file = file, ext = ext)
+function asset_path(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "",
+                    file::String = "", ext::String = ".$type", skip_ext::Bool = false) :: String
+  asset_path(host = ac.host, package = ac.package, version = ac.version, type = type, path = path, file = file, ext = ext, skip_ext = skip_ext)
 end
 
 
+"""
+    asset_file(...) :: String
+
+Generates the file system path to an asset file.
+"""
 function asset_file(; cwd = "", file::String, path::String = "", type::String = "$(split(file, '.')[end])",
-                      ext::String = "$(endswith(file, type) ? "" : ".$type")") :: String
-  joinpath((filter([cwd, "assets", type, path, file*ext]) do part
+                      ext::String = "$(endswith(file, type) ? "" : ".$type")", skip_ext::Bool = false) :: String
+  joinpath((filter([cwd, "assets", type, path, file*(skip_ext ? "" : ext)]) do part
     ! isempty(part)
   end)...) |> normpath
 end
@@ -194,7 +230,7 @@ Provides full web channels support, setting up routes for loading support JS fil
 returning the `<script>` tag for including the linked JS file into the web page.
 """
 function channels_support(channel::String = Genie.config.webchannels_default_route) :: String
-  endpoint = Genie.Assets.asset_path(assets_config, :js, file=Genie.config.webchannels_js_file, path=channel)
+  endpoint = Genie.Assets.asset_path(assets_config, :js, file=Genie.config.webchannels_js_file, path=channel, skip_ext = true)
 
   if ! external_assets()
     Router.route(endpoint) do
@@ -316,7 +352,7 @@ function favicon_support() :: String
     )
   end
 
-  "<link rel=\"icon\" type=\"image/x-icon\" href=\"$(Genie.config.base_path)favicon.ico\" />"
+  "<link rel=\"icon\" type=\"image/x-icon\" href=\"$(Genie.config.base_path)/favicon.ico\" />"
 end
 
 end
