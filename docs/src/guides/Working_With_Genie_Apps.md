@@ -40,6 +40,14 @@ We are using the `route` method, passing in the "/hello" URL and an anonymous fu
 
 Visit <http://127.0.0.1:8000/hello> for a warm welcome!
 
+---
+**HEADS UP**
+
+In case you pick this up some time after having created the project, you will need to re-launch the server to view that page. From the package's directory, activate it (`activate .`), then load (`using MyGenieApp`), create the server (`MyGenieApp.main()`) and run (`up()`).
+
+---
+
+
 ## Working with resources
 
 Adding our code to the `routes.jl` file works great for small projects, where you want to quickly publish features on the web. But for larger projects we're better off using Genie's MVC structure (MVC stands for Model-View-Controller). By employing the Model-View-Controller design pattern we can break our code into modules with clear responsibilities: the Model is used for data access, the View renders the response to the client, and the Controller orchestrates the interactions between Models and Views and handles requests. Modular code is easier to write, test and maintain.
@@ -88,12 +96,12 @@ const BillGatesBooks = Book[
 ]
 
 function billgatesbooks()
-  "
+  """
   <h1>Bill Gates' list of recommended books</h1>
   <ul>
-    $(["<li>$(book.title) by $(book.author)</li>" for book in BillGatesBooks]...)
+    $([" <li>$(book.title) by $(book.author)</li>" for book in BillGatesBooks]...)
   </ul>
-  "
+  """
 end
 
 end
@@ -120,7 +128,7 @@ The output of the function call should be a HTML string which looks like this:
 
 Please make sure that it works as expected.
 
-### Setup the route
+## Setup the route
 
 Now, let's expose our `billgatesbooks` method on the web. We need to add a new `route` which points to it. Add these to the `routes.jl` file:
 
@@ -129,7 +137,9 @@ Now, let's expose our `billgatesbooks` method on the web. We need to add a new `
 using Genie.Router
 using BooksController
 
-route("/bgbooks", BooksController.billgatesbooks)
+route("/bgbooks") do
+  BooksController.billgatesbooks()
+end
 ```
 
 In the snippet we declared that we're `using BooksController` (notice that Genie will know where to find it, no need to explicitly include the file) and then we defined a `route` between `/bgbooks` and the `BooksController.billgatesbooks` function (we say that the `BooksController.billgatesbooks` is the route handler for the `/bgbooks` URL or endpoint).
@@ -144,7 +154,7 @@ If you would rather work with Julia instead of wrangling HTML strings, you can u
 ```julia
 using Genie.Renderer.Html
 
-function billgatesbooks()
+function billgatesbooks_gen()
   [
     Html.h1() do
       "Bill Gates' list of recommended books"
@@ -162,11 +172,24 @@ end
 
 The `for_each` macro iterates over a collection and concatenates the output of each loop into the result of the loop. We'll talk about it more soon.
 
+Adding the following route to `routes.jl` will create a new page with an identical output.
+
+```julia
+# routes.jl
+
+route("/bgbooks_gen") do
+  BooksController.billgatesbooks_gen()
+end
+```
+
 ---
 
-### Adding views
+
+## Views
 
 However, putting HTML into the controllers is a bad idea: HTML should stay in the dedicated view files and contain as little logic as possible. Let's refactor our code to use views instead.
+
+### Adding views
 
 The views used for rendering a resource should be placed inside the `views/` folder, within that resource's own folder structure.
 So in our case, we will add an `app/resources/books/views/` folder. Just go ahead and do it, Genie does not provide a generator for this task:
@@ -184,6 +207,40 @@ Usually each controller method will have its own rendering logic – hence, its 
 
 At the moment, Genie supports HTML and Markdown view files, as well as plain Julia. Their type is identified by file extension so that's an important part.
 The HTML views use a `.jl.html` extension while the Markdown files go with `.jl.md` and the Julia ones by `.jl`.
+
+
+
+### Taking advantage of layouts
+
+Before exploring the HTML and Markdown views, we need to add a layout.
+
+Genie's views are rendered within a layout file. Layouts are meant to render the theme of the website, or the "frame" around the view – the elements which are common on all the pages. The layout file can include visible elements, like the main menu or the footer. But also maybe the `<head>` tag or the assets tags (`<link>` and `<script>` tags for loading CSS and JavaScript files in all the pages).
+
+Every Genie app has a main layout file which is used by default. The `Genie.newapp()` template generator will not create this file. Create a new subdirectory `app/layouts/` and open a new file `app.jl.html`. Insert the following generic content:
+
+```html
+<!-- app/layouts/app.jl.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Genie :: The highly productive Julia web framework</title>
+    <!-- link rel="stylesheet" href="/css/application.css" / -->
+  </head>
+  <body>
+    <%
+      @yield
+    %>
+    <!-- script src="/js/application.js"></script -->
+  </body>
+</html>
+```
+
+We can edit it. For example, add this right under the opening `<body>` tag, just before the `<%` tag:
+
+```html
+<h1>Welcome to top books</h1>
+```
 
 ### HTML views
 
@@ -222,13 +279,12 @@ To make HTML generation more efficient, Genie provides a series of helpers, like
 
 ### Rendering views
 
-We now need to refactor our controller to use the view, passing in the expected variables. We will use the `html` method which renders and outputs the response as HTML. Update the definition of the `billgatesbooks` function to be as follows:
+We now need to expand our controller to use the view, passing in the expected variables. We will use the `html` method which renders and outputs the response as HTML. Create a new definition of the `billgatesbooks` function to be as follows:
 
 ```julia
 # BooksController.jl
-using Genie.Renderer.Html
 
-function billgatesbooks()
+function billgatesbooks_view()
   html(:books, :billgatesbooks, books = BillGatesBooks)
 end
 ```
@@ -239,11 +295,73 @@ First, notice that we needed to add `Genie.Renderer.Html` as a dependency, to ge
 * `:billgatesbooks` is the name of the view file. We don't need to pass the extension, Genie will figure it out since there's only one file with this name;
 * and finally, we pass the values we want to expose in the view, as keyword arguments.
 
-That's it – our refactored app should be ready! You can try it out for yourself at <http://localhost:8000/bgbooks>
+
+Next, we again add a route to `routes.jl`:
+
+```julia
+# routes.jl
+
+route("/bgbooks_view") do
+  BooksController.billgatesbooks_view()
+end
+```
+
+
+That's it – our refactored app including a layout and a new view should be ready! You can try it out for yourself at <http://localhost:8000/bgbooks_view>.
+
+
+### Alternative layout
+
+Naturally, we don't have to stick to the default; we can add additional layouts. Let's suppose that we have, for example, an admin area which should have a completely different theme.
+We can add a dedicated layout for that:
+
+```julia
+julia> touch(joinpath("app", "layouts", "admin.jl.html"))
+
+"app/layouts/admin.jl.html"
+```
+
+Now edit it (`julia> edit("app/layouts/admin.jl.html")`) and make it look like this:
+
+```html
+<!-- app/layouts/admin.jl.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Genie Admin</title>
+  </head>
+  <body>
+    <h1>Books admin</h1>
+    <%
+      @yield
+    %>
+  </body>
+</html>
+```
+
+If we want to apply it, we must instruct our `BooksController` to use it. The `html` function takes a keyword argument named `layout`, for the layout file.
+Update the list of `billgatesbooks...()` functions and the routes with these:
+
+```julia
+# BooksController.jl
+function billgatesbooks_view_admin()
+  html(:books, :billgatesbooks, books = BillGatesBooks, layout = :admin)
+end
+```
+
+```julia
+# routes.jl
+route("/bgbooks_view") do
+  BooksController.billgatesbooks_view_admin()
+end
+```
+
+Reload the page and you'll see the new heading.
+
 
 ### Markdown views
 
-Markdown views work similar to HTML views – employing the same embedded Julia functionality. Here is how you can add a Markdown view for our `billgatesbooks` function.
+Markdown views work similar to HTML views – employing the same embedded Julia functionality. Here is how you can add a Markdown view for our `billgatesbooks...()` functions.
 
 First, create the corresponding view file, using the `.jl.md` extension. Maybe with:
 
@@ -273,80 +391,41 @@ It's a simple change in the `BookiesController`: we have to explicitly tell Geni
 
 ```julia
 # BooksController.jl
-function billgatesbooks()
+function billgatesbooks_view_md()
   html(:books, "billgatesbooks.jl.md", books = BillGatesBooks)
 end
 ```
 
-### Taking advantage of layouts
-
-Genie's views are rendered within a layout file. Layouts are meant to render the theme of the website, or the "frame" around the view – the elements which are common on all the pages. The layout file can include visible elements, like the main menu or the footer. But also maybe the `<head>` tag or the assets tags (`<link>` and `<script>` tags for loading CSS and JavaScript files in all the pages).
-
-Every Genie app has a main layout file which is used by default – it can be found in `app/layouts/` and is called `app.jl.html`. It looks like this:
-
-```html
-<!-- app/layouts/app.jl.html -->
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Genie :: The highly productive Julia web framework</title>
-    <!-- link rel="stylesheet" href="/css/application.css" / -->
-  </head>
-  <body>
-    <%
-      @yield
-    %>
-    <!-- script src="/js/application.js"></script -->
-  </body>
-</html>
-```
-
-We can edit it. For example, add this right under the opening `<body>` tag, just above the `<%` tag:
-
-```html
-<h1>Welcome to top books</h1>
-```
-
-If you reload the page at <http://localhost:8000/bgbooks> you will see the new heading.
-
-But we don't have to stick to the default; we can add additional layouts. Let's suppose that we have, for example, an admin area which should have a completely different theme.
-We can add a dedicated layout for that:
 
 ```julia
-julia> touch(joinpath("app", "layouts", "admin.jl.html"))
-"app/layouts/admin.jl.html"
-```
-
-Now edit it (`julia> edit("app/layouts/admin.jl.html")`) and make it look like this:
-
-```html
-<!-- app/layouts/admin.jl.html -->
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <title>Genie Admin</title>
-  </head>
-  <body>
-    <h1>Books admin</h1>
-    <%
-      @yield
-    %>
-  </body>
-</html>
-```
-
-If we want to apply it, we must instruct our `BooksController` to use it. The `html` function takes a keyword argument named `layout`, for the layout file.
-Update the `billgatesbooks` function to look like this:
-
-```julia
-# BooksController.jl
-function billgatesbooks()
-  html(:books, :billgatesbooks, books = BillGatesBooks, layout = :admin)
+# routes.jl
+route("/bgbooks_view_md") do
+  BooksController.billgatesbooks_view_md()
 end
 ```
 
-Reload the page and you'll see the new heading.
+---
+**HEADS UP**
+
+
+Note that the rendered web page will include the comment `<!-- app/resources/books/views/billgatesbooks.jl.md -->` which is currently not removed when generating the HTML page.
+
+---
+
+---
+**WARNING**
+
+The top of the file reads:
+
+```md
+<!-- app/resources/books/views/billgatesbooks.jl.md -->
+# Bill Gates' $(length(books)) recommended books
+```
+
+If empty lines are inserted
+
+---
+
 
 #### The `@yield` instruction
 
@@ -358,10 +437,13 @@ For very simple applications the MVC and the resource-centric approaches might i
 
 ```julia
 # BooksController.jl
-using Genie.Renderer
+using Genie.Renderer.Html
 
-function billgatesbooks()
+function billgatesbooks_view()
   html(path"app/resources/books/views/billgatesbooks.jl.html", books = BillGatesBooks, layout = path"app/layouts/app.jl.html")
+
+  # This is equivalent to:
+  # html(path"app/resources/books/views/billgatesbooks.jl.html", books = BillGatesBooks, layout = :app)
 end
 ```
 
@@ -372,52 +454,63 @@ A common use case for web apps is to serve as backends for RESTful APIs. For thi
 We can start in the `routes.jl` file, by appending this
 
 ```julia
-route("/api/v1/bgbooks", BooksController.API.billgatesbooks)
+route("/api/v1/bgbooks") do
+  BooksController.API.billgatesbooks_json()
+end
 ```
 
-Next, in `BooksController.jl`, append the extra logic at the end of the file, before the closing `end`. The whole file should look like this:
+
+Next, in `BooksController.jl`, append the extra logic at the end of the file, and replace the final `end` closing the `BooksController` module definition. The end of the file should look like this:
 
 ```julia
 # BooksController.jl
 module BooksController
 
-using Genie.Renderer.Html
+.correct
+.
+.
+BLA BLA BLA
+.
+.
+.
 
-struct Book
-  title::String
-  author::String
-end
+# This is necessary to correct an outstanding issue described in [https://github.com/GenieFramework/Genie.jl/issues/397]().
+using StructTypes
+StructTypes.StructType(::Type{Book}) = StructTypes.Struct()
 
-const BillGatesBooks = Book[
-  Book("The Best We Could Do", "Thi Bui"),
-  Book("Evicted: Poverty and Profit in the American City", "Matthew Desmond"),
-  Book("Believe Me: A Memoir of Love, Death, and Jazz Chickens", "Eddie Izzard"),
-  Book("The Sympathizer!", "Viet Thanh Nguyen"),
-  Book("Energy and Civilization, A History", "Vaclav Smil")
-]
-
-function billgatesbooks()
-  html(:books, :billgatesbooks, layout = :admin, books = BillGatesBooks)
-end
-
-
-module API
-
+momodule API
 using ..BooksController
 using Genie.Renderer.Json
 
-function billgatesbooks()
-  json(BooksController.BillGatesBooks)
+function billgatesbooks_view_json()
+   json(BooksController.BillGatesBooks)
 end
 
-end
+end # Module API
 
-end
+end # Module BooksController
 ```
 
 We nested an API module within the `BooksController` module, where we defined another `billgatesbooks` function which outputs a JSON.
 
+---
+**HEADS UP**
+
+(November 2021) The temporary line is added (`StructTypes.StructType(::Type{Book}) = StructTypes.Struct()`). This is necessary to correct an outstanding issue described in [https://github.com/GenieFramework/Genie.jl/issues/397]().
+
+---
+
+After the usual routes addition:
+
+```julia
+route("/api/v1/bgbooks") do
+  BooksController.API.billgatesbooks_view_json()
+end
+```
+
+
 If you go to `http://localhost:8000/api/v1/bgbooks` it should already work as expected.
+
 
 #### JSON views
 
@@ -427,7 +520,7 @@ Genie has support for JSON views – these are plain Julia files which have the 
 
 ```julia
 julia> touch(joinpath("app", "resources", "books", "views", "billgatesbooks.json.jl"))
-"app/resources/books/views/billgatesbooks.json.jl"
+"app/resources/books/views/billgatesbooks.json.jl"<
 ```
 
 We can now create a proper response. Put this in the view file:
@@ -437,15 +530,23 @@ We can now create a proper response. Put this in the view file:
 "Bill Gates' list of recommended books" => books
 ```
 
-Final step, instructing `BooksController` to render the view. Simply replace the existing `billgatesbooks` function within the `API` sub-module with the following:
+Final step, to instruct `BooksController` to render the view, add a `billgatesbooks_json_view` function within the `API` sub-module with the following:
 
 ```julia
-function billgatesbooks()
+function billgatesbooks_json_view2()
   json(:books, :billgatesbooks, books = BooksController.BillGatesBooks)
 end
 ```
 
-This should hold no surprises – the `json` function is similar to the `html` one we've seen before. So now we're rendering a custom JSON response. That's all – everything should work!
+
+```julia
+route("/api/v2/bgbooks") do
+  BooksController.API.billgatesbooks_view_json2()
+end
+```
+
+
+This should hold no surprises – the `json` function is similar to the `html` one we've seen before. So now we're rendering a custom JSON response. That's all – everything should work on `http://localhost:8000/api/v2/bgbooks`!
 
 ---
 **HEADS UP**
