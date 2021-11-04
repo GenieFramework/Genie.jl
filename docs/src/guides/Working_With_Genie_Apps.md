@@ -540,6 +540,7 @@ end
 
 
 ```julia
+# route.jl
 route("/api/v2/bgbooks") do
   BooksController.API.billgatesbooks_view_json2()
 end
@@ -588,8 +589,9 @@ Next, we add `SearchLight`:
 `SearchLight` provides a database agnostic API for working with various backends (at the moment, MySQL, SQLite, and Postgres). Thus, we also need to add the specific adapter. To keep things simple, let's use SQLite for our app. Hence, we'll need the `SearchLightSQLite` package:
 
 ```julia
-(MyGenieApp) pkg> add SearchLightSQLite
+(MyGenieApp) pkg> add SearchLightSQLite SQLite
 ```
+
 
 ### Setup the database connection
 
@@ -599,7 +601,29 @@ Genie is designed to seamlessly integrate with SearchLight and provides access t
 julia> Genie.Generator.db_support()
 ```
 
-The command will add a `db/` folder within the root of the app. What we're looking for is the `db/connection.yml` file which tells SearchLight how to connect to the database. Let's edit it. Make the file look like this:
+The command will add a `db/` folder within the root of the app. What we're looking for is the `db/connection.yml` file which tells SearchLight how to connect to the database.
+
+It is initally clean:
+
+
+```julia
+julia> using SQLite, SearchLight
+
+julia> SearchLight.Configuration.load()
+
+Dict{String, Any} with 8 entries:
+  "options"  => Dict{String, String}()
+  "host"     => nothing
+  "password" => nothing
+  "config"   => nothing
+  "username" => nothing
+  "port"     => nothing
+  "database" => nothing
+  "adapter"  => nothing
+```
+
+
+Let's edit it (it is initially write-protected and your editor might complain about this). Make the file look like this:
 
 ```yaml
 env: ENV["GENIE_ENV"]
@@ -617,31 +641,19 @@ This instructs SearchLight to run in the environment of the current Genie app (b
 
 If you are using a different adapter, make sure that the database configured already exists and that the configured user can successfully access it -- SearchLight will not attempt to create the database.
 
+The environment variable `GENIE_ENV` selects one of the profiles in the `yml` file.
+
 ---
 
-Now we can ask SearchLight to load it up:
+Now we can ask SearchLight to load it up and add it to the list of connextion:
 
 ```julia
-julia> using SearchLight
-
-julia> SearchLight.Configuration.load()
-Dict{String,Any} with 4 entries:
-  "options"  => Dict{String,String}()
-  "config"   => nothing
-  "database" => "db/books.sqlite"
-  "adapter"  => "SQLite"
+julia> push!(SearchLightSQLite.CONNECTIONS, SQLite.DB(SearchLight.Configuration.load()["database"]))
+1-element Vector{SQLite.DB}:
+ SQLite.DB("db/books.sqlite")
 ```
 
-Let's just go ahead and try it out by connecting to the DB:
-
-```julia
-julia> using SearchLightSQLite
-
-julia> SearchLight.Configuration.load() |> SearchLight.connect
-SQLite.DB("db/books.sqlite")
-```
-
-The connection succeeded and we got back a SQLite database handle.
+The connection succeeded and we got back a SQLite database handle added to the list of databases connections.
 
 ---
 **PRO TIP**
@@ -656,7 +668,7 @@ julia> SearchLightSQLite.CONNECTIONS
 
 ---
 
-Awesome! If all went well you should have a `books.sqlite` database in the `db/` folder.
+Awesome! If all went well you should have a `books.sqlite` database in the `db/` folder (from the Julia REPL prompt, typing `;` will give the shell prompt).
 
 ```julia
 shell> tree db
@@ -666,6 +678,7 @@ db
 ├── migrations
 └── seeds
 ```
+
 
 ### Managing the database schema with `SearchLight` migrations
 
@@ -710,10 +723,10 @@ Lets ask SearchLight to create a new model:
 ```julia
 julia> SearchLight.Generator.newresource("Book")
 
-[ Info: New model created at /Users/adrian/Dropbox/Projects/MyGenieApp/app/resources/books/Books.jl
-[ Info: New table migration created at /Users/adrian/Dropbox/Projects/MyGenieApp/db/migrations/2020020909574048_create_table_books.jl
-[ Info: New validator created at /Users/adrian/Dropbox/Projects/MyGenieApp/app/resources/books/BooksValidator.jl
-[ Info: New unit test created at /Users/adrian/Dropbox/Projects/MyGenieApp/test/books_test.jl
+[ Info: New model created at [PROJECT DIRECTORY]/MyGenieApp/app/resources/books/Books.jl
+[ Info: New table migration created at [PROJECT DIRECTORY]/MyGenieApp/db/migrations/2020020909574048_create_table_books.jl
+[ Info: New validator created at [PROJECT DIRECTORY]/MyGenieApp/app/resources/books/BooksValidator.jl
+[ Info: New unit test created at [PROJECT DIRECTORY]/MyGenieApp/test/books_test.jl
 ```
 
 SearchLight has created the `Books.jl` model, the `*_create_table_books.jl` migration file, the `BooksValidator.jl` model validator and the `books_test.jl` test file.
@@ -723,7 +736,7 @@ SearchLight has created the `Books.jl` model, the `*_create_table_books.jl` migr
 
 The first part of the migration file will be different for you!
 
-The `*_create_table_books.jl` file will be named differently as the first part of the name is the file creation timestamp. This timestamp part guarantees that names are unique and file name clashes are avoided (for example when working as a team a creating similar migration files).
+The text returned by the command will vary slightly depending on your personal setup. The `*_create_table_books.jl` file will be named differently as the first part of the name is the file creation timestamp. This timestamp part guarantees that names are unique and file name clashes are avoided (for example when working as a team a creating similar migration files).
 
 ---
 
@@ -768,7 +781,7 @@ The DSL is pretty readable: in the `up` function we call `create_table` and pass
 
 #### Running the migration
 
-We can see what SearchLight knows about our migrations with the `SearchLight.Migrations.status` command:
+We can see what SearchLight knows about our migrations with the `SearchLight.Migrations.status()` command:
 
 ```julia
 julia> SearchLight.Migrations.status()
@@ -799,6 +812,15 @@ julia> SearchLight.Migrations.status()
 
 Our table is ready!
 
+---
+**PRO TIP**
+
+If using Visual Code, using an SQLite extension such as [SQLite](https://marketplace.visualstudio.com/items?itemName=alexcvzz.vscode-sqlite) is a good way to follow the database internal changes.
+
+---
+
+
+
 #### Defining the model
 
 Now it's time to edit our model file at `app/resources/books/Books.jl`. Another convention in SearchLight is that we're using the pluralized name (`Books`) for the module – because it's for managing multiple books. And within it we define a type (a `mutable struct`), called `Book` – which represents an item (a single book) which maps to a row in the underlying database.
@@ -810,6 +832,9 @@ Edit the `Books.jl` file to make it look like this:
 module Books
 
 import SearchLight: AbstractModel, DbId, save!
+
+# @kwdef is not exported by Base and, theoretically, should not be used since it is an internal symbol.
+# If you want, you could instead use the @with_kw macro from the Parameters.jl package.
 import Base: @kwdef
 
 export Book
@@ -827,7 +852,7 @@ We defined a `mutable struct` which matches our previous `Book` type by using th
 
 #### Using our model
 
-To make things more interesting, we should import our current books into the database. Add this function to the `Books.jl` module, under the `Book()` constructor definition (just above the module's closing `end`):
+To make things more interesting, we should import our current books into the database. Add this function to the `Books.jl` module, following the `Book()` constructor definition (just above the module's closing `end`):
 
 ```julia
 # Books.jl
@@ -859,6 +884,18 @@ try
   if SearchLight.config.db_config_settings["adapter"] !== nothing
     eval(Meta.parse("using SearchLight$(SearchLight.config.db_config_settings["adapter"])"))
     SearchLight.connect()
+
+    @eval begin
+      using Genie.Renderer.Json
+
+      function Genie.Renderer.Json.JSON3.StructTypes.StructType(::Type{T}) where {T<:SearchLight.AbstractModel}
+        Genie.Renderer.Json.JSON3.StructTypes.Struct()
+      end
+
+      function Genie.Renderer.Json.JSON3.StructTypes.StructType(::Type{SearchLight.DbId})
+        Genie.Renderer.Json.JSON3.StructTypes.Struct()
+      end
+    end
   end
 catch ex
   @error ex
@@ -937,7 +974,7 @@ module BooksController
 
 using Genie.Renderer.Html, SearchLight, Books
 
-function billgatesbooks()
+function billgatesbooks_sqlite()
   html(:books, :billgatesbooks, books = all(Book))
 end
 
@@ -946,8 +983,8 @@ module API
 using ..BooksController
 using Genie.Renderer.Json, SearchLight, Books
 
-function billgatesbooks()
-  json(:books, :billgatesbooks, books = all(Book))
+function billgatesbooks_view_sqlite()
+  json(:books, :billgatesbooks_sqlite, books = all(Book))
 end
 
 end
@@ -955,12 +992,30 @@ end
 end
 ```
 
-Our JSON view needs a bit of tweaking too:
+Our JSON view needs a bit of tweaking too. let's create a new view file `billgatesbooks_sqlite.json.jl` with the following content:
 
 ```julia
-# app/resources/books/views/billgatesbooks.json.jl
+# app/resources/books/views/billgatesbooks_sqlite.json.jl
 "Bill's Gates list of recommended books" => [Dict("author" => b.author, "title" => b.title) for b in books]
 ```
+
+---
+**Heads up!**
+
+In the sub-module `API`, the parameter `:billgatesbooks_sqlite` reflects the new file named `billgatesbooks_sqlite.json.jl`!
+
+---
+
+Let's also add a new route:
+
+```julia
+# route.jl
+route("/api/v3/bgbooks") do
+  BooksController.API.billgatesbooks_view_sqlite()
+end
+```
+
+
 
 Now if we just start the server we'll be able to see the list of books served from the database:
 
@@ -971,7 +1026,7 @@ julia> up()
 
 The `up` method starts up the web server and takes us back to the interactive Julia REPL prompt.
 
-Now, if, for example, we navigate to <http://localhost:8000/api/v1/bgbooks>, the output should match the following JSON document:
+Now, if, for example, we navigate to <http://localhost:8000/api/v3/bgbooks>, the output should match the following JSON document (edited with newlines for clarity):
 
 ```json
 {
@@ -1054,7 +1109,7 @@ Book
 
 ---
 
-If you reload the page at <http://localhost:8000/bgbooks> the new book should show up.
+If you reload the page at <http://localhost:8000/api/v3/bgbooks> the new book should show up.
 
 ```json
 {
