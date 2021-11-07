@@ -319,12 +319,13 @@ end
 
 
 """
-    delete!(routes, route_name::Symbol)
+    delete!(route_name::Symbol)
 
 Removes the route with the corresponding name from the routes collection and returns the collection of remaining routes.
 """
-function delete!(routes::OrderedCollections.OrderedDict{Symbol,Route}, key::Symbol) :: OrderedCollections.OrderedDict{Symbol,Route}
-  OrderedCollections.delete!(routes, key)
+function delete!(key::Symbol) :: Vector{Route}
+  OrderedCollections.delete!(_routes, key)
+  return routes()
 end
 
 
