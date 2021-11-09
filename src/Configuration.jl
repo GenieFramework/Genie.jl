@@ -6,6 +6,15 @@ module Configuration
 import Pkg
 import Dates
 
+import VersionCheck
+
+function __init__()
+  try
+    @async VersionCheck.newversion("Genie")
+  catch
+  end
+end
+
 """
     pkginfo(pkg::String)
 
