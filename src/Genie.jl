@@ -62,7 +62,7 @@ export serve, up, down, loadapp, genie, bootstrap
 const assets_config = Genie.Assets.assets_config
 
 """
-    serve(path::String = Genie.config.server_document_root, params...; kwparams...)
+    serve(path::String = pwd(), params...; kwparams...)
 
 Serves a folder of static files located at `path`. Allows Genie to be used as a static files web server.
 The `params` and `kwparams` arguments are forwarded to `Genie.startup()`.
@@ -81,9 +81,9 @@ julia> Genie.serve("public", 8888, async = false, verbose = true)
 [ Info: Accept (1):  🔗    0↑     0↓    1s 127.0.0.1:8888:8888 ≣16
 ```
 """
-function serve(path::String = Genie.config.server_document_root, params...; kwparams...)
+function serve(path::String = pwd(), params...; kwparams...)
   cd(path)
-  path = "."
+  path = ""
 
   Router.route("/") do
     Router.serve_static_file(path, root = path)
@@ -195,6 +195,8 @@ function loadapp(path::String = "."; autostart::Bool = false) :: Nothing
 
   nothing
 end
+
+const go = loadapp
 
 
 """

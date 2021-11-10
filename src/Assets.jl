@@ -71,10 +71,11 @@ end
 Generates the path to an asset file.
 """
 function asset_path(; file::String, host::String = Genie.config.base_path, package::String = "", version::String = "",
-                      type::String = "$(split(file, '.')[end])", path::String = "",
+                      type::String = "$(split(file, '.')[end])", path::String = "", min::Bool = false,
                       ext::String = "$(endswith(file, type) ? "" : ".$type")", skip_ext::Bool = false) :: String
-  (external_assets(host) ? "" : "/") * join(filter([host, package, version, "assets", type, path, file*(skip_ext ? "" : ext)]) do part
-    ! isempty(part)
+  (external_assets(host) ? "" : "/") *
+    join(filter([host, package, version, "assets", type, path, file*(min ? ".min" : "")*(skip_ext ? "" : ext)]) do part
+      ! isempty(part)
   end, '/') |> lowercase
 end
 function asset_path(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "",
@@ -89,8 +90,8 @@ end
 Generates the file system path to an asset file.
 """
 function asset_file(; cwd = "", file::String, path::String = "", type::String = "$(split(file, '.')[end])",
-                      ext::String = "$(endswith(file, type) ? "" : ".$type")", skip_ext::Bool = false) :: String
-  joinpath((filter([cwd, "assets", type, path, file*(skip_ext ? "" : ext)]) do part
+                      ext::String = "$(endswith(file, type) ? "" : ".$type")", min::Bool = false, skip_ext::Bool = false) :: String
+  joinpath((filter([cwd, "assets", type, path, file*(min ? ".min" : "")*(skip_ext ? "" : ext)]) do part
     ! isempty(part)
   end)...) |> normpath
 end
@@ -101,8 +102,8 @@ end
 
 Returns the path to an asset. `asset_type` can be one of `:js`, `:css`. The `file_name` should not include the extension.
 """
-function include_asset(asset_type::Union{String,Symbol}, file_name::Union{String,Symbol}) :: String
-  asset_path(type = string(asset_type), file = string(file_name))
+function include_asset(asset_type::Union{String,Symbol}, file_name::Union{String,Symbol}; min::Bool = false) :: String
+  asset_path(type = string(asset_type), file = string(file_name); min)
 end
 
 
@@ -111,8 +112,8 @@ end
 
 Path to a css asset. The `file_name` should not include the extension.
 """
-function css_asset(file_name::String) :: String
-  include_asset(:css, file_name)
+function css_asset(file_name::String; min::Bool = false) :: String
+  include_asset(:css, file_name; min)
 end
 const css = css_asset
 
@@ -122,8 +123,8 @@ const css = css_asset
 
 Path to a js asset. `file_name` should not include the extension.
 """
-function js_asset(file_name::String) :: String
-  include_asset(:js, file_name)
+function js_asset(file_name::String; min::Bool = false) :: String
+  include_asset(:js, file_name; min)
 end
 const js = js_asset
 
@@ -241,7 +242,7 @@ function channels_support(channel::String = Genie.config.webchannels_default_rou
   channels_subscribe(channel)
 
   if ! external_assets()
-    Genie.Renderer.Html.script(src="$(Genie.config.base_path)$(endpoint[2:end])")
+    Genie.Renderer.Html.script(src = endpoint)
   else
     Genie.Renderer.Html.script([channels(channel)])
   end

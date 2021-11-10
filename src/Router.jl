@@ -1038,12 +1038,14 @@ function serve_static_file(resource::String; root = Genie.config.server_document
                     resource
                   end
   f = file_path(resource_path, root = root)
+  isempty(f) && (f = pwd() |> relpath)
 
   if isfile(f)
     return HTTP.Response(200, file_headers(f), body = read(f, String))
   elseif isdir(f)
-    isfile(joinpath(f, "index.html")) && return serve_static_file(joinpath(f, "index.html"), root = root)
-    isfile(joinpath(f, "index.htm")) && return serve_static_file(joinpath(f, "index.htm"), root = root)
+    for fn in ["index.html", "index.htm", "index.txt"]
+      isfile(joinpath(f, fn)) && return serve_static_file(joinpath(f, fn), root = root)
+    end
   else
     bundled_path = joinpath(@__DIR__, "..", "files", "static", resource[2:end])
     if isfile(bundled_path)
