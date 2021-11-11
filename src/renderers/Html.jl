@@ -501,6 +501,48 @@ function safe_attr(attr) :: String
 end
 
 
+function matchbrackets(v::String, ob = "(", cb = ")")
+  positions = Int[]
+  substrings = Any[]
+  counter = 1
+
+  for x in v
+    if x == ob
+      push!(positions, counter)
+    end
+
+    if x == cb
+      px = try
+        pop!(positions)
+      catch
+        error("Parse error: possibly unmatched bracket in `$v`")
+      end
+
+      push!(substrings, px:counter)
+    end
+
+    counter += 1
+  end
+
+  substrings |> sort!
+end
+
+
+function matchjuliaexpr(v::String, ob = "(", cb = ")", dollar = true)
+  substrings = matchbrackets(v, ob, cb)
+  matches = String[]
+
+  for i in substrings
+    pii = prevind(v, i.start)
+    if ! dollar || (dollar && pii > 0 && v[pii] == '$')
+      push!(matches, v[i.start:i.stop])
+    end
+  end
+
+  matches
+end
+
+
 function parse_attributes!(elem_attributes, io::IOBuffer) :: IOBuffer
   attributes = IOBuffer()
   attributes_keys = String[]
@@ -511,28 +553,24 @@ function parse_attributes!(elem_attributes, io::IOBuffer) :: IOBuffer
     k = string(k) |> lowercase
     if isa(v, AbstractString) && occursin("\"", v)
       # we need to escape double quotes but only if it's not embedded Julia code
-      mx = collect(eachmatch(r"\$\((.*?)\)|<%(.*?)%>", string(v)))
+      mx = vcat(matchjuliaexpr(v, '(', ')', true), matchjuliaexpr(v, "<%", "%>", false))
       if ! isempty(mx)
         index = 1
         for value in mx
-          value === nothing && continue
-
           label = "$(EMBEDDED_JULIA_PLACEHOLDER)_$(index)"
-          v = replace(string(v), value.match => label)
+          v = replace(v, value => label)
           index += 1
         end
 
         if occursin("\"", v) # do we still need to escape double quotes?
-          v = replace(string(v), "\"" => "\\\"") # we need to escape " as this will be inside julia strings
+          v = replace(v, "\"" => "\\\"") # we need to escape " as this will be inside julia strings
         end
 
         # now we need to put back the embedded Julia
         index = 1
         for value in mx
-          value === nothing && continue
-
           label = "$(EMBEDDED_JULIA_PLACEHOLDER)_$(index)"
-          v = replace(string(v), label => value.match)
+          v = replace(v, label => value)
           index += 1
         end
       elseif occursin("\"", v) # do we still need to escape double quotes?

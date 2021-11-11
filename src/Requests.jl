@@ -8,7 +8,7 @@ import HTTP, Reexport
 
 export jsonpayload, rawpayload, filespayload, postpayload, getpayload
 export request, getrequest, matchedroute, matchedchannel, wsclient
-export infilespayload, filename, payload, peer
+export infilespayload, filename, payload, peer, currenturl
 
 
 """
