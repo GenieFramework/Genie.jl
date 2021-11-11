@@ -22,7 +22,7 @@
     @test Assets.channels()[1:18] == "window.Genie = {};"
     @test channels_script()[1:27] == "<script>\nwindow.Genie = {};"
 
-    @test channels_support() == "<script src=\"genie.jl/master/assets/js/__/channels.js\">\n\n</script>\n"
+    @test channels_support() == "<script src=\"/genie.jl/master/assets/js/__/channels.js\">\n\n</script>\n"
     @test Genie.Router.routes()[1].path == "/genie.jl/master/assets/js/__/channels.js"
     @test Genie.Router.channels()[1].path == "/__/unsubscribe"
     @test Genie.Router.channels()[2].path == "/__/subscribe"
