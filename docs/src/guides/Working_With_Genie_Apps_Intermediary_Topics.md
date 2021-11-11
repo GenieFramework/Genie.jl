@@ -3,99 +3,241 @@
 ---
 **HEADS UP**
 
-This guide is still work in progress and some things might not work as expected. We're working on it though and it should be ready in a couple of weeks. You can star and follow Genie on Github to be notified when updates are added.
+This guide is still work in progress and some things might not work as expected. We're
+working on it though and it should be ready in a couple of weeks. You can star and
+follow Genie on Github to be notified when updates are added.
 
 ---
 
+## Introduction
+
+In this guide, we will improve on the  _Working with Genie Apps_ guide with a form to add
+new books. We will:
+
+- introduce how a worflow connecting different parts of a webapp; and
+- use symbols to abstract that workflow that can ease later refactoring.
+
+Let us restart the project created in the _Working with Genie Apps_ guide. Run the following:
+
+```shell
+bin/repl
+```
+
+Then launch the server:
+
+```julia
+up(8000, "127.0.0.1")
+```
+
+---
+
+*** HEAD-UP ***
+
+You can stop the server with `down()`. Alternatively, you could run
+`up(8000, "127.0.0.1", async = false)` and stop the server with Ctrl/Cmd+C.
+
+---
+
+
 ## Handling forms
 
-Now, the problem is that Bill Gates reads – a lot! It would be much easier if we would allow our users to add a few books themselves, to give us a hand.
-But since, obviously, we're not going to give them access to our Julia REPL, we should setup a web page with a form. Let's do it.
+Now, the problem is that Bill Gates reads – a lot! It would be much easier if we would
+allow our users to add a few books themselves, to give us a hand. But since, obviously,
+we're not going to give them access to our Julia REPL, we should setup a web page with a
+form. Let's do it.
 
-We'll start by adding the new routes:
+Conceptually, we need a form to input the information about a new book. Then we need a
+way to add that information to the database. The parts of that workflow are associated to
+two symbols. We will associate the new form with the symbol `:intermediate_new`. The
+choice of the symbol name is yours entirelly. Here the suffix `intermediate_` just
+indicates that we are in the _intermediate_ guide. We will associate the creation of the
+database entry to the symbol `:intermediate_create`. The reason for using symbols will
+become clear as you progress.
+
+
+### Routes
+
+Routes are the first important step as the link the step of the workflow (represented by
+the symbol), where to find on the webpage (its actual route) and the controller.
+
+We'll start by adding the new routes (again, note that the names are intentionally
+different from the routes used in the "Working With Genie Apps" guide):
 
 ```julia
 # routes.jl
-route("/bgbooks/new", BooksController.new)
-route("/bgbooks/create", BooksController.create, method = POST, named = :create_book)
+route(
+  "/bgbook_db_intermediate/new",
+  BookDBsController.intermediate_new;
+  method = GET,
+  named = :intermediate_new)
+
+route(
+  "/bgbook_db_intermediate/create",
+  BookDBsController.intermediate_create;
+  method = POST,
+  named = :intermediate_create)
 ```
 
-The first route will be used to display the page with the new book form. The second will be the target page for submitting our form - this page will accept the form's payload.
-Please note that it's configured to match `POST` requests and that we gave it a name. We'll use the name in our form so that Genie will dynamically generate the correct links to the corresponding URL (to avoid hard coding URLs).
-This way we'll make sure that our form will always submit to the right URL, even if we change the route (as long as we don't change the name).
+We intentionally use very different name to make it clear that they are completely
+unrelated. The more confusing `route("/new_book", BookDBsController.new_book; method = GET, named = :new_book)`
+would work too, but would suggest that they are all somehow linked. It also makes it clear that a quick change
+of those definition fields allow for quick refactoring exploration.
 
-Now, to add the methods in `BooksController`. Add these definition under the `billgatesbooks` function (make sure you add them in `BooksController`, not in `BooksController.API`):
+Those definitions are in fact more important than simply defining a webpage route. They connect the route itself,
+a controller associated with that route and a symbol that allows other parts of the app to refenrece to this route.
+In a sense, the most important parameter is the symbol: the route and its controller could be refactored but the
+logic of the app would remain OK.
+
+Note also the `DB` everywhere to make it clear that we are using the database version of the app.
+
+
+### Controller
+
+Now, let's add the two methods `intermediate_new()` and `intermediate_create()` in `BookDBsController`. Add these
+definition in the `BookDBsController` module (make sure you add them in  `BookDBsController`,
+not in `BookDBsController.API`):
 
 ```julia
-# BooksController.jl
-function new()
-  html(:books, :new)
+# BookDBsController.jl
+function intermediate_new()
+  html(:bookdbs, :intermediate_form_new)
 end
 
-function create()
+function intermediate_create()
   # code here
 end
 ```
 
-The `new` method should be clear: we'll just render a view file called `new`. As for `create`, for now it's just a placeholder.
+The `intermediate_new()` method should be read as:
 
-Next, to add our view. Add a blank file called `new.jl.html` in `app/resources/books/views`. Using Julia:
+- `:bookdbs`: it relates to the `bookdbs` resource;
+- `html()`: it will look for a view defined as a HTML file;
+- `:intermediate_form_new`: the HTML file should be named  `intermediate_form_new.jl.html`.
+
+`intermediate_create()` is just a placeholder for now.
+
+
+
+### View
+
+Next, to add our view. Add a blank file called `intermediate_form_new.jl.html` in
+`app/resources/bookdbs/views`. Using Julia:
 
 ```julia
-julia> touch("app/resources/books/views/new.jl.html")
+julia> touch("app/resources/bookdbs/views/intermediate_form_new.jl.html")
 ```
 
 Make sure that it has this content:
 
 ```html
-<!-- app/resources/books/views/new.jl.html -->
+<!-- app/resources/bookdbs/views/intermediate_form_new.jl.html -->
 <h2>Add a new book recommended by Bill Gates</h2>
 <p>
   For inspiration you can visit <a href="https://www.gatesnotes.com/Books" target="_blank">Bill Gates' website</a>
 </p>
-<form action="$(Genie.Router.linkto(:create_book))" method="POST">
+<form action="$(Genie.Router.linkto(:create_intermediate))" method="POST">
   <input type="text" name="book_title" placeholder="Book title" /><br />
   <input type="text" name="book_author" placeholder="Book author" /><br />
   <input type="submit" value="Add book" />
 </form>
 ```
 
-Notice that the form's action calls the `linkto` method, passing in the name of the route to generate the URL, resulting in the following HTML: `<form method="POST" action="/bgbooks/create">`.
 
-We should also update the `BooksController.create` method to do something useful with the form data. Let's make it create a new book, persist it to the database and redirect to the list of books. Here is the code:
+Notice that the form's action calls the `linkto` method. That link describes the workflow:
+after information about a new book is collected, then we need to create it. The link refers
+to the  symbol  `:intermediate_create` that we used in `routes.jl`. `routes.jl` associates
+`:intermediate_create` to the route `/bgbooks_db_intermediate/create`. Therefore, the
+`linksto` method results in the generation of the following HTML:
+`<form method="POST" action="/bgbooks_intermediate/create">`.
+
+`routes.jl` also associates `:intermediate_create` to the `BooksController.intermediate_create` function
+to actually create a new book, persist it to the database and then redirect to refresh the
+display with the new full list of books. Here is the code:
 
 ```julia
 # BooksController.jl
-using Genie.Router, Genie.Renderer
-
-function create()
-  Book(title = params(:book_title), author = params(:book_author)) |> save && redirect(:get_bgbooks)
+function intermediate_create()
+  BookDB(title = params(:book_title), author = params(:book_author)) |> save &&
+    redirect(:bgbooks_db_view_json)
 end
 ```
 
 A few things are worth pointing out in this snippet:
 
-* again, we're accessing the `params` collection to extract the request data, in this case passing in the names of our form's inputs as parameters.
-We need to bring `Genie.Router` into scope in order to access `params`;
-* we're using the `redirect` method to perform a HTTP redirect. As the argument we're passing in the name of the route, just like we did with the form's action.
-However, we didn't set any route to use this name. It turns out that Genie gives default names to all the routes.
-We can use these – but a word of notice: **these names are generated using the properties of the route, so if the route changes it's possible that the name will change too**.
-So either make sure your route stays unchanged – or explicitly name your routes. The autogenerated name, `get_bgbooks` corresponds to the method (`GET`) and the route (`bgbooks`).
+- we're accessing the `params` collection to extract the request data, in this case passing
+  in the names of our form's inputs as parameters. We need to bring `Genie.Router` into
+  scope in order to access `params`;
+
+- we're using the `redirect` method to perform a HTTP redirect. As the argument we're
+  passing in the name of the route, just like we did with the form's action. In this guide,
+  we explicitly provided names (`:intermediate_new` and `:intermediate_create`). Recall
+  that we did not do that in the previous _Working with Genie Apps_ guide. However, it
+  turns out that Genie gives default names to all the unnamed routes.
+
+- A word of caution: **these names are generated using the properties of the route, so if the route changes it's possible that the name will change too**.
+  So either make sure the properties of your route stays unchanged – or explicitly
+  name your routes with `named = [SYMBOL]`.
+
+- Here, the name used is `bgbooks_db_view_json` which was used in the previous guide. If nothing
+  had been given, a name would have been autogenerated as `:get_api_v3_bgbookdbs` to
+  reflect the method (`GET`) and the route (`/api/v3/bgbookdbs`).
 
 In order to get info about the defined routes you can use the `Router.named_routes` function:
 
 ```julia
 julia> Router.named_routes()
-julia> Dict{Symbol,Genie.Router.Route} with 6 entries:
-  :get_bgbooks        => Route("GET", "/bgbooks", billgatesbooks, Dict{Symbol,Any}(), Function[], Function[])
-  :get_bgbooks_new    => Route("GET", "/bgbooks/new", new, Dict{Symbol,Any}(), Function[], Function[])
-  :get                => Route("GET", "/", (), Dict{Symbol,Any}(), Function[], Function[])
-  :get_api_v1_bgbooks => Route("GET", "/api/v1/bgbooks", billgatesbooks, Dict{Symbol,Any}(), Function[], Function[])
-  :create_book        => Route("POST", "/bgbooks/create", create, Dict{Symbol,Any}(), Function[], Function[])
-  :get_friday         => Route("GET", "/friday", (), Dict{Symbol,Any}(), Function[], Function[])
+
+OrderedCollections.OrderedDict{Symbol, Genie.Router.Route} with 14 entries:
+  :get                         => [GET] / => #7 | :get
+  :get_hello                   => [GET] /hello => #9 | :get_hello
+  :get_bgbooks                 => [GET] /bgbooks => #11 | :get_bgbooks
+  :get_bgbooks_gen             => [GET] /bgbooks_gen => #13 | :get_bgbooks_gen
+  :get_bgbooks_view_html       => [GET] /bgbooks_view_html => #15 | :get_bgbooks_view_html
+  :get_bgbooks_view_html_admin => [GET] /bgbooks_view_html_admin => #17 | :get_bgbooks_view_html_admin
+  :get_bgbooks_view_md         => [GET] /bgbooks_view_md => #19 | :get_bgbooks_view_md
+  :get_api_v1_bgbooks          => [GET] /api/v1/bgbooks => #21 | :get_api_v1_bgbooks
+  :get_api_v2_bgbooks          => [GET] /api/v2/bgbooks => #23 | :get_api_v2_bgbooks
+  :get_api_v3_bgbooks          => [GET] /api/v3/bgbooks => #25 | :get_api_v3_bgbooks
+  :get_api_v3_bgbookdbs        => [GET] /api/v3/bgbookdbs => #67 | :get_api_v3_bgbookdbs
+  :bgbooks_db_view_json        => [GET] /api/v3/bgbookdbs => billgatesbookdbs_view_sqlite | :bgbooks_db_view_json
+  :intermediate_new            => [GET] /bgbook_db_intermediate/new => intermediate_new | :new_intermediate
+  :intermediate_create         => [POST] /bgbook_db_intermediate/create => intermediate_create | :create_intermediate
+
 ```
 
-Let's try it out. Input something and submit the form. If everything goes well a new book will be persisted to the database – and it will be added at the bottom of the list of books.
+The routes include both guides.
+
+---
+**HEADS-UP!**
+
+The list of routes is an `OrderedCollection`. The order is the order of addition to the
+list of routes, that is the order within the file.
+
+However, when to match a route to the request of a particular webpage, the order is reversed:
+if a user types an address, the route that will match will be sought from the last of the
+;ist of routes.
+---
+
+
+Let's try things out. Input something and submit the form. If everything goes well a new book
+will be persisted to the database – and it will be added at the bottom of the list of books,
+and the browser should return to the page `/api/v3/bgbookdbs` and list the full list of
+books.
+
+
+
+
+---
+
+*** HEADS-UP ***
+
+If you want to go back to the original list of books, clean and reseed the database with:
+
+```julia
+julia> using BookDBs
+
+julia> BookDBs.seed()
+```
 
 ---
 
@@ -122,22 +264,22 @@ module AddCoverColumn
 import SearchLight.Migrations: add_column, add_index
 
 # SQLite does not support column removal so the `remove_column` method is not implemented in the SearchLightSQLite adapter
-# If using SQLite do not add the following import
-import SearchLight.Migrations: remove_column
+# If not using SQLite, add the following import
+# import SearchLight.Migrations: remove_column
 
 function up()
-  add_column(:books, :cover, :string)
+  add_column(:bookdbs, :cover, :string)
 end
 
 function down()
   # if using the SQLite backend, do not add the next line, it is not supported
-  remove_column(:books, :cover)
+  remove_column(:bookdbs, :cover)
 end
 
 end
 ```
 
-Looking good - lets ask SearchLight to run it:
+Looking good - let's ask SearchLight to run it:
 
 ```julia
 julia> SearchLight.Migration.last_up()
@@ -158,16 +300,16 @@ julia> SearchLight.Migration.status()
 | 2 |   2019030813344258_add_cover_column.jl |
 ```
 
-Perfect! Now we need to add the new column as a field to the `Books.Book` model:
+Perfect! Now we need to add the new column as a field to the `BookDBs.BookDB` model:
 
 ```julia
-module Books
+module BooDBs
 
 using SearchLight, SearchLight.Validation, BooksValidator
 
-export Book
+export BookDB
 
-Base.@kwdef mutable struct Book <: AbstractModel
+Base.@kwdef mutable struct BookDB <: AbstractModel
   id::DbId = DbId()
   title::String = ""
   author::String = ""
@@ -180,28 +322,53 @@ end
 As a quick test we can extend our JSON view and see that all goes well - make it look like this:
 
 ```julia
-# app/resources/books/views/billgatesbooks.json.jl
-"Bill's Gates list of recommended books" => [Dict("author" => b.author,
-                                                  "title" => b.title,
-                                                  "cover" => b.cover) for b in books]
+# app/resources/books/views/billgatesbookdbs_sqlite.json.jl
+"Bill's Gates list of recommended books with a cover" => [
+  Dict( "author" => b.author,
+        "title" => b.title,
+        "cover" => b.cover) for b in bookdbs]
+
 ```
 
-If we navigate <http://localhost:8000/api/v1/bgbooks> you should see the newly added "cover" property (empty, but present).
+If we navigate <http://localhost:8000/api/v3/bgbookdbs> you should see the newly added "cover" property (empty, but present).
 
-##### Heads up!
+---
+**HEADS-UP!**
 
-Sometimes Julia/Genie/Revise fails to update `structs` on changes. If you get an error saying that `Book` does not have a `cover` field, please restart the Genie app.
+Julia/Genie/Revise will fail to update `structs` on field changes. If you get an error saying that `BookDB` does not have a `cover` field, please restart the Genie app.
+
+---
+
 
 ### File uploading
 
-Next step, extending our form to upload images (book covers). Please edit the `new.jl.html` view file as follows:
+Next step, extending our form to upload images (book covers). Let's create a new route, a new controller function and a new view.
+
+```julia
+# route.jl
+route(
+  "/bgbook_db_intermediate/new_cover",
+  BookDBsController.intermediate_new_cover;
+  method = GET,
+  named = :intermediate_new_cover)
+```
+
+```julia
+# BookDBsController.jl
+using Genie.Router, Genie.Renderer
+function intermediate_new_cover()
+  html(:bookdbs, :intermediate_form_new_cover)
+end
+```
+
 
 ```html
-<h3>Add a new book recommended by Bill Gates</h3>
+<!-- app/resources/books/views/intermediate_form_new_cover.jl.html -->
+<h3>Add a new book recommended by Bill Gates with cover</h3>
 <p>
   For inspiration you can visit <a href="https://www.gatesnotes.com/Books" target="_blank">Bill Gates' website</a>
 </p>
-<form action="$(Genie.Router.linkto(:create_book))" method="POST" enctype="multipart/form-data">
+<form action="$(Genie.Router.linkto(:create_intermediate_cover))" method="POST" enctype="multipart/form-data">
   <input type="text" name="book_title" placeholder="Book title" /><br />
   <input type="text" name="book_author" placeholder="Book author" /><br />
   <input type="file" name="book_cover" /><br />
@@ -211,70 +378,113 @@ Next step, extending our form to upload images (book covers). Please edit the `n
 
 The new bits are:
 
-* we added a new attribute to our `<form>` tag: `enctype="multipart/form-data"`. This is required in order to support files payloads.
-* there's a new input of type file: `<input type="file" name="book_cover" />`
+- a new attribute to our `<form>` tag: `enctype="multipart/form-data"`. This is required in order to support files payloads.
+- a new input of type file: `<input type="file" name="book_cover" />`
 
-You can see the updated form by visiting <http://localhost:8000/bgbooks/new>
+You can see the updated form by visiting <http://localhost:8000/bgbook_db_intermediate/new_cover>
 
 Now, time to add a new book, with the cover! How about "Identity" by Francis Fukuyama? Sounds good.
-You can use whatever image you want for the cover, or maybe borrow the one from Bill Gates, I hope he won't mind <https://www.gatesnotes.com/-/media/Images/GoodReadsBookCovers/Identity.png>.
+You can use whatever image you want for the cover, or maybe borrow the one from Bill Gates,
+I hope he won't mind <https://www.gatesnotes.com/-/media/Images/GoodReadsBookCovers/Identity.png>.
 Just download the file to your computer so you can upload it through our form.
 
-Almost there - now to add the logic for handling the uploaded file server side. Please update the `BooksController.create` method to look like this:
+Almost there - now to add the logic for handling the uploaded file server side with a new
+route and a new controller function:
+
 
 ```julia
-# BooksController
-function create()
-  cover_path = if haskey(filespayload(), "book_cover")
-      path = joinpath("img", "covers", filespayload("book_cover").name)
-      write(joinpath("public", path), IOBuffer(filespayload("book_cover").data))
+# route.jl
+route(
+  "/bgbook_db_intermediate/create_cover",
+  BookDBsController.intermediate_create_cover;
+  method = POST,
+  named = :intermediate_create_cover)
+```
 
-      path
-    else
-      ""
+
+```julia
+# BookDBsController.jl
+using Genie.Requests # to import filespayload()
+function intermediate_create_cover()
+  if haskey(filespayload(), "book_cover")
+    load_name = String(filespayload("book_cover").name)
+
+    web_path = joinpath("/img/covers", load_name)
+    storage_path = joinpath("public/img/covers", load_name)
+
+    # !!!! Please make sure that you create the folder `covers/` within `public/img/`
+    open(storage_path; write = true, truncate = true) do f
+      write(f, IOBuffer(filespayload("book_cover").data))
+    end
+  else
+    web_path = ""
   end
 
-  Book( title = params(:book_title),
-        author = params(:book_author),
-        cover = cover_path) |> save && redirect(:get_bgbooks)
+  BookDB(title = params(:book_title), author = params(:book_author), cover = web_path) |>
+    save && redirect(:bgbooks_db_view_json)
 end
 ```
 
-Also, very important, you need to make sure that `BooksController` is `using Genie.Requests`.
+
+Also, very important, you need to make sure that `BooksDBController` is `using Genie.Requests`.
 
 Regarding the code, there's nothing very fancy about it. First we check if the files payload contains an entry for our `book_cover` input.
 If yes, we compute the path where we want to store the file, write the file, and store the path in the database.
 
 **Please make sure that you create the folder `covers/` within `public/img/`**.
 
+You can now check that the `cover` property is now outputted, as stored in the database: <http://localhost:8000/api/v3/bgbookdbs>
+
+
+### Display with pictures
+
 Great, now let's display the images. Let's start with the HTML view - please edit `app/resources/books/views/billgatesbooks.jl.html` and make sure it has the following content:
 
 ```html
-<!-- app/resources/books/views/billgatesbooks.jl.html -->
-<h1>Bill's Gates top $( length(books) ) recommended books</h1>
+<!-- app/resources/books/views/intermediate_view_all_covers.jl.html -->
+<h1>Bill's Gates top $( length(bookdbs) ) recommended books with cover pictures</h1>
 <ul>
-<%
-for_each(books) do book
-%>
-  <li><img src='$( isempty(book.cover) ? "img/docs.png" : book.cover )' width="100px" /> $(book.title) by $(book.author)</li>
-<%
-end
-%>
+  <% for_each(bookdbs) do bookdb %>
+    <li>
+      <img src='$( isempty(bookdb.cover) ? "img/docs.png" : bookdb.cover )' width="100px" /> $(bookdb.title) by $(bookdb.author)</li>
+    <% end %>
 </ul>
 ```
 
 Basically here we check if the `cover` property is not empty, and display the actual cover. Otherwise we show a placeholder image.
-You can check the result at <http://localhost:8000/bgbooks>
 
-As for the JSON view, it already does what we want - you can check that the `cover` property is now outputted, as stored in the database: <http://localhost:8000/api/v1/bgbooks>
+Add a new route and controller:
+
+```julia
+# route.jl
+route("/bgbook_db_intermediate/view_all_covers",
+  BookDBsController.intermediate_view_all_covers;
+  method = GET,
+  named = :bgbooks_db_view_covers_html
+)
+```
+
+```julia
+# BookDBsController.jl
+function intermediate_view_all_covers()
+  html(:bookdbs, :intermediate_view_all_covers, bookdbs = all(BookDB))
+end
+```
+
+
+You can now check the result at <http://localhost:8000/bgbook_db_intermediate/view_all_covers>
+
 
 Success, we're done here!
 
 
-#### Heads up!
+---
+**HEADS-UP!**
 
 In production you will have to make the upload code more robust - the big problem here is that we store the cover file as it comes from the user which can lead to name clashes and files being overwritten - not to mention security vulnerabilities.
 A more robust way would be to compute a hash based on author and title and rename the cover to that.
+
+---
 
 ### One more thing...
 

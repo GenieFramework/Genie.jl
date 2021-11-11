@@ -41,7 +41,7 @@ We are using the `route` method, passing in the "/hello" URL and an anonymous fu
 Visit <http://127.0.0.1:8000/hello> for a warm welcome!
 
 ---
-**HEADS UP**
+**HEADS-UP!**
 
 In case you pick this up some time after having created the project, you will need to re-launch the server to view that page. From the package's directory, activate it (`activate .`), then load (`using MyGenieApp`), create the server (`MyGenieApp.main()`) and run (`up()`).
 
@@ -271,7 +271,7 @@ As you can see, it's just plain HTML with embedded Julia. We can add Julia code 
 To make HTML generation more efficient, Genie provides a series of helpers, like the above `for_each` macro which allows iterating over a collection, passing the current item into the processing function.
 
 ---
-**HEADS UP**
+**HEADS-UP!**
 
 **It is very important to keep in mind that Genie views work by rendering a HTML string. Thus, the Julia view code _must return a string_ as its result, so that the output of the computation comes up on the page**. Given that Julia automatically returns the result of the last computation, most of the times this just flows naturally. But if sometimes you notice that the templates don't output what is expected, do check that the code returns a string (or something which can be converted to a string).
 
@@ -405,7 +405,7 @@ end
 ```
 
 ---
-**HEADS UP**
+**HEADS-UP!**
 
 
 Note that the rendered web page will include the comment `<!-- app/resources/books/views/billgatesbooks.jl.md -->` which is currently not removed when generating the HTML page.
@@ -494,7 +494,7 @@ end # Module BooksController
 We nested an API module within the `BooksController` module, where we defined another `billgatesbooks` function which outputs a JSON.
 
 ---
-**HEADS UP**
+**HEADS-UP!**
 
 (November 2021) The temporary line is added (`StructTypes.StructType(::Type{Book}) = StructTypes.Struct()`). This is necessary to correct an outstanding issue described in [https://github.com/GenieFramework/Genie.jl/issues/397]().
 
@@ -550,7 +550,7 @@ end
 This should hold no surprises – the `json` function is similar to the `html` one we've seen before. So now we're rendering a custom JSON response. That's all – everything should work on `http://localhost:8000/api/v2/bgbooks`!
 
 ---
-**HEADS UP**
+**HEADS-UP!**
 
 #### Why JSON views have the extension ending in `.jl` but HTML and Markdown views do not?
 
@@ -564,18 +564,21 @@ Since practically HTML and Markdown views are HTML and Markdown files with some 
 
 You can get the most out of Genie by pairing it with its seamless ORM layer, SearchLight. SearchLight, a native Julia ORM, provides excellent support for working with relational databases. The Genie + SearchLight combo can be used to productively develop CRUD (Create-Read-Update-Delete) apps.
 
+SearchLight represents the "M" part in Genie's MVC architecture (thus, the Model layer).
+
 ---
-**HEADS UP**
+**HEADS-UP!**
 
 CRUD stands for Create-Read-Update-Delete and describes the data workflow in many web apps, where resources are created, read (listed), updated, and deleted.
 
+This section will replicate a lot of the previous one. We will add a new resource `BookDBs` to access books stored in the database instead of the books stored in the `BillGatesBooks` list.
+
 ---
 
-SearchLight represents the "M" part in Genie's MVC architecture (thus, the Model layer).
 
 Let's begin by adding SearchLight to our Genie app. All Genie apps manage their dependencies in their own Julia environment, through their `Project.toml` and `Manifest.toml` files.
 
-So we need to make sure that we're in `pkg> ` shell mode first (which is entered by typing `]` in julian mode, ie: `julia>]`).
+So we need to make sure that we're in `pkg> ` shell mode first (which is entered by typing `]` in the Julia REPL mode, ie: `julia>]`).
 The cursor should change to `(MyGenieApp) pkg>`.
 
 Next, we add `SearchLight`:
@@ -607,7 +610,7 @@ It is initally clean:
 
 
 ```julia
-julia> using SQLite, SearchLight
+julia> using SQLite, SearchLight, SearchLightSQLite
 
 julia> SearchLight.Configuration.load()
 
@@ -626,22 +629,23 @@ Dict{String, Any} with 8 entries:
 Let's edit it (it is initially write-protected and your editor might complain about this). Make the file look like this:
 
 ```yaml
-env: ENV["GENIE_ENV"]
+# env: ENV["GENIE_ENV"]
+env: dev
 
 dev:
   adapter: SQLite
-  database: db/books.sqlite
+  database: db/bookdbs.sqlite
   config:
 ```
 
-This instructs SearchLight to run in the environment of the current Genie app (by default `dev`), using `SQLite` for the adapter (backend) and a database stored at `db/books.sqlite` (the database will be created automatically if it does not exist). We could pass extra configuration options in the `config` object, but for now we don't need anything else.
+This instructs SearchLight to run in the environment of the current Genie app (by default `dev`), using `SQLite` for the adapter (backend) and a database stored at `db/bookdbs.sqlite` (the database will be created automatically if it does not exist). We could pass extra configuration options in the `config` object, but for now we don't need anything else.
 
 ---
-**HEADS UP**
+**HEADS-UP!**
 
 If you are using a different adapter, make sure that the database configured already exists and that the configured user can successfully access it -- SearchLight will not attempt to create the database.
 
-The environment variable `GENIE_ENV` selects one of the profiles in the `yml` file.
+The environment variable `GENIE_ENV` selects one of the profiles in the `yml` file, but we will force a `dev` environment for the moment.
 
 ---
 
@@ -650,7 +654,7 @@ Now we can ask SearchLight to load it up and add it to the list of connextion:
 ```julia
 julia> push!(SearchLightSQLite.CONNECTIONS, SQLite.DB(SearchLight.Configuration.load()["database"]))
 1-element Vector{SQLite.DB}:
- SQLite.DB("db/books.sqlite")
+ SQLite.DB("db/bookdbs.sqlite")
 ```
 
 The connection succeeded and we got back a SQLite database handle added to the list of databases connections.
@@ -663,17 +667,17 @@ Each database adapter exposes a `CONNECTIONS` collection where we can access the
 ```julia
 julia> SearchLightSQLite.CONNECTIONS
 1-element Array{SQLite.DB,1}:
- SQLite.DB("db/books.sqlite")
+ SQLite.DB("db/bookdbs.sqlite")
 ```
 
 ---
 
-Awesome! If all went well you should have a `books.sqlite` database in the `db/` folder (from the Julia REPL prompt, typing `;` will give the shell prompt).
+Awesome! If all went well you should have a `bookdbs.sqlite` database in the `db/` folder (from the Julia REPL prompt, typing `;` will give the shell prompt).
 
 ```julia
 shell> tree db
 db
-├── books.sqlite
+├── bookdbs.sqlite
 ├── connection.yml
 ├── migrations
 └── seeds
@@ -721,22 +725,22 @@ SearchLight, just like Genie, uses the convention-over-configuration design patt
 Lets ask SearchLight to create a new model:
 
 ```julia
-julia> SearchLight.Generator.newresource("Book")
+julia> SearchLight.Generator.newresource("BookDB")
 
-[ Info: New model created at [PROJECT DIRECTORY]/MyGenieApp/app/resources/books/Books.jl
-[ Info: New table migration created at [PROJECT DIRECTORY]/MyGenieApp/db/migrations/2020020909574048_create_table_books.jl
-[ Info: New validator created at [PROJECT DIRECTORY]/MyGenieApp/app/resources/books/BooksValidator.jl
-[ Info: New unit test created at [PROJECT DIRECTORY]/MyGenieApp/test/books_test.jl
+[ Info: New model created at [PROJECT DIRECTORY]/MyGenieApp/app/resources/bookdbs/BookDBs.jl
+[ Info: New table migration created at [PROJECT DIRECTORY]/MyGenieApp/db/migrations/2020020909574048_create_table_bookdbs.jl
+[ Info: New validator created at [PROJECT DIRECTORY]/MyGenieApp/app/resources/bookdbs/BookDBsValidator.jl
+[ Info: New unit test created at [PROJECT DIRECTORY]/MyGenieApp/test/bookdbs_test.jl
 ```
 
-SearchLight has created the `Books.jl` model, the `*_create_table_books.jl` migration file, the `BooksValidator.jl` model validator and the `books_test.jl` test file.
+SearchLight has created the `Books.jl` model, the `*_create_table_books.jl` migration file, the `BookDBsValidator.jl` model validator and the `bookdbs_test.jl` test file.
 
 ---
-**HEADS UP**
+**HEADS-UP!**
 
 The first part of the migration file will be different for you!
 
-The text returned by the command will vary slightly depending on your personal setup. The `*_create_table_books.jl` file will be named differently as the first part of the name is the file creation timestamp. This timestamp part guarantees that names are unique and file name clashes are avoided (for example when working as a team a creating similar migration files).
+The text returned by the command will vary slightly depending on your personal setup. The `*_create_table_bookdbs.jl` file will be named differently as the first part of the name is the file creation timestamp. This timestamp part guarantees that names are unique and file name clashes are avoided (for example when working as a team a creating similar migration files).
 
 ---
 
@@ -747,18 +751,18 @@ Lets begin by writing the migration to create our books table. SearchLight provi
 Each migration file needs to define two methods: `up` which applies the changes – and `down` which undoes the effects of the `up` method.
 So in our `up` method we want to create the table – and in `down` we want to drop the table.
 
-The naming convention for tables in SearchLight is that the table name should be pluralized (`books`) – because a table contains multiple books (each row represents an object, a "book").
+The naming convention for tables in SearchLight is that the table name should be pluralized (`bookdbs`) – because a table contains multiple books (each row represents an object, a "bookdb").
 But don't worry, the migration file should already be pre-populated with the correct table name.
 
-Edit the `db/migrations/*_create_table_books.jl` file and make it look like this:
+Edit the `db/migrations/*_create_table_bookdbs.jl` file and make it look like this:
 
 ```julia
-module CreateTableBooks
+module CreateTableBookDBs
 
 import SearchLight.Migrations: create_table, column, primary_key, add_index, drop_table
 
 function up()
-  create_table(:books) do
+  create_table(:bookdbs) do
     [
       primary_key()
       column(:title, :string, limit = 100)
@@ -766,12 +770,12 @@ function up()
     ]
   end
 
-  add_index(:books, :title)
-  add_index(:books, :author)
+  add_index(:bookdbs, :title)
+  add_index(:bookdbs, :author)
 end
 
 function down()
-  drop_table(:books)
+  drop_table(:bookdbs)
 end
 
 end
@@ -785,11 +789,11 @@ We can see what SearchLight knows about our migrations with the `SearchLight.Mig
 
 ```julia
 julia> SearchLight.Migrations.status()
-|   | Module name & status                   |
-|   | File name                              |
-|---|----------------------------------------|
-|   |                 CreateTableBooks: DOWN |
-| 1 | 2020020909574048_create_table_books.jl |
+|   | Module name & status                     |
+|   | File name                                |
+|---|------------------------------------------|
+|   |                 CreateTableBookdbs: DOWN |
+| 1 | 2020020909574048_create_table_bookdbs.jl |
 ```
 
 So our migration is in the `down` state – meaning that its `up` method has not been run. We can easily fix this:
@@ -799,15 +803,28 @@ julia> SearchLight.Migrations.last_up()
 [ Info: Executed migration CreateTableBooks up
 ```
 
+If you had already run the method, you might see something like:
+
+```julia
+julia> SearchLight.Migrations.last_up()
+[ Info: SELECT version FROM schema_migrations ORDER BY version DESC
+[ Info: CREATE TABLE bookdbs (id INTEGER PRIMARY KEY , title TEXT  , author TEXT  )
+[ Info: CREATE  INDEX bookdbs__idx_title ON bookdbs (title)
+[ Info: CREATE  INDEX bookdbs__idx_author ON bookdbs (author)
+[ Info: INSERT INTO schema_migrations VALUES ('2021110514460077')
+[ Info: Executed migration CreateTableBookdbs up
+```
+
 If we recheck the status, the migration is up:
 
 ```julia
-julia> SearchLight.Migrations.status()
-|   | Module name & status                   |
-|   | File name                              |
-|---|----------------------------------------|
-|   |                   CreateTableBooks: UP |
-| 1 | 2020020909574048_create_table_books.jl |
+[ Info: SELECT version FROM schema_migrations ORDER BY version DESC
+|   | Module name & status                     |
+|   | File name                                |
+|---|------------------------------------------|
+|   |                   CreateTableBookdbs: UP |
+| 1 | 2021110514460077_create_table_bookdbs.jl |
+
 ```
 
 Our table is ready!
@@ -823,13 +840,13 @@ If using Visual Code, using an SQLite extension such as [SQLite](https://marketp
 
 #### Defining the model
 
-Now it's time to edit our model file at `app/resources/books/Books.jl`. Another convention in SearchLight is that we're using the pluralized name (`Books`) for the module – because it's for managing multiple books. And within it we define a type (a `mutable struct`), called `Book` – which represents an item (a single book) which maps to a row in the underlying database.
+Now it's time to edit our model file at `app/resources/bookdbs/BookDBs.jl`. Another convention in SearchLight is that we're using the pluralized name (`BookDBs`) for the module – because it's for managing multiple books. And within it we define a type (a `mutable struct`), called `BookDB` – which represents an item (a single book) which maps to a row in the underlying database.
 
-Edit the `Books.jl` file to make it look like this:
+Edit the `BookDBs.jl` file to make it look like this:
 
 ```julia
-# Books.jl
-module Books
+# BookDBs.jl
+module BookDBs
 
 import SearchLight: AbstractModel, DbId, save!
 
@@ -837,25 +854,25 @@ import SearchLight: AbstractModel, DbId, save!
 # If you want, you could instead use the @with_kw macro from the Parameters.jl package.
 import Base: @kwdef
 
-export Book
+export BookDB
 
-@kwdef mutable struct Book <: AbstractModel
+@kwdef mutable struct BookDB <: AbstractModel
   id::DbId = DbId()
   title::String = ""
   author::String = ""
 end
 
-end
+end # module BookDBs
 ```
 
-We defined a `mutable struct` which matches our previous `Book` type by using the `@kwdef` macro, in order to also define a keyword constructor, as SearchLight needs it.
+We defined a `mutable struct` which matches our previous `Book` type (without name conflict) by using the `@kwdef` macro, in order to also define a keyword constructor, as SearchLight needs it.
 
 #### Using our model
 
-To make things more interesting, we should import our current books into the database. Add this function to the `Books.jl` module, following the `Book()` constructor definition (just above the module's closing `end`):
+To make things more interesting, we should import our current books into the database. Add this function to the `Books.jl` module, following the `BookDB()` constructor definition (just above the module's closing `end  # module Books`):
 
 ```julia
-# Books.jl
+# BookDBs.jl
 function seed()
   BillGatesBooks = [
     ("The Best We Could Do", "Thi Bui"),
@@ -866,9 +883,10 @@ function seed()
   ]
 
   for b in BillGatesBooks
-    Book(title = b[1], author = b[2]) |> save!
+    BookDB(title = b[1], author = b[2]) |> save!
   end
-end
+
+end  # function seed
 ```
 
 #### Auto-loading the DB configuration
@@ -903,7 +921,7 @@ end
 ```
 
 ---
-**Heads up!**
+**HEADS-UP!**
 
 All the `*.jl` files placed into the `config/initializers/` folder are automatically included by Genie upon starting the Genie app. They are included early (upon initialisation), before the controllers, models, views, are loaded.
 
@@ -922,17 +940,17 @@ In Windows go into the `bin/` folder within the application's directory and run 
 The `repl` executable script placed within the app's `bin/` folder starts a new Julia REPL session and loads the applications' environment. Everything should be automatically loaded now, DB configuration included - so we can invoke the previously defined `seed` function to insert the books:
 
 ```julia
-julia> using Books
+julia> using BookDBs
 
-julia> Books.seed()
+julia> BookDBs.seed()
 ```
 
 There should be a list of queries showing how the data is inserted in the DB:
 
 ```julia
-julia> Books.seed()
-[ Info: INSERT  INTO books ("title", "author") VALUES ('The Best We Could Do', 'Thi Bui')
-[ Info: INSERT  INTO books ("title", "author") VALUES ('Evicted: Poverty and Profit in the American City', 'Matthew Desmond')
+julia> BookDBs.seed()
+[ Info: INSERT  INTO bookdbs ("title", "author") VALUES ('The Best We Could Do', 'Thi Bui')
+[ Info: INSERT  INTO bookdbs ("title", "author") VALUES ('Evicted: Poverty and Profit in the American City', 'Matthew Desmond')
 # output truncated
 ```
 
@@ -941,55 +959,71 @@ If you want to make sure all went right (although trust me, it did, otherwise Se
 ```julia
 julia> using SearchLight
 
-julia> all(Book)
-[ Info: 2020-02-09 13:29:32 SELECT "books"."id" AS "books_id", "books"."title" AS "books_title", "books"."author" AS "books_author" FROM "books" ORDER BY books.id ASC
-
-5-element Array{Book,1}:
- Book
+[ Info: 2021-11-05 16:31:41 SELECT "bookdbs"."id" AS "bookdbs_id", "bookdbs"."title" AS "bookdbs_title", "bookdbs"."author" AS "bookdbs_author" FROM "bookdbs" ORDER BY bookdbs.id ASC
+5-element Vector{BookDB}:
+ BookDB
 | KEY            | VALUE                |
 |----------------|----------------------|
 | author::String | Thi Bui              |
 | id::DbId       | 1                    |
 | title::String  | The Best We Could Do |
 
- Book
+ BookDB
 | KEY            | VALUE                                            |
 |----------------|--------------------------------------------------|
 | author::String | Matthew Desmond                                  |
 | id::DbId       | 2                                                |
 | title::String  | Evicted: Poverty and Profit in the American City |
 
-# output truncated
+ BookDB
+| KEY            | VALUE                                                  |
+|----------------|--------------------------------------------------------|
+| author::String | Eddie Izzard                                           |
+| id::DbId       | 3                                                      |
+| title::String  | Believe Me: A Memoir of Love, Death, and Jazz Chickens |
+
+ BookDB
+| KEY            | VALUE             |
+|----------------|-------------------|
+| author::String | Viet Thanh Nguyen |
+| id::DbId       | 4                 |
+| title::String  | The Sympathizer!  |
+
+ BookDB
+| KEY            | VALUE                              |
+|----------------|------------------------------------|
+| author::String | Vaclav Smil                        |
+| id::DbId       | 5                                  |
+| title::String  | Energy and Civilization, A History |
+
 ```
 
-The `SearchLight.all` method returns all the `Book` items from the database.
+The `SearchLight.all` method returns all the `BookDB` items from the database.
 
 All good!
 
-The next thing we need to do is to update our controller to use the model. Make sure that `app/resources/books/BooksController.jl` reads like this:
+The next thing we need to do is to update our controller to use the model. Make sure that `app/resources/books/BookDBsController.jl` reads like this:
 
 ```julia
-# BooksController.jl
-module BooksController
+# BookDBsController.jl
+module BookDBsController
 
-using Genie.Renderer.Html, SearchLight, Books
+using Genie.Renderer.Html, SearchLight, BookDBs
 
-function billgatesbooks_sqlite()
-  html(:books, :billgatesbooks, books = all(Book))
+function billgatesbookdbs_sqlite()
+  html(:bookdbs, :billgatesbooks, bookdbs = all(BookDB))
 end
 
 module API
+using ..BookDBsController
+using Genie.Renderer.Json, SearchLight, BookDBs
 
-using ..BooksController
-using Genie.Renderer.Json, SearchLight, Books
-
-function billgatesbooks_view_sqlite()
-  json(:books, :billgatesbooks_sqlite, books = all(Book))
+function billgatesbookdbs_view_sqlite()
+  json(:bookdbs, :billgatesbooks_sqlite, bookdbs = all(BookDB))
 end
+end # module API
 
-end
-
-end
+end # module BookDBsController
 ```
 
 Our JSON view needs a bit of tweaking too. let's create a new view file `billgatesbooks_sqlite.json.jl` with the following content:
@@ -1000,7 +1034,7 @@ Our JSON view needs a bit of tweaking too. let's create a new view file `billgat
 ```
 
 ---
-**Heads up!**
+**HEADS-UP!**
 
 In the sub-module `API`, the parameter `:billgatesbooks_sqlite` reflects the new file named `billgatesbooks_sqlite.json.jl`!
 
@@ -1010,12 +1044,17 @@ Let's also add a new route:
 
 ```julia
 # route.jl
-route("/api/v3/bgbooks") do
-  BooksController.API.billgatesbooks_view_sqlite()
-end
+using BookDBsController
+
+route("/api/v3/bgbookdbs",
+  BookDBsController.API.billgatesbookdbs_view_sqlite;
+  method = GET,
+  named = :bgbooks_db_view_json
+)
 ```
 
-
+(Do not pay attention to the `method = GET, named = :bgbooks_db_view_json` part for the moment. It will
+become clear in the _Intermediate Topics_ guide).
 
 Now if we just start the server we'll be able to see the list of books served from the database:
 
@@ -1024,9 +1063,9 @@ Now if we just start the server we'll be able to see the list of books served fr
 julia> up()
 ```
 
-The `up` method starts up the web server and takes us back to the interactive Julia REPL prompt.
+The `up()` method starts up the web server and takes us back to the interactive Julia REPL prompt.
 
-Now, if, for example, we navigate to <http://localhost:8000/api/v3/bgbooks>, the output should match the following JSON document (edited with newlines for clarity):
+Now, if, for example, we navigate to <http://localhost:8000/api/v3/bgbookdbs>, the output should match the following JSON document (edited with newlines for clarity):
 
 ```json
 {
@@ -1055,10 +1094,10 @@ Now, if, for example, we navigate to <http://localhost:8000/api/v3/bgbooks>, the
 }
 ```
 
-Let's add a new book to see how it works. We'll create a new `Book` item and persist it using the `SearchLight.save!` method:
+Let's add a new book to see how it works. We'll create a new `BookDB` item and persist it using the `SearchLight.save!` method:
 
 ```julia
-julia> newbook = Book(title = "Leonardo da Vinci", author = "Walter Isaacson")
+julia> newbook = BookDB(title = "Leonardo da Vinci", author = "Walter Isaacson")
 
 Book
 | KEY            | VALUE             |
@@ -1091,7 +1130,7 @@ julia> Book(title = "Leonardo da Vinci", author = "Walter Isaacson") |> save!
 ```
 
 ---
-**HEADS UP**
+**HEADS-UP!**
 
 If you also run the one-liner `save!` example, it will add the same book again. No problem, but if you want to remove it, you can use the `delete` method:
 
@@ -1153,4 +1192,4 @@ SearchLight exposes two similar data persistence methods: `save!` and `save`. Th
 
 You have successfully finished the first part of the step by step walkthrough - you now master the Genie basics, allowing you to set up a new app, register routes, add resources (controllers, models, and views), add database support, version the database schema with migrations, and execute basic queries with SearchLight!
 
-In the next part we'll look at more advanced topics like handling forms and file uploads, templates rendering, interactivity and more.
+In the next part _Working With Genie Apps Intermediary Topics_ we'll look at more advanced topics like handling forms and file uploads, templates rendering, interactivity and more.
