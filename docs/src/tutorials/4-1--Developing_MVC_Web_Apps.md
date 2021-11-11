@@ -54,11 +54,14 @@ dev:
   config:
 ```
 
-Now let's manually load the database configuration:
+In this example, the `GENIE_ENV` environment variable selects the relevant section of the `yaml`file. In this applcation template, it should be one of `env`, `test`, `prod` or `global`. Those values are matched by configuration files located in `config/env/`. In case the variable is not defined, the following can be used during development: `env: dev`.
+
+
+Now let's manually load the database configuration (assuming that the package `SQLite` is already installed):
 
 ```julia
 julia> include(joinpath("config", "initializers", "searchlight.jl"))
-SQLite.DB("db/netflix_catalog.sqlite")
+julia> SQLite.DB("db/netflix_catalog.sqlite")
 ```
 
 ## Creating a Movie resource
