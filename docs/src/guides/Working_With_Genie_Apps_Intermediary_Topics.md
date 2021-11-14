@@ -544,7 +544,7 @@ need to pass the id of the book that we want to edit - and we want to constrain 
 We also want to:
 
 - reuse the form which we have defined in
-  `app/resources/books/views/intermediate_form_new.jl.html`
+  `app/resources/books/views/intermediate_partial_new.jl.html`
 - make the form aware of whether it's used to create a new book, or for editing an existing
   one respond accordingly by setting the correct `action` pre-fill the inputs with the
   book's info when editing a book.
@@ -559,11 +559,11 @@ creating a new book, it will be just an empty book object we'll create and then 
 
 First, let's set up the views. In `app/resources/books/views/` please create a new file
 called `intermediate_partial_form.jl.html`. Then, from
-`app/resources/books/views/intermediate_form_new.jl.html` cut the `<form>` code. That is,
+`app/resources/books/views/intermediate_partial_new.jl.html` cut the `<form>` code. That is,
 everything starting from and ending at `<form>...</form>` tags (the code _including_ the
 tags). Paste it into the newly created `intermediate_partial_form.jl.html` file. Now, create
 a new file called `intermediate_partial_form.jl.html`, copy the entire content of
-`intermediate_form_new.jl.html` and replace the previous `<form>...</form>` code
+`intermediate_partial_new.jl.html` and replace the previous `<form>...</form>` code
 (_including_ the tags) with:
 
 ```julia
@@ -576,51 +576,59 @@ we're explicitly passing the `context` so Genie can set the correct variable sco
 including the partial.
 
 After creating a new route and a new controller function, you can load the
-`intermediate_form_new_partial` page on
-<http://localhost:8000/bgbook_db_intermediate/intermediate_form_new_partial> to make sure
+`intermediate_partial_new` page on
+<http://localhost:8000/bgbook_db_intermediate/intermediate_partial_new> to make sure
 that everything still works with a new route and a new controller function:
 
 ```julia
 # routes.jl
 route(
-  "/bgbook_db_intermediate/intermediate_form_new_partial",
-  BookDBsController.intermediate_form_new_partial;
+  "/bgbook_db_intermediate/intermediate_partial_new",
+  BookDBsController.intermediate_partial_new;
   method = GET,
-  named = :intermediate_form_new_partial
+  named = :intermediate_partial_new
 )
 ```
 
 ```julia
 # BookDBsController.jl
-function intermediate_form_new_partial()
-  html(:bookdbs, :intermediate_form_new_partial)
+function intermediate_partial_new()
+  html(:bookdbs, :intermediate_partial_new)
 end
 ```
 
-Now, let's add an Edit option to our list of books. Please go back to our list view file,
-`billgatesbooks.jl.html`. Here, for each iteration, within the `for_each` block we'll want
-to dynamically link to the edit page for the corresponding book.
-
 #### `for_each` with view partials
 
+Now, let's add an Edit option to our list of books. Please go back to our list view file,
+`intermediate_view_all_covers.jl.html`. Here, for each iteration, within the `for_each`
+block we'll want to dynamically link to the edit page for the corresponding book.
+
 However, this `for_each` which renders a Julia string is very ugly - and we now know how to
-refactor it, by using a view partial. Let's do it. First, replace the body of the `for_each`
-block:
+refactor it, by using a view partial. Let's do it. First, in a new file
+`intermediate_partial_view_all_covers.jl` replace the body of the `for_each` block:
 
 ```html
-<!-- app/resources/books/views/billgatesbooks.jl.html -->
-"""
+<!-- app/resources/books/views/intermediate_view_all_covers.jl.html -->
 <li>
-  <img src='$( isempty(book.cover) ? "img/docs.png" : book.cover )'
-       width="100px" /> $(book.title) by $(book.author)
+  <img
+    src='/$(isempty(bookdb.cover) ? "img/genie/docs.png" : bookdb.cover)'
+    width="100px"></img>
+  $(bookdb.title) by $(bookdb.author)
 </li>
-"""
 ```
 
-with:
+in the new file (full file is shown here):
 
-```julia
-partial("app/resources/books/views/book.jl.html", book = book, context = @__MODULE__)
+```html
+<!-- app/resources/books/views/intermediate_partial_view_all_covers.jl.html -->
+<h1>Bill's Gates top $( length(bookdbs) ) recommended books with cover pictures</h1>
+<ul>
+  <% for_each(bookdbs) do bookdb %>
+    <% partial("app/resources/bookdbs/views/intermediate_partial_bookdb.jl.html",
+               bookdb = bookdb,
+               context = @__MODULE__) %>
+  <% end %>
+</ul>
 ```
 
 Notice that we are using the `partial` function and we pass the book object into our view,
@@ -630,11 +638,48 @@ passing the scope's `context` (our controller object).
 Next, create the `book.jl.html` in `app/resources/books/views/`, for example with:
 
 ```julia
-julia> touch("app/resources/books/views/book.jl.html")
+julia> touch("app/resources/bookdbs/views/intermediate_partial_bookdb.jl.html")
 ```
 
-Add this content to it:
-TO BE CONTINUED
+Insert this content:
+
+```html
+<!-- app/resources/bookdbs/views/intermediate_partial_bookdb.jl.html -->
+<li>
+  <img src='/$(isempty(bookdb.cover) ? "img/genie/docs.png" : bookdb.cover)' width="100px"></img>
+  $(bookdb.title) by $(bookdb.author)
+</li>
+```
+
+You now know the drill:
+
+```julia
+# routes.jl
+route(
+  "/bgbook_db_intermediate/intermediate_partial_view_all_covers",
+  BookDBsController.intermediate_partial_view_all_covers;
+  method = GET,
+  named = :intermediate_partial_view_all_covers
+)
+```
+
+```julia
+# BookDBsController.jl
+function intermediate_partial_view_all_covers()
+  html(:bookdbs, :intermediate_partial_view_all_covers, bookdbs = all(BookDB))
+end
+```
+
+You can now visit
+<http://localhost:8000/bgbook_db_intermediate/intermediate_partial_view_all_covers> and a
+page identical to what was previously done, albeit using partials.
+
+
+Time to append a link to each line to go to editing that page:
+
+[TBC]
+
+
 
 
 ### View helpers
