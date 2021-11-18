@@ -30,7 +30,7 @@ Returns a vector of all registered Genie tasks.
 function tasks(context::Module; filter_type_name::Union{Symbol,Nothing} = nothing) :: Vector{TaskInfo}
   tasks = TaskInfo[]
 
-  f = readdir(joinpath(Main.UserApp.ROOT_PATH, Genie.config.path_tasks))
+  f = readdir(normpath(Genie.config.path_tasks))
 
   for i in f
     if ( endswith(i, "Task.jl") )

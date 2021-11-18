@@ -47,7 +47,7 @@ Nettle = "0.5"
 OrderedCollections = "1"
 Reexport = "0.2, 1"
 Revise = "2, 3"
-VersionCheck = "0.1, 0.2, 1"
+VersionCheck = "0.2, 1"
 YAML = "0.4"
 julia = "1.6"
 
