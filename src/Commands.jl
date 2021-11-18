@@ -30,18 +30,12 @@ function execute(config::Genie.Configuration.Settings; server::Union{Sockets.TCP
     endswith(parsed_args["r"], "Task") || (parsed_args["r"] *= "Task")
     Base.invokelatest(Genie.Toolbox.loadtasks, Main.UserApp)
     taskname = parsed_args["r"]
+    task = getfield(Main.UserApp, Symbol(taskname))
 
-    @info "Running task $taskname with args $(parsed_args["a"])"
-
-    try
-      task = getfield(Main.UserApp, Symbol(taskname))
-      if parsed_args["a"] !== nothing
-        @info Base.invokelatest(task.runtask, parsed_args["a"])
-      else
-        @info Base.invokelatest(task.runtask)
-      end
-    catch ex
-      @error ex
+    if parsed_args["a"] !== nothing
+      Base.invokelatest(task.runtask, parsed_args["a"])
+    else
+      Base.invokelatest(task.runtask)
     end
   end
 
