@@ -19,5 +19,18 @@
 
       Genie.Renderer.clear_task_storage()
     end;
+
+    @safetestset "JSON3 struct rendering" begin
+      struct Person
+        name::String
+        age::Int
+      end
+
+      p = Person("John Doe", 42)
+
+      using Genie.Renderers.Json
+
+      @test String(json(p).body) == """{"name":"John Doe","age":42}"""
+    end
   end;
 end;

@@ -13,6 +13,9 @@ const parse = JSON3.read
 
 const json = JSON3.write
 
+# ugly but necessary
+JSON3.StructTypes.StructType(::T) where {T<:DataType} = JSON3.StructTypes.Struct()
+
 end
 
 using .JSONParser

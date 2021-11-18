@@ -530,7 +530,6 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Dict{S
   return req, res, params
 end
 
-
 push!(Genie.Router.content_negotiation_hooks, negotiate_content)
 
 
@@ -538,5 +537,6 @@ include("renderers/Html.jl")
 include("renderers/Json.jl")
 include("renderers/Js.jl")
 
-
 end
+
+const Renderers = Renderer
