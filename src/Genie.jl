@@ -56,7 +56,7 @@ config.cache_storage == :File && include("cache_adapters/FileCache.jl")
 
 include("Sessions.jl")
 
-export serve, up, down, loadapp, genie, bootstrap
+export serve, up, down, loadapp, genie, bootstrap, isrunning
 @reexport using .Router
 
 const assets_config = Genie.Assets.assets_config
@@ -220,9 +220,8 @@ Web Server starting at http://127.0.0.1:8000
 """
 const startup = AppServer.startup
 const up = startup
-
-
 const down = AppServer.down
+const isrunning = AppServer.isrunning
 
 
 ### PRIVATE ###

@@ -7,6 +7,7 @@ using HTTP, Sockets
 import Millboard, Distributed, Logging, MbedTLS
 import Genie
 
+
 """
     ServersCollection(webserver::Union{Task,Nothing}, websockets::Union{Task,Nothing})
 
@@ -28,6 +29,9 @@ const Servers = SERVERS
 
 function isrunning(server::ServersCollection, prop::Symbol = :webserver) :: Bool
   isa(getfield(server, prop), Task) && ! istaskdone(getfield(server, prop))
+end
+function isrunning(prop::Symbol = :webserver) :: Bool
+  isempty(SERVERS) ? false : isrunning(SERVERS[1], prop)
 end
 
 function server_status(server::ServersCollection, prop::Symbol) :: Nothing
