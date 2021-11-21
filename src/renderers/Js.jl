@@ -111,8 +111,8 @@ end
 
 function js(data::String; context::Module = @__MODULE__, status::Int = 200,
             headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders("Content-Type" => Genie.Renderer.CONTENT_TYPES[:javascript]),
-            forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
-  if occursin(raw"$", data) || occursin("<%", data) || forceparse
+            forceparse::Bool = false, noparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
+  if (occursin(raw"$", data) || occursin("<%", data) || forceparse) && ! noparse
     Genie.Renderer.WebRenderable(render(MIME"application/javascript", data; context = context, vars...), :javascript, status, headers) |> Genie.Renderer.respond
   else
     Genie.Renderer.WebRenderable(data, :javascript, status, headers) |> Genie.Renderer.respond

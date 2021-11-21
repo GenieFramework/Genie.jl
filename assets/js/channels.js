@@ -58,22 +58,6 @@ Genie.WebChannels.load_channels = function() {
         'payload': payload
       }));
     }
-    /*
-    else {
-      console.log("WebSocket is not ready");
-
-      setTimeout(function() {
-        if ( Genie.WebChannels.socket.readyState === 3 ) {
-          try {
-            Genie.WebChannels.socket = new WebSocket(window.location.protocol.replace("http", "ws") + '//' + window.location.hostname + ':' + Genie.WebChannels.port);
-          } catch (ex) {
-            console.log("Failed opening WebSocket connection.");
-          }
-        }
-        sendMessageTo(channel, message, payload)
-      }, Genie.Settings.webchannels_timeout);
-    }
-    */
   }
 };
 

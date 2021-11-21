@@ -439,10 +439,10 @@ Content-Type: text/html; charset=utf-8
 ```
 """
 function html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
-                            layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing, forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
+                            layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing, forceparse::Bool = false, noparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
   isa(layout, Genie.Renderer.FilePath) && (layout = read(layout, String))
 
-  if occursin(raw"$", data) || occursin("<%", data) || layout !== nothing || forceparse
+  if (occursin(raw"$", data) || occursin("<%", data) || layout !== nothing || forceparse) && ! noparse
     Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context = context, layout = layout, vars...), status, headers) |> Genie.Renderer.respond
   else
     Genie.Renderer.WebRenderable(body = data, status = status, headers = headers) |> Genie.Renderer.respond
@@ -648,7 +648,7 @@ function parsehtml(elem::HTMLParser.Node; partial::Bool = true, indent = 0) :: S
           elseif length(parts) == 1
             attrs_dict[strip(parts[1])] = strip(parts[1])
           else
-            error("Invalid attribute $(string(a))")
+            string(a)
           end
         end
       end
