@@ -769,7 +769,7 @@ Converts an input file to Julia code
                   partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n", extension = TEMPLATE_EXT) :: String
   f_name = (f_name === nothing) ? Genie.Renderer.function_name(string(input, partial)) : f_name
 
-  string("function $(f_name)(; $(Genie.Renderer.injectkwvars())) :: ParsedHTMLString \n",
+  string("function $(f_name)(; $(Genie.Renderer.injectkwvars())) \n",
           "
           [
           ",
