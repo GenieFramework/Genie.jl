@@ -187,8 +187,8 @@ end
 
 Outputs the channels.js file included with the Genie package
 """
-function channels(channel::String = Genie.config.webchannels_default_route) :: String
-  string(js_settings(channel), embedded(Genie.Assets.asset_file(cwd=normpath(joinpath(@__DIR__, "..")), type="js", file="channels")))
+function channels(channel::AbstractString = Genie.config.webchannels_default_route) :: String
+  string(js_settings(channel), embedded(Genie.Assets.asset_file(cwd=normpath(joinpath(@__DIR__, "..")), type = "js", file = "channels")))
 end
 
 
@@ -197,7 +197,7 @@ end
 
 Outputs the channels JavaScript content within `<script>...</script>` tags, for embedding into the page.
 """
-function channels_script(channel::String = Genie.config.webchannels_default_route) :: String
+function channels_script(channel::AbstractString = Genie.config.webchannels_default_route) :: String
 """
 <script>
 $(channels(channel))
@@ -206,7 +206,7 @@ $(channels(channel))
 end
 
 
-function channels_subscribe(channel::String = Genie.config.webchannels_default_route) :: Nothing
+function channels_subscribe(channel::AbstractString = Genie.config.webchannels_default_route) :: Nothing
   Router.channel("/$(channel)/$(Genie.config.webchannels_subscribe_channel)") do
     WebChannels.subscribe(Genie.Requests.wsclient(), channel)
 
@@ -230,8 +230,8 @@ end
 Provides full web channels support, setting up routes for loading support JS files, web sockets subscription and
 returning the `<script>` tag for including the linked JS file into the web page.
 """
-function channels_support(channel::String = Genie.config.webchannels_default_route) :: String
-  endpoint = Genie.Assets.asset_path(assets_config, :js, file=Genie.config.webchannels_js_file, path=channel, skip_ext = true)
+function channels_support(channel::AbstractString = Genie.config.webchannels_default_route) :: String
+  endpoint = Genie.Assets.asset_path(assets_config, :js, file = Genie.config.webchannels_js_file, skip_ext = true)
 
   if ! external_assets()
     Router.route(endpoint) do
@@ -316,7 +316,7 @@ Provides full web channels support, setting up routes for loading support JS fil
 returning the `<script>` tag for including the linked JS file into the web page.
 """
 function webthreads_support(channel::String = Genie.config.webthreads_default_route) :: String
-  endpoint = Genie.Assets.asset_path(assets_config, :js, file=Genie.config.webthreads_js_file, path=channel)
+  endpoint = Genie.Assets.asset_path(assets_config, :js, file = Genie.config.webthreads_js_file, skip_ext = true)
 
   if ! external_assets()
     Router.route(endpoint) do

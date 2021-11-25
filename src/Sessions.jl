@@ -18,7 +18,7 @@ end
 
 Session(id::String) = Session(id, Dict{Symbol,Any}())
 
-export Session
+export Session, session
 
 struct InvalidSessionIdException <: Exception
   msg::String
@@ -93,14 +93,12 @@ end
 
 Sets up the session functionality, if configured.
 """
-function init() :: Nothing
+function init()
   @eval Genie.config.session_storage === nothing && (Genie.config.session_storage = :File)
   @eval Genie.config.session_storage == :File && include(joinpath(@__DIR__, "session_adapters", "FileSession.jl"))
 
   push!(Genie.Router.pre_match_hooks, Genie.Sessions.start)
   push!(Genie.Router.pre_response_hooks, Genie.Sessions.persist)
-
-  nothing
 end
 
 
@@ -165,6 +163,9 @@ function set!(s::Session, key::Symbol, value::Any) :: Session
 
   s
 end
+function set!(key::Symbol, value::Any) :: Session
+  set!(session(), key, value)
+end
 
 
 """
@@ -174,6 +175,9 @@ Returns the value stored on the `Session` object `s` as `key`, wrapped in a `Uni
 """
 function get(s::Session, key::Symbol) :: Union{Nothing,Any}
   haskey(s.data, key) ? (s.data[key]) : nothing
+end
+function get(key::Symbol) :: Union{Nothing,Any}
+  get(session(), key)
 end
 
 
@@ -187,6 +191,9 @@ function get(s::Session, key::Symbol, default::T) :: T where T
   val = get(s, key)
 
   val === nothing ? default : val
+end
+function get(key::Symbol, default::T) :: T where T
+  get(session(), key, default)
 end
 
 
@@ -233,7 +240,7 @@ function load end
 
 Returns the `Session` object associated with the current HTTP request.
 """
-function session(params::Dict{Symbol,Any}) :: Sessions.Session
+function session(params::Dict{Symbol,Any} = Genie.Router.params()) :: Sessions.Session
   ( (! haskey(params, Genie.PARAMS_SESSION_KEY) || params[Genie.PARAMS_SESSION_KEY] === nothing) ) &&
       (params[Genie.PARAMS_SESSION_KEY] = Sessions.start(params[Genie.PARAMS_REQUEST_KEY], params[Genie.PARAMS_RESPONSE_KEY])[1])
 

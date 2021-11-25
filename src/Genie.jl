@@ -222,6 +222,7 @@ const startup = AppServer.startup
 const up = startup
 const down = AppServer.down
 const isrunning = AppServer.isrunning
+const down! = AppServer.down!
 
 
 ### PRIVATE ###

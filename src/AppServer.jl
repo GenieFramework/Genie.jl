@@ -187,6 +187,7 @@ end
     down(; webserver::Bool = true, websockets::Bool = true) :: ServersCollection
 
 Shuts down the servers optionally indicating which of the `webserver` and `websockets` servers to be stopped.
+It does not remove the servers from the `SERVERS` collection. Returns the collection.
 """
 function down(; webserver::Bool = true, websockets::Bool = true) :: Vector{ServersCollection}
   for i in 1:length(SERVERS)
@@ -202,6 +203,19 @@ function down(server::ServersCollection; webserver::Bool = true, websockets::Boo
   isnothing(websockets) || (websockets && (@async Base.throwto(server.websockets, InterruptException())))
 
   server
+end
+
+
+"""
+    function down!(; webserver::Bool = true, websockets::Bool = true) :: Vector{ServersCollection}
+
+Shuts down all the servers and empties the `SERVERS` collection. Returns the empty collection.
+"""
+function down!() :: Vector{ServersCollection}
+  down()
+  empty!(SERVERS)
+
+  SERVERS
 end
 
 

@@ -16,7 +16,6 @@ const MARKDOWN_FILE_EXT = [".md", ".jl.md"]
 
 const SUPPORTED_HTML_OUTPUT_FILE_FORMATS = [TEMPLATE_EXT]
 
-const HTMLString  = String
 const HTMLParser  = EzXML
 
 const NBSP_REPLACEMENT = ("&nbsp;"=>"!!nbsp;;")
@@ -45,7 +44,33 @@ const SVG_ELEMENTS = [:animate, :circle, :animateMotion, :animateTransform, :cli
 const EMBEDDED_JULIA_PLACEHOLDER = "~~~~~|~~~~~"
 
 
-export HTMLString, html, doc, doctype
+# ParsedHTMLStrings
+struct ParsedHTMLString <: AbstractString
+  data::String
+end
+
+function ParsedHTMLString(v::Vector{T}) where {T}
+  join(v)
+end
+
+ParsedHTMLString(args...) = ParsedHTMLString([args...])
+
+Base.string(s::ParsedHTMLString) = s.data
+Base.String(s::ParsedHTMLString) = string(s)
+
+Base.iterate(s::ParsedHTMLString) = iterate(s.data)
+Base.iterate(s::ParsedHTMLString, x::Int) = iterate(s.data, x)
+
+Base.convert(::Type{ParsedHTMLString}, v::Vector{T}) where {T} = ParsedHTMLString(v)
+
+import Base: (*)
+(*)(s::ParsedHTMLString, t::ParsedHTMLString) = string(s.data, t.data)
+
+# end ParsedHTMLStrings
+
+const HTMLString = String
+
+export HTMLString, html, doc, doctype, ParsedHTMLString
 export @yield, collection, view!, for_each
 export partial, template
 
@@ -68,16 +93,16 @@ Generates a HTML element in the form <...></...>
 function normal_element(f::Function, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
   normal_element(Base.invokelatest(f), string(elem), args, attrs...)
 end
-function normal_element(children::Union{String,Vector{String}}, elem::Any, args::Vector, attrs::Pair{Symbol,Any}) :: HTMLString
+function normal_element(children::Union{T,Vector{T}}, elem::Any, args::Vector, attrs::Pair{Symbol,Any})::HTMLString where {T<:AbstractString}
   normal_element(children, string(elem), args, Pair{Symbol,Any}[attrs])
 end
 function normal_element(children::Tuple, elem::Any, args::Vector, attrs::Pair{Symbol,Any}) :: HTMLString
   normal_element([children...], string(elem), args, Pair{Symbol,Any}[attrs])
 end
-function normal_element(children::Union{String,Vector{String}}, elem::Any, args::Vector, attrs...) :: HTMLString
+function normal_element(children::Union{T,Vector{T}}, elem::Any, args::Vector, attrs...)::HTMLString where {T<:AbstractString}
   normal_element(children, string(elem), args, Pair{Symbol,Any}[attrs...])
 end
-function normal_element(children::Union{String,Vector{String}}, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
+function normal_element(children::Union{T,Vector{T}}, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[])::HTMLString where {T<:AbstractString}
   content_args, args = contentargs(args...)
   children = string(join(children), content_args)
 
@@ -301,10 +326,10 @@ end
 """
 Outputs document's doctype.
 """
-function doc(html::String) :: HTMLString
+function doc(html::AbstractString) :: HTMLString
   string(doctype(), html)
 end
-function doc(doctype::Symbol, html::String) :: HTMLString
+function doc(doctype::Symbol, html::AbstractString) :: HTMLString
   string(doctype(doctype), html)
 end
 
@@ -445,8 +470,14 @@ function html(data::String; context::Module = @__MODULE__, status::Int = 200, he
   if (occursin(raw"$", data) || occursin("<%", data) || layout !== nothing || forceparse) && ! noparse
     Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context = context, layout = layout, vars...), status, headers) |> Genie.Renderer.respond
   else
-    Genie.Renderer.WebRenderable(body = data, status = status, headers = headers) |> Genie.Renderer.respond
+    html(ParsedHTMLString(data); context, status, headers, layout, vars...)
   end
+end
+
+
+function html(data::ParsedHTMLString; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
+              layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing, vars...) :: Genie.Renderer.HTTP.Response
+  Genie.Renderer.WebRenderable(body = data.data, status = status, headers = headers) |> Genie.Renderer.respond
 end
 
 
@@ -738,7 +769,7 @@ Converts an input file to Julia code
                   partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n", extension = TEMPLATE_EXT) :: String
   f_name = (f_name === nothing) ? Genie.Renderer.function_name(string(input, partial)) : f_name
 
-  string("function $(f_name)(; $(Genie.Renderer.injectkwvars())) \n",
+  string("function $(f_name)(; $(Genie.Renderer.injectkwvars())) :: ParsedHTMLString \n",
           "
           [
           ",
