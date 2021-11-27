@@ -66,8 +66,8 @@ end
 
 Removes whitespaces from `s`, whith the exception of the characters in `allowed`.
 """
-function filterwhitespace(s::String, allowed::Vector{Char} = Char[]) :: String
-  filter(x -> (x in allowed) || ! isspace(x), s)
+function filterwhitespace(s::S, allowed::Vector{Char} = Char[])::String where {S<:AbstractString}
+  filter(x -> (x in allowed) || ! isspace(x), string(s))
 end
 
 const fws = filterwhitespace
