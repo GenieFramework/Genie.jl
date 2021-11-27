@@ -6,6 +6,8 @@ module Configuration
 import Pkg
 import Dates
 
+using Random
+
 import VersionCheck
 
 function __init__()
@@ -184,7 +186,7 @@ Base.@kwdef mutable struct Settings
   path_bin::String                                    = "bin"
   path_src::String                                    = "src"
 
-  webchannels_default_route::String                   = "__"
+  webchannels_default_route::String                   = lowercase(randstring(8))
   webchannels_js_file::String                         = "channels.js"
   webchannels_subscribe_channel::String               = "subscribe"
   webchannels_unsubscribe_channel::String             = "unsubscribe"
@@ -192,7 +194,7 @@ Base.@kwdef mutable struct Settings
   webchannels_eval_command::String                    = ">eval:"
   webchannels_timeout::Int                            = 1_000
 
-  webthreads_default_route::String                    = "__"
+  webthreads_default_route::String                    = webchannels_default_route
   webthreads_js_file::String                          = "webthreads.js"
   webthreads_pull_route::String                       = "pull"
   webthreads_push_route::String                       = "push"
