@@ -361,7 +361,7 @@ end
 
 Persists compiled Julia view data to file and returns the path
 """
-function build_module(content::String, path::String, mod_name::String; output_path::Bool = true) :: String
+function build_module(content::S, path::S, mod_name::S; output_path::Bool = true)::String where {S<:AbstractString}
   module_path = joinpath(Genie.config.path_build, BUILD_NAME, mod_name)
 
   isdir(dirname(module_path)) || mkpath(dirname(module_path))

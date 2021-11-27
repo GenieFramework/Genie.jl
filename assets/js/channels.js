@@ -116,10 +116,14 @@ function parse_payload(json_data) {
   console.log(json_data);
 };
 
+function subscription_ready() {
+  console.log("Subscription ready");
+};
+
 function subscribe() {
   if (document.readyState === "complete" || document.readyState === "interactive") {
     Genie.WebChannels.sendMessageTo(window.Genie.Settings.webchannels_default_route, window.Genie.Settings.webchannels_subscribe_channel);
-    console.log("Subscription ready");
+    window.subscription_ready();
   } else {
     console.log("Queuing subscription");
     setTimeout(subscribe, Genie.Settings.webchannels_timeout);

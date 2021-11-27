@@ -3,7 +3,15 @@ module FileSession
 using Genie
 import Serialization, Logging
 
-const SESSIONS_PATH = "sessions"
+SESSIONS_PATH = "sessions"
+
+function sessions_path(path::String)
+  SESSIONS_PATH = normpath(path) |> abspath
+end
+function sessions_path()
+  SESSIONS_PATH
+end
+
 
 """
     write(session::Genie.Sessions.Session) :: Genie.Sessions.Session
@@ -11,14 +19,14 @@ const SESSIONS_PATH = "sessions"
 Persists the `Session` object to the file system, using the configured sessions folder and returns it.
 """
 function write(session::Genie.Sessions.Session) :: Genie.Sessions.Session
-  if ! isdir(joinpath(SESSIONS_PATH))
-    @warn "Sessions folder $(abspath(SESSIONS_PATH)) does not exist"
-    @info "Creating sessions folder at $(abspath(SESSIONS_PATH))"
+  if ! isdir(sessions_path())
+    @warn "Sessions folder $(sessions_path()) does not exist"
+    @info "Creating sessions folder at $(sessions_path())"
 
     try
-      mkpath(SESSIONS_PATH)
+      mkpath(sessions_path())
     catch ex
-      @error "Can't create session storage path $SESSIONS_PATH"
+      @error "Can't create session storage path $(sessions_path())"
       @error ex
     end
   end
@@ -92,6 +100,9 @@ function Genie.Sessions.persist(req::Genie.Sessions.HTTP.Request, res::Genie.Ses
   write(params[Genie.PARAMS_SESSION_KEY])
 
   req, res, params
+end
+function Genie.Sessions.persist(s::Genie.Sessions.Session) :: Genie.Sessions.Session
+  write(s)
 end
 
 

@@ -862,7 +862,12 @@ Populates `params` with default environment vars.
 function setup_base_params(req::HTTP.Request = HTTP.Request(), res::Union{HTTP.Response,Nothing} = req.response,
                             params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Dict{Symbol,Any}
   params[Genie.PARAMS_REQUEST_KEY]   = req
-  params[Genie.PARAMS_RESPONSE_KEY]  = res
+  params[Genie.PARAMS_RESPONSE_KEY]  =  if res === nothing
+                                          req.response = HTTP.Response()
+                                          req.response
+                                        else
+                                          res
+                                        end
   params[Genie.PARAMS_POST_KEY]      = Dict{Symbol,Any}()
   params[Genie.PARAMS_GET_KEY]       = Dict{Symbol,Any}()
 

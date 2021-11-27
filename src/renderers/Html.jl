@@ -50,8 +50,10 @@ struct ParsedHTMLString <: AbstractString
 end
 
 function ParsedHTMLString(v::Vector{T}) where {T}
-  join(v)
+  join(v) |> ParsedHTMLString
 end
+
+Base.string(v::Vector{ParsedHTMLString}) = join(v)
 
 ParsedHTMLString(args...) = ParsedHTMLString([args...])
 
@@ -68,9 +70,36 @@ import Base: (*)
 
 # end ParsedHTMLStrings
 
-const HTMLString = String
+# HTMLStrings
+struct HTMLString <: AbstractString
+  data::String
+end
 
-export HTMLString, html, doc, doctype, ParsedHTMLString
+function HTMLString(v::Vector{T}) where {T}
+  join(v) |> HTMLString
+end
+
+Base.string(v::Vector{HTMLString}) = join(v)
+Base.string(v::Vector{AbstractString}) = join(v)
+
+HTMLString(args...) = HTMLString([args...])
+
+Base.string(s::HTMLString) = s.data
+Base.String(s::HTMLString) = string(s)
+
+Base.iterate(s::HTMLString) = iterate(s.data)
+Base.iterate(s::HTMLString, x::Int) = iterate(s.data, x)
+
+Base.convert(::Type{HTMLString}, v::Vector{T}) where {T} = HTMLString(v)
+
+import Base: (*)
+(*)(s::HTMLString, t::HTMLString) = string(s.data, t.data)
+
+# end HTMLStrings
+
+# const HTMLString = String
+
+export HTMLString, html, doc, doctype, ParsedHTMLString, html!
 export @yield, collection, view!, for_each
 export partial, template
 
@@ -339,7 +368,7 @@ end
 
 Parses a view file, returning a rendering function. If necessary, the function is JIT-compiled, persisted and loaded into memory.
 """
-function parseview(data::String; partial = false, context::Module = @__MODULE__) :: Function
+function parseview(data::S; partial = false, context::Module = @__MODULE__)::Function where {S<:AbstractString}
   data_hash = hash(data)
   path = "Genie_" * string(data_hash)
 
@@ -365,7 +394,7 @@ end
 
 Renders the string as an HTML view.
 """
-function render(data::String; context::Module = @__MODULE__, layout::Union{String,Nothing} = nothing, vars...) :: Function
+function render(data::S; context::Module = @__MODULE__, layout::Union{String,Nothing} = nothing, vars...)::Function where {S<:AbstractString}
   Genie.Renderer.registervars(; context = context, vars...)
 
   if layout !== nothing
@@ -410,7 +439,8 @@ function parsehtml(input::String; partial::Bool = true) :: String
 end
 
 
-function Genie.Renderer.render(::Type{MIME"text/html"}, data::String; context::Module = @__MODULE__, layout::Union{String,Nothing} = nothing, vars...) :: Genie.Renderer.WebRenderable
+function Genie.Renderer.render(::Type{MIME"text/html"}, data::S; context::Module = @__MODULE__,
+                                layout::Union{String,Nothing} = nothing, vars...)::Genie.Renderer.WebRenderable where {S<:AbstractString}
   try
     render(data; context = context, layout = layout, vars...) |> Genie.Renderer.WebRenderable
   catch ex
@@ -464,20 +494,30 @@ Content-Type: text/html; charset=utf-8
 ```
 """
 function html(data::String; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
-                            layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing, forceparse::Bool = false, noparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
+              layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing, forceparse::Bool = false, noparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
   isa(layout, Genie.Renderer.FilePath) && (layout = read(layout, String))
 
   if (occursin(raw"$", data) || occursin("<%", data) || layout !== nothing || forceparse) && ! noparse
-    Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context = context, layout = layout, vars...), status, headers) |> Genie.Renderer.respond
+    html(HTMLString(data); context = context, status = status, headers = headers, layout = layout, vars...)
   else
     html(ParsedHTMLString(data); context, status, headers, layout, vars...)
   end
 end
 
+function html(data::HTMLString; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
+              layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing, forceparse::Bool = false, noparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
+  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context = context, layout = layout, vars...), status, headers) |> Genie.Renderer.respond
+end
 
-function html(data::ParsedHTMLString; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
-              layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing, vars...) :: Genie.Renderer.HTTP.Response
+function html(data::ParsedHTMLString; status::Int = 200,
+              headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
   Genie.Renderer.WebRenderable(body = data.data, status = status, headers = headers) |> Genie.Renderer.respond
+end
+
+function html!(data::Union{S,Vector{S}}; status::Int = 200,
+                headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
+                vars...)::Genie.Renderer.HTTP.Response where {S<:AbstractString}
+  html(ParsedHTMLString(join(data)); headers, vars...)
 end
 
 
@@ -755,7 +795,7 @@ end
 
 Converts string view data to Julia code
 """
-function string_to_julia(content::String; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n") :: String
+function string_to_julia(content::S; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n")::String where {S<:AbstractString}
   to_julia(content, parse_string, partial = partial, f_name = f_name, prepend = prepend)
 end
 
@@ -765,8 +805,9 @@ end
 
 Converts an input file to Julia code
 """
-  function to_julia(input::String, f::Union{Function,Nothing};
-                  partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend::String = "\n", extension = TEMPLATE_EXT) :: String
+  function to_julia(input::S, f::Union{Function,Nothing};
+                  partial = true, f_name::Union{Symbol,Nothing} = nothing,
+                  prepend::String = "\n", extension = TEMPLATE_EXT)::ParsedHTMLString where {S<:AbstractString}
   f_name = (f_name === nothing) ? Genie.Renderer.function_name(string(input, partial)) : f_name
 
   string("function $(f_name)(; $(Genie.Renderer.injectkwvars())) \n",
@@ -854,7 +895,7 @@ end
 
 Parses a HTML file into Julia code.
 """
-function parse_template(file_path::String; partial::Bool = true, extension = TEMPLATE_EXT) :: String
+function parse_template(file_path::S; partial::Bool = true, extension = TEMPLATE_EXT)::ParsedHTMLString where {S<:AbstractString}
   parse(read_template_file(file_path; extension = extension)::String; partial = partial)
 end
 
@@ -864,17 +905,17 @@ end
 
 Parses a HTML string into Julia code.
 """
-function parse_string(data::String; partial::Bool = true, extension = TEMPLATE_EXT) :: String
+function parse_string(data::S; partial::Bool = true, extension = TEMPLATE_EXT)::ParsedHTMLString where {S<:AbstractString}
   parse(parse_embed_tags(data), partial = partial)
 end
 
 
-function parse(input::String; partial::Bool = true) :: String
+function parse(input::S; partial::Bool = true)::ParsedHTMLString where {S<:AbstractString}
   parsehtml(input, partial = partial)
 end
 
 
-function parse_embed_tags(code::String) :: String
+function parse_embed_tags(code::S)::String where {S<:AbstractString}
   replace(
     replace(code, "<%"=>"""<script type="julia/eval">"""),
     "%>"=>"""</script>""")
@@ -928,25 +969,25 @@ Generates a Julia function representing a "normal" HTML element: that is an elem
 """
 function register_normal_element(elem::Union{Symbol,String}; context = @__MODULE__) :: Nothing
   Core.eval(context, """
-    function $elem(f::Function, args...; attrs...) :: HTMLString
+    function $elem(f::Function, args...; attrs...) :: ParsedHTMLString
       \"\"\"\$(normal_element(f, "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
 
   Core.eval(context, """
-    function $elem(children::Union{String,Vector{String}} = "", args...; attrs...) :: HTMLString
+    function $elem(children::Union{String,Vector{String}} = "", args...; attrs...) :: ParsedHTMLString
       \"\"\"\$(normal_element(children, "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
 
   Core.eval(context, """
-    function $elem(children::Any, args...; attrs...) :: HTMLString
+    function $elem(children::Any, args...; attrs...) :: ParsedHTMLString
       \"\"\"\$(normal_element(string(children), "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
 
   Core.eval(context, """
-    function $elem(children::Vector{Any}, args...; attrs...) :: HTMLString
+    function $elem(children::Vector{Any}, args...; attrs...) :: ParsedHTMLString
       \"\"\"\$(normal_element([string(c) for c in children], "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)

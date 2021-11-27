@@ -214,23 +214,24 @@ Here, a temporary one is generated for the current session if no other token is 
 `generate_if_missing` is true.
 """
 function secret_token(generate_if_missing::Bool = true; context::Union{Module,Nothing} = nothing)
-  if context != nothing
-    @warn "secret_token not context-dependent any more; the context argument is deprecated"
-  end
+  if isempty(SECRET_TOKEN[])
+    isfile(joinpath(Genie.config.path_config, Genie.SECRETS_FILE_NAME)) &&
+      @eval include(joinpath(Genie.config.path_config, Genie.SECRETS_FILE_NAME))
 
-  if isempty(SECRET_TOKEN[]) && generate_if_missing
-    @warn "
-          No secret token is defined through `Genie.secret_token!(\"token\")`. Such a token
-          is needed to hash and to encrypt/decrypt sensitive data in Genie, including cookie
-          and session data.
+    if isempty(SECRET_TOKEN[]) && generate_if_missing
+      @warn "
+            No secret token is defined through `Genie.secret_token!(\"token\")`. Such a token
+            is needed to hash and to encrypt/decrypt sensitive data in Genie, including cookie
+            and session data.
 
-          If your app relies on cookies or sessions make sure you generate a valid token,
-          otherwise the encrypted data will become unreadable between app restarts.
+            If your app relies on cookies or sessions make sure you generate a valid token,
+            otherwise the encrypted data will become unreadable between app restarts.
 
-          You can resolve this issue by generating a valid `config/secrets.jl` file with a
-          random token, calling `Genie.Generator.write_secrets_file()`.
-          "
-    secret_token!()
+            You can resolve this issue by generating a valid `config/secrets.jl` file with a
+            random token, calling `Genie.Generator.write_secrets_file()`.
+            "
+      secret_token!()
+    end
   end
 
   SECRET_TOKEN[]
