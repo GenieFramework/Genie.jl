@@ -186,7 +186,7 @@ Base.@kwdef mutable struct Settings
   path_bin::String                                    = "bin"
   path_src::String                                    = "src"
 
-  webchannels_default_route::String                   = lowercase(randstring(8))
+  webchannels_default_route::String                   = "____"
   webchannels_js_file::String                         = "channels.js"
   webchannels_subscribe_channel::String               = "subscribe"
   webchannels_unsubscribe_channel::String             = "unsubscribe"
