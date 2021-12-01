@@ -18,7 +18,7 @@ module Docker
 
 import Genie, Genie.FileTemplates
 
-const DOCKER = @static Sys.islinux() ? `sudo docker` : `docker`
+DOCKER(; sudo::Bool = Sys.islinux()) = `$(sudo ? "sudo " : "")docker` : `docker`
 
 """
     dockerfile(path::String = "."; user::String = "genie", env::String = "dev",
@@ -37,7 +37,7 @@ Generates a `Dockerfile` optimised for containerizing Genie apps.
 - `force::Bool`: if the file already exists, when `force` is `true`, it will be overwritten
 """
 function dockerfile(path::String = "."; filename::String = "Dockerfile", user::String = "genie", env::String = "dev",
-                    host = "0.0.0.0", port::Int = 8000, dockerport::Int = 80, force::Bool = false,
+                    host = "0.0.0.0", port::Int = 8000, dockerport::Int = 80, force::Bool = false, platform::String = "linux/amd64",
                     websockets_port::Int = port, websockets_dockerport::Int = dockerport, earlybind::Bool = true)
   filename = normpath(joinpath(path, filename))
   isfile(filename) && force && rm(filename)
@@ -45,7 +45,7 @@ function dockerfile(path::String = "."; filename::String = "Dockerfile", user::S
 
   open(filename, "w") do io
     write(io, FileTemplates.dockerfile(user = user, env = env, filename = filename, host = host,
-                                        port = port, dockerport = dockerport,
+                                        port = port, dockerport = dockerport, platform = platform,
                                         websockets_port = websockets_port, websockets_dockerport = websockets_dockerport))
   end
 
@@ -58,11 +58,11 @@ end
 
 Builds the Docker image based on the `Dockerfile`
 """
-function build(path::String = "."; appname::String = "genie", nocache::Bool = true)
+function build(path::String = "."; appname::String = "genie", nocache::Bool = true, sudo::Bool = Sys.islinux())
   if nocache
-    `$DOCKER build --no-cache -t "$appname" $path`
+    `$(DOCKER(sudo = sudo)) build --no-cache -t "$appname" $path`
   else
-    `$DOCKER build -t "$appname" $path`
+    `$(DOCKER(sudo = sudo)) build -t "$appname" $path`
   end |> Genie.Deploy.run
 
   "Docker container successfully built" |> println
@@ -88,7 +88,7 @@ Runs the Docker container named `containername`, binding `hostport` and `contain
 """
 function run(; containername::String = "genieapp", hostport::Int = 80, containerport::Int = 8000, appdir::String = "/home/genie/app",
                 mountapp::Bool = false, image::String = "genie", command::String = "", rm::Bool = true, it::Bool = true,
-                websockets_hostport::Int = hostport, websockets_containerport::Int = containerport)
+                websockets_hostport::Int = hostport, websockets_containerport::Int = containerport, sudo::Bool = System.islinux())
   options = []
 
   it && push!(options, "-it")
@@ -114,10 +114,10 @@ function run(; containername::String = "genieapp", hostport::Int = 80, container
 
   isempty(command) || push!(options, command)
 
-  docker_command = replace(string(DOCKER), "`" => "")
+  docker_command = replace(string(DOCKER(sudo = sudo)), "`" => "")
   "Starting docker container with `$docker_command run $(join(options, " "))`" |> println
 
-  `$DOCKER run $options` |> Genie.Deploy.run
+  `$(DOCKER(sudo = sudo)) run $options` |> Genie.Deploy.run
 end
 
 end # end module Docker

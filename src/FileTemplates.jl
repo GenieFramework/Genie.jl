@@ -95,14 +95,14 @@ Generates dockerfile for the Genie app.
 """
 function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::Bool = false, env::String = "dev",
                       filename::String = "Dockerfile", port::Int = Genie.config.server_port, dockerport::Int = 80,
-                      host::String = "0.0.0.0", websockets_port::Int = port,
+                      host::String = "0.0.0.0", websockets_port::Int = port, platform::String = "",
                       websockets_dockerport::Int = dockerport, earlybind::Bool = true)
   appdir = "/home/$user/app"
 
   string(
   """
   # pull latest julia image
-  FROM julia:latest
+  FROM $(isempty(platform) ? "" : "--platform=$platform") julia:latest
 
   # create dedicated user
   RUN useradd --create-home --shell /bin/bash $user

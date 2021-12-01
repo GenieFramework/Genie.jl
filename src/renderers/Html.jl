@@ -347,7 +347,7 @@ end
 """
 Outputs document's doctype.
 """
-@inline function doctype(doctype::Symbol = :html) :: HTMLString
+@inline function doctype(doctype::Symbol = :html) :: ParsedHTMLString
   string("<!DOCTYPE $doctype>", Genie.config.format_html_output ? "\n" : "")
 end
 
@@ -355,10 +355,10 @@ end
 """
 Outputs document's doctype.
 """
-function doc(html::AbstractString) :: HTMLString
+function doc(html::AbstractString) :: ParsedHTMLString
   string(doctype(), html)
 end
-function doc(doctype::Symbol, html::AbstractString) :: HTMLString
+function doc(doctype::Symbol, html::AbstractString) :: ParsedHTMLString
   string(doctype(doctype), html)
 end
 
