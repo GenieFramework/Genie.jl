@@ -18,7 +18,7 @@ module Docker
 
 import Genie, Genie.FileTemplates
 
-DOCKER(; sudo::Bool = Sys.islinux()) = `$(sudo ? "sudo " : "")docker` : `docker`
+DOCKER(; sudo::Bool = Sys.islinux()) = `$(sudo ? "sudo " : "")docker`
 
 """
     dockerfile(path::String = "."; user::String = "genie", env::String = "dev",
