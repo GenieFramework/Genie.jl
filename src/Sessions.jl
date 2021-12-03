@@ -3,7 +3,7 @@ module Sessions
 import SHA, HTTP, Dates, Logging
 import Genie
 
-const HTTP = HTTP
+# const HTTP = HTTP
 
 
 """

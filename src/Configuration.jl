@@ -218,7 +218,7 @@ Base.@kwdef mutable struct Settings
 
   features_peerinfo::Bool                             = false
 
-  format_julia_builds::Bool                           = true
+  format_julia_builds::Bool                           = false
   format_html_output::Bool                            = true
   format_html_indentation_string::String              = "  "
 end
