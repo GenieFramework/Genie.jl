@@ -88,7 +88,7 @@ Runs the Docker container named `containername`, binding `hostport` and `contain
 """
 function run(; containername::String = "genieapp", hostport::Int = 80, containerport::Int = 8000, appdir::String = "/home/genie/app",
                 mountapp::Bool = false, image::String = "genie", command::String = "", rm::Bool = true, it::Bool = true,
-                websockets_hostport::Int = hostport, websockets_containerport::Int = containerport, sudo::Bool = System.islinux())
+                websockets_hostport::Int = hostport, websockets_containerport::Int = containerport, sudo::Bool = Sys.islinux())
   options = []
 
   it && push!(options, "-it")
