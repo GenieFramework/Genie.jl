@@ -762,7 +762,8 @@ function parsehtml(elem::HTMLParser.Node; partial::Bool = true, indent = 0) :: S
 
       if ! isempty(inner)
         endswith(inner, "\n\n") && (inner = inner[1:end-2])
-        print(io, inner, " ; ")
+        print(io, inner)
+        invalid_tag || print(io, " ; ")
       end
 
       invalid_tag ? print(io, "") : print(io, " ]end\n")
