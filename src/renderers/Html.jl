@@ -63,6 +63,8 @@ Base.String(s::ParsedHTMLString) = string(s)
 Base.iterate(s::ParsedHTMLString) = iterate(s.data)
 Base.iterate(s::ParsedHTMLString, x::Int) = iterate(s.data, x)
 
+Base.ncodeunits(s::ParsedHTMLString) = Base.ncodeunits(s.data)
+
 Base.convert(::Type{ParsedHTMLString}, v::Vector{T}) where {T} = ParsedHTMLString(v)
 
 import Base: (*)
@@ -89,6 +91,8 @@ Base.String(s::HTMLString) = string(s)
 
 Base.iterate(s::HTMLString) = iterate(s.data)
 Base.iterate(s::HTMLString, x::Int) = iterate(s.data, x)
+
+Base.ncodeunits(s::HTMLString) = Base.ncodeunits(s.data)
 
 Base.convert(::Type{HTMLString}, v::Vector{T}) where {T} = HTMLString(v)
 
