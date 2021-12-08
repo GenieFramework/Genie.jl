@@ -4,4 +4,4 @@ Genie = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
 
 [compat]
 Documenter = "0.27"
-Genie = "2, 3, 4"
+Genie = "4"
