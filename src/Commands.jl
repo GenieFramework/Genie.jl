@@ -22,7 +22,7 @@ function execute(config::Genie.Configuration.Settings; server::Union{Sockets.TCP
   Genie.config.websockets_port = haskey(ENV, "WSPORT") ? parse(Int, ENV["WSPORT"]) : parse(Int, parsed_args["w"])
   Genie.config.server_host = parsed_args["l"]
 
-  if called_command(parsed_args, "s") || (haskey(ENV["STARTSERVER"]) && parse(Bool, ENV["STARTSERVER"]))
+  if called_command(parsed_args, "s") || (haskey(ENV, "STARTSERVER") && parse(Bool, ENV["STARTSERVER"]))
     Genie.config.run_as_server = true
     Base.invokelatest(Genie.up, Genie.config.server_port, Genie.config.server_host; server = server)
 
