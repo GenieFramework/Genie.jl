@@ -887,7 +887,7 @@ Reads `file_path` template from disk.
 function read_template_file(file_path::String; extension = TEMPLATE_EXT) :: String
   io = IOBuffer()
 
-  endswith(file_path, extension) || (file_path *= extension)
+  # endswith(file_path, extension) || (file_path *= extension)
 
   # extension == TEMPLATE_EXT && print(io, """
   # \"\"\"
