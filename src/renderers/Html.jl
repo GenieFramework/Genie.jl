@@ -64,6 +64,8 @@ Base.iterate(s::ParsedHTMLString) = iterate(s.data)
 Base.iterate(s::ParsedHTMLString, x::Int) = iterate(s.data, x)
 
 Base.ncodeunits(s::ParsedHTMLString) = Base.ncodeunits(s.data)
+Base.codeunit(s::ParsedHTMLString) = Base.codeunit(s.data)
+Base.isvalid(s::ParsedHTMLString, i::Int) = Base.isvalid(s.data, i)
 
 Base.convert(::Type{ParsedHTMLString}, v::Vector{T}) where {T} = ParsedHTMLString(v)
 
@@ -93,6 +95,8 @@ Base.iterate(s::HTMLString) = iterate(s.data)
 Base.iterate(s::HTMLString, x::Int) = iterate(s.data, x)
 
 Base.ncodeunits(s::HTMLString) = Base.ncodeunits(s.data)
+Base.codeunit(s::HTMLString) = Base.codeunit(s.data)
+Base.isvalid(s::HTMLString, i::Int) = Base.isvalid(s.data, i)
 
 Base.convert(::Type{HTMLString}, v::Vector{T}) where {T} = HTMLString(v)
 
@@ -330,7 +334,7 @@ function get_template(path::String; partial::Bool = true, context::Module = @__M
   path, extension = Genie.Renderer.view_file_info(path, SUPPORTED_HTML_OUTPUT_FILE_FORMATS)
 
   f_name = Genie.Renderer.function_name(string(path, partial)) |> Symbol
-  mod_name = Genie.Renderer.m_name(string(path, partial)) * ".jl"
+  mod_name = Genie.Renderer.m_name(string(path, partial)) * HTML_FILE_EXT
   f_path = joinpath(Genie.config.path_build, Genie.Renderer.BUILD_NAME, mod_name)
   f_stale = Genie.Renderer.build_is_stale(path, f_path)
 
@@ -339,7 +343,9 @@ function get_template(path::String; partial::Bool = true, context::Module = @__M
       path = MdHtml.md_to_html(path, context = context)
     end
 
-    f_stale && Genie.Renderer.build_module(html_to_julia(path, partial = partial, extension = extension), path, mod_name)
+    parsingfunction = (extension == HTML_FILE_EXT ? julia_to_julia : html_to_julia)
+
+    f_stale && Genie.Renderer.build_module(parsingfunction(path, partial = partial, extension = extension), path, mod_name)
 
     return Base.include(context, joinpath(Genie.config.path_build, Genie.Renderer.BUILD_NAME, mod_name))
   end
@@ -377,7 +383,7 @@ function parseview(data::S; partial = false, context::Module = @__MODULE__)::Fun
   path = "Genie_" * string(data_hash)
 
   func_name = Genie.Renderer.function_name(string(data_hash, partial)) |> Symbol
-  mod_name = Genie.Renderer.m_name(string(path, partial)) * ".jl"
+  mod_name = Genie.Renderer.m_name(string(path, partial)) * HTML_FILE_EXT
   f_path = joinpath(Genie.config.path_build, Genie.Renderer.BUILD_NAME, mod_name)
   f_stale = Genie.Renderer.build_is_stale(f_path, f_path)
 
@@ -805,6 +811,11 @@ function string_to_julia(content::S; partial = true, f_name::Union{Symbol,Nothin
 end
 
 
+function julia_to_julia(file_path::String; partial = true, extension = HTML_FILE_EXT) :: String
+  to_julia(read_template_file(file_path; extension = extension), nothing; partial = partial, extension = extension)
+end
+
+
 """
     to_julia(input::String, f::Function; partial = true, f_name::Union{Symbol,Nothing} = nothing, prepend = "") :: String
 
@@ -876,9 +887,11 @@ Reads `file_path` template from disk.
 function read_template_file(file_path::String; extension = TEMPLATE_EXT) :: String
   io = IOBuffer()
 
-  extension == HTML_FILE_EXT && print(io, """
-  \"\"\"
-  """)
+  endswith(file_path, extension) || (file_path *= extension)
+
+  # extension == TEMPLATE_EXT && print(io, """
+  # \"\"\"
+  # """)
 
   open(file_path) do f
     for line in eachline(f)
@@ -887,9 +900,9 @@ function read_template_file(file_path::String; extension = TEMPLATE_EXT) :: Stri
     end
   end
 
-  extension == HTML_FILE_EXT && print(io, """
-  \"\"\"
-  """)
+  # extension == TEMPLATE_EXT && print(io, """
+  # \"\"\"
+  # """)
 
   String(take!(io))
 end

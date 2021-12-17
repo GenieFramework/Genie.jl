@@ -93,7 +93,8 @@ Genie.WebChannels.messageHandlers.push(function(event){
       window.parse_payload(event.data);
     }
   } catch (ex) {
-    console.log(ex);
+    console.error(ex);
+    console.log(event.data);
   }
 });
 
