@@ -159,10 +159,9 @@ function normal_element(children::Union{T,Vector{T}}, elem::Any, args::Vector = 
 
   string(
     htmlsourceindent, # indentation opening tag
-    "<", elem, (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), ">", (Genie.config.format_html_output ? "\n" : ""), # opening tag
-    prepare_template(children), (Genie.config.format_html_output ? "\n" : ""), # content/children
-    htmlsourceindent, # indentation closing tag
-    "</", elem, ">", (Genie.config.format_html_output ? "\n" : "") # closing tag
+    "<", elem, (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), ">", # opening tag
+    prepare_template(children), (endswith(children, '>') ? htmlsourceindent : ""), # content/children
+    "</", elem, ">" # closing tag
   )
 end
 function normal_element(elem::Any, attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
@@ -208,7 +207,11 @@ function extractindent!(attrs) :: String
     0
   end
 
-  repeat(Genie.config.format_html_indentation_string, indent)
+  if indent > 0
+    '\n' * repeat(Genie.config.format_html_indentation_string, indent)
+  else
+    ""
+  end
 end
 
 
@@ -320,7 +323,7 @@ function void_element(elem::String, args = [], attrs::Vector{Pair{Symbol,Any}} =
   attribs = rstrip(attributes(attrs))
   string(
     htmlsourceindent, # tag indentation
-    "<", normalize_element(elem), (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), Genie.config.html_parser_close_tag, ">", (Genie.config.format_html_output ? "\n" : "")
+    "<", normalize_element(elem), (isempty(attribs) ? "" : " $attribs"), (isempty(args) ? "" : " $(join(args, " "))"), Genie.config.html_parser_close_tag, ">"
   )
 end
 
@@ -358,7 +361,7 @@ end
 Outputs document's doctype.
 """
 @inline function doctype(doctype::Symbol = :html) :: ParsedHTMLString
-  string("<!DOCTYPE $doctype>", Genie.config.format_html_output ? "\n" : "")
+  string("<!DOCTYPE $doctype>")
 end
 
 
