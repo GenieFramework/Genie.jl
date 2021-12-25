@@ -71,7 +71,7 @@ Sets `value` under the `key` label on the `Cookie`.
 - `attributes::Dict`: additional cookie attributes, such as `Path` or `HttpOnly`
 - `encrypted::Bool`: if `true` the value is stored encoded
 """
-function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attributes::Dict{String,Any} = Dict(); encrypted::Bool = true) :: HTTP.Response
+function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attributes::Dict{String,<:Any} = Dict(); encrypted::Bool = true) :: HTTP.Response
   normalized_attrs = Dict{Symbol,Any}()
   for (k,v) in attributes
     normalized_attrs[Symbol(lowercase(string(k)))] = v
