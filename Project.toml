@@ -4,6 +4,7 @@ authors = ["Adrian Salceanu <e@essenciary.com>"]
 version = "4.7.1"
 
 [deps]
+AMQPClient = "79c8b4cd-a41a-55fa-907c-fab5288e1383"
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"

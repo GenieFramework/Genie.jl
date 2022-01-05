@@ -7,6 +7,7 @@ import Pkg
 import Dates
 
 using Random
+using AMQPClient
 
 import VersionCheck
 
@@ -221,6 +222,12 @@ Base.@kwdef mutable struct Settings
   format_julia_builds::Bool                           = false
   format_html_output::Bool                            = true
   format_html_indentation_string::String              = "  "
+
+  amqp_port::Int                                      = (haskey(ENV, "AMQP_PORT") ? parse(Int, ENV["AMQP_PORT"]) : 5672)
+  amqp_username::String                               = haskey(ENV, "AMQP_USERNAME") ? ENV["AMQP_USERNAME"] : "guest"
+  amqp_password::String                               = haskey(ENV, "AMQP_PASSWORD") ? ENV["AMQP_PASSWORD"] : "guest"
+  amqp_virtualhost::String                            = haskey(ENV, "AMQP_VIRTUALHOST") ? ENV["AMQP_VIRTUALHOST"] : "/"
+  amqp_host::String                                   = haskey(ENV, "AMQP_HOST") ? ENV["AMQP_HOST"] : "localhost"
 end
 
 end
