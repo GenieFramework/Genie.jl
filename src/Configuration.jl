@@ -134,6 +134,7 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `html_parser_close_tag::String`: default " /". Can be changed to an empty string "" so the single tags would not be closed.
 - `ssl_enabled::Bool`: default false. Server runs over SSL/HTTPS in development.
 - `ssl_config::MbedTLS.SSLConfig`: default `nothing`. If not `nothing` and `ssl_enabled`, it will use the config to start the server over HTTPS.
+- `webchannels_keepalive_frequency::Int`: default `30000`. Frequency in miliseconds to send keepalive messages to webchannel/websocket to keep the connection alive. Set to `0` to disable keepalive messages.
 """
 Base.@kwdef mutable struct Settings
   server_port::Int                                    = (haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : 8000) # default port for binding the web server
@@ -193,6 +194,7 @@ Base.@kwdef mutable struct Settings
   webchannels_autosubscribe::Bool                     = true
   webchannels_eval_command::String                    = ">eval:"
   webchannels_timeout::Int                            = 1_000
+  webchannels_keepalive_frequency::Int                = 30_000 # 30 seconds
 
   webthreads_default_route::String                    = webchannels_default_route
   webthreads_js_file::String                          = "webthreads.js"

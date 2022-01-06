@@ -1,11 +1,11 @@
+/*
+** channels.js v1.1 // 6th January 2022
+** Author: Adrian Salceanu // @essenciary
+** GenieFramework.com // Genie.jl
+*/
 Genie.WebChannels = {};
-Genie.WebChannels.port = undefined;
-Genie.WebChannels.socket = undefined;
 
 Genie.WebChannels.load_channels = function() {
-  Genie.WebChannels.port = Genie.Settings.websockets_port == Genie.Settings.server_port ? window.location.port : Genie.Settings.websockets_port;
-  Genie.WebChannels.socket = new WebSocket(window.location.protocol.replace("http", "ws") + '//' + window.location.hostname + ':' + Genie.WebChannels.port);
-
   Genie.WebChannels.sendMessageTo = sendMessageTo;
   Genie.WebChannels.messageHandlers = [];
   Genie.WebChannels.errorHandlers = [];
@@ -61,10 +61,21 @@ Genie.WebChannels.load_channels = function() {
   }
 };
 
+function newSocketConnection() {
+  try {
+    return new WebSocket(window.location.protocol.replace("http", "ws") + '//' + window.location.hostname + ':' + Genie.WebChannels.port);
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+Genie.WebChannels.port = Genie.Settings.websockets_port == Genie.Settings.server_port ? window.location.port : Genie.Settings.websockets_port;
+Genie.WebChannels.socket = newSocketConnection();
+
 window.addEventListener('beforeunload', function (event) {
   console.log("Preparing to unload");
 
-  if ( Genie.Settings.webchannels_autosubscribe ) {
+  if (Genie.Settings.webchannels_autosubscribe) {
     unsubscribe();
   }
 
@@ -106,8 +117,16 @@ Genie.WebChannels.closeHandlers.push(function(event) {
   console.log("Server closed WebSocket connection");
 });
 
+Genie.WebChannels.closeHandlers.push(function(event) {
+  if (Genie.Settings.webchannels_autosubscribe) {
+    console.log("Attempting to reconnect");
+    Genie.WebChannels.socket = newSocketConnection();
+    subscribe();
+  }
+});
+
 Genie.WebChannels.openHandlers.push(function(event) {
-  if ( Genie.Settings.webchannels_autosubscribe ) {
+  if (Genie.Settings.webchannels_autosubscribe) {
     subscribe();
   }
 });

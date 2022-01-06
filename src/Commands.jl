@@ -71,9 +71,6 @@ function parse_commandline_args(config::Genie.Configuration.Settings) :: Dict{St
     help = "Host IP to listen on"
     default = "$(config.server_host)"
 
-    "si"
-    help = "starts HTTP server and enters REPL"
-
     "-r"
     help = "runs Genie.Toolbox task"
 
