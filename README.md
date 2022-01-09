@@ -36,17 +36,19 @@
   <p>
     <a href="https://www.genieframework.com/">
       <img
-        src="docs/content/img/genie.png"
+        src="docs/content/img/genie.gif"
         alt="Screenshot"
         width="100%"
       />
     </a>
   </p>
 </div>
-
+<p style="font-family:verdana;font-size:80%;margin-bottom:4%" align="center">
+<u>Julia data dashboards powered by Genie</u>
+</p>
 
 <p align="center">
-  Genie is a full-stack MVC web framework that provides a streamlined and efficient workflow for developing modern web applications. It builds on Julia's strengths (high-level, high-performance, dynamic, JIT compiled), exposing a rich API and a powerful toolset for productive web development.
+  Genie is a full-stack web framework that provides a streamlined and efficient workflow for developing modern web applications. It builds on Julia's strengths (high-level, high-performance, dynamic, JIT compiled), exposing a rich API and a powerful toolset for productive web development.
 </p>
 
 #### **Need Help!**
