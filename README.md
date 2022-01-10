@@ -185,22 +185,7 @@ function search(user_names, regions, startdate, enddate)
 end
 ```
 
-📝 More Genie features like: 
-* `Files Uploads` 
-
-```julia
-route("/", method = POST) do
-  if infilespayload(:yourfile)
-    write(filespayload(:yourfile))
-
-    stat(filename(filespayload(:yourfile)))
-  else
-    "No file uploaded"
-  end
-end
-```
-
-* `Database Migrations`
+- `Database Migrations`
 ```julia
 module CreateTableRecord
 
@@ -231,7 +216,24 @@ end
 end
 ```
 
-* `Model Validations` | `Logging System` | `Caching` | `Cookies and Sessions` | `Built in Docker and Heroku Integrations`
+* `Model Validations`
+
+📝 More Genie features like: 
+* `Files Uploads` 
+
+```julia
+route("/", method = POST) do
+  if infilespayload(:yourfile)
+    write(filespayload(:yourfile))
+
+    stat(filename(filespayload(:yourfile)))
+  else
+    "No file uploaded"
+  end
+end
+```
+
+* `Logging System` | `Caching` | `Cookies and Sessions` | `Built in Docker and Heroku Integrations` | `Genie Deploy`
 * To explore more features check [Genie Documentation](https://www.genieframework.com/docs/tutorials/Overview.html) 🏃‍♂️🏃‍♀️
 
 ## **Made With Genie**
