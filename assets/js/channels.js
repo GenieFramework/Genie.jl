@@ -63,9 +63,9 @@ Genie.WebChannels.load_channels = function() {
 
 function newSocketConnection() {
   try {
-    return new WebSocket(window.location.protocol.replace("http", "ws") + '//' + window.location.hostname + ':' + Genie.WebChannels.port);
+    return new WebSocket(window.location.protocol.replace('http', 'ws') + '//' + window.location.hostname + ':' + Genie.WebChannels.port);
   } catch (e) {
-    console.log(e);
+    console.error(e);
   }
 }
 
@@ -73,7 +73,9 @@ Genie.WebChannels.port = Genie.Settings.websockets_port == Genie.Settings.server
 Genie.WebChannels.socket = newSocketConnection();
 
 window.addEventListener('beforeunload', function (event) {
-  console.log("Preparing to unload");
+  if (Genie.Settings.env == 'dev') {
+    console.info('Preparing to unload');
+  }
 
   if (Genie.Settings.webchannels_autosubscribe) {
     unsubscribe();
@@ -92,7 +94,7 @@ Genie.WebChannels.messageHandlers.push(function(event){
 
     if (event.data.startsWith('{') && event.data.endsWith('}')) {
       window.parse_payload(JSON.parse(event.data, function (key, value) {
-        if (value == "__undefined__") {
+        if (value == '__undefined__') {
           return undefined;
         } else {
           return value;
@@ -105,21 +107,27 @@ Genie.WebChannels.messageHandlers.push(function(event){
     }
   } catch (ex) {
     console.error(ex);
-    console.log(event.data);
+    console.error(event.data);
   }
 });
 
 Genie.WebChannels.errorHandlers.push(function(event) {
-  console.log(event.data);
+  if (Genie.Settings.env == 'dev') {
+    console.error(event.data);
+  }
 });
 
 Genie.WebChannels.closeHandlers.push(function(event) {
-  console.log("Server closed WebSocket connection");
+  if (Genie.Settings.env == 'dev') {
+    console.warn('Server closed WebSocket connection');
+  }
 });
 
 Genie.WebChannels.closeHandlers.push(function(event) {
   if (Genie.Settings.webchannels_autosubscribe) {
-    console.log("Attempting to reconnect");
+    if (Genie.Settings.env == 'dev') {
+      console.info('Attempting to reconnect');
+    }
     Genie.WebChannels.socket = newSocketConnection();
     subscribe();
   }
@@ -132,25 +140,33 @@ Genie.WebChannels.openHandlers.push(function(event) {
 });
 
 function parse_payload(json_data) {
-  console.log("Overwrite window.parse_payload to handle messages from the server")
-  console.log(json_data);
+  if (Genie.Settings.env == 'dev') {
+    console.info('Overwrite window.parse_payload to handle messages from the server');
+    console.info(json_data);
+  }
 };
 
 function subscription_ready() {
-  console.log("Subscription ready");
+  if (Genie.Settings.env == 'dev') {
+    console.info('Subscription ready');
+  }
 };
 
 function subscribe() {
-  if (document.readyState === "complete" || document.readyState === "interactive") {
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
     Genie.WebChannels.sendMessageTo(window.Genie.Settings.webchannels_default_route, window.Genie.Settings.webchannels_subscribe_channel);
     window.subscription_ready();
   } else {
-    console.log("Queuing subscription");
+    if (Genie.Settings.env == 'dev') {
+      console.warn('Queuing subscription');
+    }
     setTimeout(subscribe, Genie.Settings.webchannels_timeout);
   }
 };
 
 function unsubscribe() {
   Genie.WebChannels.sendMessageTo(window.Genie.Settings.webchannels_default_route, window.Genie.Settings.webchannels_unsubscribe_channel);
-  console.log("Unsubscription completed");
+  if (Genie.Settings.env == 'dev') {
+    console.info('Unsubscription completed');
+  }
 };

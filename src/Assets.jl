@@ -157,6 +157,7 @@ function js_settings(channel::String = Genie.config.webchannels_default_route) :
     :webthreads_push_route            => Genie.config.webthreads_push_route,
 
     :base_path                        => Genie.config.base_path,
+    :env                              => Genie.env(),
   ))
 
   """

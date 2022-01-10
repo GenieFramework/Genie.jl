@@ -18,7 +18,7 @@ Processes an `application/json` `POST` request.
 If it fails to successfully parse the `JSON` data it returns `nothing`. The original payload can still be accessed invoking `rawpayload()`
 """
 function jsonpayload()
-  Router.params(Genie.PARAMS_JSON_PAYLOAD)
+  haskey(Router.params(), Genie.PARAMS_JSON_PAYLOAD) ? Router.params(Genie.PARAMS_JSON_PAYLOAD) : nothing
 end
 
 
@@ -38,7 +38,7 @@ end
 Returns the raw `POST` payload as a `String`.
 """
 function rawpayload() :: String
-  Router.params(Genie.PARAMS_RAW_PAYLOAD)
+  haskey(Router.params(), Genie.PARAMS_RAW_PAYLOAD) ? Router.params(Genie.PARAMS_RAW_PAYLOAD) : ""
 end
 
 
@@ -48,7 +48,7 @@ end
 Collection of form uploaded files.
 """
 function filespayload() :: Dict{String,Input.HttpFile}
-  Router.params(Genie.PARAMS_FILES)
+  haskey(Router.params(), Genie.PARAMS_FILES) ? Router.params(Genie.PARAMS_FILES) : Dict{String,Input.HttpFile}()
 end
 
 
@@ -109,7 +109,7 @@ end
 A dict representing the POST variables payload of the request (corresponding to a `form-data` request)
 """
 function postpayload() :: Dict{Symbol,Any}
-  Router.params(Genie.PARAMS_POST_KEY)
+  haskey(Router.params(), Genie.PARAMS_POST_KEY) ? Router.params(Genie.PARAMS_POST_KEY) : Dict{Symbol,Any}()
 end
 
 
@@ -139,7 +139,7 @@ end
 A dict representing the GET/query variables payload of the request (the part correspoding to `?foo=bar&baz=moo`)
 """
 function getpayload() :: Dict{Symbol,Any}
-  Router.params(Genie.PARAMS_GET_KEY)
+  haskey(Router.params(), Genie.PARAMS_GET_KEY) ? Router.params(Genie.PARAMS_GET_KEY) : Dict{Symbol,Any}()
 end
 
 
@@ -166,10 +166,11 @@ end
 """
     request() :: HTTP.Request
 
-Returns the raw HTTP.Request object associated with the request.
+Returns the raw HTTP.Request object associated with the request. If no request is available (not within a
+request/response cycle) returns `nothing`.
 """
-function request() :: HTTP.Request
-  Router.params(Genie.PARAMS_REQUEST_KEY)
+function request() :: Union{HTTP.Request,Nothing}
+  haskey(Router.params(), Genie.PARAMS_REQUEST_KEY) ? Router.params(Genie.PARAMS_REQUEST_KEY) : nothing
 end
 
 const getrequest = request
@@ -208,30 +209,30 @@ end
 """
     matchedroute() :: Route
 
-Returns the `Route` object which was matched for the current request.
+Returns the `Route` object which was matched for the current request or `noting` if no route is available.
 """
-function matchedroute() :: Genie.Router.Route
-  Router.params(Genie.PARAMS_ROUTE_KEY)
+function matchedroute() :: Union{Genie.Router.Route,Nothing}
+  haskey(Router.params(), Genie.PARAMS_ROUTE_KEY) ? Router.params(Genie.PARAMS_ROUTE_KEY) : nothing
 end
 
 
 """
     matchedchannel() :: Channel
 
-Returns the `Channel` object which was matched for the current request.
+Returns the `Channel` object which was matched for the current request or `nothing` if no channel is available.
 """
-function matchedchannel() :: Genie.Router.Channel
-  Router.params(Genie.PARAMS_CHANNELS_KEY)
+function matchedchannel() :: Union{Genie.Router.Channel,Nothing}
+  haskey(Router.params(), Genie.PARAMS_CHANNELS_KEY) ? Router.params(Genie.PARAMS_CHANNELS_KEY) : nothing
 end
 
 
 """
     wsclient() :: HTTP.WebSockets.WebSocket
 
-The web sockets client for the current request.
+The web sockets client for the current request or nothing if not available.
 """
-function wsclient() :: HTTP.WebSockets.WebSocket
-  Router.params(Genie.PARAMS_WS_CLIENT)
+function wsclient() :: Union{HTTP.WebSockets.WebSocket,Nothing}
+  haskey(Router.params(), Genie.PARAMS_WS_CLIENT) ? Router.params(Genie.PARAMS_WS_CLIENT) : nothing
 end
 
 
