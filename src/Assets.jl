@@ -151,7 +151,7 @@ function js_settings(channel::String = Genie.config.webchannels_default_route) :
     :webchannels_timeout              => Genie.config.webchannels_timeout,
     :webchannels_keepalive_frequency  => Genie.config.webchannels_keepalive_frequency,
 
-    :webthreads_default_route         => Genie.config.webthreads_default_route,
+    :webthreads_default_route         => channel,
     :webthreads_js_file               => Genie.config.webthreads_js_file,
     :webthreads_pull_route            => Genie.config.webthreads_pull_route,
     :webthreads_push_route            => Genie.config.webthreads_push_route,
