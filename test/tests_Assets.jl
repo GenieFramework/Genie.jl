@@ -13,7 +13,7 @@
   @safetestset "Expose settings" begin
     using Genie, Genie.Assets
 
-    @test js_settings() == "window.Genie = {};\nGenie.Settings = {\"webchannels_autosubscribe\":true,\"server_host\":\"127.0.0.1\",\"webchannels_eval_command\":\">eval:\",\"webthreads_js_file\":\"webthreads.js\",\"webchannels_unsubscribe_channel\":\"unsubscribe\",\"webthreads_default_route\":\"____\",\"webchannels_subscribe_channel\":\"subscribe\",\"server_port\":8000,\"webchannels_keepalive_frequency\":30000,\"base_path\":\"\",\"webthreads_pull_route\":\"pull\",\"webchannels_default_route\":\"____\",\"webchannels_timeout\":1000,\"webthreads_push_route\":\"push\",\"websockets_port\":8000};\n"
+    @test js_settings() == "window.Genie = {};\nGenie.Settings = {\"webchannels_autosubscribe\":true,\"server_host\":\"127.0.0.1\",\"env\":\"dev\",\"webchannels_eval_command\":\">eval:\",\"webthreads_js_file\":\"webthreads.js\",\"webchannels_unsubscribe_channel\":\"unsubscribe\",\"webthreads_default_route\":\"____\",\"webchannels_subscribe_channel\":\"subscribe\",\"server_port\":8000,\"webchannels_keepalive_frequency\":30000,\"base_path\":\"\",\"webthreads_pull_route\":\"pull\",\"webchannels_default_route\":\"____\",\"webchannels_timeout\":1000,\"webthreads_push_route\":\"push\",\"websockets_port\":8000};\n"
   end
 
   @safetestset "Embedded assets" begin

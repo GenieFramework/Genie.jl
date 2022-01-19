@@ -56,7 +56,9 @@ Genie.WebChannels.load_channels = function() {
 };
 
 window.addEventListener('beforeunload', function (event) {
-  console.log("Preparing to unload");
+  if (Genie.Settings.env == 'dev') {
+    console.info('Preparing to unload');
+  }
 
   if ( Genie.Settings.webchannels_autosubscribe ) {
     unsubscribe();
@@ -76,11 +78,11 @@ window.addEventListener('load', function (event) {
 Genie.WebChannels.load_channels();
 
 function uri_factory(endpoint) {
-  return Genie.WebChannels.server_uri + (Genie.Settings.base_path == "" ? "/" : Genie.Settings.base_path) + Genie.Settings.webthreads_default_route + '/' + endpoint + '?wtclient=' + Genie.WebChannels.wtid;
+  return Genie.WebChannels.server_uri + (Genie.Settings.base_path == '' ? '/' : Genie.Settings.base_path) + Genie.Settings.webthreads_default_route + '/' + endpoint + '?wtclient=' + Genie.WebChannels.wtid;
 }
 
 function subscribe() {
-  if (document.readyState === "complete" || document.readyState === "interactive") {
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
     Genie.WebChannels.channel.start('GET', uri_factory(Genie.Settings.webchannels_subscribe_channel), {}, '');
     pull();
   } else {
@@ -92,7 +94,7 @@ function unsubscribe() {
   clearTimeout(tm);
   Genie.WebChannels.channel.abort();
 
-  if (document.readyState === "complete" || document.readyState === "interactive") {
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
     Genie.WebChannels.channel.start('GET', uri_factory(Genie.Settings.webchannels_unsubscribe_channel), {}, '');
   } else {
     tm = setTimeout(unsubscribe, Genie.WebChannels.poll_interval);
@@ -100,7 +102,7 @@ function unsubscribe() {
 }
 
 function pull() {
-  if (document.readyState === "complete" || document.readyState === "interactive") {
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
     Genie.WebChannels.channel.start('POST', uri_factory(Genie.Settings.webthreads_pull_route), {}, '');
   }
 
@@ -111,7 +113,7 @@ function push(body, headers = {}) {
   clearTimeout(tm);
   Genie.WebChannels.channel.abort();
 
-  if (document.readyState === "complete" || document.readyState === "interactive") {
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
     Genie.WebChannels.channel.start('POST', uri_factory(Genie.Settings.webthreads_push_route), headers, body);
   }
 
@@ -124,7 +126,7 @@ Genie.WebChannels.messageHandlers.push(function(code, result, headers){
     try {
       if (message.startsWith('{') && message.endsWith('}')) {
         window.parse_payload(JSON.parse(message, function (key, value) {
-          if (value == "__undefined__") {
+          if (value == '__undefined__') {
             return undefined;
           } else {
             return value;
@@ -136,17 +138,23 @@ Genie.WebChannels.messageHandlers.push(function(code, result, headers){
         window.parse_payload(message);
       }
     } catch (ex) {
-      console.log(ex);
+      if (Genie.Settings.env == 'dev') {
+        console.error(ex);
+      }
     }
   }
 });
 
 Genie.WebChannels.errorHandlers.push(function(event) {
-  console.log("Error: ", event);
+  if (Genie.Settings.env == 'dev') {
+    console.error('Error: ', event);
+  }
   tm = setTimeout(pull, Genie.WebChannels.poll_interval * 2);
 });
 
 function parse_payload(json_data) {
-  console.log("Overwrite window.parse_payload to handle messages from the server")
-  console.log(json_data);
+  if (Genie.Settings.env == 'dev') {
+    console.info('Overwrite window.parse_payload to handle messages from the server');
+    console.info(json_data);
+  }
 };
