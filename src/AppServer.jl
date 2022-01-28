@@ -35,7 +35,7 @@ function isrunning(prop::Symbol = :webserver) :: Bool
 end
 
 function server_status(server::ServersCollection, prop::Symbol) :: Nothing
-  if isrunning(server)
+  if isrunning(server, prop)
     @info("✔️ server is running.")
   else
     @error("❌ $server is not running.")
