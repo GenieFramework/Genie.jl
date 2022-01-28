@@ -7179,6 +7179,35 @@ html.theme--documenter-dark {
     visibility: visible; }
   html.theme--documenter-dark .docs-light-only {
     display: none !important; }
+  html.theme--documenter-dark pre {
+    position: relative; }
+    html.theme--documenter-dark pre .copy-button {
+      opacity: 0.2;
+      transition: opacity 0.2s;
+      position: absolute;
+      right: 0em;
+      top: 0em;
+      padding: 0.5em;
+      width: 2.5em;
+      height: 2.5em;
+      background: transparent;
+      border: none;
+      font-family: "Font Awesome 5 Free";
+      color: #fff;
+      cursor: pointer;
+      text-align: center; }
+      html.theme--documenter-dark pre .copy-button:focus, html.theme--documenter-dark pre .copy-button:hover {
+        opacity: 1;
+        background: rgba(255, 255, 255, 0.1);
+        color: #1abc9c; }
+      html.theme--documenter-dark pre .copy-button.success {
+        color: #259a12;
+        opacity: 1; }
+      html.theme--documenter-dark pre .copy-button.error {
+        color: #cb3c33;
+        opacity: 1; }
+    html.theme--documenter-dark pre:hover .copy-button {
+      opacity: 1; }
   html.theme--documenter-dark .admonition {
     background-color: #282f2f;
     border-style: solid;

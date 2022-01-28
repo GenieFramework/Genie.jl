@@ -7114,6 +7114,36 @@ h1:hover .docs-heading-anchor-permalink, h2:hover .docs-heading-anchor-permalink
 .docs-dark-only {
   display: none !important; }
 
+pre {
+  position: relative; }
+  pre .copy-button {
+    opacity: 0.2;
+    transition: opacity 0.2s;
+    position: absolute;
+    right: 0em;
+    top: 0em;
+    padding: 0.5em;
+    width: 2.5em;
+    height: 2.5em;
+    background: transparent;
+    border: none;
+    font-family: "Font Awesome 5 Free";
+    color: #222222;
+    cursor: pointer;
+    text-align: center; }
+    pre .copy-button:focus, pre .copy-button:hover {
+      opacity: 1;
+      background: rgba(34, 34, 34, 0.1);
+      color: #2e63b8; }
+    pre .copy-button.success {
+      color: #259a12;
+      opacity: 1; }
+    pre .copy-button.error {
+      color: #cb3c33;
+      opacity: 1; }
+  pre:hover .copy-button {
+    opacity: 1; }
+
 .admonition {
   background-color: #b5b5b5;
   border-style: solid;
