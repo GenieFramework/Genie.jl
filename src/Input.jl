@@ -20,7 +20,7 @@ mutable struct HttpFile
 end
 HttpFile() = HttpFile("", "", UInt8[])
 
-const HttpPostData  = Dict{String,Any}
+const HttpPostData  = Dict{String, Union{String, Vector{String}}}
 const HttpFiles     = Dict{String,HttpFile}
 
 mutable struct HttpInput
@@ -83,12 +83,12 @@ function post_url_encoded!(http_data::Array{UInt8, 1}, post_data::HttpPostData)
       # collect values like x[] in an array
       if endswith(string(k), "[]")
         if haskey(post_data, string(k))
-          push!(post_data[string(k)], v)
+          push!(post_data[string(k)], string(v))
         else
-          post_data[string(k)] = [v]
+          post_data[string(k)] = [string(v)]
         end
       else
-        post_data[string(k)] = v
+        post_data[string(k)] = string(v)
       end
     end
   else
