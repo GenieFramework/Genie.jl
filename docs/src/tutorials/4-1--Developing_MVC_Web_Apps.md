@@ -10,7 +10,12 @@ First, let's create a new Genie MVC app. We'll use Genie's app generator, so fir
 Let's start a Julia REPL and add Genie:
 
 ```julia
-pkg> add Genie # press ] from julia> prompt to enter Pkg mode
+pkg> add Genie, SQLite # press ] from julia> prompt to enter Pkg mode
+```
+
+Then, we load the packages in via:
+```julia
+julia> using Genie, SQLite
 ```
 
 Now, to create the app:
@@ -58,7 +63,7 @@ Now let's manually load the database configuration:
 
 ```julia
 julia> include(joinpath("config", "initializers", "searchlight.jl"))
-SQLite.DB("db/netflix_catalog.sqlite")
+julia> SQLite.DB("db/netflix_catalog.sqlite")
 ```
 
 ## Creating a Movie resource
