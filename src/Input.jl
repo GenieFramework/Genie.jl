@@ -20,7 +20,7 @@ mutable struct HttpFile
 end
 HttpFile() = HttpFile("", "", UInt8[])
 
-const HttpPostData  = Dict{String,String}
+const HttpPostData  = Dict{String, Union{String, Vector{String}}}
 const HttpFiles     = Dict{String,HttpFile}
 
 mutable struct HttpInput
@@ -73,10 +73,30 @@ function post_from_request!(request::HTTP.Request, input::HttpInput)
 end
 
 function post_url_encoded!(http_data::Array{UInt8, 1}, post_data::HttpPostData)
-  params::Dict{String,String} = HTTP.URIs.queryparams(String(http_data))
+  if occursin("%5B%5D", String(copy(http_data))) || occursin("[]", String(copy(http_data))) # array values []
+    for query_part in split(String(http_data), "&")
+      qp = split(query_part, "=")
+      (size(qp)[1] == 1) && (push!(qp, ""))
 
-  for (key::String, value::String) in params
-    post_data[key] = value
+      k = Symbol(HTTP.URIs.unescapeuri(qp[1]))
+      v = HTTP.URIs.unescapeuri(qp[2])
+      # collect values like x[] in an array
+      if endswith(string(k), "[]")
+        if haskey(post_data, string(k))
+          push!(post_data[string(k)], string(v))
+        else
+          post_data[string(k)] = [string(v)]
+        end
+      else
+        post_data[string(k)] = string(v)
+      end
+    end
+  else
+    params::Dict{String,String} = HTTP.URIs.queryparams(String(http_data))
+
+    for (key::String, value::String) in params
+      post_data[key] = value
+    end
   end
 end
 
