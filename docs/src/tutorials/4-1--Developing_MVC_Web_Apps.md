@@ -28,6 +28,7 @@ Please choose the DB backend you want to use:
 3. PostgreSQL
 Input 1, 2 or 3 and press ENTER to confirm
 ```
+Note that if you select an option other than SQLite, you will need to manually create the database outside of Genie. Currently, Genie only automatically creates SQLite databases.
 
 We'll use SQLite in this demo, so let's press "1". Once the process is completed, Genie will start the new application at <http://127.0.0.1:8000>. We can open it in the browser to see the default Genie home page.
 
