@@ -60,8 +60,8 @@ makedocs(
           "Configuration" => "api/configuration.md",
           "Cookies" => "api/cookies.md",
           "Deploy" => [
-            "Docker" => "api/deploy_docker.md",
-            "Heroku" => "api/deploy_heroku.md"
+            "Docker" => "api/deploy-docker.md",
+            "Heroku" => "api/deploy-heroku.md"
           ],
           "Encryption" => "api/encryption.md",
           "Exceptions" => "api/exceptions.md",
@@ -74,9 +74,9 @@ makedocs(
           "Input" => "api/input.md",
           "Plugins" => "api/plugins.md",
           "Renderer" => "api/renderer.md",
-          "HTML Renderer" => "api/renderer_html.md",
-          "JS Renderer" => "api/renderer_js.md",
-          "JSON Renderer" => "api/renderer_json.md",
+          "HTML Renderer" => "api/renderer-html.md",
+          "JS Renderer" => "api/renderer-js.md",
+          "JSON Renderer" => "api/renderer-json.md",
           "Requests" => "api/requests.md",
           "Responses" => "api/responses.md",
           "Router" => "api/router.md",
