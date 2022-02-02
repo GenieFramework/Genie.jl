@@ -51,7 +51,7 @@ makedocs(
           "Deploying to Heroku with Docker" => "tutorials/91--Deploying_Genie_Docker_Apps_on_Heroku.md",
           "Deploying to server with Nginx" => "tutorials/92--Deploying_Genie_Server_Apps_with_Nginx.md"
         ],
-        "api" => [
+        "API" => [
           "App" => "api/app.md",
           "AppServer" => "api/appserver.md",
           "Assets" => "api/assets.md",
