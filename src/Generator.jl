@@ -325,14 +325,13 @@ end
 Writes files used for interacting with the SearchLight ORM.
 """
 function db_support(app_path::String = ".", include_env::Bool = true, add_dependencies::Bool = true;
-                    testmode::Bool = false, dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing
+                    testmode::Bool = false, dbadapter::Union{String,Symbol,Nothing} = nothing, interactive::Bool = true)
+
   cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_db), joinpath(app_path, Genie.config.path_db), force = true)
 
   db_intializer(app_path, include_env)
 
-  add_dependencies && install_db_dependencies(testmode = testmode, dbadapter = dbadapter)
-
-  nothing
+  add_dependencies ? install_db_dependencies(testmode = testmode, dbadapter = dbadapter, interactive = interactive) : dbadapter
 end
 
 
@@ -392,28 +391,29 @@ end
 Installs the application's dependencies using Julia's Pkg
 """
 function install_app_dependencies(app_path::String = "."; testmode::Bool = false,
-                                  dbsupport::Bool = false, dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing
+                                  dbsupport::Bool = false, dbadapter::Union{String,Symbol,Nothing} = nothing,
+                                  interactive::Bool = true)
   @info "Installing app dependencies"
   Pkg.activate(".")
 
   pkgs = ["Dates", "Logging", "LoggingExtras", "MbedTLS"]
 
-  testmode ? Pkg.develop("Genie") : push!(pkgs, "Genie")
-  testmode ? Pkg.develop("Inflector") : push!(pkgs, "Inflector")
+  testmode ? Pkg.develop("Genie", io = devnull) : push!(pkgs, "Genie")
+  testmode ? Pkg.develop("Inflector", io = devnull) : push!(pkgs, "Inflector")
 
-  Pkg.add(pkgs)
+  Pkg.add(pkgs, io = devnull)
 
-  dbsupport && install_db_dependencies(testmode = testmode, dbadapter = dbadapter)
+  result = dbsupport ? install_db_dependencies(testmode = testmode, dbadapter = dbadapter, interactive = interactive) : dbadapter
 
   @info "Installing dependencies for unit tests"
 
   Pkg.activate("test")
 
-  Pkg.add("Test")
+  Pkg.add("Test", io = devnull)
 
   Pkg.activate(".") # return to the main project
 
-  nothing
+  result
 end
 
 
@@ -495,42 +495,55 @@ function pkggenfile(f::Function, ctx::Pkg.API.Context, pkg::String, dir::String,
 end
 
 
-function install_db_dependencies(; testmode::Bool = false, dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing
+function install_db_dependencies(; testmode::Bool = false, dbadapter::Union{String,Symbol,Nothing} = nothing, interactive::Bool = true)
   try
-    Pkg.add("SearchLight")
-    testmode || install_searchlight_dependencies(dbadapter)
+    testmode ? Pkg.develop("SearchLight", io = devnull) : Pkg.add("SearchLight", io = devnull)
+    interactive || ! isnothing(dbadapter) ?
+      install_searchlight_dependencies(dbadapter, testmode = testmode) :
+        dbadapter
   catch ex
     @error ex
   end
-
-  nothing
 end
 
 
-function install_searchlight_dependencies(dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing # TODO: move this to SearchLight post install
-  backends = ["SQLite", "MySQL", "PostgreSQL"] # todo: this should be dynamic somehow -- maybe by using the future plugins REST API
+function install_searchlight_dependencies(dbadapter::Union{String,Symbol,Nothing} = nothing;
+                                          testmode::Bool = false) # TODO: move this to SearchLight post install
 
   adapter::String = if dbadapter === nothing
+    backends = ["SQLite", "MySQL", "PostgreSQL"] # TODO: this should be dynamic somehow -- maybe by using the future plugins REST API
+
+    println()
     println("Please choose the DB backend you want to use: ")
     for i in 1:length(backends)
       println("$i. $(backends[i])")
     end
-    println("$(length(backends)+1). Other")
+    # println("$(length(backends)+1). Other")
+    println("$(length(backends)+1). Skip installing DB support at this time")
 
-    println("Input $(join([1:(length(backends)+1)...], ", ", " or ")) and press ENTER to confirm")
+    println( "
+Input $(join([1:(length(backends)+1)...], ", ", " or ")) and press ENTER to confirm.
+If you are not sure what to pick, choose 1 (SQLite). It is the simplest option to get you started right away.
+You can add support for additional databases anytime later. ")
     println()
 
     choice = try
       parse(Int, readline())
     catch
-      return install_searchlight_dependencies()
+      return install_searchlight_dependencies(; testmode = testmode)
     end
 
     if choice == (length(backends)+1)
-      println("Please input DB adapter (ex: Oracle, ODBC, JDBC, etc)")
+      # println("Please input DB adapter (ex: Oracle, ODBC, JDBC, etc)")
+      println("Skipping DB support installation")
       println()
 
-      readline()
+      return
+
+      # readline()
+    elseif choice > (length(backends)+1)
+      @warn "You must choose a number between 1 and $(length(backends)+1)"
+      return install_searchlight_dependencies(; testmode = testmode)
     else
       backends[choice]
     end
@@ -538,10 +551,32 @@ function install_searchlight_dependencies(dbadapter::Union{String,Symbol,Nothing
     string(dbadapter)
   end
 
-  Pkg.activate(".")
-  Pkg.add("SearchLight$adapter")
+  if adapter != "SQLite"
+    @warn "You need to edit the database configuration file at db/connection.yml to set your database connection info."
+  end
 
-  nothing
+  Pkg.activate(".")
+  testmode ? Pkg.develop("SearchLight$adapter", io = devnull) : Pkg.add("SearchLight$adapter", io = devnull)
+
+  adapter
+end
+
+
+"""
+    write_db_config(connfile = joinpath("db", "connection.yml"))
+
+Writes the default configuration for the selected SearchLight DB adapter.
+"""
+macro write_db_config(connfile = joinpath("db", "connection.yml"), initfile = joinpath("config", "initializers", "searchlight.jl"))
+  quote
+    open($connfile, "w") do f
+      write(f, SearchLight.Generator.FileTemplates.adapter_default_config())
+    end
+
+    include($initfile)
+
+    nothing
+  end |> esc
 end
 
 
@@ -550,10 +585,10 @@ end
 
 If `autostart` is `true`, the newly generated Genie app will be automatically started.
 """
-function autostart_app(path::String = "."; autostart::Bool = true) :: Nothing
+function autostart_app(path::String = "."; autostart::Bool = true, initdb::Bool = false, dbadapter::Union{Nothing,Symbol,String} = nothing) :: Nothing
   if autostart
     @info "Starting your brand new Genie app - hang tight!"
-    Genie.loadapp(abspath(path), autostart = autostart)
+    Genie.loadapp(abspath(path); autostart = autostart, dbadapter = string(dbadapter))
   else
     @info("Your new Genie app is ready!
         Run \njulia> Genie.loadapp() \nto load the app's environment
@@ -619,13 +654,15 @@ julia> Genie.newapp("MyGenieApp")
 """
 function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = false,
                 dbsupport::Bool = false, mvcsupport::Bool = false, testmode::Bool = false,
-                dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing
+                dbadapter::Union{String,Symbol,Nothing} = nothing, interactive::Bool = true) :: Nothing
   app_name = validname(app_name)
   app_path = abspath(app_name)
 
   fullstack ? fullstack_app(app_name, app_path) : microstack_app(app_name, app_path)
 
-  (dbsupport || fullstack) ? db_support(app_path, testmode = testmode, dbadapter = dbadapter) : remove_searchlight_initializer(app_path)
+  dbadapter = (dbsupport || fullstack) ?
+                db_support(app_path; testmode, dbadapter, interactive) :
+                  remove_searchlight_initializer(app_path)
 
   mvcsupport && (fullstack || mvc_support(app_path))
 
@@ -644,14 +681,14 @@ function newapp(app_name::String; autostart::Bool = true, fullstack::Bool = fals
   end
 
   post_create(app_name, app_path; autostart = autostart, testmode = testmode,
-              dbsupport = (dbsupport || fullstack), dbadapter = dbadapter)
+              dbsupport = (dbsupport || fullstack), dbadapter = dbadapter, interactive = interactive)
 
   nothing
 end
 
 
 function post_create(app_name::String, app_path::String; autostart::Bool = true, testmode::Bool = false,
-                      dbsupport::Bool = false, dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing
+                      dbsupport::Bool = false, dbadapter::Union{String,Symbol,Nothing} = nothing, interactive::Bool = true) :: Nothing
   @info "Done! New app created at $app_path"
 
   @info "Changing active directory to $app_path"
@@ -659,21 +696,29 @@ function post_create(app_name::String, app_path::String; autostart::Bool = true,
 
   generate_project(app_name)
 
-  install_app_dependencies(app_path, testmode = testmode, dbsupport = dbsupport, dbadapter = dbadapter)
+  dbadapter = install_app_dependencies(app_path, testmode = testmode, dbsupport = dbsupport, dbadapter = dbadapter, interactive = interactive)
 
   set_files_mod()
 
-  autostart_app(app_path, autostart = autostart)
+  autostart_app(app_path, autostart = autostart, dbadapter = dbadapter)
 
   nothing
 end
 
 
 function set_files_mod() :: Nothing
-  for f in ["Manifest.toml", "Project.toml", "routes.jl"]
+  for f in vcat( # TODO: make this DRY
+                ["Manifest.toml", "Project.toml", "routes.jl"],
+                (isdir("app") ? readdir("app") : []), (isdir("app/helpers") ? readdir("app/helpers"; join = true) : []),
+                (isdir("config") ? readdir("config") : []), (isdir("config/env") ? readdir("config/env"; join = true) : []), (isdir("config/initializers") ? readdir("config/initializers"; join = true) : []),
+                (isdir("db") ? readdir("db") : []),
+                (isdir("public") ? readdir("public") : []),
+                (isdir("test") ? readdir("test") : [])
+                )
     try
-      chmod(f, 0o700)
-    catch _
+      isfile(f) && chmod(f, 0o760)
+    catch err
+      @error err
       @warn "Can't change mod for $f. File might be read-only."
     end
   end
@@ -695,9 +740,13 @@ Template for scaffolding a new Genie app suitable for nimble web services.
 (one of :MySQL, :SQLite, or :PostgreSQL). If `dbadapter` is `nothing`, an adapter will have to be selected interactivel
 at the REPL, during the app creation process.
 """
-function newapp_webservice(path::String = "."; autostart::Bool = true, dbsupport::Bool = false, dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing
-  newapp(path, autostart = autostart, fullstack = false, dbsupport = dbsupport, mvcsupport = false, dbadapter = dbadapter)
+function newapp_webservice(path::String = "."; autostart::Bool = true, dbsupport::Bool = false,
+                            dbadapter::Union{String,Symbol,Nothing} = nothing, testmode::Bool = false,
+                            interactive::Bool = true) :: Nothing
+  newapp(path, autostart = autostart, fullstack = false, dbsupport = dbsupport, mvcsupport = false,
+          dbadapter = dbadapter, testmode = testmode, interactive = interactive)
 end
+const newappwebservice = newapp_webservice
 
 
 """
@@ -712,9 +761,12 @@ Template for scaffolding a new Genie app suitable for MVC web applications (incl
 (one of :MySQL, :SQLite, or :PostgreSQL). If `dbadapter` is `nothing`, an adapter will have to be selected interactivel
 at the REPL, during the app creation process.
 """
-function newapp_mvc(path::String = "."; autostart::Bool = true, dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing
-  newapp(path, autostart = autostart, fullstack = false, dbsupport = true, mvcsupport = true, dbadapter = dbadapter)
+function newapp_mvc(path::String = "."; autostart::Bool = true, dbadapter::Union{String,Symbol,Nothing} = nothing,
+                    testmode::Bool = false, interactive::Bool = true) :: Nothing
+  newapp(path, autostart = autostart, fullstack = false, dbsupport = true, mvcsupport = true, dbadapter = dbadapter,
+          testmode = testmode, interactive = interactive)
 end
+const newappmvc = newapp_mvc
 
 
 """
@@ -729,9 +781,12 @@ Template for scaffolding a new Genie app suitable for full stack web application
 (one of :MySQL, :SQLite, or :PostgreSQL). If `dbadapter` is `nothing`, an adapter will have to be selected interactivel
 at the REPL, during the app creation process.
 """
-function newapp_fullstack(path::String = "."; autostart::Bool = true, dbadapter::Union{String,Symbol,Nothing} = nothing) :: Nothing
-  newapp(path, autostart = autostart, fullstack = true, dbsupport = true, mvcsupport = true, dbadapter = dbadapter)
+function newapp_fullstack(path::String = "."; autostart::Bool = true, dbadapter::Union{String,Symbol,Nothing} = nothing,
+                          testmode::Bool = false, interactive::Bool = true) :: Nothing
+  newapp(path, autostart = autostart, fullstack = true, dbsupport = true, mvcsupport = true, dbadapter = dbadapter,
+          testmode = testmode, interactive = interactive)
 end
+const newappfullstack = newapp_fullstack
 
 
 end
