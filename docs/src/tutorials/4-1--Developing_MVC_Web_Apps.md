@@ -52,7 +52,6 @@ env: ENV["GENIE_ENV"]
 dev:
   adapter: SQLite
   database: db/netflix_catalog.sqlite
-  config:
 ```
 
 Now let's manually load the database configuration:
