@@ -10,7 +10,7 @@
     params(:greeting)
   end
 
-  route("/data", method = POST) do 
+  route("/data", method = POST) do
     fields = postpayload(Symbol("fields[]"))
     fields[1] * fields[2] * postpayload(:single)
   end
@@ -28,7 +28,7 @@
   @test response.status == 200
   @test String(response.body) == "GET"
 
-  response = HTTP.request("POST", "http://localhost:$port/data", ["Content-Type" => "application/x-www-form-urlencoded"], "fields[]=1&fields[]=2&single=3")
+  response = HTTP.request("POST", "http://localhost:$port/data", ["Content-Type" => "application/x-www-form-urlencoded"], "fields%5B%5D=1&fields%5B%5D=2&single=3")
   @test response.status == 200
   @test String(response.body) == "123"
 
