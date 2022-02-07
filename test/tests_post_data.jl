@@ -24,11 +24,19 @@
   @test response.status == 200
   @test String(response.body) == "Hello"
 
+  response = HTTP.request("POST", "http://localhost:$port/", ["Content-Type" => "application/x-www-form-urlencoded"], "greeting=Hey you there")
+  @test response.status == 200
+  @test String(response.body) == "Hey you there"
+
   response = HTTP.request("GET", "http://localhost:$port/", ["Content-Type" => "application/x-www-form-urlencoded"], "greeting=Hello")
   @test response.status == 200
   @test String(response.body) == "GET"
 
-  response = HTTP.request("POST", "http://localhost:$port/data", ["Content-Type" => "application/x-www-form-urlencoded"], "fields%5B%5D=1&fields%5B%5D=2&single=3")
+  response = HTTP.request("POST", "http://localhost:$port/data", ["Content-Type" => "application/x-www-form-urlencoded"], "fields[]=Hey you there&fields[]=&single=")
+  @test response.status == 200
+  @test String(response.body) == "Hey you there"
+
+  response = HTTP.request("POST", "http://localhost:$port/data", ["Content-Type" => "application/x-www-form-urlencoded"], "fields[]=1&fields[]=2&single=3")
   @test response.status == 200
   @test String(response.body) == "123"
 
