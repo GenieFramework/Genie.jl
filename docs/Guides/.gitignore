@@ -1,0 +1,17 @@
+.DS_Store
+test/PlutoNotebooks/4--Developing_Web_Services/Watchtonight/
+test/PlutoNotebooks/16--Using_Genie_With_Docker/DockerTest
+test/PlutoNotebooks/3--Getting_Started/geniews.jl
+test/PlutoNotebooks/9--Publishing_Your_Julia_Code_Online_With_Genie_Apps/MyGenieApp
+test/PlutoNotebooks/*/*.html
+test/PlutoNotebooks/*/*.toml
+test/PlutoNotebooks/180--Working_With_Genie_Apps/MyGenieApp
+test/PlutoNotebooks/*/*backup 1.jl
+test/PlutoNotebooks/181--Frontend_assets/MyApp
+test/PlutoNotebooks/183--Simple_API_backend/rest.jl
+test/PlutoNotebooks/4--Developing_Web_Services/MyGenieApp
+test/PlutoNotebooks/41--Developing_MVC_Web_Apps/Watchtonight
+
+build/guides/*.html
+build/tutorials/*.html
+test/Manifest.toml
