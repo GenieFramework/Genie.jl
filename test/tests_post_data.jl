@@ -32,11 +32,11 @@
   @test response.status == 200
   @test String(response.body) == "GET"
 
-  response = HTTP.request("POST", "http://localhost:$port/data", ["Content-Type" => "application/x-www-form-urlencoded"], "fields[]=Hey you there&fields[]=&single=")
+  response = HTTP.request("POST", "http://localhost:$port/data", ["Content-Type" => "application/x-www-form-urlencoded"], "fields%5B%5D=Hey you there&fields%5B%5D=&single=")
   @test response.status == 200
   @test String(response.body) == "Hey you there"
 
-  response = HTTP.request("POST", "http://localhost:$port/data", ["Content-Type" => "application/x-www-form-urlencoded"], "fields[]=1&fields[]=2&single=3")
+  response = HTTP.request("POST", "http://localhost:$port/data", ["Content-Type" => "application/x-www-form-urlencoded"], "fields%5B%5D=1&fields%5B%5D=2&single=3")
   @test response.status == 200
   @test String(response.body) == "123"
 
