@@ -94,11 +94,13 @@ end
 Sets up the session functionality, if configured.
 """
 function init() :: Nothing
-  @eval Genie.config.session_storage === nothing && (Genie.config.session_storage = :File)
-  @eval Genie.config.session_storage == :File && include(joinpath(@__DIR__, "session_adapters", "FileSession.jl"))
+  if Genie.config.session_storage === nothing
+    @eval Genie.config.session_storage = :File
+    @eval include(joinpath(@__DIR__, "session_adapters", "FileSession.jl"))
 
-  push!(Genie.Router.pre_match_hooks, Genie.Sessions.start)
-  push!(Genie.Router.pre_response_hooks, Genie.Sessions.persist)
+    push!(Genie.Router.pre_match_hooks, Genie.Sessions.start)
+    push!(Genie.Router.pre_response_hooks, Genie.Sessions.persist)
+  end
 
   nothing
 end
@@ -163,6 +165,7 @@ Stores `value` as `key` on the `Session` object `s`.
 """
 function set!(s::Session, key::Symbol, value::Any) :: Session
   s.data[key] = value
+  persist(s)
 
   s
 end
@@ -190,18 +193,18 @@ end
 Attempts to retrive the value stored on the `Session` object `s` as `key`.
 If the value is not set, it returns the `default`.
 """
-function get(s::Session, key::Symbol, default::T) :: T where T
+function get(s::Session, key::Symbol, default::T) where {T}
   val = get(s, key)
 
   val === nothing ? default : val
 end
-function get(key::Symbol, default::T) :: T where T
+function get(key::Symbol, default::T) where {T}
   get(session(), key, default)
 end
-function get!(key::Symbol, default::T) :: T where T
+function get!(key::Symbol, default::T) where {T}
   get!(session(), key, default)
 end
-function get!(s::Session, key::Symbol, default::T) :: T where T
+function get!(s::Session, key::Symbol, default::T) where {T}
   val = get(s, key, default)
   set!(key, val)
 

@@ -208,6 +208,11 @@ function route(path::String, action::Function; method = GET, named::Union{Symbol
 
   Router.push!(_routes, r.name, r)
 end
+function routes(args...; method::Vector{<:AbstractString}, kwargs...)
+  for m in method
+    route(args...; method = m, kwargs...)
+  end
+end
 
 
 """
@@ -433,7 +438,9 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
     # method must match but we can also handle HEAD requests with GET routes
     (r.method == req.method) || (r.method == GET && req.method == HEAD) || continue
 
-    parsed_route, param_names, param_types = Genie.Configuration.isprod() ? get!(ROUTE_CACHE, r.path, parse_route(r.path, context = r.context)) : parse_route(r.path, context = r.context)
+    parsed_route, param_names, param_types = Genie.Configuration.isprod() ?
+                                              get!(ROUTE_CACHE, r.path, parse_route(r.path, context = r.context)) :
+                                                parse_route(r.path, context = r.context)
     regex_route = try
       Regex("^" * parsed_route * "\$")
     catch
@@ -572,7 +579,7 @@ function parse_route(route::String; context::Module = @__MODULE__) :: Tuple{Stri
   param_types = Any[]
 
   if occursin('#', route) || occursin(':', route)
-    validation_match = "[\\w\\-\\.\\+\\,\\s\\%\\:]+"
+    validation_match = "[\\w\\-\\.\\+\\,\\s\\%\\:\\(\\)\\[\\]]+"
 
     for rp in split(route, '/', keepempty = false)
       if occursin("#", rp)
