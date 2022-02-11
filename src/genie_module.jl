@@ -33,8 +33,9 @@ function newresource(resource_name::Union{String,Symbol}; path::String = ".", pl
   Generator.newresource(string(resource_name), path = path, pluralize = pluralize)
 
   try
-    Core.eval(context, :(SearchLight.Generator.newresource(uppercasefirst($resource_name))))
-  catch
+    Core.eval(context, Meta.parse("SearchLight.Generator.newresource(uppercasefirst(\"$resource_name\"); pluralize = $pluralize)"))
+  catch ex
+    @warn ex
   end
 
   load_resources()

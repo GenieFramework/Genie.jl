@@ -65,6 +65,7 @@ Base.iterate(s::ParsedHTMLString, x::Int) = iterate(s.data, x)
 
 Base.ncodeunits(s::ParsedHTMLString) = Base.ncodeunits(s.data)
 Base.codeunit(s::ParsedHTMLString) = Base.codeunit(s.data)
+Base.codeunit(s::ParsedHTMLString, i::Int) = Base.codeunit(s.data, i)
 Base.isvalid(s::ParsedHTMLString, i::Int) = Base.isvalid(s.data, i)
 
 Base.convert(::Type{ParsedHTMLString}, v::Vector{T}) where {T} = ParsedHTMLString(v)
@@ -96,6 +97,7 @@ Base.iterate(s::HTMLString, x::Int) = iterate(s.data, x)
 
 Base.ncodeunits(s::HTMLString) = Base.ncodeunits(s.data)
 Base.codeunit(s::HTMLString) = Base.codeunit(s.data)
+Base.codeunit(s::HTMLString, i::Int) = Base.codeunit(s.data, i)
 Base.isvalid(s::HTMLString, i::Int) = Base.isvalid(s.data, i)
 
 Base.convert(::Type{HTMLString}, v::Vector{T}) where {T} = HTMLString(v)
