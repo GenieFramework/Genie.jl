@@ -93,14 +93,17 @@ end
 
 Sets up the session functionality, if configured.
 """
-function init() :: Nothing
+function init(adapter::Symbol = :File) :: Nothing
   if Genie.config.session_storage === nothing
-    @eval Genie.config.session_storage = :File
-    @eval include(joinpath(@__DIR__, "session_adapters", "FileSession.jl"))
-
-    push!(Genie.Router.pre_match_hooks, Genie.Sessions.start)
-    push!(Genie.Router.pre_response_hooks, Genie.Sessions.persist)
+    Core.eval(@__MODULE__, Meta.parse("Genie.config.session_storage = Symbol(\"$adapter\")"))
   end
+
+  if ! isdefined(@__MODULE__, Symbol("$(Genie.config.session_storage)Session"))
+    @eval include(joinpath(@__DIR__, "session_adapters", "$(Genie.config.session_storage)Session.jl"))
+  end
+
+  Genie.Sessions.start in Genie.Router.pre_match_hooks || push!(Genie.Router.pre_match_hooks, Genie.Sessions.start)
+  Genie.Sessions.persist in Genie.Router.pre_response_hooks || push!(Genie.Router.pre_response_hooks, Genie.Sessions.persist)
 
   nothing
 end
