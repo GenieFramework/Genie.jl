@@ -32,7 +32,7 @@
     end
 
     up()
-    sleep(5)
+    sleep(10)
 
     r = Genie.Requests.HTTP.request("GET", "http://localhost:8000/test")
 
