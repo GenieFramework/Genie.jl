@@ -146,7 +146,10 @@ function route_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
     req, res, params.collection = f(req, res, params.collection)
   end
 
-  res = match_routes(req, res, params)
+  matched_route = match_routes(req, res, params)
+  res = matched_route === nothing ?
+    error(req.target, response_mime(params.collection), Val(404)) :
+      run_route(matched_route)
 
   res.status == 404 && req.method == OPTIONS && return preflight_response()
 
@@ -416,8 +419,8 @@ Sets up the :action_controller, :action, and :controller key - value pairs of th
 """
 function action_controller_params(action::Function, params::Params) :: Nothing
   params.collection[:action_controller] = action |> string |> Symbol
-  params.collection[:action] = nameof(action)
-  params.collection[:controller] = (action |> typeof).name.module |> string |> Symbol
+  params.collection[:action] = action
+  params.collection[:controller] = (action |> typeof).name.module
 
   nothing
 end
@@ -426,11 +429,11 @@ end
 
 
 """
-    match_routes(req::Request, res::Response, params::Params) :: Response
+    match_routes(req::Request, res::Response, params::Params) :: Union{Route,Nothing}
 
 Matches the invoked URL to the corresponding route, sets up the execution environment and invokes the controller method.
 """
-function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: HTTP.Response
+function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: Union{Route,Nothing}
   endswith(req.target, "/") && req.target != "/" && (req.target = req.target[1:end-1])
   uri = HTTP.URIs.URI(req.target)
 
@@ -462,32 +465,34 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
     ispayload(req) && extract_request_params(req, params)
     action_controller_params(r.action, params)
 
+    params.collection[Genie.PARAMS_ROUTE_KEY] = r
+    get!(params.collection, Genie.PARAMS_MIME_KEY, MIME(request_type(req)))
+
     for f in unique(content_negotiation_hooks)
       req, res, params.collection = f(req, res, params.collection)
     end
 
-    params.collection[Genie.PARAMS_ROUTE_KEY] = r
-
-    get!(params.collection, Genie.PARAMS_MIME_KEY, MIME(request_type(req)))
-
-    controller = (r.action |> typeof).name.module
-
-    return  try
-              try
-                (r.action)() |> to_response
-              catch ex1
-                if isa(ex1, MethodError) && string(ex1.f) == string(r.action)
-                  Base.invokelatest(r.action) |> to_response
-                else
-                  rethrow(ex1)
-                end
-              end
-            catch ex
-              return handle_exception(ex)
-            end
+    return r
   end
 
-  error(req.target, response_mime(params.collection), Val(404))
+  nothing
+end
+
+
+function run_route(r::Route) :: HTTP.Response
+  try
+    try
+      (r.action)() |> to_response
+    catch ex1
+      if isa(ex1, MethodError) && string(ex1.f) == string(r.action)
+        Base.invokelatest(r.action) |> to_response
+      else
+        rethrow(ex1)
+      end
+    end
+  catch ex
+    return handle_exception(ex)
+  end
 end
 
 
