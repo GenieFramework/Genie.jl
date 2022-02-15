@@ -416,4 +416,45 @@
     port = nothing
   end
 
+  @safetestset "Add custom content negotiation hook" begin
+    using Genie, Genie.Requests
+    using HTTP
+
+    port = nothing
+    port = rand(8500:8900)
+
+    REQUEST_COUNT = Ref{UInt}(0)
+
+    function req_stat_hook(req, resp, p)
+      r = get(p, Genie.PARAMS_ROUTE_KEY, nothing)
+      if !isnothing(r)
+        @info "I'm in the second hook"
+        a = r.action
+        r.action = () -> begin
+          REQUEST_COUNT[] += 1
+          a()
+        end
+      end
+      req, resp, p
+    end
+
+    push!(Genie.Router.content_negotiation_hooks, req_stat_hook)
+
+    route("/hello") do
+      "world"
+    end
+
+    server = up(port; open_browser = false)
+
+    HTTP.request("GET", "http://127.0.0.1:$port/hello")
+    HTTP.request("GET", "http://127.0.0.1:$port/hello")
+    HTTP.request("GET", "http://127.0.0.1:$port/hello")
+    
+    @test REQUEST_COUNT[] == 3
+    down()
+    sleep(1)
+    server = nothing
+    port = nothing
+    pop!(Genie.Router.content_negotiation_hooks)
+  end
 end;
