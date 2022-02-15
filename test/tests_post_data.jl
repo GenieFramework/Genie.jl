@@ -40,6 +40,14 @@
   @test response.status == 200
   @test String(response.body) == "123"
 
+  response = HTTP.post("http://localhost:$port", [], HTTP.Form(Dict("greeting" => "Hello")))
+  @test response.status == 200
+  @test String(response.body) == "Hello"
+
+  response = HTTP.post("http://localhost:$port", [], HTTP.Form(Dict("greeting" => "Hey you there")))
+  @test response.status == 200
+  @test String(response.body) == "Hey you there"
+  
   down()
   sleep(1)
   server = nothing
