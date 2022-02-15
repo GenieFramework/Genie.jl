@@ -19,7 +19,7 @@
   port = nothing
   port = rand(8500:8900)
 
-  up(port)
+  server = up(port)
 
   response = HTTP.request("GET", "http://localhost:$port")
   @test response.status == 200
@@ -32,7 +32,9 @@
   @test response.status == 200
   @test String(response.body) == custom_message
 
-  down()
+  pop!(Genie.Router.content_negotiation_hooks)
+  Genie.AppServer.down!()
+
   sleep(1)
   server = nothing
   port = nothing
