@@ -424,15 +424,23 @@
     port = rand(8500:8900)
 
     REQUEST_COUNT = Ref{UInt}(0)
+    struct CustomWrapper
+      action
+    end
+
+    Base.nameof(c::CustomWrapper) = "CustomWrapper"
+
+    function (f::CustomWrapper)()
+      REQUEST_COUNT[] += 1
+      f.action()
+    end
 
     function req_stat_hook(req, resp, p)
       r = get(p, Genie.PARAMS_ROUTE_KEY, nothing)
       if !isnothing(r)
         @info "I'm in the second hook"
-        a = r.action
-        r.action = () -> begin
-          REQUEST_COUNT[] += 1
-          a()
+        if !(r.action isa CustomWrapper)
+          r.action = CustomWrapper(r.action)
         end
       end
       req, resp, p
