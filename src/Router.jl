@@ -462,11 +462,11 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
     ispayload(req) && extract_request_params(req, params)
     action_controller_params(r.action, params)
 
+    params.collection[Genie.PARAMS_ROUTE_KEY] = r
+
     for f in unique(content_negotiation_hooks)
       req, res, params.collection = f(req, res, params.collection)
     end
-
-    params.collection[Genie.PARAMS_ROUTE_KEY] = r
 
     get!(params.collection, Genie.PARAMS_MIME_KEY, MIME(request_type(req)))
 
