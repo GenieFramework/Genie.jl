@@ -54,7 +54,7 @@ Representation of a route object
 mutable struct Route
   method::String
   path::String
-  action::Any
+  action::Function
   name::Union{Symbol,Nothing}
   context::Module
 end
@@ -414,7 +414,7 @@ end
 
 Sets up the :action_controller, :action, and :controller key - value pairs of the `params` collection.
 """
-function action_controller_params(action, params::Params) :: Nothing
+function action_controller_params(action::Function, params::Params) :: Nothing
   params.collection[:action_controller] = action |> string |> Symbol
   params.collection[:action] = nameof(action)
   params.collection[:controller] = (action |> typeof).name.module |> string |> Symbol
