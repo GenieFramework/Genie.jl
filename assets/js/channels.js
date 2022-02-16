@@ -63,7 +63,8 @@ Genie.WebChannels.load_channels = function() {
 
 function newSocketConnection() {
   try {
-    return new WebSocket(window.location.protocol.replace('http', 'ws') + '//' + window.location.hostname + ':' + Genie.WebChannels.port);
+    return new WebSocket(window.location.protocol.replace('http', 'ws') + '//' + window.location.hostname + 
+      ':' + Genie.WebChannels.port + (Genie.Settings.base_path == '' ? '' : '/' + Genie.Settings.base_path));
   } catch (e) {
     console.error(e);
   }
