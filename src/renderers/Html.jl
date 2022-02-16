@@ -11,10 +11,10 @@ const DEFAULT_LAYOUT_FILE = :app
 const LAYOUTS_FOLDER = "layouts"
 
 const HTML_FILE_EXT = ".jl"
-const TEMPLATE_EXT  = ".jl.html"
+const TEMPLATE_EXT  = [".jl.html", ".jl"]
 const MARKDOWN_FILE_EXT = [".md", ".jl.md"]
 
-const SUPPORTED_HTML_OUTPUT_FILE_FORMATS = [TEMPLATE_EXT]
+const SUPPORTED_HTML_OUTPUT_FILE_FORMATS = TEMPLATE_EXT
 
 const HTMLParser  = EzXML
 
@@ -861,10 +861,13 @@ function partial(path::String; context::Module = @__MODULE__, kwvars...) :: Stri
 
   template(path, partial = true, context = context)
 end
-
 function partial(path::Genie.Renderer.FilePath; context::Module = @__MODULE__, kwvars...)
   partial(string(path); context = context, kwvars...)
 end
+function partial(resource::Genie.Renderer.ResourcePath, view::Genie.Renderer.ResourcePath, args...; kwargs...)
+  partial(joinpath(Genie.config.path_resources, string(resource), Renderer.VIEWS_FOLDER, string(view)), args...; kwargs...)
+end
+
 
 """
     template(path::String; partial::Bool = true, context::Module = @__MODULE__, vars...) :: String
