@@ -14,11 +14,6 @@ using Genie,Genie.Router;
 
 using Genie.Requests  # Genie and Genie.Router already imported above
 
-# ╔═╡ 1e388f30-bd1d-4cab-96ce-98c98e2f0c21
-# hideall
-
-using HTTP;
-
 # ╔═╡ 43a9d450-3269-11ec-2353-1b13386fbc8d
 md"""
 # Advanced routing techniques
@@ -236,10 +231,15 @@ julia> HTTP.request("PATCH", "http://127.0.0.1:8000/patch_stuff").body |> String
 
 """
 
+# ╔═╡ 1e388f30-bd1d-4cab-96ce-98c98e2f0c21
+# hideall
+
+#using HTTP;
+
 # ╔═╡ daaac609-bd82-42e9-bd15-998fef170746
 # hideall
 
-HTTP.request("PATCH", "http://127.0.0.1:8000/patch_stuff").body |> String
+#HTTP.request("PATCH", "http://127.0.0.1:8000/patch_stuff").body |> String
 
 # ╔═╡ 9eee3b60-65df-4312-bfbf-402f5efdbb43
 # hideall
@@ -595,11 +595,9 @@ down();
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 Genie = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
-HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 
 [compat]
 Genie = "~4.9.1"
-HTTP = "~0.9.17"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002

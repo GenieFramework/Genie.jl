@@ -169,7 +169,7 @@ md"""
 Now, open it in the editor: and edit `geniews.jl`
 
 ```julia
-julia> edit("genie.jl")
+julia> edit("geniews.jl")
 ```
 
 """
@@ -194,7 +194,7 @@ route("/hello.txt") do
    respond("Hello World", :text)
 end
 
-up(8002, async = true)
+up(8001, async = true)
 ```
 """
 
@@ -635,7 +635,7 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═c9ffdde1-8bf3-4759-a3c2-6139cec96019
 # ╠═82aaf57a-3390-43a9-8cd4-548c96c576a0
 # ╠═a5841694-02ea-42dc-a58a-7e7ae651bf79
-# ╟─e078471a-5488-46a6-8ca2-06ea02e16a0e
+# ╠═e078471a-5488-46a6-8ca2-06ea02e16a0e
 # ╟─534f2f99-9c49-4bf6-a7d5-686e43664327
 # ╟─0476f46e-9a30-4f20-9fe6-0148487426b9
 # ╠═3aa6c93b-b9a9-4758-bd5c-2ab08e7047fc

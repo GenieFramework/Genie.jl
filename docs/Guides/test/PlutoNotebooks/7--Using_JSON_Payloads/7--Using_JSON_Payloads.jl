@@ -9,11 +9,6 @@ using InteractiveUtils
 
 using Genie, Genie.Router, Genie.Requests, Genie.Renderer.Json
 
-# ╔═╡ 8801795d-2e75-404c-b51f-aa6c949cda60
-# hideall
-
-using HTTP
-
 # ╔═╡ a9da1cae-319b-11ec-0640-9f3d4f563ec0
 md"""
 # Using JSON payloads
@@ -88,10 +83,15 @@ Transfer-Encoding: chunked
 ```
 """
 
+# ╔═╡ 8801795d-2e75-404c-b51f-aa6c949cda60
+# hideall
+
+#using HTTP
+
 # ╔═╡ a2e870b8-ac88-460e-8c88-70f2f2419c44
 # hideall
 
-HTTP.request("POST", "http://localhost:8000/jsonpayload", [("Content-Type", "application/json")], """{"name":"Adrian"}""");
+#HTTP.request("POST", "http://localhost:8000/jsonpayload", [("Content-Type", "application/json")], """{"name":"Adrian"}""");
 
 # ╔═╡ f293a37d-3076-4762-965c-3604cf046057
 md"""
@@ -117,11 +117,9 @@ First, for the two `@show` calls, notice how `jsonpayload` had successfully conv
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 Genie = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
-HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 
 [compat]
 Genie = "~4.9.1"
-HTTP = "~0.9.17"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002

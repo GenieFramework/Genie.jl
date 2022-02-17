@@ -14,19 +14,6 @@ using Revise
 
 using Genie
 
-# ╔═╡ 64ea16e4-4323-435f-9e13-9fe86ed31375
-# hideall
-
-using SearchLight
-
-# ╔═╡ b208bfb8-e9ee-4f10-9dec-9248e30a7c9b
-# hideall
-
-using SearchLightSQLite
-
-# ╔═╡ 03ed3567-911c-4091-b4bb-f672009d1647
-using SQLite
-
 # ╔═╡ de3d681a-424a-11ec-0a26-574b0c85d733
 md"""
 # Working with Genie apps (projects)
@@ -1355,6 +1342,21 @@ begin
 	Genie.Generator.db_support(; dbadapter = :SQLite);
 end;
 
+# ╔═╡ 64ea16e4-4323-435f-9e13-9fe86ed31375
+# hideall
+begin
+	db;
+	using SearchLight;
+end;
+
+# ╔═╡ b208bfb8-e9ee-4f10-9dec-9248e30a7c9b
+# hideall
+
+begin
+	db;
+	using SearchLightSQLite;
+end;
+
 # ╔═╡ 415bec3c-4b56-480b-a779-105f1bfb3320
 md"""
 The command will add a `db/` folder within the root of the app. What we're looking for is the `db/connection.yml` file which tells SearchLight how to connect to the database. Let's edit it. Make the file look like this:
@@ -1456,7 +1458,7 @@ julia> SearchLight.Configuration.load() |> SearchLight.connect
 
 begin
 	db
-	push!(SearchLightSQLite.CONNECTIONS, SQLite.DB(SearchLight.Configuration.load()["database"]))
+	push!(SearchLightSQLite.CONNECTIONS, SearchLightSQLite.SQLite.DB(SearchLight.Configuration.load()["database"]))
 end
 
 # ╔═╡ 10e8ed24-aad8-4e56-96dc-a0e3511f3926
@@ -2362,14 +2364,12 @@ PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 Genie = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
-SQLite = "0aa819cd-b072-5ff4-a722-6bc24af294d9"
 SearchLight = "340e8cb6-72eb-11e8-37ce-c97ebeb32050"
 SearchLightSQLite = "21a827c4-482a-11ea-3a19-4d2243a4a2c5"
 
 [compat]
 Genie = "~4.9.1"
 Revise = "~3.3.1"
-SQLite = "~1.4.0"
 SearchLight = "~2.1.0"
 SearchLightSQLite = "~2.0.0"
 """
@@ -2999,7 +2999,6 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╟─452a2397-923f-4349-90d4-813a87a254fb
 # ╟─f1153b95-aed8-4527-8e2a-fb1da2c79ad1
 # ╠═65044e1c-039e-412c-b960-ebc3be23d1d9
-# ╠═03ed3567-911c-4091-b4bb-f672009d1647
 # ╟─1c4625a3-c596-4651-9d22-ed104f854e13
 # ╠═5ff78c5b-3466-473e-8234-50a362cdc035
 # ╟─10e8ed24-aad8-4e56-96dc-a0e3511f3926
