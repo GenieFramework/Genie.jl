@@ -151,15 +151,30 @@ function route_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
     error(req.target, response_mime(params.collection), Val(404)) :
       run_route(matched_route)
 
-  res.status == 404 && req.method == OPTIONS && return preflight_response()
+  if res.status == 404 && req.method == OPTIONS
+    res = preflight_response()
+
+    log_response(req, res)
+
+    return res
+  end
 
   for f in unique(pre_response_hooks)
     req, res, params.collection = f(req, res, params.collection)
   end
 
-  reqstatus = "$(req.method) $(req.target) $(res.status)\n"
+  log_response(req, res)
 
+  req.method == HEAD && (res.body = UInt8[])
+
+  res
+end
+
+
+function log_response(req::HTTP.Request, res::HTTP.Response) :: Nothing
   if Genie.config.log_requests
+    reqstatus = "$(req.method) $(req.target) $(res.status)\n"
+
     if res.status < 400
       @info reqstatus
     else
@@ -167,9 +182,7 @@ function route_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
     end
   end
 
-  req.method == HEAD && (res.body = UInt8[])
-
-  res
+  nothing
 end
 
 

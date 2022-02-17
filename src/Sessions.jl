@@ -93,15 +93,7 @@ end
 
 Sets up the session functionality, if configured.
 """
-function init(adapter::Symbol = :File) :: Nothing
-  if Genie.config.session_storage === nothing
-    Core.eval(@__MODULE__, Meta.parse("Genie.config.session_storage = Symbol(\"$adapter\")"))
-  end
-
-  if ! isdefined(@__MODULE__, Symbol("$(Genie.config.session_storage)Session"))
-    @eval include(joinpath(@__DIR__, "session_adapters", "$(Genie.config.session_storage)Session.jl"))
-  end
-
+function init() :: Nothing
   Genie.Sessions.start in Genie.Router.pre_match_hooks || push!(Genie.Router.pre_match_hooks, Genie.Sessions.start)
   Genie.Sessions.persist in Genie.Router.pre_response_hooks || push!(Genie.Router.pre_response_hooks, Genie.Sessions.persist)
 
@@ -267,5 +259,15 @@ function session(params::Dict{Symbol,Any} = Genie.Router.params()) :: Sessions.S
 
   params[Genie.PARAMS_SESSION_KEY]
 end
+
+
+if Genie.config.session_storage === nothing
+  Genie.config.session_storage = :File
+end
+
+if ! isdefined(@__MODULE__, Symbol("$(Genie.config.session_storage)Session"))
+  include(joinpath(@__DIR__, "session_adapters", "$(Genie.config.session_storage)Session.jl"))
+end
+
 
 end
