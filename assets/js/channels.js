@@ -70,7 +70,7 @@ function newSocketConnection() {
   }
 }
 
-Genie.WebChannels.port = Genie.Settings.websockets_port; // == Genie.Settings.server_port ? window.location.port : Genie.Settings.websockets_port;
+Genie.WebChannels.port = Genie.Settings.websockets_port;
 Genie.WebChannels.socket = newSocketConnection();
 
 window.addEventListener('beforeunload', function (event) {
