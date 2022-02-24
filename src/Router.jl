@@ -216,11 +216,10 @@ function route(action::Function, path::String; method = GET, named::Union{Symbol
   route(path, action, method = method, named = named, context = context)
 end
 function route(path::String, action::Function; method = GET, named::Union{Symbol,Nothing} = nothing, context::Module = @__MODULE__) :: Route
-  r = Route(method = method, path = path, action = action, name = named, context = context)
-
-  if named === nothing
-    r.name = routename(r)
-  end
+  Route(method = method, path = path, action = action, name = named, context = context) |> route
+end
+function route(r::Route) :: Route
+  r.name === nothing && (r.name = routename(r))
 
   Router.push!(_routes, r.name, r)
 end
