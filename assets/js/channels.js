@@ -69,7 +69,7 @@ function newSocketConnection(host = wshost) {
       ':' + Genie.Settings.websockets_port + (Genie.Settings.base_path == '' ? '' : '/' + Genie.Settings.base_path));
 }
 
-Genie.WebChannels.port = Genie.Settings.websockets_port;
+Genie.WebChannels.port = Genie.Settings.websockets_port == Genie.Settings.server_port ? window.location.port : Genie.Settings.websockets_port
 Genie.WebChannels.socket = newSocketConnection();
 Genie.WebChannels.socket.addEventListener('error', function(_){
   Genie.WebChannels.socket = newSocketConnection();
