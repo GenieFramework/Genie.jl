@@ -108,6 +108,21 @@ route("/") do
   serve_static_file("welcome.html")
 end
 ```
+
+
+Now, we can stop the server by hitting <ctrl+d> (windows/linux) or <cmd+d> (macos). You can restart the server by
+
+```shell
+$ cd Watchtonight
+$ bin/server
+```
+
+However, for this tutorial we Genie's interactive mode:
+
+```shell
+$ cd Watchtonight
+$ bin/repl
+```
 """
 
 # ╔═╡ 7a63f66a-de61-4a1f-a73a-577cbbaf9622
@@ -637,7 +652,7 @@ Add CSV.jl as a dependency of the project:
 md"""
 
 ```julia
-pkg> add CSV
+pkg> add CSV   # you can go to pkg mode by pressing <]> key and exit with <backspace> key
 ```
 """
 
@@ -765,8 +780,12 @@ md"""
 We'll start by adding the route to our handler function. Let's open the `routes.jl` file and add:
 
 ```julia
-# routes.jl
+using Genie.Router
 using MoviesController
+
+route("/") do
+  serve_static_file("welcome.html")
+end
 
 route("/movies", MoviesController.index)
 ```
@@ -831,7 +850,13 @@ end;
 
 # ╔═╡ 7d6485e6-61a3-4c8c-803c-b5f5c9471af5
 md"""
-If we navigate to <http://127.0.0.1:8000/movies> we should see the welcome.
+You can start Genie Server by running:
+```julia-repl
+julia> up()
+```
+
+If we navigate to <http://127.0.0.1:8000/movies> we should see the welcome. You can stop the server with
+`down()` function. To execute further command in same repl session, hit <enter> key and you'll see `julia>` prompt.
 
 Let's make this more useful though and display a random movie upon landing here:
 
@@ -1085,6 +1110,7 @@ Let's make the web page nicer by loading the Twitter Bootstrap CSS library. As i
 </html>
 ```
 
+You can check your progress at <http://127.0.0.1:8000/movies>
 """
 
 # ╔═╡ 28c4ecbb-c726-4a2e-b62d-66b2d757e100
@@ -1183,9 +1209,10 @@ md"""
 
 We have added a HTML `<form>` which submits a query term over GET.
 
-Next, add the route:
+Next, add the route in `routes.jl`:
 
 ```julia
+# ... routes.jl
 route("/movies/search", MoviesController.search, named = :search_movies)
 ```
 """
@@ -1205,7 +1232,7 @@ end;
 
 # ╔═╡ 94cde687-0027-4e62-be10-2020bf852170
 md"""
-And the `MoviesController.search` function after updating the `using` section:
+And the `MoviesController.search` function after updating the `using` section in `MoviesController.jl`:
 
 ```julia
 using Genie, Genie.Renderer, Genie.Renderer.Html, SearchLight, Movies
@@ -1376,6 +1403,7 @@ julia> GenieAuthentication.install(@__DIR__)
 The plugin has created a create table migration that we need to run `UP`:
 
 ```julia
+julia> using SearchLight
 julia> SearchLight.Migration.up("CreateTableUsers")
 ```
 
@@ -1402,7 +1430,7 @@ julia> u = User(email = "admin@admin", name = "Admin", password = Users.hash_pas
 julia> save!(u)
 ```
 
-We'll also need a route for the admin area:
+We'll also need a route for the admin area in `routes.jl`:
 
 ```julia
 using AdminController
@@ -1410,7 +1438,7 @@ using AdminController
 route("/admin/movies", AdminController.index, named = :get_home)
 ```
 
-And finally, the controller code:
+And finally, the controller code in `AdminController.jl`:
 
 ```julia
 module AdminController
@@ -1425,7 +1453,7 @@ end
 end
 ```
 
-If we navigate to `http://127.0.0.1:8000/admin/movies` we'll be asked to logged in. Using `admin` for the user and `admin` for the password will allow us to access the password protected section.
+If we navigate to <http://127.0.0.1:8000/admin/movies> we'll be asked to logged in. Using `admin` for the user and `admin` for the password will allow us to access the password protected section.
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -1974,7 +2002,7 @@ uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 # ╠═bc4234b8-67d4-4844-a907-d45a4649db8b
 # ╠═eebc2a27-ac29-4f70-998c-d2a5be7a29ce
 # ╠═65ea2335-4d7f-4e48-9aef-453141d3551c
-# ╠═89f2cc70-c656-4aa9-8ea6-ca739871e0d6
+# ╟─89f2cc70-c656-4aa9-8ea6-ca739871e0d6
 # ╟─7a63f66a-de61-4a1f-a73a-577cbbaf9622
 # ╠═8cf3615d-a101-4c50-926d-172703c2ee70
 # ╠═bb0796e4-e5ad-4d5d-b59c-9af9bfec6eb7

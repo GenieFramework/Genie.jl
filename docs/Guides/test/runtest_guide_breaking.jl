@@ -32,10 +32,7 @@ end
 @testset "testing guides" begin
     @info @__DIR__
     notebooks= [
-    "0--Index/1--index.jl",
-    "183--Simple_API_backend/183--Simple_API_backend.jl",
-    "182--Genie_Plugins/182--Genie_Plugins.jl",
-    "184--Interactive_environment/184--Interactive_environment.jl"
+    "180--Working_With_Genie_Apps/180--Working_With_Genie_Apps.jl"
     ]
     for notebook in notebooks
         input=joinpath(@__DIR__,"PlutoNotebooks/",notebook)

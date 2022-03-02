@@ -9,16 +9,6 @@ using InteractiveUtils
 
 using Genie
 
-# ╔═╡ fe97ffdb-22ed-456b-8269-017f7a0b3637
-# hideall
-
-using HTTP
-
-# ╔═╡ f7c15c14-73fb-440c-a79f-0ab34ff6eac6
-# hideall
-
-include("rest.jl");
-
 # ╔═╡ bac482d8-4781-11ec-306b-1f4298a0cb54
 md"""
 # Developing a simple API backend
@@ -106,29 +96,39 @@ Genie.startup(async = false)
 ```
 """
 
+# ╔═╡ fe97ffdb-22ed-456b-8269-017f7a0b3637
+# hideall
+
+# using HTTP
+
 # ╔═╡ a10279fd-2f17-4964-ae7c-811543194aa1
 # hideall
 
-write("rest.jl", """using Genie, Genie.Router, Genie.Renderer.Json, Genie.Requests
-using HTTP
+# write("rest.jl", """using Genie, Genie.Router, Genie.Renderer.Json, Genie.Requests
+# using HTTP
 
-route("/echo", method = POST) do
-  message = jsonpayload()
-  (:echo => (message["message"] * " ") ^ message["repeat"]) |> json
-end
+# route("/echo", method = POST) do
+#   message = jsonpayload()
+#   (:echo => (message["message"] * " ") ^ message["repeat"]) |> json
+# end
 
-route("/send") do
-  response = HTTP.request("POST", "http://localhost:8000/echo", [("Content-Type", "application/json")], \"""{"message":"hello", "repeat":3}\""")
+# route("/send") do
+#   response = HTTP.request("POST", "http://localhost:8000/echo", [("Content-Type", "application/json")], \"""{"message":"hello", "repeat":3}\""")
 
-  response.body |> String |> json
-end
+#   response.body |> String |> json
+# end
 
-Genie.startup(async = true)""");
+# Genie.startup(async = true)""");
+
+# ╔═╡ f7c15c14-73fb-440c-a79f-0ab34ff6eac6
+# hideall
+
+# include("rest.jl");
 
 # ╔═╡ 990d6c09-eba8-4741-b6fd-8eb39cc9a30c
 # hideall
 
-Genie.Router.routes();
+# Genie.Router.routes();
 
 # ╔═╡ 8a936d9b-5652-4a6a-bffa-4352affb4e00
 md"""
@@ -163,11 +163,9 @@ You can also use `rawpayload` if for example the type of request/payload is not 
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
 Genie = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
-HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 
 [compat]
 Genie = "~4.2.0"
-HTTP = "~0.9.17"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
