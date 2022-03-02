@@ -5,13 +5,6 @@ When contributing to this repository, please first discuss the change you wish t
 
 Please note we have a code of conduct, please follow it in all your interactions with the project.
 
-## Docs contribution
-
-1. To make `API` contribution directly add modify/add Docstrings in Genie.jl source code
-2. Genie's Guides/Tutorials section from [genieframework.com/docs]() are converted to Interactive Pluto Notebooks, you can modify them in `docs/Guides/test/PlutoNotebooks/` (Note: Pluto version 0.17.3 -> `add Pluto@0.17.3`)
-3. To run Pluto notebook, follow the video: https://youtu.be/OOjKEgbt8AI
-4. To build and test all Pluto Notebooks. Use the instructions given in `docs/Guides/README.md`
-
 ## Pull Request Process
 
 1. Ensure any install or build dependencies are removed before the end of the layer when doing a
