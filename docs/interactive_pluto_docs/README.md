@@ -14,20 +14,25 @@ julia> Pluto.run() # will start Pluto server
 
 1. Locate the guide/tutorial you want to edit
 
-![](../content/img/pluto_docs_instructions/1.png)
+<img src="../content/img/pluto_docs_instructions/1.png" width="300" height="200"/>
 
 2. Open the `.jl` notebook and click `open`
-![](../content/img/pluto_docs_instructions/2.png)
+
+<img src="../content/img/pluto_docs_instructions/2.png" width="300" height="200"  />
 
 3. Once you have opened the notebook wait for notebook to execute all code cells. See the progress in top bar
 
-![](../content/img/pluto_docs_instructions/3.png)
+<img src="../content/img/pluto_docs_instructions/3.png" />
 
 4. Edit `markdown cell` along with `code cell`(if exists) and then click on save button. Save will execute all the changes and execute the cells
 
-![](../content/img/pluto_docs_instructions/4.png)
+<img src="../content/img/pluto_docs_instructions/4.png"/>
 
-to kill Pluto you can hit `<ctrl/cmd + d>` in terminal
+5. To kill Pluto you can hit `<ctrl/cmd + c>` in terminal
+
+> NOTE: Some notebooks when run with Pluto create corresponding projects in their corresponding directories. Make sure you delete the project 
+
+<img src="../content/img/pluto_docs_instructions/0.png" width="250" height="200" />
 
 # Testing all notebooks(after you have made changes)
 
