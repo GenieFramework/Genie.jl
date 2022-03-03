@@ -4,11 +4,10 @@
 
 Versions of Genie.jl currently being supported with security updates.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 4.16.x  |        ✔           |
-| 4.15.x  |        x           |
-| < 4.0   |        x           |
+| Version    | Supported          |
+| ---------- | ------------------ |
+| >= 4.16.x  |        ✔           |
+| <= 4.15.x  |        x           |
 
 # Security Policies and Procedures
 
@@ -52,7 +51,7 @@ involving the following steps:
   * Confirm the problem and determine the affected versions.
   * Audit code to find any potential similar problems.
   * Prepare fixes for all releases still under maintenance. These fixes will be
-    released as fast as possible to npm.
+    released as fast as possible and will be available with latest tagged Genie version and annouced on [Genie's twitter](https://twitter.com/GenieMVC) and [Genie's Discord #announcement channel](https://discord.com/invite/9zyZbD6J7H).
 
 ## Comments on this Policy
 
