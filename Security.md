@@ -19,6 +19,8 @@ project.
   * [Disclosure Policy](#disclosure-policy)
   * [Comments on this Policy](#comments-on-this-policy)
 
+## Reporting a Bug
+
 The Genie team and community take all security bugs in Genie seriously.
 Thank you for improving the security of Genie. We appreciate your efforts and
 responsible disclosure and will make every effort to acknowledge your
