@@ -852,7 +852,7 @@ function request_type(req::HTTP.Request) :: Symbol
     end
   end
 
-  Symbol(accepted_encodings[1])
+  isempty(accepted_encodings[1]) ? Symbol(request_mappings[:html]) : Symbol(accepted_encodings[1])
 end
 
 
@@ -922,7 +922,7 @@ to_response(action_result::Any)::HTTP.Response = HTTP.Response(string(action_res
 The collection containing the request variables collection.
 """
 function params()
-  haskey(task_local_storage(), :__params) ? task_local_storage(:__params) : task_local_storage(:__params, Dict{Symbol,Any}())
+  haskey(task_local_storage(), :__params) ? task_local_storage(:__params) : task_local_storage(:__params, setup_base_params())
 end
 function params(key)
   params()[key]
@@ -1055,6 +1055,16 @@ end
 
 
 """
+    is_accessible_resource(resource::String) :: Bool
+
+Checks if the requested resource is within the public/ folder.
+"""
+function is_accessible_resource(resource::String) :: Bool
+  startswith(abspath(resource), abspath(Genie.config.server_document_root))
+end
+
+
+"""
     serve_static_file(resource::String) :: Response
 
 Reads the static file and returns the content as a `Response`.
@@ -1068,6 +1078,11 @@ function serve_static_file(resource::String; root = Genie.config.server_document
                   end
   f = file_path(resource_path, root = root)
   isempty(f) && (f = pwd() |> relpath)
+
+  if (isfile(f) || isdir(f)) && ! is_accessible_resource(f)
+    @error "401 Unauthorised Access $f"
+    return error(resource, response_mime(), Val(401))
+  end
 
   if isfile(f)
     return HTTP.Response(200, file_headers(f), body = read(f, String))
@@ -1103,9 +1118,7 @@ end
 Returns the MIME type of the response.
 """
 function response_mime(params::Dict{Symbol,Any} = params())
-  rm = get!(params, Genie.PARAMS_MIME_KEY, request_type(params[Genie.PARAMS_REQUEST_KEY]))
-
-  if isempty(string(rm()))
+  if isempty(get!(params, Genie.PARAMS_MIME_KEY, request_type(params[Genie.PARAMS_REQUEST_KEY])) |> string)
     params[Genie.PARAMS_MIME_KEY] = request_type(params[Genie.PARAMS_REQUEST_KEY])
   end
 
@@ -1132,6 +1145,11 @@ end
 
 function error(error_message::String, mime::Any, ::Val{500}; error_info::String = "") :: HTTP.Response
   HTTP.Response(500, ["Content-Type" => string(trymime(mime))], body = "500 Internal Error - $error_message. $error_info")
+end
+
+
+function error(error_message::String, mime::Any, ::Val{401}; error_info::String = "") :: HTTP.Response
+  HTTP.Response(401, ["Content-Type" => string(trymime(mime))], body = "401 Unauthorised - $error_message. $error_info")
 end
 
 
