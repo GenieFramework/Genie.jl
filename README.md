@@ -56,8 +56,10 @@
 [![Chat on Discord](https://img.shields.io/badge/chat-Discord-7289DA?logo=discord)](https://discord.com/invite/9zyZbD6J7H) [![Chat on Gitter](https://img.shields.io/badge/gitter-chat-red)](https://gitter.im/essenciary/Genie.jl) [![Discuss on GitHub](https://img.shields.io/badge/discussions-GitHub-333333?logo=github)](https://github.com/GenieFramework/Genie.jl/discussions)
 
 <div style="border: 2px solid crimson; background-color: linen;">
-## Important ##
-**We have fixed dangerous security vulnerability that affected older versions of Genie -- please make sure to update to Genie v4.16 or above.**
+  <h2>Important</h2>
+  <p>
+    <strong>We have fixed a security vulnerability that affected older versions of Genie -- please make sure to update to Genie v4.16 or above.</strong>
+  </p>
 </div>
 
 <details open>
