@@ -7090,13 +7090,13 @@ html.theme--documenter-dark {
     position: relative;
     overflow: hidden; }
     html.theme--documenter-dark pre code, html.theme--documenter-dark pre code.hljs {
-      padding: 0 0.5rem;
+      padding: 0 0.5rem !important;
       overflow: auto;
       display: block; }
     html.theme--documenter-dark pre code:first-of-type, html.theme--documenter-dark pre code.hljs:first-of-type {
-      padding-top: 0.7rem; }
+      padding-top: 0.7rem !important; }
     html.theme--documenter-dark pre code:last-of-type, html.theme--documenter-dark pre code.hljs:last-of-type {
-      padding-bottom: 0.7rem; }
+      padding-bottom: 0.7rem !important; }
     html.theme--documenter-dark pre .copy-button {
       opacity: 0.2;
       transition: opacity 0.2s;
