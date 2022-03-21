@@ -274,8 +274,10 @@ Generates default names for routes and channels.
 """
 function baptizer(params::Union{Route,Channel}, parts::Vector{String}) :: Symbol
   for uri_part in split(params.path, '/', keepempty = false)
-    startswith(uri_part, ":") && continue # we ignore named params
-    push!(parts, lowercase(uri_part))
+    startswith(uri_part, ":") ?
+      push!(parts, "by", lowercase(uri_part)[2:end]) :
+        push!(parts, lowercase(uri_part))
+
   end
 
   join(parts, "_") |> Symbol
