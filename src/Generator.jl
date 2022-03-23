@@ -567,10 +567,13 @@ end
 
 Writes the default configuration for the selected SearchLight DB adapter.
 """
-macro write_db_config(connfile = joinpath("db", "connection.yml"), initfile = joinpath("config", "initializers", "searchlight.jl"))
+macro write_db_config(connfile = joinpath("db", "connection.yml"),
+                      initfile = joinpath("config", "initializers", "searchlight.jl"))
   quote
+    isfile($connfile) && chmod($connfile, 0o760)
+
     open($connfile, "w") do f
-      write(f, SearchLight.Generator.FileTemplates.adapter_default_config())
+      write(f, SearchLight.Generator.FileTemplates.adapter_default_config(database = Genie.config.app_env, env = Genie.config.app_env))
     end
 
     include($initfile)

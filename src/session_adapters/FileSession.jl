@@ -80,7 +80,7 @@ function read(session_id::Union{String,Symbol}) :: Union{Nothing,Genie.Sessions.
     end
   catch ex
     @error "Can't read session"
-    @error ex
+    # @error ex
   end
 end
 

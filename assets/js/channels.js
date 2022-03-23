@@ -61,18 +61,21 @@ Genie.WebChannels.load_channels = function() {
   }
 };
 
-function newSocketConnection() {
-  try {
-    return new WebSocket(window.location.protocol.replace('http', 'ws') + '//' + window.location.hostname + ':' + Genie.WebChannels.port);
-  } catch (e) {
-    console.error(e);
-  }
+// connecting to 0.0.0.0 (ex in prod) fails
+let wshost = Genie.Settings.server_host == "0.0.0.0" ? window.location.hostname : Genie.Settings.server_host;
+
+function newSocketConnection(host = wshost) {
+  return new WebSocket(window.location.protocol.replace('http', 'ws') + '//' + host +
+      ':' + Genie.WebChannels.port + (Genie.Settings.base_path == '' ? '' : '/' + Genie.Settings.base_path));
 }
 
-Genie.WebChannels.port = Genie.Settings.websockets_port == Genie.Settings.server_port ? window.location.port : Genie.Settings.websockets_port;
+Genie.WebChannels.port = Genie.Settings.websockets_port == Genie.Settings.server_port ? window.location.port : Genie.Settings.websockets_port
 Genie.WebChannels.socket = newSocketConnection();
+Genie.WebChannels.socket.addEventListener('error', function(_){
+  Genie.WebChannels.socket = newSocketConnection();
+});
 
-window.addEventListener('beforeunload', function (event) {
+window.addEventListener('beforeunload', function (_) {
   if (Genie.Settings.env == 'dev') {
     console.info('Preparing to unload');
   }

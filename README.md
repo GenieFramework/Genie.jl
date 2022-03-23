@@ -51,9 +51,18 @@
   Genie is a full-stack web framework that provides a streamlined and efficient workflow for developing modern web applications. It builds on Julia's strengths (high-level, high-performance, dynamic, JIT compiled), exposing a rich API and a powerful toolset for productive web development.
 </p>
 
-#### **Need Help!**
+#### **Need Help?** Reach out on our social media channels. 
 
 [![Chat on Discord](https://img.shields.io/badge/chat-Discord-7289DA?logo=discord)](https://discord.com/invite/9zyZbD6J7H) [![Chat on Gitter](https://img.shields.io/badge/gitter-chat-red)](https://gitter.im/essenciary/Genie.jl) [![Discuss on GitHub](https://img.shields.io/badge/discussions-GitHub-333333?logo=github)](https://github.com/GenieFramework/Genie.jl/discussions)
+
+<div style="border: 2px solid crimson; background-color: linen;">
+  <h4>Important</h4>
+  <p>
+    <strong>We have fixed a security vulnerability that affected older versions of Genie -- please make sure to update to Genie v4.16 or above.</strong>
+  </p>
+</div>
+
+<hr>
 
 <details open>
   <summary><b>Table of contents</b></summary>

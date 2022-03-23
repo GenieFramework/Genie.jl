@@ -85,6 +85,8 @@ function serve(path::String = pwd(), params...; kwparams...)
   cd(path)
   path = ""
 
+  Genie.config.server_document_root = abspath(path)
+
   Router.route("/") do
     Router.serve_static_file(path, root = path)
   end

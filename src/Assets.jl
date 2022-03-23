@@ -132,6 +132,11 @@ end
 const js = js_asset
 
 
+const js_literal = ["js:|", "|_"]
+function jsliteral(val) :: String
+  "$(js_literal[1])$val$(js_literal[2])"
+end
+
 """
     js_settings() :: string
 
@@ -160,9 +165,14 @@ function js_settings(channel::String = Genie.config.webchannels_default_route) :
     :env                              => Genie.env(),
   ))
 
+  if contains(settings, js_literal[1])
+    settings = replace(settings, "\"$(js_literal[1])"=>"")
+    settings = replace(settings, "$(js_literal[2])\""=>"")
+  end
+
   """
   window.Genie = {};
-  Genie.Settings = $(settings);
+  Genie.Settings = $settings;
   """
 end
 
@@ -236,7 +246,7 @@ Provides full web channels support, setting up routes for loading support JS fil
 returning the `<script>` tag for including the linked JS file into the web page.
 """
 function channels_support(channel::AbstractString = Genie.config.webchannels_default_route) :: String
-  endpoint = Genie.Assets.asset_path(assets_config, :js, file = Genie.config.webchannels_js_file, path=channel, skip_ext = true)
+  endpoint = Genie.Assets.asset_path(assets_config, :js, file = Genie.config.webchannels_js_file, skip_ext = true)
 
   if ! external_assets()
     Router.route(endpoint) do

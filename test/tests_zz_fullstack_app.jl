@@ -27,14 +27,14 @@
     end
     @test isfile(joinpath("app", "resources", "foo", "views", "foo.jl.html")) == true
 
-    Genie.Router.route("/test") do
+    route("/test") do
       Genie.Renderer.Html.html(:foo, :foo)
     end
 
-    up()
-    sleep(2)
+    up(9999)
+    sleep(10)
 
-    r = Genie.Requests.HTTP.request("GET", "http://localhost:8000/test")
+    r = Genie.Requests.HTTP.request("GET", "http://localhost:9999/test")
 
     @test occursin(content, String(r.body)) == true
 

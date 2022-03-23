@@ -78,17 +78,17 @@ function post_url_encoded!(http_data::Array{UInt8, 1}, post_data::HttpPostData)
       qp = split(query_part, "=")
       (size(qp)[1] == 1) && (push!(qp, ""))
 
-      k = Symbol(HTTP.URIs.unescapeuri(qp[1]))
-      v = HTTP.URIs.unescapeuri(qp[2])
+      k = HTTP.URIs.unescapeuri(HTTP.URIs.decodeplus(qp[1]))
+      v = HTTP.URIs.unescapeuri(HTTP.URIs.decodeplus(qp[2]))
       # collect values like x[] in an array
-      if endswith(string(k), "[]")
-        if haskey(post_data, string(k))
-          push!(post_data[string(k)], string(v))
+      if endswith(k, "[]")
+        if haskey(post_data, k)
+          push!(post_data[k], v)
         else
-          post_data[string(k)] = [string(v)]
+          post_data[k] = [v]
         end
       else
-        post_data[string(k)] = string(v)
+        post_data[k] = v
       end
     end
   else
@@ -132,7 +132,18 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
                 hasFile = true
               end
             elseif getkey(values, "name", nothing) != nothing
-              post_data[values["name"]] = String(part.data)
+              k = values["name"]
+              v = String(part.data)
+
+              if endswith(k, "[]")
+                if haskey(post_data, k)
+                  push!(post_data[k], v)
+                else
+                  post_data[k] = [v]
+                end
+              else
+                post_data[k] = v
+              end
             end
           elseif field == "Content-Type"
             (file.mime, mime) = first(values)

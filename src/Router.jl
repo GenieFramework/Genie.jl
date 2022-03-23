@@ -146,17 +146,35 @@ function route_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
     req, res, params.collection = f(req, res, params.collection)
   end
 
-  res = match_routes(req, res, params)
+  matched_route = match_routes(req, res, params)
+  res = matched_route === nothing ?
+    error(req.target, response_mime(params.collection), Val(404)) :
+      run_route(matched_route)
 
-  res.status == 404 && req.method == OPTIONS && return preflight_response()
+  if res.status == 404 && req.method == OPTIONS
+    res = preflight_response()
+
+    log_response(req, res)
+
+    return res
+  end
 
   for f in unique(pre_response_hooks)
     req, res, params.collection = f(req, res, params.collection)
   end
 
-  reqstatus = "$(req.method) $(req.target) $(res.status)\n"
+  log_response(req, res)
 
+  req.method == HEAD && (res.body = UInt8[])
+
+  res
+end
+
+
+function log_response(req::HTTP.Request, res::HTTP.Response) :: Nothing
   if Genie.config.log_requests
+    reqstatus = "$(req.method) $(req.target) $(res.status)\n"
+
     if res.status < 400
       @info reqstatus
     else
@@ -164,9 +182,7 @@ function route_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
     end
   end
 
-  req.method == HEAD && (res.body = UInt8[])
-
-  res
+  nothing
 end
 
 
@@ -200,13 +216,17 @@ function route(action::Function, path::String; method = GET, named::Union{Symbol
   route(path, action, method = method, named = named, context = context)
 end
 function route(path::String, action::Function; method = GET, named::Union{Symbol,Nothing} = nothing, context::Module = @__MODULE__) :: Route
-  r = Route(method = method, path = path, action = action, name = named, context = context)
-
-  if named === nothing
-    r.name = routename(r)
-  end
+  Route(method = method, path = path, action = action, name = named, context = context) |> route
+end
+function route(r::Route) :: Route
+  r.name === nothing && (r.name = routename(r))
 
   Router.push!(_routes, r.name, r)
+end
+function routes(args...; method::Vector{<:AbstractString}, kwargs...)
+  for m in method
+    route(args...; method = m, kwargs...)
+  end
 end
 
 
@@ -254,8 +274,10 @@ Generates default names for routes and channels.
 """
 function baptizer(params::Union{Route,Channel}, parts::Vector{String}) :: Symbol
   for uri_part in split(params.path, '/', keepempty = false)
-    startswith(uri_part, ":") && continue # we ignore named params
-    push!(parts, lowercase(uri_part))
+    startswith(uri_part, ":") ?
+      push!(parts, "by", lowercase(uri_part)[2:end]) :
+        push!(parts, lowercase(uri_part))
+
   end
 
   join(parts, "_") |> Symbol
@@ -411,8 +433,8 @@ Sets up the :action_controller, :action, and :controller key - value pairs of th
 """
 function action_controller_params(action::Function, params::Params) :: Nothing
   params.collection[:action_controller] = action |> string |> Symbol
-  params.collection[:action] = nameof(action)
-  params.collection[:controller] = (action |> typeof).name.module |> string |> Symbol
+  params.collection[:action] = action
+  params.collection[:controller] = (action |> typeof).name.module
 
   nothing
 end
@@ -421,11 +443,11 @@ end
 
 
 """
-    match_routes(req::Request, res::Response, params::Params) :: Response
+    match_routes(req::Request, res::Response, params::Params) :: Union{Route,Nothing}
 
 Matches the invoked URL to the corresponding route, sets up the execution environment and invokes the controller method.
 """
-function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: HTTP.Response
+function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: Union{Route,Nothing}
   endswith(req.target, "/") && req.target != "/" && (req.target = req.target[1:end-1])
   uri = HTTP.URIs.URI(req.target)
 
@@ -433,7 +455,9 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
     # method must match but we can also handle HEAD requests with GET routes
     (r.method == req.method) || (r.method == GET && req.method == HEAD) || continue
 
-    parsed_route, param_names, param_types = Genie.Configuration.isprod() ? get!(ROUTE_CACHE, r.path, parse_route(r.path, context = r.context)) : parse_route(r.path, context = r.context)
+    parsed_route, param_names, param_types = Genie.Configuration.isprod() ?
+                                              get!(ROUTE_CACHE, r.path, parse_route(r.path, context = r.context)) :
+                                                parse_route(r.path, context = r.context)
     regex_route = try
       Regex("^" * parsed_route * "\$")
     catch
@@ -455,32 +479,34 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
     ispayload(req) && extract_request_params(req, params)
     action_controller_params(r.action, params)
 
+    params.collection[Genie.PARAMS_ROUTE_KEY] = r
+    get!(params.collection, Genie.PARAMS_MIME_KEY, MIME(request_type(req)))
+
     for f in unique(content_negotiation_hooks)
       req, res, params.collection = f(req, res, params.collection)
     end
 
-    params.collection[Genie.PARAMS_ROUTE_KEY] = r
-
-    get!(params.collection, Genie.PARAMS_MIME_KEY, MIME(request_type(req)))
-
-    controller = (r.action |> typeof).name.module
-
-    return  try
-              try
-                (r.action)() |> to_response
-              catch ex1
-                if isa(ex1, MethodError) && string(ex1.f) == string(r.action)
-                  Base.invokelatest(r.action) |> to_response
-                else
-                  rethrow(ex1)
-                end
-              end
-            catch ex
-              return handle_exception(ex)
-            end
+    return r
   end
 
-  error(req.target, response_mime(params.collection), Val(404))
+  nothing
+end
+
+
+function run_route(r::Route) :: HTTP.Response
+  try
+    try
+      (r.action)() |> to_response
+    catch ex1
+      if isa(ex1, MethodError) && string(ex1.f) == string(r.action)
+        Base.invokelatest(r.action) |> to_response
+      else
+        rethrow(ex1)
+      end
+    end
+  catch ex
+    return handle_exception(ex)
+  end
 end
 
 
@@ -572,7 +598,7 @@ function parse_route(route::String; context::Module = @__MODULE__) :: Tuple{Stri
   param_types = Any[]
 
   if occursin('#', route) || occursin(':', route)
-    validation_match = "[\\w\\-\\.\\+\\,\\s\\%\\:]+"
+    validation_match = "[\\w\\-\\.\\+\\,\\s\\%\\:\\(\\)\\[\\]]+"
 
     for rp in split(route, '/', keepempty = false)
       if occursin("#", rp)
@@ -828,7 +854,7 @@ function request_type(req::HTTP.Request) :: Symbol
     end
   end
 
-  Symbol(accepted_encodings[1])
+  isempty(accepted_encodings[1]) ? Symbol(request_mappings[:html]) : Symbol(accepted_encodings[1])
 end
 
 
@@ -898,7 +924,7 @@ to_response(action_result::Any)::HTTP.Response = HTTP.Response(string(action_res
 The collection containing the request variables collection.
 """
 function params()
-  haskey(task_local_storage(), :__params) ? task_local_storage(:__params) : task_local_storage(:__params, Dict{Symbol,Any}())
+  haskey(task_local_storage(), :__params) ? task_local_storage(:__params) : task_local_storage(:__params, setup_base_params())
 end
 function params(key)
   params()[key]
@@ -1031,6 +1057,16 @@ end
 
 
 """
+    is_accessible_resource(resource::String) :: Bool
+
+Checks if the requested resource is within the public/ folder.
+"""
+function is_accessible_resource(resource::String) :: Bool
+  startswith(abspath(resource), abspath(Genie.config.server_document_root))
+end
+
+
+"""
     serve_static_file(resource::String) :: Response
 
 Reads the static file and returns the content as a `Response`.
@@ -1044,6 +1080,11 @@ function serve_static_file(resource::String; root = Genie.config.server_document
                   end
   f = file_path(resource_path, root = root)
   isempty(f) && (f = pwd() |> relpath)
+
+  if (isfile(f) || isdir(f)) && ! is_accessible_resource(f)
+    @error "401 Unauthorised Access $f"
+    return error(resource, response_mime(), Val(401))
+  end
 
   if isfile(f)
     return HTTP.Response(200, file_headers(f), body = read(f, String))
@@ -1079,9 +1120,7 @@ end
 Returns the MIME type of the response.
 """
 function response_mime(params::Dict{Symbol,Any} = params())
-  rm = get!(params, Genie.PARAMS_MIME_KEY, request_type(params[Genie.PARAMS_REQUEST_KEY]))
-
-  if isempty(string(rm()))
+  if isempty(get!(params, Genie.PARAMS_MIME_KEY, request_type(params[Genie.PARAMS_REQUEST_KEY])) |> string)
     params[Genie.PARAMS_MIME_KEY] = request_type(params[Genie.PARAMS_REQUEST_KEY])
   end
 
@@ -1108,6 +1147,11 @@ end
 
 function error(error_message::String, mime::Any, ::Val{500}; error_info::String = "") :: HTTP.Response
   HTTP.Response(500, ["Content-Type" => string(trymime(mime))], body = "500 Internal Error - $error_message. $error_info")
+end
+
+
+function error(error_message::String, mime::Any, ::Val{401}; error_info::String = "") :: HTTP.Response
+  HTTP.Response(401, ["Content-Type" => string(trymime(mime))], body = "401 Unauthorised - $error_message. $error_info")
 end
 
 

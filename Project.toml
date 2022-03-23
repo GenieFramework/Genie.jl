@@ -1,7 +1,7 @@
 name = "Genie"
 uuid = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
 authors = ["Adrian Salceanu <e@essenciary.com>"]
-version = "4.10.1"
+version = "4.16.2"
 
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
@@ -41,7 +41,7 @@ HTTP = "0.8, 0.9"
 HttpCommon = "0.5"
 Inflector = "1"
 JSON3 = "1"
-JuliaFormatter = "0.22"
+JuliaFormatter = ">= 0.12" # prev 0.22
 MbedTLS = "1"
 Millboard = "0.2"
 Nettle = "0.5"

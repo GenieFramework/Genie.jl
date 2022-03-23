@@ -11,10 +11,10 @@ const DEFAULT_LAYOUT_FILE = :app
 const LAYOUTS_FOLDER = "layouts"
 
 const HTML_FILE_EXT = ".jl"
-const TEMPLATE_EXT  = ".jl.html"
+const TEMPLATE_EXT  = [".jl.html", ".jl"]
 const MARKDOWN_FILE_EXT = [".md", ".jl.md"]
 
-const SUPPORTED_HTML_OUTPUT_FILE_FORMATS = [TEMPLATE_EXT]
+const SUPPORTED_HTML_OUTPUT_FILE_FORMATS = TEMPLATE_EXT
 
 const HTMLParser  = EzXML
 
@@ -65,6 +65,7 @@ Base.iterate(s::ParsedHTMLString, x::Int) = iterate(s.data, x)
 
 Base.ncodeunits(s::ParsedHTMLString) = Base.ncodeunits(s.data)
 Base.codeunit(s::ParsedHTMLString) = Base.codeunit(s.data)
+Base.codeunit(s::ParsedHTMLString, i::Int) = Base.codeunit(s.data, i)
 Base.isvalid(s::ParsedHTMLString, i::Int) = Base.isvalid(s.data, i)
 
 Base.convert(::Type{ParsedHTMLString}, v::Vector{T}) where {T} = ParsedHTMLString(v)
@@ -96,6 +97,7 @@ Base.iterate(s::HTMLString, x::Int) = iterate(s.data, x)
 
 Base.ncodeunits(s::HTMLString) = Base.ncodeunits(s.data)
 Base.codeunit(s::HTMLString) = Base.codeunit(s.data)
+Base.codeunit(s::HTMLString, i::Int) = Base.codeunit(s.data, i)
 Base.isvalid(s::HTMLString, i::Int) = Base.isvalid(s.data, i)
 
 Base.convert(::Type{HTMLString}, v::Vector{T}) where {T} = HTMLString(v)
@@ -859,10 +861,13 @@ function partial(path::String; context::Module = @__MODULE__, kwvars...) :: Stri
 
   template(path, partial = true, context = context)
 end
-
 function partial(path::Genie.Renderer.FilePath; context::Module = @__MODULE__, kwvars...)
   partial(string(path); context = context, kwvars...)
 end
+function partial(resource::Genie.Renderer.ResourcePath, view::Genie.Renderer.ResourcePath, args...; kwargs...)
+  partial(joinpath(Genie.config.path_resources, string(resource), Renderer.VIEWS_FOLDER, string(view)), args...; kwargs...)
+end
+
 
 """
     template(path::String; partial::Bool = true, context::Module = @__MODULE__, vars...) :: String

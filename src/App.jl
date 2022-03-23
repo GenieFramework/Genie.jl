@@ -43,7 +43,7 @@ function bootstrap(context::Union{Module,Nothing} = Genie.default_context(contex
 
   printstyled("| Web: https://genieframework.com\n", color = :light_black, bold = true)
   printstyled("| GitHub: https://github.com/genieframework/Genie.jl\n", color = :light_black, bold = true)
-  printstyled("| Docs: https://www.genieframework.com/docs/tutorials/Overview.html\n", color = :light_black, bold = true)
+  printstyled("| Docs: https://www.genieframework.com/docs\n", color = :light_black, bold = true)
   printstyled("| Discord: https://discord.com/invite/9zyZbD6J7H\n", color = :light_black, bold = true)
   printstyled("| Twitter: https://twitter.com/GenieMVC\n\n", color = :light_black, bold = true)
   printstyled("Active env: $(ENV["GENIE_ENV"] |> uppercase)\n\n", color = :light_blue, bold = true)
