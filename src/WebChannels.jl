@@ -217,6 +217,11 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}},
                     except::Union{HTTP.WebSockets.WebSocket,Nothing,UInt} = nothing) :: Bool
   isa(channels, Array) || (channels = ChannelName[channels])
 
+  if isempty(SUBSCRIPTIONS)
+    @warn("No clients are subscribed to any channel.")
+    return false
+  end
+
   for channel in channels
     haskey(SUBSCRIPTIONS, channel) || throw(ChannelNotFoundException(channel))
 
