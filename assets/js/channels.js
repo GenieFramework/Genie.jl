@@ -12,6 +12,7 @@ Genie.WebChannels.load_channels = function() {
   Genie.WebChannels.openHandlers = [];
   Genie.WebChannels.closeHandlers = [];
   Genie.WebChannels.subscriptionHandlers = [];
+  Genie.WebChannels.processingHandlers = [];
 
   Genie.WebChannels.socket.addEventListener('open', function(event) {
     for (var i = 0; i < Genie.WebChannels.openHandlers.length; i++) {
@@ -94,6 +95,10 @@ window.addEventListener('beforeunload', function (_) {
 
 Genie.WebChannels.load_channels();
 
+Genie.WebChannels.processingHandlers.push(function(event){
+  window.parse_payload(event.data);
+});
+
 Genie.WebChannels.messageHandlers.push(function(event){
   try {
     event.data = event.data.trim();
@@ -111,7 +116,7 @@ Genie.WebChannels.messageHandlers.push(function(event){
     } else if (event.data == 'Subscription: OK') {
       window.subscription_ready();
     } else {
-      window.parse_payload(event.data);
+      window.process_payload(event);
     }
   } catch (ex) {
     console.error(ex);
@@ -151,6 +156,15 @@ function parse_payload(json_data) {
   if (Genie.Settings.env == 'dev') {
     console.info('Overwrite window.parse_payload to handle messages from the server');
     console.info(json_data);
+  }
+};
+
+function process_payload(event) {
+  for (var i = 0; i < Genie.WebChannels.processingHandlers.length; i++) {
+    var f = Genie.WebChannels.processingHandlers[i];
+    if (typeof f === 'function') {
+      f(event);
+    }
   }
 };
 
