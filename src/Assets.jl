@@ -246,7 +246,7 @@ Provides full web channels support, setting up routes for loading support JS fil
 returning the `<script>` tag for including the linked JS file into the web page.
 """
 function channels_support(channel::AbstractString = Genie.config.webchannels_default_route) :: String
-  endpoint = Genie.Assets.asset_path(assets_config, :js, file = Genie.config.webchannels_js_file, path = "$(hash(channel))", skip_ext = true)
+  endpoint = Genie.Assets.asset_path(assets_config, :js, file = Genie.config.webchannels_js_file, skip_ext = true)
 
   if ! external_assets()
     Router.route(endpoint) do
@@ -297,14 +297,14 @@ function webthreads_subscribe(channel::String = Genie.config.webthreads_default_
   Router.route("/$(channel)/$(Genie.config.webchannels_subscribe_channel)", method = Router.GET) do
     WebThreads.subscribe(Genie.Requests.wtclient(), channel)
 
-    Dict("Subscription" => "OK") |> Genie.Renderer.Json.json
+    "Subscription: OK"
   end
 
   Router.route("/$(channel)/$(Genie.config.webchannels_unsubscribe_channel)", method = Router.GET) do
     WebThreads.unsubscribe(Genie.Requests.wtclient(), channel)
     WebThreads.unsubscribe_disconnected_clients()
 
-    Dict("Unubscription" => "OK") |> Genie.Renderer.Json.json
+    "Unsubscription: OK"
   end
 
   nothing

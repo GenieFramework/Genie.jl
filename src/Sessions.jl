@@ -243,12 +243,13 @@ function load end
 Returns the `Session` object associated with the current HTTP request.
 """
 function session(params::Dict{Symbol,Any} = Genie.Router.params()) :: Sessions.Session
-  ( (! haskey(params, Genie.PARAMS_SESSION_KEY) || params[Genie.PARAMS_SESSION_KEY] === nothing) ) &&
+  ( (! haskey(params, Genie.PARAMS_SESSION_KEY) || isnothing(params[Genie.PARAMS_SESSION_KEY])) ) &&
     (params = Sessions.start!(
       Base.get(params, Genie.PARAMS_REQUEST_KEY, HTTP.Request()),
       Base.get(params, Genie.PARAMS_RESPONSE_KEY, HTTP.Response())
     )[3])
 
+  # @show params[Genie.PARAMS_SESSION_KEY]
   params[Genie.PARAMS_SESSION_KEY]
 end
 
