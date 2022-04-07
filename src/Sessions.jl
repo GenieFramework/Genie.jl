@@ -1,6 +1,6 @@
 module Sessions
 
-import SHA, HTTP, Dates, Logging
+import SHA, HTTP, Dates, Logging, Random
 import Genie
 
 # const HTTP = HTTP
@@ -27,6 +27,8 @@ InvalidSessionIdException() =
   InvalidSessionIdException("Can't compute session id - make sure that secret_token!(token) is called in config/secrets.jl")
 
 
+const CSPRNG = Random.RandomDevice()
+
 """
     id() :: String
 
@@ -42,17 +44,7 @@ function id() :: String
     end
   end
 
-  try
-    return join([
-      Genie.secret_token(),
-      bytes2hex(SHA.sha1(string(Dates.now()))),
-      string(rand()),
-      string(hash(Genie))
-    ], ":") |> SHA.sha256 |> bytes2hex
-  catch ex
-    @error ex
-    throw(InvalidSessionIdException())
-  end
+  bytes2hex(SHA.sha256(Genie.secret_token() * string(rand(Sessions.CSPRNG, UInt128))))
 end
 
 

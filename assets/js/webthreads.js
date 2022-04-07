@@ -17,6 +17,8 @@ Genie.WebChannels.load_channels = function() {
 
   channels.messageHandlers = [];
   channels.errorHandlers = [];
+  channels.subscriptionHandlers = [];
+  channels.processingHandlers = [];
 
   socket.maxTries = 1;
 
@@ -56,10 +58,6 @@ Genie.WebChannels.load_channels = function() {
 };
 
 window.addEventListener('beforeunload', function (event) {
-  if (Genie.Settings.env == 'dev') {
-    console.info('Preparing to unload');
-  }
-
   if ( Genie.Settings.webchannels_autosubscribe ) {
     unsubscribe();
   }
@@ -120,10 +118,25 @@ function push(body, headers = {}) {
   pull();
 }
 
+Genie.WebChannels.processingHandlers.push(function(json_data){
+  window.parse_payload(json_data);
+});
+
 Genie.WebChannels.messageHandlers.push(function(code, result, headers){
-  for ( i=0; i<result.length; i++ ) {
-    message = result[i].trim();
-    try {
+  if ( typeof result === 'string' ) {
+    message = result.trim();
+
+    if (message.startsWith(Genie.Settings.webchannels_eval_command)) {
+      return Function('"use strict";return (' + message.substring(Genie.Settings.webchannels_eval_command.length).trim() + ')')();
+    } else if (message == 'Subscription: OK') {
+      window.subscription_ready();
+    } else {
+      window.process_payload(message);
+    }
+  } else if ( typeof result === 'object' && result !== null ) {
+    for ( i=0; i<result.length; i++ ) {
+      message = result[i].trim();
+
       if (message.startsWith('{') && message.endsWith('}')) {
         window.parse_payload(JSON.parse(message, function (key, value) {
           if (value == '__undefined__') {
@@ -132,14 +145,8 @@ Genie.WebChannels.messageHandlers.push(function(code, result, headers){
             return value;
           }
         }));
-      } else if (message.startsWith(Genie.Settings.webchannels_eval_command)) {
-        return Function('"use strict";return (' + message.substring(Genie.Settings.webchannels_eval_command.length).trim() + ')')();
       } else {
-        window.parse_payload(message);
-      }
-    } catch (ex) {
-      if (Genie.Settings.env == 'dev') {
-        console.error(ex);
+        window.process_payload(message);
       }
     }
   }
@@ -152,9 +159,31 @@ Genie.WebChannels.errorHandlers.push(function(event) {
   tm = setTimeout(pull, Genie.WebChannels.poll_interval * 2);
 });
 
+function process_payload(json_data) {
+  for (var i = 0; i < Genie.WebChannels.processingHandlers.length; i++) {
+    var f = Genie.WebChannels.processingHandlers[i];
+    if (typeof f === 'function') {
+      f(json_data);
+    }
+  }
+};
+
 function parse_payload(json_data) {
   if (Genie.Settings.env == 'dev') {
     console.info('Overwrite window.parse_payload to handle messages from the server');
     console.info(json_data);
+  }
+};
+
+function subscription_ready() {
+  for (var i = 0; i < Genie.WebChannels.subscriptionHandlers.length; i++) {
+    var f = Genie.WebChannels.subscriptionHandlers[i];
+    if (typeof f === 'function') {
+      f();
+    }
+  }
+
+  if (Genie.Settings.env == 'dev') {
+    console.info('Subscription ready');
   }
 };

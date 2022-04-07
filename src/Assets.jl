@@ -297,14 +297,14 @@ function webthreads_subscribe(channel::String = Genie.config.webthreads_default_
   Router.route("/$(channel)/$(Genie.config.webchannels_subscribe_channel)", method = Router.GET) do
     WebThreads.subscribe(Genie.Requests.wtclient(), channel)
 
-    Dict("Subscription" => "OK") |> Genie.Renderer.Json.json
+    "Subscription: OK"
   end
 
   Router.route("/$(channel)/$(Genie.config.webchannels_unsubscribe_channel)", method = Router.GET) do
     WebThreads.unsubscribe(Genie.Requests.wtclient(), channel)
     WebThreads.unsubscribe_disconnected_clients()
 
-    Dict("Unubscription" => "OK") |> Genie.Renderer.Json.json
+    "Unsubscription: OK"
   end
 
   nothing

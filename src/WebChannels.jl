@@ -64,7 +64,7 @@ end
 function disconnected_clients(channel::ChannelName) :: Vector{ChannelClient}
   clients = ChannelClient[]
   for client_id in SUBSCRIPTIONS[channel]
-    CLIENTS[client_id].client.txclosed && CLIENTS[client_id].client.rxclosed && push!(clients, CLIENTS[client_id])
+    (CLIENTS[client_id].client.txclosed || CLIENTS[client_id].client.rxclosed) && push!(clients, CLIENTS[client_id])
   end
 
   clients
@@ -217,6 +217,11 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}},
                     except::Union{HTTP.WebSockets.WebSocket,Nothing,UInt} = nothing) :: Bool
   isa(channels, Array) || (channels = ChannelName[channels])
 
+  if isempty(SUBSCRIPTIONS)
+    @warn("No clients are subscribed to any channel.")
+    return false
+  end
+
   for channel in channels
     haskey(SUBSCRIPTIONS, channel) || throw(ChannelNotFoundException(channel))
 
@@ -228,7 +233,8 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}},
         payload !== nothing ?
           message(client, ChannelMessage(channel, client, msg, payload) |> Renderer.Json.JSONParser.json) :
           message(client, msg)
-      catch
+      catch ex
+        @error ex
       end
     end
   end

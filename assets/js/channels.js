@@ -11,6 +11,8 @@ Genie.WebChannels.load_channels = function() {
   Genie.WebChannels.errorHandlers = [];
   Genie.WebChannels.openHandlers = [];
   Genie.WebChannels.closeHandlers = [];
+  Genie.WebChannels.subscriptionHandlers = [];
+  Genie.WebChannels.processingHandlers = [];
 
   Genie.WebChannels.socket.addEventListener('open', function(event) {
     for (var i = 0; i < Genie.WebChannels.openHandlers.length; i++) {
@@ -57,6 +59,8 @@ Genie.WebChannels.load_channels = function() {
         'message': message,
         'payload': payload
       }));
+    } else {
+      console.warn('WebSocket is not open');
     }
   }
 };
@@ -91,6 +95,10 @@ window.addEventListener('beforeunload', function (_) {
 
 Genie.WebChannels.load_channels();
 
+Genie.WebChannels.processingHandlers.push(function(event){
+  window.parse_payload(event.data);
+});
+
 Genie.WebChannels.messageHandlers.push(function(event){
   try {
     event.data = event.data.trim();
@@ -105,8 +113,10 @@ Genie.WebChannels.messageHandlers.push(function(event){
       }));
     } else if (event.data.startsWith(Genie.Settings.webchannels_eval_command)) {
       return Function('"use strict";return (' + event.data.substring(Genie.Settings.webchannels_eval_command.length).trim() + ')')();
+    } else if (event.data == 'Subscription: OK') {
+      window.subscription_ready();
     } else {
-      window.parse_payload(event.data);
+      window.process_payload(event);
     }
   } catch (ex) {
     console.error(ex);
@@ -149,7 +159,23 @@ function parse_payload(json_data) {
   }
 };
 
+function process_payload(event) {
+  for (var i = 0; i < Genie.WebChannels.processingHandlers.length; i++) {
+    var f = Genie.WebChannels.processingHandlers[i];
+    if (typeof f === 'function') {
+      f(event);
+    }
+  }
+};
+
 function subscription_ready() {
+  for (var i = 0; i < Genie.WebChannels.subscriptionHandlers.length; i++) {
+    var f = Genie.WebChannels.subscriptionHandlers[i];
+    if (typeof f === 'function') {
+      f();
+    }
+  }
+
   if (Genie.Settings.env == 'dev') {
     console.info('Subscription ready');
   }
@@ -158,7 +184,6 @@ function subscription_ready() {
 function subscribe() {
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
     Genie.WebChannels.sendMessageTo(window.Genie.Settings.webchannels_default_route, window.Genie.Settings.webchannels_subscribe_channel);
-    window.subscription_ready();
   } else {
     if (Genie.Settings.env == 'dev') {
       console.warn('Queuing subscription');
