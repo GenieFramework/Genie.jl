@@ -620,7 +620,7 @@ end
 Scaffolds a new Genie app, setting up the file structure indicated by the various arguments.
 
 # Arguments
-- `path::String`: the name of the app and the path where to bootstrap it. Spaces not allowed
+- `app_name::String`: the name of the app (can be the full path where the app should be created).
 - `autostart::Bool`: automatically start the app once the file structure is created
 - `fullstack::Bool`: the type of app to be bootstrapped. The fullstack app includes MVC structure, DB connection code, and asset pipeline files.
 - `dbsupport::Bool`: bootstrap the files needed for DB connection setup via the SearchLight ORM

@@ -239,6 +239,31 @@ function channels_subscribe(channel::AbstractString = Genie.config.webchannels_d
 end
 
 
+function assets_endpoint() :: String
+  Genie.Assets.asset_path(assets_config, :js, file = Genie.config.webchannels_js_file, skip_ext = true)
+end
+
+
+function channels_route(channel::AbstractString = Genie.config.webchannels_default_route) :: Nothing
+  if ! external_assets()
+    Router.route(assets_endpoint()) do
+      Genie.Renderer.Js.js(channels(channel))
+    end
+  end
+
+  nothing
+end
+
+
+function channels_script_tag(channel::AbstractString = Genie.config.webchannels_default_route) :: String
+  if ! external_assets()
+    Genie.Renderer.Html.script(src = assets_endpoint())
+  else
+    Genie.Renderer.Html.script([channels(channel)])
+  end
+end
+
+
 """
     channels_support(channel = Genie.config.webchannels_default_route) :: String
 
@@ -246,21 +271,9 @@ Provides full web channels support, setting up routes for loading support JS fil
 returning the `<script>` tag for including the linked JS file into the web page.
 """
 function channels_support(channel::AbstractString = Genie.config.webchannels_default_route) :: String
-  endpoint = Genie.Assets.asset_path(assets_config, :js, file = Genie.config.webchannels_js_file, skip_ext = true)
-
-  if ! external_assets()
-    Router.route(endpoint) do
-      Genie.Renderer.Js.js(channels(channel))
-    end
-  end
-
+  channels_route(channel)
   channels_subscribe(channel)
-
-  if ! external_assets()
-    Genie.Renderer.Html.script(src = endpoint)
-  else
-    Genie.Renderer.Html.script([channels(channel)])
-  end
+  channels_script_tag(channel)
 end
 
 
@@ -324,6 +337,31 @@ function webthreads_push_pull(channel::String = Genie.config.webthreads_default_
 end
 
 
+function webthreads_endpoint(channel::String = Genie.config.webthreads_default_route) :: String
+  Genie.Assets.asset_path(assets_config, :js, file = Genie.config.webthreads_js_file, path = channel, skip_ext = true)
+end
+
+
+function webthreads_route(channel::String = Genie.config.webthreads_default_route) :: Nothing
+  if ! external_assets()
+    Router.route(webthreads_endpoint(channel)) do
+      Genie.Renderer.Js.js(webthreads(channel))
+    end
+  end
+
+  nothing
+end
+
+
+function webthreads_script_tag(channel::String = Genie.config.webthreads_default_route) :: String
+  if ! external_assets()
+    Genie.Renderer.Html.script(src="$(Genie.config.base_path)$(webthreads_endpoint(channel)[2:end])")
+  else
+    Genie.Renderer.Html.script([webthreads(channel)])
+  end
+end
+
+
 """
     webthreads_support(channel = Genie.config.webthreads_default_route) :: String
 
@@ -331,22 +369,10 @@ Provides full web channels support, setting up routes for loading support JS fil
 returning the `<script>` tag for including the linked JS file into the web page.
 """
 function webthreads_support(channel::String = Genie.config.webthreads_default_route) :: String
-  endpoint = Genie.Assets.asset_path(assets_config, :js, file = Genie.config.webthreads_js_file, path=channel, skip_ext = true)
-
-  if ! external_assets()
-    Router.route(endpoint) do
-      Genie.Renderer.Js.js(webthreads(channel))
-    end
-  end
-
+  webthreads_route(channel)
   webthreads_subscribe(channel)
   webthreads_push_pull(channel)
-
-  if ! external_assets()
-    Genie.Renderer.Html.script(src="$(Genie.config.base_path)$(endpoint[2:end])")
-  else
-    Genie.Renderer.Html.script([webthreads(channel)])
-  end
+  webthreads_script_tag(channel)
 end
 
 

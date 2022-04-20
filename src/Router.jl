@@ -73,8 +73,7 @@ mutable struct Channel
   action::Function
   name::Union{Symbol,Nothing}
 
-  Channel(; path = "", action = (() -> error("Channel not set")), name = nothing) =
-    new(path, action)
+  Channel(; path = "", action = (() -> error("Channel not set")), name = nothing) = new(path, action, name)
 end
 
 
@@ -293,6 +292,11 @@ end
 const namedroutes = named_routes
 
 
+function ischannel(channel_name::Symbol) :: Bool
+  haskey(named_channels(), channel_name)
+end
+
+
 """
     named_channels() :: Dict{Symbol,Any}
 
@@ -304,11 +308,16 @@ end
 const namedchannels = named_channels
 
 
+function isroute(route_name::Symbol) :: Bool
+  haskey(named_routes(), route_name)
+end
+
+
 """
 Gets the `Route` correspoding to `routename`
 """
 function get_route(route_name::Symbol; default::Union{Route,Nothing} = Route()) :: Route
-  haskey(named_routes(), route_name) ?
+  isroute(route_name) ?
     named_routes()[route_name] :
     (if default === nothing
       Base.error("Route named `$route_name` is not defined")
@@ -325,8 +334,8 @@ const getroute = get_route
 
 Returns a vector of defined routes.
 """
-function routes() :: Vector{Route}
-  collect(values(_routes)) |> reverse
+function routes(; reversed::Bool = true) :: Vector{Route}
+  collect(values(_routes)) |> (reversed ? reverse : identity)
 end
 
 

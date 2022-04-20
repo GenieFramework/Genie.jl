@@ -217,24 +217,25 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}},
                     except::Union{HTTP.WebSockets.WebSocket,Nothing,UInt} = nothing) :: Bool
   isa(channels, Array) || (channels = ChannelName[channels])
 
-  if isempty(SUBSCRIPTIONS)
-    @warn("No clients are subscribed to any channel.")
-    return false
-  end
+  isempty(SUBSCRIPTIONS) && return false
 
   for channel in channels
     haskey(SUBSCRIPTIONS, channel) || throw(ChannelNotFoundException(channel))
 
     for client in SUBSCRIPTIONS[channel]
       except !== nothing && client == id(except) && continue
-      CLIENTS[client].client.txclosed && CLIENTS[client].client.rxclosed && continue
+      (CLIENTS[client].client.txclosed || CLIENTS[client].client.rxclosed) && continue
 
       try
         payload !== nothing ?
           message(client, ChannelMessage(channel, client, msg, payload) |> Renderer.Json.JSONParser.json) :
           message(client, msg)
       catch ex
-        @error ex
+        if isa(ex, Base.IOError)
+          unsubscribe_disconnected_clients(channel)
+        else
+          @error ex
+        end
       end
     end
   end
