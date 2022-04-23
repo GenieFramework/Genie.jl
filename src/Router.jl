@@ -29,8 +29,6 @@ const HEAD    = "HEAD"
 
 const PARAMS_REQUEST_KEY    = :REQUEST
 const PARAMS_RESPONSE_KEY   = :RESPONSE
-const PARAMS_SESSION_KEY    = :SESSION
-const PARAMS_FLASH_KEY      = :FLASH
 const PARAMS_POST_KEY       = :POST
 const PARAMS_GET_KEY        = :GET
 const PARAMS_WS_CLIENT      = :WS_CLIENT

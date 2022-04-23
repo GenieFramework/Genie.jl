@@ -126,11 +126,8 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `app_env::String`: the environment in which the app is running (dev, test, or prod)
 - `cors_headers::Dict{String,String}`: default `Access-Control-*` CORS settings
 - `cors_allowed_origins::Vector{String}`: allowed origin hosts for CORS settings
-- `cache_duration::Int`: cache expiration time in seconds
 - `log_level::Logging.LogLevel`: logging severity level
 - `log_to_file::Bool`: if true, information will be logged to file besides REPL
-- `session_key_name::String`: the name of the session cookie
-- `session_storage::Symbol`: the backend adapter for session storage (default File)
 - `inflector_irregulars::Vector{Tuple{String,String}}`: additional irregular singular-plural forms to be used by the Inflector
 - `run_as_server::Bool`: when true the server thread is launched synchronously to avoid that the script exits
 - `websockets_server::Bool`: if true, the websocket server is also started together with the web server
@@ -158,9 +155,6 @@ Base.@kwdef mutable struct Settings
                                                         )
   cors_allowed_origins::Vector{String}                = String[]
 
-  cache_duration::Int                                 = 0
-  cache_storage::Union{Symbol,Nothing}                = nothing
-
   log_level::Logging.LogLevel                         = Logging.Debug
   log_to_file::Bool                                   = false
   log_requests::Bool                                  = true
@@ -184,7 +178,6 @@ Base.@kwdef mutable struct Settings
   path_tasks::String                                  = "tasks"
   path_build::String                                  = buildpath()
   path_plugins::String                                = "plugins"
-  path_cache::String                                  = "cache"
   path_initializers::String                           = joinpath(path_config, initializers_folder)
   path_db::String                                     = "db"
   path_bin::String                                    = "bin"
@@ -214,10 +207,6 @@ Base.@kwdef mutable struct Settings
 
   ssl_enabled::Bool                                   = false
   ssl_config::Union{MbedTLS.SSLConfig,Nothing}        = nothing
-
-  session_key_name::String                            = "__geniesid"
-  session_storage::Union{Symbol,Nothing}              = nothing
-  session_options::Dict{String,Any}                   = Dict{String,Any}("Path" => "/", "HttpOnly" => true, "Secure" => ssl_enabled)
 
   base_path::String                                   = haskey(ENV, "BASEPATH") ? ENV["BASEPATH"] : ""
 

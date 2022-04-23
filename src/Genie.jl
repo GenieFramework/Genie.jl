@@ -41,23 +41,13 @@ include("Server.jl")
 include("Commands.jl")
 include("Responses.jl")
 include("Requests.jl")
-include("Flash.jl")
 include("Plugins.jl")
 include("Deploy.jl")
 
 # === #
-# EXTRAS #
-
-include("Cache.jl")
-config.cache_storage == :File && include("cache_adapters/FileCache.jl")
-
-include("Sessions.jl")
 
 export up, down
 @reexport using .Router
-
-
-### NOT EXPORTED ###
 
 
 """

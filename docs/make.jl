@@ -7,12 +7,9 @@ using Genie.Deploy, Genie.Encryption, Genie.Exceptions
 using Genie.FileTemplates, Genie.Flash, Genie.Generator
 using Genie.Headers, Genie.HTTPUtils, Genie.Input, Genie.Loader, Genie.Plugins
 using Genie.Renderer, Genie.Requests, Genie.Responses, Genie.Router, Genie.Server
-using Genie.Sessions, Genie.Toolbox, Genie.Util, Genie.WebChannels
+using Genie.Toolbox, Genie.Util, Genie.WebChannels
 
-push!(LOAD_PATH,  "../../src",
-                  "../../src/cache_adapters",
-                  "../../src/session_adapters",
-                  "../../src/renderers")
+push!(LOAD_PATH,  "../../src", "../../src/renderers")
 
 makedocs(
     sitename = "Genie - The Highly Productive Julia Web Framework",
@@ -53,7 +50,6 @@ makedocs(
         "API" => [
           "App" => "api/app.md",
           "Assets" => "api/assets.md",
-          "Cache" => "api/cache.md",
           "Commands" => "api/commands.md",
           "Configuration" => "api/configuration.md",
           "Cookies" => "api/cookies.md",
@@ -79,7 +75,6 @@ makedocs(
           "Responses" => "api/responses.md",
           "Router" => "api/router.md",
           "Server" => "api/server.md",
-          "Sessions" => "api/sessions.md",
           "Toolbox" => "api/toolbox.md",
           "Util" => "api/util.md",
           "WebChannels" => "api/webchannels.md"
