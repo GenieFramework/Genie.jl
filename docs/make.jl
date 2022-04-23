@@ -2,12 +2,11 @@ push!(LOAD_PATH,"../src/")
 
 using Documenter
 
-using Genie, Genie.App, Genie.AppServer, Genie.Assets
-using Genie.Cache, Genie.Commands, Genie.Configuration, Genie.Cookies
+using Genie, Genie.Assets, Genie.Cache, Genie.Commands, Genie.Configuration, Genie.Cookies
 using Genie.Deploy, Genie.Encryption, Genie.Exceptions
 using Genie.FileTemplates, Genie.Flash, Genie.Generator
-using Genie.Headers, Genie.HTTPUtils, Genie.Input, Genie.Plugins
-using Genie.Renderer, Genie.Requests, Genie.Responses, Genie.Router
+using Genie.Headers, Genie.HTTPUtils, Genie.Input, Genie.Loader, Genie.Plugins
+using Genie.Renderer, Genie.Requests, Genie.Responses, Genie.Router, Genie.Server
 using Genie.Sessions, Genie.Toolbox, Genie.Util, Genie.WebChannels
 
 push!(LOAD_PATH,  "../../src",
@@ -53,7 +52,6 @@ makedocs(
         ],
         "API" => [
           "App" => "api/app.md",
-          "AppServer" => "api/appserver.md",
           "Assets" => "api/assets.md",
           "Cache" => "api/cache.md",
           "Commands" => "api/commands.md",
@@ -80,6 +78,7 @@ makedocs(
           "Requests" => "api/requests.md",
           "Responses" => "api/responses.md",
           "Router" => "api/router.md",
+          "Server" => "api/server.md",
           "Sessions" => "api/sessions.md",
           "Toolbox" => "api/toolbox.md",
           "Util" => "api/util.md",

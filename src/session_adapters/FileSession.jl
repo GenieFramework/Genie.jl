@@ -44,9 +44,9 @@ function write(session::Genie.Sessions.Session) :: Genie.Sessions.Session
     @warn "Resetting session"
 
     session = Genie.Sessions.Session(Genie.Sessions.id())
-    Genie.Cookies.set!(Genie.Router.params(Genie.PARAMS_RESPONSE_KEY), Genie.config.session_key_name, session.id, Genie.config.session_options)
+    Genie.Cookies.set!(Genie.Router.params(Genie.Router.PARAMS_RESPONSE_KEY), Genie.config.session_key_name, session.id, Genie.config.session_options)
     write_session(session)
-    Genie.Router.params(Genie.PARAMS_SESSION_KEY, session)
+    Genie.Router.params(Genie.Router.PARAMS_SESSION_KEY, session)
 
     return session
   catch ex
@@ -97,7 +97,7 @@ end
 Generic method for persisting session data - delegates to the underlying `SessionAdapter`.
 """
 function Genie.Sessions.persist(req::Genie.Sessions.HTTP.Request, res::Genie.Sessions.HTTP.Response, params::Dict{Symbol,Any}) :: Tuple{Genie.Sessions.HTTP.Request,Genie.Sessions.HTTP.Response,Dict{Symbol,Any}}
-  write(params[Genie.PARAMS_SESSION_KEY])
+  write(params[Genie.Router.PARAMS_SESSION_KEY])
 
   req, res, params
 end

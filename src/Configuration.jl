@@ -8,15 +8,6 @@ import Dates
 
 using Random
 
-import VersionCheck
-
-function __init__()
-  try
-    @async VersionCheck.newversion("Genie", url = "https://genieframework.com/CHANGELOG.html")
-  catch
-  end
-end
-
 """
     pkginfo(pkg::String)
 
@@ -107,6 +98,18 @@ env() :: String = Genie.config.app_env
 Constructs the temp dir where Genie's view files are built.
 """
 buildpath() :: String = Base.Filesystem.mktempdir(prefix = "jl_genie_build_")
+
+
+"""
+    config!(; kwargs...)
+
+Updates Genie.confg using the provided keyword arguments.
+"""
+function config!(; kwargs...)
+  for args in kwargs
+    setfield!(Genie.config, args[1], args[2])
+  end
+end
 
 
 """
@@ -223,6 +226,8 @@ Base.@kwdef mutable struct Settings
   format_julia_builds::Bool                           = false
   format_html_output::Bool                            = true
   format_html_indentation_string::String              = "  "
+
+  autoload::Vector{Symbol}                            = Symbol[:initializers, :helpers, :libs, :resources, :plugins, :routes]
 end
 
 end

@@ -35,16 +35,16 @@ const CSPRNG = Random.RandomDevice()
 Generates a new session id.
 """
 function id() :: String
-  if isempty(Genie.secret_token())
+  if isempty(Genie.Secrets.secret_token())
     if !Genie.Configuration.isprod()
-      @error "Empty Genie.secret_token(); using a temporary token"
-      Genie.secret_token!()
+      @error "Empty Genie.Secrets.secret_token(); using a temporary token"
+      Genie.Secrets.secret_token!()
     else
       throw(InvalidSessionIdException())
     end
   end
 
-  bytes2hex(SHA.sha256(Genie.secret_token() * string(rand(Sessions.CSPRNG, UInt128))))
+  bytes2hex(SHA.sha256(Genie.Secrets.secret_token() * string(rand(Sessions.CSPRNG, UInt128))))
 end
 
 
@@ -125,20 +125,20 @@ Initiates a new default session object, generating a new session id.
 function start(req::HTTP.Request, res::HTTP.Response, params::Dict{Symbol,Any} = Dict{Symbol,Any}(); options::Dict{String,Any} = Genie.config.session_options) :: Tuple{HTTP.Request,HTTP.Response,Dict{Symbol,Any},Session}
   session, res = start(id(req, res), req, res; options = options)
 
-  params[Genie.PARAMS_SESSION_KEY]   = session
-  params[Genie.PARAMS_FLASH_KEY]     = begin
-                                          if session !== nothing
-                                            s = get(session, Genie.PARAMS_FLASH_KEY)
-                                            if s === nothing
-                                              ""
-                                            else
-                                              unset!(session, Genie.PARAMS_FLASH_KEY)
-                                              s
-                                            end
-                                          else
-                                            ""
-                                          end
-                                        end
+  params[Genie.Router.PARAMS_SESSION_KEY]   = session
+  params[Genie.Router.PARAMS_FLASH_KEY]     = begin
+                                                if session !== nothing
+                                                  s = get(session, Genie.Router.PARAMS_FLASH_KEY)
+                                                  if s === nothing
+                                                    ""
+                                                  else
+                                                    unset!(session, Genie.Router.PARAMS_FLASH_KEY)
+                                                    s
+                                                  end
+                                                else
+                                                  ""
+                                                end
+                                              end
 
   req, res, params, session
 end
@@ -243,14 +243,13 @@ function load end
 Returns the `Session` object associated with the current HTTP request.
 """
 function session(params::Dict{Symbol,Any} = Genie.Router.params()) :: Sessions.Session
-  ( (! haskey(params, Genie.PARAMS_SESSION_KEY) || isnothing(params[Genie.PARAMS_SESSION_KEY])) ) &&
+  ( (! haskey(params, Genie.Router.PARAMS_SESSION_KEY) || isnothing(params[Genie.Router.PARAMS_SESSION_KEY])) ) &&
     (params = Sessions.start!(
-      Base.get(params, Genie.PARAMS_REQUEST_KEY, HTTP.Request()),
-      Base.get(params, Genie.PARAMS_RESPONSE_KEY, HTTP.Response())
+      Base.get(params, Genie.Router.PARAMS_REQUEST_KEY, HTTP.Request()),
+      Base.get(params, Genie.Router.PARAMS_RESPONSE_KEY, HTTP.Response())
     )[3])
 
-  # @show params[Genie.PARAMS_SESSION_KEY]
-  params[Genie.PARAMS_SESSION_KEY]
+  params[Genie.Router.PARAMS_SESSION_KEY]
 end
 
 

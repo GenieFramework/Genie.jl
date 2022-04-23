@@ -27,10 +27,23 @@ const DELETE  = "DELETE"
 const OPTIONS = "OPTIONS"
 const HEAD    = "HEAD"
 
-const ROUTE_CATCH_ALL = "/*"
+const PARAMS_REQUEST_KEY    = :REQUEST
+const PARAMS_RESPONSE_KEY   = :RESPONSE
+const PARAMS_SESSION_KEY    = :SESSION
+const PARAMS_FLASH_KEY      = :FLASH
+const PARAMS_POST_KEY       = :POST
+const PARAMS_GET_KEY        = :GET
+const PARAMS_WS_CLIENT      = :WS_CLIENT
+const PARAMS_JSON_PAYLOAD   = :JSON_PAYLOAD
+const PARAMS_RAW_PAYLOAD    = :RAW_PAYLOAD
+const PARAMS_FILES          = :FILES
+const PARAMS_ROUTE_KEY      = :ROUTE
+const PARAMS_CHANNELS_KEY   = :CHANNEL
+const PARAMS_MIME_KEY       = :MIME
+
 const ROUTE_CACHE = Dict{String,Tuple{String,Vector{String},Vector{Any}}}()
 
-const request_mappings = Dict{Symbol,String}(
+request_mappings() = Dict{Symbol,String}(
   :text       => "text/plain",
   :html       => "text/html",
   :json       => "application/json",
@@ -193,7 +206,7 @@ First step in handling a web socket request: sets up params collection, handles 
 function route_ws_request(req, msg::String, ws_client) :: String
   params = Params()
 
-  params.collection[Genie.PARAMS_WS_CLIENT] = ws_client
+  params.collection[PARAMS_WS_CLIENT] = ws_client
 
   extract_get_params(HTTP.URIs.URI(req.target), params)
 
@@ -475,6 +488,7 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
       continue
     end
 
+    ROUTE_CATCH_ALL = "/*"
     occursin(regex_route, string(uri.path)) || parsed_route == ROUTE_CATCH_ALL || continue
 
     params.collection = setup_base_params(req, res, params.collection)
@@ -488,8 +502,8 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
     ispayload(req) && extract_request_params(req, params)
     action_controller_params(r.action, params)
 
-    params.collection[Genie.PARAMS_ROUTE_KEY] = r
-    get!(params.collection, Genie.PARAMS_MIME_KEY, MIME(request_type(req)))
+    params.collection[PARAMS_ROUTE_KEY] = r
+    get!(params.collection, PARAMS_MIME_KEY, MIME(request_type(req)))
 
     for f in unique(content_negotiation_hooks)
       req, res, params.collection = f(req, res, params.collection)
@@ -571,7 +585,7 @@ function match_channels(req, msg::String, ws_client, params::Params) :: String
 
     action_controller_params(c.action, params)
 
-    params.collection[Genie.PARAMS_CHANNELS_KEY] = c
+    params.collection[PARAMS_CHANNELS_KEY] = c
 
     controller = (c.action |> typeof).name.module
 
@@ -721,16 +735,16 @@ function extract_get_params(uri::HTTP.URIs.URI, params::Params) :: Bool
         if endswith(string(k), "[]")
           (haskey(params.collection, k) && isa(params.collection[k], Vector)) || (params.collection[k] = String[])
           push!(params.collection[k], v)
-          params.collection[Genie.PARAMS_GET_KEY][k] = params.collection[k]
+          params.collection[PARAMS_GET_KEY][k] = params.collection[k]
         else
-          params.collection[k] = params.collection[Genie.PARAMS_GET_KEY][k] = v
+          params.collection[k] = params.collection[PARAMS_GET_KEY][k] = v
         end
       end
 
     else # no array values
       for (k,v) in HTTP.URIs.queryparams(uri)
         k = Symbol(k)
-        params.collection[k] = params.collection[Genie.PARAMS_GET_KEY][k] = v
+        params.collection[k] = params.collection[PARAMS_GET_KEY][k] = v
       end
     end
   end
@@ -754,10 +768,10 @@ function extract_post_params(req::HTTP.Request, params::Params) :: Nothing
       nested_keys(k, v, params)
 
       k = Symbol(k)
-      params.collection[k] = params.collection[Genie.PARAMS_POST_KEY][k] = v
+      params.collection[k] = params.collection[PARAMS_POST_KEY][k] = v
     end
 
-    params.collection[Genie.PARAMS_FILES] = input.files
+    params.collection[PARAMS_FILES] = input.files
   catch ex
     @error ex
   end
@@ -776,20 +790,20 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
 
   req_body = String(req.body)
 
-  params.collection[Genie.PARAMS_RAW_PAYLOAD] = req_body
+  params.collection[PARAMS_RAW_PAYLOAD] = req_body
 
   if request_type_is(req, :json) && content_length(req) > 0
     try
-      params.collection[Genie.PARAMS_JSON_PAYLOAD] = JSON3.read(req_body) |> Dict
-      params.collection[Genie.PARAMS_POST_KEY][Genie.PARAMS_JSON_PAYLOAD] = params.collection[Genie.PARAMS_JSON_PAYLOAD]
+      params.collection[PARAMS_JSON_PAYLOAD] = JSON3.read(req_body) |> Dict
+      params.collection[PARAMS_POST_KEY][PARAMS_JSON_PAYLOAD] = params.collection[PARAMS_JSON_PAYLOAD]
     catch ex
       @error ex
       @warn "Setting params(:JSON_PAYLOAD) to Nothing"
 
-      params.collection[Genie.PARAMS_JSON_PAYLOAD] = nothing
+      params.collection[PARAMS_JSON_PAYLOAD] = nothing
     end
   else
-    params.collection[Genie.PARAMS_JSON_PAYLOAD] = nothing
+    params.collection[PARAMS_JSON_PAYLOAD] = nothing
   end
 
   nothing
@@ -826,7 +840,7 @@ function content_length(req::HTTP.Request) :: Int
   parse(Int, get(Genie.HTTPUtils.Dict(req), "content-length", "0"))
 end
 function content_length() :: Int
-  content_length(params(Genie.PARAMS_REQUEST_KEY))
+  content_length(params(PARAMS_REQUEST_KEY))
 end
 
 
@@ -836,14 +850,14 @@ end
 Checks if the request content-type is of a certain type.
 """
 function request_type_is(req::HTTP.Request, request_type::Symbol) :: Bool
-  ! in(request_type, keys(request_mappings) |> collect) && error("Unknown request type $request_type - expected one of $(keys(request_mappings) |> collect).")
+  ! in(request_type, keys(request_mappings()) |> collect) && error("Unknown request type $request_type - expected one of $(keys(request_mappings()) |> collect).")
 
-  occursin(request_mappings[request_type], content_type(req)) && return true
+  occursin(request_mappings()[request_type], content_type(req)) && return true
 
   false
 end
 function request_type_is(request_type::Symbol) :: Bool
-  request_type_is(params(Genie.PARAMS_REQUEST_KEY), request_type)
+  request_type_is(params(PARAMS_REQUEST_KEY), request_type)
 end
 
 
@@ -856,14 +870,14 @@ function request_type(req::HTTP.Request) :: Symbol
   accepted_encodings = split(content_type(req), ',')
 
   for accepted_encoding in accepted_encodings
-    for (k,v) in request_mappings
+    for (k,v) in request_mappings()
       if occursin(v, accepted_encoding)
         return k
       end
     end
   end
 
-  isempty(accepted_encodings[1]) ? Symbol(request_mappings[:html]) : Symbol(accepted_encodings[1])
+  isempty(accepted_encodings[1]) ? Symbol(request_mappings()[:html]) : Symbol(accepted_encodings[1])
 end
 
 
@@ -896,17 +910,17 @@ Populates `params` with default environment vars.
 """
 function setup_base_params(req::HTTP.Request = HTTP.Request(), res::Union{HTTP.Response,Nothing} = req.response,
                             params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Dict{Symbol,Any}
-  params[Genie.PARAMS_REQUEST_KEY]   = req
-  params[Genie.PARAMS_RESPONSE_KEY]  =  if res === nothing
+  params[PARAMS_REQUEST_KEY]   = req
+  params[PARAMS_RESPONSE_KEY]  =  if res === nothing
                                           req.response = HTTP.Response()
                                           req.response
                                         else
                                           res
                                         end
-  params[Genie.PARAMS_POST_KEY]      = Dict{Symbol,Any}()
-  params[Genie.PARAMS_GET_KEY]       = Dict{Symbol,Any}()
+  params[PARAMS_POST_KEY]      = Dict{Symbol,Any}()
+  params[PARAMS_GET_KEY]       = Dict{Symbol,Any}()
 
-  params[Genie.PARAMS_FILES]         = Dict{String,Genie.Input.HttpFile}()
+  params[PARAMS_FILES]         = Dict{String,Genie.Input.HttpFile}()
 
   params
 end
@@ -952,7 +966,7 @@ end
 The collection containing the query request variables collection (GET params).
 """
 function query()
-  haskey(params(), Genie.PARAMS_GET_KEY) ? params(Genie.PARAMS_GET_KEY) : Dict()
+  haskey(params(), PARAMS_GET_KEY) ? params(PARAMS_GET_KEY) : Dict()
 end
 function query(key)
   query()[key]
@@ -968,7 +982,7 @@ end
 The collection containing the POST request variables collection.
 """
 function post()
-  haskey(params(), Genie.PARAMS_POST_KEY) ? params(Genie.PARAMS_POST_KEY) : Dict()
+  haskey(params(), PARAMS_POST_KEY) ? params(PARAMS_POST_KEY) : Dict()
 end
 function post(key)
   post()[key]
@@ -984,7 +998,7 @@ end
 The request object.
 """
 function request()
-  params(Genie.PARAMS_REQUEST_KEY)
+  params(PARAMS_REQUEST_KEY)
 end
 
 
@@ -1005,7 +1019,7 @@ end
 Returns the content-type of the current request-response cycle.
 """
 function response_type(params::Dict{Symbol,T})::Symbol where {T}
-  get(params, :response_type, request_type(params[Genie.PARAMS_REQUEST_KEY]))
+  get(params, :response_type, request_type(params[PARAMS_REQUEST_KEY]))
 end
 function response_type(params::Params) :: Symbol
   response_type(params.collection)
@@ -1129,11 +1143,11 @@ end
 Returns the MIME type of the response.
 """
 function response_mime(params::Dict{Symbol,Any} = params())
-  if isempty(get!(params, Genie.PARAMS_MIME_KEY, request_type(params[Genie.PARAMS_REQUEST_KEY])) |> string)
-    params[Genie.PARAMS_MIME_KEY] = request_type(params[Genie.PARAMS_REQUEST_KEY])
+  if isempty(get!(params, PARAMS_MIME_KEY, request_type(params[PARAMS_REQUEST_KEY])) |> string)
+    params[PARAMS_MIME_KEY] = request_type(params[PARAMS_REQUEST_KEY])
   end
 
-  params[Genie.PARAMS_MIME_KEY]
+  params[PARAMS_MIME_KEY]
 end
 
 

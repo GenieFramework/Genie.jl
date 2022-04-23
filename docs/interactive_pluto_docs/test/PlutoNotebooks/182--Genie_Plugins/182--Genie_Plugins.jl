@@ -119,7 +119,7 @@ $ bin/repl
 Start the server:
 
 ```julia
-julia> Genie.startup()
+julia> Genie.up()
 ```
 
 Navigate to `http://localhost:8000/hello` to get the greeting from the plugin.

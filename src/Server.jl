@@ -1,7 +1,7 @@
 """
 Handles Http server related functionality, manages requests and responses and their logging.
 """
-module AppServer
+module Server
 
 using HTTP, Sockets
 import Millboard, Distributed, Logging, MbedTLS
@@ -47,7 +47,7 @@ end
 
 
 """
-    startup(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
+    up(port::Int = Genie.config.server_port, host::String = Genie.config.server_host;
         ws_port::Int = Genie.config.websockets_port, async::Bool = ! Genie.config.run_as_server) :: ServersCollection
 
 Starts the web server.
@@ -65,7 +65,7 @@ julia> up(8000, "127.0.0.1", async = false)
 Web Server starting at http://127.0.0.1:8000
 ```
 """
-function startup(port::Int, host::String = Genie.config.server_host;
+function up(port::Int, host::String = Genie.config.server_host;
                   ws_port::Int = port,
                   async::Bool = ! Genie.config.run_as_server,
                   verbose::Bool = false,
@@ -149,11 +149,9 @@ function startup(port::Int, host::String = Genie.config.server_host;
   new_server
 end
 
-function startup(; port = Genie.config.server_port, ws_port = Genie.config.websockets_port, kwargs...) :: ServersCollection
-    startup(port; ws_port = ws_port, kwargs...)
+function up(; port = Genie.config.server_port, ws_port = Genie.config.websockets_port, kwargs...) :: ServersCollection
+  up(port; ws_port = ws_port, kwargs...)
 end
-
-const up = startup
 
 
 print_server_status(status::String) = @info "\n$status \n"
@@ -165,6 +163,43 @@ elseif Sys.islinux()
   openbrowser(url::String) = run(`xdg-open $url`)
 elseif Sys.iswindows()
   openbrowser(url::String) = run(`cmd /C start $url`)
+end
+
+
+"""
+    serve(path::String = pwd(), params...; kwparams...)
+
+Serves a folder of static files located at `path`. Allows Genie to be used as a static files web server.
+The `params` and `kwparams` arguments are forwarded to `Genie.up()`.
+
+# Arguments
+- `path::String`: the folder of static files to be served by the server
+- `params`: additional arguments which are passed to `Genie.up` to control the web server
+- `kwparams`: additional keyword arguments which are passed to `Genie.up` to control the web server
+
+# Examples
+```julia-repl
+julia> Genie.serve("public", 8888, async = false, verbose = true)
+[ Info: Ready!
+2019-08-06 16:39:20:DEBUG:Main: Web Server starting at http://127.0.0.1:8888
+[ Info: Listening on: 127.0.0.1:8888
+[ Info: Accept (1):  🔗    0↑     0↓    1s 127.0.0.1:8888:8888 ≣16
+```
+"""
+function serve(path::String = pwd(), params...; kwparams...)
+  cd(path)
+  path = ""
+
+  Genie.config.server_document_root = abspath(path)
+
+  Router.route("/") do
+    Router.serve_static_file(path, root = path)
+  end
+  Router.route(".*") do
+    Router.serve_static_file(Router.params(:REQUEST).target, root = path)
+  end
+
+  up(params...; kwparams...)
 end
 
 

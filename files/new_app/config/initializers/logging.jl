@@ -2,9 +2,15 @@ import Genie
 import Logging, LoggingExtras
 import Dates
 
-function initialize_logging()
+function timestamp_logger(logger)
   date_format = "yyyy-mm-dd HH:MM:SS"
 
+  LoggingExtras.TransformerLogger(logger) do log
+    merge(log, (; message = "$(Dates.format(Dates.now(), date_format)) $(log.message)"))
+  end
+end
+
+function initialize_logging()
   logger =  if Genie.config.log_to_file
               isdir(Genie.config.path_log) || mkpath(Genie.config.path_log)
               LoggingExtras.TeeLogger(
@@ -14,10 +20,6 @@ function initialize_logging()
             else
               Logging.ConsoleLogger(stdout, Genie.config.log_level)
             end
-
-  timestamp_logger(logger) = LoggingExtras.TransformerLogger(logger) do log
-    merge(log, (; message = "$(Dates.format(Dates.now(), date_format)) $(log.message)"))
-  end
 
   LoggingExtras.TeeLogger(LoggingExtras.MinLevelLogger(logger, Genie.config.log_level)) |> timestamp_logger |> global_logger
 

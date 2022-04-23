@@ -41,15 +41,15 @@ end
 Generates a pair of key32 and iv16 with salt for encryption/decryption
 """
 function encryption_sauce() :: Tuple{Vector{UInt8},Vector{UInt8}}
-  if length(Genie.secret_token()) < 64
+  if length(Genie.Secrets.secret_token()) < 64
     if !Genie.Configuration.isprod()
-      @error "Invalid Genie.secret_token() with less than 64 characters; using a temporary token"
-      Genie.secret_token!()
+      @error "Invalid Genie.Secrets.secret_token() with less than 64 characters; using a temporary token"
+      Genie.Secrets.secret_token!()
     else
-      error("Can't encrypt - make sure that secret_token!(token) is called in config/secrets.jl")
+      error("Can't encrypt - make sure that Genie.Secrets.secret_token!(token) is called in config/secrets.jl")
     end
   end
-  token = Genie.secret_token()
+  token = Genie.Secrets.secret_token()
   passwd = token[1:32]
   salt = hex2bytes(token[33:64])
   Nettle.gen_key32_iv16(Vector{UInt8}(passwd), salt)

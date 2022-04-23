@@ -15,7 +15,7 @@
     req = HTTP.request("GET", "http://localhost:$port/../../src/mimetypes.jl"; status_exception = false)
     @test req.status == 401
 
-    Genie.AppServer.down!()
+    Genie.Server.down!()
     server = nothing
   end
 

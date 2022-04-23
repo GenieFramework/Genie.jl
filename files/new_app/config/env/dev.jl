@@ -1,6 +1,6 @@
-using Genie.Configuration, Logging
+using Genie, Logging
 
-const config = Settings(
+Genie.Configuration.config!(
   server_port                     = 8000,
   server_host                     = "127.0.0.1",
   log_level                       = Logging.Info,

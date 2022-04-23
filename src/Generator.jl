@@ -3,16 +3,28 @@ Generates various Genie files.
 """
 module Generator
 
-import SHA, Dates, Pkg, Logging, UUIDs
+import Dates, Pkg, Logging, UUIDs
 import Inflector
 import Genie
 
 
-const JULIA_PATH = joinpath(Sys.BINDIR, "julia")
+const NEW_APP_PATH = joinpath("files", "new_app")
 
 
 function validname(name::String)
   filter(! isempty, [x.match for x in collect(eachmatch(r"[0-9a-zA-Z_]*", name))]) |> join
+end
+
+"""
+    newcontroller(controller_name::Union{String,Symbol}) :: Nothing
+
+Creates a new `controller` file. If `pluralize` is `false`, the name of the controller is not automatically pluralized.
+"""
+function newcontroller(controller_name::Union{String,Symbol}; path::Union{String,Nothing} = nothing, pluralize::Bool = true, context::Union{Module,Nothing} = nothing) :: Nothing
+  Generator.newcontroller(string(controller_name), path = path, pluralize = pluralize)
+  load_resources(; context = Genie.Loader.default_context(context))
+
+  nothing
 end
 
 
@@ -31,6 +43,20 @@ function newcontroller(resource_name::String; path::Union{String,Nothing} = noth
   cfn = controller_file_name(resource_name)
   write_resource_file(resource_path, cfn, resource_name, :controller, pluralize = pluralize) &&
     @info "New controller created at $(abspath(joinpath(resource_path, cfn)))"
+
+  nothing
+end
+
+
+"""
+    newresource(resource_name::Union{String,Symbol}; pluralize::Bool = true, context::Union{Module,Nothing} = nothing) :: Nothing
+
+Creates all the files associated with a new resource.
+If `pluralize` is `false`, the name of the resource is not automatically pluralized.
+"""
+function newresource(resource_name::Union{String,Symbol}; path::String = ".", pluralize::Bool = true, context::Union{Module,Nothing} = nothing) :: Nothing
+  newresource(string(resource_name), path = path, pluralize = pluralize)
+  load_resources(; context = Genie.Loader.default_context(context))
 
   nothing
 end
@@ -58,6 +84,21 @@ function newresource(resource_name::String; path::String = ".", pluralize::Bool 
 
   nothing
 end
+
+"""
+    newtask(task_name::Union{String,Symbol}) :: Nothing
+
+Creates a new Genie `Task` file.
+"""
+function newtask(task_name::Union{String,Symbol}) :: Nothing
+  task_name = string(task_name)
+  endswith(task_name, "Task") || (task_name = task_name * "Task")
+  Toolbox.new(task_name)
+
+  nothing
+end
+
+###################################
 
 
 """
@@ -134,6 +175,7 @@ end
 Creates the bin/server and bin/repl binaries for Windows
 """
 function setup_windows_bin_files(path::String = ".") :: Nothing
+  JULIA_PATH = joinpath(Sys.BINDIR, "julia")
   bin_folder_path = binfolderpath(path)
 
   open(joinpath(bin_folder_path, "repl.bat"), "w") do f
@@ -202,17 +244,8 @@ end
 Computes the controller file name based on the resource name.
 """
 function controller_file_name(resource_name::Union{String,Symbol}) :: String
+  GENIE_CONTROLLER_FILE_POSTFIX = "Controller.jl"
   uppercasefirst(string(resource_name)) * Genie.GENIE_CONTROLLER_FILE_POSTFIX
-end
-
-
-"""
-    secret_token() :: String
-
-Generates a random secret token to be used for configuring the call to `Genie.secret_token!`.
-"""
-function secret_token() :: String
-  SHA.sha256("$(randn()) $(Dates.now())") |> bytes2hex
 end
 
 
@@ -225,8 +258,8 @@ function write_secrets_file(app_path::String = ".") :: Nothing
   secrets_path = joinpath(app_path, Genie.config.path_config)
   ispath(secrets_path) || mkpath(secrets_path)
 
-  open(joinpath(secrets_path, Genie.SECRETS_FILE_NAME), "w") do f
-    write(f, """Genie.secret_token!("$(secret_token())") """)
+  open(joinpath(secrets_path, Genie.Secrets.SECRETS_FILE_NAME), "w") do f
+    write(f, """Genie.Secrets.secret_token!("$(Genie.Secrets.secret())") """)
   end
 
   nothing
@@ -270,6 +303,8 @@ end
 Writes the file necessary to scaffold a minimal Genie app.
 """
 function scaffold(app_name::String, app_path::String = "") :: Nothing
+  GENIE_FILE_NAME = "genie.jl"
+
   app_name = validname(app_name)
   app_path = abspath(app_name)
 
@@ -749,7 +784,6 @@ function newapp_webservice(path::String = "."; autostart::Bool = true, dbsupport
   newapp(path, autostart = autostart, fullstack = false, dbsupport = dbsupport, mvcsupport = false,
           dbadapter = dbadapter, testmode = testmode, interactive = interactive)
 end
-const newappwebservice = newapp_webservice
 
 
 """
@@ -769,7 +803,6 @@ function newapp_mvc(path::String = "."; autostart::Bool = true, dbadapter::Union
   newapp(path, autostart = autostart, fullstack = false, dbsupport = true, mvcsupport = true, dbadapter = dbadapter,
           testmode = testmode, interactive = interactive)
 end
-const newappmvc = newapp_mvc
 
 
 """
@@ -789,7 +822,13 @@ function newapp_fullstack(path::String = "."; autostart::Bool = true, dbadapter:
   newapp(path, autostart = autostart, fullstack = true, dbsupport = true, mvcsupport = true, dbadapter = dbadapter,
           testmode = testmode, interactive = interactive)
 end
-const newappfullstack = newapp_fullstack
 
+
+function autoconfdb(dbadapter)
+  Core.eval(Main, Meta.parse("using SearchLight"))
+  Core.eval(Main, Meta.parse("using SearchLight$dbadapter"))
+
+  Core.eval(Main, Meta.parse("Genie.Generator.@write_db_config()"))
+end
 
 end

@@ -53,14 +53,14 @@ end
 md"""
 
 ```julia
-julia> Genie.startup()
+julia> Genie.up()
 ```
 """
 
 # ╔═╡ 1dcb137a-6527-4b0f-831d-0cd190f2e09a
 # hideall
 
-Genie.startup(async=true);
+Genie.up(async=true);
 
 # ╔═╡ 23aab64c-cf08-4c26-a2bd-b0e6f9609f66
 md"""

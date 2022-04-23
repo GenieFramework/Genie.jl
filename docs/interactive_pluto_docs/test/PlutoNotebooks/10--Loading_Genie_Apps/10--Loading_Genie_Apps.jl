@@ -151,7 +151,7 @@ The app's environment will now be loaded.
 In order to start the web server execute
 
 ```julia
-julia> startup()
+julia> up()
 ```
 """
 

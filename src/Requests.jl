@@ -18,7 +18,7 @@ Processes an `application/json` `POST` request.
 If it fails to successfully parse the `JSON` data it returns `nothing`. The original payload can still be accessed invoking `rawpayload()`
 """
 function jsonpayload()
-  haskey(Router.params(), Genie.PARAMS_JSON_PAYLOAD) ? Router.params(Genie.PARAMS_JSON_PAYLOAD) : nothing
+  haskey(Genie.Router.params(), Genie.Router.PARAMS_JSON_PAYLOAD) ? Genie.Router.params(Genie.Router.PARAMS_JSON_PAYLOAD) : nothing
 end
 
 
@@ -38,7 +38,7 @@ end
 Returns the raw `POST` payload as a `String`.
 """
 function rawpayload() :: String
-  haskey(Router.params(), Genie.PARAMS_RAW_PAYLOAD) ? Router.params(Genie.PARAMS_RAW_PAYLOAD) : ""
+  haskey(Genie.Router.params(), Genie.Router.PARAMS_RAW_PAYLOAD) ? Genie.Router.params(Genie.Router.PARAMS_RAW_PAYLOAD) : ""
 end
 
 
@@ -48,7 +48,7 @@ end
 Collection of form uploaded files.
 """
 function filespayload() :: Dict{String,Input.HttpFile}
-  haskey(Router.params(), Genie.PARAMS_FILES) ? Router.params(Genie.PARAMS_FILES) : Dict{String,Input.HttpFile}()
+  haskey(Router.params(), Genie.Router.PARAMS_FILES) ? Router.params(Genie.Router.PARAMS_FILES) : Dict{String,Input.HttpFile}()
 end
 
 
@@ -58,7 +58,7 @@ end
 Returns the `HttpFile` uploaded through the `key` input name.
 """
 function filespayload(key::Union{String,Symbol}) :: Input.HttpFile
-  Router.params(Genie.PARAMS_FILES)[string(key)]
+  Router.params(Genie.Router.PARAMS_FILES)[string(key)]
 end
 
 
@@ -109,7 +109,7 @@ end
 A dict representing the POST variables payload of the request (corresponding to a `form-data` request)
 """
 function postpayload() :: Dict{Symbol,Any}
-  haskey(Router.params(), Genie.PARAMS_POST_KEY) ? Router.params(Genie.PARAMS_POST_KEY) : Dict{Symbol,Any}()
+  haskey(Router.params(), Genie.Router.PARAMS_POST_KEY) ? Router.params(Genie.Router.PARAMS_POST_KEY) : Dict{Symbol,Any}()
 end
 
 
@@ -139,7 +139,7 @@ end
 A dict representing the GET/query variables payload of the request (the part correspoding to `?foo=bar&baz=moo`)
 """
 function getpayload() :: Dict{Symbol,Any}
-  haskey(Router.params(), Genie.PARAMS_GET_KEY) ? Router.params(Genie.PARAMS_GET_KEY) : Dict{Symbol,Any}()
+  haskey(Router.params(), Genie.Router.PARAMS_GET_KEY) ? Router.params(Genie.Router.PARAMS_GET_KEY) : Dict{Symbol,Any}()
 end
 
 
@@ -170,7 +170,7 @@ Returns the raw HTTP.Request object associated with the request. If no request i
 request/response cycle) returns `nothing`.
 """
 function request() :: Union{HTTP.Request,Nothing}
-  haskey(Router.params(), Genie.PARAMS_REQUEST_KEY) ? Router.params(Genie.PARAMS_REQUEST_KEY) : nothing
+  haskey(Router.params(), Genie.Router.PARAMS_REQUEST_KEY) ? Router.params(Genie.Router.PARAMS_REQUEST_KEY) : nothing
 end
 
 const getrequest = request
@@ -212,7 +212,7 @@ end
 Returns the `Route` object which was matched for the current request or `noting` if no route is available.
 """
 function matchedroute() :: Union{Genie.Router.Route,Nothing}
-  haskey(Router.params(), Genie.PARAMS_ROUTE_KEY) ? Router.params(Genie.PARAMS_ROUTE_KEY) : nothing
+  haskey(Router.params(), Genie.Router.PARAMS_ROUTE_KEY) ? Router.params(Genie.Router.PARAMS_ROUTE_KEY) : nothing
 end
 
 
@@ -222,7 +222,7 @@ end
 Returns the `Channel` object which was matched for the current request or `nothing` if no channel is available.
 """
 function matchedchannel() :: Union{Genie.Router.Channel,Nothing}
-  haskey(Router.params(), Genie.PARAMS_CHANNELS_KEY) ? Router.params(Genie.PARAMS_CHANNELS_KEY) : nothing
+  haskey(Router.params(), Genie.Router.PARAMS_CHANNELS_KEY) ? Router.params(Genie.Router.PARAMS_CHANNELS_KEY) : nothing
 end
 
 
@@ -232,7 +232,7 @@ end
 The web sockets client for the current request or nothing if not available.
 """
 function wsclient() :: Union{HTTP.WebSockets.WebSocket,Nothing}
-  haskey(Router.params(), Genie.PARAMS_WS_CLIENT) ? Router.params(Genie.PARAMS_WS_CLIENT) : nothing
+  haskey(Router.params(), Genie.Router.PARAMS_WS_CLIENT) ? Router.params(Genie.Router.PARAMS_WS_CLIENT) : nothing
 end
 
 

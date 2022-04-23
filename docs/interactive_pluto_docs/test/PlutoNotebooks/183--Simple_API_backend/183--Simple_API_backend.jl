@@ -30,7 +30,7 @@ route("/") do
   (:message => "Hi there!") |> json
 end
 
-Genie.startup()
+Genie.up()
 ```
 """
 
@@ -59,7 +59,7 @@ end;
 
 # ╔═╡ fc1de4cd-80a7-40d6-9a1a-2719ed170508
 md"""
-The key bit here is `Genie.config.run_as_server = true`. This will start the server synchronously so the `startup()` function won't return.
+The key bit here is `Genie.config.run_as_server = true`. This will start the server synchronously so the `up()` function won't return.
 This endpoint can be run directly from the command line - if say, you save the code in a `rest.jl` file:
 """
 
@@ -92,7 +92,7 @@ route("/send") do
   response.body |> String |> json
 end
 
-Genie.startup(async = false)
+Genie.up(async = false)
 ```
 """
 
@@ -118,7 +118,7 @@ Genie.startup(async = false)
 #   response.body |> String |> json
 # end
 
-# Genie.startup(async = true)""");
+# Genie.up(async = true)""");
 
 # ╔═╡ f7c15c14-73fb-440c-a79f-0ab34ff6eac6
 # hideall

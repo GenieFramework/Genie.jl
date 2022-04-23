@@ -330,7 +330,7 @@ function webthreads_push_pull(channel::String = Genie.config.webthreads_default_
   end
 
   Router.route("/$(channel)/$(Genie.config.webthreads_push_route)", method = Router.POST) do
-    WebThreads.push(Genie.Requests.wtclient(), channel, Router.params(Genie.PARAMS_RAW_PAYLOAD))
+    WebThreads.push(Genie.Requests.wtclient(), channel, Router.params(Genie.Router.PARAMS_RAW_PAYLOAD))
   end
 
   nothing
