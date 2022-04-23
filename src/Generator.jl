@@ -401,7 +401,7 @@ function write_app_custom_files(path::String, app_path::String) :: Nothing
     (pwd() != @__DIR__) && cd(@__DIR__) # allow starting app from bin/ dir
 
     using $(moduleinfo[1])
-    push!(Base.modules_warned_for, Base.PkgId($(moduleinfo[1])))
+    const UserApp = $(moduleinfo[1])
     $(moduleinfo[1]).main()
     """)
   end

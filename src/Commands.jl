@@ -28,14 +28,14 @@ function execute(config::Genie.Configuration.Settings; server::Union{Sockets.TCP
 
   elseif called_command(parsed_args, "r")
     endswith(parsed_args["r"], "Task") || (parsed_args["r"] *= "Task")
-    Base.invokelatest(Genie.Toolbox.loadtasks, Main.UserApp)
-    taskname = parsed_args["r"]
-    task = getfield(Main.UserApp, Symbol(taskname))
+    Genie.Toolbox.loadtasks()
+    taskname = parsed_args["r"] |> Symbol
+    task = getfield(Main.UserApp, taskname)
 
     if parsed_args["a"] !== nothing
-      Base.invokelatest(task.runtask, parsed_args["a"])
+      Base.@invokelatest task.runtask(parsed_args["a"])
     else
-      Base.invokelatest(task.runtask)
+      Base.@invokelatest task.runtask()
     end
   end
 

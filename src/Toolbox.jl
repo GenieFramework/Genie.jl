@@ -2,8 +2,11 @@ module Toolbox
 
 import Base.string
 
+import Logging
 import Inflector
-import Genie, Genie.Util, Millboard, Genie.FileTemplates, Genie.Configuration, Genie.Exceptions, Logging
+import Genie, Genie.Util, Genie.FileTemplates, Genie.Configuration, Genie.Exceptions, Genie.Loader
+import Millboard
+import Revise
 
 export TaskResult, VoidTaskResult
 
@@ -23,11 +26,11 @@ end
 
 
 """
-    tasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
+    loadtasks(; filter_type_name = Symbol()) :: Vector{TaskInfo}
 
 Returns a vector of all registered Genie tasks.
 """
-function tasks(context::Module; filter_type_name::Union{Symbol,Nothing} = nothing) :: Vector{TaskInfo}
+function loadtasks(context::Module = Genie.Loader.default_context(); filter_type_name::Union{Symbol,Nothing} = nothing) :: Vector{TaskInfo}
   tasks = TaskInfo[]
 
   f = readdir(normpath(Genie.config.path_tasks))
@@ -35,8 +38,7 @@ function tasks(context::Module; filter_type_name::Union{Symbol,Nothing} = nothin
   for i in f
     if ( endswith(i, "Task.jl") )
       module_name = Genie.Util.file_name_without_extension(i) |> Symbol
-      Core.eval(context, :(include(joinpath(Genie.config.path_tasks, $i))))
-      Core.eval(context, :(using .$(module_name)))
+      Revise.includet(context, joinpath(Genie.config.path_tasks, i))
 
       ti = TaskInfo(i, module_name, taskdocs(module_name, context = context))
 
@@ -48,7 +50,6 @@ function tasks(context::Module; filter_type_name::Union{Symbol,Nothing} = nothin
 
   tasks
 end
-const loadtasks = tasks
 
 
 function VoidTaskResult()
@@ -76,7 +77,7 @@ Prints a list of all the registered Genie tasks to the standard output.
 function printtasks(context::Module) :: Nothing
   output = ""
   arr_output = []
-  for t in tasks(context)
+  for t in loadtasks(context)
     td = Genie.to_dict(t)
     push!(arr_output, [td["module_name"], td["file_name"], td["description"]])
   end
