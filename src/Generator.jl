@@ -245,7 +245,7 @@ Computes the controller file name based on the resource name.
 """
 function controller_file_name(resource_name::Union{String,Symbol}) :: String
   GENIE_CONTROLLER_FILE_POSTFIX = "Controller.jl"
-  uppercasefirst(string(resource_name)) * Genie.GENIE_CONTROLLER_FILE_POSTFIX
+  uppercasefirst(string(resource_name)) * GENIE_CONTROLLER_FILE_POSTFIX
 end
 
 
@@ -272,7 +272,7 @@ end
 Writes the files necessary to create a full stack Genie app.
 """
 function fullstack_app(app_name::String = ".", app_path::String = ".") :: Nothing
-  cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH), app_path)
+  cp(joinpath(@__DIR__, "..", NEW_APP_PATH), app_path)
 
   scaffold(app_name, app_path)
 
@@ -310,10 +310,10 @@ function scaffold(app_name::String, app_path::String = "") :: Nothing
 
   isdir(app_path) || mkpath(app_path)
 
-  for f in [Genie.config.path_src, Genie.GENIE_FILE_NAME, Genie.ROUTES_FILE_NAME,
+  for f in [Genie.config.path_src, GENIE_FILE_NAME, Genie.ROUTES_FILE_NAME,
             ".gitattributes", ".gitignore"]
     try
-      cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, f), joinpath(app_path, f))
+      cp(joinpath(@__DIR__, "..", NEW_APP_PATH, f), joinpath(app_path, f))
     catch ex
     end
   end
@@ -333,7 +333,7 @@ function microstack_app(app_name::String = ".", app_path::String = ".") :: Nothi
   isdir(app_path) || mkpath(app_path)
 
   for f in [Genie.config.path_bin, Genie.config.path_config, Genie.config.server_document_root]
-    cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, f), joinpath(app_path, f))
+    cp(joinpath(@__DIR__, "..", NEW_APP_PATH, f), joinpath(app_path, f))
   end
 
   scaffold(app_name, app_path)
@@ -348,7 +348,7 @@ end
 Writes the files used for rendering resources using the MVC stack and the Genie templating system.
 """
 function mvc_support(app_path::String = ".") :: Nothing
-  cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_app), joinpath(app_path, Genie.config.path_app))
+  cp(joinpath(@__DIR__, "..", NEW_APP_PATH, Genie.config.path_app), joinpath(app_path, Genie.config.path_app))
 
   nothing
 end
@@ -362,7 +362,7 @@ Writes files used for interacting with the SearchLight ORM.
 function db_support(app_path::String = ".", include_env::Bool = true, add_dependencies::Bool = true;
                     testmode::Bool = false, dbadapter::Union{String,Symbol,Nothing} = nothing, interactive::Bool = true)
 
-  cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_db), joinpath(app_path, Genie.config.path_db), force = true)
+  cp(joinpath(@__DIR__, "..", NEW_APP_PATH, Genie.config.path_db), joinpath(app_path, Genie.config.path_db), force = true)
 
   db_intializer(app_path, include_env)
 
@@ -373,11 +373,11 @@ end
 function db_intializer(app_path::String = ".", include_env::Bool = false)
   initializers_dir = joinpath(app_path, Genie.config.path_initializers)
   initializer_path = joinpath(initializers_dir, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME)
-  source_path = joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_initializers, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME) |> normpath
+  source_path = joinpath(@__DIR__, "..", NEW_APP_PATH, Genie.config.path_initializers, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME) |> normpath
 
   if !isfile(initializer_path)
     ispath(initializers_dir) || mkpath(initializers_dir)
-    include_env && cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_env), joinpath(app_path, Genie.config.path_env), force = true)
+    include_env && cp(joinpath(@__DIR__, "..", NEW_APP_PATH, Genie.config.path_env), joinpath(app_path, Genie.config.path_env), force = true)
     cp(source_path, initializer_path)
   end
 end
