@@ -49,6 +49,7 @@ include("Deploy.jl")
 export up, down
 @reexport using .Router
 
+const assets_config = Genie.Assets.assets_config
 
 """
     newapp(path::String = "."; autostart::Bool = true, fullstack::Bool = false, dbsupport::Bool = false, mvcsupport::Bool = false) :: Nothing
