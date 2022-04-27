@@ -18,6 +18,7 @@ include("constants.jl")
 
 import Sockets
 import Logging
+import PrecompileSignatures
 
 using Reexport
 
@@ -284,5 +285,15 @@ function genie(; context = @__MODULE__) :: Union{Nothing,Sockets.TCPServer}
 end
 
 const bootstrap = genie
+
+import EzXML
+import FilePathsBase
+import Markdown
+import HTTP
+import Pkg
+
+if ccall(:jl_generating_output, Cint, ()) == 1
+    include(PrecompileSignatures.precompile_directives(Genie))
+end
 
 end
