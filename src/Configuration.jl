@@ -109,6 +109,8 @@ function config!(; kwargs...)
   for args in kwargs
     setfield!(Genie.config, args[1], args[2])
   end
+
+  Genie.config
 end
 
 
