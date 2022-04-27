@@ -160,6 +160,11 @@ function autoload(dirs::Vector{String}; kwargs...)
 end
 
 
+function autoload(dirs...; kwargs...)
+  autoload([dirs...]; kwargs...)
+end
+
+
 """
     load(; context::Union{Module,Nothing} = nothing) :: Nothing
 

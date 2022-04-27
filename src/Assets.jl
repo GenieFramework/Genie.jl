@@ -180,7 +180,7 @@ end
 """
     embeded(path::String) :: String
 
-Reads and outputs the file at `path` within Genie's root package dir
+Reads and outputs the file at `path`.
 """
 function embedded(path::String) :: String
   read(joinpath(path) |> normpath, String)
@@ -190,7 +190,7 @@ end
 """
     embeded_path(path::String) :: String
 
-Returns the path relative to Genie's root package dir
+Returns the path relative to Genie's root package dir.
 """
 function embedded_path(path::String) :: String
   joinpath(@__DIR__, "..", path) |> normpath
@@ -200,7 +200,7 @@ end
 """
     channels() :: String
 
-Outputs the channels.js file included with the Genie package
+Outputs the channels.js file included with the Genie package.
 """
 function channels(channel::AbstractString = Genie.config.webchannels_default_route) :: String
   string(js_settings(channel), embedded(Genie.Assets.asset_file(cwd=normpath(joinpath(@__DIR__, "..")), type = "js", file = "channels")))
@@ -221,6 +221,11 @@ $(channels(channel))
 end
 
 
+"""
+    function channels_subscribe(channel) :: Nothing
+
+Registers subscription and unsubscription channels for `channel`.
+"""
 function channels_subscribe(channel::AbstractString = Genie.config.webchannels_default_route) :: Nothing
   Router.channel("/$(channel)/$(Genie.config.webchannels_subscribe_channel)") do
     WebChannels.subscribe(Genie.Requests.wsclient(), channel)
@@ -306,6 +311,11 @@ $(webthreads(channel))
 end
 
 
+"""
+    function webthreads_subscribe(channel) :: Nothing
+
+Registers subscription and unsubscription routes for `channel`.
+"""
 function webthreads_subscribe(channel::String = Genie.config.webthreads_default_route) :: Nothing
   Router.route("/$(channel)/$(Genie.config.webchannels_subscribe_channel)", method = Router.GET) do
     WebThreads.subscribe(Genie.Requests.wtclient(), channel)
@@ -324,6 +334,11 @@ function webthreads_subscribe(channel::String = Genie.config.webthreads_default_
 end
 
 
+"""
+    function webthreads_push_pull(channel) :: Nothing
+
+Registers push and pull routes for `channel`.
+"""
 function webthreads_push_pull(channel::String = Genie.config.webthreads_default_route) :: Nothing
   Router.route("/$(channel)/$(Genie.config.webthreads_pull_route)", method = Router.POST) do
     WebThreads.pull(Genie.Requests.wtclient(), channel)

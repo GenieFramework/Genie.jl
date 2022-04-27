@@ -3,9 +3,9 @@ push!(LOAD_PATH,"../src/")
 using Documenter
 
 using Genie, Genie.Assets, Genie.Cache, Genie.Commands, Genie.Configuration, Genie.Cookies
-using Genie.Deploy, Genie.Encryption, Genie.Exceptions
+using Genie.Encryption, Genie.Exceptions
 using Genie.FileTemplates, Genie.Flash, Genie.Generator
-using Genie.Headers, Genie.HTTPUtils, Genie.Input, Genie.Loader, Genie.Plugins
+using Genie.Headers, Genie.HTTPUtils, Genie.Input, Genie.Loader
 using Genie.Renderer, Genie.Requests, Genie.Responses, Genie.Router, Genie.Server
 using Genie.Toolbox, Genie.Util, Genie.WebChannels
 
@@ -53,10 +53,6 @@ makedocs(
           "Commands" => "api/commands.md",
           "Configuration" => "api/configuration.md",
           "Cookies" => "api/cookies.md",
-          "Deploy" => [
-            "Docker" => "api/deploy-docker.md",
-            "Heroku" => "api/deploy-heroku.md"
-          ],
           "Encryption" => "api/encryption.md",
           "Exceptions" => "api/exceptions.md",
           "FileTemplates" => "api/filetemplates.md",
@@ -66,7 +62,6 @@ makedocs(
           "Headers" => "api/headers.md",
           "HttpUtils" => "api/httputils.md",
           "Input" => "api/input.md",
-          "Plugins" => "api/plugins.md",
           "Renderer" => "api/renderer.md",
           "HTML Renderer" => "api/renderer-html.md",
           "JS Renderer" => "api/renderer-js.md",

@@ -128,9 +128,15 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `cors_allowed_origins::Vector{String}`: allowed origin hosts for CORS settings
 - `log_level::Logging.LogLevel`: logging severity level
 - `log_to_file::Bool`: if true, information will be logged to file besides REPL
+- `log_requests::Bool`: if true, requests will be automatically logged
 - `inflector_irregulars::Vector{Tuple{String,String}}`: additional irregular singular-plural forms to be used by the Inflector
 - `run_as_server::Bool`: when true the server thread is launched synchronously to avoid that the script exits
 - `websockets_server::Bool`: if true, the websocket server is also started together with the web server
+- `websockets_port::Int`: the port for the websocket server (default `server_port`)
+- `initializers_folder::String`: the folder where the initializers are located (default "initializers/")
+- `path_config::String`: the path to the configurations folder (default "config/")
+- `path_env::String`: the path to the environment files (default "<path_config>/env/")
+- `path_app::String`: the path to the app files (default "app/")
 - `html_parser_close_tag::String`: default " /". Can be changed to an empty string "" so the single tags would not be closed.
 - `ssl_enabled::Bool`: default false. Server runs over SSL/HTTPS in development.
 - `ssl_config::MbedTLS.SSLConfig`: default `nothing`. If not `nothing` and `ssl_enabled`, it will use the config to start the server over HTTPS.
