@@ -74,7 +74,10 @@ Automatically recursively includes files from `resources/` and subfolders.
 """
 function load_resources(root_dir::String = Genie.config.path_resources;
                         context::Union{Module,Nothing} = nothing) :: Nothing
-  autoload(root_dir; context, skipdirs = ["views"])
+  skpdr = ["views"]
+  autoload(root_dir; context, skipdirs = skpdr, namematch = r"Validator.jl$") # validators first, used by models
+  autoload(root_dir; context, skipdirs = skpdr, skipmatch = r"[Controller.jl$|Validator.jl$]") # next models
+  autoload(root_dir; context, skipdirs = skpdr, namematch = r"Controller.jl$") # finally controllers
 end
 
 
@@ -129,12 +132,17 @@ The files are set up with `Revise` to be automatically reloaded when changed (in
 """
 function autoload(root_dir::String = Genie.config.path_lib;
                   context::Union{Module,Nothing} = nothing,
-                  skipdirs::Vector{String} = String[]) :: Nothing
+                  skipdirs::Vector{String} = String[],
+                  namematch::Regex = r".*",
+                  skipmatch::Union{Regex,Nothing} = nothing) :: Nothing
   isdir(root_dir) || return nothing
+
+  validinclude(fi)::Bool = endswith(fi, ".jl") && match(namematch, fi) !== nothing &&
+                            ((skipmatch !== nothing && match(skipmatch, fi) === nothing) || skipmatch === nothing)
 
   for i in readdir(root_dir)
     fi = joinpath(root_dir, i)
-    endswith(fi, ".jl") && Revise.includet(default_context(context), fi)
+    validinclude(fi) && Revise.includet(default_context(context), fi)
   end
 
   for (root, dirs, files) in walkdir(root_dir)
@@ -144,7 +152,7 @@ function autoload(root_dir::String = Genie.config.path_lib;
       p = joinpath(root, dir)
       for i in readdir(p)
         fi = joinpath(p, i)
-        endswith(fi, ".jl") && Revise.includet(default_context(context), fi)
+        endswith(fi, ".jl") && match(namematch, fi) !== nothing && Revise.includet(default_context(context), fi)
       end
     end
   end

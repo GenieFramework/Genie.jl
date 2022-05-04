@@ -6,6 +6,7 @@ module Server
 using HTTP, Sockets
 import Millboard, Distributed, Logging, MbedTLS
 import Genie
+import Distributed
 
 
 """
@@ -74,7 +75,7 @@ function up(port::Int, host::String = Genie.config.server_host;
                   wsserver::Union{Sockets.TCPServer,Nothing} = server,
                   ssl_config::Union{MbedTLS.SSLConfig,Nothing} = Genie.config.ssl_config,
                   open_browser::Bool = false,
-                  reuseaddr::Bool = false,
+                  reuseaddr::Bool = Distributed.nworkers() > 1,
                   http_kwargs...) :: ServersCollection
 
   if server !== nothing
@@ -107,7 +108,7 @@ function up(port::Int, host::String = Genie.config.server_host;
 
   command = () -> begin
     HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server,
-                sslconfig = ssl_config, reuseaddr = reuseaddr, http_kwargs...) do http::HTTP.Stream
+                                    sslconfig = ssl_config, reuseaddr = reuseaddr, http_kwargs...) do http::HTTP.Stream
       try
         if Genie.config.websockets_server && port == ws_port && HTTP.WebSockets.is_upgrade(http.message)
           HTTP.WebSockets.upgrade(http) do ws
