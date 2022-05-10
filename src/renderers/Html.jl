@@ -245,7 +245,7 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
 
   for (k,v) in attrs
     v === nothing && continue # skip nothing values
-    v == "false" && (v = false)
+    # v == "false" && (v = false)
 
     print(a, attrparser(k, v))
   end
@@ -259,7 +259,8 @@ function attrparser(k::Symbol, v::Bool) :: String
 end
 
 function attrparser(k::Symbol, v::Union{AbstractString,Symbol}) :: String
-  isempty(string(v)) && return attrparser(k, true)
+  v = string(v)
+  isempty(v) && return attrparser(k, true)
   "$(k |> parseattr)=\"$(v)\" "
 end
 

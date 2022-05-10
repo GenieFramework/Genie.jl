@@ -148,6 +148,7 @@ function js_settings(channel::String = Genie.config.webchannels_default_route) :
     :server_port                      => Genie.config.server_port,
 
     :websockets_port                  => Genie.config.websockets_port,
+    :websockets_protocol              => jsliteral("window.location.protocol.replace('http', 'ws')"),
     :webchannels_default_route        => channel,
     :webchannels_subscribe_channel    => Genie.config.webchannels_subscribe_channel,
     :webchannels_unsubscribe_channel  => Genie.config.webchannels_unsubscribe_channel,

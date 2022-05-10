@@ -69,7 +69,7 @@ Genie.WebChannels.load_channels = function() {
 let wshost = Genie.Settings.server_host == "0.0.0.0" ? window.location.hostname : Genie.Settings.server_host;
 
 function newSocketConnection(host = wshost) {
-  return new WebSocket(window.location.protocol.replace('http', 'ws') + '//' + host +
+  return new WebSocket(Genie.Settings.websockets_protocol + '//' + host +
       ':' + Genie.WebChannels.port + (Genie.Settings.base_path == '' ? '' : '/' + Genie.Settings.base_path));
 }
 
