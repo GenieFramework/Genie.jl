@@ -147,6 +147,7 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 Base.@kwdef mutable struct Settings
   server_port::Int                                    = (haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : 8000) # default port for binding the web server
   server_host::String                                 = haskey(ENV, "HOST") ? ENV["HOST"] : "127.0.0.1"
+
   server_document_root::String                        = "public"
   server_handle_static_files::Bool                    = true
   server_signature::String                            = "Genie/Julia/$VERSION"
@@ -172,7 +173,11 @@ Base.@kwdef mutable struct Settings
   run_as_server::Bool                                 = false
 
   websockets_server::Bool                             = false
+  websockets_protocol::Union{String,Nothing}          = nothing
   websockets_port::Int                                = server_port
+  websockets_host::String                             = server_host
+  websockets_exposed_port::Union{Int,Nothing}         = nothing
+  websockets_exposed_host::Union{String,Nothing}      = nothing
 
   initializers_folder::String                         = "initializers"
 
