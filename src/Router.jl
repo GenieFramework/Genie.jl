@@ -954,6 +954,7 @@ function params(key, default)
   get(params(), key, default)
 end
 function params!(key, value)
+  params()
   task_local_storage(:__params)[key] = value
 end
 

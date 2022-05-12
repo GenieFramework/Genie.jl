@@ -145,7 +145,7 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `webchannels_keepalive_frequency::Int`: default `30000`. Frequency in miliseconds to send keepalive messages to webchannel/websocket to keep the connection alive. Set to `0` to disable keepalive messages.
 """
 Base.@kwdef mutable struct Settings
-  server_port::Int                                    = (haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : 8000) # default port for binding the web server
+  server_port::Int                                    = haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : 8000 # default port for binding the web server
   server_host::String                                 = haskey(ENV, "HOST") ? ENV["HOST"] : "127.0.0.1"
 
   server_document_root::String                        = "public"
@@ -155,12 +155,12 @@ Base.@kwdef mutable struct Settings
   app_env::String                                     = haskey(ENV, "GENIE_ENV") ? ENV["GENIE_ENV"] : DEV
 
   cors_headers::Dict{String,String}                   = Dict{String,String}(
-                                                          "Access-Control-Allow-Origin"       => "", # ex: "*" or "http://mozilla.org"
-                                                          "Access-Control-Expose-Headers"     => "", # ex: "X-My-Custom-Header, X-Another-Custom-Header"
-                                                          "Access-Control-Max-Age"            => "86400", # 24 hours
-                                                          "Access-Control-Allow-Credentials"  => "", # "true" or "false"
-                                                          "Access-Control-Allow-Methods"      => "", # ex: "POST, GET"
-                                                          "Access-Control-Allow-Headers"      => "", # ex: "X-PINGOTHER, Content-Type"
+                                                        "Access-Control-Allow-Origin"       => "", # ex: "*" or "http://mozilla.org"
+                                                        "Access-Control-Expose-Headers"     => "", # ex: "X-My-Custom-Header, X-Another-Custom-Header"
+                                                        "Access-Control-Max-Age"            => "86400", # 24 hours
+                                                        "Access-Control-Allow-Credentials"  => "", # "true" or "false"
+                                                        "Access-Control-Allow-Methods"      => "", # ex: "POST, GET"
+                                                        "Access-Control-Allow-Headers"      => "", # ex: "X-PINGOTHER, Content-Type"
                                                         )
   cors_allowed_origins::Vector{String}                = String[]
 
@@ -176,8 +176,8 @@ Base.@kwdef mutable struct Settings
   websockets_protocol::Union{String,Nothing}          = nothing
   websockets_port::Int                                = server_port
   websockets_host::String                             = server_host
-  websockets_exposed_port::Union{Int,Nothing}         = nothing
-  websockets_exposed_host::Union{String,Nothing}      = nothing
+  websockets_exposed_port::Union{Int,Nothing}         = haskey(ENV, "WSEXPPORT") ? parse(Int, ENV["WSEXPPORT"]) : nothing
+  websockets_exposed_host::Union{String,Nothing}      = haskey(ENV, "WSEXPHOST") ? ENV["WSEXPHOST"] : nothing
 
   initializers_folder::String                         = "initializers"
 
