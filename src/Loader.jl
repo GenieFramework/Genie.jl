@@ -30,6 +30,8 @@ function bootstrap(context::Union{Module,Nothing} = default_context(context)) ::
 
   haskey(ENV, "PORT") && (! isempty(ENV["PORT"])) && (Genie.config.server_port = parse(Int, ENV["PORT"]))
   haskey(ENV, "WSPORT") && (! isempty(ENV["WSPORT"])) && (Genie.config.websockets_port = parse(Int, ENV["WSPORT"]))
+  haskey(ENV, "WSEXPPORT") && (! isempty(ENV["WSEXPPORT"])) && (Genie.config.websockets_exposed_port = parse(Int, ENV["WSEXPPORT"]))
+  haskey(ENV, "WSEXPHOST") && (! isempty(ENV["WSEXPHOST"])) && (Genie.config.websockets_exposed_host = ENV["WSEXPHOST"])
   haskey(ENV, "HOST") && (! isempty(ENV["HOST"])) && (Genie.config.server_host = ENV["HOST"])
   haskey(ENV, "HOST") || (ENV["HOST"] = Genie.config.server_host)
 
