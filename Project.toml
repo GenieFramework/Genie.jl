@@ -48,7 +48,7 @@ OrderedCollections = "1"
 Reexport = "0.2, 1"
 Revise = "2, 3"
 YAML = "0.4"
-julia = "1.8"
+julia = "1.6"
 
 [extras]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
