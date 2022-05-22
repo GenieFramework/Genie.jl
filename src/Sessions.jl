@@ -1,6 +1,6 @@
 module Sessions
 
-import SHA, HTTP, Dates, Logging
+import SHA, HTTP, Dates, Logging, Random
 import Genie
 
 # const HTTP = HTTP
@@ -27,6 +27,8 @@ InvalidSessionIdException() =
   InvalidSessionIdException("Can't compute session id - make sure that secret_token!(token) is called in config/secrets.jl")
 
 
+const CSPRNG = Random.RandomDevice()
+
 """
     id() :: String
 
@@ -42,17 +44,7 @@ function id() :: String
     end
   end
 
-  try
-    return join([
-      Genie.secret_token(),
-      bytes2hex(SHA.sha1(string(Dates.now()))),
-      string(rand()),
-      string(hash(Genie))
-    ], ":") |> SHA.sha256 |> bytes2hex
-  catch ex
-    @error ex
-    throw(InvalidSessionIdException())
-  end
+  bytes2hex(SHA.sha256(Genie.secret_token() * string(rand(Sessions.CSPRNG, UInt128))))
 end
 
 
@@ -94,11 +86,8 @@ end
 Sets up the session functionality, if configured.
 """
 function init() :: Nothing
-  @eval Genie.config.session_storage === nothing && (Genie.config.session_storage = :File)
-  @eval Genie.config.session_storage == :File && include(joinpath(@__DIR__, "session_adapters", "FileSession.jl"))
-
-  push!(Genie.Router.pre_match_hooks, Genie.Sessions.start)
-  push!(Genie.Router.pre_response_hooks, Genie.Sessions.persist)
+  Genie.Sessions.start in Genie.Router.pre_match_hooks || push!(Genie.Router.pre_match_hooks, Genie.Sessions.start)
+  Genie.Sessions.persist in Genie.Router.pre_response_hooks || push!(Genie.Router.pre_response_hooks, Genie.Sessions.persist)
 
   nothing
 end
@@ -163,6 +152,7 @@ Stores `value` as `key` on the `Session` object `s`.
 """
 function set!(s::Session, key::Symbol, value::Any) :: Session
   s.data[key] = value
+  persist(s)
 
   s
 end
@@ -190,18 +180,18 @@ end
 Attempts to retrive the value stored on the `Session` object `s` as `key`.
 If the value is not set, it returns the `default`.
 """
-function get(s::Session, key::Symbol, default::T) :: T where T
+function get(s::Session, key::Symbol, default::T) where {T}
   val = get(s, key)
 
   val === nothing ? default : val
 end
-function get(key::Symbol, default::T) :: T where T
+function get(key::Symbol, default::T) where {T}
   get(session(), key, default)
 end
-function get!(key::Symbol, default::T) :: T where T
+function get!(key::Symbol, default::T) where {T}
   get!(session(), key, default)
 end
-function get!(s::Session, key::Symbol, default::T) :: T where T
+function get!(s::Session, key::Symbol, default::T) where {T}
   val = get(s, key, default)
   set!(key, val)
 
@@ -253,13 +243,24 @@ function load end
 Returns the `Session` object associated with the current HTTP request.
 """
 function session(params::Dict{Symbol,Any} = Genie.Router.params()) :: Sessions.Session
-  ( (! haskey(params, Genie.PARAMS_SESSION_KEY) || params[Genie.PARAMS_SESSION_KEY] === nothing) ) &&
+  ( (! haskey(params, Genie.PARAMS_SESSION_KEY) || isnothing(params[Genie.PARAMS_SESSION_KEY])) ) &&
     (params = Sessions.start!(
       Base.get(params, Genie.PARAMS_REQUEST_KEY, HTTP.Request()),
       Base.get(params, Genie.PARAMS_RESPONSE_KEY, HTTP.Response())
     )[3])
 
+  # @show params[Genie.PARAMS_SESSION_KEY]
   params[Genie.PARAMS_SESSION_KEY]
 end
+
+
+if Genie.config.session_storage === nothing
+  Genie.config.session_storage = :File
+end
+
+if ! isdefined(@__MODULE__, Symbol("$(Genie.config.session_storage)Session"))
+  include(joinpath(@__DIR__, "session_adapters", "$(Genie.config.session_storage)Session.jl"))
+end
+
 
 end

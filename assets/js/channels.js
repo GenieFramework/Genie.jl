@@ -1,16 +1,18 @@
+/*
+** channels.js v1.1 // 6th January 2022
+** Author: Adrian Salceanu // @essenciary
+** GenieFramework.com // Genie.jl
+*/
 Genie.WebChannels = {};
-Genie.WebChannels.port = undefined;
-Genie.WebChannels.socket = undefined;
 
 Genie.WebChannels.load_channels = function() {
-  Genie.WebChannels.port = Genie.Settings.websockets_port == Genie.Settings.server_port ? window.location.port : Genie.Settings.websockets_port;
-  Genie.WebChannels.socket = new WebSocket(window.location.protocol.replace("http", "ws") + '//' + window.location.hostname + ':' + Genie.WebChannels.port);
-
   Genie.WebChannels.sendMessageTo = sendMessageTo;
   Genie.WebChannels.messageHandlers = [];
   Genie.WebChannels.errorHandlers = [];
   Genie.WebChannels.openHandlers = [];
   Genie.WebChannels.closeHandlers = [];
+  Genie.WebChannels.subscriptionHandlers = [];
+  Genie.WebChannels.processingHandlers = [];
 
   Genie.WebChannels.socket.addEventListener('open', function(event) {
     for (var i = 0; i < Genie.WebChannels.openHandlers.length; i++) {
@@ -57,14 +59,32 @@ Genie.WebChannels.load_channels = function() {
         'message': message,
         'payload': payload
       }));
+    } else {
+      console.warn('WebSocket is not open');
     }
   }
 };
 
-window.addEventListener('beforeunload', function (event) {
-  console.log("Preparing to unload");
+// connecting to 0.0.0.0 (ex in prod) fails
+let wshost = Genie.Settings.server_host == "0.0.0.0" ? window.location.hostname : Genie.Settings.server_host;
 
-  if ( Genie.Settings.webchannels_autosubscribe ) {
+function newSocketConnection(host = wshost) {
+  return new WebSocket(window.location.protocol.replace('http', 'ws') + '//' + host +
+      ':' + Genie.WebChannels.port + (Genie.Settings.base_path == '' ? '' : '/' + Genie.Settings.base_path));
+}
+
+Genie.WebChannels.port = Genie.Settings.websockets_port == Genie.Settings.server_port ? window.location.port : Genie.Settings.websockets_port
+Genie.WebChannels.socket = newSocketConnection();
+Genie.WebChannels.socket.addEventListener('error', function(_){
+  Genie.WebChannels.socket = newSocketConnection();
+});
+
+window.addEventListener('beforeunload', function (_) {
+  if (Genie.Settings.env == 'dev') {
+    console.info('Preparing to unload');
+  }
+
+  if (Genie.Settings.webchannels_autosubscribe) {
     unsubscribe();
   }
 
@@ -75,13 +95,17 @@ window.addEventListener('beforeunload', function (event) {
 
 Genie.WebChannels.load_channels();
 
+Genie.WebChannels.processingHandlers.push(function(event){
+  window.parse_payload(event.data);
+});
+
 Genie.WebChannels.messageHandlers.push(function(event){
   try {
     event.data = event.data.trim();
 
     if (event.data.startsWith('{') && event.data.endsWith('}')) {
       window.parse_payload(JSON.parse(event.data, function (key, value) {
-        if (value == "__undefined__") {
+        if (value == '__undefined__') {
           return undefined;
         } else {
           return value;
@@ -89,49 +113,88 @@ Genie.WebChannels.messageHandlers.push(function(event){
       }));
     } else if (event.data.startsWith(Genie.Settings.webchannels_eval_command)) {
       return Function('"use strict";return (' + event.data.substring(Genie.Settings.webchannels_eval_command.length).trim() + ')')();
+    } else if (event.data == 'Subscription: OK') {
+      window.subscription_ready();
     } else {
-      window.parse_payload(event.data);
+      window.process_payload(event);
     }
   } catch (ex) {
     console.error(ex);
-    console.log(event.data);
+    console.error(event.data);
   }
 });
 
 Genie.WebChannels.errorHandlers.push(function(event) {
-  console.log(event.data);
+  if (Genie.Settings.env == 'dev') {
+    console.error(event.data);
+  }
 });
 
 Genie.WebChannels.closeHandlers.push(function(event) {
-  console.log("Server closed WebSocket connection");
+  if (Genie.Settings.env == 'dev') {
+    console.warn('Server closed WebSocket connection');
+  }
+});
+
+Genie.WebChannels.closeHandlers.push(function(event) {
+  if (Genie.Settings.webchannels_autosubscribe) {
+    if (Genie.Settings.env == 'dev') {
+      console.info('Attempting to reconnect');
+    }
+    Genie.WebChannels.socket = newSocketConnection();
+    subscribe();
+  }
 });
 
 Genie.WebChannels.openHandlers.push(function(event) {
-  if ( Genie.Settings.webchannels_autosubscribe ) {
+  if (Genie.Settings.webchannels_autosubscribe) {
     subscribe();
   }
 });
 
 function parse_payload(json_data) {
-  console.log("Overwrite window.parse_payload to handle messages from the server")
-  console.log(json_data);
+  if (Genie.Settings.env == 'dev') {
+    console.info('Overwrite window.parse_payload to handle messages from the server');
+    console.info(json_data);
+  }
+};
+
+function process_payload(event) {
+  for (var i = 0; i < Genie.WebChannels.processingHandlers.length; i++) {
+    var f = Genie.WebChannels.processingHandlers[i];
+    if (typeof f === 'function') {
+      f(event);
+    }
+  }
 };
 
 function subscription_ready() {
-  console.log("Subscription ready");
+  for (var i = 0; i < Genie.WebChannels.subscriptionHandlers.length; i++) {
+    var f = Genie.WebChannels.subscriptionHandlers[i];
+    if (typeof f === 'function') {
+      f();
+    }
+  }
+
+  if (Genie.Settings.env == 'dev') {
+    console.info('Subscription ready');
+  }
 };
 
 function subscribe() {
-  if (document.readyState === "complete" || document.readyState === "interactive") {
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
     Genie.WebChannels.sendMessageTo(window.Genie.Settings.webchannels_default_route, window.Genie.Settings.webchannels_subscribe_channel);
-    window.subscription_ready();
   } else {
-    console.log("Queuing subscription");
+    if (Genie.Settings.env == 'dev') {
+      console.warn('Queuing subscription');
+    }
     setTimeout(subscribe, Genie.Settings.webchannels_timeout);
   }
 };
 
 function unsubscribe() {
   Genie.WebChannels.sendMessageTo(window.Genie.Settings.webchannels_default_route, window.Genie.Settings.webchannels_unsubscribe_channel);
-  console.log("Unsubscription completed");
+  if (Genie.Settings.env == 'dev') {
+    console.info('Unsubscription completed');
+  }
 };

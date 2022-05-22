@@ -14,7 +14,7 @@
     workdir = Base.Filesystem.mktempdir()
     cd(workdir)
 
-    Genie.newapp("fullstack_test", fullstack = true, testmode = true)
+    Genie.newapp("fullstack_test", fullstack = true, testmode = true, interactive = false, autostart = false)
 
     Genie.Generator.newcontroller("Foo", pluralize = false)
     @test isfile(joinpath("app", "resources", "foo", "FooController.jl")) == true
@@ -27,11 +27,14 @@
     end
     @test isfile(joinpath("app", "resources", "foo", "views", "foo.jl.html")) == true
 
-    Genie.Router.route("/test") do
+    route("/test") do
       Genie.Renderer.Html.html(:foo, :foo)
     end
 
-    r = Genie.Requests.HTTP.request("GET", "http://localhost:8000/test")
+    up(9999)
+    sleep(10)
+
+    r = Genie.Requests.HTTP.request("GET", "http://localhost:9999/test")
 
     @test occursin(content, String(r.body)) == true
 

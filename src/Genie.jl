@@ -85,6 +85,8 @@ function serve(path::String = pwd(), params...; kwparams...)
   cd(path)
   path = ""
 
+  Genie.config.server_document_root = abspath(path)
+
   Router.route("/") do
     Router.serve_static_file(path, root = path)
   end
@@ -144,6 +146,10 @@ const newapp_webservice = Generator.newapp_webservice
 const newapp_mvc = Generator.newapp_mvc
 const newapp_fullstack = Generator.newapp_fullstack
 
+const newappwebservice = Generator.newapp_webservice
+const newappmvc = Generator.newapp_mvc
+const newappfullstack = Generator.newapp_fullstack
+
 
 """
     loadapp(path::String = "."; autostart::Bool = false) :: Nothing
@@ -186,7 +192,14 @@ julia> Genie.loadapp(".")
 [ Info: Logging to file at MyGenieApp/log/dev.log
 ```
 """
-function loadapp(path::String = "."; autostart::Bool = false) :: Nothing
+function loadapp(path::String = "."; autostart::Bool = false, dbadapter::Union{Nothing,Symbol,String} = nothing) :: Nothing
+  if ! isnothing(dbadapter) && dbadapter != "nothing"
+    Core.eval(Main, Meta.parse("using SearchLight"))
+    Core.eval(Main, Meta.parse("using SearchLight$dbadapter"))
+
+    Core.eval(Main, Meta.parse("Genie.Generator.@write_db_config()"))
+  end
+
   Core.eval(Main, quote
       include(joinpath($path, $(Genie.BOOTSTRAP_FILE_NAME)))
   end)
