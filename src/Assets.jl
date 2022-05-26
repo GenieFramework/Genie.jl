@@ -25,7 +25,7 @@ Base.@kwdef mutable struct AssetsConfig
   version::String = "master"
 end
 
-const assets_config = AssetsConfig()
+assets_config = AssetsConfig()
 
 """
     assets_config!(packages::Vector{Module}; config...) :: Nothing
@@ -65,6 +65,7 @@ function external_assets() :: Bool
   external_assets(assets_config)
 end
 
+
 """
     asset_path(...) :: String
 
@@ -91,6 +92,33 @@ end
 function asset_path(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "",
                     file::String = "", ext::String = ".$type", skip_ext::Bool = false, query::String = "") :: String
   asset_path(host = ac.host, package = ac.package, version = ac.version, type = type, path = path, file = file,
+              ext = ext, skip_ext = skip_ext, query = query)
+end
+
+
+"""
+    asset_route(...) :: String
+
+Generates the route to an asset file.
+"""
+function asset_route(; file::String, package::String = "", version::String = "",
+                      type::String = "$(split(file, '.')[end])", path::String = "", min::Bool = false,
+                      ext::String = "$(endswith(file, type) ? "" : ".$type")", skip_ext::Bool = false, query::String = "") :: String
+  startswith(path, '/') && (path = path[2:end])
+  endswith(path, '/') && (path = path[1:end-1])
+
+  ('/' *
+    join(filter([package, version, "assets", type, path, file*(min ? ".min" : "")*(skip_ext ? "" : ext)]) do part
+      ! isempty(part)
+    end, '/') *
+    query) |> lowercase
+end
+function asset_route(file::String; kwargs...)
+  asset_route(; file, kwargs...)
+end
+function asset_route(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "",
+                    file::String = "", ext::String = ".$type", skip_ext::Bool = false, query::String = "") :: String
+  asset_route(package = ac.package, version = ac.version, type = type, path = path, file = file,
               ext = ext, skip_ext = skip_ext, query = query)
 end
 
@@ -257,14 +285,14 @@ function channels_subscribe(channel::AbstractString = Genie.config.webchannels_d
 end
 
 
-function assets_endpoint() :: String
-  Genie.Assets.asset_path(assets_config, :js, file = Genie.config.webchannels_js_file, skip_ext = true)
+function assets_endpoint(f::Function = Genie.Assets.asset_path) :: String
+  f(assets_config, :js, file = Genie.config.webchannels_js_file, skip_ext = true)
 end
 
 
 function channels_route(channel::AbstractString = Genie.config.webchannels_default_route) :: Nothing
   if ! external_assets()
-    Router.route(assets_endpoint()) do
+    Router.route(assets_endpoint(Genie.Assets.asset_route)) do
       Genie.Renderer.Js.js(channels(channel))
     end
   end
@@ -422,7 +450,7 @@ function favicon_support() :: String
     )
   end
 
-  "<link rel=\"icon\" type=\"image/x-icon\" href=\"$(Genie.config.base_path)/favicon.ico\" />"
+  "<link rel=\"icon\" type=\"image/x-icon\" href=\"$(Genie.config.base_path)$(endswith(Genie.config.base_path, '/') ? "" : "/")favicon.ico\" />"
 end
 
 end

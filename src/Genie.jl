@@ -47,7 +47,7 @@ include("Requests.jl")
 export up, down
 @reexport using .Router
 
-const assets_config = Genie.Assets.assets_config
+assets_config = Genie.Assets.assets_config
 
 
 """

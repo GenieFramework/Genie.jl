@@ -34,6 +34,7 @@ function bootstrap(context::Union{Module,Nothing} = default_context(context)) ::
   haskey(ENV, "WSEXPHOST") && (! isempty(ENV["WSEXPHOST"])) && (Genie.config.websockets_exposed_host = ENV["WSEXPHOST"])
   haskey(ENV, "HOST") && (! isempty(ENV["HOST"])) && (Genie.config.server_host = ENV["HOST"])
   haskey(ENV, "HOST") || (ENV["HOST"] = Genie.config.server_host)
+  haskey(ENV, "BASEPATH") && (Genie.config.base_path = ENV["BASEPATH"])
 
   printstyled("""
 
