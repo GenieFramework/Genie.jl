@@ -73,12 +73,20 @@ Generates the path to an asset file.
 function asset_path(; file::String, host::String = Genie.config.base_path, package::String = "", version::String = "",
                       type::String = "$(split(file, '.')[end])", path::String = "", min::Bool = false,
                       ext::String = "$(endswith(file, type) ? "" : ".$type")", skip_ext::Bool = false, query::String = "") :: String
+  startswith(host, '/') && (host = host[2:end])
+  endswith(host, '/') && (host = host[1:end-1])
+  startswith(path, '/') && (path = path[2:end])
+  endswith(path, '/') && (path = path[1:end-1])
+
   (
     (external_assets(host) ? "" : "/") *
     join(filter([host, package, version, "assets", type, path, file*(min ? ".min" : "")*(skip_ext ? "" : ext)]) do part
       ! isempty(part)
     end, '/') *
     query) |> lowercase
+end
+function asset_path(file::String; kwargs...)
+  asset_path(; file, kwargs...)
 end
 function asset_path(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "",
                     file::String = "", ext::String = ".$type", skip_ext::Bool = false, query::String = "") :: String
