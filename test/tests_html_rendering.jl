@@ -31,6 +31,24 @@
     "
   end
 
+function htmltemplatefilewithinterpolation()
+  "
+  <!DOCTYPE HTML>
+  <html>
+  <head>
+    <title>$name test</title>
+  </head>
+  <body>
+  <h1>\$&</h1>
+    <div class=\"template\">
+    <% @yield %>
+    </div>
+    <footer>Just a footer</footer>
+  </body>
+  </html>
+  "
+end
+
 
   @testset "HTML Rendering" begin
     using Genie, Genie.Renderer.Html, Genie.Requests
@@ -66,7 +84,7 @@
       @test wr.body == "good morning"
       @test wr.content_type == :javascript
       @test wr.status == 302
-      @test wr.headers["Location"] == "/morning"
+      @test wr.headers["Location"] == "/morning" 
     end;
 
     @testset "String HTML rendering" begin
@@ -83,7 +101,14 @@
               "<!DOCTYPE html><html><body><h1>$greeting</h1><div><p>This is a $name test</p></div>
               <hr$(Genie.config.html_parser_close_tag)></body></html>" |> fws
       end;
+      @testset "String with interpolation" begin
+        rm("build", force = true, recursive = true)
+        r = html(htmltemplatefilewithinterpolation(), forceparse = true)
 
+        @test String(r.body) |> fws ==
+              "<!DOCTYPE html><html><body><h1>\$&$greeting</h1><div><p>This is a $name test</p></div>
+              <hr$(Genie.config.html_parser_close_tag)></body></html>" |> fws
+      end;
       @testset "String with layout" begin
         rm("build", force = true, recursive = true)
         r = html(htmlviewfile(), layout = htmltemplatefile())
@@ -100,4 +125,4 @@
       rm("build", force = true, recursive = true)
     end;
   end;
-end
+end;
