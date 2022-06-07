@@ -22,7 +22,7 @@ Creates a new `controller` file. If `pluralize` is `false`, the name of the cont
 """
 function newcontroller(controller_name::Union{String,Symbol}; path::Union{String,Nothing} = nothing, pluralize::Bool = true, context::Union{Module,Nothing} = nothing) :: Nothing
   Generator.newcontroller(string(controller_name), path = path, pluralize = pluralize)
-  load_resources(; context = Genie.Loader.default_context(context))
+  Genie.Loader.load_resources(; context = Genie.Loader.default_context(context))
 
   nothing
 end
@@ -56,7 +56,7 @@ If `pluralize` is `false`, the name of the resource is not automatically plurali
 """
 function newresource(resource_name::Union{String,Symbol}; path::String = ".", pluralize::Bool = true, context::Union{Module,Nothing} = nothing) :: Nothing
   newresource(string(resource_name), path = path, pluralize = pluralize)
-  load_resources(; context = Genie.Loader.default_context(context))
+  Genie.Loader.load_resources(; context = Genie.Loader.default_context(context))
 
   nothing
 end
@@ -152,7 +152,7 @@ function write_resource_file(resource_path::String, file_name::String, resource_
   end
 
   try
-    Genie.load_resources()
+    Genie.Loader.load_resources()
   catch ex
     @error ex
   end

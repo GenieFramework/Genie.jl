@@ -72,7 +72,7 @@ end
 Generates the path to an asset file.
 """
 function asset_path(; file::String, host::String = Genie.config.base_path, package::String = "", version::String = "",
-                      type::String = "$(split(file, '.')[end])", path::String = "", min::Bool = false,
+                      prefix::String = "assets", type::String = "$(split(file, '.')[end])", path::String = "", min::Bool = false,
                       ext::String = "$(endswith(file, type) ? "" : ".$type")", skip_ext::Bool = false, query::String = "") :: String
   startswith(host, '/') && (host = host[2:end])
   endswith(host, '/') && (host = host[1:end-1])
@@ -81,7 +81,7 @@ function asset_path(; file::String, host::String = Genie.config.base_path, packa
 
   (
     (external_assets(host) ? "" : "/") *
-    join(filter([host, package, version, "assets", type, path, file*(min ? ".min" : "")*(skip_ext ? "" : ext)]) do part
+    join(filter([host, package, version, prefix, type, path, file*(min ? ".min" : "")*(skip_ext ? "" : ext)]) do part
       ! isempty(part)
     end, '/') *
     query) |> lowercase
@@ -101,14 +101,14 @@ end
 
 Generates the route to an asset file.
 """
-function asset_route(; file::String, package::String = "", version::String = "",
+function asset_route(; file::String, package::String = "", version::String = "", prefix::String = "assets",
                       type::String = "$(split(file, '.')[end])", path::String = "", min::Bool = false,
                       ext::String = "$(endswith(file, type) ? "" : ".$type")", skip_ext::Bool = false, query::String = "") :: String
   startswith(path, '/') && (path = path[2:end])
   endswith(path, '/') && (path = path[1:end-1])
 
   ('/' *
-    join(filter([package, version, "assets", type, path, file*(min ? ".min" : "")*(skip_ext ? "" : ext)]) do part
+    join(filter([package, version, prefix, type, path, file*(min ? ".min" : "")*(skip_ext ? "" : ext)]) do part
       ! isempty(part)
     end, '/') *
     query) |> lowercase
@@ -128,9 +128,9 @@ end
 
 Generates the file system path to an asset file.
 """
-function asset_file(; cwd = "", file::String, path::String = "", type::String = "$(split(file, '.')[end])",
+function asset_file(; cwd = "", file::String, path::String = "", type::String = "$(split(file, '.')[end])", prefix::String = "assets",
                       ext::String = "$(endswith(file, type) ? "" : ".$type")", min::Bool = false, skip_ext::Bool = false) :: String
-  joinpath((filter([cwd, "assets", type, path, file*(min ? ".min" : "")*(skip_ext ? "" : ext)]) do part
+  joinpath((filter([cwd, prefix, type, path, file*(min ? ".min" : "")*(skip_ext ? "" : ext)]) do part
     ! isempty(part)
   end)...) |> normpath
 end

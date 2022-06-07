@@ -24,7 +24,7 @@ const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :articl
                           :header, :h1, :h2, :h3, :h4, :h5, :h6, :hgroup, :nav, :section,
                           :dd, :div, :d, :dl, :dt, :figcaption, :figure, :li, :main, :ol, :p, :pre, :ul, :span,
                           :a, :abbr, :b, :bdi, :bdo, :cite, :code, :data, :dfn, :em, :i, :kbd, :mark,
-                          :q, :rp, :rt, :rtc, :ruby, :s, :samp, :small, :spam, :strong, :sub, :sup, :time,
+                          :q, :rp, :rt, :rtc, :ruby, :s, :samp, :small, :strong, :sub, :sup, :time,
                           :u, :var, :wrb, :audio, :void, :embed, :object, :canvas, :noscript, :script,
                           :del, :ins, :caption, :col, :colgroup, :table, :tbody, :td, :tfoot, :th, :thead, :tr,
                           :button, :datalist, :fieldset, :label, :legend, :meter,
@@ -245,7 +245,7 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
 
   for (k,v) in attrs
     v === nothing && continue # skip nothing values
-    # v == "false" && (v = false)
+    v == "false" && (v = false)
 
     print(a, attrparser(k, v))
   end

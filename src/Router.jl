@@ -16,6 +16,7 @@ export GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
 export tolink, linkto, responsetype, toroute
 export params, query, post, headers, request
 export ispayload
+export NOT_FOUND, INTERNAL_ERROR
 
 Reexport.@reexport using HttpCommon
 
@@ -38,6 +39,9 @@ const PARAMS_FILES          = :FILES
 const PARAMS_ROUTE_KEY      = :ROUTE
 const PARAMS_CHANNELS_KEY   = :CHANNEL
 const PARAMS_MIME_KEY       = :MIME
+
+const NOT_FOUND       = 404
+const INTERNAL_ERROR  = 500
 
 const ROUTE_CACHE = Dict{String,Tuple{String,Vector{String},Vector{Any}}}()
 
