@@ -14,7 +14,7 @@ include("mimetypes.jl")
 export route, routes, channel, channels, serve_static_file
 export GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
 export tolink, linkto, responsetype, toroute
-export params, query, post, headers, request
+export params, query, post, headers, request, params!
 export ispayload
 export NOT_FOUND, INTERNAL_ERROR
 
