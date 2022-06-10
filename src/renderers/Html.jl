@@ -29,9 +29,8 @@ const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :articl
                           :del, :ins, :caption, :col, :colgroup, :table, :tbody, :td, :tfoot, :th, :thead, :tr,
                           :button, :datalist, :fieldset, :label, :legend, :meter,
                           :output, :progress, :select, :option, :textarea, :details, :dialog, :menu, :menuitem, :summary,
-                          :slot, :template, :blockquote, :center, :iframe]
+                          :slot, :template, :blockquote, :center, :iframe, :form]
 const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input]
-const CUSTOM_ELEMENTS = [:form, :select]
 const NON_EXPORTED = [:main, :map, :filter]
 const SVG_ELEMENTS = [:animate, :circle, :animateMotion, :animateTransform, :clipPath, :defs, :desc, :discard,
                       :ellipse, :feComponentTransfer, :feComposite, :feDiffuseLighting, :feBlend, :feColorMatrix,
@@ -45,6 +44,8 @@ const BOOL_ATTRS = [:allowfullscreen, :async, :autofocus, :autoplay, :checked, :
                     :playsinline, :readonly, :required, :reversed, :selected, :truespeed]
 
 const EMBEDDED_JULIA_PLACEHOLDER = "~~~~~|~~~~~"
+const EMBED_JULIA_OPEN_TAG = "<%"
+const EMBED_JULIA_CLOSE_TAG = "%>"
 
 
 # ParsedHTMLStrings
@@ -516,7 +517,7 @@ function html(data::String; context::Module = @__MODULE__, status::Int = 200, he
               layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing, forceparse::Bool = false, noparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
   isa(layout, Genie.Renderer.FilePath) && (layout = read(layout, String))
 
-  if (occursin(raw"$", data) || occursin("<%", data) || layout !== nothing || forceparse) && ! noparse
+  if (occursin(raw"$", data) || occursin(EMBED_JULIA_OPEN_TAG, data) || layout !== nothing || forceparse) && ! noparse
     html(HTMLString(data); context = context, status = status, headers = headers, layout = layout, vars...)
   else
     html(ParsedHTMLString(data); context, status, headers, layout, vars...)
@@ -643,7 +644,7 @@ function parse_attributes!(elem_attributes, io::IOBuffer) :: IOBuffer
     k = string(k) |> lowercase
     if isa(v, AbstractString) && occursin("\"", v)
       # we need to escape double quotes but only if it's not embedded Julia code
-      mx = vcat(matchjuliaexpr(v, '(', ')', true), matchjuliaexpr(v, "<%", "%>", false))
+      mx = vcat(matchjuliaexpr(v, '(', ')', true), matchjuliaexpr(v, EMBED_JULIA_OPEN_TAG, EMBED_JULIA_CLOSE_TAG, false))
       if ! isempty(mx)
         index = 1
         for value in mx
@@ -899,22 +900,12 @@ Reads `file_path` template from disk.
 function read_template_file(file_path::String; extension = TEMPLATE_EXT) :: String
   io = IOBuffer()
 
-  # endswith(file_path, extension) || (file_path *= extension)
-
-  # extension == TEMPLATE_EXT && print(io, """
-  # \"\"\"
-  # """)
-
   open(file_path) do f
     for line in eachline(f)
       isempty(strip(line)) && continue
       print(io, parse_embed_tags(line), "\n")
     end
   end
-
-  # extension == TEMPLATE_EXT && print(io, """
-  # \"\"\"
-  # """)
 
   String(take!(io))
 end
@@ -947,8 +938,8 @@ end
 
 function parse_embed_tags(code::S)::String where {S<:AbstractString}
   replace(
-    replace(code, "<%"=>"""<script type="julia/eval">"""),
-    "%>"=>"""</script>""")
+    replace(code, EMBED_JULIA_OPEN_TAG=>"""<script type="julia/eval">"""),
+                  EMBED_JULIA_CLOSE_TAG=>"""</script>""")
 end
 
 
@@ -964,11 +955,6 @@ function register_elements(; context = @__MODULE__) :: Nothing
 
   for elem in VOID_ELEMENTS
     register_void_element(elem)
-  end
-
-  for elem in CUSTOM_ELEMENTS
-    Core.eval(@__MODULE__, """include("html/$elem.jl")""" |> Meta.parse)
-    elem in NON_EXPORTED || Core.eval(context, "export $elem" |> Meta.parse)
   end
 
   for elem in SVG_ELEMENTS
@@ -1178,7 +1164,6 @@ function el(; vars...)
   OrderedCollections.OrderedDict(vars)
 end
 
-
-register_elements()
+register_elements() # this doesn't work on __init__
 
 end
