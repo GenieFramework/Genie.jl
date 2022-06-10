@@ -30,7 +30,7 @@ Creating a simple Genie web service:
 # ╔═╡ 03fce09f-0f05-47bd-960b-eed9ef1087dd
 # hideall
 
-Genie.newapp_webservice("MyGenieApp");
+Genie.Generator.newapp_webservice("MyGenieApp");
 
 # ╔═╡ c7ca2f4a-09d4-48d3-bb96-1fea6195b9cf
 md"""
@@ -48,7 +48,7 @@ julia> mkdir("lib")
 """
 
 # ╔═╡ 4f7496dd-fa87-4180-8d6e-dfe663d66cc4
-# hideall 
+# hideall
 
 begin
 	incPath= true

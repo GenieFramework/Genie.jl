@@ -20,7 +20,7 @@ If using a local server, a static IP is needed to ensure continuous access to th
 
 We assume that a Genie app has been developed and is ready for deployment and that it is hosted as a project on a git repository.
 
-For example, the app `MyGenieApp` generated through `Genie.newapp("MyGenieApp")` being hosted at `github.com/user/MyGenieApp`.
+For example, the app `MyGenieApp` generated through `Genie.Generator.newapp("MyGenieApp")` being hosted at `github.com/user/MyGenieApp`.
 
 The scripts presented in this tutorial are for Ubuntu 20.04.
 

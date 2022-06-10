@@ -25,10 +25,18 @@ Base.@kwdef mutable struct AssetsConfig
   version::String = "master"
 end
 
-assets_config = AssetsConfig()
+const assets_config = AssetsConfig()
+
+function __init__()
+  # make sure the assets config is properly initialized
+  assets_config.host = Genie.config.base_path
+  assets_config.package = "Genie.jl"
+  assets_config.version = "master"
+end
 
 """
     assets_config!(packages::Vector{Module}; config...) :: Nothing
+    assets_config!(package::Module; config...) :: Nothing
 
 Utility function which allows bulk configuration of the assets.
 
@@ -49,9 +57,24 @@ function assets_config!(packages::Vector{Module}; config...) :: Nothing
 
   nothing
 end
+function assets_config!(package::Module; config...) :: Nothing
+  assets_config!([package]; config...)
+end
+
 
 """
-    external_assets(...) :: Bool
+    assets_config!(; config...) :: Nothing
+
+Updates the assets configuration for the current package.
+"""
+function assets_config!(; config...) :: Nothing
+  assets_config!([@__MODULE__]; config...)
+end
+
+"""
+    external_assets(host::String) :: Bool
+    external_assets(ac::AssetsConfig) :: Bool
+    external_assets() :: Bool
 
 Returns true if the current package is using external assets.
 """
@@ -67,7 +90,12 @@ end
 
 
 """
-    asset_path(...) :: String
+    asset_path(; file::String, host::String = Genie.config.base_path, package::String = "", version::String = "",
+                  prefix::String = "assets", type::String = "", path::String = "", min::Bool = false,
+                  ext::String = "", skip_ext::Bool = false, query::String = "") :: String
+    asset_path(file::String; kwargs...) :: String
+    asset_path(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "",
+                    file::String = "", ext::String = "", skip_ext::Bool = false, query::String = "") :: String
 
 Generates the path to an asset file.
 """
@@ -86,7 +114,7 @@ function asset_path(; file::String, host::String = Genie.config.base_path, packa
     end, '/') *
     query) |> lowercase
 end
-function asset_path(file::String; kwargs...)
+function asset_path(file::String; kwargs...) :: String
   asset_path(; file, kwargs...)
 end
 function asset_path(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "",
@@ -97,7 +125,12 @@ end
 
 
 """
-    asset_route(...) :: String
+    asset_route(; file::String, package::String = "", version::String = "", prefix::String = "assets",
+                  type::String = "", path::String = "", min::Bool = false,
+                  ext::String = "", skip_ext::Bool = false, query::String = "") :: String
+    asset_route(file::String; kwargs...) :: String
+    asset_route(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "",
+                file::String = "", ext::String = "", skip_ext::Bool = false, query::String = "") :: String
 
 Generates the route to an asset file.
 """
@@ -113,7 +146,7 @@ function asset_route(; file::String, package::String = "", version::String = "",
     end, '/') *
     query) |> lowercase
 end
-function asset_route(file::String; kwargs...)
+function asset_route(file::String; kwargs...) :: String
   asset_route(; file, kwargs...)
 end
 function asset_route(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "",
@@ -124,7 +157,8 @@ end
 
 
 """
-    asset_file(...) :: String
+    asset_file(; cwd = "", file::String, path::String = "", type::String = "", prefix::String = "assets",
+                  ext::String = "", min::Bool = false, skip_ext::Bool = false) :: String
 
 Generates the file system path to an asset file.
 """
@@ -174,7 +208,7 @@ function jsliteral(val) :: String
 end
 
 """
-    js_settings() :: string
+    js_settings(channel::String = Genie.config.webchannels_default_route) :: String
 
 Sets up a `window.Genie.Settings` JavaScript object which exposes relevant Genie app settings from `Genie.config`
 """
@@ -239,9 +273,9 @@ end
 
 
 """
-    channels() :: String
+    channels(channel::AbstractString = Genie.config.webchannels_default_route) :: String
 
-Outputs the channels.js file included with the Genie package.
+Outputs the `channels.js` file included with the Genie package.
 """
 function channels(channel::AbstractString = Genie.config.webchannels_default_route) :: String
   string(js_settings(channel), embedded(Genie.Assets.asset_file(cwd=normpath(joinpath(@__DIR__, "..")), type = "js", file = "channels")))
@@ -249,7 +283,7 @@ end
 
 
 """
-    channels_script() :: String
+    channels_script(channel::AbstractString = Genie.config.webchannels_default_route) :: String
 
 Outputs the channels JavaScript content within `<script>...</script>` tags, for embedding into the page.
 """
@@ -263,7 +297,7 @@ end
 
 
 """
-    function channels_subscribe(channel) :: Nothing
+    channels_subscribe(channel::AbstractString = Genie.config.webchannels_default_route) :: Nothing
 
 Registers subscription and unsubscription channels for `channel`.
 """
@@ -323,7 +357,7 @@ function channels_support(channel::AbstractString = Genie.config.webchannels_def
 end
 
 
-########
+######## WEB THREADS
 
 
 """

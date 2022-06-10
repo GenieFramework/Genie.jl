@@ -4,7 +4,7 @@ Handles Http server related functionality, manages requests and responses and th
 module Server
 
 using HTTP, Sockets
-import Millboard, Distributed, Logging, MbedTLS
+import Millboard, Distributed, Logging
 import Genie
 import Distributed
 
@@ -73,7 +73,6 @@ function up(port::Int, host::String = Genie.config.server_host;
                   ratelimit::Union{Rational{Int},Nothing} = nothing,
                   server::Union{Sockets.TCPServer,Nothing} = nothing,
                   wsserver::Union{Sockets.TCPServer,Nothing} = server,
-                  ssl_config::Union{MbedTLS.SSLConfig,Nothing} = Genie.config.ssl_config,
                   open_browser::Bool = false,
                   reuseaddr::Bool = Distributed.nworkers() > 1,
                   http_kwargs...) :: ServersCollection
@@ -97,7 +96,7 @@ function up(port::Int, host::String = Genie.config.server_host;
     print_server_status("Web Sockets server starting at $host:$ws_port")
 
     new_server.websockets = @async HTTP.listen(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver,
-                                                sslconfig = ssl_config, reuseaddr = reuseaddr, http_kwargs...) do http::HTTP.Stream
+                                                reuseaddr = reuseaddr, http_kwargs...) do http::HTTP.Stream
       if HTTP.WebSockets.is_upgrade(http.message)
         HTTP.WebSockets.upgrade(http) do ws
           setup_ws_handler(http.message, ws)
@@ -108,7 +107,7 @@ function up(port::Int, host::String = Genie.config.server_host;
 
   command = () -> begin
     HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server,
-                                    sslconfig = ssl_config, reuseaddr = reuseaddr, http_kwargs...) do http::HTTP.Stream
+                                    reuseaddr = reuseaddr, http_kwargs...) do http::HTTP.Stream
       try
         if Genie.config.websockets_server && port == ws_port && HTTP.WebSockets.is_upgrade(http.message)
           HTTP.WebSockets.upgrade(http) do ws
@@ -124,7 +123,7 @@ function up(port::Int, host::String = Genie.config.server_host;
     end
   end
 
-  server_url = "$( (ssl_config !== nothing && Genie.config.ssl_enabled) ? "https" : "http" )://$host:$port"
+  server_url = "http://$host:$port"
 
   status = if async
     print_server_status("Web Server starting at $server_url")

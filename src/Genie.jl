@@ -41,6 +41,7 @@ include("Server.jl")
 include("Commands.jl")
 include("Responses.jl")
 include("Requests.jl")
+include("Logger.jl")
 
 # === #
 

@@ -17,7 +17,6 @@ pkginfo(pkg::String) = filter(x -> x.name == pkg && x.is_direct_dep, values(Pkg.
 
 import Logging
 import Genie
-import MbedTLS
 
 export isdev, isprod, istest, env
 export Settings, DEV, PROD, TEST
@@ -140,8 +139,6 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `path_env::String`: the path to the environment files (default "<path_config>/env/")
 - `path_app::String`: the path to the app files (default "app/")
 - `html_parser_close_tag::String`: default " /". Can be changed to an empty string "" so the single tags would not be closed.
-- `ssl_enabled::Bool`: default false. Server runs over SSL/HTTPS in development.
-- `ssl_config::MbedTLS.SSLConfig`: default `nothing`. If not `nothing` and `ssl_enabled`, it will use the config to start the server over HTTPS.
 - `webchannels_keepalive_frequency::Int`: default `30000`. Frequency in miliseconds to send keepalive messages to webchannel/websocket to keep the connection alive. Set to `0` to disable keepalive messages.
 """
 Base.@kwdef mutable struct Settings
@@ -164,9 +161,10 @@ Base.@kwdef mutable struct Settings
                                                         )
   cors_allowed_origins::Vector{String}                = String[]
 
-  log_level::Logging.LogLevel                         = Logging.Debug
+  log_level::Logging.LogLevel                         = Logging.Info
   log_to_file::Bool                                   = false
   log_requests::Bool                                  = true
+  log_date_format::String                             = "yyyy-mm-dd HH:MM:SS"
 
   inflector_irregulars::Vector{Tuple{String,String}}  = Tuple{String,String}[]
 
@@ -217,9 +215,6 @@ Base.@kwdef mutable struct Settings
   html_parser_char_dot::String                        = "!"
   html_parser_char_column::String                     = "!"
   html_parser_char_dash::String                       = "__"
-
-  ssl_enabled::Bool                                   = false
-  ssl_config::Union{MbedTLS.SSLConfig,Nothing}        = nothing
 
   base_path::String                                   = haskey(ENV, "BASEPATH") ? ENV["BASEPATH"] : ""
 

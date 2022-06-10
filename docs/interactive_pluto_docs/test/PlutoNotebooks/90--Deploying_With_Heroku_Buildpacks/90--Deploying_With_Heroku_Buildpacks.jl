@@ -60,7 +60,7 @@ web: julia --project src/app.jl $PORT
 You may edit the `Procfile` to point to your own project's launch script. (for example `src/my_app_launch_file.jl` instead of `src/app.jl`),
 but be sure to take into account the dynamically changing `$PORT` environment variable which is set by Heroku.
 
-If you're deploying a standard Genie application built with `Genie.newapp`, the launch script will be `bin/server`. Genie will automatically pick the `$PORT` number from the environment.
+If you're deploying a standard Genie application built with `Genie.Generator.newapp`, the launch script will be `bin/server`. Genie will automatically pick the `$PORT` number from the environment.
 
 #### Create a Heroku project
 

@@ -14,7 +14,7 @@
     workdir = Base.Filesystem.mktempdir()
     cd(workdir)
 
-    Genie.newapp("fullstack_test", fullstack = true, testmode = true, interactive = false, autostart = false)
+    Genie.Generator.newapp("fullstack_test", fullstack = true, testmode = true, interactive = false, autostart = false)
 
     Genie.Generator.newcontroller("Foo", pluralize = false)
     @test isfile(joinpath("app", "resources", "foo", "FooController.jl")) == true

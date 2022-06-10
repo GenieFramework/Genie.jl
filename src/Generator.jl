@@ -431,7 +431,7 @@ function install_app_dependencies(app_path::String = "."; testmode::Bool = false
   @info "Installing app dependencies"
   Pkg.activate(".")
 
-  pkgs = ["Dates", "Logging", "LoggingExtras", "MbedTLS"]
+  pkgs = ["Dates", "Logging"]
 
   testmode ? Pkg.develop("Genie", io = devnull) : push!(pkgs, "Genie")
   testmode ? Pkg.develop("Inflector", io = devnull) : push!(pkgs, "Inflector")
@@ -666,7 +666,7 @@ at the REPL, during the app creation process.
 
 # Examples
 ```julia-repl
-julia> Genie.newapp("MyGenieApp")
+julia> Genie.Generator.newapp("MyGenieApp")
 2019-08-06 16:54:15:INFO:Main: Done! New app created at MyGenieApp
 2019-08-06 16:54:15:DEBUG:Main: Changing active directory to MyGenieApp
 2019-08-06 16:54:15:DEBUG:Main: Installing app dependencies

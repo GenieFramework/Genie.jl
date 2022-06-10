@@ -211,7 +211,8 @@ Sets the module in which the code is loaded (the app's module)
 """
 function default_context(context::Union{Module,Nothing} = nothing)
   try
-    context === nothing ? Main.UserApp : context
+    userapp = isdefined(Main, :UserApp) ? Main.UserApp : @__MODULE__
+    context === nothing ? userapp : context
   catch ex
     @error ex
     @__MODULE__
