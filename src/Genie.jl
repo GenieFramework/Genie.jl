@@ -50,18 +50,6 @@ export up, down
 const assets_config = Genie.Assets.assets_config
 
 
-function __init__()
-  haskey(ENV, "GENIE_ENV") && (Genie.config.app_env = ENV["GENIE_ENV"])
-  haskey(ENV, "PORT") && (! isempty(ENV["PORT"])) && (Genie.config.server_port = parse(Int, ENV["PORT"]))
-  haskey(ENV, "WSPORT") && (! isempty(ENV["WSPORT"])) && (Genie.config.websockets_port = parse(Int, ENV["WSPORT"]))
-  haskey(ENV, "WSEXPPORT") && (! isempty(ENV["WSEXPPORT"])) && (Genie.config.websockets_exposed_port = parse(Int, ENV["WSEXPPORT"]))
-  haskey(ENV, "WSEXPHOST") && (! isempty(ENV["WSEXPHOST"])) && (Genie.config.websockets_exposed_host = ENV["WSEXPHOST"])
-  haskey(ENV, "GENIE_HOST") && (! isempty(ENV["GENIE_HOST"])) && (Genie.config.server_host = ENV["GENIE_HOST"])
-  haskey(ENV, "GENIE_HOST") || (ENV["GENIE_HOST"] = Genie.config.server_host)
-  haskey(ENV, "BASEPATH") && (Genie.config.base_path = ENV["BASEPATH"])
-end
-
-
 """
     loadapp(path::String = "."; autostart::Bool = false) :: Nothing
 
