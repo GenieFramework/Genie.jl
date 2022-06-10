@@ -40,6 +40,9 @@ const SVG_ELEMENTS = [:animate, :circle, :animateMotion, :animateTransform, :cli
                       :feSpotLight, :feTile, :feTurbulence, :foreignObject, :g, :hatch, :hatchpath, :image, :line, :linearGradient,
                       :marker, :mask, :metadata, :mpath, :path, :pattern, :polygon, :polyline, :radialGradient, :rect, :set, :stop, :svg,
                       :switch, :symbol, :text, :textPath, :tspan, :use, :view]
+const BOOL_ATTRS = [:allowfullscreen, :async, :autofocus, :autoplay, :checked, :controls, :default, :defer, :disabled,
+                    :formnovalidate, :ismap, :itemscope, :loop, :multiple, :muted, :nomodule, :novalidate, :open,
+                    :playsinline, :readonly, :required, :reversed, :selected, :truespeed]
 
 const EMBEDDED_JULIA_PLACEHOLDER = "~~~~~|~~~~~"
 
@@ -245,7 +248,7 @@ function attributes(attrs::Vector{Pair{Symbol,Any}} = Vector{Pair{Symbol,Any}}()
 
   for (k,v) in attrs
     v === nothing && continue # skip nothing values
-    v == "false" && (v = false)
+    v == "false" && (k in BOOL_ATTRS) && (v = false)
 
     print(a, attrparser(k, v))
   end
