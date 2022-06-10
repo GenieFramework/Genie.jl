@@ -21,20 +21,9 @@ function bootstrap(context::Union{Module,Nothing} = default_context(context)) ::
   ENV_FILE_NAME = "env.jl"
   GLOBAL_ENV_FILE_NAME = "global.jl"
 
-  if haskey(ENV, "GENIE_ENV")
-    Genie.config.app_env = ENV["GENIE_ENV"]
-    isfile(joinpath(Genie.config.path_env, GLOBAL_ENV_FILE_NAME)) && Base.include(context, joinpath(Genie.config.path_env, GLOBAL_ENV_FILE_NAME))
-    isfile(joinpath(Genie.config.path_env, ENV["GENIE_ENV"] * ".jl")) && Base.include(context, joinpath(Genie.config.path_env, ENV["GENIE_ENV"] * ".jl"))
-    Genie.config.app_env = ENV["GENIE_ENV"] # ENV might have changed
-  end
-
-  haskey(ENV, "PORT") && (! isempty(ENV["PORT"])) && (Genie.config.server_port = parse(Int, ENV["PORT"]))
-  haskey(ENV, "WSPORT") && (! isempty(ENV["WSPORT"])) && (Genie.config.websockets_port = parse(Int, ENV["WSPORT"]))
-  haskey(ENV, "WSEXPPORT") && (! isempty(ENV["WSEXPPORT"])) && (Genie.config.websockets_exposed_port = parse(Int, ENV["WSEXPPORT"]))
-  haskey(ENV, "WSEXPHOST") && (! isempty(ENV["WSEXPHOST"])) && (Genie.config.websockets_exposed_host = ENV["WSEXPHOST"])
-  haskey(ENV, "HOST") && (! isempty(ENV["HOST"])) && (Genie.config.server_host = ENV["HOST"])
-  haskey(ENV, "HOST") || (ENV["HOST"] = Genie.config.server_host)
-  haskey(ENV, "BASEPATH") && (Genie.config.base_path = ENV["BASEPATH"])
+  isfile(joinpath(Genie.config.path_env, GLOBAL_ENV_FILE_NAME)) && Base.include(context, joinpath(Genie.config.path_env, GLOBAL_ENV_FILE_NAME))
+  isfile(joinpath(Genie.config.path_env, ENV["GENIE_ENV"] * ".jl")) && Base.include(context, joinpath(Genie.config.path_env, ENV["GENIE_ENV"] * ".jl"))
+  Genie.config.app_env = ENV["GENIE_ENV"] # ENV might have changed
 
   printstyled("""
 

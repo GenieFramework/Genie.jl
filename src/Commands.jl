@@ -17,10 +17,12 @@ function execute(config::Genie.Configuration.Settings; server::Union{Sockets.TCP
   parsed_args = parse_commandline_args(config)::Dict{String,Any}
 
   # overwrite env settings with command line arguments
-  Genie.config.app_env = ENV["GENIE_ENV"]
-  Genie.config.server_port = haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : parse(Int, parsed_args["p"])
-  Genie.config.websockets_port = haskey(ENV, "WSPORT") ? parse(Int, ENV["WSPORT"]) : parse(Int, parsed_args["w"])
+  Genie.config.server_port = parse(Int, parsed_args["p"])
+  Genie.config.websockets_port = parse(Int, parsed_args["w"])
   Genie.config.server_host = parsed_args["l"]
+  Genie.config.websockets_exposed_host = parsed_args["x"] == "nothing" ? nothing : parsed_args["x"]
+  Genie.config.websockets_exposed_port = parsed_args["y"] == "nothing" ? nothing : parse(Int, parsed_args["y"])
+  Genie.config.base_path = parsed_args["b"]
 
   if called_command(parsed_args, "s") || (haskey(ENV, "STARTSERVER") && parse(Bool, ENV["STARTSERVER"]))
     Genie.config.run_as_server = true
@@ -70,6 +72,18 @@ function parse_commandline_args(config::Genie.Configuration.Settings) :: Dict{St
     "-l"
     help = "Host IP to listen on"
     default = "$(config.server_host)"
+
+    "-x"
+    help = "WebSockets port used by the clients"
+    default = "$(config.websockets_exposed_port)"
+
+    "-y"
+    help = "WebSockets host used by the clients"
+    default = "$(config.websockets_exposed_host)"
+
+    "-b"
+    help = "Base path for serving assets and building links"
+    default = "$(config.websockets_exposed_host)"
 
     "-r"
     help = "runs Genie.Toolbox task"

@@ -10,14 +10,13 @@ using .Configuration
 
 const config = Configuration.Settings()
 
+
 include("constants.jl")
 
 import Sockets
 import Logging
 
 using Reexport
-
-include(joinpath(@__DIR__, "genie_types.jl"))
 
 include("HTTPUtils.jl")
 include("Exceptions.jl")
@@ -48,7 +47,19 @@ include("Logger.jl")
 export up, down
 @reexport using .Router
 
-assets_config = Genie.Assets.assets_config
+const assets_config = Genie.Assets.assets_config
+
+
+function __init__()
+  haskey(ENV, "GENIE_ENV") && (Genie.config.app_env = ENV["GENIE_ENV"])
+  haskey(ENV, "PORT") && (! isempty(ENV["PORT"])) && (Genie.config.server_port = parse(Int, ENV["PORT"]))
+  haskey(ENV, "WSPORT") && (! isempty(ENV["WSPORT"])) && (Genie.config.websockets_port = parse(Int, ENV["WSPORT"]))
+  haskey(ENV, "WSEXPPORT") && (! isempty(ENV["WSEXPPORT"])) && (Genie.config.websockets_exposed_port = parse(Int, ENV["WSEXPPORT"]))
+  haskey(ENV, "WSEXPHOST") && (! isempty(ENV["WSEXPHOST"])) && (Genie.config.websockets_exposed_host = ENV["WSEXPHOST"])
+  haskey(ENV, "GENIE_HOST") && (! isempty(ENV["GENIE_HOST"])) && (Genie.config.server_host = ENV["GENIE_HOST"])
+  haskey(ENV, "GENIE_HOST") || (ENV["GENIE_HOST"] = Genie.config.server_host)
+  haskey(ENV, "BASEPATH") && (Genie.config.base_path = ENV["BASEPATH"])
+end
 
 
 """
@@ -157,9 +168,9 @@ function genie(; context = @__MODULE__) :: Union{Nothing,Sockets.TCPServer}
 
   ### EARLY BIND TO PORT FOR HOSTS WITH TIMEOUT ###
   EARLYBINDING = if haskey(ENV, "EARLYBIND") && lowercase(ENV["EARLYBIND"]) == "true" && haskey(ENV, "PORT")
-    @info "Binding to host $(ENV["HOST"]) and port $(ENV["PORT"]) \n"
+    @info "Binding to host $(ENV["GENIE_HOST"]) and port $(ENV["PORT"]) \n"
     try
-      Sockets.listen(parse(Sockets.IPAddr, ENV["HOST"]), parse(Int, ENV["PORT"]))
+      Sockets.listen(parse(Sockets.IPAddr, ENV["GENIE_HOST"]), parse(Int, ENV["PORT"]))
     catch ex
       @error ex
 

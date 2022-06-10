@@ -2,19 +2,6 @@ module Util
 
 import Genie
 
-export expand_nullable, time_to_unixtimestamp
-
-
-
-"""
-    expand_nullable{T}(value::Union{Nothing,T}, default::T) :: T
-
-Returns `value` if it is not `nothing` - otherwise `default`.
-"""
-function expand_nullable(value::Union{Nothing,T}, default::T)::T where T
-  value === nothing ? default : value
-end
-
 
 """
     file_name_without_extension(file_name, extension = ".jl") :: String
@@ -48,16 +35,6 @@ function walk_dir(dir, paths = String[]; only_extensions = ["jl"], only_files = 
   end
 
   paths
-end
-
-
-"""
-    time_to_unixtimestamp(t::Float64 = time()) :: Int
-
-Converts a time value to the corresponding unix timestamp.
-"""
-function time_to_unixtimestamp(t::Float64 = time()) :: Int
-  floor(t) |> Int
 end
 
 
