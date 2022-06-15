@@ -1123,7 +1123,7 @@ function serve_static_file(resource::String; root = Genie.config.server_document
     end
   end
 
-  @error "404 Not Found $f"
+  @error "404 Not Found $f [$(abspath(f))]"
   error(resource, response_mime(), Val(404))
 end
 
