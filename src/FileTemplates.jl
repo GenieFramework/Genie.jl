@@ -48,7 +48,7 @@ Default content for a new test file.
 """
 function newtest(plural_name::String, singular_name::String) :: String
   """
-  using Genie, App.$(plural_name)
+  using Main.UserApp, Main.UserApp.$(plural_name)
 
   ### Your tests here
   @test 1 == 1
