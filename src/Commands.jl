@@ -24,7 +24,8 @@ function execute(config::Genie.Configuration.Settings; server::Union{Sockets.TCP
   Genie.config.websockets_exposed_port = parsed_args["y"] == "nothing" ? nothing : parse(Int, parsed_args["y"])
   Genie.config.base_path = parsed_args["b"]
 
-  if called_command(parsed_args, "s") || (haskey(ENV, "STARTSERVER") && parse(Bool, ENV["STARTSERVER"]))
+  if (called_command(parsed_args, "s") && get(parsed_args, "s", "false") == "true") ||
+      (haskey(ENV, "STARTSERVER") && parse(Bool, ENV["STARTSERVER"]))
     Genie.config.run_as_server = true
     Base.invokelatest(Genie.up, Genie.config.server_port, Genie.config.server_host; server = server)
 
@@ -58,8 +59,9 @@ function parse_commandline_args(config::Genie.Configuration.Settings) :: Dict{St
   settings.epilog = "Visit https://genieframework.com for more info"
 
   ArgParse.@add_arg_table! settings begin
-    "s"
-    help = "starts HTTP server"
+    "-s"
+    help = "Starts HTTP server"
+    default = "false"
 
     "-p"
     help = "HTTP server port"
@@ -103,7 +105,7 @@ end
 Checks whether or not a certain command was invoked by looking at the command line args.
 """
 function called_command(args::Dict{String,Any}, key::String) :: Bool
-  haskey(args, key) && (args[key] == "true" || args["s"] == key || args[key] !== nothing)
+  haskey(args, key) && args[key] !== nothing
 end
 
 end

@@ -142,7 +142,7 @@ Runs the Genie app by parsing the command line args and invoking the correspondi
 Used internally to parse command line arguments.
 """
 function run(; server::Union{Sockets.TCPServer,Nothing} = nothing) :: Nothing
-  Commands.execute(Genie.config, server = server)
+  Genie.config.app_env == "test" || Commands.execute(Genie.config, server = server)
 
   nothing
 end
