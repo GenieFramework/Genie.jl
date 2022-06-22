@@ -29,13 +29,11 @@ function watch(files::Vector{String}, extensions::Vector{String} = Genie.config.
   push!(WATCHED_FOLDERS[], files...)
   WATCHED_FOLDERS[] = unique(WATCHED_FOLDERS[])
 
-  @info "Monitoring $files for changes"
+  @debug "Monitoring $files for changes"
 
   Revise.revise()
 
   _task[] = @async entr(collect_watched_files(files, extensions); all = true, postpone = true) do
-    @info "Detected files changes"
-
     for fg in handlers()
       for f in fg
         try

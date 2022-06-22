@@ -76,16 +76,16 @@ function parse_commandline_args(config::Genie.Configuration.Settings) :: Dict{St
     default = "$(config.server_host)"
 
     "-x"
-    help = "WebSockets port used by the clients"
-    default = "$(config.websockets_exposed_port)"
-
-    "-y"
     help = "WebSockets host used by the clients"
     default = "$(config.websockets_exposed_host)"
 
+    "-y"
+    help = "WebSockets port used by the clients"
+    default = "$(config.websockets_exposed_port)"
+
     "-b"
     help = "Base path for serving assets and building links"
-    default = "$(config.websockets_exposed_host)"
+    default = "$(config.base_path)"
 
     "-r"
     help = "runs Genie.Toolbox task"
