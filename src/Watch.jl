@@ -17,6 +17,11 @@ function collect_watched_files(files::Vector{String} = WATCHED_FOLDERS[], extens
   result |> sort |> unique
 end
 
+function watchpath(path::Union{String,Vector{String}})
+  isa(path, Vector) || (path = String[path])
+  push!(WATCHED_FOLDERS[], path...)
+end
+
 function handlers()
   Genie.config.watch_handlers |> values |> collect
 end
@@ -50,7 +55,6 @@ watch() = watch(String[])
 
 function unwatch(files::Vector{String}) :: Nothing
   filter!(e -> !(e in files), WATCHED_FOLDERS[])
-  watch()
 end
 unwatch(files...) = unwatch(String[files...])
 
