@@ -5,7 +5,6 @@ using Genie
 using Logging
 using Dates
 
-const _task = Ref{Core.Task}()
 const WATCHED_FOLDERS = Ref{Vector{String}}(String[])
 
 function collect_watched_files(files::Vector{String} = WATCHED_FOLDERS[], extensions::Vector{String} = Genie.config.watch_extensions) :: Vector{String}
@@ -15,7 +14,7 @@ function collect_watched_files(files::Vector{String} = WATCHED_FOLDERS[], extens
     push!(result, Genie.Util.walk_dir(f, only_extensions = extensions)...)
   end
 
-  result |> unique
+  result |> sort |> unique
 end
 
 function handlers()
@@ -29,13 +28,13 @@ function watch(files::Vector{String}, extensions::Vector{String} = Genie.config.
 
   Revise.revise()
 
-  _task[] = @async entr(collect_watched_files(WATCHED_FOLDERS[], extensions); all = true, postpone = true) do
-    now() - last_watched > Millisecond(1_000) || return
+  entr(collect_watched_files(WATCHED_FOLDERS[], extensions); all = true, postpone = true) do
+    now() - last_watched > Millisecond(Genie.config.watch_frequency) || return
     last_watched = now()
 
     for fg in handlers()
       for f in fg
-        @async Base.invokelatest(f)
+        Base.invokelatest(f)
       end
     end
 

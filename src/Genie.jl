@@ -173,7 +173,7 @@ function genie(; context = @__MODULE__) :: Union{Nothing,Sockets.TCPServer}
 
   Secrets.load(context = context)
   Loader.load(context = context)
-  Genie.config.watch && Watch.watch(pwd())
+  Genie.config.watch && @async Watch.watch(pwd())
   run(server = EARLYBINDING)
 
   EARLYBINDING

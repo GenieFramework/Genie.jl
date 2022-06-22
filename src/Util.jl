@@ -18,11 +18,24 @@ end
 
 Recursively walks dir and `produce`s non directories. If `only_files`, directories will be skipped. If `only_dirs`, files will be skipped.
 """
-function walk_dir(dir, paths = String[]; only_extensions = ["jl"], only_files = true, only_dirs = false) :: Vector{String}
+function walk_dir(dir, paths = String[]; only_extensions = ["jl"], only_files = true, only_dirs = false, exceptions = Genie.config.watch_exceptions) :: Vector{String}
   f = readdir(dir)
 
+  exception = false
   for i in f
     full_path = joinpath(dir, i)
+
+    for ex in exceptions
+      if occursin(ex, full_path)
+        exception = true
+        break
+      end
+    end
+
+    if exception
+      exception = false
+      continue
+    end
 
     if isdir(full_path)
       (! only_files || only_dirs) && push!(paths, full_path)
