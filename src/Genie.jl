@@ -101,7 +101,7 @@ function loadapp(path::String = "."; autostart::Bool = false, dbadapter::Union{N
       include(joinpath($path, $(Genie.BOOTSTRAP_FILE_NAME)))
   end)
 
-  Genie.config.watch && Genie.Watch.watch(path)
+  Genie.config.watch && @async Genie.Watch.watch(path)
   autostart && (Core.eval(Main, :(up())))
 
   nothing
