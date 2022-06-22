@@ -68,7 +68,7 @@ Genie.WebChannels.load_channels = function() {
 function newSocketConnection(host = Genie.Settings.websockets_exposed_host) {
   return new WebSocket(Genie.Settings.websockets_protocol + '//' + host
   + (Genie.Settings.websockets_exposed_port > 0 ? (':' + Genie.Settings.websockets_exposed_port) : '')
-  + ((Genie.Settings.base_path.trim() === '' || Genie.Settings.base_path.startsWith('/') ? '' : '/') + Genie.Settings.base_path));
+  + ( ((Genie.Settings.base_path.trim() === '' || Genie.Settings.base_path.startsWith('/')) ? '' : '/') + Genie.Settings.base_path));
 }
 
 Genie.WebChannels.socket = newSocketConnection();
