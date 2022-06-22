@@ -21,6 +21,7 @@ using Reexport
 include("HTTPUtils.jl")
 include("Exceptions.jl")
 include("Repl.jl")
+include("Watch.jl")
 include("Loader.jl")
 include("Secrets.jl")
 include("Util.jl")
@@ -100,6 +101,7 @@ function loadapp(path::String = "."; autostart::Bool = false, dbadapter::Union{N
       include(joinpath($path, $(Genie.BOOTSTRAP_FILE_NAME)))
   end)
 
+  Genie.config.watch && Genie.Watch.watch(path)
   autostart && (Core.eval(Main, :(up())))
 
   nothing
@@ -171,6 +173,7 @@ function genie(; context = @__MODULE__) :: Union{Nothing,Sockets.TCPServer}
 
   Secrets.load(context = context)
   Loader.load(context = context)
+  Genie.config.watch && Watch.watch(pwd())
   run(server = EARLYBINDING)
 
   EARLYBINDING
