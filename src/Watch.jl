@@ -6,6 +6,7 @@ using Logging
 using Dates
 
 const WATCHED_FOLDERS = Ref{Vector{String}}(String[])
+const WATCHING = Ref{Bool}(false)
 
 function collect_watched_files(files::Vector{String} = WATCHED_FOLDERS[], extensions::Vector{String} = Genie.config.watch_extensions) :: Vector{String}
   result = String[]
@@ -32,6 +33,12 @@ function watch(files::Vector{String}, extensions::Vector{String} = Genie.config.
   last_watched = now()
 
   Revise.revise()
+
+  if ! WATCHING[]
+    WATCHING[] = true
+  else
+    return
+  end
 
   entr(collect_watched_files(WATCHED_FOLDERS[], extensions); all = true, postpone = true) do
     now() - last_watched > Millisecond(Genie.config.watch_frequency) || return
