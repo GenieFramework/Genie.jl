@@ -558,6 +558,10 @@ function handle_exception(ex::Exception)
   rethrow(ex)
 end
 
+function handle_exception(ex::Any)
+  Base.error(ex |> string)
+end
+
 
 """
     match_channels(req::Request, msg::String, ws_client::HTTP.WebSockets.WebSocket, params::Params) :: String
