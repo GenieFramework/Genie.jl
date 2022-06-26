@@ -16,7 +16,7 @@ export GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
 export tolink, linkto, responsetype, toroute
 export params, query, post, headers, request, params!
 export ispayload
-export NOT_FOUND, INTERNAL_ERROR
+export NOT_FOUND, INTERNAL_ERROR, BAD_REQUEST, CREATED, NO_CONTENT, OK
 
 Reexport.@reexport using HttpCommon
 
@@ -40,6 +40,11 @@ const PARAMS_ROUTE_KEY      = :ROUTE
 const PARAMS_CHANNELS_KEY   = :CHANNEL
 const PARAMS_MIME_KEY       = :MIME
 
+const OK              = 200
+const CREATED         = 201
+const ACCEPTED        = 202
+const NO_CONTENT      = 204
+const BAD_REQUEST     = 400
 const NOT_FOUND       = 404
 const INTERNAL_ERROR  = 500
 

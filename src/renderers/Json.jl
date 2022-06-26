@@ -24,8 +24,12 @@ const JSON = JSONParser
 const JSON_FILE_EXT = ".json.jl"
 const JSONString = String
 
-export JSONString, json
+export JSONString, json, JSONException
 
+Base.@kwdef mutable struct JSONException <: Exception
+  status::Int
+  message::String
+end
 
 function render(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__, vars...) :: Function
   Genie.Renderer.registervars(; context = context, vars...)
@@ -103,6 +107,10 @@ end
 
 function json(data::Any; status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders()) :: Genie.Renderer.HTTP.Response
   Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"application/json", data), :json, status, headers) |> Genie.Renderer.respond
+end
+
+function json(exception::JSONException; headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders()) :: Genie.Renderer.HTTP.Response
+  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"application/json", exception.message), :json, exception.status, headers) |> Genie.Renderer.respond
 end
 
 
