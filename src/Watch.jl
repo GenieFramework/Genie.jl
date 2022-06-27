@@ -62,6 +62,8 @@ watch() = watch(String[])
 
 function unwatch(files::Vector{String}) :: Nothing
   filter!(e -> !(e in files), WATCHED_FOLDERS[])
+
+  nothing
 end
 unwatch(files...) = unwatch(String[files...])
 
