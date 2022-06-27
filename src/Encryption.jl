@@ -31,7 +31,13 @@ function decrypt(s::String) :: String
   decryptor = Nettle.Decryptor(ENCRYPTION_METHOD, key32)
   deciphertext = Nettle.decrypt(decryptor, :CBC, iv16, s |> hex2bytes)
 
-  String(Nettle.trim_padding_PKCS5(deciphertext))
+  try
+    String(Nettle.trim_padding_PKCS5(deciphertext))
+  catch ex
+    @error ex
+    @error "Can not decrypt data"
+    ""
+  end
 end
 
 
@@ -42,13 +48,14 @@ Generates a pair of key32 and iv16 with salt for encryption/decryption
 """
 function encryption_sauce() :: Tuple{Vector{UInt8},Vector{UInt8}}
   if length(Genie.Secrets.secret_token()) < 64
-    if !Genie.Configuration.isprod()
+    if ! Genie.Configuration.isprod()
       @error "Invalid Genie.Secrets.secret_token() with less than 64 characters; using a temporary token"
       Genie.Secrets.secret_token!()
     else
       error("Can't encrypt - make sure that Genie.Secrets.secret_token!(token) is called in config/secrets.jl")
     end
   end
+
   token = Genie.Secrets.secret_token()
   passwd = token[1:32]
   salt = hex2bytes(token[33:64])
