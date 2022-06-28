@@ -61,7 +61,6 @@ function parse_commandline_args(config::Genie.Configuration.Settings) :: Dict{St
   ArgParse.@add_arg_table! settings begin
     "-s"
     help = "Starts HTTP server"
-    default = "false"
 
     "-p"
     help = "HTTP server port"
