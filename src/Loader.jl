@@ -150,7 +150,10 @@ function autoload(root_dir::String = Genie.config.path_lib;
 
   for i in readdir(root_dir)
     fi = joinpath(root_dir, i)
-    validinclude(fi) && Revise.includet(default_context(context), fi)
+    if validinclude(fi)
+      @debug "Auto loading file: $fi"
+      Revise.includet(default_context(context), fi)
+    end
   end
 
   for (root, dirs, files) in walkdir(root_dir)
@@ -160,7 +163,10 @@ function autoload(root_dir::String = Genie.config.path_lib;
       p = joinpath(root, dir)
       for i in readdir(p)
         fi = joinpath(p, i)
-        endswith(fi, ".jl") && match(namematch, fi) !== nothing && Revise.includet(default_context(context), fi)
+        if endswith(fi, ".jl") && match(namematch, fi) !== nothing
+          @debug "Auto loading file: $fi"
+          Revise.includet(default_context(context), fi)
+        end
       end
     end
   end
