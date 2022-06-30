@@ -142,13 +142,16 @@ function autoload(root_dir::String = Genie.config.path_lib;
                   context::Union{Module,Nothing} = nothing,
                   skipdirs::Vector{String} = String[],
                   namematch::Regex = r".*",
-                  skipmatch::Union{Regex,Nothing} = nothing) :: Nothing
+                  skipmatch::Union{Regex,Nothing} = nothing,
+                  autoload_ignore_file::String = Genie.config.autoload_ignore_file) :: Nothing
   isdir(root_dir) || return nothing
 
   validinclude(fi)::Bool = endswith(fi, ".jl") && match(namematch, fi) !== nothing &&
                             ((skipmatch !== nothing && match(skipmatch, fi) === nothing) || skipmatch === nothing)
 
   for i in readdir(root_dir)
+    isfile(joinpath(root_dir, autoload_ignore_file)) && continue
+
     fi = joinpath(root_dir, i)
     if validinclude(fi)
       @debug "Auto loading file: $fi"
@@ -162,6 +165,8 @@ function autoload(root_dir::String = Genie.config.path_lib;
 
       p = joinpath(root, dir)
       for i in readdir(p)
+        isfile(joinpath(p, autoload_ignore_file)) && continue
+
         fi = joinpath(p, i)
         if endswith(fi, ".jl") && match(namematch, fi) !== nothing
           @debug "Auto loading file: $fi"

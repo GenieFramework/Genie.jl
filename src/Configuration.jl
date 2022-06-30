@@ -225,6 +225,7 @@ Base.@kwdef mutable struct Settings
   format_html_indentation_string::String              = "  "
 
   autoload::Vector{Symbol}                            = Symbol[:initializers, :helpers, :libs, :resources, :plugins, :routes]
+  autoload_ignore_file::String                        = ".autoload_ignore"
 
   watch::Bool                                         = false
   watch_extensions::Vector{String}                    = String["jl", "html", "md", "js", "css"]
