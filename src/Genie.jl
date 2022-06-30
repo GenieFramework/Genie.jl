@@ -155,6 +155,8 @@ end
 """
 function genie(; context = @__MODULE__) :: Union{Nothing,Sockets.TCPServer}
   haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = "dev")
+  haskey(ENV, "GENIE_HOST") && (! isempty(ENV["GENIE_HOST"])) && (Genie.config.server_host = ENV["GENIE_HOST"])
+  haskey(ENV, "GENIE_HOST") || (ENV["GENIE_HOST"] = Genie.config.server_host)
 
   ### EARLY BIND TO PORT FOR HOSTS WITH TIMEOUT ###
   EARLYBINDING = if haskey(ENV, "EARLYBIND") && lowercase(ENV["EARLYBIND"]) == "true" && haskey(ENV, "PORT")

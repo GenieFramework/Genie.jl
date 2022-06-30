@@ -154,7 +154,7 @@ function autoload(root_dir::String = Genie.config.path_lib;
 
     fi = joinpath(root_dir, i)
     if validinclude(fi)
-      @debug "Auto loading file: $fi"
+      # @debug "Auto loading file: $fi"
       Revise.includet(default_context(context), fi)
     end
   end
@@ -169,7 +169,7 @@ function autoload(root_dir::String = Genie.config.path_lib;
 
         fi = joinpath(p, i)
         if endswith(fi, ".jl") && match(namematch, fi) !== nothing
-          @debug "Auto loading file: $fi"
+          # @debug "Auto loading file: $fi"
           Revise.includet(default_context(context), fi)
         end
       end

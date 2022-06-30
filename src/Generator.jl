@@ -183,7 +183,7 @@ function setup_windows_bin_files(path::String = ".") :: Nothing
   end
 
   open(joinpath(bin_folder_path, "server.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -i -- \"%~dp0..\\$(Genie.BOOTSTRAP_FILE_NAME)\" -s %*")
+    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -i -- \"%~dp0..\\$(Genie.BOOTSTRAP_FILE_NAME)\" -s=true %*")
   end
 
   open(joinpath(bin_folder_path, "runtask.bat"), "w") do f
@@ -207,7 +207,7 @@ function setup_nix_bin_files(path::String = ".") :: Nothing
   end
 
   open(joinpath(bin_folder_path, "server"), "w") do f
-    write(f, "#!/bin/sh\n" * raw"julia --color=yes --depwarn=no --project=@. -q -i -- $(dirname $0)/../bootstrap.jl -s \"$@\"")
+    write(f, "#!/bin/sh\n" * raw"julia --color=yes --depwarn=no --project=@. -q -i -- $(dirname $0)/../bootstrap.jl -s=true \"$@\"")
   end
 
   open(joinpath(bin_folder_path, "runtask"), "w") do f
