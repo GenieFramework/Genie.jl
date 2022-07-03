@@ -1094,8 +1094,13 @@ end
 
 Checks if the requested resource is within the public/ folder.
 """
-function is_accessible_resource(resource::String) :: Bool
-  startswith(abspath(resource), abspath(Genie.config.server_document_root))
+function is_accessible_resource(resource::String; root = Genie.config.server_document_root) :: Bool
+  startswith(abspath(resource), abspath(root)) # the file path includes the root path
+end
+
+
+function bundles_path() :: String
+  joinpath(@__DIR__, "..", "files", "static") |> normpath |> abspath
 end
 
 
@@ -1111,10 +1116,11 @@ function serve_static_file(resource::String; root = Genie.config.server_document
                   catch ex
                     resource
                   end
-  f = file_path(resource_path, root = root)
+
+  f = file_path(resource_path; root = root)
   isempty(f) && (f = pwd() |> relpath)
 
-  if (isfile(f) || isdir(f)) && ! is_accessible_resource(f)
+  if (isfile(f) || isdir(f)) && ! is_accessible_resource(f; root)
     @error "401 Unauthorised Access $f"
     return error(resource, response_mime(), Val(401))
   end
@@ -1126,7 +1132,13 @@ function serve_static_file(resource::String; root = Genie.config.server_document
       isfile(joinpath(f, fn)) && return serve_static_file(joinpath(f, fn), root = root)
     end
   else
-    bundled_path = joinpath(@__DIR__, "..", "files", "static", resource[2:end])
+    bundled_path = joinpath(bundles_path(), resource[2:end])
+
+    if ! is_accessible_resource(bundled_path; root = bundles_path())
+      @error "401 Unauthorised Access $f"
+      return error(resource, response_mime(), Val(401))
+    end
+
     if isfile(bundled_path)
       return HTTP.Response(200, file_headers(bundled_path), body = read(bundled_path, String))
     end
@@ -1199,12 +1211,12 @@ end
 
 
 """
-    file_path(resource::String; within_doc_root = true) :: String
+    file_path(resource::String; within_doc_root = true, root = Genie.config.server_document_root) :: String
 
 Returns the path to a resource file. If `within_doc_root` it will automatically prepend the document root to `resource`.
 """
 function file_path(resource::String; within_doc_root = true, root = Genie.config.server_document_root) :: String
-  within_doc_root = within_doc_root && root == Genie.config.server_document_root
+  within_doc_root = (within_doc_root && root == Genie.config.server_document_root)
   joinpath(within_doc_root ? Genie.config.server_document_root : root, resource[(startswith(resource, '/') ? 2 : 1):end])
 end
 const filepath = file_path
