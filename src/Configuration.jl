@@ -8,15 +8,6 @@ import Dates
 
 using Random
 
-import VersionCheck
-
-function __init__()
-  try
-    @async VersionCheck.newversion("Genie", url = "https://genieframework.com/CHANGELOG.html")
-  catch
-  end
-end
-
 """
     pkginfo(pkg::String)
 

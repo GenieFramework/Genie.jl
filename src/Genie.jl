@@ -82,16 +82,15 @@ julia> Genie.serve("public", 8888, async = false, verbose = true)
 ```
 """
 function serve(path::String = pwd(), params...; kwparams...)
-  cd(path)
-  path = ""
+  path = abspath(path)
 
-  Genie.config.server_document_root = abspath(path)
+  Genie.config.server_document_root = path
 
-  Router.route("/") do
-    Router.serve_static_file(path, root = path)
+  Genie.Router.route("/") do
+    Genie.Router.serve_static_file(path; root = path)
   end
-  Router.route(".*") do
-    Router.serve_static_file(Router.params(:REQUEST).target, root = path)
+  Genie.Router.route(".*") do
+    Genie.Router.serve_static_file(Genie.Router.params(:REQUEST).target; root = path)
   end
 
   up(params...; kwparams...)
