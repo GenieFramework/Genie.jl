@@ -1149,6 +1149,7 @@ function serve_static_file(resource::String; root = Genie.config.server_document
 end
 
 
+
 """
 preflight_response() :: HTTP.Response
 

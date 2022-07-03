@@ -3,7 +3,6 @@
     using Genie, Genie.Requests
     using HTTP
 
-    port = nothing
     port = rand(8500:8900)
 
     route("/") do
@@ -31,7 +30,6 @@
     using Genie, Genie.Requests
     using HTTP
 
-    port = nothing
     port = rand(8500:8900)
     Genie.config.features_peerinfo = true
 
