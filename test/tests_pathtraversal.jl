@@ -43,10 +43,10 @@
     using Genie
 
     response = Genie.Router.serve_static_file("//etc/passwd", root = "public")
-    @test response.status == (Sys.iswindows() ? 404 : 401)
+    @test response.status == 401
 
     response = Genie.Router.serve_static_file("../../../../etc/passwd", root = "public")
-    @test response.status == (Sys.iswindows() ? 404 : 401)
+    @test response.status == 401
   end
 
 end
