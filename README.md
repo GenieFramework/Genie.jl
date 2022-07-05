@@ -243,7 +243,7 @@ end
 ```
 
 * `Logging System` | `Caching` | `Cookies and Sessions` | `Built in Docker and Heroku Integrations` | `Genie Deploy`
-* To explore more features check [Genie Documentation](https://www.genieframework.com/docs/tutorials/Overview.html) 🏃‍♂️🏃‍♀️
+* To explore more features check [Genie Documentation](https://www.genieframework.com/docs/genie/tutorials/Overview.html) 🏃‍♂️🏃‍♀️
 
 ## **Made With Genie**
 - Packages/Libraries:
