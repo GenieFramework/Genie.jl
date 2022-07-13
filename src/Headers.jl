@@ -50,7 +50,7 @@ function set_access_control_allow_headers!(req::HTTP.Request, res::HTTP.Response
 
   if ! isempty(request_headers)
     for rqh in split(request_headers, ',')
-      if ! strip(rqh) in Genie.config.cors_headers["Access-Control-Allow-Headers"]
+      if ! ( strip(rqh) in Genie.config.cors_headers["Access-Control-Allow-Headers"] )
         app_response.status = 403 # Forbidden
         throw(Genie.Exceptions.ExceptionalResponse(app_response))
       end
