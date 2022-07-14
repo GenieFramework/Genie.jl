@@ -271,6 +271,58 @@ function embedded_path(path::String) :: String
   joinpath(@__DIR__, "..", path) |> normpath
 end
 
+"""
+  add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::AbstractString;
+    basedir = @__DIR__,
+    type::Union{Nothing, String} = nothing, 
+    content_type::Union{Nothing, Symbol} = nothing,
+    ext::Union{Nothing, String} = nothing, kwargs...)
+
+Helper function to add a file route to the assets based on asset_config and filename.
+
+# Example
+
+```
+add_fileroute(StippleUI.assets_config, "Sortable.min.js")
+add_fileroute(StippleUI.assets_config, "vuedraggable.umd.min.js")
+add_fileroute(StippleUI.assets_config, "vuedraggable.umd.min.js.map", type = "js")
+add_fileroute(StippleUI.assets_config, "QSortableTree.js")
+
+draggabletree_deps() = [
+  script(src = "/stippleui.jl/master/assets/js/sortable.min.js")
+  script(src = "/stippleui.jl/master/assets/js/vuedraggable.umd.min.js")
+  script(src = "/stippleui.jl/master/assets/js/qsortabletree.js")
+]
+Stipple.DEPS[:qdraggabletree] = draggabletree_deps
+```
+"""
+function add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::AbstractString;
+  basedir = @__DIR__,
+  type::Union{Nothing, String} = nothing, 
+  content_type::Union{Nothing, Symbol} = nothing,
+  ext::Union{Nothing, String} = nothing, kwargs...)
+
+  file, ex = splitext(filename)
+  ext = isnothing(ext) ? ex : ext
+  type = isnothing(type) ? ex[2:end] : type
+  
+  content_type = isnothing(content_type) ? if type == "js"
+    :javascript
+  elseif type == "css"
+    :css
+  elseif type in ["jpg", "jpeg", "svg", "mov", "avi", "png", "gif", "tif", "tiff"]
+    imagetype = replace(type, Dict("jpg" => "jpeg", "mpg" => "mpeg", "tif" => "tiff")...)
+    Symbol("image/$imagetype")
+  else
+    Symbol("*.*")
+  end : content_type
+
+  Genie.Router.route(Genie.Assets.asset_path(assets_config, type; file, ext, kwargs...)) do
+    Genie.Renderer.WebRenderable(
+      Genie.Assets.embedded(Genie.Assets.asset_file(cwd=basedir; type, file)),
+    content_type) |> Genie.Renderer.respond
+  end
+end
 
 """
     channels(channel::AbstractString = Genie.config.webchannels_default_route) :: String
