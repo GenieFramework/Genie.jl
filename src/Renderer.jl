@@ -478,7 +478,8 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Dict{S
     return req, res, params
   end
 
-  negotiation_header = haskey(headers, "Accept") ? "Accept" : ( haskey(headers, "Content-Type") ? "Content-Type" : "" )
+  negotiation_header = haskey(headers, "Accept") ? "Accept" :
+                        ( haskey(headers, "Content-Type") ? "Content-Type" : "" )
 
   if isempty(negotiation_header)
     req, res, params = set_negotiated_content(req, res, params)

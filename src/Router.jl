@@ -50,15 +50,15 @@ const INTERNAL_ERROR  = 500
 
 const ROUTE_CACHE = Dict{String,Tuple{String,Vector{String},Vector{Any}}}()
 
-request_mappings() = Dict{Symbol,String}(
-  :text       => "text/plain",
-  :html       => "text/html",
-  :json       => "application/json",
-  :javascript => "application/javascript",
-  :form       => "application/x-www-form-urlencoded",
-  :multipart  => "multipart/form-data",
-  :file       => "application/octet-stream",
-  :xml        => "text/xml"
+request_mappings() = Dict{Symbol,Vector{String}}(
+  :text       => ["text/plain"],
+  :html       => ["text/html"],
+  :json       => ["application/json", "application/vnd.api+json"],
+  :javascript => ["application/javascript"],
+  :form       => ["application/x-www-form-urlencoded"],
+  :multipart  => ["multipart/form-data"],
+  :file       => ["application/octet-stream"],
+  :xml        => ["text/xml"]
 )
 
 const pre_match_hooks = Function[]
@@ -858,15 +858,14 @@ end
 
 Checks if the request content-type is of a certain type.
 """
-function request_type_is(req::HTTP.Request, request_type::Symbol) :: Bool
-  ! in(request_type, keys(request_mappings()) |> collect) && error("Unknown request type $request_type - expected one of $(keys(request_mappings()) |> collect).")
+function request_type_is(req::HTTP.Request, reqtype::Symbol) :: Bool
+  ! in(reqtype, keys(request_mappings()) |> collect) &&
+    error("Unknown request type $reqtype - expected one of $(keys(request_mappings()) |> collect).")
 
-  occursin(request_mappings()[request_type], content_type(req)) && return true
-
-  false
+  request_type(req) == reqtype
 end
-function request_type_is(request_type::Symbol) :: Bool
-  request_type_is(params(PARAMS_REQUEST_KEY), request_type)
+function request_type_is(reqtype::Symbol) :: Bool
+  request_type_is(params(PARAMS_REQUEST_KEY), reqtype)
 end
 
 
@@ -876,11 +875,11 @@ end
 Gets the request's content type.
 """
 function request_type(req::HTTP.Request) :: Symbol
-  accepted_encodings = split(content_type(req), ',')
+  accepted_encodings = strip.(collect(Iterators.flatten(split.(strip.(split(content_type(req), ';')), ','))))
 
   for accepted_encoding in accepted_encodings
     for (k,v) in request_mappings()
-      if occursin(v, accepted_encoding)
+      if in(accepted_encoding, v)
         return k
       end
     end
