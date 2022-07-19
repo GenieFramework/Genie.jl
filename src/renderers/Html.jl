@@ -724,10 +724,11 @@ function parsehtml(elem::HTMLParser.Node; partial::Bool = true, indent = 0) :: S
         try
           attrs_dict[a.name] = elem[a.name]
         catch ex
-          parts = split(string(a), '=')
+          attr = string(a)
+          parts = split(attr, '=')
 
-          if length(parts) == 2
-            val = strip(parts[2])
+          if length(parts) >= 2
+            val = attr[(findfirst(c->c.=='=', attr)+1):end]
             (startswith(val, '"') || startswith(val, "'")) && (val = val[2:end])
             (endswith(val, '"') || endswith(val, "'")) && (val = val[1:end-1])
             attrs_dict[strip(parts[1])] = val

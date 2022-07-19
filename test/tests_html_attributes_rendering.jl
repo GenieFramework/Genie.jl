@@ -65,6 +65,20 @@
     @test String(r.body) |> fws == """<!DOCTYPE html><html><body><div data-arg="foo bar" data-moo-hoo="123"></div></body></html>""" |> fws
   end;
 
+  @safetestset "Attribute value with `=` character" begin
+    using Genie.Renderer.Html
+    import Genie.Util: fws
+
+    r = html("""<div onclick="event = true"></div>""")
+    @test String(r.body) |> fws == """<div onclick="event = true"></div>""" |> fws
+    r = html("""<div onclick="event = true"></div>""", forceparse=true)
+    @test String(r.body) |> fws == """<!DOCTYPE html><html><body><div onclick="event = true"></div></body></html>""" |> fws
+
+    r = html("<div v-on:click='event = true'></div>")
+    @test String(r.body) |> fws == "<div v-on:click='event = true'></div>" |> fws
+    r = html("<div v-on:click='event = true'></div>", forceparse=true)
+    @test String(r.body) |> fws == """<!DOCTYPE html><html><body><div v-on:click="event = true"></div></body></html>""" |> fws
+  end;
 
   @safetestset "Single quotes" begin
     using Genie.Renderer.Html
