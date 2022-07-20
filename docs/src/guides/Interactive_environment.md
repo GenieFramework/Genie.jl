@@ -17,7 +17,7 @@ julia> route("/") do
 You can now start the web server using
 
 ```julia
-julia> Genie.startup()
+julia> up()
 ```
 
 Finally, now navigate to <http://localhost:8000> – you should see the message "Hi there!".
@@ -31,11 +31,11 @@ julia> function hello_world()
 julia> route("/hello/world", hello_world)
 ```
 
-Obviously, the functions can be defined anywhere (in any other module) as long as they are accessible in the current scope.
+The route handler functions can be defined anywhere (in any other file or module) as long as they are accessible in the current scope.
 
 You can now visit <http://localhost:8000/hello/world> in the browser.
 
-Of course we can access GET params:
+We can access route params that are defined as part of the URL, like `:message` in the following example:
 
 ```julia
 julia> route("/echo/:message") do
@@ -45,7 +45,7 @@ julia> route("/echo/:message") do
 
 Accessing <http://localhost:8000/echo/ciao> should echo "ciao".
 
-And we can even match by types:
+And we can even match route params by types (and automatically convert them to the correct type):
 
 ```julia
 julia> route("/sum/:x::Int/:y::Int") do
@@ -53,21 +53,20 @@ julia> route("/sum/:x::Int/:y::Int") do
        end
 ```
 
-By default, GET params are extracted as `SubString` (more exactly, `SubString{String}`).
+By default, route params are extracted as `SubString` (more exactly, `SubString{String}`).
 If type constraints are added, Genie will attempt to convert the `SubString` to the indicated type.
 
 For the above to work, we also need to tell Genie how to perform the conversion:
 
 ```julia
-julia> import Base.convert
-julia> convert(::Type{Int}, s::AbstractString) = parse(Int, s)
+julia> Base.convert(::Type{Int}, s::AbstractString) = parse(Int, s)
 ```
 
 Now if we access <http://localhost:8000/sum/2/3> we should see `5`
 
-## Handling query string params
+## Handling query params
 
-Query string params, which look like `...?foo=bar&baz=2` are automatically unpacked by Genie and placed into the `params` collection. For example:
+Query params, which look like `...?foo=bar&baz=2` are automatically unpacked by Genie and placed into the `params` collection. For example:
 
 ```julia
 julia> route("/sum/:x::Int/:y::Int") do

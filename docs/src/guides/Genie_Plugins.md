@@ -39,7 +39,7 @@ Create a new Genie app:
 ```julia
 julia> using Genie
 
-julia> Genie.newapp("Greetings", autostart = false)
+julia> Genie.Generator.newapp("Greetings", autostart = false)
 ```
 
 Add the plugin as a dependency:
@@ -73,7 +73,7 @@ $ bin/repl
 Start the server:
 
 ```julia
-julia> Genie.startup()
+julia> up()
 ```
 
 Navigate to `http://localhost:8000/hello` to get the greeting from the plugin.
@@ -82,12 +82,12 @@ Navigate to `http://localhost:8000/hello` to get the greeting from the plugin.
 
 ## Developing Genie Plugins
 
-Genie provides an efficient scaffold for bootstraping a new plugin package. All you need to do is run this code to create your plugin project:
+`GeniePlugins.jl` is a Genie plugin that provides an efficient scaffold for creating a new Genie plugin packages. All you need to do is run this code to create your plugin project:
 
 ```julia
-julia> using Genie
+julia> using Genie, GeniePlugins
 
-julia> Genie.Plugins.scaffold("GenieHelloPlugin") # use the actual name of your plugin
+julia> GeniePlugins.scaffold("GenieHelloPlugin") # use the actual name of your plugin
 Generating project file
 Generating project GenieHelloPlugin:
     GenieHelloPlugin/Project.toml
@@ -99,9 +99,7 @@ Adding dependencies
   Updating git-repo `https://github.com/JuliaRegistries/General.git`
   Updating git-repo `https://github.com/genieframework/Genie.jl`
  Resolving package versions...
-  Updating `~/GenieHelloPlugin/Project.toml`
-  [c43c736e] + Genie v0.9.4 #master (https://github.com/genieframework/Genie.jl)
-  Updating `~/GenieHelloPlugin/Manifest.toml`
+  # output truncated
 
 Initialized empty Git repository in /Users/adrian/GenieHelloPlugin/.git/
 [master (root-commit) 30533f9] initial commit
@@ -110,11 +108,11 @@ Initialized empty Git repository in /Users/adrian/GenieHelloPlugin/.git/
 Congratulations, your plugin is ready!
 You can use this default installation function in your plugin's module:
   function install(dest::String; force = false)
-    src = abspath(normpath(joinpath(@__DIR__, "..", Genie.Plugins.FILES_FOLDER)))
+    src = abspath(normpath(joinpath(@__DIR__, "..", GeniePlugins.FILES_FOLDER)))
 
     for f in readdir(src)
       isdir(f) || continue
-      Genie.Plugins.install(joinpath(src, f), dest, force = force)
+      GeniePlugins.install(joinpath(src, f), dest, force = force)
     end
   end
 ```
@@ -145,7 +143,7 @@ The scaffold command will create the file structure of your plugin, including th
     └── GenieHelloPlugin.jl
 ```
 
-The core of the functionality shoud go into the `src/GenieHelloPlugin.jl` module. While everything placed within the `files/` folder should be copied into the corresponding folders of the Genie apps installing the plugin. You can add resources, controllers, models, database migrations, views, assets and any other files inside the `files/` folder to be copied.
+The core of the functionality should go into the `src/GenieHelloPlugin.jl` module. While everything placed within the `files/` folder should be copied into the corresponding folders of the Genie apps installing the plugin. You can add resources, controllers, models, database migrations, views, assets and any other files inside the `files/` folder to be copied.
 
 The scaffolding will also create a `plugins/geniehelloplugin.jl` file - this is the initializer of the plugin and is meant to bootstrap the functionality of the plugin. Here you can load dependencies, define routes, set up configuration, etc.
 
@@ -155,17 +153,17 @@ Because any Genie plugin is a Julia `Pkg` project, you can add any other Julia p
 
 The main module file, present in `src/GenieHelloPlugin.jl` should also expose an `install(path::String)` function, responsible for copying the files of your plugin into the user Genie app. The `path` param is the root of the Genie app where the installation will be performed.
 
-As copying the plugin's files is a standard but tedious operation, Genie provides some helpers to get you started. The `Genie.Plugins` module provides an `install(path::String, dest::String; force = false)` which can be used for copying the plugin's files to their destination in the app.
+As copying the plugin's files is a standard but tedious operation, Genie provides some helpers to get you started. The `GeniePlugins` module provides an `install(path::String, dest::String; force = false)` which can be used for copying the plugin's files to their destination in the app.
 
 The scaffolding function will also recommend a default `install(path::String)` that you can use in your module:
 
 ```julia
 function install(dest::String; force = false)
-  src = abspath(normpath(joinpath(@__DIR__, "..", Genie.Plugins.FILES_FOLDER)))
+  src = abspath(normpath(joinpath(@__DIR__, "..", GeniePlugins.FILES_FOLDER)))
 
   for f in readdir(src)
     isdir(f) || continue
-    Genie.Plugins.install(joinpath(src, f), dest, force = force)
+    GeniePlugins.install(joinpath(src, f), dest, force = force)
   end
 end
 ```

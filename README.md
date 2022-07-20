@@ -18,7 +18,7 @@
     <b> 🧞 The highly productive Julia web framework
     </b>
   </p>
-  
+
   <p>
 
 [![Docs](https://img.shields.io/badge/genie-docs-greenyellow)](https://www.genieframework.com/docs/) [![current status](https://img.shields.io/badge/julia%20support-v1.6%20and%20up-dark%20green)](https://github.com/GenieFramework/Genie.jl/blob/173d8e3deb47f20b3f8b4e5b12da6bf4c59f3370/Project.toml#L53) [![Website](https://img.shields.io/website?url=https%3A%2F%2Fgenieframework.com&logo=genie)](https://www.genieframework.com/) [![Tests](https://img.shields.io/badge/build-passing-green)](https://github.com/GenieFramework/Genie.jl/actions) [![Genie Downloads](https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/Genie)](https://pkgs.genieframework.com?packages=Genie) [![Tweet](https://img.shields.io/twitter/url?url=https%3A%2F%2Fgithub.com%2FGenieFramework%2FGenie.jl)](https://twitter.com/GenieMVC)
@@ -51,15 +51,18 @@
   Genie is a full-stack web framework that provides a streamlined and efficient workflow for developing modern web applications. It builds on Julia's strengths (high-level, high-performance, dynamic, JIT compiled), exposing a rich API and a powerful toolset for productive web development.
 </p>
 
-#### **Need Help?** Reach out on our social media channels. 
+#### **Need Help?** Reach out on our social media channels.
 
 [![Chat on Discord](https://img.shields.io/badge/chat-Discord-7289DA?logo=discord)](https://discord.com/invite/9zyZbD6J7H) [![Chat on Gitter](https://img.shields.io/badge/gitter-chat-red)](https://gitter.im/essenciary/Genie.jl) [![Discuss on GitHub](https://img.shields.io/badge/discussions-GitHub-333333?logo=github)](https://github.com/GenieFramework/Genie.jl/discussions)
 
 <div style="border: 2px solid crimson; background-color: linen;">
-  <h4>Important</h4>
+  <h4>Genie v4 and Julia v1.8 compatibility issue: <code>modules_warned_for not defined</code></h4>
+
   <p>
-    <strong>We have fixed a security vulnerability that affected older versions of Genie -- please make sure to update to Genie v4.16 or above.</strong>
+Due to an issue caused by the removal of some APIs in Julia 1.8, **Genie v4 apps can not run on Julia 1.8**. This results in a `LoadError: UndefVarError: modules_warned_for not defined` exception when loading a Genie v4 app on Julia 1.8 and above.
   </p>
+
+  <strong>Please follow the Genie v4 to Genie v5 migration guide to update your app and make it compatible with Julia 1.8 and above.</strong>
 </div>
 
 <hr>
@@ -69,13 +72,12 @@
 
 ---
 
-- [Features](#features)
-- [Made With Genie](#made-with-genie)
-- [Community Curated Resources](#community-curated-resources)
-- [Community Mentions](#community-mentions)
-- [Contributing](#contributing)
-- [Special Credits](#special-credits)
-- [License](#license)
+- [**Made With Genie**](#made-with-genie)
+- [**Community Curated Resources**](#community-curated-resources)
+- [**Community Mentions**](#community-mentions)
+- [**Contributing**](#contributing)
+- [**Special Credits**](#special-credits)
+- [**License**](#license)
 
 ---
 
@@ -83,8 +85,8 @@
 
 ### **Features**
 
-🛠**Genie Router:** Genie has a really powerful 
-💪 `Router`. Matching web requests to functions, extracting and setting up the request's variables and the execution environment, and invoking the response methods. Features include: 
+🛠**Genie Router:** Genie has a really powerful
+💪 `Router`. Matching web requests to functions, extracting and setting up the request's variables and the execution environment, and invoking the response methods. Features include:
 
 - Static, Dyanmic, Named routing
 - Routing parameters
@@ -128,9 +130,9 @@ julia> channel("/foo/bar") do
 [WS] /foo/bar => #1 | :foo_bar
 ```
 
-📃 **Templating:** Inbuild templating solution for `HTML`, `JSON`, `Markdown`, `JavaScript` views
+📃 **Templating:** Built-in templates support for `HTML`, `JSON`, `Markdown`, `JavaScript` views.
 
-🔐 **Authentication:** Easy to add database backed authentication for restricted area of a website
+🔐 **Authentication:** Easy to add database backed authentication for restricted area of a website.
 
 ```julia-repl
 julia> using Pkg
@@ -227,8 +229,8 @@ end
 
 * `Model Validations`
 
-📝 More Genie features like: 
-* `Files Uploads` 
+📝 More Genie features like:
+* `Files Uploads`
 
 ```julia
 route("/", method = POST) do
@@ -242,11 +244,13 @@ route("/", method = POST) do
 end
 ```
 
-* `Logging System` | `Caching` | `Cookies and Sessions` | `Built in Docker and Heroku Integrations` | `Genie Deploy`
+* `Logging` | `Caching` | `Cookies and Sessions` | `Docker, Heroku, JuliaHub, etc Integrations` | `Genie Deploy`
 * To explore more features check [Genie Documentation](https://www.genieframework.com/docs/tutorials/Overview.html) 🏃‍♂️🏃‍♀️
 
 ## **Made With Genie**
+
 - Packages/Libraries:
+
   * Stipple: [Stipple is a reactive UI library for building interactive data applications in pure Julia](https://github.com/GenieFramework/Stipple.jl)
 
   * StippleUI: [StippleUI is a library of reactive UI elements for Stipple.jl](https://github.com/GenieFramework/StippleUI.jl)
@@ -262,24 +266,32 @@ end
 
 ## **Community Curated Resources**
 
-* [![Awesome Genie](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg) **Awesome Genie**](https://github.com/AbhimanyuAryan/genie-awesome): A curated list of awesome things related to Julia's Web framework Genie. 
+* [![Awesome Genie](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg) **Awesome Genie**](https://github.com/AbhimanyuAryan/genie-awesome): A curated list of awesome things related to Julia's Web framework Genie.
 
 ## **Community Mentions**
+
 * [6 Julia Frameworks to Create Desktop GUI’s 🖥 and Web Apps](https://logankilpatrick.medium.com/6-julia-frameworks-to-create-desktop-guis-and-web-apps-9ae1a941f115) by Logan Kilpatrick
+
 * [12 Best Julia web frameworks](https://www.dunebook.com/julia-web-framework/) by Olanrewaju Olakunle
+
 * [What are the best web frameworks for Julia programming language?](https://qr.ae/pG6Zdn) by Morgane Alinaï
 
 ## **Contributing**
+
 Please contribute using [GitHub Flow](https://guides.github.com/introduction/flow). Create a branch, add commits, and [open a pull request](https://github.com/genieframework/genie.jl/compare).
 
 Please read [`CONTRIBUTING`](CONTRIBUTING.md) for details on our [`CODE OF CONDUCT`](CODE_OF_CONDUCT.md), and the process for submitting pull requests to us.
 
 ## **Special Credits**
+
 * The awesome Genie logo was designed by Alvaro Casanova
+
 * Hoppscoth for readme structure template
-* Genie uses a multitude of packages that have been kindly contributed by the Julia community 
+
+* Genie uses a multitude of packages that have been kindly contributed by the Julia community
 
 ## **License**
+
 This project is licensed under the [MIT License](https://opensource.org/licenses/MIT) - see the [`LICENSE`](https://github.com/GenieFramework/Genie.jl/blob/master/LICENSE.md) file for details.
 
 <p>⭐ If you enjoy this project please consider starring the 🧞 <b>Genie.jl</b> GitHub repo. It will help us fund our open source projects.</p>
