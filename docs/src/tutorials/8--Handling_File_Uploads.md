@@ -1,8 +1,19 @@
 # Handling file uploads
 
-Genie has built-in support for working with file uploads. The collection of uploaded files (as `POST` variables) can be accessed through the `Requests.filespayload` method. Or, we can retrieve the data corresponding to a given file form input by using `Requests.filespayload(key)` -- where `key` is the name of the file input in the form.
+Genie has built-in support for working with file uploads. The collection of uploaded files (as `POST` variables) can be
+accessed through the `Requests.filespayload` method. Or, we can retrieve the data corresponding to a given file form
+input by using `Requests.filespayload(key)` -- where `key` is the name of the file input in the form.
 
-In the following snippet we configure two routes in the root of the app (`/`): the first route, handling `GET` requests, displays an upload form. The second route, handling `POST` requests, processes the uploads, generating a file from the uploaded data, saving it, and displaying the file stats.
+In the following snippet we configure two routes in the root of the app (`/`): the first route, handling `GET` requests,
+displays an upload form. The second route, handling `POST` requests, processes the uploads, generating a file from the
+uploaded data, saving it, and displaying the file stats.
+
+---
+**HEADS UP**
+
+Notice that we can define multiple routes at the same URL if they have different methods, in our case `GET` and `POST`.
+
+---
 
 ### Example
 

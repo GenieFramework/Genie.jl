@@ -78,7 +78,7 @@ In v4 we could access them directly in `routes.jl` (or in other controllers and 
 
 However, in Genie v5 all the app's resources are scoped to the app's main module. So we need to update all references to the app resources to use the app's main module, meaning that in v5 we'll need `using WelcomeHome.HomeController, WelcomeHome.Home`.
 
-We can also dynamically reference the app's main module by using `Main.UserApp` (so `Main.UserApp` is the same as `WelcomeHome` in our example).
+We can also dynamically reference the app's main module by using `..Main.UserApp` (so `..Main.UserApp` is the same as `WelcomeHome` in our example).
 
 ### 5. `Genie.Cache`
 

@@ -1,5 +1,7 @@
-Here is a complete walk-through of developing a feature rich MVC app with Genie, including both user facing web pages, a REST API endpoint, and user authentication.
-You can see and clone the full app here: <https://github.com/essenciary/genie-watch-tonight>
+# Developing Genie MVC Apps
+
+Here is a complete walk-through of developing a feature rich MVC app with Genie, including both user facing web pages,
+a REST API endpoint, and user authentication.
 
 ---
 
@@ -16,10 +18,22 @@ pkg> add Genie # press ] from julia> prompt to enter Pkg mode
 Now, to create the app:
 
 ```julia
-julia> Genie.newapp_mvc("Watch tonight")
+julia> Genie.Generator.newapp_mvc("Watch Tonight")
 ```
 
-Genie will bootstrap a new application for us, creating the necessary files and installing dependencies. As we're creating a MVC app, Genie will offer to install support for SearchLight, Genie's ORM, and will ask what database backend we'll want to use:
+---
+**HEADS UP**
+
+The `newapp_mvc` function creates a new app with the given name, although spaces are not allowed in the name and Genie
+will automatically correct it as `WatchTonight`. `WatchTonight` is the name of the app and the name of the main module of
+the project, in the `src/` folder. You will see it used when we will reference the various files in the project, in the
+`using` statements.
+
+---
+
+Genie will bootstrap a new application for us, creating the necessary files and installing dependencies. As we're
+creating a MVC app, Genie will offer to install support for SearchLight, Genie's ORM, and will ask what database backend
+we'll want to use:
 
 ```shell
 Please choose the DB backend you want to use:
@@ -28,13 +42,18 @@ Please choose the DB backend you want to use:
 3. PostgreSQL
 Input 1, 2 or 3 and press ENTER to confirm
 ```
-Note that if you select an option other than SQLite, you will need to manually create the database outside of Genie. Currently, Genie only automatically creates SQLite databases.
 
-We'll use SQLite in this demo, so let's press "1". Once the process is completed, Genie will start the new application at <http://127.0.0.1:8000>. We can open it in the browser to see the default Genie home page.
+Note that if you select an option other than SQLite, you will need to manually create the database outside of Genie.
+Currently, Genie only automatically creates SQLite databases.
+
+We'll use SQLite in this demo, so let's press "1". Once the process is completed, Genie will start the new application
+at <http://127.0.0.1:8000>. We can open it in the browser to see the default Genie home page.
 
 ### How does this work?
 
-Genie uses the concept of routes and routing in order to map a URL to a request handler (a Julia function) within the app. If we edit the `routes.jl` file we will see that is has defined a `route` with for requests at `/` will display a static file called `welcome.html` (and which can be found in the `public/` folder):
+Genie uses the concept of routes and routing in order to map a URL to a request handler (a Julia function) within the app.
+If we edit the `routes.jl` file we will see that is has defined a `route` that states that for any requests to the `/` URL,
+the app will display a static file called `welcome.html` (which can be found in the `public/` folder):
 
 ```julia
 route("/") do
@@ -63,17 +82,23 @@ SQLite.DB("db/netflix_catalog.sqlite")
 
 ## Creating a Movie resource
 
-A resource is a business entity made available through the application via a URL. In a Genie MVC app it also represents a bundle of Model, View, and Controller files - as well as additional files including a migration file for modifying the database, a test file, and a model data validator.
+A resource is an entity exposed by the application at a URL. In a Genie MVC app it represents a bundle of Model, views,
+and Controller files - as well as possible additional files such as migration files for creating a database table, tests,
+a model data validator, etc.
 
 In the REPL run:
 
 ```julia
-julia> Genie.newresource("movie")
+julia> Genie.Generator.newresource("movie")
 ```
+
+This should create a series of files to represent the Movie resource - just take a look at the output to see what and
+where was created.
 
 ### Creating the DB table using the database migration
 
-We need to edit the migrations file we just created in `db/migrations/`. Look for a file that ends in `_create_table_movies.jl` and make it look like this:
+We need to edit the migrations file that was just created in `db/migrations/`. Look for a file that ends in
+`_create_table_movies.jl` and make it look like this:
 
 ```julia
 module CreateTableMovies
@@ -111,10 +136,11 @@ end
 
 #### Creating the migrations table
 
-In order to be able to manage the app's migrations, we need to create the DB table used by SearchLight's migration system. This is easily done using SearchLight's generators:
+In order to be able to manage the app's migrations, we need to create the DB table used by SearchLight's migration system.
+This is easily done using SearchLight's generators:
 
 ```julia
-julia> SearchLight.Migration.create_migrations_table()
+julia> SearchLight.Migration.init()
 ```
 
 ### Running the migration
@@ -125,15 +151,21 @@ We can now check the status of the migrations:
 julia> SearchLight.Migration.status()
 ```
 
-And run the last migration UP:
+We should see that we have one migration that is `DOWN` (meaning that we need to run the migration because it has not been
+executed yet).
+
+We execute the migration by running the last migration UP:
 
 ```julia
-julia> SearchLight.Migration.last_up()
+julia> SearchLight.Migration.lastup()
 ```
+
+If you now recheck the status of the migrations, you should see that the migration is now `UP`.
 
 ## Creating the Movie model
 
-Now that we have the database table, we need to create the model file which allows us manage the data. The file has already been created for us in `app/resources/movies/Movies.jl`. Edit it and make it look like this:
+Now that we have the database table, we need to create the model file which allows us manage the data. The file has
+already been created for us in `app/resources/movies/Movies.jl`. Edit it and make it look like this:
 
 ```julia
 module Movies
@@ -164,7 +196,7 @@ end
 Once our model is created, we can interact with the database:
 
 ```julia
-julia> using Movies
+julia> using WatchTonight.Movies
 
 julia> m = Movie(title = "Test movie", actors = "John Doe, Jane Doe")
 ```
@@ -193,7 +225,8 @@ julia> all(Movie)
 
 ### Seeding the data
 
-We're now ready to load the movie data into our database - we'll use a short seeding script. First make sure to place the CVS file into the `/db/seeds/` folder. Create the seeds file:
+We're now ready to load the movie data into our database - we'll use a short seeding script. First make sure to place
+the CVS file into the `/db/seeds/` folder. Create the seeds file:
 
 ```julia
 julia> touch(joinpath("db", "seeds", "seed_movies.jl"))
@@ -202,7 +235,7 @@ julia> touch(joinpath("db", "seeds", "seed_movies.jl"))
 And edit it to look like this:
 
 ```julia
-using SearchLight, Movies
+using SearchLight, WatchTonight.Movies
 using CSV
 
 Base.convert(::Type{String}, _::Missing) = ""
@@ -253,12 +286,13 @@ We'll start by adding the route to our handler function. Let's open the `routes.
 
 ```julia
 # routes.jl
-using MoviesController
+using WatchTonight.MoviesController
 
 route("/movies", MoviesController.index)
 ```
 
-This route declares that the `/movies` URL will be handled by the `MoviesController.index` index function. Let's put it in by editing `/app/resources/movies/MoviesController.jl`:
+This route declares that the `/movies` URL will be handled by the `MoviesController.index` index function. Let's put it
+in by editing `/app/resources/movies/MoviesController.jl`:
 
 ```julia
 module MoviesController
@@ -277,7 +311,7 @@ Let's make this more useful though and display a random movie upon landing here:
 ```julia
 module MoviesController
 
-using Genie.Renderer.Html, SearchLight, Movies
+using Genie.Renderer.Html, SearchLight, WatchTonight.Movies
 
 function index()
   html(:movies, :index, movies = rand(Movie))
@@ -286,7 +320,8 @@ end
 end
 ```
 
-The index function renders the `/app/resources/movies/views/index.jl.html` view file as HTML, passing it a random movie into the `movies` instance. Since we don't have the view file yet, let's add it:
+The index function renders the `/app/resources/movies/views/index.jl.html` view file as HTML, passing it a random movie
+into the `movies` instance. Since we don't have the view file yet, let's add it:
 
 ```julia
 julia> touch(joinpath("app", "resources", "movies", "views", "index.jl.html"))
@@ -350,7 +385,8 @@ Which must look like this:
 
 ### Using the layout file
 
-Let's make the web page nicer by loading the Twitter Bootstrap CSS library. As it will be used across all the pages of the website, we'll load it in the main layout file. Edit `/app/layouts/app.jl.html` to look like this:
+Let's make the web page nicer by loading the Twitter Bootstrap CSS library. As it will be used across all the pages of
+the website, we'll load it in the main layout file. Edit `/app/layouts/app.jl.html` to look like this:
 
 ```html
 <!DOCTYPE html>
@@ -358,7 +394,7 @@ Let's make the web page nicer by loading the Twitter Bootstrap CSS library. As i
   <head>
     <meta charset="utf-8" />
     <title>Genie :: The Highly Productive Julia Web Framework</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5/dist/css/bootstrap.min.css" rel="stylesheet">
   </head>
   <body>
     <div class="container">
@@ -372,13 +408,14 @@ Let's make the web page nicer by loading the Twitter Bootstrap CSS library. As i
 
 ## Adding the search feature
 
-Now that we can display titles, it's time to implement the search feature. We'll add a search form onto our page. Edit `/app/resources/movies/views/index.jl.html` to look like this:
+Now that we can display titles, it's time to implement the search feature. We'll add a search form onto our page.
+Edit `/app/resources/movies/views/index.jl.html` to look like this:
 
 ```html
 <h1 class="display-1 text-center">Watch tonight</h1>
 
 <div class="container" style="margin-top: 40px;">
-  <form action="$( linkto(:search_movies) )">
+  <form action="$( Genie.Router.linkto(:search_movies) )">
     <input class="form-control form-control-lg" type="search" name="search_movies" placeholder="Search for movies and TV shows" />
   </form>
 </div>
@@ -405,7 +442,7 @@ route("/movies/search", MoviesController.search, named = :search_movies)
 And the `MoviesController.search` function after updating the `using` section:
 
 ```julia
-using Genie, Genie.Renderer, Genie.Renderer.Html, SearchLight, Movies
+using Genie, Genie.Renderer, Genie.Renderer.Html, SearchLight, WatchTonight.Movies
 
 function search()
   isempty(strip(params(:search_movies))) && redirect(:get_movies)
@@ -431,7 +468,7 @@ route("/movies/search_api", MoviesController.search_api)
 With the corresponding `search_api` method in the `MoviesController` model:
 
 ```julia
-using Genie, Genie.Renderer, Genie.Renderer.Html, SearchLight, Movies, Genie.Renderer.Json
+using Genie, Genie.Renderer, Genie.Renderer.Html, SearchLight, WatchTonight.Movies, Genie.Renderer.Json
 
 function search_api()
   movies = find(Movie,
@@ -444,7 +481,8 @@ end
 
 ## Bonus
 
-Genie makes it easy to add database backed authentication for restricted area of a website, by using the `GenieAuthentication` plugin. Start by adding package:
+Genie makes it easy to add database backed authentication for restricted area of a website, by using the
+`GenieAuthentication` plugin. Start by adding package:
 
 ```julia
 pkg> add GenieAuthentication
@@ -470,8 +508,8 @@ Let's generate an Admin controller that we'll want to protect by login:
 julia> Genie.Generator.newcontroller("Admin", pluralize = false)
 ```
 
-Only this time, let's load the plugin into the app manually. Upon restarting the application, the plugin will be automatically
-loaded by `Genie`:
+Let's load the plugin into the app manually to avoid restarting the app. Upon restarting the application next time,
+the plugin will be automatically loaded by `Genie`:
 
 ```julia
 julia> include(joinpath("plugins", "genie_authentication.jl"))
@@ -480,7 +518,7 @@ julia> include(joinpath("plugins", "genie_authentication.jl"))
 Time to create an admin user for logging in:
 
 ```julia
-julia> using Users
+julia> using WatchTonight.Users
 
 julia> u = User(email = "admin@admin", name = "Admin", password = Users.hash_password("admin"), username = "admin")
 
@@ -490,7 +528,7 @@ julia> save!(u)
 We'll also need a route for the admin area:
 
 ```julia
-using AdminController
+using WatchTonight.AdminController
 
 route("/admin/movies", AdminController.index, named = :get_home)
 ```
@@ -510,5 +548,5 @@ end
 end
 ```
 
-If we navigate to `http://127.0.0.1:8000/admin/movies` we'll be asked to logged in. Using `admin` for the user and `admin` for the password will allow us to access the password protected section.
-
+If we navigate to `http://127.0.0.1:8000/admin/movies` we'll be asked to logged in. Using `admin` for the user and
+`admin` for the password will allow us to access the password protected section.
