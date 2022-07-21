@@ -18,7 +18,7 @@
     <b> 🧞 The highly productive Julia web framework
     </b>
   </p>
-  
+
   <p>
 
 [![Docs](https://img.shields.io/badge/genie-docs-greenyellow)](https://www.genieframework.com/docs/) [![current status](https://img.shields.io/badge/julia%20support-v1.6%20and%20up-dark%20green)](https://github.com/GenieFramework/Genie.jl/blob/173d8e3deb47f20b3f8b4e5b12da6bf4c59f3370/Project.toml#L53) [![Website](https://img.shields.io/website?url=https%3A%2F%2Fgenieframework.com&logo=genie)](https://www.genieframework.com/) [![Tests](https://img.shields.io/badge/build-passing-green)](https://github.com/GenieFramework/Genie.jl/actions) [![Genie Downloads](https://shields.io/endpoint?url=https://pkgs.genieframework.com/api/v1/badge/Genie)](https://pkgs.genieframework.com?packages=Genie) [![Tweet](https://img.shields.io/twitter/url?url=https%3A%2F%2Fgithub.com%2FGenieFramework%2FGenie.jl)](https://twitter.com/GenieMVC)
@@ -43,6 +43,13 @@
     </a>
   </p>
 </div>
+
+<h2>
+  Important: Genie v4 is not compatible with Julia version 1.8 and up. For Julia 1.8 and up support, please use Genie 5.
+  If you have applications developed with Genie v4, please upgrade them to Genie 5, by following the migration guide
+  provided in the Genie docs.
+</h2>
+
 <p style="font-family:verdana;font-size:80%;margin-bottom:4%" align="center">
 <u>Julia data dashboards powered by Genie</u>
 </p>
@@ -51,7 +58,7 @@
   Genie is a full-stack web framework that provides a streamlined and efficient workflow for developing modern web applications. It builds on Julia's strengths (high-level, high-performance, dynamic, JIT compiled), exposing a rich API and a powerful toolset for productive web development.
 </p>
 
-#### **Need Help?** Reach out on our social media channels. 
+#### **Need Help?** Reach out on our social media channels.
 
 [![Chat on Discord](https://img.shields.io/badge/chat-Discord-7289DA?logo=discord)](https://discord.com/invite/9zyZbD6J7H) [![Chat on Gitter](https://img.shields.io/badge/gitter-chat-red)](https://gitter.im/essenciary/Genie.jl) [![Discuss on GitHub](https://img.shields.io/badge/discussions-GitHub-333333?logo=github)](https://github.com/GenieFramework/Genie.jl/discussions)
 
@@ -69,13 +76,12 @@
 
 ---
 
-- [Features](#features)
-- [Made With Genie](#made-with-genie)
-- [Community Curated Resources](#community-curated-resources)
-- [Community Mentions](#community-mentions)
-- [Contributing](#contributing)
-- [Special Credits](#special-credits)
-- [License](#license)
+- [**Made With Genie**](#made-with-genie)
+- [**Community Curated Resources**](#community-curated-resources)
+- [**Community Mentions**](#community-mentions)
+- [**Contributing**](#contributing)
+- [**Special Credits**](#special-credits)
+- [**License**](#license)
 
 ---
 
@@ -83,8 +89,8 @@
 
 ### **Features**
 
-🛠**Genie Router:** Genie has a really powerful 
-💪 `Router`. Matching web requests to functions, extracting and setting up the request's variables and the execution environment, and invoking the response methods. Features include: 
+🛠**Genie Router:** Genie has a really powerful
+💪 `Router`. Matching web requests to functions, extracting and setting up the request's variables and the execution environment, and invoking the response methods. Features include:
 
 - Static, Dyanmic, Named routing
 - Routing parameters
@@ -227,8 +233,8 @@ end
 
 * `Model Validations`
 
-📝 More Genie features like: 
-* `Files Uploads` 
+📝 More Genie features like:
+* `Files Uploads`
 
 ```julia
 route("/", method = POST) do
@@ -262,7 +268,7 @@ end
 
 ## **Community Curated Resources**
 
-* [![Awesome Genie](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg) **Awesome Genie**](https://github.com/AbhimanyuAryan/genie-awesome): A curated list of awesome things related to Julia's Web framework Genie. 
+* [![Awesome Genie](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg) **Awesome Genie**](https://github.com/AbhimanyuAryan/genie-awesome): A curated list of awesome things related to Julia's Web framework Genie.
 
 ## **Community Mentions**
 * [6 Julia Frameworks to Create Desktop GUI’s 🖥 and Web Apps](https://logankilpatrick.medium.com/6-julia-frameworks-to-create-desktop-guis-and-web-apps-9ae1a941f115) by Logan Kilpatrick
@@ -277,7 +283,7 @@ Please read [`CONTRIBUTING`](CONTRIBUTING.md) for details on our [`CODE OF CONDU
 ## **Special Credits**
 * The awesome Genie logo was designed by Alvaro Casanova
 * Hoppscoth for readme structure template
-* Genie uses a multitude of packages that have been kindly contributed by the Julia community 
+* Genie uses a multitude of packages that have been kindly contributed by the Julia community
 
 ## **License**
 This project is licensed under the [MIT License](https://opensource.org/licenses/MIT) - see the [`LICENSE`](https://github.com/GenieFramework/Genie.jl/blob/master/LICENSE.md) file for details.
