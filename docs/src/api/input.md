@@ -4,15 +4,15 @@ CurrentModule = Input
 
 ```@docs
 HttpFile
-HttpInput
 HttpFormPart
+HttpInput
 all
-post
 files
-post_from_request!
-post_url_encoded!
-post_multipart!
 get_multiform_parts!
 parse_seicolon_fields
+post
+post_from_request!
 parse_quoted_params
+post_multipart!
+post_url_encoded!
 ```

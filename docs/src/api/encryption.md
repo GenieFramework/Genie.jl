@@ -3,7 +3,7 @@ CurrentModule = Encryption
 ```
 
 ```@docs
-encrypt
 decrypt
+encrypt
 encryption_sauce
 ```

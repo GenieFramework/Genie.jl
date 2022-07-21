@@ -3,11 +3,12 @@ CurrentModule = Configuration
 ```
 
 ```@docs
-GENIE_VERSION
+buildpath
+config!
+env
 isdev
 isprod
 istest
-env
-buildpath
+pkginfo
 Settings
 ```
