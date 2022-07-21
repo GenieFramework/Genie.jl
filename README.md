@@ -245,7 +245,7 @@ end
 ```
 
 * `Logging` | `Caching` | `Cookies and Sessions` | `Docker, Heroku, JuliaHub, etc Integrations` | `Genie Deploy`
-* To explore more features check [Genie Documentation](https://www.genieframework.com/docs/tutorials/Overview.html) 🏃‍♂️🏃‍♀️
+* To explore more features check [Genie Documentation](https://www.genieframework.com/docs/genie/tutorials/Overview.html) 🏃‍♂️🏃‍♀️
 
 ## **Made With Genie**
 
