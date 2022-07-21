@@ -77,6 +77,7 @@
     r = html("<div v-on:click='event = true'></div>")
     @test String(r.body) |> fws == "<div v-on:click='event = true'></div>" |> fws
     r = html("<div v-on:click='event = true'></div>", forceparse=true)
+    @show r.body |> String |> fws
     @test String(r.body) |> fws == """<!DOCTYPE html><html><body><div v-on:click="event = true"></div></body></html>""" |> fws
   end;
 
