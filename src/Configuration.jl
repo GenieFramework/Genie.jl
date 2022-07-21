@@ -17,7 +17,6 @@ pkginfo(pkg::String) = filter(x -> x.name == pkg && x.is_direct_dep, values(Pkg.
 
 import Logging
 import Genie
-import MbedTLS
 
 export isdev, isprod, istest, env
 export Settings, DEV, PROD, TEST
@@ -101,6 +100,20 @@ buildpath() :: String = Base.Filesystem.mktempdir(prefix = "jl_genie_build_")
 
 
 """
+    config!(; kwargs...)
+
+Updates Genie.confg using the provided keyword arguments.
+"""
+function config!(; kwargs...)
+  for args in kwargs
+    setfield!(Genie.config, args[1], args[2])
+  end
+
+  Genie.config
+end
+
+
+"""
     mutable struct Settings
 
 App configuration - sets up the app's defaults. Individual options are overwritten in the corresponding environment file.
@@ -114,51 +127,55 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `app_env::String`: the environment in which the app is running (dev, test, or prod)
 - `cors_headers::Dict{String,String}`: default `Access-Control-*` CORS settings
 - `cors_allowed_origins::Vector{String}`: allowed origin hosts for CORS settings
-- `cache_duration::Int`: cache expiration time in seconds
 - `log_level::Logging.LogLevel`: logging severity level
 - `log_to_file::Bool`: if true, information will be logged to file besides REPL
-- `session_key_name::String`: the name of the session cookie
-- `session_storage::Symbol`: the backend adapter for session storage (default File)
+- `log_requests::Bool`: if true, requests will be automatically logged
 - `inflector_irregulars::Vector{Tuple{String,String}}`: additional irregular singular-plural forms to be used by the Inflector
 - `run_as_server::Bool`: when true the server thread is launched synchronously to avoid that the script exits
 - `websockets_server::Bool`: if true, the websocket server is also started together with the web server
+- `websockets_port::Int`: the port for the websocket server (default `server_port`)
+- `initializers_folder::String`: the folder where the initializers are located (default "initializers/")
+- `path_config::String`: the path to the configurations folder (default "config/")
+- `path_env::String`: the path to the environment files (default "<path_config>/env/")
+- `path_app::String`: the path to the app files (default "app/")
 - `html_parser_close_tag::String`: default " /". Can be changed to an empty string "" so the single tags would not be closed.
-- `ssl_enabled::Bool`: default false. Server runs over SSL/HTTPS in development.
-- `ssl_config::MbedTLS.SSLConfig`: default `nothing`. If not `nothing` and `ssl_enabled`, it will use the config to start the server over HTTPS.
 - `webchannels_keepalive_frequency::Int`: default `30000`. Frequency in miliseconds to send keepalive messages to webchannel/websocket to keep the connection alive. Set to `0` to disable keepalive messages.
 """
 Base.@kwdef mutable struct Settings
-  server_port::Int                                    = (haskey(ENV, "PORT") ? parse(Int, ENV["PORT"]) : 8000) # default port for binding the web server
-  server_host::String                                 = haskey(ENV, "HOST") ? ENV["HOST"] : "127.0.0.1"
+  server_port::Int                                    = 8000 # default port for binding the web server
+  server_host::String                                 = "127.0.0.1"
+
   server_document_root::String                        = "public"
   server_handle_static_files::Bool                    = true
   server_signature::String                            = "Genie/Julia/$VERSION"
 
-  app_env::String                                     = haskey(ENV, "GENIE_ENV") ? ENV["GENIE_ENV"] : DEV
+  app_env::String                                     = DEV
 
   cors_headers::Dict{String,String}                   = Dict{String,String}(
-                                                          "Access-Control-Allow-Origin"       => "", # ex: "*" or "http://mozilla.org"
-                                                          "Access-Control-Expose-Headers"     => "", # ex: "X-My-Custom-Header, X-Another-Custom-Header"
-                                                          "Access-Control-Max-Age"            => "86400", # 24 hours
-                                                          "Access-Control-Allow-Credentials"  => "", # "true" or "false"
-                                                          "Access-Control-Allow-Methods"      => "", # ex: "POST, GET"
-                                                          "Access-Control-Allow-Headers"      => "", # ex: "X-PINGOTHER, Content-Type"
+                                                        "Access-Control-Allow-Origin"       => "", # ex: "*" or "http://mozilla.org"
+                                                        "Access-Control-Expose-Headers"     => "", # ex: "X-My-Custom-Header, X-Another-Custom-Header"
+                                                        "Access-Control-Max-Age"            => "86400", # 24 hours
+                                                        "Access-Control-Allow-Credentials"  => "", # "true" or "false"
+                                                        "Access-Control-Allow-Methods"      => "", # ex: "POST, GET"
+                                                        "Access-Control-Allow-Headers"      => "Accept, Accept-Language, Content-Language, Content-Type", # CORS safelisted headers
                                                         )
   cors_allowed_origins::Vector{String}                = String[]
 
-  cache_duration::Int                                 = 0
-  cache_storage::Union{Symbol,Nothing}                = nothing
-
-  log_level::Logging.LogLevel                         = Logging.Debug
+  log_level::Logging.LogLevel                         = Logging.Info
   log_to_file::Bool                                   = false
   log_requests::Bool                                  = true
+  log_date_format::String                             = "yyyy-mm-dd HH:MM:SS"
 
   inflector_irregulars::Vector{Tuple{String,String}}  = Tuple{String,String}[]
 
   run_as_server::Bool                                 = false
 
   websockets_server::Bool                             = false
+  websockets_protocol::Union{String,Nothing}          = nothing
   websockets_port::Int                                = server_port
+  websockets_host::String                             = server_host
+  websockets_exposed_port::Union{Int,Nothing}         = nothing
+  websockets_exposed_host::Union{String,Nothing}      = nothing
 
   initializers_folder::String                         = "initializers"
 
@@ -172,7 +189,6 @@ Base.@kwdef mutable struct Settings
   path_tasks::String                                  = "tasks"
   path_build::String                                  = buildpath()
   path_plugins::String                                = "plugins"
-  path_cache::String                                  = "cache"
   path_initializers::String                           = joinpath(path_config, initializers_folder)
   path_db::String                                     = "db"
   path_bin::String                                    = "bin"
@@ -200,20 +216,22 @@ Base.@kwdef mutable struct Settings
   html_parser_char_column::String                     = "!"
   html_parser_char_dash::String                       = "__"
 
-  ssl_enabled::Bool                                   = false
-  ssl_config::Union{MbedTLS.SSLConfig,Nothing}        = nothing
-
-  session_key_name::String                            = "__geniesid"
-  session_storage::Union{Symbol,Nothing}              = nothing
-  session_options::Dict{String,Any}                   = Dict{String,Any}("Path" => "/", "HttpOnly" => true, "Secure" => ssl_enabled)
-
-  base_path::String                                   = haskey(ENV, "BASEPATH") ? ENV["BASEPATH"] : ""
+  base_path::String                                   = ""
 
   features_peerinfo::Bool                             = false
 
   format_julia_builds::Bool                           = false
   format_html_output::Bool                            = true
   format_html_indentation_string::String              = "  "
+
+  autoload::Vector{Symbol}                            = Symbol[:initializers, :helpers, :libs, :resources, :plugins, :routes]
+  autoload_ignore_file::String                        = ".autoload_ignore"
+
+  watch::Bool                                         = false
+  watch_extensions::Vector{String}                    = String["jl", "html", "md", "js", "css"]
+  watch_handlers::Dict{Any,Vector{Function}}          = Dict()
+  watch_frequency::Int                                = 2_000 # 2 seconds
+  watch_exceptions::Vector{String}                    = String["bin/", "build/", "sessions/", "Project.toml", "Manifest.toml"]
 end
 
 end

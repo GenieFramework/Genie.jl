@@ -49,7 +49,7 @@ julia> using Genie
 # ╔═╡ 72531cdc-8652-4a42-8d10-7430e6c0595d
 md"""
 ```julia
-julia> Genie.newapp("DockerTest")
+julia> Genie.Generator.newapp("DockerTest")
 [ Info: Done! New app created at /Users/adrian/DockerTest
 # output truncated
 ```

@@ -1,2 +1,2 @@
 # Optional flat/non-resource MVC folder structure
-# push!(LOAD_PATH,  "controllers", "models")
+# Genie.Loader.autoload(abspath("models"), abspath("controllers"))

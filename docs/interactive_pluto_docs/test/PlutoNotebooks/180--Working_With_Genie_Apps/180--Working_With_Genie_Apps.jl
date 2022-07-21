@@ -5,7 +5,7 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ b2667ebb-10d4-4233-804d-589f3d108dc6
-# hideall 
+# hideall
 
 using Revise
 
@@ -27,7 +27,7 @@ julia> using Pkg
 julia> Pkg.add("Genie")
 ```
 
-In order to create a new Genie app, we need to run `Genie.newapp($app_name)`:
+In order to create a new Genie app, we need to run `Genie.Generator.newapp($app_name)`:
 """
 
 # ╔═╡ dfce7e49-2848-4656-8880-386cfcd99ffe
@@ -36,7 +36,7 @@ md"""
 ```julia
 julia> using Genie
 
-julia> Genie.newapp("MyGenieApp")
+julia> Genie.Generator.newapp("MyGenieApp")
 ```
 
 """
@@ -44,7 +44,7 @@ julia> Genie.newapp("MyGenieApp")
 # ╔═╡ c2e80b10-502e-46c8-b802-ee9956b63fcc
 # hideall
 
-Genie.newapp("MyGenieApp")
+Genie.Generator.newapp("MyGenieApp")
 
 # ╔═╡ 628696ba-4d35-4be9-9ffd-e1e1fd583449
 md"""
@@ -273,7 +273,7 @@ md"""
 julia> BooksController.billgatesbooks()
 ```
 
-The output of the function call should be a HTML string which looks like this: 
+The output of the function call should be a HTML string which looks like this:
 """
 
 # ╔═╡ 19e78a3c-1f67-40fb-9863-c3155bed1136
@@ -439,7 +439,7 @@ write(viewPath2, """<!-- billgatesbooks.jl.html -->
   <% for_each(books) do book %>
     <li>\$(book.title) by \$(book.author)</li>
   <% end %>
-</ul>"""); 
+</ul>""");
 
 # ╔═╡ ce610c99-79a0-4e08-97a8-2f9ed2766598
 md"""
@@ -572,7 +572,7 @@ julia> touch(joinpath("app", "resources", "books", "views", "billgatesbooks.jl.m
 """
 
 # ╔═╡ f9787fca-1aad-46f4-9676-5e17b0ad7f09
-# hideall 
+# hideall
 begin
 	mdp = true;
 	viewPath4 = joinpath("$(dirname(pwd()))/MyGenieApp/","app", "resources", "books", "views", "billgatesbooks.jl.md");
@@ -677,7 +677,7 @@ begin
 	function billgatesbooks_view()
 	  html(:books, :billgatesbooks, books = BillGatesBooks)
 	end
-	
+
 	function billgatesbooks_view_admin()
 		html(:books, :billgatesbooks, books = BillGatesBooks, layout = :admin)
 	end
@@ -685,7 +685,7 @@ begin
 	function billgatesbooks_view_md()
 		html(:books, "billgatesbooks.jl.md", books = BillGatesBooks)
 	end
-	
+
 	end""");
 end;
 
@@ -703,7 +703,7 @@ end
 route("/bgbooks_view") do
   BooksController.billgatesbooks_view()
 end
-	
+
 route("/bgbooks_view_admin") do
   BooksController.billgatesbooks_view_admin()
 end
@@ -873,7 +873,7 @@ begin
 	function billgatesbooks_view()
 	  html(:books, :billgatesbooks, books = BillGatesBooks)
 	end
-	
+
 	function billgatesbooks_view_admin()
 		html(:books, :billgatesbooks, books = BillGatesBooks, layout = :admin)
 	end
@@ -895,7 +895,7 @@ end
 route("/bgbooks_view") do
   BooksController.billgatesbooks_view()
 end
-	
+
 route("/bgbooks_view_admin") do
   BooksController.billgatesbooks_view_admin()
 end""");
@@ -956,7 +956,7 @@ end
 route("/bgbooks_view") do
   BooksController.billgatesbooks_view()
 end
-	
+
 route("/bgbooks_view_admin") do
   BooksController.billgatesbooks_view_admin()
 end
@@ -1219,7 +1219,7 @@ end;
 
 # ╔═╡ 972325b6-5c17-4878-b4a2-a925742ad31e
 md"""
-Adding a route for the controller: 
+Adding a route for the controller:
 
 ```julia
 # route.jl
@@ -1253,11 +1253,11 @@ begin
 	route("/bgbooks_view_md") do
 	  BooksController.billgatesbooks_view_md()
 	end
-	
+
 	route("/api/v1/bgbooks_json") do
 		BooksController.API.billgatesbooks_view_json()
 	end
-		
+
 	route("/api/v2/bgbooks_json") do
 		BooksController.API.billgatesbooks_view_json2()
 	end""");
@@ -1402,7 +1402,7 @@ dev:
   adapter: SQLite
   database: db/books.sqlite
   config:""");
-end;	
+end;
 
 # ╔═╡ 452a2397-923f-4349-90d4-813a87a254fb
 md"""
@@ -1672,7 +1672,7 @@ begin
 end;
 
 # ╔═╡ 1161c5da-1bbe-4f20-be3f-436ca712a792
-# hideall 
+# hideall
 
 begin
 	b_resource;
@@ -1900,7 +1900,7 @@ export Book
   title::String = ""
   author::String = ""
 end
-		
+
 function seed()
   BillGatesBooks = [
     ("The Best We Could Do", "Thi Bui"),
@@ -2197,7 +2197,7 @@ end
 route("/api/v1/bgbooks_json") do
 	BooksController.API.billgatesbooks_view_json()
 end
-	
+
 route("/api/v2/bgbooks_json") do
 	BooksController.API.billgatesbooks_view_json2()
 end

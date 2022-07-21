@@ -1,6 +1,6 @@
 #=
 This file is taken from: https://github.com/rikhuijzer/PlutoStaticHTML.jl/blob/main/src/PlutoStaticHTML.jl
-in Oct 2021. The project has grown since with parallel builds/caching like features. 
+in Oct 2021. The project has grown since with parallel builds/caching like features.
 Kindly use PlutoStaticHTML.jl instead.
 =#
 
@@ -304,7 +304,7 @@ function upperwrap()
     <div class="nav-box"></div>
     <div class="container-fluid nav-container">
       <div class="container" style="max-width:1100px">
-        <nav class="navbar navbar-expand-sm navbar-light m-auto"> 
+        <nav class="navbar navbar-expand-sm navbar-light m-auto">
           <a class="navbar-brand active" aria-current="page" href="/index.html">
             <img src="/assets/img/logo-genieframework.svg" alt="GenieFramework" width="32" height="32" class="d-inline-block align-text-middle me-2">
             <h5 class="logoGenie">
@@ -493,7 +493,7 @@ function lowerwrap()
                           <a class="tocitem" name="App" onclick="hideSideBar()" href="/docs/api/app.html">App</a>
                       </li>
                       <li>
-                          <a class="tocitem" name="Appserver" onclick="hideSideBar()" href="/docs/api/appserver.html">AppServer</a>
+                          <a class="tocitem" name="Server" onclick="hideSideBar()" href="/docs/api/server.html">Server</a>
                       </li>
                       <li>
                           <a class="tocitem" name="Assets" onclick="hideSideBar()" href="/docs/api/assets.html">Assets</a>
@@ -634,7 +634,7 @@ function lowerwrap()
             </div>
         </div>
     </div>
-</footer>    
+</footer>
 <script src="/assets/external/bootstrap-5.1.3-dist/js/bootstrap.min.js"></script>
 
 <script src="/assets/external/highlight/highlight.min.js"></script>

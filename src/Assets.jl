@@ -27,8 +27,16 @@ end
 
 const assets_config = AssetsConfig()
 
+function __init__()
+  # make sure the assets config is properly initialized
+  assets_config.host = Genie.config.base_path
+  assets_config.package = "Genie.jl"
+  assets_config.version = "master"
+end
+
 """
     assets_config!(packages::Vector{Module}; config...) :: Nothing
+    assets_config!(package::Module; config...) :: Nothing
 
 Utility function which allows bulk configuration of the assets.
 
@@ -49,9 +57,24 @@ function assets_config!(packages::Vector{Module}; config...) :: Nothing
 
   nothing
 end
+function assets_config!(package::Module; config...) :: Nothing
+  assets_config!([package]; config...)
+end
+
 
 """
-    external_assets(...) :: Bool
+    assets_config!(; config...) :: Nothing
+
+Updates the assets configuration for the current package.
+"""
+function assets_config!(; config...) :: Nothing
+  assets_config!([@__MODULE__]; config...)
+end
+
+"""
+    external_assets(host::String) :: Bool
+    external_assets(ac::AssetsConfig) :: Bool
+    external_assets() :: Bool
 
 Returns true if the current package is using external assets.
 """
@@ -65,13 +88,19 @@ function external_assets() :: Bool
   external_assets(assets_config)
 end
 
+
 """
-    asset_path(...) :: String
+    asset_path(; file::String, host::String = Genie.config.base_path, package::String = "", version::String = "",
+                  prefix::String = "assets", type::String = "", path::String = "", min::Bool = false,
+                  ext::String = "", skip_ext::Bool = false, query::String = "") :: String
+    asset_path(file::String; kwargs...) :: String
+    asset_path(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "",
+                    file::String = "", ext::String = "", skip_ext::Bool = false, query::String = "") :: String
 
 Generates the path to an asset file.
 """
 function asset_path(; file::String, host::String = Genie.config.base_path, package::String = "", version::String = "",
-                      type::String = "$(split(file, '.')[end])", path::String = "", min::Bool = false,
+                      prefix::String = "assets", type::String = "$(split(file, '.')[end])", path::String = "", min::Bool = false,
                       ext::String = "$(endswith(file, type) ? "" : ".$type")", skip_ext::Bool = false, query::String = "") :: String
   startswith(host, '/') && (host = host[2:end])
   endswith(host, '/') && (host = host[1:end-1])
@@ -80,12 +109,12 @@ function asset_path(; file::String, host::String = Genie.config.base_path, packa
 
   (
     (external_assets(host) ? "" : "/") *
-    join(filter([host, package, version, "assets", type, path, file*(min ? ".min" : "")*(skip_ext ? "" : ext)]) do part
+    join(filter([host, package, version, prefix, type, path, file*(min ? ".min" : "")*(skip_ext ? "" : ext)]) do part
       ! isempty(part)
     end, '/') *
     query) |> lowercase
 end
-function asset_path(file::String; kwargs...)
+function asset_path(file::String; kwargs...) :: String
   asset_path(; file, kwargs...)
 end
 function asset_path(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "",
@@ -96,13 +125,46 @@ end
 
 
 """
-    asset_file(...) :: String
+    asset_route(; file::String, package::String = "", version::String = "", prefix::String = "assets",
+                  type::String = "", path::String = "", min::Bool = false,
+                  ext::String = "", skip_ext::Bool = false, query::String = "") :: String
+    asset_route(file::String; kwargs...) :: String
+    asset_route(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "",
+                file::String = "", ext::String = "", skip_ext::Bool = false, query::String = "") :: String
+
+Generates the route to an asset file.
+"""
+function asset_route(; file::String, package::String = "", version::String = "", prefix::String = "assets",
+                      type::String = "$(split(file, '.')[end])", path::String = "", min::Bool = false,
+                      ext::String = "$(endswith(file, type) ? "" : ".$type")", skip_ext::Bool = false, query::String = "") :: String
+  startswith(path, '/') && (path = path[2:end])
+  endswith(path, '/') && (path = path[1:end-1])
+
+  ('/' *
+    join(filter([package, version, prefix, type, path, file*(min ? ".min" : "")*(skip_ext ? "" : ext)]) do part
+      ! isempty(part)
+    end, '/') *
+    query) |> lowercase
+end
+function asset_route(file::String; kwargs...) :: String
+  asset_route(; file, kwargs...)
+end
+function asset_route(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "",
+                    file::String = "", ext::String = ".$type", skip_ext::Bool = false, query::String = "") :: String
+  asset_route(package = ac.package, version = ac.version, type = type, path = path, file = file,
+              ext = ext, skip_ext = skip_ext, query = query)
+end
+
+
+"""
+    asset_file(; cwd = "", file::String, path::String = "", type::String = "", prefix::String = "assets",
+                  ext::String = "", min::Bool = false, skip_ext::Bool = false) :: String
 
 Generates the file system path to an asset file.
 """
-function asset_file(; cwd = "", file::String, path::String = "", type::String = "$(split(file, '.')[end])",
+function asset_file(; cwd = "", file::String, path::String = "", type::String = "$(split(file, '.')[end])", prefix::String = "assets",
                       ext::String = "$(endswith(file, type) ? "" : ".$type")", min::Bool = false, skip_ext::Bool = false) :: String
-  joinpath((filter([cwd, "assets", type, path, file*(min ? ".min" : "")*(skip_ext ? "" : ext)]) do part
+  joinpath((filter([cwd, prefix, type, path, file*(min ? ".min" : "")*(skip_ext ? "" : ext)]) do part
     ! isempty(part)
   end)...) |> normpath
 end
@@ -146,7 +208,7 @@ function jsliteral(val) :: String
 end
 
 """
-    js_settings() :: string
+    js_settings(channel::String = Genie.config.webchannels_default_route) :: String
 
 Sets up a `window.Genie.Settings` JavaScript object which exposes relevant Genie app settings from `Genie.config`
 """
@@ -155,7 +217,12 @@ function js_settings(channel::String = Genie.config.webchannels_default_route) :
     :server_host                      => Genie.config.server_host,
     :server_port                      => Genie.config.server_port,
 
+    :websockets_protocol              => Genie.config.websockets_protocol === nothing ? jsliteral("window.location.protocol.replace('http', 'ws')") : Genie.config.websockets_protocol,
+    :websockets_host                  => Genie.config.websockets_host,
+    :websockets_exposed_host          => Genie.config.websockets_exposed_host === nothing ? jsliteral("window.location.hostname") : Genie.config.websockets_exposed_host,
     :websockets_port                  => Genie.config.websockets_port,
+    :websockets_exposed_port          => Genie.config.websockets_exposed_port === nothing ? jsliteral("window.location.port") : Genie.config.websockets_exposed_port,
+
     :webchannels_default_route        => channel,
     :webchannels_subscribe_channel    => Genie.config.webchannels_subscribe_channel,
     :webchannels_unsubscribe_channel  => Genie.config.webchannels_unsubscribe_channel,
@@ -188,7 +255,7 @@ end
 """
     embeded(path::String) :: String
 
-Reads and outputs the file at `path` within Genie's root package dir
+Reads and outputs the file at `path`.
 """
 function embedded(path::String) :: String
   read(joinpath(path) |> normpath, String)
@@ -198,17 +265,69 @@ end
 """
     embeded_path(path::String) :: String
 
-Returns the path relative to Genie's root package dir
+Returns the path relative to Genie's root package dir.
 """
 function embedded_path(path::String) :: String
   joinpath(@__DIR__, "..", path) |> normpath
 end
 
+"""
+  add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::AbstractString;
+    basedir = @__DIR__,
+    type::Union{Nothing, String} = nothing, 
+    content_type::Union{Nothing, Symbol} = nothing,
+    ext::Union{Nothing, String} = nothing, kwargs...)
+
+Helper function to add a file route to the assets based on asset_config and filename.
+
+# Example
+
+```
+add_fileroute(StippleUI.assets_config, "Sortable.min.js")
+add_fileroute(StippleUI.assets_config, "vuedraggable.umd.min.js")
+add_fileroute(StippleUI.assets_config, "vuedraggable.umd.min.js.map", type = "js")
+add_fileroute(StippleUI.assets_config, "QSortableTree.js")
+
+draggabletree_deps() = [
+  script(src = "/stippleui.jl/master/assets/js/sortable.min.js")
+  script(src = "/stippleui.jl/master/assets/js/vuedraggable.umd.min.js")
+  script(src = "/stippleui.jl/master/assets/js/qsortabletree.js")
+]
+Stipple.DEPS[:qdraggabletree] = draggabletree_deps
+```
+"""
+function add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::AbstractString;
+  basedir = @__DIR__,
+  type::Union{Nothing, String} = nothing, 
+  content_type::Union{Nothing, Symbol} = nothing,
+  ext::Union{Nothing, String} = nothing, kwargs...)
+
+  file, ex = splitext(filename)
+  ext = isnothing(ext) ? ex : ext
+  type = isnothing(type) ? ex[2:end] : type
+  
+  content_type = isnothing(content_type) ? if type == "js"
+    :javascript
+  elseif type == "css"
+    :css
+  elseif type in ["jpg", "jpeg", "svg", "mov", "avi", "png", "gif", "tif", "tiff"]
+    imagetype = replace(type, Dict("jpg" => "jpeg", "mpg" => "mpeg", "tif" => "tiff")...)
+    Symbol("image/$imagetype")
+  else
+    Symbol("*.*")
+  end : content_type
+
+  Genie.Router.route(Genie.Assets.asset_path(assets_config, type; file, ext, kwargs...)) do
+    Genie.Renderer.WebRenderable(
+      Genie.Assets.embedded(Genie.Assets.asset_file(cwd=basedir; type, file)),
+    content_type) |> Genie.Renderer.respond
+  end
+end
 
 """
-    channels() :: String
+    channels(channel::AbstractString = Genie.config.webchannels_default_route) :: String
 
-Outputs the channels.js file included with the Genie package
+Outputs the `channels.js` file included with the Genie package.
 """
 function channels(channel::AbstractString = Genie.config.webchannels_default_route) :: String
   string(js_settings(channel), embedded(Genie.Assets.asset_file(cwd=normpath(joinpath(@__DIR__, "..")), type = "js", file = "channels")))
@@ -216,7 +335,7 @@ end
 
 
 """
-    channels_script() :: String
+    channels_script(channel::AbstractString = Genie.config.webchannels_default_route) :: String
 
 Outputs the channels JavaScript content within `<script>...</script>` tags, for embedding into the page.
 """
@@ -229,6 +348,11 @@ $(channels(channel))
 end
 
 
+"""
+    channels_subscribe(channel::AbstractString = Genie.config.webchannels_default_route) :: Nothing
+
+Registers subscription and unsubscription channels for `channel`.
+"""
 function channels_subscribe(channel::AbstractString = Genie.config.webchannels_default_route) :: Nothing
   Router.channel("/$(channel)/$(Genie.config.webchannels_subscribe_channel)") do
     WebChannels.subscribe(Genie.Requests.wsclient(), channel)
@@ -247,14 +371,14 @@ function channels_subscribe(channel::AbstractString = Genie.config.webchannels_d
 end
 
 
-function assets_endpoint() :: String
-  Genie.Assets.asset_path(assets_config, :js, file = Genie.config.webchannels_js_file, skip_ext = true)
+function assets_endpoint(f::Function = Genie.Assets.asset_path) :: String
+  f(assets_config, :js, file = Genie.config.webchannels_js_file, skip_ext = true)
 end
 
 
 function channels_route(channel::AbstractString = Genie.config.webchannels_default_route) :: Nothing
   if ! external_assets()
-    Router.route(assets_endpoint()) do
+    Router.route(assets_endpoint(Genie.Assets.asset_route)) do
       Genie.Renderer.Js.js(channels(channel))
     end
   end
@@ -285,7 +409,7 @@ function channels_support(channel::AbstractString = Genie.config.webchannels_def
 end
 
 
-########
+######## WEB THREADS
 
 
 """
@@ -314,6 +438,11 @@ $(webthreads(channel))
 end
 
 
+"""
+    function webthreads_subscribe(channel) :: Nothing
+
+Registers subscription and unsubscription routes for `channel`.
+"""
 function webthreads_subscribe(channel::String = Genie.config.webthreads_default_route) :: Nothing
   Router.route("/$(channel)/$(Genie.config.webchannels_subscribe_channel)", method = Router.GET) do
     WebThreads.subscribe(Genie.Requests.wtclient(), channel)
@@ -332,13 +461,18 @@ function webthreads_subscribe(channel::String = Genie.config.webthreads_default_
 end
 
 
+"""
+    function webthreads_push_pull(channel) :: Nothing
+
+Registers push and pull routes for `channel`.
+"""
 function webthreads_push_pull(channel::String = Genie.config.webthreads_default_route) :: Nothing
   Router.route("/$(channel)/$(Genie.config.webthreads_pull_route)", method = Router.POST) do
     WebThreads.pull(Genie.Requests.wtclient(), channel)
   end
 
   Router.route("/$(channel)/$(Genie.config.webthreads_push_route)", method = Router.POST) do
-    WebThreads.push(Genie.Requests.wtclient(), channel, Router.params(Genie.PARAMS_RAW_PAYLOAD))
+    WebThreads.push(Genie.Requests.wtclient(), channel, Router.params(Genie.Router.PARAMS_RAW_PAYLOAD))
   end
 
   nothing
@@ -402,7 +536,7 @@ function favicon_support() :: String
     )
   end
 
-  "<link rel=\"icon\" type=\"image/x-icon\" href=\"$(Genie.config.base_path)/favicon.ico\" />"
+  "<link rel=\"icon\" type=\"image/x-icon\" href=\"$(Genie.config.base_path)$(endswith(Genie.config.base_path, '/') ? "" : "/")favicon.ico\" />"
 end
 
 end

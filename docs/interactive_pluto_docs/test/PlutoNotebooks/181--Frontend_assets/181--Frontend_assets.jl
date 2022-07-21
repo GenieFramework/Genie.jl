@@ -28,7 +28,7 @@ As summary:
 """
 
 # ╔═╡ 01eaaf87-7744-4101-ac22-eb8e5d02b622
-Genie.newapp("MyApp", fullstack=true, dbadapter=:SQLite)
+Genie.Generator.newapp("MyApp", fullstack=true, dbadapter=:SQLite)
 
 # ╔═╡ 832a2b00-6c3a-4d22-bca5-2f2f9a39373b
 md"""

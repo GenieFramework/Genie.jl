@@ -3,16 +3,28 @@ Generates various Genie files.
 """
 module Generator
 
-import SHA, Dates, Pkg, Logging, UUIDs
+import Dates, Pkg, Logging, UUIDs
 import Inflector
 import Genie
 
 
-const JULIA_PATH = joinpath(Sys.BINDIR, "julia")
+const NEW_APP_PATH = joinpath("files", "new_app")
 
 
 function validname(name::String)
   filter(! isempty, [x.match for x in collect(eachmatch(r"[0-9a-zA-Z_]*", name))]) |> join
+end
+
+"""
+    newcontroller(controller_name::Union{String,Symbol}) :: Nothing
+
+Creates a new `controller` file. If `pluralize` is `false`, the name of the controller is not automatically pluralized.
+"""
+function newcontroller(controller_name::Union{String,Symbol}; path::Union{String,Nothing} = nothing, pluralize::Bool = true, context::Union{Module,Nothing} = nothing) :: Nothing
+  Generator.newcontroller(string(controller_name), path = path, pluralize = pluralize)
+  Genie.Loader.load_resources(; context = Genie.Loader.default_context(context))
+
+  nothing
 end
 
 
@@ -31,6 +43,20 @@ function newcontroller(resource_name::String; path::Union{String,Nothing} = noth
   cfn = controller_file_name(resource_name)
   write_resource_file(resource_path, cfn, resource_name, :controller, pluralize = pluralize) &&
     @info "New controller created at $(abspath(joinpath(resource_path, cfn)))"
+
+  nothing
+end
+
+
+"""
+    newresource(resource_name::Union{String,Symbol}; pluralize::Bool = true, context::Union{Module,Nothing} = nothing) :: Nothing
+
+Creates all the files associated with a new resource.
+If `pluralize` is `false`, the name of the resource is not automatically pluralized.
+"""
+function newresource(resource_name::Union{String,Symbol}; path::String = ".", pluralize::Bool = true, context::Union{Module,Nothing} = nothing) :: Nothing
+  newresource(string(resource_name), path = path, pluralize = pluralize)
+  Genie.Loader.load_resources(; context = Genie.Loader.default_context(context))
 
   nothing
 end
@@ -58,6 +84,21 @@ function newresource(resource_name::String; path::String = ".", pluralize::Bool 
 
   nothing
 end
+
+"""
+    newtask(task_name::Union{String,Symbol}) :: Nothing
+
+Creates a new Genie `Task` file.
+"""
+function newtask(task_name::Union{String,Symbol}) :: Nothing
+  task_name = string(task_name)
+  endswith(task_name, "Task") || (task_name = task_name * "Task")
+  Toolbox.new(task_name)
+
+  nothing
+end
+
+###################################
 
 
 """
@@ -111,7 +152,7 @@ function write_resource_file(resource_path::String, file_name::String, resource_
   end
 
   try
-    Genie.load_resources()
+    Genie.Loader.load_resources()
   catch ex
     @error ex
   end
@@ -134,6 +175,7 @@ end
 Creates the bin/server and bin/repl binaries for Windows
 """
 function setup_windows_bin_files(path::String = ".") :: Nothing
+  JULIA_PATH = joinpath(Sys.BINDIR, "julia")
   bin_folder_path = binfolderpath(path)
 
   open(joinpath(bin_folder_path, "repl.bat"), "w") do f
@@ -141,7 +183,7 @@ function setup_windows_bin_files(path::String = ".") :: Nothing
   end
 
   open(joinpath(bin_folder_path, "server.bat"), "w") do f
-    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -i -- \"%~dp0..\\$(Genie.BOOTSTRAP_FILE_NAME)\" s %*")
+    write(f, "\"$JULIA_PATH\" --color=yes --depwarn=no --project=@. -q -i -- \"%~dp0..\\$(Genie.BOOTSTRAP_FILE_NAME)\" -s=true %*")
   end
 
   open(joinpath(bin_folder_path, "runtask.bat"), "w") do f
@@ -165,7 +207,7 @@ function setup_nix_bin_files(path::String = ".") :: Nothing
   end
 
   open(joinpath(bin_folder_path, "server"), "w") do f
-    write(f, "#!/bin/sh\n" * raw"julia --color=yes --depwarn=no --project=@. -q -i -- $(dirname $0)/../bootstrap.jl s \"$@\"")
+    write(f, "#!/bin/sh\n" * raw"julia --color=yes --depwarn=no --project=@. -q -i -- $(dirname $0)/../bootstrap.jl -s=true \"$@\"")
   end
 
   open(joinpath(bin_folder_path, "runtask"), "w") do f
@@ -202,17 +244,8 @@ end
 Computes the controller file name based on the resource name.
 """
 function controller_file_name(resource_name::Union{String,Symbol}) :: String
-  uppercasefirst(string(resource_name)) * Genie.GENIE_CONTROLLER_FILE_POSTFIX
-end
-
-
-"""
-    secret_token() :: String
-
-Generates a random secret token to be used for configuring the call to `Genie.secret_token!`.
-"""
-function secret_token() :: String
-  SHA.sha256("$(randn()) $(Dates.now())") |> bytes2hex
+  GENIE_CONTROLLER_FILE_POSTFIX = "Controller.jl"
+  uppercasefirst(string(resource_name)) * GENIE_CONTROLLER_FILE_POSTFIX
 end
 
 
@@ -225,8 +258,8 @@ function write_secrets_file(app_path::String = ".") :: Nothing
   secrets_path = joinpath(app_path, Genie.config.path_config)
   ispath(secrets_path) || mkpath(secrets_path)
 
-  open(joinpath(secrets_path, Genie.SECRETS_FILE_NAME), "w") do f
-    write(f, """Genie.secret_token!("$(secret_token())") """)
+  open(joinpath(secrets_path, Genie.Secrets.SECRETS_FILE_NAME), "w") do f
+    write(f, """Genie.Secrets.secret_token!("$(Genie.Secrets.secret())") """)
   end
 
   nothing
@@ -239,7 +272,7 @@ end
 Writes the files necessary to create a full stack Genie app.
 """
 function fullstack_app(app_name::String = ".", app_path::String = ".") :: Nothing
-  cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH), app_path)
+  cp(joinpath(@__DIR__, "..", NEW_APP_PATH), app_path)
 
   scaffold(app_name, app_path)
 
@@ -270,15 +303,17 @@ end
 Writes the file necessary to scaffold a minimal Genie app.
 """
 function scaffold(app_name::String, app_path::String = "") :: Nothing
+  GENIE_FILE_NAME = "genie.jl"
+
   app_name = validname(app_name)
   app_path = abspath(app_name)
 
   isdir(app_path) || mkpath(app_path)
 
-  for f in [Genie.config.path_src, Genie.GENIE_FILE_NAME, Genie.ROUTES_FILE_NAME,
+  for f in [Genie.config.path_src, GENIE_FILE_NAME, Genie.ROUTES_FILE_NAME,
             ".gitattributes", ".gitignore"]
     try
-      cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, f), joinpath(app_path, f))
+      cp(joinpath(@__DIR__, "..", NEW_APP_PATH, f), joinpath(app_path, f))
     catch ex
     end
   end
@@ -298,7 +333,7 @@ function microstack_app(app_name::String = ".", app_path::String = ".") :: Nothi
   isdir(app_path) || mkpath(app_path)
 
   for f in [Genie.config.path_bin, Genie.config.path_config, Genie.config.server_document_root]
-    cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, f), joinpath(app_path, f))
+    cp(joinpath(@__DIR__, "..", NEW_APP_PATH, f), joinpath(app_path, f))
   end
 
   scaffold(app_name, app_path)
@@ -313,7 +348,7 @@ end
 Writes the files used for rendering resources using the MVC stack and the Genie templating system.
 """
 function mvc_support(app_path::String = ".") :: Nothing
-  cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_app), joinpath(app_path, Genie.config.path_app))
+  cp(joinpath(@__DIR__, "..", NEW_APP_PATH, Genie.config.path_app), joinpath(app_path, Genie.config.path_app))
 
   nothing
 end
@@ -327,7 +362,7 @@ Writes files used for interacting with the SearchLight ORM.
 function db_support(app_path::String = ".", include_env::Bool = true, add_dependencies::Bool = true;
                     testmode::Bool = false, dbadapter::Union{String,Symbol,Nothing} = nothing, interactive::Bool = true)
 
-  cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_db), joinpath(app_path, Genie.config.path_db), force = true)
+  cp(joinpath(@__DIR__, "..", NEW_APP_PATH, Genie.config.path_db), joinpath(app_path, Genie.config.path_db), force = true)
 
   db_intializer(app_path, include_env)
 
@@ -338,11 +373,11 @@ end
 function db_intializer(app_path::String = ".", include_env::Bool = false)
   initializers_dir = joinpath(app_path, Genie.config.path_initializers)
   initializer_path = joinpath(initializers_dir, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME)
-  source_path = joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_initializers, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME) |> normpath
+  source_path = joinpath(@__DIR__, "..", NEW_APP_PATH, Genie.config.path_initializers, Genie.SEARCHLIGHT_INITIALIZER_FILE_NAME) |> normpath
 
   if !isfile(initializer_path)
     ispath(initializers_dir) || mkpath(initializers_dir)
-    include_env && cp(joinpath(@__DIR__, "..", Genie.NEW_APP_PATH, Genie.config.path_env), joinpath(app_path, Genie.config.path_env), force = true)
+    include_env && cp(joinpath(@__DIR__, "..", NEW_APP_PATH, Genie.config.path_env), joinpath(app_path, Genie.config.path_env), force = true)
     cp(source_path, initializer_path)
   end
 end
@@ -366,7 +401,7 @@ function write_app_custom_files(path::String, app_path::String) :: Nothing
     (pwd() != @__DIR__) && cd(@__DIR__) # allow starting app from bin/ dir
 
     using $(moduleinfo[1])
-    push!(Base.modules_warned_for, Base.PkgId($(moduleinfo[1])))
+    const UserApp = $(moduleinfo[1])
     $(moduleinfo[1]).main()
     """)
   end
@@ -375,9 +410,33 @@ function write_app_custom_files(path::String, app_path::String) :: Nothing
   open(joinpath(app_path, "test", "runtests.jl"), "w") do f
     write(f,
       """
-      using $(moduleinfo[1]), Test
-      # implement your tests here
-      @test 1 == 1
+      # This file is autogenerated to run all tests in the context of your Genie app.
+      # It is not necessary to edit this file.
+      # To create tests, simply add `.jl` test files in the `test/` folder.
+      # All `.jl` files in the `test/` folder will be automaticlaly executed by running `\$ julia --project runtests.jl`
+      # If you want to selectively run tests, use `\$ julia --project runtests.jl test_file_1 test_file_2`
+
+      ENV["GENIE_ENV"] = "test"
+      push!(LOAD_PATH, abspath(normpath(joinpath("..", "src"))))
+
+      cd("..")
+      using Pkg
+      Pkg.activate(".")
+
+      using Genie
+      Genie.loadapp("..")
+
+      cd(@__DIR__)
+      Pkg.activate(".")
+
+      # !!! Main.UserApp is configured as an alias for Main.$(moduleinfo[1]) and you might encounter it in some tests
+      using Main.$(moduleinfo[1]), Test, TestSetExtensions, Logging
+
+      Logging.global_logger(NullLogger())
+
+      @testset ExtendedTestSet "$(moduleinfo[1]) tests" begin
+        @includetests ARGS
+      end
       """)
   end
 
@@ -396,7 +455,7 @@ function install_app_dependencies(app_path::String = "."; testmode::Bool = false
   @info "Installing app dependencies"
   Pkg.activate(".")
 
-  pkgs = ["Dates", "Logging", "LoggingExtras", "MbedTLS"]
+  pkgs = ["Dates", "Logging"]
 
   testmode ? Pkg.develop("Genie", io = devnull) : push!(pkgs, "Genie")
   testmode ? Pkg.develop("Inflector", io = devnull) : push!(pkgs, "Inflector")
@@ -409,7 +468,14 @@ function install_app_dependencies(app_path::String = "."; testmode::Bool = false
 
   Pkg.activate("test")
 
+  Pkg.add("Genie", io = devnull)
   Pkg.add("Test", io = devnull)
+  Pkg.add("TestSetExtensions", io = devnull)
+  Pkg.add("Pkg", io = devnull)
+  Pkg.add("Logging", io = devnull)
+  Pkg.instantiate()
+
+  dbsupport ? install_db_dependencies(testmode = testmode, dbadapter = dbadapter, interactive = interactive) : dbadapter
 
   Pkg.activate(".") # return to the main project
 
@@ -631,7 +697,7 @@ at the REPL, during the app creation process.
 
 # Examples
 ```julia-repl
-julia> Genie.newapp("MyGenieApp")
+julia> Genie.Generator.newapp("MyGenieApp")
 2019-08-06 16:54:15:INFO:Main: Done! New app created at MyGenieApp
 2019-08-06 16:54:15:DEBUG:Main: Changing active directory to MyGenieApp
 2019-08-06 16:54:15:DEBUG:Main: Installing app dependencies
@@ -749,7 +815,6 @@ function newapp_webservice(path::String = "."; autostart::Bool = true, dbsupport
   newapp(path, autostart = autostart, fullstack = false, dbsupport = dbsupport, mvcsupport = false,
           dbadapter = dbadapter, testmode = testmode, interactive = interactive)
 end
-const newappwebservice = newapp_webservice
 
 
 """
@@ -769,7 +834,6 @@ function newapp_mvc(path::String = "."; autostart::Bool = true, dbadapter::Union
   newapp(path, autostart = autostart, fullstack = false, dbsupport = true, mvcsupport = true, dbadapter = dbadapter,
           testmode = testmode, interactive = interactive)
 end
-const newappmvc = newapp_mvc
 
 
 """
@@ -789,7 +853,13 @@ function newapp_fullstack(path::String = "."; autostart::Bool = true, dbadapter:
   newapp(path, autostart = autostart, fullstack = true, dbsupport = true, mvcsupport = true, dbadapter = dbadapter,
           testmode = testmode, interactive = interactive)
 end
-const newappfullstack = newapp_fullstack
 
+
+function autoconfdb(dbadapter)
+  Core.eval(Main, Meta.parse("using SearchLight"))
+  Core.eval(Main, Meta.parse("using SearchLight$dbadapter"))
+
+  Core.eval(Main, Meta.parse("Genie.Generator.@write_db_config()"))
+end
 
 end

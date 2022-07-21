@@ -10,7 +10,7 @@ using InteractiveUtils
 using Genie
 
 # ╔═╡ 9ab99155-0cdf-4b13-9719-61a6608bedc7
-# hideall 
+# hideall
 
 using SearchLight
 
@@ -64,22 +64,22 @@ md"""
 ```julia
 julia> using Genie
 
-julia> Genie.newapp_mvc("Watch tonight", dbadapter= :SQLite)
+julia> Genie.Generator.newapp_mvc("Watch tonight", dbadapter= :SQLite)
 ```
 """
 
 # ╔═╡ eebc2a27-ac29-4f70-998c-d2a5be7a29ce
 # hideall
 
-Genie.newapp_mvc("Watch tonight", dbadapter= :SQLite)
+Genie.Generator.newapp_mvc("Watch tonight", dbadapter= :SQLite)
 
 # ╔═╡ 65ea2335-4d7f-4e48-9aef-453141d3551c
 md"""
 
-or you can create a Genie App and pick your choice of db at runtime: 
+or you can create a Genie App and pick your choice of db at runtime:
 
 ```julia
-Genie.newapp_mvc("Watch tonight")
+Genie.Generator.newapp_mvc("Watch tonight")
 ```
 
 If you however don't pass `dbadapter` in `newapp_mvc` generator you will be presented with following instructions of selecting the adapter.
@@ -338,7 +338,7 @@ julia> SearchLight.Migration.create_migrations_table()
 """
 
 # ╔═╡ b5dc2b0d-98a3-478c-b553-5c5f90ebd89d
-# hideall 
+# hideall
 
 begin
 	migrations;
@@ -694,7 +694,7 @@ begin
 end;
 
 # ╔═╡ cb851bb7-85ce-4fb9-9d65-1f65bf2abd45
-# hideall 
+# hideall
 begin
 	csv_seed;
 	write(seed_path, """using SearchLight, Movies
@@ -981,7 +981,7 @@ begin
 end;
 
 # ╔═╡ af9524f8-8609-43a2-a0e4-8af8fd3e5d19
-# hideall 
+# hideall
 
 begin
 	viewing;
@@ -1329,7 +1329,7 @@ end
 """
 
 # ╔═╡ 2ea91d6b-7034-48e1-813d-b1409efff537
-# hideall 
+# hideall
 
 begin
 	controlling;
@@ -1348,7 +1348,7 @@ function search_api()
 
   json(Dict("movies" => movies))
 end
-		
+
 function search()
   isempty(strip(params(:search_movies))) && redirect(:get_movies)
 

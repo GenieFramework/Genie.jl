@@ -4,7 +4,8 @@ CurrentModule = Exceptions
 
 ```@docs
 ExceptionalResponse
-RuntimeException
+FileExistsException
 InternalServerException
 NotFoundException
+RuntimeException
 ```

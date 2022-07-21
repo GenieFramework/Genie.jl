@@ -15,7 +15,7 @@
     req = HTTP.request("GET", "http://localhost:$port/../../src/mimetypes.jl"; status_exception = false)
     @test req.status == 401
 
-    Genie.AppServer.down!()
+    Genie.Server.down!()
     server = nothing
   end
 
@@ -27,15 +27,14 @@
   #   isdir(Genie.config.server_document_root) || mkdir(Genie.config.server_document_root)
 
   #   port = rand(8000:10_000)
-  #   server = Genie.serve(; port)
+  #   server = Genie.Server.serve(; port)
   #   req = HTTP.request("GET", "http://localhost:$port//etc/passwd"; status_exception = false)
   #   @test req.status == (Sys.iswindows() ? 404 : 401)
 
   #   req = HTTP.request("GET", "http://localhost:$port/../../src/mimetypes.jl"; status_exception = false)
   #   @test req.status == 401
 
-  #   down()
-  #   sleep(1)
+  #   Genie.Server.down!()
   #   server = nothing
   # end
 

@@ -28,6 +28,18 @@
   @test response.status == 200
   @test String(response.body) == "[1, 2, 3]"
 
+  response = HTTP.request("POST", "http://localhost:$port/jsonpayload",
+                  [("Content-Type", "application/json")], """{"greeting":"hello"}""")
+
+  @test response.status == 200
+  @test String(response.body) |> fws == """Dict{String, Any}("greeting" => "hello")""" |> fws
+
+  response = HTTP.request("POST", "http://localhost:$port/jsontest",
+                  [("Content-Type", "application/json")], """{"test":[1,2,3]}""")
+
+  @test response.status == 200
+  @test String(response.body) == "[1, 2, 3]"
+
   route("/json-error", method = POST) do
     error("500, sorry")
   end

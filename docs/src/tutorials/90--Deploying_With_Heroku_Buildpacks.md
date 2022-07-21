@@ -4,11 +4,13 @@ This tutorial shows how to host a Julia/Genie app using a Heroku Buildpack.
 
 ## Prerequisites
 
-This guide assumes you have a Heroku account and are signed into the Heroku CLI. [Information on how to setup the Heroku CLI is available here](https://devcenter.heroku.com/articles/heroku-cli).
+This guide assumes you have a Heroku account and are signed into the Heroku CLI.
+[Information on how to setup the Heroku CLI is available here](https://devcenter.heroku.com/articles/heroku-cli).
 
 ## The application
 
-In order to try the deployment, you will need a sample application. Either pick one of yours or clone this sample one, as indicated next.
+In order to try the deployment, you will need a sample application. Either pick one of yours or clone this sample one,
+as indicated next.
 
 ### All Steps (in easy copy-paste format):
 
@@ -62,7 +64,7 @@ heroku logs -tail -a $HEROKU_APP_NAME
 HEROKU_APP_NAME=my-app-name
 ```
 
-This must be unique among all Heroku projects, and is part of the url where your project is hosted (e.g. https://my-app-name.herokuapp.com/).
+This must be unique among all Heroku projects, and is part of the url where your project is hosted (e.g. <https://my-app-name.herokuapp.com/>).
 
 If the name is not unique, you will see this error at the `heroku create` step.
 

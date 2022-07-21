@@ -13,7 +13,7 @@
 
     cd(workdir)
 
-    Genie.newapp(workdir, autostart = false, testmode = true)
+    Genie.Generator.newapp(workdir, autostart = false, testmode = true)
 
     @test true === true
   end;
@@ -28,7 +28,7 @@
 
   #   workdir = Base.Filesystem.mktempdir()
 
-  #   Genie.newapp(workdir, autostart = true, testmode = true)
+  #   Genie.Generator.newapp(workdir, autostart = true, testmode = true)
 
   #   @test true === true
   # end;
@@ -45,7 +45,7 @@
 
     cd(workdir)
 
-    Genie.newapp(workdir, autostart = false, testmode = true)
+    Genie.Generator.newapp(workdir, autostart = false, testmode = true)
 
     @test sort(readdir(workdir)) == sort([".gitattributes", ".gitignore", "Manifest.toml", "Project.toml", "bin",
                                           "bootstrap.jl", "config", "genie.jl", "public", "routes.jl", "src"])
@@ -66,7 +66,7 @@
 
     cd(workdir)
 
-    Genie.newapp(workdir, autostart = false, dbsupport = true, testmode = true)
+    Genie.Generator.newapp(workdir, autostart = false, dbsupport = true, testmode = true)
 
     @test sort(readdir(workdir)) == sort([".gitattributes", ".gitignore", "Manifest.toml", "Project.toml", "bin",
                                           "bootstrap.jl", "config", "db", "genie.jl", "public", "routes.jl", "src"])
@@ -86,7 +86,7 @@
 
     cd(workdir)
 
-    Genie.newapp(workdir, autostart = false, mvcsupport = true, testmode = true)
+    Genie.Generator.newapp(workdir, autostart = false, mvcsupport = true, testmode = true)
 
     @test sort(readdir(workdir)) == sort([".gitattributes", ".gitignore", "Manifest.toml", "Project.toml", "app", "bin", "bootstrap.jl", "config", "genie.jl", "public", "routes.jl", "src"])
     @test sort(readdir(joinpath(workdir, Genie.config.path_app))) == sort(["helpers", "layouts", "resources"])

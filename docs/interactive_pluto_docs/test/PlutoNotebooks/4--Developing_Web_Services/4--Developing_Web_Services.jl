@@ -27,7 +27,7 @@ Genie packs handy generator features and templates which help bootstrapping and 
 # ╔═╡ f1e11f9d-a5ce-4d6b-9e26-ce39800cac20
 md"""
 
-#### Adding Genie package 
+#### Adding Genie package
 
 ```julia
 julia> using Pkg
@@ -40,7 +40,7 @@ julia> Pkg.add("Genie")
 ```julia
 julia> using Genie
 
-julia> Genie.newapp_webservice("MyGenieApp")
+julia> Genie.Generator.newapp_webservice("MyGenieApp")
 ```
 
 """
@@ -48,7 +48,7 @@ julia> Genie.newapp_webservice("MyGenieApp")
 # ╔═╡ 4226f596-ce42-4953-966f-ea1afe32b698
 # hideall
 
-Genie.newapp_webservice("MyGenieApp")
+Genie.Generator.newapp_webservice("MyGenieApp")
 
 # ╔═╡ 2ebe66be-24b5-4765-8a58-0ccac149799b
 md"""
@@ -63,7 +63,7 @@ If you follow the log messages in the REPL you will see that the command will tr
 ---
 **TIP**
 
-Check out the inline help for `Genie.newapp`, `Genie.newapp_webservice`, `Genie.newapp_mvc`, and `Genie.newapp_fullstack` too see what options are available for bootstrapping applications. We'll go over the different configurations in upcoming sections.
+Check out the inline help for `Genie.Generator.newapp`, `Genie.Generator.newapp_webservice`, `Genie.Generator.newapp_mvc`, and `Genie.Generator.newapp_fullstack` too see what options are available for bootstrapping applications. We'll go over the different configurations in upcoming sections.
 
 ---
 

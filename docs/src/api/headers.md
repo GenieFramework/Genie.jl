@@ -3,7 +3,9 @@ CurrentModule = Genie.Headers
 ```
 
 ```@docs
-set_headers!
-normalize_headers
 normalize_header_key
+normalize_headers
+set_access_control_allow_headers!
+set_access_control_allow_origin!
+set_headers!
 ```

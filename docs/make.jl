@@ -2,18 +2,14 @@ push!(LOAD_PATH,"../src/")
 
 using Documenter
 
-using Genie, Genie.App, Genie.AppServer, Genie.Assets
-using Genie.Cache, Genie.Commands, Genie.Configuration, Genie.Cookies
-using Genie.Deploy, Genie.Encryption, Genie.Exceptions
-using Genie.FileTemplates, Genie.Flash, Genie.Generator
-using Genie.Headers, Genie.HTTPUtils, Genie.Input, Genie.Plugins
-using Genie.Renderer, Genie.Requests, Genie.Responses, Genie.Router
-using Genie.Sessions, Genie.Toolbox, Genie.Util, Genie.WebChannels
+using Genie, Genie.Assets, Genie.Commands, Genie.Configuration, Genie.Cookies
+using Genie.Encryption, Genie.Exceptions
+using Genie.FileTemplates, Genie.Generator
+using Genie.Headers, Genie.HTTPUtils, Genie.Input, Genie.Loader, Genie.Logger
+using Genie.Renderer, Genie.Repl, Genie.Requests, Genie.Responses, Genie.Router, Genie.Secrets, Genie.Server
+using Genie.Toolbox, Genie.Util, Genie.Watch, Genie.WebChannels, Genie.WebThreads
 
-push!(LOAD_PATH,  "../../src",
-                  "../../src/cache_adapters",
-                  "../../src/session_adapters",
-                  "../../src/renderers")
+push!(LOAD_PATH,  "../../src", "../../src/renderers")
 
 makedocs(
     sitename = "Genie - The Highly Productive Julia Web Framework",
@@ -21,11 +17,12 @@ makedocs(
     pages = [
         "Home" => "index.md",
         "Guides" => [
+          "Migrating Genie v4 apps to Genie v5" => "guides/Migrating_from_v4_to_v5.md",
           "Working with Genie Apps" => "guides/Working_With_Genie_Apps.md",
+          "Working With Genie Apps: Intermediate Topics [WIP]" => "guides/Working_With_Genie_Apps_Intermediary_Topics.md",
           "Using Genie in an interactive environment" => "guides/Interactive_environment.md",
           "Developing an API backend" => "guides/Simple_API_backend.md",
           "Using Genie Plugins" => "guides/Genie_Plugins.md",
-          "Working With Genie Apps: Intermediate Topics [WIP]" => "guides/Working_With_Genie_Apps_Intermediary_Topics.md"
         ],
         "Tutorials" => [
           "Welcome to Genie"  => "tutorials/1--Overview.md",
@@ -46,44 +43,38 @@ makedocs(
           "Auto-loading user libraries" => "tutorials/15--The_Lib_Folder.md",
           "Using Genie with Docker" => "tutorials/16--Using_Genie_With_Docker.md",
           "Working with WebSockets" => "tutorials/17--Working_with_Web_Sockets.md",
-          "Force compiling route handlers" => "tutorials/80--Force_Compiling_Routes.md",
           "Deploying to Heroku with Buildpacks" => "tutorials/90--Deploying_With_Heroku_Buildpacks.md",
-          "Deploying to Heroku with Docker" => "tutorials/91--Deploying_Genie_Docker_Apps_on_Heroku.md",
           "Deploying to server with Nginx" => "tutorials/92--Deploying_Genie_Server_Apps_with_Nginx.md"
         ],
         "API" => [
-          "App" => "api/app.md",
-          "AppServer" => "api/appserver.md",
-          "Assets" => "api/assets.md",
-          "Cache" => "api/cache.md",
-          "Commands" => "api/commands.md",
-          "Configuration" => "api/configuration.md",
-          "Cookies" => "api/cookies.md",
-          "Deploy" => [
-            "Docker" => "api/deploy-docker.md",
-            "Heroku" => "api/deploy-heroku.md"
-          ],
-          "Encryption" => "api/encryption.md",
-          "Exceptions" => "api/exceptions.md",
-          "FileTemplates" => "api/filetemplates.md",
-          "Flash" => "api/flash.md",
-          "Generator" => "api/generator.md",
-          "Genie" => "api/genie.md",
-          "Headers" => "api/headers.md",
-          "HttpUtils" => "api/httputils.md",
-          "Input" => "api/input.md",
-          "Plugins" => "api/plugins.md",
-          "Renderer" => "api/renderer.md",
-          "HTML Renderer" => "api/renderer-html.md",
-          "JS Renderer" => "api/renderer-js.md",
-          "JSON Renderer" => "api/renderer-json.md",
-          "Requests" => "api/requests.md",
-          "Responses" => "api/responses.md",
-          "Router" => "api/router.md",
-          "Sessions" => "api/sessions.md",
-          "Toolbox" => "api/toolbox.md",
-          "Util" => "api/util.md",
-          "WebChannels" => "api/webchannels.md"
+          "Assets" => "API/assets.md",
+          "Commands" => "API/commands.md",
+          "Configuration" => "API/configuration.md",
+          "Cookies" => "API/cookies.md",
+          "Encryption" => "API/encryption.md",
+          "Exceptions" => "API/exceptions.md",
+          "FileTemplates" => "API/filetemplates.md",
+          "Generator" => "API/generator.md",
+          "Genie" => "API/genie.md",
+          "Headers" => "API/headers.md",
+          "HttpUtils" => "API/httputils.md",
+          "Input" => "API/input.md",
+          "Loader" => "API/loader.md",
+          "Logger" => "API/logger.md",
+          "Renderer" => "API/renderer.md",
+          "HTML Renderer" => "API/renderer-html.md",
+          "JS Renderer" => "API/renderer-js.md",
+          "JSON Renderer" => "API/renderer-json.md",
+          "Requests" => "API/requests.md",
+          "Responses" => "API/responses.md",
+          "Router" => "API/router.md",
+          "Secrets" => "API/secrets.md",
+          "Server" => "API/server.md",
+          "Toolbox" => "API/toolbox.md",
+          "Util" => "API/util.md",
+          "Watch" => "API/watch.md",
+          "WebChannels" => "API/webchannels.md",
+          "WebThreads" => "API/webthreads.md"
         ]
     ],
 )

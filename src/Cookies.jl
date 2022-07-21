@@ -72,6 +72,7 @@ Sets `value` under the `key` label on the `Cookie`.
 - `encrypted::Bool`: if `true` the value is stored encoded
 """
 function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attributes::Dict{String,<:Any} = Dict(); encrypted::Bool = true) :: HTTP.Response
+  r = Genie.Headers.normalize_headers(res)
   normalized_attrs = Dict{Symbol,Any}()
   for (k,v) in attributes
     normalized_attrs[Symbol(lowercase(string(k)))] = v
@@ -84,8 +85,6 @@ function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attribu
   headers = Dict(res.headers)
   if haskey(headers, "Set-Cookie")
     headers["Set-Cookie"] *= "\nSet-Cookie: " * HTTP.Cookies.String(cookie, false) * "; "
-  elseif haskey(headers, "set-cookie")
-    headers["set-cookie"] *= "\nset-cookie: " * HTTP.Cookies.String(cookie, false) * "; "
   else
     headers["Set-Cookie"] = HTTP.Cookies.String(cookie, false) * "; "
   end
@@ -101,17 +100,14 @@ end
 Extracts the `Cookie` and `Set-Cookie` data from the `Request` and `Response` objects and converts it into a Dict.
 """
 function Base.Dict(r::Union{HTTP.Request,HTTP.Response}) :: Dict{String,String}
+  r = Genie.Headers.normalize_headers(r)
   d = Dict{String,String}()
   headers = Dict(r.headers)
 
   h = if haskey(headers, "Cookie")
     split(headers["Cookie"], ";")
-  elseif haskey(headers, "cookie")
-    split(headers["cookie"], ";")
   elseif haskey(headers, "Set-Cookie")
     split(headers["Set-Cookie"], ";")
-  elseif haskey(headers, "set-cookie")
-    split(headers["set-cookie"], ";")
   else
     []
   end

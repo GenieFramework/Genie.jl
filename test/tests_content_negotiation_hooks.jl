@@ -33,7 +33,7 @@
   @test String(response.body) == custom_message
 
   pop!(Genie.Router.content_negotiation_hooks)
-  Genie.AppServer.down!()
+  Genie.Server.down!()
 
   sleep(1)
   server = nothing

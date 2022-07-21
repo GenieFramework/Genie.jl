@@ -1,10 +1,10 @@
 # Developing a simple API backend
 
-Genie makes it very easy to quickly set up a REST API backend. All it takes is a few lines of code:
+Genie makes it very easy to quickly set up a REST API backend. All it takes is a few lines of code. Add these to a `rest.jl` file:
 
 ```julia
+# rest.jl
 using Genie
-import Genie.Router: route
 import Genie.Renderer.Json: json
 
 Genie.config.run_as_server = true
@@ -13,22 +13,26 @@ route("/") do
   (:message => "Hi there!") |> json
 end
 
-Genie.startup()
+up()
 ```
 
-The key bit here is `Genie.config.run_as_server = true`. This will start the server synchronously so the `startup()` function won't return.
-This endpoint can be run directly from the command line - if say, you save the code in a `rest.jl` file:
+The key bit here is `Genie.config.run_as_server = true`. This will start the server synchronously (blocking) so the `up()` function won't return (won't exit) keeping the Julia process running.
+As an alternative, we can skip the `run_as_server = true` configuration and use `up(async = false)` instead.
+
+The script can be run directly from the command line:
 
 ```shell
 $ julia rest.jl
 ```
 
+If you run the above code in the REPL, there is no need to set up `run_as_server = true` or `up(async = false)` because the REPL will keep the Julia process running.
+
 ## Accepting JSON payloads
 
-One common requirement when exposing APIs is to accept `POST` payloads. That is, requests over `POST`, with a request body, usually as a JSON encoded object. We can build an echo service like this:
+One common requirement when exposing APIs is to accept `POST` payloads. That is, requests over `POST`, with a request body as a JSON encoded object. We can build an echo service like this:
 
 ```julia
-using Genie, Genie.Router, Genie.Renderer.Json, Genie.Requests
+using Genie, Genie.Renderer.Json, Genie.Requests
 using HTTP
 
 route("/echo", method = POST) do
@@ -42,7 +46,7 @@ route("/send") do
   response.body |> String |> json
 end
 
-Genie.startup(async = false)
+up(async = false)
 ```
 
 Here we define two routes, `/send` and `/echo`. The `send` route makes a `HTTP` request over `POST` to `/echo`, sending a JSON payload with two values, `message` and `repeat`.

@@ -48,7 +48,7 @@ Default content for a new test file.
 """
 function newtest(plural_name::String, singular_name::String) :: String
   """
-  using Genie, App.$(plural_name)
+  using Main.UserApp, Main.UserApp.$(plural_name)
 
   ### Your tests here
   @test 1 == 1
@@ -68,95 +68,19 @@ function appmodule(path::String)
   content = """
   module $appname
 
-  using Genie, Logging, LoggingExtras
+  using Genie
+
+  const up = Genie.up
+  export up
 
   function main()
-    Core.eval(Main, :(const UserApp = \$(@__MODULE__)))
-
     Genie.genie(; context = @__MODULE__)
-
-    Core.eval(Main, :(const Genie = UserApp.Genie))
-    Core.eval(Main, :(using Genie))
   end
 
   end
   """
 
   (appname, content)
-end
-
-
-"""
-    dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::Bool = false, env::String = "dev",
-                      filename::String = "Dockerfile", port::Int = 8000, dockerport::Int = 80, host::String = "0.0.0.0",
-                      websockets_port::Int = port, websockets_dockerport::Int = dockerport)
-
-Generates dockerfile for the Genie app.
-"""
-function dockerfile(; user::String = "genie", supervisor::Bool = false, nginx::Bool = false, env::String = "dev",
-                      filename::String = "Dockerfile", port::Int = Genie.config.server_port, dockerport::Int = 80,
-                      host::String = "0.0.0.0", websockets_port::Int = port, platform::String = "",
-                      websockets_dockerport::Int = dockerport, earlybind::Bool = true)
-  appdir = "/home/$user/app"
-
-  string(
-  """
-  # pull latest julia image
-  FROM $(isempty(platform) ? "" : "--platform=$platform") julia:latest
-
-  # create dedicated user
-  RUN useradd --create-home --shell /bin/bash $user
-
-  # set up the app
-  RUN mkdir $appdir
-  COPY . $appdir
-  WORKDIR $appdir
-
-  # configure permissions
-  RUN chown $user:$user -R *
-
-  RUN chmod +x bin/repl
-  RUN chmod +x bin/server
-  RUN chmod +x bin/runtask
-
-  # switch user
-  USER $user
-
-  # instantiate Julia packages
-  RUN julia -e "using Pkg; Pkg.activate(\\".\\"); Pkg.instantiate(); Pkg.precompile(); "
-
-  # ports
-  EXPOSE $port
-  EXPOSE $dockerport
-  """,
-
-  (websockets_port != port ?
-  """
-
-  # websockets ports
-  EXPOSE $websockets_port
-  EXPOSE $websockets_dockerport
-  """ : ""),
-
-  """
-
-  # set up app environment
-  ENV JULIA_DEPOT_PATH "/home/$user/.julia"
-  ENV GENIE_ENV "$env"
-  ENV HOST "$host"
-  ENV PORT "$port"
-  ENV WSPORT "$websockets_port"
-  ENV EARLYBIND "$earlybind"
-  """,
-
-  """
-
-  # run app
-  CMD ["bin/server"]
-
-  # or maybe include a Julia file
-  # CMD julia -e 'using Pkg; Pkg.activate("."); include("IrisClustering.jl"); '
-  """)
 end
 
 end
