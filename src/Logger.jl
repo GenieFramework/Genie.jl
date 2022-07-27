@@ -12,11 +12,15 @@ function timestamp_logger(logger)
   end
 end
 
-function initialize_logging()
+function default_log_name()
+  "$(Genie.config.app_env)-$(Dates.today()).log"
+end
+
+function initialize_logging(; log_name = default_log_name())
   logger =  if Genie.config.log_to_file
               isdir(Genie.config.path_log) || mkpath(Genie.config.path_log)
               LoggingExtras.TeeLogger(
-                LoggingExtras.FileLogger(joinpath(Genie.config.path_log, "$(Genie.config.app_env)-$(Dates.today()).log"), always_flush = true, append = true),
+                LoggingExtras.FileLogger(joinpath(Genie.config.path_log, log_name), always_flush = true, append = true),
                 Logging.ConsoleLogger(stdout, Genie.config.log_level)
               )
             else
