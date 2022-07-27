@@ -18,6 +18,8 @@ pkg> add Genie # press ] from julia> prompt to enter Pkg mode
 Now, to create the app:
 
 ```julia
+julia> using Genie 
+
 julia> Genie.Generator.newapp_mvc("Watch Tonight")
 ```
 
@@ -77,7 +79,6 @@ Now let's manually load the database configuration:
 
 ```julia
 julia> include(joinpath("config", "initializers", "searchlight.jl"))
-SQLite.DB("db/netflix_catalog.sqlite")
 ```
 
 ## Creating a Movie resource
@@ -90,6 +91,10 @@ In the REPL run:
 
 ```julia
 julia> Genie.Generator.newresource("movie")
+
+julia> using SearchLight 
+
+julia> SearchLight.Generator.newresource("movie")
 ```
 
 This should create a series of files to represent the Movie resource - just take a look at the output to see what and
