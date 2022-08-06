@@ -66,16 +66,17 @@ julia> up(8000, "127.0.0.1", async = false)
 Web Server starting at http://127.0.0.1:8000
 ```
 """
-function up(port::Int, host::String = Genie.config.server_host;
-                  ws_port::Int = port,
-                  async::Bool = ! Genie.config.run_as_server,
-                  verbose::Bool = false,
-                  ratelimit::Union{Rational{Int},Nothing} = nothing,
-                  server::Union{Sockets.TCPServer,Nothing} = nothing,
-                  wsserver::Union{Sockets.TCPServer,Nothing} = server,
-                  open_browser::Bool = false,
-                  reuseaddr::Bool = Distributed.nworkers() > 1,
-                  http_kwargs...) :: ServersCollection
+function up(port::Int,
+            host::String = Genie.config.server_host;
+            ws_port::Int = port,
+            async::Bool = ! Genie.config.run_as_server,
+            verbose::Bool = false,
+            ratelimit::Union{Rational{Int},Nothing} = nothing,
+            server::Union{Sockets.TCPServer,Nothing} = nothing,
+            wsserver::Union{Sockets.TCPServer,Nothing} = server,
+            open_browser::Bool = false,
+            reuseaddr::Bool = Distributed.nworkers() > 1,
+            http_kwargs...) :: ServersCollection
 
   if server !== nothing
     try

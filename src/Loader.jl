@@ -13,12 +13,9 @@ import Genie
 
 
 function importenv()
-  haskey(ENV, "PORT") && (! isempty(ENV["PORT"])) && (Genie.config.server_port = parse(Int, ENV["PORT"]))
   haskey(ENV, "WSPORT") && (! isempty(ENV["WSPORT"])) && (Genie.config.websockets_port = parse(Int, ENV["WSPORT"]))
   haskey(ENV, "WSEXPPORT") && (! isempty(ENV["WSEXPPORT"])) && (Genie.config.websockets_exposed_port = parse(Int, ENV["WSEXPPORT"]))
   haskey(ENV, "WSEXPHOST") && (! isempty(ENV["WSEXPHOST"])) && (Genie.config.websockets_exposed_host = ENV["WSEXPHOST"])
-  haskey(ENV, "GENIE_HOST") && (! isempty(ENV["GENIE_HOST"])) && (Genie.config.server_host = ENV["GENIE_HOST"])
-  haskey(ENV, "GENIE_HOST") || (ENV["GENIE_HOST"] = Genie.config.server_host)
   haskey(ENV, "BASEPATH") && (Genie.config.base_path = ENV["BASEPATH"])
 
   nothing
@@ -41,17 +38,24 @@ function bootstrap(context::Union{Module,Nothing} = default_context(context)) ::
   Genie.config.app_env = ENV["GENIE_ENV"] # ENV might have changed
   importenv()
 
+  get!(ENV, "GENIE_BANNER", "true") |> strip |> lowercase != "false" && print_banner()
+
+  nothing
+end
+
+
+function print_banner()
   printstyled("""
 
 
-   ██████╗ ███████╗███╗   ██╗██╗███████╗    ███████╗
-  ██╔════╝ ██╔════╝████╗  ██║██║██╔════╝    ██╔════╝
-  ██║  ███╗█████╗  ██╔██╗ ██║██║█████╗      ███████╗
-  ██║   ██║██╔══╝  ██║╚██╗██║██║██╔══╝      ╚════██║
-  ╚██████╔╝███████╗██║ ╚████║██║███████╗    ███████║
-   ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚═╝╚══════╝    ╚══════╝
+ ██████╗ ███████╗███╗   ██╗██╗███████╗    ███████╗
+██╔════╝ ██╔════╝████╗  ██║██║██╔════╝    ██╔════╝
+██║  ███╗█████╗  ██╔██╗ ██║██║█████╗      ███████╗
+██║   ██║██╔══╝  ██║╚██╗██║██║██╔══╝      ╚════██║
+╚██████╔╝███████╗██║ ╚████║██║███████╗    ███████║
+ ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚═╝╚══════╝    ╚══════╝
 
-  """, color = :light_black, bold = true)
+""", color = :light_black, bold = true)
 
   printstyled("| Website  https://genieframework.com\n", color = :light_black, bold = true)
   printstyled("| GitHub   https://github.com/genieframework\n", color = :light_black, bold = true)
@@ -201,8 +205,6 @@ function load(; context::Union{Module,Nothing} = nothing) :: Nothing
   context = default_context(context)
 
   Genie.Configuration.isdev() && Core.eval(context, :(__revise_mode__ = :eval))
-
-  bootstrap(context)
 
   t = Terminals.TTYTerminal("", stdin, stdout, stderr)
 

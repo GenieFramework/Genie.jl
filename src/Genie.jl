@@ -155,11 +155,16 @@ end
 """
 function genie(; context = @__MODULE__) :: Union{Nothing,Sockets.TCPServer}
   haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = "dev")
+  Loader.bootstrap(context)
+
   haskey(ENV, "GENIE_HOST") && (! isempty(ENV["GENIE_HOST"])) && (Genie.config.server_host = ENV["GENIE_HOST"])
   haskey(ENV, "GENIE_HOST") || (ENV["GENIE_HOST"] = Genie.config.server_host)
 
+  haskey(ENV, "PORT") && (! isempty(ENV["PORT"])) && (Genie.config.server_port = parse(Int, ENV["PORT"]))
+  haskey(ENV, "PORT") || (ENV["PORT"] = Genie.config.server_port)
+
   ### EARLY BIND TO PORT FOR HOSTS WITH TIMEOUT ###
-  EARLYBINDING = if haskey(ENV, "EARLYBIND") && lowercase(ENV["EARLYBIND"]) == "true" && haskey(ENV, "PORT")
+  EARLYBINDING = if haskey(ENV, "EARLYBIND") && strip(lowercase(ENV["EARLYBIND"])) == "true"
     @info "Binding to host $(ENV["GENIE_HOST"]) and port $(ENV["PORT"]) \n"
     try
       Sockets.listen(parse(Sockets.IPAddr, ENV["GENIE_HOST"]), parse(Int, ENV["PORT"]))
