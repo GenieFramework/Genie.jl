@@ -256,7 +256,7 @@ function seed()
     m.directors = row.director
     m.actors = row.cast
     m.country = row.country
-    m.year = row.release_year
+    m.year = parse(Int, row.release_year)
     m.rating = row.rating
     m.categories = row.listed_in
     m.description = row.description
