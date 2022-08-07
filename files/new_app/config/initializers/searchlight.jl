@@ -1,5 +1,4 @@
 using SearchLight
-using SearchLightSQLite
 using Genie
 
 function Genie.Renderer.Json.JSON3.StructTypes.StructType(::Type{T}) where {T<:SearchLight.AbstractModel}
@@ -10,5 +9,5 @@ function Genie.Renderer.Json.JSON3.StructTypes.StructType(::Type{SearchLight.DbI
   Genie.Renderer.Json.JSON3.StructTypes.Struct()
 end
 
-SearchLight.Configuration.load()
+SearchLight.Configuration.load(context = @__MODULE__)
 SearchLight.connect()
