@@ -140,6 +140,10 @@ All the `Genie.new` functions have been moved to `Genie.Generator` in v5.
 
 Genie v4 apps would automatically import `Genie` in `Main`, so that `Genie` would be readily available at the REPL. Starting with Genie 5, this is no longer the case and at the app's REPL it's now necessary to first run `julia> using Genie`.
 
-### 18. Other
+### 18. Modification of `bin/server` and `bin/server.bat`
+
+The scripts responsible for starting the app in non-interactive/serving mode need to be updated by replacing the end of the command from `s "$@"` to `-s=true "$@"`.
+
+### 19. Other
 
 Genie 5 also changes or removes other APIs which can be generally be considered as internal. If you find other important breaking changes that have been missed, please open an issue on the Genie GitHub repository or just edit this file and submit a PR.

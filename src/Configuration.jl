@@ -102,7 +102,7 @@ buildpath() :: String = Base.Filesystem.mktempdir(prefix = "jl_genie_build_")
 """
     config!(; kwargs...)
 
-Updates Genie.confg using the provided keyword arguments.
+Updates Genie.config using the provided keyword arguments.
 """
 function config!(; kwargs...)
   for args in kwargs
