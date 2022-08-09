@@ -62,7 +62,7 @@ Loads (includes) the framework's secrets.jl file into the app's module `context`
 The files are set up with `Revise` to be automatically reloaded.
 """
 function load(root_dir::String = Genie.config.path_config; context::Union{Module,Nothing} = nothing) :: Nothing
-  secrets_path = joinpath(root_dir, SECRETS_FILE_NAME)
+  secrets_path = secret_file_path(root_dir)
   isfile(secrets_path) && Revise.includet(Genie.Loader.default_context(context), secrets_path)
 
   # check that the secrets_path has called Genie.secret_token!
@@ -81,6 +81,16 @@ Generates a random secret token to be used for configuring the call to `Genie.Se
 """
 function secret() :: String
   SHA.sha256("$(randn()) $(Dates.now())") |> bytes2hex
+end
+
+
+function secret_file_exists(root_dir::String = Genie.config.path_config) :: Bool
+  secret_file_path(root_dir) |> isfile
+end
+
+
+function secret_file_path(root_dir::String = Genie.config.path_config) :: String
+  joinpath(root_dir, SECRETS_FILE_NAME)
 end
 
 
