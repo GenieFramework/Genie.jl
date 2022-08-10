@@ -455,10 +455,9 @@ function install_app_dependencies(app_path::String = "."; testmode::Bool = false
   @info "Installing app dependencies"
   Pkg.activate(".")
 
-  pkgs = ["Dates", "Logging"]
+  pkgs = ["Dates", "Logging", "Inflector"]
 
-  testmode ? Pkg.develop("Genie", io = devnull) : push!(pkgs, "Genie")
-  testmode ? Pkg.develop("Inflector", io = devnull) : push!(pkgs, "Inflector")
+  testmode ? Pkg.develop("Genie", io = devnull) : Pkg.add(Pkg.PackageSpec(; name="Genie", version="5"))
 
   Pkg.add(pkgs, io = devnull)
 
@@ -468,7 +467,7 @@ function install_app_dependencies(app_path::String = "."; testmode::Bool = false
 
   Pkg.activate("test")
 
-  Pkg.add("Genie", io = devnull)
+  Pkg.add(Pkg.PackageSpec(; name="Genie", version="5"), io = devnull)
   Pkg.add("Test", io = devnull)
   Pkg.add("TestSetExtensions", io = devnull)
   Pkg.add("Pkg", io = devnull)
