@@ -396,12 +396,9 @@ function install_app_dependencies(app_path::String = "."; testmode::Bool = false
   @info "Installing app dependencies"
   Pkg.activate(".")
 
-  pkgs = ["Dates", "Logging", "LoggingExtras", "MbedTLS"]
+  Pkg.add(Pkg.PackageSpec(; name="Genie", version="4"))
 
-  testmode ? Pkg.develop("Genie", io = devnull) : push!(pkgs, "Genie")
-  testmode ? Pkg.develop("Inflector", io = devnull) : push!(pkgs, "Inflector")
-
-  Pkg.add(pkgs, io = devnull)
+  Pkg.add(["Dates", "Logging", "LoggingExtras", "MbedTLS", "Inflector"], io = devnull)
 
   result = dbsupport ? install_db_dependencies(testmode = testmode, dbadapter = dbadapter, interactive = interactive) : dbadapter
 
