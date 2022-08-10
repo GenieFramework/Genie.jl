@@ -153,10 +153,14 @@ function route_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
     req, res, params.collection = f(req, res, params.collection)
   end
 
-  if is_static_file(req.target)
-    Genie.config.server_handle_static_files && return serve_static_file(req.target)
-
-    return error(req.target, response_mime(), Val(404))
+  if is_static_file(req.target) && req.method == GET
+    if isroute(baptizer(req.target, [lowercase(req.method)]))
+      @warn "Route matches static file: $(req.target) -- executing route"
+    elseif Genie.config.server_handle_static_files
+      return serve_static_file(req.target)
+    else
+      return error(req.target, response_mime(), Val(404))
+    end
   end
 
   Genie.Configuration.isdev() && Revise.revise()
@@ -291,8 +295,8 @@ end
 
 Generates default names for routes and channels.
 """
-function baptizer(params::Union{Route,Channel}, parts::Vector{String}) :: Symbol
-  for uri_part in split(params.path, '/', keepempty = false)
+function baptizer(route_path::String, parts::Vector{String} = String[]) :: Symbol
+  for uri_part in split(route_path, '/', keepempty = false)
     startswith(uri_part, ":") ?
       push!(parts, "by", lowercase(uri_part)[2:end]) :
         push!(parts, lowercase(uri_part))
@@ -300,6 +304,9 @@ function baptizer(params::Union{Route,Channel}, parts::Vector{String}) :: Symbol
   end
 
   join(parts, "_") |> Symbol
+end
+function baptizer(params::Union{Route,Channel}, parts::Vector{String} = String[]) :: Symbol
+  baptizer(params.path, parts)
 end
 
 
