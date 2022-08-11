@@ -87,9 +87,14 @@ Automatically recursively includes files from `resources/` and subfolders.
 function load_resources(root_dir::String = Genie.config.path_resources;
                         context::Union{Module,Nothing} = nothing) :: Nothing
   skpdr = ["views"]
-  autoload(root_dir; context, skipdirs = skpdr, namematch = r"Validator.jl$") # validators first, used by models
-  autoload(root_dir; context, skipdirs = skpdr, skipmatch = r"[Controller.jl$|Validator.jl$]") # next models
-  autoload(root_dir; context, skipdirs = skpdr, namematch = r"Controller.jl$") # finally controllers
+  @debug "Auto loading validators"
+  autoload(root_dir; context, skipdirs = skpdr, namematch = r"Validator\.jl$") # validators first, used by models
+
+  @debug "Auto loading models"
+  autoload(root_dir; context, skipdirs = skpdr, skipmatch = r"Controller\.jl$|Validator\.jl$") # next models
+
+  @debug "Auto loading controllers"
+  autoload(root_dir; context, skipdirs = skpdr, namematch = r"Controller\.jl$") # finally controllers
 end
 
 
@@ -157,8 +162,9 @@ function autoload(root_dir::String = Genie.config.path_lib;
     isfile(joinpath(root_dir, autoload_ignore_file)) && continue
 
     fi = joinpath(root_dir, i)
+    @debug "Checking $fi"
     if validinclude(fi)
-      # @debug "Auto loading file: $fi"
+      @debug "Auto loading file: $fi"
       Revise.includet(default_context(context), fi)
     end
   end
@@ -172,8 +178,9 @@ function autoload(root_dir::String = Genie.config.path_lib;
         isfile(joinpath(p, autoload_ignore_file)) && continue
 
         fi = joinpath(p, i)
-        if endswith(fi, ".jl") && match(namematch, fi) !== nothing
-          # @debug "Auto loading file: $fi"
+        @debug "Checking $fi"
+        if validinclude(fi)
+          @debug "Auto loading file: $fi"
           Revise.includet(default_context(context), fi)
         end
       end

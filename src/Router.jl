@@ -721,7 +721,8 @@ function extract_uri_params(uri::String, regex_route::Regex, param_names::Vector
   for param_name in param_names
     try
       params.collection[Symbol(param_name)] = parse_param(param_types[i], matches[param_name])
-    catch _
+    catch ex
+      @error ex
       return false
     end
 
