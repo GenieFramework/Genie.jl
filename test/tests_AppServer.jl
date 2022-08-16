@@ -4,30 +4,28 @@
     using Genie
     using Genie.Server
 
-    Genie.Server.down()
+    Genie.Server.down!()
     empty!(Genie.Server.SERVERS)
 
     servers = Genie.Server.up()
     @test servers.webserver.state == :runnable
-    @test Genie.Server.SERVERS[1].webserver.state == :runnable
 
-    servers = Genie.Server.down()
+    servers = Genie.Server.down(servers)
     sleep(1)
-    @test servers[1].webserver.state == :done
-    @test Genie.Server.SERVERS[1].webserver.state == :done
+    @test servers.webserver.state == :failed
+    @test Genie.Server.SERVERS[1].webserver.state == :failed
+
+    servers = Genie.Server.down!()
+    empty!(Genie.Server.SERVERS)
 
     servers = Genie.Server.up(; open_browser = false)
-    Genie.Server.down(; webserver = false)
-    sleep(1)
+    Genie.Server.down(servers; webserver = false)
     @test servers.webserver.state == :runnable
-    @test Genie.Server.SERVERS[2].webserver.state == :runnable
 
-    servers = Genie.Server.down(; webserver = true)
+    servers = Genie.Server.down(servers; webserver = true)
     sleep(1)
-    @test servers[1].webserver.state == :done
-    @test servers[2].webserver.state == :done
-    @test Genie.Server.SERVERS[1].webserver.state == :done
-    @test Genie.Server.SERVERS[2].webserver.state == :done
+    @test servers.webserver.state == :failed
+    @test Genie.Server.SERVERS[1].webserver.state == :failed
 
     servers = nothing
   end;
