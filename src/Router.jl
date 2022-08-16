@@ -214,7 +214,7 @@ end
 
 First step in handling a web socket request: sets up params collection, handles query vars.
 """
-function route_ws_request(req, msg::String, ws_client) :: String
+function route_ws_request(req, msg::Union{String,Vector{UInt8}}, ws_client) :: String
   params = Params()
 
   params.collection[PARAMS_WS_CLIENT] = ws_client
@@ -584,6 +584,7 @@ function match_channels(req, msg::String, ws_client, params::Params) :: String
 
   uri = haskey(payload, "channel") ? '/' * payload["channel"] : '/'
   uri = haskey(payload, "message") ? uri * '/' * payload["message"] : uri
+  uri = string(uri)
 
   for c in channels()
     parsed_channel, param_names, param_types = parse_channel(c.path)

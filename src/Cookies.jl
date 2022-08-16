@@ -78,17 +78,21 @@ function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attribu
     normalized_attrs[Symbol(lowercase(string(k)))] = v
   end
 
+  if haskey(normalized_attrs, :samesite)
+    if lowercase(normalized_attrs[:samesite]) == "lax"
+      normalized_attrs[:samesite] = HTTP.Cookies.SameSiteLaxMode
+    elseif lowercase(normalized_attrs[:samesite]) == "none"
+      normalized_attrs[:samesite] = HTTP.Cookies.SameSiteLaxNone
+    elseif lowercase(normalized_attrs[:samesite]) == "strict"
+      normalized_attrs[:samesite] = HTTP.Cookies.SameSiteLaxStrict
+    end
+  end
+
   value = string(value)
   encrypted && (value = Genie.Encryption.encrypt(value))
   cookie = HTTP.Cookies.Cookie(string(key), value; normalized_attrs...)
 
-  headers = Dict(res.headers)
-  if haskey(headers, "Set-Cookie")
-    headers["Set-Cookie"] *= "\nSet-Cookie: " * HTTP.Cookies.String(cookie, false) * "; "
-  else
-    headers["Set-Cookie"] = HTTP.Cookies.String(cookie, false) * "; "
-  end
-  res.headers = [(k => v) for (k,v) in headers]
+  HTTP.Cookies.addcookie!(res, cookie)
 
   res
 end

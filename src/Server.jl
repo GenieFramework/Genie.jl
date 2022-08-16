@@ -3,7 +3,7 @@ Handles Http server related functionality, manages requests and responses and th
 """
 module Server
 
-using HTTP, Sockets
+using HTTP, Sockets, HTTP.WebSockets
 import Millboard, Distributed, Logging
 import Genie
 import Distributed
@@ -96,11 +96,11 @@ function up(port::Int,
   if Genie.config.websockets_server && port != ws_port
     print_server_status("Web Sockets server starting at $host:$ws_port")
 
-    new_server.websockets = @async HTTP.listen(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver,
+    new_server.websockets = HTTP.listen(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver,
                                                 reuseaddr = reuseaddr, http_kwargs...) do http::HTTP.Stream
-      if HTTP.WebSockets.is_upgrade(http.message)
+      if HTTP.WebSockets.isupgrade(http.message)
         HTTP.WebSockets.upgrade(http) do ws
-          setup_ws_handler(http.message, ws)
+          setup_ws_handler(http, ws)
         end
       end
     end
@@ -110,9 +110,9 @@ function up(port::Int,
     HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server,
                                     reuseaddr = reuseaddr, http_kwargs...) do http::HTTP.Stream
       try
-        if Genie.config.websockets_server && port == ws_port && HTTP.WebSockets.is_upgrade(http.message)
+        if Genie.config.websockets_server && port == ws_port && HTTP.WebSockets.isupgrade(http.message)
           HTTP.WebSockets.upgrade(http) do ws
-            setup_ws_handler(http.message, ws)
+            setup_ws_handler(http, ws)
           end
         else
           setup_http_streamer(http)
@@ -283,7 +283,7 @@ function setup_http_streamer(http::HTTP.Stream)
     end
   end
 
-  HTTP.handle(HTTP.RequestHandlerFunction(setup_http_listener), http)
+  HTTP.Handlers.streamhandler(setup_http_listener)(http)
 end
 
 
@@ -318,21 +318,41 @@ end
 
 
 """
-    setup_ws_handler(req::HTTP.Request, ws_client) :: Nothing
+    setup_ws_handler(stream::HTTP.Stream, ws_client) :: Nothing
 
 Configures the handler for WebSockets requests.
 """
-function setup_ws_handler(req::HTTP.Request, ws_client) :: Nothing
+function setup_ws_handler(stream::HTTP.Stream, ws_client) :: Nothing
+  req = stream.message
+
+  # while ! HTTP.WebSockets.isclosed(ws_client)
+  #   Sockets.send(ws_client, handle_ws_request(req; message = HTTP.WebSockets.receive(ws_client), client = ws_client))
+  # end
+
   try
-    while ! eof(ws_client)
-      write(ws_client, String(Distributed.@fetch handle_ws_request(req, String(readavailable(ws_client)), ws_client)))
+    req = stream.message
+
+    while ! HTTP.WebSockets.isclosed(ws_client) && ! ws_client.writeclosed && isopen(ws_client.io)
+      Sockets.send(ws_client, Distributed.@fetch handle_ws_request(req; message = HTTP.WebSockets.receive(ws_client), client = ws_client))
     end
   catch ex
     if isa(ex, Distributed.RemoteException) &&
       hasfield(typeof(ex), :captured) && isa(ex.captured, Distributed.CapturedException) &&
+        hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, HTTP.WebSockets.CloseFrameBody) && ex.captured.ex.code == 1000
+
+      @info "WebSocket closed"
+
+      return nothing
+    elseif isa(ex, Distributed.RemoteException) &&
+      hasfield(typeof(ex), :captured) && isa(ex.captured, Distributed.CapturedException) &&
         hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, Genie.Exceptions.RuntimeException)
+
       @error ex.captured.ex
+
+      return nothing
     end
+
+    rethrow(ex)
   end
 
   nothing
@@ -344,9 +364,9 @@ end
 
 Http server handler function - invoked when the server gets a request.
 """
-function handle_ws_request(req::HTTP.Request, msg::String, ws_client) :: String
-  isempty(msg) && return "" # keep alive
-  Genie.Router.route_ws_request(req, msg, ws_client)
+function handle_ws_request(req::HTTP.Request; message::Union{String,Vector{UInt8}}, client::HTTP.WebSockets.WebSocket) :: String
+  isempty(message) && return "" # keep alive
+  Genie.Router.route_ws_request(req, message, client)
 end
 
 end
