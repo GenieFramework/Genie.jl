@@ -11,7 +11,7 @@ import Genie
 
 include("mimetypes.jl")
 
-export route, routes, channel, channels, serve_static_file
+export route, routes, channel, channels, download, serve_static_file
 export GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
 export tolink, linkto, responsetype, toroute
 export params, query, post, headers, request, params!
@@ -1116,7 +1116,7 @@ end
 
 Reads the static file and returns the content as a `Response`.
 """
-function serve_static_file(resource::String; root = Genie.config.server_document_root) :: HTTP.Response
+function serve_static_file(resource::String; root = Genie.config.server_document_root, download=false) :: HTTP.Response
   startswith(resource, '/') || (resource = "/$(resource)")
   resource_path = try
                     HTTP.URIs.URI(resource).path |> string
@@ -1127,13 +1127,16 @@ function serve_static_file(resource::String; root = Genie.config.server_document
   f = file_path(resource_path; root = root)
   isempty(f) && (f = pwd() |> relpath)
 
+  fileheader = file_headers(f)
+  download && push!(fileheader, ("Content-Disposition" => """attachment; filename=$(basename(f))"""))
+
   if (isfile(f) || isdir(f)) && ! is_accessible_resource(f; root)
     @error "401 Unauthorised Access $f"
     return error(resource, response_mime(), Val(401))
   end
 
   if isfile(f)
-    return HTTP.Response(200, file_headers(f), body = read(f, String))
+    return HTTP.Response(200, fileheader, body = read(f, String))
   elseif isdir(f)
     for fn in ["index.html", "index.htm", "index.txt"]
       isfile(joinpath(f, fn)) && return serve_static_file(joinpath(f, fn), root = root)
@@ -1155,6 +1158,15 @@ function serve_static_file(resource::String; root = Genie.config.server_document
   error(resource, response_mime(), Val(404))
 end
 
+
+"""
+    download(resource::String) :: HTTP.Response
+
+Download a file from the server.
+"""
+function download(resource::String; root::String) :: HTTP.Response
+  return serve_static_file(resource; root = root, download=true)
+end
 
 
 """
