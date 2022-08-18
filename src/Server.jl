@@ -325,10 +325,6 @@ Configures the handler for WebSockets requests.
 function setup_ws_handler(stream::HTTP.Stream, ws_client) :: Nothing
   req = stream.message
 
-  # while ! HTTP.WebSockets.isclosed(ws_client)
-  #   Sockets.send(ws_client, handle_ws_request(req; message = HTTP.WebSockets.receive(ws_client), client = ws_client))
-  # end
-
   try
     req = stream.message
 
@@ -338,7 +334,7 @@ function setup_ws_handler(stream::HTTP.Stream, ws_client) :: Nothing
   catch ex
     if isa(ex, Distributed.RemoteException) &&
       hasfield(typeof(ex), :captured) && isa(ex.captured, Distributed.CapturedException) &&
-        hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, HTTP.WebSockets.CloseFrameBody) && ex.captured.ex.code == 1000
+        hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, HTTP.WebSockets.CloseFrameBody) # && ex.captured.ex.code == 1000
 
       @info "WebSocket closed"
 
@@ -352,7 +348,7 @@ function setup_ws_handler(stream::HTTP.Stream, ws_client) :: Nothing
       return nothing
     end
 
-    rethrow(ex)
+    # rethrow(ex)
   end
 
   nothing
