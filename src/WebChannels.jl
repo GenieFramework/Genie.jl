@@ -3,7 +3,7 @@ Handles WebSockets communication logic.
 """
 module WebChannels
 
-import HTTP, Distributed, Logging, JSON3
+import HTTP, Distributed, Logging, JSON3, Sockets
 import Genie, Genie.Renderer
 
 const ClientId = UInt # web socket hash
@@ -46,7 +46,7 @@ channels() = collect(keys(SUBSCRIPTIONS))
 function connected_clients(channel::ChannelName) :: Vector{ChannelClient}
   clients = ChannelClient[]
   for client_id in SUBSCRIPTIONS[channel]
-    ! (CLIENTS[client_id].client.txclosed && CLIENTS[client_id].client.rxclosed) && push!(clients, CLIENTS[client_id])
+    ! HTTP.WebSockets.isclosed(CLIENTS[client_id].client) && push!(clients, CLIENTS[client_id])
   end
 
   clients
@@ -64,7 +64,7 @@ end
 function disconnected_clients(channel::ChannelName) :: Vector{ChannelClient}
   clients = ChannelClient[]
   for client_id in SUBSCRIPTIONS[channel]
-    (CLIENTS[client_id].client.txclosed || CLIENTS[client_id].client.rxclosed) && push!(clients, CLIENTS[client_id])
+    HTTP.WebSockets.isclosed(CLIENTS[client_id].client) && push!(clients, CLIENTS[client_id])
   end
 
   clients
@@ -224,7 +224,7 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}},
 
     for client in SUBSCRIPTIONS[channel]
       except !== nothing && client == id(except) && continue
-      (CLIENTS[client].client.txclosed || CLIENTS[client].client.rxclosed) && continue
+      HTTP.WebSockets.isclosed(CLIENTS[client].client) && continue
 
       try
         payload !== nothing ?
@@ -270,7 +270,7 @@ end
 Writes `msg` to web socket for `client`.
 """
 function message(ws::HTTP.WebSockets.WebSocket, msg::String) :: Int
-  write(ws, msg)
+  Sockets.send(ws, msg)
 end
 function message(client::ClientId, msg::String) :: Int
   message(CLIENTS[client].client, msg)

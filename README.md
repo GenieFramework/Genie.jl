@@ -95,7 +95,7 @@ Due to an issue caused by the removal of some APIs in Julia 1.8, **Genie v4 apps
 🛠**Genie Router:** Genie has a really powerful
 💪 `Router`. Matching web requests to functions, extracting and setting up the request's variables and the execution environment, and invoking the response methods. Features include:
 
-- Static, Dyanmic, Named routing
+- Static, Dynamic, Named routing
 - Routing parameters
 - Linking routes
 - Route management (Listing, Deleting, Modifying) support
