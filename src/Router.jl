@@ -1158,16 +1158,28 @@ function serve_static_file(resource::String; root = Genie.config.server_document
   error(resource, response_mime(), Val(404))
 end
 
-
 """
-    download(resource::String) :: HTTP.Response
+    download(filepath::String) :: HTTP.Response
 
-Download a file from the server.
+Download an existing file from the server.
 """
-function download(resource::String; root::String) :: HTTP.Response
-  return serve_static_file(resource; root = root, download=true)
+function download(filepath::String)::HTTP.Response
+  return serve_static_file(filepath; root=@__DIR__, download=true)
 end
 
+"""
+    download(data::Vector{UInt8}, filename::String, mimetype) :: HTTP.Response
+
+Download file from generated stream of bytes
+"""
+function download(data::Vector{UInt8}, filename::String, mimetype::String)::HTTP.Response
+  if mimetype in values(mimetypes)
+    return HTTP.Response(200,
+        ("Content-Type" => mimetype, "Content-Disposition" => """attachment; filename=$(filename)"""),
+        body=data)
+  end
+  @error "415 Unsupported Media Type $mimetype"
+end
 
 """
 preflight_response() :: HTTP.Response
