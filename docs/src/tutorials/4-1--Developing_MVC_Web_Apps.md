@@ -201,7 +201,7 @@ end
 Once our model is created, we can interact with the database:
 
 ```julia
-julia> using WatchTonight.Movies
+julia> using Movies
 
 julia> m = Movie(title = "Test movie", actors = "John Doe, Jane Doe")
 ```
