@@ -9,10 +9,22 @@ a REST API endpoint, and user authentication.
 
 First, let's create a new Genie MVC app. We'll use Genie's app generator, so first let's make sure we have Genie installed.
 
+Let's start with a new environment for packages. (It's because Genie package may have conflicts with the existing packages in your current environment.)
+
+julia>mkdir("MyProject")
+julia>cd("MyProject")
+
+Let's see the current packages.
+(@v1.7) pkg>st # press ] from julia> prompt to enter Pkg mod
+
+
+(@v1.7) pkg>activate .  # start with a new environment for packages
+(MyProject) pkg>st
+
 Let's start a Julia REPL and add Genie:
 
 ```julia
-pkg> add Genie # press ] from julia> prompt to enter Pkg mode
+(MyProject) pkg> add Genie
 ```
 
 Now, to create the app:
