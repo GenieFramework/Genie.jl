@@ -201,7 +201,7 @@ end
 Once our model is created, we can interact with the database:
 
 ```julia
-julia> using WatchTonight.Movies
+julia> using Movies
 
 julia> m = Movie(title = "Test movie", actors = "John Doe, Jane Doe")
 ```
@@ -240,7 +240,7 @@ julia> touch(joinpath("db", "seeds", "seed_movies.jl"))
 And edit it to look like this:
 
 ```julia
-using SearchLight, WatchTonight.Movies
+using SearchLight, Movies
 using CSV
 
 Base.convert(::Type{String}, _::Missing) = ""
