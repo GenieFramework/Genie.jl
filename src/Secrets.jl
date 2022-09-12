@@ -23,7 +23,7 @@ function secret_token(generate_if_missing::Bool = true; context::Union{Module,No
     isfile(joinpath(Genie.config.path_config, SECRETS_FILE_NAME)) &&
       Revise.includet(Genie.Loader.default_context(context), joinpath(Genie.config.path_config, SECRETS_FILE_NAME))
 
-    if isempty(SECRET_TOKEN[]) && generate_if_missing
+    if isempty(SECRET_TOKEN[]) && generate_if_missing && Genie.Configuration.isprod()
       @warn "
             No secret token is defined through `Genie.Secrets.secret_token!(\"token\")`. Such a token
             is needed to hash and to encrypt/decrypt sensitive data in Genie, including cookie
