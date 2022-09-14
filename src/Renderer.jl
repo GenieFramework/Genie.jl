@@ -190,7 +190,6 @@ Redirecting you to /index
 
 """
 function redirect(location::String, code::Int = 302, headers::HTTPHeaders = HTTPHeaders()) :: HTTP.Response
-  @show location
   headers["Location"] = location
   WebRenderable("Redirecting you to $location", :html, code, headers) |> respond
 end
