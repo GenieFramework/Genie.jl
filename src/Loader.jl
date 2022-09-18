@@ -141,6 +141,18 @@ end
 
 
 """
+    load_app(app_file::String = Genie.APP_FILE_NAME; context::Union{Module,Nothing} = nothing) :: Nothing
+
+Loads the app file (`app.jl` can be used for single file apps, instead of `routes.jl`).
+"""
+function load_app(app_file::String = Genie.APP_FILE_NAME; context::Union{Module,Nothing} = nothing) :: Nothing
+  isfile(app_file) && Revise.includet(default_context(context), app_file)
+
+  nothing
+end
+
+
+"""
     autoload
 
 Automatically and recursively includes files from the indicated `root_dir` into the indicated `context` module,
