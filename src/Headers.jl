@@ -32,7 +32,7 @@ function set_access_control_allow_origin!(req::HTTP.Request, res::HTTP.Response,
 
   if ! isempty(request_origin)
     allowed_origin_dict = Dict("Access-Control-Allow-Origin" =>
-      contains(request_origin |> lowercase, join(Genie.config.cors_allowed_origins, ',') |> lowercase) ||
+      occursin(request_origin |> lowercase, join(Genie.config.cors_allowed_origins, ',') |> lowercase) ||
         in("*", Genie.config.cors_allowed_origins)
       ? request_origin
       : strip(Genie.config.cors_headers["Access-Control-Allow-Origin"])
@@ -51,7 +51,7 @@ function set_access_control_allow_headers!(req::HTTP.Request, res::HTTP.Response
 
   if ! isempty(request_headers)
     for rqh in split(request_headers, ',')
-      if ! contains(strip(rqh) |> lowercase, Genie.config.cors_headers["Access-Control-Allow-Headers"] |> lowercase)
+      if ! occursin(strip(rqh) |> lowercase, Genie.config.cors_headers["Access-Control-Allow-Headers"] |> lowercase)
         app_response.status = 403 # Forbidden
         throw(Genie.Exceptions.ExceptionalResponse(app_response))
       end
