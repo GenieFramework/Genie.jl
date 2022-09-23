@@ -1180,7 +1180,7 @@ end
 
 
 function el(; vars...)
-  OrderedCollections.OrderedDict(vars)
+  OrderedCollections.LittleDict(vars)
 end
 
 register_elements() # this doesn't work on __init__

@@ -105,8 +105,8 @@ function Base.show(io::IO, c::Channel)
 end
 
 
-const _routes = OrderedCollections.OrderedDict{Symbol,Route}()
-const _channels = OrderedCollections.OrderedDict{Symbol,Channel}()
+const _routes = OrderedCollections.LittleDict{Symbol,Route}()
+const _channels = OrderedCollections.LittleDict{Symbol,Channel}()
 
 
 """
@@ -313,7 +313,7 @@ end
 """
 The list of the defined named routes.
 """
-function named_routes() :: OrderedCollections.OrderedDict{Symbol,Route}
+function named_routes() :: OrderedCollections.LittleDict{Symbol,Route}
   _routes
 end
 const namedroutes = named_routes
@@ -329,7 +329,7 @@ end
 
 The list of the defined named channels.
 """
-function named_channels() :: OrderedCollections.OrderedDict{Symbol,Channel}
+function named_channels() :: OrderedCollections.LittleDict{Symbol,Channel}
   _channels
 end
 const namedchannels = named_channels
