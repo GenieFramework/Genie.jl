@@ -349,7 +349,8 @@ function get_route(route_name::Symbol; default::Union{Route,Nothing} = Route()) 
     (if default === nothing
       Base.error("Route named `$route_name` is not defined")
     else
-      @warn "Route named `$route_name` is not defined"
+      Genie.Configuration.isdev() && @debug "Route named `$route_name` is not defined"
+
       default
     end)
 end
