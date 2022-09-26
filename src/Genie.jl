@@ -97,20 +97,26 @@ function loadapp(path::String = "."; autostart::Bool = false, dbadapter::Union{N
     Genie.Generator.autoconfdb(dbadapter)
   end
 
-  local appfilename = if isfile(joinpath(path, Genie.BOOTSTRAP_FILE_NAME))
-    joinpath(path, Genie.BOOTSTRAP_FILE_NAME)
-  elseif isfile(joinpath(path, Genie.ROUTES_FILE_NAME))
-    joinpath(path, Genie.ROUTES_FILE_NAME)
-  elseif isfile(joinpath(path, Genie.APP_FILE_NAME))
-    joinpath(path, Genie.APP_FILE_NAME)
-  else
-    error("Could not find a Genie app file in $path")
-  end
+  # Core.eval(Main, quote
+  #   include(joinpath($path, $(Genie.BOOTSTRAP_FILE_NAME)))
+  # end)
 
-  Core.eval(Main,
-    quote
-      include($appfilename)
-    end)
+  # todo -- improve this
+  Core.eval(Main, quote
+    try
+      joinpath($path, $(Genie.BOOTSTRAP_FILE_NAME)) |> include
+    catch
+      try
+        joinpath($path, $(Genie.ROUTES_FILE_NAME)) |> include
+      catch
+        try
+          joinpath($path, $(Genie.APP_FILE_NAME)) |> include
+        catch
+          error("Could not find a Genie app file in $path")
+        end
+      end
+    end
+  end)
 
   Genie.config.watch && @async Genie.Watch.watch(path)
   autostart && (Core.eval(Main, :(up())))
