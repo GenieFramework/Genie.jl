@@ -221,7 +221,10 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String
   isa(channels, Array) || (channels = ChannelName[channels])
 
   for channel in channels
-    haskey(SUBSCRIPTIONS, channel) || throw(Genie.WebChannels.ChannelNotFoundException(channel))
+    if ! haskey(SUBSCRIPTIONS, channel)
+      @debug(Genie.WebChannels.ChannelNotFoundException(channel))
+      continue
+    end
 
     for client in SUBSCRIPTIONS[channel]
       except !== nothing && client == except && continue
@@ -240,7 +243,10 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String
   isa(channels, Array) || (channels = [channels])
 
   for channel in channels
-    haskey(SUBSCRIPTIONS, channel) || throw(Genie.WebChannels.ChannelNotFoundException(channel))
+    if ! haskey(SUBSCRIPTIONS, channel)
+      @debug(Genie.WebChannels.ChannelNotFoundException(channel))
+      continue
+    end
 
     for client in SUBSCRIPTIONS[channel]
       try
