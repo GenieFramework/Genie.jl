@@ -144,6 +144,16 @@ Genie v4 apps would automatically import `Genie` in `Main`, so that `Genie` woul
 
 The scripts responsible for starting the app in non-interactive/serving mode need to be updated by replacing the end of the command from `s "$@"` to `-s=true "$@"`.
 
-### 19. Other
+### 19. Update `config/initializers/logging.jl`
+
+Update the content of the `logging.jl` initializer to this:
+
+```julia
+import Genie
+
+Genie.Logger.initialize_logging()
+```
+
+### 20. Other
 
 Genie 5 also changes or removes other APIs which can be generally be considered as internal. If you find other important breaking changes that have been missed, please open an issue on the Genie GitHub repository or just edit this file and submit a PR.

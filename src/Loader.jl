@@ -8,6 +8,7 @@ import REPL, REPL.Terminals
 import Revise
 import Genie
 
+const post_load_hooks = Function[]
 
 ### PRIVATE ###
 
@@ -232,6 +233,13 @@ function load(; context::Union{Module,Nothing} = nothing) :: Nothing
     Genie.Repl.replprint(string(i), t; prefix = "Loading ", clearline = 3, sleep_time = 0.0)
     Base.@invokelatest f(; context)
     Genie.Repl.replprint("$i ✅", t; prefix = "Loading ", clearline = 3, color = :green, sleep_time = 0.1)
+  end
+
+  if ! isempty(post_load_hooks)
+    Genie.Repl.replprint("Running post load hooks ✅", t; clearline = 3, color = :green, sleep_time = 0.1)
+    for f in unique(post_load_hooks)
+      f |> Base.invokelatest
+    end
   end
 
   Genie.Repl.replprint("\nReady! \n", t; clearline = 1, color = :green, bold = :true)

@@ -24,6 +24,9 @@ isauthenticated() || throw(ExceptionalResponse(redirect(:show_login)))
 struct ExceptionalResponse <: Exception
   response::HTTP.Response
 end
+function ExceptionalResponse(status, headers, body)
+  HTTP.Response(status, headers, body) |> ExceptionalResponse
+end
 
 Base.show(io::IO, ex::ExceptionalResponse) = print(io, "ExceptionalResponseException: $(ex.response.status) - $(Dict(ex.response.headers))")
 
