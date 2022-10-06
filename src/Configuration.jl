@@ -57,7 +57,7 @@ julia> Configuration.isprod()
 false
 ```
 """
-isprod():: Bool = (Genie.config.app_env == PROD)
+isprod()::Bool = (Genie.config.app_env == PROD)
 
 
 """
@@ -74,7 +74,7 @@ julia> Configuration.isprod()
 false
 ```
 """
-istest():: Bool = (Genie.config.app_env == TEST)
+istest()::Bool = (Genie.config.app_env == TEST)
 
 
 """
@@ -88,7 +88,7 @@ julia> Configuration.env()
 "dev"
 ```
 """
-env() :: String = Genie.config.app_env
+env()::String = Genie.config.app_env
 
 
 """
@@ -96,7 +96,7 @@ env() :: String = Genie.config.app_env
 
 Constructs the temp dir where Genie's view files are built.
 """
-buildpath() :: String = Base.Filesystem.mktempdir(prefix = "jl_genie_build_")
+buildpath()::String = Base.Filesystem.mktempdir(prefix="jl_genie_build_")
 
 
 """

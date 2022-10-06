@@ -17,6 +17,7 @@ import Sockets
 import Logging
 
 using Reexport
+using Revise
 
 include("HTTPUtils.jl")
 include("Exceptions.jl")
@@ -97,26 +98,16 @@ function loadapp(path::String = "."; autostart::Bool = false, dbadapter::Union{N
     Genie.Generator.autoconfdb(dbadapter)
   end
 
-  # Core.eval(Main, quote
-  #   include(joinpath($path, $(Genie.BOOTSTRAP_FILE_NAME)))
-  # end)
-
-  # todo -- improve this
-  Core.eval(Main, quote
-    try
-      joinpath($path, $(Genie.BOOTSTRAP_FILE_NAME)) |> include
-    catch
-      try
-        joinpath($path, $(Genie.ROUTES_FILE_NAME)) |> include
-      catch
-        try
-          joinpath($path, $(Genie.APP_FILE_NAME)) |> include
-        catch
-          error("Could not find a Genie app file in $path")
-        end
-      end
-    end
-  end)
+  appfile = if isfile(joinpath(path, Genie.BOOTSTRAP_FILE_NAME))
+    joinpath(path, Genie.BOOTSTRAP_FILE_NAME)
+  elseif isfile(joinpath(path, Genie.ROUTES_FILE_NAME))
+    joinpath(path, Genie.ROUTES_FILE_NAME)
+  elseif isfile(joinpath(path, Genie.APP_FILE_NAME))
+    joinpath(path, Genie.APP_FILE_NAME)
+  else
+    error("Couldn't find a Genie app file in $path")
+  end
+  Revise.includet(Main, appfile)
 
   Genie.config.watch && @async Genie.Watch.watch(path)
   autostart && (Core.eval(Main, :(up())))
