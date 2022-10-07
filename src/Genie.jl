@@ -93,24 +93,20 @@ julia> Genie.loadapp(".")
 [ Info: Logging to file at MyGenieApp/log/dev.log
 ```
 """
-function loadapp(path::String = "."; autostart::Bool = false, dbadapter::Union{Nothing,Symbol,String} = nothing) :: Nothing
+function loadapp(path::String = "."; autostart::Bool = false, dbadapter::Union{Nothing,Symbol,String} = nothing, context = Main) :: Nothing
   if ! isnothing(dbadapter) && dbadapter != "nothing"
     Genie.Generator.autoconfdb(dbadapter)
   end
 
-  appfile = if isfile(joinpath(path, Genie.BOOTSTRAP_FILE_NAME))
-    joinpath(path, Genie.BOOTSTRAP_FILE_NAME)
-  elseif isfile(joinpath(path, Genie.ROUTES_FILE_NAME))
-    joinpath(path, Genie.ROUTES_FILE_NAME)
-  elseif isfile(joinpath(path, Genie.APP_FILE_NAME))
-    joinpath(path, Genie.APP_FILE_NAME)
+  if isfile(joinpath(path, Genie.BOOTSTRAP_FILE_NAME))
+    Revise.includet(context, joinpath(path, Genie.BOOTSTRAP_FILE_NAME))
+    Genie.config.watch && @async Genie.Watch.watch(path)
+    autostart && (Core.eval(context, :(up())))
+  elseif isfile(joinpath(path, Genie.ROUTES_FILE_NAME)) || isfile(joinpath(path, Genie.APP_FILE_NAME))
+    genie(context = context) # load the app
   else
-    error("Couldn't find a Genie app file in $path")
+    error("Couldn't find a Genie app file in $path -- make sure you have one of bootstrap.jl, routes.jl or app.jl")
   end
-  Revise.includet(Main, appfile)
-
-  Genie.config.watch && @async Genie.Watch.watch(path)
-  autostart && (Core.eval(Main, :(up())))
 
   nothing
 end
@@ -162,30 +158,7 @@ end
     genie() :: Union{Nothing,Sockets.TCPServer}
 """
 function genie(; context = @__MODULE__) :: Union{Nothing,Sockets.TCPServer}
-  haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = "dev")
-  Loader.bootstrap(context)
-
-  haskey(ENV, "GENIE_HOST") && (! isempty(ENV["GENIE_HOST"])) && (Genie.config.server_host = ENV["GENIE_HOST"])
-  haskey(ENV, "GENIE_HOST") || (ENV["GENIE_HOST"] = Genie.config.server_host)
-
-  haskey(ENV, "PORT") && (! isempty(ENV["PORT"])) && (Genie.config.server_port = parse(Int, ENV["PORT"]))
-  haskey(ENV, "PORT") || (ENV["PORT"] = Genie.config.server_port)
-
-  ### EARLY BIND TO PORT FOR HOSTS WITH TIMEOUT ###
-  EARLYBINDING = if haskey(ENV, "EARLYBIND") && strip(lowercase(ENV["EARLYBIND"])) == "true"
-    @info "Binding to host $(ENV["GENIE_HOST"]) and port $(ENV["PORT"]) \n"
-    try
-      Sockets.listen(parse(Sockets.IPAddr, ENV["GENIE_HOST"]), parse(Int, ENV["PORT"]))
-    catch ex
-      @error ex
-
-      @warn "Failed binding! \n"
-      nothing
-    end
-  else
-    nothing
-  end
-
+  EARLYBINDING = Loader.loadenv(context = context)
   Secrets.load(context = context)
   Loader.load(context = context)
   Genie.config.watch && @async Watch.watch(pwd())
