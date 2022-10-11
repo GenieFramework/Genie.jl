@@ -26,9 +26,12 @@ const CONTENT_TYPES = Dict{Symbol,String}(
   :javascript => "application/javascript; $DEFAULT_CHARSET",
   :xml        => "text/xml; $DEFAULT_CHARSET",
   :markdown   => "text/markdown; $DEFAULT_CHARSET",
-  :favicon    => "image/x-icon",
   :css        => "text/css; $DEFAULT_CHARSET",
   :fontwoff2  => "font/woff2",
+  :favicon    => "image/x-icon",
+  :png        => "image/png",
+  :jpg        => "image/jpeg",
+  :svg        => "image/svg+xml"
 )
 
 const MIME_TYPES = Dict(
