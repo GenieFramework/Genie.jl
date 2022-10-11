@@ -24,7 +24,7 @@ function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.
 
   headers = Pair{String,String}[]
   header_names = Set{String}()
-  for h in Iterators.flatten(h for h in [res.headers, app_response.headers, ["Server" => Genie.config.server_signature]])
+  for h in Iterators.flatten(h for h in [app_response.headers, res.headers, ["Server" => Genie.config.server_signature]])
     if !in(h.first, header_names) || h.first == "Set-Cookie" # do not remove multiple "Set-Cookie" headers
       push!(headers, h)
       push!(header_names, h.first)
