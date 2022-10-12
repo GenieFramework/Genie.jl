@@ -43,7 +43,7 @@ function walk_dir(dir, paths = String[];
     if isdir(full_path)
       isfile(joinpath(full_path, autoload_ignorefile)) && continue
       (! only_files || only_dirs) && push!(paths, full_path)
-      walk_dir(full_path, paths; only_extensions = only_extensions)
+      Genie.Util.walk_dir(full_path, paths; only_extensions = only_extensions, only_files = only_files, only_dirs = only_dirs, exceptions = exceptions, autoload_ignorefile = autoload_ignorefile)
     else
       only_dirs && continue
 
@@ -53,6 +53,7 @@ function walk_dir(dir, paths = String[];
 
   paths
 end
+const walkdir = walk_dir
 
 
 """
