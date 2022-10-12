@@ -61,14 +61,29 @@ Genie.WebChannels.load_channels = function() {
       }));
     } else {
       console.warn('WebSocket is not open');
+      displayAlert();
     }
   }
 };
 
+function displayAlert(content = 'Can not reach the server - please reload the page') {
+  var elemid = 'wsconnectionalert';
+  if (document.getElementById(elemid) === null) {
+    var elem = document.createElement('div');
+    elem.id = elemid;
+    elem.style.cssText = 'position:absolute;width:100%;opacity:0.5;z-index:100;background:#e63946;color:#f1faee;text-align:center;';
+    elem.innerHTML = content + '<a href="javascript:location.reload();" style="color:#a8dadc;padding: 0 10pt;font-weight:bold;">Reload</a>';
+    setTimeout(() => {
+      document.body.appendChild(elem);
+      document.location.href = '#' + elemid;
+    }, 1000);
+  }
+}
+
 function newSocketConnection(host = Genie.Settings.websockets_exposed_host) {
   return new WebSocket(Genie.Settings.websockets_protocol + '//' + host
-  + (Genie.Settings.websockets_exposed_port > 0 ? (':' + Genie.Settings.websockets_exposed_port) : '')
-  + ( ((Genie.Settings.base_path.trim() === '' || Genie.Settings.base_path.startsWith('/')) ? '' : '/') + Genie.Settings.base_path));
+    + (Genie.Settings.websockets_exposed_port > 0 ? (':' + Genie.Settings.websockets_exposed_port) : '')
+    + ( ((Genie.Settings.base_path.trim() === '' || Genie.Settings.base_path.startsWith('/')) ? '' : '/') + Genie.Settings.base_path));
 }
 
 Genie.WebChannels.socket = newSocketConnection();
