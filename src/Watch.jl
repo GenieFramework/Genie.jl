@@ -23,11 +23,11 @@ function watchpath(path::Union{String,Vector{String}})
   push!(WATCHED_FOLDERS[], path...)
 end
 
-function handlers()
-  Genie.config.watch_handlers |> values |> collect
+function handlers() :: Vector{Function}
+  Genie.config.watch_handlers |> values |> collect |> Iterators.flatten |> collect
 end
 
-function watch(files::Vector{String}, extensions::Vector{String} = Genie.config.watch_extensions) :: Nothing
+function watch(files::Vector{String}, extensions::Vector{String} = Genie.config.watch_extensions; handlers::Vector{Function} = handlers()) :: Nothing
   push!(WATCHED_FOLDERS[], files...)
   WATCHED_FOLDERS[] = unique(WATCHED_FOLDERS[])
   last_watched = now()
@@ -44,10 +44,8 @@ function watch(files::Vector{String}, extensions::Vector{String} = Genie.config.
     now() - last_watched > Millisecond(Genie.config.watch_frequency) || return
     last_watched = now()
 
-    for fg in handlers()
-      for f in fg
-        Base.invokelatest(f)
-      end
+    for f in handlers
+      Base.invokelatest(f)
     end
 
     last_watched = now()
@@ -56,8 +54,13 @@ function watch(files::Vector{String}, extensions::Vector{String} = Genie.config.
   nothing
 end
 
-watch(files::String, extensions::Vector{String} = Genie.config.watch_extensions) = watch(String[files], extensions)
-watch(files...; extensions::Vector{String} = Genie.config.watch_extensions) = watch(String[files...], extensions)
+function watch(handler::Function, files::Union{String,Vector{String}}, extensions::Vector{String} = Genie.config.watch_extensions)
+  isa(files, Vector) || (files = String[files])
+  watch(files, extensions; handlers = Function[handler])
+end
+
+watch(files::String, extensions::Vector{String} = Genie.config.watch_extensions; handlers::Vector{Function} = handlers()) = watch(String[files], extensions; handlers)
+watch(files...; extensions::Vector{String} = Genie.config.watch_extensions, handlers::Vector{Function} = handlers()) = watch(String[files...], extensions; handlers)
 watch() = watch(String[])
 
 function unwatch(files::Vector{String}) :: Nothing
