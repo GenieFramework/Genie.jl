@@ -16,11 +16,11 @@ The easiest and quickest to deploy and expose Genie applications is to create a 
 
 After opening an AWS console you should be able to see your network under VPC tab. This is default one, and we’ll use it for hosting our EC2 instance.
 
-![network-vpc](../../content/Deploying_Genie_Apps_On_AWS/1_network_tab.png)
+![network-vpc](../assets/Deploying_Genie_Apps_On_AWS/1_network_tab.png)
 
 This VPC already contains a predefined subnets. We need a public subnet as we should access our Application via Internet.
 
-![subnet](../../content/Deploying_Genie_Apps_On_AWS/2_subnet.png)
+![subnet](../assets/Deploying_Genie_Apps_On_AWS/2_subnet.png)
 
 Great, let’s move on.
 
@@ -28,19 +28,19 @@ Great, let’s move on.
 
 Navigate to EC2 tab in AWS Console and then click on “Launch instances“. 
 
-![launch-instance](../../content/Deploying_Genie_Apps_On_AWS/3_launch_instance.png)
+![launch-instance](../assets/Deploying_Genie_Apps_On_AWS/3_launch_instance.png)
 
 We will use a Free Tier Amazon  Linux 2 AMI image. It can fit our needs for this demo
 
-![free-tier](../../content/Deploying_Genie_Apps_On_AWS/4_free_instance.png)
+![free-tier](../assets/Deploying_Genie_Apps_On_AWS/4_free_instance.png)
 
 For an Instance type lets choose t2.small, in that case we’ll get 1vCPU and 2Gb Memory. We should have enough memory with this instance to meet our application requirements. Also we should allow HTTP & HTTPS access. For SSH let’s specify your IP or let 0.0.0.0/0 with is allows connect to this instance from everywhere (not secure). Also double check that “Auto-assign public IP“ is enabled.
 
-![instance-conf](../../content/Deploying_Genie_Apps_On_AWS/5_instance_conf.png)
+![instance-conf](../assets/Deploying_Genie_Apps_On_AWS/5_instance_conf.png)
 
 Click on "Launch instance". It’ll take around 2min and we can proceed.
 
-![launch-instance](../../content/Deploying_Genie_Apps_On_AWS/6_launch_instance.png)
+![launch-instance](../assets/Deploying_Genie_Apps_On_AWS/6_launch_instance.png)
 
 Ok, now our Instance is Running and have a public IP.
 
@@ -98,6 +98,6 @@ docker run -p 80:8000 my-demo-app
 
 Then just grep a public IP from AWS console and open it in your browser.
 
-![deployed-app](../../content/Deploying_Genie_Apps_On_AWS/7_aws_app.png)
+![deployed-app](../assets/Deploying_Genie_Apps_On_AWS/7_aws_app.png)
 
 That’s it, your application was successfully deployed. Thanks.
