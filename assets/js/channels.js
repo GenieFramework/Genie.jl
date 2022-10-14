@@ -66,6 +66,8 @@ Genie.WebChannels.load_channels = function() {
   }
 };
 
+const SERVER_GONE_ALERT_TIMEOUT = 10000;
+
 function displayAlert(content = 'Can not reach the server - please reload the page') {
   var elemid = 'wsconnectionalert';
   if (document.getElementById(elemid) === null) {
@@ -76,7 +78,7 @@ function displayAlert(content = 'Can not reach the server - please reload the pa
     setTimeout(() => {
       document.body.appendChild(elem);
       document.location.href = '#' + elemid;
-    }, 1000);
+    }, SERVER_GONE_ALERT_TIMEOUT);
   }
 }
 

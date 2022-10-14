@@ -45,6 +45,8 @@ const MIME_TYPES = Dict(
   :fontwoff2  => MIME"font/woff2",
 )
 
+const MAX_FILENAME_LENGTH = 1_000
+
 push_content_type(s::Symbol, content_type::String, charset::String = DEFAULT_CHARSET) = (CONTENT_TYPES[s] = "$content_type; $charset")
 
 const ResourcePath = Union{String,Symbol}

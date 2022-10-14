@@ -114,7 +114,7 @@ import Base: (*)
 # const HTMLString = String
 
 export HTMLString, html, doc, doctype, ParsedHTMLString, html!
-export @yield, collection, view!, for_each
+export @yield, collection, view!, for_each, iif
 export partial, template
 
 task_local_storage(:__yield, "")
@@ -491,11 +491,18 @@ function Genie.Renderer.render(::Type{MIME"text/html"}, viewfile::Genie.Renderer
 end
 
 
+const MAX_FILENAME_LENGTH = 500
+
+
 function html(resource::Genie.Renderer.ResourcePath, action::Genie.Renderer.ResourcePath;
-                layout::Union{Genie.Renderer.ResourcePath,Nothing,String} = DEFAULT_LAYOUT_FILE,
+                layout::Union{Genie.Renderer.ResourcePath,Nothing,String,Symbol} = DEFAULT_LAYOUT_FILE,
                 context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
+  isa(layout, Symbol) && (layout = string(layout))
   html(Genie.Renderer.Path(joinpath(Genie.config.path_resources, string(resource), Renderer.VIEWS_FOLDER, string(action)));
-        layout = (layout === nothing ? nothing : Genie.Renderer.Path(joinpath(Genie.config.path_app, LAYOUTS_FOLDER, string(layout)))),
+        layout = (layout === nothing ? nothing :
+                    isa(layout, String) && length(layout) < MAX_FILENAME_LENGTH ?
+                      Genie.Renderer.Path(joinpath(Genie.config.path_app, LAYOUTS_FOLDER, string(layout))) : layout
+                  ),
         context = context, status = status, headers = headers, vars...)
 end
 
@@ -1059,6 +1066,20 @@ The results of each iteration are concatenated and the final string is returned.
 """
 function for_each(f::Function, v)
   [f(x) for x in v] |> join
+end
+
+
+"""
+    iif(f::Function, v)
+
+Conditional rendering of a block of HTML code.
+"""
+function iif(f::Function, condition::Bool)
+  if condition
+    f() |> join
+  else
+    ""
+  end
 end
 
 
