@@ -23,6 +23,7 @@ makedocs(
           "Using Genie in an interactive environment" => "guides/Interactive_environment.md",
           "Developing an API backend" => "guides/Simple_API_backend.md",
           "Using Genie Plugins" => "guides/Genie_Plugins.md",
+          "Deploying Genie Apps On AWS" => "guides/Deploying_Genie_Apps_On_AWS.md"
         ],
         "Tutorials" => [
           "Welcome to Genie"  => "tutorials/1--Overview.md",
