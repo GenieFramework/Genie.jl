@@ -17,6 +17,7 @@ function importenv()
   haskey(ENV, "WSPORT") && (! isempty(ENV["WSPORT"])) && (Genie.config.websockets_port = parse(Int, ENV["WSPORT"]))
   haskey(ENV, "WSEXPPORT") && (! isempty(ENV["WSEXPPORT"])) && (Genie.config.websockets_exposed_port = parse(Int, ENV["WSEXPPORT"]))
   haskey(ENV, "WSEXPHOST") && (! isempty(ENV["WSEXPHOST"])) && (Genie.config.websockets_exposed_host = ENV["WSEXPHOST"])
+  haskey(ENV, "WSBASEPATH") && (Genie.config.websockets_base_path = ENV["WSBASEPATH"])
   haskey(ENV, "BASEPATH") && (Genie.config.base_path = ENV["BASEPATH"])
 
   nothing

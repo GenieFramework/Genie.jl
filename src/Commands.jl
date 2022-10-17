@@ -22,6 +22,7 @@ function execute(config::Genie.Configuration.Settings; server::Union{Sockets.TCP
   Genie.config.server_host = parsed_args["l"]
   Genie.config.websockets_exposed_host = parsed_args["x"] == "nothing" ? nothing : parsed_args["x"]
   Genie.config.websockets_exposed_port = parsed_args["y"] == "nothing" ? nothing : parse(Int, parsed_args["y"])
+  Genie.config.websockets_base_path = parsed_args["W"]
   Genie.config.base_path = parsed_args["b"]
 
   if (called_command(parsed_args, "s") && get(parsed_args, "s", "false") == "true") ||
@@ -81,6 +82,10 @@ function parse_commandline_args(config::Genie.Configuration.Settings) :: Dict{St
     "-y"
     help = "WebSockets port used by the clients"
     default = "$(config.websockets_exposed_port)"
+
+    "-W"
+    help = "Websockets base path, e.g. `websocket`, `stream`"
+    default = "$(config.websockets_base_path)"
 
     "-b"
     help = "Base path for serving assets and building links"
