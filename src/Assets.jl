@@ -274,7 +274,7 @@ end
 
 """
   add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::AbstractString;
-    basedir = @__DIR__,
+    basedir = pwd(),
     type::Union{Nothing, String} = nothing, 
     content_type::Union{Nothing, Symbol} = nothing,
     ext::Union{Nothing, String} = nothing, kwargs...)
@@ -298,7 +298,7 @@ Stipple.DEPS[:qdraggabletree] = draggabletree_deps
 ```
 """
 function add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::AbstractString;
-  basedir = @__DIR__,
+  basedir = pwd(),
   type::Union{Nothing, String} = nothing, 
   content_type::Union{Nothing, Symbol} = nothing,
   ext::Union{Nothing, String} = nothing, kwargs...)
