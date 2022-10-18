@@ -22,7 +22,15 @@ function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.
   app_response = set_access_control_allow_origin!(req, res, app_response)
   app_response = set_access_control_allow_headers!(req, res, app_response)
 
-  app_response.headers = [d for d in merge(Dict(res.headers), Dict(app_response.headers), Dict("Server" => Genie.config.server_signature))]
+  headers = Pair{String,String}[]
+  header_names = Set{String}()
+  for h in Iterators.flatten(h for h in [app_response.headers, res.headers, ["Server" => Genie.config.server_signature]])
+    if !in(h.first, header_names) || h.first == "Set-Cookie" # do not remove multiple "Set-Cookie" headers
+      push!(headers, h)
+      push!(header_names, h.first)
+    end
+  end
+  app_response.headers = headers
 
   app_response
 end
@@ -71,16 +79,17 @@ end
 Makes request headers case insensitive.
 """
 function normalize_headers(req::Union{HTTP.Request,HTTP.Response})
-  headers = Dict(req.headers)
-  normalized_headers = Dict{String,String}()
+  normalized_headers = Pair{String,String}[]
 
-  for (k,v) in headers
-    string(k) in NORMALIZED_HEADERS ?
-      normalized_headers[normalize_header_key(string(k))] = string(v) :
-      normalized_headers[string(k)] = string(v)
+  for (k,v) in req.headers
+    if string(k) in NORMALIZED_HEADERS
+      push!(normalized_headers, normalize_header_key(string(k)) => string(v))
+    else
+      push!(normalized_headers, string(k) => string(v))
+    end
   end
 
-  req.headers = [normalized_headers...]
+  req.headers = normalized_headers
 
   req
 end
