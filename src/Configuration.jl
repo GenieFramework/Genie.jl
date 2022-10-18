@@ -176,6 +176,7 @@ Base.@kwdef mutable struct Settings
   websockets_host::String                             = server_host
   websockets_exposed_port::Union{Int,Nothing}         = nothing
   websockets_exposed_host::Union{String,Nothing}      = nothing
+  websockets_base_path::String                        = ""
 
   initializers_folder::String                         = "initializers"
 

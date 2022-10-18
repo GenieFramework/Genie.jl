@@ -85,7 +85,8 @@ function displayAlert(content = 'Can not reach the server - please reload the pa
 function newSocketConnection(host = Genie.Settings.websockets_exposed_host) {
   return new WebSocket(Genie.Settings.websockets_protocol + '//' + host
     + (Genie.Settings.websockets_exposed_port > 0 ? (':' + Genie.Settings.websockets_exposed_port) : '')
-    + ( ((Genie.Settings.base_path.trim() === '' || Genie.Settings.base_path.startsWith('/')) ? '' : '/') + Genie.Settings.base_path));
+    + ( ((Genie.Settings.base_path.trim() === '' || Genie.Settings.base_path.startsWith('/')) ? '' : '/') + Genie.Settings.base_path)
+    + ( ((Genie.Settings.websockets_base_path.trim() === '' || Genie.Settings.websockets_base_path.startsWith('/')) ? '' : '/') + Genie.Settings.websockets_base_path));
 }
 
 Genie.WebChannels.socket = newSocketConnection();

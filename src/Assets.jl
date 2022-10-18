@@ -222,6 +222,7 @@ function js_settings(channel::String = Genie.config.webchannels_default_route) :
     :websockets_exposed_host          => Genie.config.websockets_exposed_host === nothing ? jsliteral("window.location.hostname") : Genie.config.websockets_exposed_host,
     :websockets_port                  => Genie.config.websockets_port,
     :websockets_exposed_port          => Genie.config.websockets_exposed_port === nothing ? jsliteral("window.location.port") : Genie.config.websockets_exposed_port,
+    :websockets_base_path             => Genie.config.websockets_base_path,
 
     :webchannels_default_route        => channel,
     :webchannels_subscribe_channel    => Genie.config.webchannels_subscribe_channel,
