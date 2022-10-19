@@ -98,6 +98,8 @@ function loadapp(path::String = "."; autostart::Bool = false, dbadapter::Union{N
     Genie.Generator.autoconfdb(dbadapter)
   end
 
+  path = normpath(path) |> abspath
+
   if isfile(joinpath(path, Genie.BOOTSTRAP_FILE_NAME))
     Revise.includet(context, joinpath(path, Genie.BOOTSTRAP_FILE_NAME))
     Genie.config.watch && @async Genie.Watch.watch(path)
@@ -105,7 +107,7 @@ function loadapp(path::String = "."; autostart::Bool = false, dbadapter::Union{N
   elseif isfile(joinpath(path, Genie.ROUTES_FILE_NAME)) || isfile(joinpath(path, Genie.APP_FILE_NAME))
     genie(context = context) # load the app
   else
-    error("Couldn't find a Genie app file in $path -- make sure you have one of bootstrap.jl, routes.jl or app.jl")
+    error("Couldn't find a Genie app file in $path (bootstrap.jl, routes.jl or app.jl).")
   end
 
   nothing
