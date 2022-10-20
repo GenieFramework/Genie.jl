@@ -531,11 +531,24 @@ Content-Type: text/html; charset=utf-8
 </div></body></html>"
 ```
 """
-function html(data::String; context::Module = @__MODULE__, status::Int = 200,
+function html(data::String;
+              context::Module = @__MODULE__,
+              status::Int = 200,
               headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
-              layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing,
-              forceparse::Bool = false, noparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
-  isa(layout, Genie.Renderer.FilePath) && (layout = read(layout, String))
+              layout::Union{String,Nothing,Genie.Renderer.FilePath,Function} = nothing,
+              forceparse::Bool = false,
+              noparse::Bool = false,
+              vars...) :: Genie.Renderer.HTTP.Response
+
+  layout = if isa(layout, Genie.Renderer.FilePath)
+    read(layout, String)
+  elseif isa(layout, Function)
+    layout() |> string
+  else
+    layout
+  end
+
+  isa(data, Function) && (data = data() |> string)
 
   if (occursin(raw"$", data) || occursin(EMBED_JULIA_OPEN_TAG, data) || layout !== nothing || forceparse) && ! noparse
     html(HTMLString(data); context = context, status = status, headers = headers, layout = layout, vars...)
@@ -544,17 +557,39 @@ function html(data::String; context::Module = @__MODULE__, status::Int = 200,
   end
 end
 
-function html(data::HTMLString; context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
-              layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing, forceparse::Bool = false, noparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
+function html!(data::Function;
+  context::Module = @__MODULE__,
+  status::Int = 200,
+  headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
+  layout::Union{String,Nothing,Genie.Renderer.FilePath,Function} = nothing,
+  forceparse::Bool = false,
+  noparse::Bool = false,
+  vars...) :: Genie.Renderer.HTTP.Response
+
+  html(data() |> string; context, status, headers, layout, forceparse, noparse, vars...)
+end
+
+function html(data::HTMLString;
+              context::Module = @__MODULE__,
+              status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
+              layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing,
+              forceparse::Bool = false,
+              noparse::Bool = false,
+              vars...) :: Genie.Renderer.HTTP.Response
+
   Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context = context, layout = layout, vars...), status, headers) |> Genie.Renderer.respond
 end
 
-function html(data::ParsedHTMLString; status::Int = 200,
-              headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
+function html(data::ParsedHTMLString;
+              status::Int = 200,
+              headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
+              vars...) :: Genie.Renderer.HTTP.Response
+
   Genie.Renderer.WebRenderable(body = data.data, status = status, headers = headers) |> Genie.Renderer.respond
 end
 
-function html!(data::Union{S,Vector{S}}; status::Int = 200,
+function html!(data::Union{S,Vector{S}};
+                status::Int = 200,
                 headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
                 vars...)::Genie.Renderer.HTTP.Response where {S<:AbstractString}
   html(ParsedHTMLString(join(data)); headers, vars...)
@@ -566,10 +601,13 @@ end
 
 Markdown view rendering
 """
-function html(md::Markdown.MD; context::Module = @__MODULE__, status::Int = 200,
+function html(md::Markdown.MD;
+              context::Module = @__MODULE__,
+              status::Int = 200,
               headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
               layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing,
-              forceparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
+              forceparse::Bool = false,
+              vars...) :: Genie.Renderer.HTTP.Response
   data = MdHtml.eval_markdown(string(md)) |> Markdown.parse |> Markdown.html
   for kv in vars
     data = replace(data, ":" * string(kv[1]) => "\$" * string(kv[1]))
@@ -594,8 +632,10 @@ Parses and renders the HTML `viewfile`, optionally rendering it within the `layo
 """
 function html(viewfile::Genie.Renderer.FilePath;
                 layout::Union{Nothing,Genie.Renderer.FilePath,String} = nothing,
-                context::Module = @__MODULE__, status::Int = 200,
-                headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
+                context::Module = @__MODULE__,
+                status::Int = 200,
+                headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
+                vars...) :: Genie.Renderer.HTTP.Response
   Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", viewfile; layout, context, vars...), status, headers) |> Genie.Renderer.respond
 end
 
