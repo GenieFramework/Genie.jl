@@ -200,7 +200,7 @@ function autoload(root_dir::String = Genie.config.path_lib;
   validinclude(fi)::Bool = endswith(fi, ".jl") && match(namematch, fi) !== nothing &&
                             ((skipmatch !== nothing && match(skipmatch, fi) === nothing) || skipmatch === nothing)
 
-  for i in readdir(root_dir)
+  for i in sort_load_order(root_dir, readdir(root_dir))
     isfile(joinpath(root_dir, autoload_ignore_file)) && continue
 
     fi = joinpath(root_dir, i)
@@ -244,6 +244,15 @@ function autoload(dirs...; kwargs...)
   autoload([dirs...]; kwargs...)
 end
 
+"""
+    sort_load_order() :: Nothing
+"""
+function sort_load_order(rootdir, lsdir::Vector{String})
+  autoloadfilepath = isfile(joinpath(pwd(), rootdir, Genie.config.autoload_file)) ? joinpath(pwd(), rootdir, Genie.config.autoload_file) : return lsdir
+  autoloadorder = open(f -> ([line for line in eachline(f)]), autoloadfilepath)
+  loadorder = issubset(unique(autoloadorder), unique(lsdir)) ? autoloadorder : throw(ArgumentError("Autoload file contains files not in directory"))
+  append!(loadorder, Base.symdiff(loadorder, unique(lsdir)))
+end
 
 """
     load(; context::Union{Module,Nothing} = nothing) :: Nothing
