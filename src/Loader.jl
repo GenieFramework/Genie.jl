@@ -245,13 +245,18 @@ function autoload(dirs...; kwargs...)
 end
 
 """
-    sort_load_order() :: Nothing
+    sort_load_order(root_dir::String, files::Vector{String}) :: Vector{String}
+
+Returns a sorted list of files based on `.autoload` file. If `.autoload` file is a not present in `rootdir` return original output of `readdir()`.
 """
 function sort_load_order(rootdir, lsdir::Vector{String})
   autoloadfilepath = isfile(joinpath(pwd(), rootdir, Genie.config.autoload_file)) ? joinpath(pwd(), rootdir, Genie.config.autoload_file) : return lsdir
   autoloadorder = open(f -> ([line for line in eachline(f)]), autoloadfilepath)
-  loadorder = issubset(unique(autoloadorder), unique(lsdir)) ? autoloadorder : throw(ArgumentError("Autoload file contains files not in directory"))
-  append!(loadorder, Base.symdiff(loadorder, unique(lsdir)))
+  excludedfiles = map(elem -> elem[1] == '-' ? replace(pop!(autoloadorder), "-" => "") : nothing , autoloadorder)
+  filter!(elem -> elem !== nothing, excludedfiles)
+  lsdirexcluded = filter(elem -> !(elem in excludedfiles), lsdir)
+  loadorder = issubset(unique(autoloadorder), unique(lsdirexcluded)) ? autoloadorder : throw(ArgumentError("Autoload file contains files not in directory"))
+  append!(loadorder, Base.symdiff(loadorder, unique(lsdirexcluded)))
 end
 
 """

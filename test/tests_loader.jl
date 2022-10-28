@@ -2,5 +2,5 @@
     using Genie
 
     order = Genie.Loader.sort_load_order("loader", readdir("loader"))
-    @test order == ["b.jl", "a.jl", ".autoload", "c.jl", "d.jl"]
+    @test order == ["xyz.jl", "def.jl", "Abc.jl", ".autoload", "Aaa.jl", "Abb.jl"]
 end
