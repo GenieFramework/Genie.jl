@@ -255,7 +255,7 @@ function sort_load_order(rootdir, lsdir::Vector{String})
   autoloadorder = open(f -> ([line for line in eachline(f)]), autoloadfilepath)
   excludedfiles = map(elem -> elem[1] == '-' ? replace(pop!(autoloadorder), "-" => "") : nothing , autoloadorder)
   filter!(elem -> elem !== nothing, excludedfiles)
-  lsdirexcluded = filter(elem -> !(elem in excludedfiles), lsdir)
+  lsdirexcluded = isempty(excludedfiles) ? lsdir  : filter(elem -> !(elem in excludedfiles), lsdir)
   loadorder = issubset(unique(autoloadorder), unique(lsdirexcluded)) ? autoloadorder : throw(ArgumentError("Autoload file contains files not in directory"))
   append!(loadorder, Base.symdiff(loadorder, unique(lsdirexcluded)))
 end
