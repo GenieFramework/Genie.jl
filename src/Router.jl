@@ -484,7 +484,7 @@ Matches the invoked URL to the corresponding route, sets up the execution enviro
 """
 function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: Union{Route,Nothing}
   endswith(req.target, "/") && req.target != "/" && (req.target = req.target[1:end-1])
-  uri = HTTP.URIs.URI(req.target)
+  uri = HTTP.URIs.URI(HTTP.URIs.unescapeuri(req.target))
 
   for r in routes()
     # method must match but we can also handle HEAD requests with GET routes
