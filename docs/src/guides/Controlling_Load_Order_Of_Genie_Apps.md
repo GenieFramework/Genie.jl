@@ -27,22 +27,21 @@ Abb.jl
 Abc.jl
 def.jl
 Foo.jl
-xyz.jl
+-x-yz.jl
 ```
 
 and we want to decide the load order of these files. To achieve this behavior, we can simply create a `.autoload` file in the directory containing your `.jl` files with content(developer preferred load order) as follows:
 
 ```
-xyz.jl
+--x-yz.jl
 def.jl
 Abc.jl
 -Foo.jl
 ```
 
-where (-) means exclude the file from Genie's autoload sequence. Now the load order of our directory is going to be
+where (-) means exclude the file from Genie's autoload sequence and (--) means remove file starting with (-) from Genie Load sequence. Now the load order of our directory is going to be
 
 ```
-xyz.jl
 def.jl
 Abc.jl
 Aaa.jl
