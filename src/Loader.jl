@@ -253,11 +253,19 @@ Returns a sorted list of files based on `.autoload` file. If `.autoload` file is
 function sort_load_order(rootdir, lsdir::Vector{String})
   autoloadfilepath = isfile(joinpath(pwd(), rootdir, Genie.config.autoload_file)) ? joinpath(pwd(), rootdir, Genie.config.autoload_file) : return lsdir
   autoloadorder = open(f -> ([line for line in eachline(f)]), autoloadfilepath)
-  excludedfiles = map(elem -> elem[1] == '-' ? replace(pop!(autoloadorder), "-" => "") : nothing , autoloadorder)
-  filter!(elem -> elem !== nothing, excludedfiles)
-  lsdirexcluded = isempty(excludedfiles) ? lsdir  : filter(elem -> !(elem in excludedfiles), lsdir)
-  loadorder = issubset(unique(autoloadorder), unique(lsdirexcluded)) ? autoloadorder : throw(ErrorException("autoload file contains one or more files not in directory"))
-  append!(loadorder, Base.symdiff(loadorder, unique(lsdirexcluded)))
+  
+  excludedfiles = String[]
+  lsdirexcluded = lsdir
+  for file in autoloadorder
+    file in lsdirexcluded && continue
+    if startswith(file, "--") || (startswith(file, '-') && (chop(file, head=1, tail=0) in lsdirexcluded))
+      push!(excludedfiles, chop(file, head=1, tail=0))
+      deleteat!(lsdirexcluded, findall(x->x==chop(file, head=1, tail=0), lsdirexcluded))
+    end
+  end
+  
+  filter!(elem -> elem in lsdir, autoloadorder)
+  append!(autoloadorder, Base.symdiff(autoloadorder, unique(lsdirexcluded)))
 end
 
 """

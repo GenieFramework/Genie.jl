@@ -1,4 +1,10 @@
+--my-testfile.jl
 xyz.jl
+-my-test-file.jl
 def.jl
+my-test-file.jl
 Abc.jl
 -Foo.jl
+-my-testfile.jl
+Boo.jl
+-Zoo.jl
