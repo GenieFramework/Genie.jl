@@ -68,7 +68,7 @@ Web Server starting at http://127.0.0.1:8000
 """
 function up(port::Int,
             host::String = Genie.config.server_host;
-            ws_port::Int = port,
+            ws_port::Int = Genie.config.websockets_port,
             async::Bool = ! Genie.config.run_as_server,
             verbose::Bool = false,
             ratelimit::Union{Rational{Int},Nothing} = nothing,
@@ -76,6 +76,7 @@ function up(port::Int,
             wsserver::Union{Sockets.TCPServer,Nothing} = server,
             open_browser::Bool = false,
             reuseaddr::Bool = Distributed.nworkers() > 1,
+            updateconfig::Bool = true,
             http_kwargs...) :: ServersCollection
 
   if server !== nothing
@@ -89,7 +90,7 @@ function up(port::Int,
     end
   end
 
-  update_config(port, host, ws_port)
+  updateconfig && update_config(port, host, ws_port)
 
   new_server = ServersCollection()
 
@@ -210,9 +211,14 @@ Updates the corresponding Genie configurations to the corresponding values for
   `port`, `host`, and `ws_port`, if these are passed as arguments when starting up the server.
 """
 function update_config(port::Int, host::String, ws_port::Int) :: Nothing
+  if port !== Genie.config.server_port && ws_port === Genie.config.websockets_port
+    Genie.config.websockets_port = port
+  elseif ws_port !== Genie.config.websockets_port
+    Genie.config.websockets_port = ws_port
+  end
+
   Genie.config.server_port = port
   Genie.config.server_host = host
-  Genie.config.websockets_port = ws_port
 
   nothing
 end
