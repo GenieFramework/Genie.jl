@@ -7,6 +7,7 @@ import Logging
 import REPL, REPL.Terminals
 import Revise
 import Genie
+import Sockets
 
 const post_load_hooks = Function[]
 

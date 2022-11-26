@@ -11,7 +11,7 @@ import Genie
 
 include("mimetypes.jl")
 
-export route, routes, channel, channels, download, serve_static_file
+export route, routes, channel, channels, download, serve_static_file, serve_file
 export GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
 export tolink, linkto, responsetype, toroute
 export params, query, post, headers, request, params!
@@ -484,7 +484,7 @@ Matches the invoked URL to the corresponding route, sets up the execution enviro
 """
 function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: Union{Route,Nothing}
   endswith(req.target, "/") && req.target != "/" && (req.target = req.target[1:end-1])
-  uri = HTTP.URIs.URI(req.target)
+  uri = HTTP.URIs.URI(HTTP.URIs.unescapeuri(req.target))
 
   for r in routes()
     # method must match but we can also handle HEAD requests with GET routes
@@ -1157,6 +1157,17 @@ function serve_static_file(resource::String; root = Genie.config.server_document
 
   @error "404 Not Found $f [$(abspath(f))]"
   error(resource, response_mime(), Val(404))
+end
+
+
+function serve_file(f::String) :: HTTP.Response
+  fileheader = file_headers(f)
+  if isfile(f)
+    return HTTP.Response(200, fileheader, body = read(f, String))
+  else
+    @error "404 Not Found $f [$(abspath(f))]"
+    error(f, response_mime(), Val(404))
+  end
 end
 
 

@@ -424,7 +424,7 @@ function write_app_custom_files(path::String, app_path::String) :: Nothing
       Pkg.activate(".")
 
       using Genie
-      Genie.loadapp("..")
+      Genie.loadapp()
 
       cd(@__DIR__)
       Pkg.activate(".")

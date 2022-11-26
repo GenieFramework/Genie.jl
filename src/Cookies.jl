@@ -92,9 +92,9 @@ function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attribu
   encrypted && (value = Genie.Encryption.encrypt(value))
   cookie = HTTP.Cookies.Cookie(string(key), value; normalized_attrs...)
 
-  HTTP.Cookies.addcookie!(res, cookie)
+  HTTP.Cookies.addcookie!(r, cookie)
 
-  res
+  r
 end
 
 
