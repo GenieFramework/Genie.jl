@@ -548,8 +548,6 @@ function html(data::String;
     layout
   end
 
-  isa(data, Function) && (data = data() |> string)
-
   if (occursin(raw"$", data) || occursin(EMBED_JULIA_OPEN_TAG, data) || layout !== nothing || forceparse) && ! noparse
     html(HTMLString(data); context = context, status = status, headers = headers, layout = layout, vars...)
   else
