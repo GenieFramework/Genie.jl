@@ -566,7 +566,7 @@ function html!(data::Function;
   noparse::Bool = false,
   vars...) :: Genie.Renderer.HTTP.Response
 
-  html(data() |> string; context, status, headers, layout, forceparse, noparse, vars...)
+  html(data(); context, status, headers, layout, forceparse, noparse, vars...)
 end
 
 function html(data::HTMLString;
@@ -639,6 +639,18 @@ function html(viewfile::Genie.Renderer.FilePath;
   Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", viewfile; layout, context, vars...), status, headers) |> Genie.Renderer.respond
 end
 
+# fallback for html
+function html(data;
+  context::Module = @__MODULE__,
+  status::Int = 200,
+  headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
+  layout::Union{String,Nothing,Genie.Renderer.FilePath,Function} = nothing,
+  forceparse::Bool = false,
+  noparse::Bool = false,
+  vars...) :: Genie.Renderer.HTTP.Response
+
+  html(data |> string; context, status, headers, layout, forceparse, noparse, vars...)
+end
 
 """
     safe_attr(attr) :: String
