@@ -399,9 +399,9 @@ function parseview(data::S; partial = false, context::Module = @__MODULE__, _...
 
   if f_stale || ! isdefined(context, func_name)
     if f_stale
-      Genie.Renderer.build_module(string_to_julia(data, partial = partial), path, mod_name)
+      Genie.Renderer.build_module(string_to_julia(data, partial = partial, f_name = func_name), path, mod_name)
     end
-
+    
     return Base.include(context, joinpath(Genie.config.path_build, Genie.Renderer.BUILD_NAME, mod_name))
   end
 
