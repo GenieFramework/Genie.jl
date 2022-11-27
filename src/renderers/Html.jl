@@ -399,9 +399,9 @@ function parseview(data::S; partial = false, context::Module = @__MODULE__, _...
 
   if f_stale || ! isdefined(context, func_name)
     if f_stale
-      Genie.Renderer.build_module(string_to_julia(data, partial = partial), path, mod_name)
+      Genie.Renderer.build_module(string_to_julia(data, partial = partial, f_name = func_name), path, mod_name)
     end
-
+    
     return Base.include(context, joinpath(Genie.config.path_build, Genie.Renderer.BUILD_NAME, mod_name))
   end
 
@@ -548,8 +548,6 @@ function html(data::String;
     layout
   end
 
-  isa(data, Function) && (data = data() |> string)
-
   if (occursin(raw"$", data) || occursin(EMBED_JULIA_OPEN_TAG, data) || layout !== nothing || forceparse) && ! noparse
     html(HTMLString(data); context = context, status = status, headers = headers, layout = layout, vars...)
   else
@@ -566,7 +564,7 @@ function html!(data::Function;
   noparse::Bool = false,
   vars...) :: Genie.Renderer.HTTP.Response
 
-  html(data() |> string; context, status, headers, layout, forceparse, noparse, vars...)
+  html(data(); context, status, headers, layout, forceparse, noparse, vars...)
 end
 
 function html(data::HTMLString;
@@ -588,7 +586,7 @@ function html(data::ParsedHTMLString;
   Genie.Renderer.WebRenderable(body = data.data, status = status, headers = headers) |> Genie.Renderer.respond
 end
 
-function html!(data::Union{S,Vector{S}};
+function html(data::Union{S,Vector{S}};
                 status::Int = 200,
                 headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
                 vars...)::Genie.Renderer.HTTP.Response where {S<:AbstractString}
@@ -639,6 +637,18 @@ function html(viewfile::Genie.Renderer.FilePath;
   Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", viewfile; layout, context, vars...), status, headers) |> Genie.Renderer.respond
 end
 
+# fallback for html
+function html(data;
+  context::Module = @__MODULE__,
+  status::Int = 200,
+  headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
+  layout::Union{String,Nothing,Genie.Renderer.FilePath,Function} = nothing,
+  forceparse::Bool = false,
+  noparse::Bool = false,
+  vars...) :: Genie.Renderer.HTTP.Response
+
+  html(data |> string; context, status, headers, layout, forceparse, noparse, vars...)
+end
 
 """
     safe_attr(attr) :: String
