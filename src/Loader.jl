@@ -194,14 +194,15 @@ function autoload(root_dir::String = Genie.config.path_lib;
                   skipdirs::Vector{String} = String[],
                   namematch::Regex = r".*",
                   skipmatch::Union{Regex,Nothing} = nothing,
-                  autoload_ignore_file::String = Genie.config.autoload_ignore_file) :: Nothing
+                  autoload_ignore_file::String = Genie.config.autoload_ignore_file,
+                  autoload_file::String = Genie.config.autoload_file) :: Nothing
   isdir(root_dir) || return nothing
 
   validinclude(fi)::Bool = endswith(fi, ".jl") && match(namematch, fi) !== nothing &&
                             ((skipmatch !== nothing && match(skipmatch, fi) === nothing) || skipmatch === nothing)
 
-  for i in readdir(root_dir)
-    isfile(joinpath(root_dir, autoload_ignore_file)) && continue
+  for i in sort_load_order(root_dir, readdir(root_dir))
+    (isfile(joinpath(root_dir, autoload_ignore_file)) || i == autoload_file ) && continue
 
     fi = joinpath(root_dir, i)
     @debug "Checking $fi"
@@ -244,6 +245,28 @@ function autoload(dirs...; kwargs...)
   autoload([dirs...]; kwargs...)
 end
 
+"""
+    sort_load_order(root_dir::String, files::Vector{String}) :: Vector{String}
+
+Returns a sorted list of files based on `.autoload` file. If `.autoload` file is a not present in `rootdir` return original output of `readdir()`.
+"""
+function sort_load_order(rootdir, lsdir::Vector{String})
+  autoloadfilepath = isfile(joinpath(pwd(), rootdir, Genie.config.autoload_file)) ? joinpath(pwd(), rootdir, Genie.config.autoload_file) : return lsdir
+  autoloadorder = open(f -> ([line for line in eachline(f)]), autoloadfilepath)
+  
+  excludedfiles = String[]
+  lsdirexcluded = lsdir
+  for file in autoloadorder
+    file in lsdirexcluded && continue
+    if startswith(file, "--") || (startswith(file, '-') && (chop(file, head=1, tail=0) in lsdirexcluded))
+      push!(excludedfiles, chop(file, head=1, tail=0))
+      deleteat!(lsdirexcluded, findall(x->x==chop(file, head=1, tail=0), lsdirexcluded))
+    end
+  end
+  
+  filter!(elem -> elem in lsdir, autoloadorder)
+  append!(autoloadorder, Base.symdiff(autoloadorder, unique(lsdirexcluded)))
+end
 
 """
     load(; context::Union{Module,Nothing} = nothing) :: Nothing
