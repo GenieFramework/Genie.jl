@@ -68,7 +68,7 @@ Web Server starting at http://127.0.0.1:8000
 """
 function up(port::Int,
             host::String = Genie.config.server_host;
-            ws_port::Int = port,
+            ws_port::Int = Genie.config.websockets_port,
             async::Bool = ! Genie.config.run_as_server,
             verbose::Bool = false,
             ratelimit::Union{Rational{Int},Nothing} = nothing,
@@ -76,6 +76,7 @@ function up(port::Int,
             wsserver::Union{Sockets.TCPServer,Nothing} = server,
             open_browser::Bool = false,
             reuseaddr::Bool = Distributed.nworkers() > 1,
+            updateconfig::Bool = true,
             http_kwargs...) :: ServersCollection
 
   if server !== nothing
@@ -89,14 +90,14 @@ function up(port::Int,
     end
   end
 
-  update_config(port, host, ws_port)
+  updateconfig && update_config(port, host, ws_port)
 
   new_server = ServersCollection()
 
-  if Genie.config.websockets_server && port != ws_port
+  if Genie.config.websockets_server !== nothing && port !== ws_port
     print_server_status("Web Sockets server starting at $host:$ws_port")
 
-    new_server.websockets = HTTP.listen(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver,
+    new_server.websockets = @async HTTP.listen(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver,
                                                 reuseaddr = reuseaddr, http_kwargs...) do http::HTTP.Stream
       if HTTP.WebSockets.isupgrade(http.message)
         HTTP.WebSockets.upgrade(http) do ws
@@ -110,7 +111,7 @@ function up(port::Int,
     HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server,
                                     reuseaddr = reuseaddr, http_kwargs...) do http::HTTP.Stream
       try
-        if Genie.config.websockets_server && port == ws_port && HTTP.WebSockets.isupgrade(http.message)
+        if Genie.config.websockets_server !== nothing && port === ws_port && HTTP.WebSockets.isupgrade(http.message)
           HTTP.WebSockets.upgrade(http) do ws
             setup_ws_handler(http, ws)
           end
@@ -134,7 +135,7 @@ function up(port::Int,
     command()
   end
 
-  if status !== nothing && status.state == :runnable
+  if status !== nothing && status.state === :runnable
     new_server.webserver = status
 
     try
@@ -210,9 +211,14 @@ Updates the corresponding Genie configurations to the corresponding values for
   `port`, `host`, and `ws_port`, if these are passed as arguments when starting up the server.
 """
 function update_config(port::Int, host::String, ws_port::Int) :: Nothing
+  if port !== Genie.config.server_port && ws_port === Genie.config.websockets_port
+    Genie.config.websockets_port = port
+  elseif ws_port !== Genie.config.websockets_port
+    Genie.config.websockets_port = ws_port
+  end
+
   Genie.config.server_port = port
   Genie.config.server_host = host
-  Genie.config.websockets_port = ws_port
 
   nothing
 end

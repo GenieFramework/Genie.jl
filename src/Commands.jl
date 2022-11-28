@@ -64,12 +64,12 @@ function parse_commandline_args(config::Genie.Configuration.Settings) :: Dict{St
     help = "Starts HTTP server"
 
     "-p"
-    help = "HTTP server port"
+    help = "Web server port"
     default = "$(config.server_port)"
 
     "-w"
-    help = "Web Sockets server port"
-    default = "$(config.server_port)"
+    help = "WebSockets server port"
+    default = "$(config.websockets_port)"
 
     "-l"
     help = "Host IP to listen on"
