@@ -136,7 +136,7 @@ sudo systemctl restart nginx
 
 ## Enable HTTPS
 
-To enable HTTP, a site-certificate will be needed for the domain on which the site will be served.
+To enable HTTPS, a site-certificate will be needed for the domain on which the site will be served.
 A practical approach is to use the utilities provided by [certbot](https://certbot.eff.org/).
 
 Following provided instructions for nginx on Ubuntu 20.04:
@@ -153,5 +153,5 @@ Then, using certbot utility, a certificate will be generated and appropriate mod
 sudo certbot --nginx
 ```
 
-Note that this steps will check for ownernship of the `test.com` domain mentionned in the nginx config file. For that
+Note that this step will check for ownernship of the `test.com` domain mentionned in the nginx config file. For that
 validation to succeed, it requires to have the `A` record for the domain set to `123.123.123.123`.
