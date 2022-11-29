@@ -259,7 +259,7 @@ function sort_load_order(rootdir, lsdir::Vector{String})
     if file in lsdir
       push!(fn_loadorder, file)
       filter!(f -> f != file, lsdir)
-    elseif startswith(file, '-') && isfile(file[2:end]) ∉ lsdir
+    elseif startswith(file, '-') && file[2:end] ∈ lsdir
       filter!(f -> f != file[2:end], lsdir)
       continue
     else
