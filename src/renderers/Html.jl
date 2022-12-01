@@ -401,7 +401,7 @@ function parseview(data::S; partial = false, context::Module = @__MODULE__, _...
     if f_stale
       Genie.Renderer.build_module(string_to_julia(data, partial = partial, f_name = func_name), path, mod_name)
     end
-    
+
     return Base.include(context, joinpath(Genie.config.path_build, Genie.Renderer.BUILD_NAME, mod_name))
   end
 
@@ -564,7 +564,7 @@ function html!(data::Function;
   noparse::Bool = false,
   vars...) :: Genie.Renderer.HTTP.Response
 
-  html(data(); context, status, headers, layout, forceparse, noparse, vars...)
+  html(data() |> string; context, status, headers, layout, forceparse, noparse, vars...)
 end
 
 function html(data::HTMLString;
@@ -586,7 +586,7 @@ function html(data::ParsedHTMLString;
   Genie.Renderer.WebRenderable(body = data.data, status = status, headers = headers) |> Genie.Renderer.respond
 end
 
-function html(data::Union{S,Vector{S}};
+function html!(data::Union{S,Vector{S}};
                 status::Int = 200,
                 headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
                 vars...)::Genie.Renderer.HTTP.Response where {S<:AbstractString}
