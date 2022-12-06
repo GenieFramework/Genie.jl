@@ -228,6 +228,7 @@ Base.@kwdef mutable struct Settings
   autoload::Vector{Symbol}                            = Symbol[:initializers, :helpers, :libs, :resources, :plugins, :routes, :app]
   autoload_file::String                               = ".autoload"
   autoload_ignore_file::String                        = ".autoload_ignore"
+  env_file::String                                    = ".env"
 
   watch::Bool                                         = false
   watch_extensions::Vector{String}                    = String["jl", "html", "md", "js", "css"]

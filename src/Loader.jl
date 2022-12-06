@@ -9,6 +9,8 @@ import Revise
 import Genie
 import Sockets
 
+using DotEnv
+
 const post_load_hooks = Function[]
 
 ### PRIVATE ###
@@ -70,6 +72,10 @@ function bootstrap(context::Union{Module,Nothing} = default_context(context)) ::
 
   get!(ENV, "GENIE_BANNER", "true") |> strip |> lowercase != "false" && print_banner()
 
+  if isfile(Genie.config.env_file)
+    DotEnv.config(;path=Genie.config.env_file)
+  end
+  
   nothing
 end
 
