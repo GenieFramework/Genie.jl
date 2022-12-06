@@ -75,7 +75,7 @@ function bootstrap(context::Union{Module,Nothing} = default_context(context)) ::
   if isfile(Genie.config.env_file)
     DotEnv.config(;path=Genie.config.env_file)
   end
-  
+
   nothing
 end
 
