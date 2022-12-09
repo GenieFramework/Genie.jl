@@ -6,6 +6,7 @@
 
   content = "abcd"
   content2 = "efgh"
+  content3 = raw"\$hello\$"
 
   @testset "Basic rendering" begin
     r = Requests.HTTP.Response()
@@ -27,6 +28,11 @@
 
       @test String(r.body) == "$content"
     end;
+
+    @testset "String with backspace dollar" begin
+      r = html(content3)
+      @test String(r.body) |> fws == raw"<!DOCTYPE html><html><body><p>\$hello\$</p></body></html>" |> fws
+    end
 
     @testset "String no spaces force parse" begin
       r = html(content, forceparse = true)

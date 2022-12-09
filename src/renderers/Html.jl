@@ -910,6 +910,8 @@ Converts an input file to Julia code
   function to_julia(input::S, f::Union{Function,Nothing};
                   partial = true, f_name::Union{Symbol,Nothing} = nothing,
                   prepend::String = "\n", extension = TEMPLATE_EXT)::ParsedHTMLString where {S<:AbstractString}
+
+  input = replace(input, raw"\$" => raw"\\\$") # escape $ signs -- in code, $ must be escaped twice, \\\$ is the correct way -- then we preserve the escape into the resulting HTML
   f_name = (f_name === nothing) ? Genie.Renderer.function_name(string(input, partial)) : f_name
 
   string("function $(f_name)(; $(Genie.Renderer.injectkwvars())) \n",
