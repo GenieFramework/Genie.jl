@@ -1,35 +1,35 @@
 @safetestset "DotEnv functionality" begin
   @safetestset "Create and run new Genie App" begin
-    # using Logging
-    # Logging.global_logger(NullLogger())
-
     testdir = pwd()
+
     using Pkg
     using Genie
 
-    workdir = Base.Filesystem.mktempdir()
-    cd(workdir)
-    
-    Genie.Generator.newapp("testapp"; autostart = false)
-    mv(".env.example", ".env")
-    # @info readdir()
-    # Pkg.activate(".")
-    # Pkg.develop("Genie")
-    # @info Pkg.status()
-    Genie.loadapp()  
+    tmpdir = Base.Filesystem.mktempdir()
+    cd(tmpdir)
 
-    @test ENV["PORT"] == 9001
-    up()
+    @async Genie.Generator.newapp("testapp"; autostart=false, testmode=true)
     sleep(10)
 
-    r = Genie.Requests.HTTP.request("GET", """http://localhost:$(ENV["PORT"])/""")
-    @test r.status = Genie.Router.OK
+    mv(".env.example", ".env")
+    Genie.Loader.DotEnv.config()
 
-    down()
-    sleep(1)
+    task = @async run(`bin/server`, wait=false)
+    sleep(10)
+
+    r = Genie.Requests.HTTP.request("GET", "http://$(ENV["HOST"]):$(ENV["PORT"])/")
+    @test r.status == Genie.Router.OK
+
+    try
+      @async Base.throwto(task, InterruptException())
+    catch
+    end
+
+    kill(task |> fetch)
+    task = nothing
 
     cd(testdir)
     Pkg.activate(".")
-  end;
-  
-end;
+  end
+
+end
