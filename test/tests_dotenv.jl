@@ -1,5 +1,5 @@
 @safetestset "DotEnv functionality" begin
-  @safetestset "Create and run new Genie App" begin
+  @safetestset "Create newapp and test ENV vars" begin
     testdir = pwd()
 
     using Pkg
