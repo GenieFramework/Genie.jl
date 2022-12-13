@@ -37,6 +37,9 @@ function loadenv(; context)
   haskey(ENV, "PORT") && (! isempty(ENV["PORT"])) && (Genie.config.server_port = parse(Int, ENV["PORT"]))
   haskey(ENV, "PORT") || (ENV["PORT"] = Genie.config.server_port)
 
+  haskey(ENV, "WSPORT") && (! isempty(ENV["WSPORT"])) && (Genie.config.websockets_port = parse(Int, ENV["WSPORT"]))
+  haskey(ENV, "WSPORT") || (ENV["WSPORT"] = Genie.config.websockets_port)
+
   ### EARLY BIND TO PORT FOR HOSTS WITH TIMEOUT ###
   EARLYBINDING = if haskey(ENV, "EARLYBIND") && strip(lowercase(ENV["EARLYBIND"])) == "true"
     @info "Binding to host $(ENV["GENIE_HOST"]) and port $(ENV["PORT"]) \n"
