@@ -1,38 +1,9 @@
 @safetestset "DotEnv functionality" begin
-  @safetestset "Create newapp and test ENV vars" begin
-    testdir = pwd()
 
-    using Pkg
-    using Genie
+  @safetestset "ENV variables JSON endpoint check" begin
+    using Logging
+    Logging.global_logger(NullLogger())
 
-    tmpdir = Base.Filesystem.mktempdir()
-    cd(tmpdir)
-
-    @async Genie.Generator.newapp("testapp"; autostart=false, testmode=true)
-    sleep(10)
-
-    mv(".env.example", ".env")
-    Genie.Loader.DotEnv.config()
-
-    task = @async run(`bin/server`, wait=false)
-    sleep(10)
-
-    r = Genie.Requests.HTTP.request("GET", "http://$(ENV["HOST"]):$(ENV["PORT"])/")
-    @test r.status == Genie.Router.OK
-
-    try
-      @async Base.throwto(task, InterruptException())
-    catch
-    end
-
-    kill(task |> fetch)
-    task = nothing
-
-    cd(testdir)
-    Pkg.activate(".")
-  end
-
-  @safetestset "ENV variables JSON endpoint" begin
     testdir = pwd()
 
     using Pkg
@@ -59,10 +30,16 @@
     end
     """)
 
-    task = @async run(`bin/server`, wait=false)
+    if Sys.iswindows()
+      task = @async run(`bin\\server.bat`, wait=false)
+    else
+      task = @async run(`bin/server`, wait=false)
+    end
+
     sleep(10)
 
     r = Genie.Requests.HTTP.request("GET", "http://$(ENV["HOST"]):$(ENV["PORT"])/")
+    @test r.status == Genie.Router.OK
 
     eobj = Genie.Renderer.Json.JSONParser.parse(String(r.body))
 
