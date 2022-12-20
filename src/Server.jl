@@ -68,7 +68,7 @@ Web Server starting at http://127.0.0.1:8000
 """
 function up(port::Int,
             host::String = Genie.config.server_host;
-            ws_port::Int = Genie.config.websockets_port,
+            ws_port::Union{Int,Nothing} = Genie.config.websockets_port,
             async::Bool = ! Genie.config.run_as_server,
             verbose::Bool = false,
             ratelimit::Union{Rational{Int},Nothing} = nothing,
@@ -89,6 +89,8 @@ function up(port::Int,
       @error ex
     end
   end
+
+  ws_port === nothing && (ws_port = port)
 
   updateconfig && update_config(port, host, ws_port)
 

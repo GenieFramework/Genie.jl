@@ -18,7 +18,7 @@ function execute(config::Genie.Configuration.Settings; server::Union{Sockets.TCP
 
   # overwrite env settings with command line arguments
   Genie.config.server_port = parse(Int, parsed_args["p"])
-  Genie.config.websockets_port = parse(Int, parsed_args["w"])
+  Genie.config.websockets_port = parsed_args["w"] == "nothing" ? nothing : parse(Int, parsed_args["w"])
   Genie.config.server_host = parsed_args["l"]
   Genie.config.websockets_exposed_host = parsed_args["x"] == "nothing" ? nothing : parsed_args["x"]
   Genie.config.websockets_exposed_port = parsed_args["y"] == "nothing" ? nothing : parse(Int, parsed_args["y"])

@@ -172,7 +172,7 @@ Base.@kwdef mutable struct Settings
 
   websockets_server::Bool                             = false
   websockets_protocol::Union{String,Nothing}          = nothing
-  websockets_port::Int                                = server_port
+  websockets_port::Union{Int,Nothing}                 = nothing
   websockets_host::String                             = server_host
   websockets_exposed_port::Union{Int,Nothing}         = nothing
   websockets_exposed_host::Union{String,Nothing}      = nothing
