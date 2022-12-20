@@ -231,6 +231,7 @@ function js_settings(channel::String = Genie.config.webchannels_default_route) :
     :webchannels_eval_command         => Genie.config.webchannels_eval_command,
     :webchannels_timeout              => Genie.config.webchannels_timeout,
     :webchannels_keepalive_frequency  => Genie.config.webchannels_keepalive_frequency,
+    :webchannels_server_gone_alert_timeout => Genie.config.webchannels_server_gone_alert_timeout,
 
     :webthreads_default_route         => channel,
     :webthreads_js_file               => Genie.config.webthreads_js_file,
@@ -275,7 +276,7 @@ end
 """
   add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::AbstractString;
     basedir = pwd(),
-    type::Union{Nothing, String} = nothing, 
+    type::Union{Nothing, String} = nothing,
     content_type::Union{Nothing, Symbol} = nothing,
     ext::Union{Nothing, String} = nothing, kwargs...)
 
@@ -299,14 +300,14 @@ Stipple.DEPS[:qdraggabletree] = draggabletree_deps
 """
 function add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::AbstractString;
   basedir = pwd(),
-  type::Union{Nothing, String} = nothing, 
+  type::Union{Nothing, String} = nothing,
   content_type::Union{Nothing, Symbol} = nothing,
   ext::Union{Nothing, String} = nothing, kwargs...)
 
   file, ex = splitext(filename)
   ext = isnothing(ext) ? ex : ext
   type = isnothing(type) ? ex[2:end] : type
-  
+
   content_type = isnothing(content_type) ? if type == "js"
     :javascript
   elseif type == "css"
