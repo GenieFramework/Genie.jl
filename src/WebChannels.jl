@@ -70,12 +70,12 @@ function disconnected_clients(channel::ChannelName) :: Vector{ChannelClient}
   clients
 end
 function disconnected_clients() :: Vector{ChannelClient}
-  clients = ChannelClient[]
-  for ch in channels()
-    clients = vcat(clients, disconnected_clients(ch))
+  channel_clients = ChannelClient[]
+  for channel_client in clients()
+    HTTP.WebSockets.isclosed(channel_client.client) && push!(channel_clients, channel_client)
   end
 
-  clients
+  channel_clients
 end
 
 
