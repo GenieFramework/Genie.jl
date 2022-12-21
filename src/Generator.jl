@@ -311,7 +311,7 @@ function scaffold(app_name::String, app_path::String = "") :: Nothing
   isdir(app_path) || mkpath(app_path)
 
   for f in [Genie.config.path_src, GENIE_FILE_NAME, Genie.ROUTES_FILE_NAME,
-            ".gitattributes", ".gitignore"]
+            ".gitattributes", ".gitignore", ".env.example"]
     try
       cp(joinpath(@__DIR__, "..", NEW_APP_PATH, f), joinpath(app_path, f))
     catch ex
