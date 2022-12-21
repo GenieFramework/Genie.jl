@@ -2,7 +2,6 @@ using Genie, Logging
 
 Genie.Configuration.config!(
   server_port                     = 8000,
-  websockets_port                 = 8000,
   server_host                     = "0.0.0.0",
   log_level                       = Logging.Error,
   log_to_file                     = false,
