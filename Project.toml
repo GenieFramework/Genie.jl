@@ -1,12 +1,13 @@
 name = "Genie"
 uuid = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
 authors = ["Adrian Salceanu <e@essenciary.com>"]
-version = "5.12.0"
+version = "5.13.0"
 
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
+DotEnv = "4dc1fcf4-5e3b-5448-94ab-0c38ec0385c1"
 EzXML = "8f5d6c58-4d21-5cfd-889c-e3ad7ee6a615"
 FilePathsBase = "48062228-2e41-5def-b9a4-89aafe57970f"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
@@ -34,6 +35,7 @@ YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
 ArgParse = "1"
+DotEnv = "0.3"
 EzXML = "1"
 FilePathsBase = "0.9"
 HTTP = "1"

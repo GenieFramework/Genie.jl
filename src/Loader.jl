@@ -9,6 +9,8 @@ import Revise
 import Genie
 import Sockets
 
+using DotEnv
+
 const post_load_hooks = Function[]
 
 ### PRIVATE ###
@@ -34,6 +36,8 @@ function loadenv(; context)
 
   haskey(ENV, "PORT") && (! isempty(ENV["PORT"])) && (Genie.config.server_port = parse(Int, ENV["PORT"]))
   haskey(ENV, "PORT") || (ENV["PORT"] = Genie.config.server_port)
+
+  haskey(ENV, "WSPORT") && (! isempty(ENV["WSPORT"])) && (Genie.config.websockets_port = parse(Int, ENV["WSPORT"]))
 
   ### EARLY BIND TO PORT FOR HOSTS WITH TIMEOUT ###
   EARLYBINDING = if haskey(ENV, "EARLYBIND") && strip(lowercase(ENV["EARLYBIND"])) == "true"
@@ -69,6 +73,10 @@ function bootstrap(context::Union{Module,Nothing} = default_context(context)) ::
   importenv()
 
   get!(ENV, "GENIE_BANNER", "true") |> strip |> lowercase != "false" && print_banner()
+
+  if isfile(Genie.config.env_file)
+    DotEnv.config(;path=Genie.config.env_file)
+  end
 
   nothing
 end

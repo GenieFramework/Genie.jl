@@ -24,7 +24,7 @@ const JSON = JSONParser
 const JSON_FILE_EXT = ".json.jl"
 const JSONString = String
 
-export JSONString, json, JSONException
+export JSONString, json, parse, JSONException
 
 Base.@kwdef mutable struct JSONException <: Exception
   status::Int
