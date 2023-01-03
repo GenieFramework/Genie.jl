@@ -599,13 +599,10 @@ You can add support for additional databases anytime later. ")
     end
 
     if choice == (length(backends)+1)
-      # println("Please input DB adapter (ex: Oracle, ODBC, JDBC, etc)")
       println("Skipping DB support installation")
       println()
 
       return
-
-      # readline()
     elseif choice > (length(backends)+1)
       @warn "You must choose a number between 1 and $(length(backends)+1)"
       return install_searchlight_dependencies(; testmode = testmode)

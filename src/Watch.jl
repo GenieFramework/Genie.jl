@@ -32,7 +32,7 @@ function watch(files::Vector{String}, extensions::Vector{String} = Genie.config.
   WATCHED_FOLDERS[] = unique(WATCHED_FOLDERS[])
   last_watched = now()
 
-  Revise.revise()
+  Configuration.isdev() && Revise.revise()
 
   if ! WATCHING[]
     WATCHING[] = true
