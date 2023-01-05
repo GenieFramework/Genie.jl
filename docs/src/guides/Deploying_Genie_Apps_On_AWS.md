@@ -1,4 +1,4 @@
-How to deploy Genie applications
+### How to deploy Genie applications
 
 In this guide we will walk through how to deploy a Genie App to Amazon Cloud. This article will be added with more information in future.
 
