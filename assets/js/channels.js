@@ -5,7 +5,7 @@
 */
 Genie.WebChannels = {};
 
-Genie.WebChannels.load_channels = function() {
+Genie.WebChannels.initialize = function() {
   Genie.WebChannels.sendMessageTo = sendMessageTo;
   Genie.WebChannels.messageHandlers = [];
   Genie.WebChannels.errorHandlers = [];
@@ -14,57 +14,21 @@ Genie.WebChannels.load_channels = function() {
   Genie.WebChannels.subscriptionHandlers = [];
   Genie.WebChannels.processingHandlers = [];
 
-  Genie.WebChannels.socket.addEventListener('open', function(event) {
-    for (var i = 0; i < Genie.WebChannels.openHandlers.length; i++) {
-      var f = Genie.WebChannels.openHandlers[i];
-      if (typeof f === 'function') {
-        f(event);
-      }
-    }
-  });
-
-  Genie.WebChannels.socket.addEventListener('message', function(event) {
-    for (var i = 0; i < Genie.WebChannels.messageHandlers.length; i++) {
-      var f = Genie.WebChannels.messageHandlers[i];
-      if (typeof f === 'function') {
-        f(event);
-      }
-    }
-  });
-
-  Genie.WebChannels.socket.addEventListener('error', function(event) {
-    for (var i = 0; i < Genie.WebChannels.errorHandlers.length; i++) {
-      var f = Genie.WebChannels.errorHandlers[i];
-      if (typeof f === 'function') {
-        f(event);
-      }
-    }
-  });
-
-  Genie.WebChannels.socket.addEventListener('close', function(event) {
-    for (var i = 0; i < Genie.WebChannels.closeHandlers.length; i++) {
-      var f = Genie.WebChannels.closeHandlers[i];
-      if (typeof f === 'function') {
-        f(event);
-      }
-    }
-  });
-
   // A message maps to a channel route so that channel + message = /action/controller
   // The payload is the data exposed in the Channel Controller
   function sendMessageTo(channel, message, payload = {}) {
+    var msg = JSON.stringify({
+      'channel': channel,
+      'message': message,
+      'payload': payload
+    });
     if (Genie.WebChannels.socket.readyState === 1) {
-      Genie.WebChannels.socket.send(JSON.stringify({
-        'channel': channel,
-        'message': message,
-        'payload': payload
-      }));
-    } else {
-      console.warn('WebSocket is not open');
-      displayAlert();
+      Genie.WebChannels.socket.send(msg);
+    } else if (Object.keys(payload).length > 0) {
+      setTimeout(Genie.WebChannels.socket.send.bind(this, msg), Genie.Settings.webchannels_timeout);
     }
   }
-};
+}
 
 function displayAlert(content = 'Can not reach the server - please reload the page') {
   var elemid = 'wsconnectionalert';
@@ -81,16 +45,56 @@ function displayAlert(content = 'Can not reach the server - please reload the pa
 }
 
 function newSocketConnection(host = Genie.Settings.websockets_exposed_host) {
-  return new WebSocket(Genie.Settings.websockets_protocol + '//' + host
+  var ws = new WebSocket(Genie.Settings.websockets_protocol + '//' + host
     + (Genie.Settings.websockets_exposed_port > 0 ? (':' + Genie.Settings.websockets_exposed_port) : '')
     + ( ((Genie.Settings.base_path.trim() === '' || Genie.Settings.base_path.startsWith('/')) ? '' : '/') + Genie.Settings.base_path)
     + ( ((Genie.Settings.websockets_base_path.trim() === '' || Genie.Settings.websockets_base_path.startsWith('/')) ? '' : '/') + Genie.Settings.websockets_base_path));
+    
+    ws.addEventListener('open', function(event) {
+      for (var i = 0; i < Genie.WebChannels.openHandlers.length; i++) {
+        var f = Genie.WebChannels.openHandlers[i];
+        if (typeof f === 'function') {
+          f(event);
+        }
+      }
+    });
+  
+    ws.addEventListener('message', function(event) {
+      for (var i = 0; i < Genie.WebChannels.messageHandlers.length; i++) {
+        var f = Genie.WebChannels.messageHandlers[i];
+        if (typeof f === 'function') {
+          f(event);
+        }
+      }
+    });
+  
+    ws.addEventListener('error', function(event) {
+      for (var i = 0; i < Genie.WebChannels.errorHandlers.length; i++) {
+        var f = Genie.WebChannels.errorHandlers[i];
+        if (typeof f === 'function') {
+          f(event);
+        }
+      }
+    });
+  
+    ws.addEventListener('close', function(event) {
+      for (var i = 0; i < Genie.WebChannels.closeHandlers.length; i++) {
+        var f = Genie.WebChannels.closeHandlers[i];
+        if (typeof f === 'function') {
+          f(event);
+        }
+      }
+    });
+  
+    ws.addEventListener('error', function(_){
+      Genie.WebChannels.socket = newSocketConnection();
+    });
+
+    return ws
 }
 
+Genie.WebChannels.initialize();
 Genie.WebChannels.socket = newSocketConnection();
-Genie.WebChannels.socket.addEventListener('error', function(_){
-  Genie.WebChannels.socket = newSocketConnection();
-});
 
 window.addEventListener('beforeunload', function (_) {
   if (Genie.Settings.env == 'dev') {
@@ -105,8 +109,6 @@ window.addEventListener('beforeunload', function (_) {
     Genie.WebChannels.socket.close();
   }
 });
-
-Genie.WebChannels.load_channels();
 
 Genie.WebChannels.processingHandlers.push(function(event){
   window.parse_payload(event.data);
@@ -194,15 +196,20 @@ function subscription_ready() {
   }
 };
 
-function subscribe() {
-  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+
+function subscribe(trial = 1) {
+  if (Genie.WebChannels.socket.readyState && (document.readyState === 'complete' || document.readyState === 'interactive')) {
     Genie.WebChannels.sendMessageTo(window.Genie.Settings.webchannels_default_route, window.Genie.Settings.webchannels_subscribe_channel);
-  } else {
+  } else if (trial < 4) {
     if (Genie.Settings.env == 'dev') {
       console.warn('Queuing subscription');
     }
-    setTimeout(subscribe, Genie.Settings.webchannels_timeout);
+    trial++;
+    setTimeout(subscribe.bind(this, trial), Genie.Settings.webchannels_timeout);
+  } else if (trial == 4) {
+    displayAlert();
   }
+  end
 };
 
 function unsubscribe() {
