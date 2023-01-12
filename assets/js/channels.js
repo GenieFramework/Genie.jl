@@ -209,7 +209,6 @@ function subscribe(trial = 1) {
   } else if (trial == 4) {
     displayAlert();
   }
-  end
 };
 
 function unsubscribe() {
