@@ -14,9 +14,28 @@ Genie.WebChannels.initialize = function() {
   Genie.WebChannels.subscriptionHandlers = [];
   Genie.WebChannels.processingHandlers = [];
 
+  const waitForOpenConnection = () => { 
+    return new Promise((resolve, reject) => {
+        const maxNumberOfAttempts = 10;
+        const intervalTime = 500;
+
+        let currentAttempt = 0;
+        const interval = setInterval(() => {
+            if (currentAttempt > maxNumberOfAttempts - 1) {
+                clearInterval(interval);
+                reject(new Error('Maximum number of attempts exceeded: Message not sent.'));
+            } else if (eval('Genie.WebChannels.socket.readyState') === 1) {
+                clearInterval(interval);
+                resolve();
+            };
+            currentAttempt++;
+        }, intervalTime)
+    })
+  }
+
   // A message maps to a channel route so that channel + message = /action/controller
   // The payload is the data exposed in the Channel Controller
-  function sendMessageTo(channel, message, payload = {}) {
+  async function sendMessageTo(channel, message, payload = {}) {
     var msg = JSON.stringify({
       'channel': channel,
       'message': message,
@@ -25,7 +44,13 @@ Genie.WebChannels.initialize = function() {
     if (Genie.WebChannels.socket.readyState === 1) {
       Genie.WebChannels.socket.send(msg);
     } else if (Object.keys(payload).length > 0) {
-      setTimeout(Genie.WebChannels.socket.send.bind(this, msg), Genie.Settings.webchannels_timeout);
+      try {
+        await waitForOpenConnection()
+        eval('Genie.WebChannels.socket').send(msg);
+      } catch (err) { 
+        console.error(err);
+        displayAlert('Could not send message: ' + payload); 
+      }
     }
   }
 }

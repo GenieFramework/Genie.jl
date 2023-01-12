@@ -3,7 +3,7 @@ Handles WebSockets communication logic.
 """
 module WebChannels
 
-import HTTP, Distributed, Logging, JSON3, Sockets
+import HTTP, Distributed, Logging, JSON3, Sockets, Dates
 import Genie, Genie.Renderer
 
 const ClientId = UInt # web socket hash
@@ -91,7 +91,7 @@ function subscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelName) :: Chann
 
   push_subscription(id(ws), channel)
 
-  @info "Subscribed: $(id(ws))"
+  @info "Subscribed: $(id(ws)) ($(Dates.now()))"
   CLIENTS
 end
 
@@ -108,7 +108,7 @@ function unsubscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelName) :: Cha
   haskey(CLIENTS, id(ws)) && deleteat!(CLIENTS[id(ws)].channels, CLIENTS[id(ws)].channels .== channel)
   pop_subscription(id(ws), channel)
 
-  @info "Unsubscribed: $(id(ws))"
+  @info "Unsubscribed: $(id(ws)) ($(Dates.now()))"
   CLIENTS
 end
 function unsubscribe(channel_client::ChannelClient, channel::ChannelName) :: ChannelClientsCollection
