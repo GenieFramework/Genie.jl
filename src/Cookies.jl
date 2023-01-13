@@ -68,7 +68,7 @@ Sets `value` under the `key` label on the `Cookie`.
 - `res::HTTP.Response`: the HTTP.Response object
 - `key::Union{String,Symbol}`: the key for storing the cookie value
 - `value::Any`: the cookie value
-- `attributes::Dict`: additional cookie attributes, such as `Path` or `HttpOnly`
+- `attributes::Dict`: additional cookie attributes, such as `path`, `httponly`, `maxage`
 - `encrypted::Bool`: if `true` the value is stored encoded
 """
 function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attributes::Dict{String,<:Any} = Dict{String,Any}(); encrypted::Bool = true) :: HTTP.Response
