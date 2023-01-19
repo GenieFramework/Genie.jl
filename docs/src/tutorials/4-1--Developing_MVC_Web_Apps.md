@@ -1,4 +1,4 @@
-# Developing Genie MVC Apps
+we'# Developing Genie MVC Apps
 
 Here is a complete walk-through of developing a feature rich MVC app with Genie, including both user facing web pages,
 a REST API endpoint, and user authentication.
@@ -18,7 +18,7 @@ pkg> add Genie # press ] from julia> prompt to enter Pkg mode
 Now, to create the app:
 
 ```julia
-julia> using Genie 
+julia> using Genie
 
 julia> Genie.Generator.newapp_mvc("Watch Tonight")
 ```
@@ -92,7 +92,7 @@ In the REPL run:
 ```julia
 julia> Genie.Generator.newresource("movie")
 
-julia> using SearchLight 
+julia> using SearchLight
 
 julia> SearchLight.Generator.newresource("movie")
 ```
@@ -546,7 +546,7 @@ module AdminController
 using GenieAuthentication, Genie.Renderer, Genie.Exceptions, Genie.Renderer.Html
 
 function index()
-  @authenticated!
+  authenticated!()
   h1("Welcome Admin") |> html
 end
 
