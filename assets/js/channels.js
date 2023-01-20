@@ -16,7 +16,7 @@ Genie.WebChannels.initialize = function() {
 
   const waitForOpenConnection = () => { 
     return new Promise((resolve, reject) => {
-        const maxNumberOfAttempts = Genie.Settings.webchannels_connection_attemps;
+        const maxNumberOfAttempts = Genie.Settings.webchannels_connection_attempts;
         const delay = Genie.Settings.webchannels_reconnect_delay;
 
         let currentAttempt = 0;
@@ -36,7 +36,7 @@ Genie.WebChannels.initialize = function() {
   // A message maps to a channel route so that channel + message = /action/controller
   // The payload is the data exposed in the Channel Controller
   async function sendMessageTo(channel, message, payload = {}) {
-    var msg = JSON.stringify({
+    let msg = JSON.stringify({
       'channel': channel,
       'message': message,
       'payload': payload
@@ -225,7 +225,7 @@ function subscription_ready() {
 function subscribe(trial = 1) {
   if (Genie.WebChannels.socket.readyState && (document.readyState === 'complete' || document.readyState === 'interactive')) {
     Genie.WebChannels.sendMessageTo(window.Genie.Settings.webchannels_default_route, window.Genie.Settings.webchannels_subscribe_channel);
-  } else if (trial < Genie.Settings.subscription_trails) {
+  } else if (trial < Genie.Settings.webchannels_subscription_trails) {
     if (Genie.Settings.env == 'dev') {
       console.warn('Queuing subscription');
     }
