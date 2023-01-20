@@ -49,7 +49,7 @@ Genie.WebChannels.initialize = function() {
         eval('Genie.WebChannels.socket').send(msg);
       } catch (err) { 
         console.error(err);
-        displayAlert('Could not send message: ' + payload); 
+        console.warn('Could not send message: ' + msg); 
       }
     }
   }
@@ -172,7 +172,7 @@ Genie.WebChannels.errorHandlers.push(event => {
 
 Genie.WebChannels.closeHandlers.push(event => {
   if (Genie.Settings.env == 'dev') {
-    console.warn('Server closed WebSocket connection');
+    console.warn('WebSocket connection closed: ' + event.code + ' ' + event.reason + ' ' + event.wasClean);
   }
 });
 
