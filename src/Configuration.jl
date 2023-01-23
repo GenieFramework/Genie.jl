@@ -170,13 +170,15 @@ Base.@kwdef mutable struct Settings
 
   run_as_server::Bool                                 = false
 
+  base_path::String                                   = ""
+
   websockets_server::Bool                             = false
   websockets_protocol::Union{String,Nothing}          = nothing
   websockets_port::Union{Int,Nothing}                 = nothing
   websockets_host::String                             = server_host
   websockets_exposed_port::Union{Int,Nothing}         = nothing
   websockets_exposed_host::Union{String,Nothing}      = nothing
-  websockets_base_path::String                        = ""
+  websockets_base_path::String                        = base_path
 
   initializers_folder::String                         = "initializers"
 
@@ -217,8 +219,6 @@ Base.@kwdef mutable struct Settings
   html_parser_char_dot::String                        = "!"
   html_parser_char_column::String                     = "!"
   html_parser_char_dash::String                       = "__"
-
-  base_path::String                                   = ""
 
   features_peerinfo::Bool                             = false
 

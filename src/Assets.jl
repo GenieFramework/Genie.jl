@@ -27,11 +27,13 @@ end
 
 const assets_config = AssetsConfig()
 
-function __init__()
+function __init__()::Nothing
   # make sure the assets config is properly initialized
   assets_config.host = Genie.config.base_path
   assets_config.package = "Genie.jl"
   assets_config.version = "master"
+
+  nothing
 end
 
 """
