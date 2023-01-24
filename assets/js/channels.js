@@ -231,7 +231,7 @@ function subscribe(trial = 1) {
     }
     trial++;
     setTimeout(subscribe.bind(this, trial), Genie.Settings.webchannels_timeout);
-  } else if (trial == 4) {
+  } else if (trial == Genie.Settings.webchannels_subscription_trails) {
     displayAlert();
   }
 };
