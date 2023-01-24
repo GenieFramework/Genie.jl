@@ -1,6 +1,6 @@
 /*
-** channels.js v1.1 // 6th January 2022
-** Author: Adrian Salceanu // @essenciary
+** channels.js v1.2 // 24th January 2023
+** Author: Adrian Salceanu and contributors // @essenciary
 ** GenieFramework.com // Genie.jl
 */
 Genie.WebChannels = {};
@@ -14,7 +14,7 @@ Genie.WebChannels.initialize = function() {
   Genie.WebChannels.subscriptionHandlers = [];
   Genie.WebChannels.processingHandlers = [];
 
-  const waitForOpenConnection = () => { 
+  const waitForOpenConnection = () => {
     return new Promise((resolve, reject) => {
         const maxNumberOfAttempts = Genie.Settings.webchannels_connection_attempts;
         const delay = Genie.Settings.webchannels_reconnect_delay;
@@ -47,9 +47,9 @@ Genie.WebChannels.initialize = function() {
       try {
         await waitForOpenConnection()
         eval('Genie.WebChannels.socket').send(msg);
-      } catch (err) { 
+      } catch (err) {
         console.error(err);
-        console.warn('Could not send message: ' + msg); 
+        console.warn('Could not send message: ' + msg);
       }
     }
   }
@@ -74,7 +74,7 @@ function newSocketConnection(host = Genie.Settings.websockets_exposed_host) {
     + (Genie.Settings.websockets_exposed_port > 0 ? (':' + Genie.Settings.websockets_exposed_port) : '')
     + ( ((Genie.Settings.base_path.trim() === '' || Genie.Settings.base_path.startsWith('/')) ? '' : '/') + Genie.Settings.base_path)
     + ( ((Genie.Settings.websockets_base_path.trim() === '' || Genie.Settings.websockets_base_path.startsWith('/')) ? '' : '/') + Genie.Settings.websockets_base_path));
-    
+
     ws.addEventListener('open', event => {
       for (let i = 0; i < Genie.WebChannels.openHandlers.length; i++) {
         let f = Genie.WebChannels.openHandlers[i];
@@ -83,7 +83,7 @@ function newSocketConnection(host = Genie.Settings.websockets_exposed_host) {
         }
       }
     });
-  
+
     ws.addEventListener('message', event => {
       for (let i = 0; i < Genie.WebChannels.messageHandlers.length; i++) {
         let f = Genie.WebChannels.messageHandlers[i];
@@ -92,7 +92,7 @@ function newSocketConnection(host = Genie.Settings.websockets_exposed_host) {
         }
       }
     });
-  
+
     ws.addEventListener('error', event => {
       for (let i = 0; i < Genie.WebChannels.errorHandlers.length; i++) {
         let f = Genie.WebChannels.errorHandlers[i];
@@ -101,7 +101,7 @@ function newSocketConnection(host = Genie.Settings.websockets_exposed_host) {
         }
       }
     });
-  
+
     ws.addEventListener('close', event => {
       for (let i = 0; i < Genie.WebChannels.closeHandlers.length; i++) {
         let f = Genie.WebChannels.closeHandlers[i];
@@ -110,7 +110,7 @@ function newSocketConnection(host = Genie.Settings.websockets_exposed_host) {
         }
       }
     });
-  
+
     ws.addEventListener('error', _ => {
       Genie.WebChannels.socket = newSocketConnection();
     });
@@ -231,7 +231,7 @@ function subscribe(trial = 1) {
     }
     trial++;
     setTimeout(subscribe.bind(this, trial), Genie.Settings.webchannels_timeout);
-  } else if (trial == 4) {
+  } else {
     displayAlert();
   }
 };

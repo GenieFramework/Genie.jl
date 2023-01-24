@@ -91,7 +91,7 @@ function subscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelName) :: Chann
 
   push_subscription(id(ws), channel)
 
-  @info "Subscribed: $(id(ws)) ($(Dates.now()))"
+  @debug "Subscribed: $(id(ws)) ($(Dates.now()))"
   CLIENTS
 end
 
@@ -108,7 +108,7 @@ function unsubscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelName) :: Cha
   haskey(CLIENTS, id(ws)) && deleteat!(CLIENTS[id(ws)].channels, CLIENTS[id(ws)].channels .== channel)
   pop_subscription(id(ws), channel)
 
-  @info "Unsubscribed: $(id(ws)) ($(Dates.now()))"
+  @debug "Unsubscribed: $(id(ws)) ($(Dates.now()))"
   CLIENTS
 end
 function unsubscribe(channel_client::ChannelClient, channel::ChannelName) :: ChannelClientsCollection
