@@ -234,7 +234,7 @@ function js_settings(channel::String = Genie.config.webchannels_default_route) :
     :webchannels_timeout              => Genie.config.webchannels_timeout,
     :webchannels_keepalive_frequency  => Genie.config.webchannels_keepalive_frequency,
     :webchannels_server_gone_alert_timeout => Genie.config.webchannels_server_gone_alert_timeout,
-    :webchannels_connection_wait_attempts => Genie.config.webchannels_connection_wait_attempts,
+    :webchannels_connection_attempts => Genie.config.webchannels_connection_attempts,
     :webchannels_reconnect_delay     => Genie.config.webchannels_reconnect_delay,
     :webchannels_subscription_trails => Genie.config.webchannels_subscription_trails,
 
