@@ -67,8 +67,8 @@ peek at the Console, you will see a `Subscription ready` message.
 At this point, by invoking `Assets.channels_support()`, Genie has done the following:
 
 * loaded the bundled `channels.js` file which provides a JS API for communicating over WebSockets
-* has created two default channels, for subscribing and unsubscribing: `/__/subscribe` and `/__/unsubscribe`
-* has invoked `/__/subscribe` and created a WebSockets connection between client and server
+* has created two default channels, for subscribing and unsubscribing: `/____/subscribe` and `/____/unsubscribe`
+* has invoked `/____/subscribe` and created a WebSockets connection between client and server
 
 ### Pushing messages from the server
 
@@ -77,13 +77,13 @@ We are ready to interact with the client. Go to the Julia REPL running the web a
 ```julia
 julia> Genie.WebChannels.connected_clients()
 1-element Array{Genie.WebChannels.ChannelClient,1}:
- Genie.WebChannels.ChannelClient(HTTP.WebSockets.WebSocket{HTTP.ConnectionPool.Transaction{Sockets.TCPSocket}}(T0  🔁    0↑🔒    0↓🔒 100s 127.0.0.1:8001:8001 ≣16, 0x01, true, UInt8[0x7b, 0x22, 0x63, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c, 0x22  …  0x79, 0x6c, 0x6f, 0x61, 0x64, 0x22, 0x3a, 0x7b, 0x7d, 0x7d], UInt8[], false, false), ["__"])
+ Genie.WebChannels.ChannelClient(HTTP.WebSockets.WebSocket{HTTP.ConnectionPool.Transaction{Sockets.TCPSocket}}(T0  🔁    0↑🔒    0↓🔒 100s 127.0.0.1:8001:8001 ≣16, 0x01, true, UInt8[0x7b, 0x22, 0x63, 0x68, 0x61, 0x6e, 0x6e, 0x65, 0x6c, 0x22  …  0x79, 0x6c, 0x6f, 0x61, 0x64, 0x22, 0x3a, 0x7b, 0x7d, 0x7d], UInt8[], false, false), ["____"])
 ```
 
-We have one connected client to the `__` channel! We can send it a message:
+We have one connected client to the `____` channel! We can send it a message:
 
 ```julia
-julia> Genie.WebChannels.broadcast("__", "Hey!")
+julia> Genie.WebChannels.broadcast("____", "Hey!")
 true
 ```
 
@@ -131,7 +131,7 @@ We can also push messages from client to server. As we don't have a UI, we'll us
 API to send the messages. But first, we need to set up the `channel` which will receive our message. Run this in the active Julia REPL:
 
 ```julia
-channel("/__/echo") do
+channel("/____/echo") do
   @info "Received: $(params(:payload))"
 end
 ```
@@ -139,7 +139,7 @@ end
 Now that our endpoint is up, go to the browser's console and run:
 
 ```javascript
-Genie.WebChannels.sendMessageTo('__', 'echo', 'Hello!')
+Genie.WebChannels.sendMessageTo('____', 'echo', 'Hello!')
 ```
 
 The julia terminal and console will both immediately display the response from the server:
