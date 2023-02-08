@@ -132,7 +132,7 @@ API to send the messages. But first, we need to set up the `channel` which will 
 
 ```julia
 channel("/__/echo") do
-  "Received: $(params(:payload))"
+  @info "Received: $(params(:payload))"
 end
 ```
 
@@ -142,7 +142,7 @@ Now that our endpoint is up, go to the browser's console and run:
 Genie.WebChannels.sendMessageTo('__', 'echo', 'Hello!')
 ```
 
-The console will immediately display the response from the server:
+The julia terminal and console will both immediately display the response from the server:
 
 ```text
 Received: Hello!
