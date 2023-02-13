@@ -153,8 +153,8 @@ function up(port::Int,
   new_server
 end
 
-function up(; port = Genie.config.server_port, ws_port = Genie.config.websockets_port, kwargs...) :: ServersCollection
-  up(port; ws_port = ws_port, kwargs...)
+function up(; port = Genie.config.server_port, ws_port = Genie.config.websockets_port, host = Genie.config.server_host, kwargs...) :: ServersCollection
+  up(port, host; ws_port = ws_port, kwargs...)
 end
 
 
