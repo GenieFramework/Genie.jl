@@ -793,60 +793,60 @@ end
 
 
 """
-    newapp_webservice(path::String = "."; autostart::Bool = true, dbsupport::Bool = false) :: Nothing
+    newapp_webservice(name::String; autostart::Bool = true, dbsupport::Bool = false) :: Nothing
 
 Template for scaffolding a new Genie app suitable for nimble web services.
 
 # Arguments
-- `path::String`: the name of the app and the path where to bootstrap it
+- `name::String`: the name of the app
 - `autostart::Bool`: automatically start the app once the file structure is created
 - `dbsupport::Bool`: bootstrap the files needed for DB connection setup via the SearchLight ORM
 - `dbadapter::Union{String,Symbol,Nothing} = nothing` : pass the SearchLight database adapter to be used by default
 (one of :MySQL, :SQLite, or :PostgreSQL). If `dbadapter` is `nothing`, an adapter will have to be selected interactivel
 at the REPL, during the app creation process.
 """
-function newapp_webservice(path::String = "."; autostart::Bool = true, dbsupport::Bool = false,
+function newapp_webservice(name::String; autostart::Bool = true, dbsupport::Bool = false,
                             dbadapter::Union{String,Symbol,Nothing} = nothing, testmode::Bool = false,
                             interactive::Bool = true) :: Nothing
-  newapp(path, autostart = autostart, fullstack = false, dbsupport = dbsupport, mvcsupport = false,
+  newapp(name, autostart = autostart, fullstack = false, dbsupport = dbsupport, mvcsupport = false,
           dbadapter = dbadapter, testmode = testmode, interactive = interactive)
 end
 
 
 """
-    newapp_mvc(path::String = "."; autostart::Bool = true) :: Nothing
+    newapp_mvc(name::String; autostart::Bool = true) :: Nothing
 
 Template for scaffolding a new Genie app suitable for MVC web applications (includes MVC structure and DB support).
 
 # Arguments
-- `path::String`: the name of the app and the path where to bootstrap it
+- `name::String`: the name of the app
 - `autostart::Bool`: automatically start the app once the file structure is created
 - `dbadapter::Union{String,Symbol,Nothing} = nothing` : pass the SearchLight database adapter to be used by default
 (one of :MySQL, :SQLite, or :PostgreSQL). If `dbadapter` is `nothing`, an adapter will have to be selected interactivel
 at the REPL, during the app creation process.
 """
-function newapp_mvc(path::String = "."; autostart::Bool = true, dbadapter::Union{String,Symbol,Nothing} = nothing,
+function newapp_mvc(name::String; autostart::Bool = true, dbadapter::Union{String,Symbol,Nothing} = nothing,
                     testmode::Bool = false, interactive::Bool = true) :: Nothing
-  newapp(path, autostart = autostart, fullstack = false, dbsupport = true, mvcsupport = true, dbadapter = dbadapter,
+  newapp(name, autostart = autostart, fullstack = false, dbsupport = true, mvcsupport = true, dbadapter = dbadapter,
           testmode = testmode, interactive = interactive)
 end
 
 
 """
-    newapp_fullstack(path::String = "."; autostart::Bool = true) :: Nothing
+    newapp_fullstack(name::String; autostart::Bool = true) :: Nothing
 
 Template for scaffolding a new Genie app suitable for full stack web applications (includes MVC structure, DB support, and frontend asset pipeline).
 
 # Arguments
-- `path::String`: the name of the app and the path where to bootstrap it
+- `name::String`: the name of the app
 - `autostart::Bool`: automatically start the app once the file structure is created
 - `dbadapter::Union{String,Symbol,Nothing} = nothing` : pass the SearchLight database adapter to be used by default
 (one of :MySQL, :SQLite, or :PostgreSQL). If `dbadapter` is `nothing`, an adapter will have to be selected interactivel
 at the REPL, during the app creation process.
 """
-function newapp_fullstack(path::String = "."; autostart::Bool = true, dbadapter::Union{String,Symbol,Nothing} = nothing,
+function newapp_fullstack(name::String = "."; autostart::Bool = true, dbadapter::Union{String,Symbol,Nothing} = nothing,
                           testmode::Bool = false, interactive::Bool = true) :: Nothing
-  newapp(path, autostart = autostart, fullstack = true, dbsupport = true, mvcsupport = true, dbadapter = dbadapter,
+  newapp(name, autostart = autostart, fullstack = true, dbsupport = true, mvcsupport = true, dbadapter = dbadapter,
           testmode = testmode, interactive = interactive)
 end
 
