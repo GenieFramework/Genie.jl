@@ -267,11 +267,11 @@ end
 
 
 """
-    fullstack_app(app_path::String = ".") :: Nothing
+    fullstack_app(app_name::String) :: Nothing
 
 Writes the files necessary to create a full stack Genie app.
 """
-function fullstack_app(app_name::String = ".", app_path::String = ".") :: Nothing
+function fullstack_app(app_name::String, app_path::String = ".") :: Nothing
   cp(joinpath(@__DIR__, "..", NEW_APP_PATH), app_path)
 
   scaffold(app_name, app_path)
@@ -298,7 +298,7 @@ end
 
 
 """
-    scaffold(app_path::String = ".") :: Nothing
+    scaffold(app_name::String, app_path::String = "") :: Nothing
 
 Writes the file necessary to scaffold a minimal Genie app.
 """
@@ -325,11 +325,11 @@ end
 
 
 """
-    microstack_app(app_path::String = ".") :: Nothing
+    microstack_app(app_name::String, app_path::String = ".") :: Nothing
 
 Writes the file necessary to create a microstack app.
 """
-function microstack_app(app_name::String = ".", app_path::String = ".") :: Nothing
+function microstack_app(app_name::String, app_path::String = ".") :: Nothing
   isdir(app_path) || mkpath(app_path)
 
   for f in [Genie.config.path_bin, Genie.config.path_config, Genie.config.server_document_root]
@@ -844,7 +844,7 @@ Template for scaffolding a new Genie app suitable for full stack web application
 (one of :MySQL, :SQLite, or :PostgreSQL). If `dbadapter` is `nothing`, an adapter will have to be selected interactivel
 at the REPL, during the app creation process.
 """
-function newapp_fullstack(name::String = "."; autostart::Bool = true, dbadapter::Union{String,Symbol,Nothing} = nothing,
+function newapp_fullstack(name::String; autostart::Bool = true, dbadapter::Union{String,Symbol,Nothing} = nothing,
                           testmode::Bool = false, interactive::Bool = true) :: Nothing
   newapp(name, autostart = autostart, fullstack = true, dbsupport = true, mvcsupport = true, dbadapter = dbadapter,
           testmode = testmode, interactive = interactive)
