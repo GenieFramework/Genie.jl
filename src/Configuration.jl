@@ -190,7 +190,7 @@ Base.@kwdef mutable struct Settings
   path_helpers::String                                = joinpath(path_app, "helpers")
   path_log::String                                    = "log"
   path_tasks::String                                  = "tasks"
-  path_build::String                                  = buildpath()
+  path_build::String                                  = "build"
   path_plugins::String                                = "plugins"
   path_initializers::String                           = joinpath(path_config, initializers_folder)
   path_db::String                                     = "db"

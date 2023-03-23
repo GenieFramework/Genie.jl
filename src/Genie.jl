@@ -10,7 +10,6 @@ using .Configuration
 
 const config = Configuration.Settings()
 
-
 include("constants.jl")
 
 import Sockets
@@ -170,5 +169,9 @@ function genie(; context = @__MODULE__) :: Union{Nothing,Sockets.TCPServer}
 end
 
 const bootstrap = genie
+
+function __init__()
+  config.path_build = Genie.Configuration.buildpath()
+end
 
 end
