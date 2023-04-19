@@ -101,7 +101,7 @@ end
 """
     InternalServerException(message::String)
 
-External `InternalServerException` constructor accepting a custome message.
+External `InternalServerException` constructor accepting a custom message.
 """
 InternalServerException(message::String) = InternalServerException(message, "", 500)
 
