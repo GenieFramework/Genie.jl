@@ -5,7 +5,7 @@ This tutorial shows how to host a Julia/Genie app on with Nginx.
 ## Prerequisites
 
 To expose the app over the internet, one needs access to a server. This can be a local machine or a cloud instance such
-as AWS EC2 or a Google Cloud Compute Engine for example).
+as AWS EC2 or a Google Cloud Compute Engine for example.
 
 If using a local server, a static IP is needed to ensure continuous access to the app. Internet service provider generally
 charge a fee for such extra service.
