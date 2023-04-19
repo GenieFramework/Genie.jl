@@ -59,7 +59,7 @@ const walkdir = walk_dir
 """
     filterwhitespace(s::String, allowed::Vector{Char} = Char[]) :: String
 
-Removes whitespaces from `s`, whith the exception of the characters in `allowed`.
+Removes whitespaces from `s`, with the exception of the characters in `allowed`.
 """
 function filterwhitespace(s::S, allowed::Vector{Char} = Char[])::String where {S<:AbstractString}
   filter(x -> (x in allowed) || ! isspace(x), string(s))
