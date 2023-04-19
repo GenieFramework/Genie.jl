@@ -51,7 +51,7 @@ involving the following steps:
   * Confirm the problem and determine the affected versions.
   * Audit code to find any potential similar problems.
   * Prepare fixes for all releases still under maintenance. These fixes will be
-    released as fast as possible and will be available with latest tagged Genie version and annouced on [Genie's twitter](https://twitter.com/GenieMVC) and [Genie's Discord #announcement channel](https://discord.com/invite/9zyZbD6J7H).
+    released as fast as possible and will be available with latest tagged Genie version and announced on [Genie's twitter](https://twitter.com/GenieMVC) and [Genie's Discord #announcement channel](https://discord.com/invite/9zyZbD6J7H).
 
 ## Comments on this Policy
 
