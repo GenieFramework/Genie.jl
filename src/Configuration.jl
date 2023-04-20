@@ -139,7 +139,7 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `path_env::String`: the path to the environment files (default "<path_config>/env/")
 - `path_app::String`: the path to the app files (default "app/")
 - `html_parser_close_tag::String`: default " /". Can be changed to an empty string "" so the single tags would not be closed.
-- `webchannels_keepalive_frequency::Int`: default `30000`. Frequency in miliseconds to send keepalive messages to webchannel/websocket to keep the connection alive. Set to `0` to disable keepalive messages.
+- `webchannels_keepalive_frequency::Int`: default `30000`. Frequency in milliseconds to send keepalive messages to webchannel/websocket to keep the connection alive. Set to `0` to disable keepalive messages.
 """
 Base.@kwdef mutable struct Settings
   server_port::Int                                    = 8000 # default port for binding the web server

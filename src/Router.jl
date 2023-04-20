@@ -1,6 +1,6 @@
 """
 Parses requests and extracts parameters, setting up the call variables and invoking
-the appropiate route handler function.
+the appropriate route handler function.
 """
 module Router
 
@@ -341,7 +341,7 @@ end
 
 
 """
-Gets the `Route` correspoding to `routename`
+Gets the `Route` corresponding to `routename`
 """
 function get_route(route_name::Symbol; default::Union{Route,Nothing} = Route()) :: Route
   isroute(route_name) ?
