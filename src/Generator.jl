@@ -12,7 +12,7 @@ const NEW_APP_PATH = joinpath("files", "new_app")
 
 
 function validname(name::String)
-  filter(! isempty, [x.match for x in collect(eachmatch(r"[0-9a-zA-Z_]*", name))]) |> join
+  filter(! isempty, [x.match for x in collect(eachmatch(r"[0-9a-zA-Z_-]*", name))]) |> join
 end
 
 """
