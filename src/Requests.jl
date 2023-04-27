@@ -136,7 +136,7 @@ end
 """
     getpayload() :: Dict{Symbol,Any}
 
-A dict representing the GET/query variables payload of the request (the part correspoding to `?foo=bar&baz=moo`)
+A dict representing the GET/query variables payload of the request (the part corresponding to `?foo=bar&baz=moo`)
 """
 function getpayload() :: Dict{Symbol,Any}
   haskey(Router.params(), Genie.Router.PARAMS_GET_KEY) ? Router.params(Genie.Router.PARAMS_GET_KEY) : Dict{Symbol,Any}()
