@@ -255,6 +255,22 @@ end
 
 
 """
+    findheader(key::String, default::Any = nothing) :: Union{String,Nothing}
+
+Case insensitive search for the header `key` in the request headers. If `key` is not found, `default` is returned.
+"""
+function findheader(key::String, default = nothing) :: Union{String,Nothing}
+  for (k, v) in getheaders()
+    if lowercase(k) == lowercase(key)
+      return v
+    end
+  end
+
+  default
+end
+
+
+"""
     peer()
 
 Returns information about the requesting client's IP address as a NamedTuple{(:ip,), Tuple{String}}
