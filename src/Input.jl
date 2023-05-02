@@ -120,18 +120,18 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
         fileFieldName::String = ""
 
         for (field::String, values::Dict{String,String}) in part.headers
-          if field == "Content-Disposition" && getkey(values, "form-data", nothing) != nothing
+          if field == "Content-Disposition" && haskey(values, "form-data")
 
             # Check to see whether this part is a file upload
             # Otherwise, treat as basic POST data
 
-            if getkey(values, "filename", nothing) != nothing
+            if haskey(values, "filename")
               if length(values["filename"]) > 0
                 fileFieldName = values["name"]
                 file.name = values["filename"]
                 hasFile = true
               end
-            elseif getkey(values, "name", nothing) != nothing
+            elseif haskey(values, "name")
               k = values["name"]
               v = String(part.data)
 
