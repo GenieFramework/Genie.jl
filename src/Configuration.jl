@@ -18,7 +18,7 @@ pkginfo(pkg::String) = filter(x -> x.name == pkg && x.is_direct_dep, values(Pkg.
 import Logging
 import Genie
 
-export isdev, isprod, istest, env
+export isdev, isprod, istest, env, basepath
 export Settings, DEV, PROD, TEST
 
 # app environments
@@ -98,6 +98,23 @@ Constructs the temp dir where Genie's view files are built.
 """
 buildpath()::String = Base.Filesystem.mktempdir(prefix="jl_genie_build_")
 
+
+"""
+    basepath(; prefix = "/") :: String
+
+Returns the base path for the app. Optionally takes a prefix argument -- defaults to `/`.
+"""
+function basepath(; prefix = "/")
+  if prefix != "/" && startswith(Genie.config.base_path, "/")
+    return joinpath(prefix, Genie.config.base_path[2:end])
+  end
+
+  if prefix == "/" && ! startswith(Genie.config.base_path, "/")
+    return joinpath(prefix, Genie.config.base_path)
+  end
+
+  return joinpath(prefix, Genie.config.base_path)
+end
 
 """
     config!(; kwargs...)
