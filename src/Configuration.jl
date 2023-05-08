@@ -104,15 +104,23 @@ buildpath()::String = Base.Filesystem.mktempdir(prefix="jl_genie_build_")
 
 Returns the base path for the app. Optionally takes a prefix argument -- defaults to `/`.
 """
-function basepath(; prefix = "/")
+function basepath(; prefix = "/", ignore_empty = true)
+  # if base_path is not set (it's empty) then don't do anything (return empty string)
+  if ignore_empty && isempty(Genie.config.base_path)
+    return ""
+  end
+
+  # if base_path starts with "/" but the prefix is different, then remove the "/" from base_path
   if prefix != "/" && startswith(Genie.config.base_path, "/")
     return joinpath(prefix, Genie.config.base_path[2:end])
   end
 
-  if prefix == "/" && ! startswith(Genie.config.base_path, "/")
-    return joinpath(prefix, Genie.config.base_path)
+  # if base_path already starts with the prefix, then return it as it is
+  if startswith(Genie.config.base_path, prefix)
+    return Genie.config.base_path
   end
 
+  # otherwise, join the prefix with the base_path
   return joinpath(prefix, Genie.config.base_path)
 end
 
