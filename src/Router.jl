@@ -391,13 +391,19 @@ end
 """
 Generates the HTTP link corresponding to `route_name` using the parameters in `d`.
 """
-function to_link(route_name::Symbol, d::Dict{Symbol,T}; preserve_query::Bool = true, extra_query::Dict = Dict())::String where {T}
+function to_link(route_name::Symbol, d::Dict{Symbol,T}; basepath::String = basepath, preserve_query::Bool = true, extra_query::Dict = Dict())::String where {T}
   route = get_route(route_name)
 
-  @info route.path
-  
+  newpath = String[]
+  if isempty(newpath)
+    newpath = route.path
+  else
+    !endswith(basepath, '/') && (basepath *= '/')
+    newpath = basepath * route.path
+  end
+
   result = String[]
-  for part in split(route.path, '/')
+  for part in split(newpath, '/')
     if occursin("#", part)
       part = split(part, "#")[1] |> string
     end
@@ -447,8 +453,8 @@ end
 """
 Generates the HTTP link corresponding to `route_name` using the parameters in `route_params`.
 """
-function to_link(route_name::Symbol; preserve_query::Bool = true, extra_query::Dict = Dict(), route_params...) :: String
-  to_link(route_name, route_params_to_dict(route_params), preserve_query = preserve_query, extra_query = extra_query)
+function to_link(route_name::Symbol; basepath::String=Genie.config.base_path, preserve_query::Bool = true, extra_query::Dict = Dict(), route_params...) :: String
+  to_link(route_name, route_params_to_dict(route_params), basepath = basepath, preserve_query = preserve_query, extra_query = extra_query)
 end
 
 const link_to = to_link
