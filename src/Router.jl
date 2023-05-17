@@ -394,7 +394,7 @@ Generates the HTTP link corresponding to `route_name` using the parameters in `d
 function to_link(route_name::Symbol, d::Dict{Symbol,T}; basepath::String = basepath, preserve_query::Bool = true, extra_query::Dict = Dict())::String where {T}
   route = get_route(route_name)
 
-  newpath = String[]
+  newpath = ""
   if isempty(newpath)
     newpath = route.path
   else
