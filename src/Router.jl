@@ -394,6 +394,8 @@ Generates the HTTP link corresponding to `route_name` using the parameters in `d
 function to_link(route_name::Symbol, d::Dict{Symbol,T}; preserve_query::Bool = true, extra_query::Dict = Dict())::String where {T}
   route = get_route(route_name)
 
+  @info route.path
+  
   result = String[]
   for part in split(route.path, '/')
     if occursin("#", part)
@@ -435,6 +437,8 @@ function to_link(route_name::Symbol, d::Dict{Symbol,T}; preserve_query::Bool = t
   for (k,v) in query_vars
     push!(qv, "$k=$v")
   end
+
+  @info result
 
   join(result, '/') * ( ! isempty(qv) ? '?' : "" ) * join(qv, '&')
 end
