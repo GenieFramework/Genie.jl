@@ -31,4 +31,25 @@
     @test Router.isroute(:get_abcd) == true
   end;
 
+  # test to_link
+  @safetestset "test to_link" begin
+    using Genie, Genie.Router
+
+    route("/abcd", named = :get_abcd) do
+      "abcd"
+    end
+
+    @test Router.to_link(:get_abcd) == "/abcd"
+  end
+
+  @safetestset "test with basepath" begin
+    using Genie, Genie.Router
+
+    route("/abcd", named = :get_abcd) do
+      "abcd"
+    end
+    
+    @test Router.to_link(:get_abcd, basepath = "/geniedev/9001") == "/geniedev/9001/abcd"
+  end
+
 end;
