@@ -395,7 +395,7 @@ function to_link(route_name::Symbol, d::Dict{Symbol,T}; basepath::String = basep
   route = get_route(route_name)
 
   newpath = ""
-  if isempty(newpath)
+  if isempty(basepath)
     newpath = route.path
   else
     !endswith(basepath, '/') && (basepath *= '/')
