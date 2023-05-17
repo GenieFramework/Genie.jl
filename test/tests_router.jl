@@ -31,7 +31,6 @@
     @test Router.isroute(:get_abcd) == true
   end;
 
-  # test to_link
   @safetestset "test to_link" begin
     using Genie, Genie.Router
 
