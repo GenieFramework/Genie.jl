@@ -44,12 +44,6 @@
   </p>
 </div>
 
-<h2>
-  Important: Genie v4 is not compatible with Julia version 1.8 and up. For Julia 1.8 and up support, please use Genie 5.
-  If you have applications developed with Genie v4, please upgrade them to Genie 5, by following the migration guide
-  provided in the Genie docs.
-</h2>
-
 <p style="font-family:verdana;font-size:80%;margin-bottom:4%" align="center">
 <u>Julia data dashboards powered by Genie</u>
 </p>
