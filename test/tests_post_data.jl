@@ -16,7 +16,7 @@
   end
 
   port = nothing
-  port = rand(8501:8900)
+  port = rand(8500:8900)
 
   up(port; open_browser = false)
 
@@ -47,7 +47,7 @@
   response = HTTP.post("http://localhost:$port", [], HTTP.Form(Dict("greeting" => "Hey you there")))
   @test response.status == 200
   @test String(response.body) == "Hey you there"
-
+  
   down()
   sleep(1)
   server = nothing

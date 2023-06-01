@@ -12,7 +12,7 @@
   end
 
   port = nothing
-  port = rand(8502:8900)
+  port = rand(8500:8900)
 
   server = up(port)
 
