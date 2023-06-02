@@ -438,8 +438,6 @@ function to_link(route_name::Symbol, d::Dict{Symbol,T}; basepath::String = basep
     push!(qv, "$k=$v")
   end
 
-  @info result
-
   join(result, '/') * ( ! isempty(qv) ? '?' : "" ) * join(qv, '&')
 end
 
@@ -447,7 +445,7 @@ end
 """
 Generates the HTTP link corresponding to `route_name` using the parameters in `route_params`.
 """
-function to_link(route_name::Symbol; basepath::String=Genie.config.base_path, preserve_query::Bool = true, extra_query::Dict = Dict(), route_params...) :: String
+function to_link(route_name::Symbol; basepath::String = Genie.config.base_path, preserve_query::Bool = true, extra_query::Dict = Dict(), route_params...) :: String
   to_link(route_name, route_params_to_dict(route_params), basepath = basepath, preserve_query = preserve_query, extra_query = extra_query)
 end
 
