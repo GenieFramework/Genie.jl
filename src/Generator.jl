@@ -366,6 +366,7 @@ function write_app_custom_files(path::String, app_path::String) :: Nothing
     (pwd() != @__DIR__) && cd(@__DIR__) # allow starting app from bin/ dir
 
     using $(moduleinfo[1])
+    isdefined(Base, :modules_warned_for) &&
     push!(Base.modules_warned_for, Base.PkgId($(moduleinfo[1])))
     $(moduleinfo[1]).main()
     """)
