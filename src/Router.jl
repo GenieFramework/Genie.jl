@@ -6,10 +6,8 @@ module Router
 
 import Revise
 import Reexport, Logging
-import HTTP, HttpCommon, Sockets, Millboard, Dates, OrderedCollections, JSON3
+import HTTP, HttpCommon, Sockets, Millboard, Dates, OrderedCollections, JSON3, MIMEs
 import Genie
-
-include("mimetypes.jl")
 
 export route, routes, channel, channels, download, serve_static_file, serve_file
 export GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
@@ -1187,7 +1185,7 @@ end
 Download file from generated stream of bytes
 """
 function download(data::Vector{UInt8}, filename::String, mimetype::String)::HTTP.Response
-  if mimetype in values(mimetypes)
+  if mimetype in values(MIMEs._ext2mime)
     return HTTP.Response(200,
         ("Content-Type" => mimetype, "Content-Disposition" => """attachment; filename=$(filename)"""),
         body=data)
@@ -1291,7 +1289,7 @@ file_extension(f) :: String = ormatch(match(r"(?<=\.)[^\.\\/]*$", f), "")
 Returns the file headers of `f`.
 """
 function file_headers(f) :: Vector{Pair{String,String}}
-  ["Content-Type" => get(mimetypes, file_extension(f), "application/octet-stream")]
+  ["Content-Type" => get(MIMEs._ext2mime, file_extension(f), "application/octet-stream")]
 end
 
 
