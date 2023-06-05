@@ -27,6 +27,8 @@
     Genie.config.base_path = "proxy/8000"
     @test Genie.Assets.asset_path("s.js", path = "/foo/bar/baz/") == "/proxy/8000/assets/js/foo/bar/baz/s.js"
     @test Genie.Assets.asset_path("s.js") == "/proxy/8000/assets/js/s.js"
+
+    Genie.config.base_path = ""
   end;
 
 end;
