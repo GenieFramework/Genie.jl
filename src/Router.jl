@@ -6,10 +6,8 @@ module Router
 
 import Revise
 import Reexport, Logging
-import HTTP, HttpCommon, Sockets, Millboard, Dates, OrderedCollections, JSON3
+import HTTP, HttpCommon, Sockets, Millboard, Dates, OrderedCollections, JSON3, MIMEs
 import Genie
-
-include("mimetypes.jl")
 
 export route, routes, channel, channels, download, serve_static_file, serve_file
 export GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
@@ -391,11 +389,13 @@ end
 """
 Generates the HTTP link corresponding to `route_name` using the parameters in `d`.
 """
-function to_link(route_name::Symbol, d::Dict{Symbol,T}; preserve_query::Bool = true, extra_query::Dict = Dict())::String where {T}
+function to_link(route_name::Symbol, d::Dict{Symbol,T}; basepath::String = basepath, preserve_query::Bool = true, extra_query::Dict = Dict())::String where {T}
   route = get_route(route_name)
 
+  newpath = isempty(basepath) ? route.path : basepath * route.path
+
   result = String[]
-  for part in split(route.path, '/')
+  for part in split(newpath, '/')
     if occursin("#", part)
       part = split(part, "#")[1] |> string
     end
@@ -443,8 +443,8 @@ end
 """
 Generates the HTTP link corresponding to `route_name` using the parameters in `route_params`.
 """
-function to_link(route_name::Symbol; preserve_query::Bool = true, extra_query::Dict = Dict(), route_params...) :: String
-  to_link(route_name, route_params_to_dict(route_params), preserve_query = preserve_query, extra_query = extra_query)
+function to_link(route_name::Symbol; basepath::String = Genie.config.base_path, preserve_query::Bool = true, extra_query::Dict = Dict(), route_params...) :: String
+  to_link(route_name, route_params_to_dict(route_params), basepath = basepath, preserve_query = preserve_query, extra_query = extra_query)
 end
 
 const link_to = to_link
@@ -1187,7 +1187,7 @@ end
 Download file from generated stream of bytes
 """
 function download(data::Vector{UInt8}, filename::String, mimetype::String)::HTTP.Response
-  if mimetype in values(mimetypes)
+  if mimetype in values(MIMEs._ext2mime)
     return HTTP.Response(200,
         ("Content-Type" => mimetype, "Content-Disposition" => """attachment; filename=$(filename)"""),
         body=data)
@@ -1291,7 +1291,7 @@ file_extension(f) :: String = ormatch(match(r"(?<=\.)[^\.\\/]*$", f), "")
 Returns the file headers of `f`.
 """
 function file_headers(f) :: Vector{Pair{String,String}}
-  ["Content-Type" => get(mimetypes, file_extension(f), "application/octet-stream")]
+  ["Content-Type" => get(MIMEs._ext2mime, file_extension(f), "application/octet-stream")]
 end
 
 

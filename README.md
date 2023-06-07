@@ -44,12 +44,6 @@
   </p>
 </div>
 
-<h2>
-  Important: Genie v4 is not compatible with Julia version 1.8 and up. For Julia 1.8 and up support, please use Genie 5.
-  If you have applications developed with Genie v4, please upgrade them to Genie 5, by following the migration guide
-  provided in the Genie docs.
-</h2>
-
 <p style="font-family:verdana;font-size:80%;margin-bottom:4%" align="center">
 <u>Julia data dashboards powered by Genie</u>
 </p>
@@ -61,16 +55,6 @@
 #### **Need Help?** Reach out on our social media channels.
 
 [![Chat on Discord](https://img.shields.io/badge/chat-Discord-7289DA?logo=discord)](https://discord.com/invite/9zyZbD6J7H) [![Chat on Gitter](https://img.shields.io/badge/gitter-chat-red)](https://gitter.im/essenciary/Genie.jl) [![Discuss on GitHub](https://img.shields.io/badge/discussions-GitHub-333333?logo=github)](https://github.com/GenieFramework/Genie.jl/discussions)
-
-<div style="border: 2px solid crimson; background-color: linen;">
-  <h4>Genie v4 and Julia v1.8 compatibility issue: <code>modules_warned_for not defined</code></h4>
-
-  <p>
-Due to an issue caused by the removal of some APIs in Julia 1.8, **Genie v4 apps can not run on Julia 1.8**. This results in a `LoadError: UndefVarError: modules_warned_for not defined` exception when loading a Genie v4 app on Julia 1.8 and above.
-  </p>
-
-  <strong>Please follow the Genie v4 to Genie v5 migration guide to update your app and make it compatible with Julia 1.8 and above.</strong>
-</div>
 
 <hr>
 
