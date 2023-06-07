@@ -1,5 +1,5 @@
 /*
-** channels.js v1.2 // 24th January 2023
+** channels.js v1.3 // 7th July 2023
 ** Author: Adrian Salceanu and contributors // @essenciary
 ** GenieFramework.com // Genie.jl
 */
@@ -112,7 +112,7 @@ function newSocketConnection(host = Genie.Settings.websockets_exposed_host) {
     });
 
     ws.addEventListener('error', _ => {
-      Genie.WebChannels.socket = newSocketConnection();
+      // Genie.WebChannels.socket = newSocketConnection();
     });
 
     return ws
@@ -122,7 +122,7 @@ Genie.WebChannels.initialize();
 Genie.WebChannels.socket = newSocketConnection();
 
 window.addEventListener('beforeunload', _ => {
-  if (Genie.Settings.env == 'dev') {
+  if (isDev()) {
     console.info('Preparing to unload');
   }
 
@@ -165,24 +165,24 @@ Genie.WebChannels.messageHandlers.push(event => {
 });
 
 Genie.WebChannels.errorHandlers.push(event => {
-  if (Genie.Settings.env == 'dev') {
+  if (isDev()) {
     console.error(event.data);
   }
 });
 
 Genie.WebChannels.closeHandlers.push(event => {
-  if (Genie.Settings.env == 'dev') {
+  if (isDev()) {
     console.warn('WebSocket connection closed: ' + event.code + ' ' + event.reason + ' ' + event.wasClean);
   }
 });
 
 Genie.WebChannels.closeHandlers.push(event => {
   if (Genie.Settings.webchannels_autosubscribe) {
-    if (Genie.Settings.env == 'dev') {
-      console.info('Attempting to reconnect');
-    }
-    Genie.WebChannels.socket = newSocketConnection();
-    subscribe();
+    if (isDev()) console.info('Attempting to reconnect');
+    setTimeout(function() {
+      Genie.WebChannels.socket = newSocketConnection();
+      subscribe();
+    }, Genie.Settings.webchannels_timeout);
   }
 });
 
@@ -193,7 +193,7 @@ Genie.WebChannels.openHandlers.push(event => {
 });
 
 function parse_payload(json_data) {
-  if (Genie.Settings.env == 'dev') {
+  if (isDev()) {
     console.info('Overwrite window.parse_payload to handle messages from the server');
     console.info(json_data);
   }
@@ -216,9 +216,7 @@ function subscription_ready() {
     }
   }
 
-  if (Genie.Settings.env == 'dev') {
-    console.info('Subscription ready');
-  }
+  if (isDev()) console.info('Subscription ready');
 };
 
 
@@ -226,9 +224,7 @@ function subscribe(trial = 1) {
   if (Genie.WebChannels.socket.readyState && (document.readyState === 'complete' || document.readyState === 'interactive')) {
     Genie.WebChannels.sendMessageTo(window.Genie.Settings.webchannels_default_route, window.Genie.Settings.webchannels_subscribe_channel);
   } else if (trial < Genie.Settings.webchannels_subscription_trails) {
-    if (Genie.Settings.env == 'dev') {
-      console.warn('Queuing subscription');
-    }
+    if (isDev()) console.warn('Queuing subscription');
     trial++;
     setTimeout(subscribe.bind(this, trial), Genie.Settings.webchannels_timeout);
   } else {
@@ -238,7 +234,9 @@ function subscribe(trial = 1) {
 
 function unsubscribe() {
   Genie.WebChannels.sendMessageTo(window.Genie.Settings.webchannels_default_route, window.Genie.Settings.webchannels_unsubscribe_channel);
-  if (Genie.Settings.env == 'dev') {
-    console.info('Unsubscription completed');
-  }
+  if (isDev()) console.info('Unsubscription completed');
 };
+
+function isDev() {
+  return Genie.Settings.env === 'dev';
+}
