@@ -2,8 +2,6 @@
 
   using Genie, HTTP
   import Genie.Util: fws
-
-  down()
   
   route("/jsonpayload", method = POST) do
     Genie.Requests.jsonpayload()
@@ -14,7 +12,7 @@
   end
 
   port = nothing
-  port = rand(8500:8900)
+  port = rand(2500:2700)
 
   server = up(port)
 
