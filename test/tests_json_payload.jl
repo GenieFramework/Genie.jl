@@ -3,6 +3,8 @@
   using Genie, HTTP
   import Genie.Util: fws
 
+  down()
+  
   route("/jsonpayload", method = POST) do
     Genie.Requests.jsonpayload()
   end

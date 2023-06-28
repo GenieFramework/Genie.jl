@@ -16,7 +16,7 @@
   end
 
   port = nothing
-  port = rand(8500:8900)
+  port = rand(4000:5000)
 
   up(port; open_browser = false)
 
