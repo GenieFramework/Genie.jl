@@ -5,7 +5,7 @@
 
     port = rand(8500:8900)
 
-    route("/") do
+    route("/") do params
       "$(peer().ip)-$(peer().port)"
     end
 
@@ -33,7 +33,7 @@
     port = rand(8500:8900)
     Genie.config.features_peerinfo = true
 
-    route("/") do
+    route("/") do params
       "$(peer().ip)-$(peer().port)"
     end
 

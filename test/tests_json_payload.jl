@@ -3,12 +3,12 @@
   using Genie, HTTP
   import Genie.Util: fws
 
-  route("/jsonpayload", method = POST) do
-    Genie.Requests.jsonpayload()
+  route("/jsonpayload", method = POST) do params::Params
+    Genie.Requests.jsonpayload(params)
   end
 
-  route("/jsontest", method = POST) do
-    Genie.Requests.jsonpayload("test")
+  route("/jsontest", method = POST) do params::Params
+    Genie.Requests.jsonpayload(params)["test"]
   end
 
   port = nothing
@@ -20,7 +20,7 @@
                   [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
 
   @test response.status == 200
-  @test String(response.body) |> fws == """Dict{String, Any}("greeting" => "hello")""" |> fws
+  @test String(response.body) |> fws == """{"greeting": "hello"}""" |> fws
 
   response = HTTP.request("POST", "http://localhost:$port/jsontest",
                   [("Content-Type", "application/json; charset=utf-8")], """{"test":[1,2,3]}""")
@@ -32,7 +32,7 @@
                   [("Content-Type", "application/json")], """{"greeting":"hello"}""")
 
   @test response.status == 200
-  @test String(response.body) |> fws == """Dict{String, Any}("greeting" => "hello")""" |> fws
+  @test String(response.body) |> fws == """{"greeting": "hello"}""" |> fws
 
   response = HTTP.request("POST", "http://localhost:$port/jsontest",
                   [("Content-Type", "application/json")], """{"test":[1,2,3]}""")

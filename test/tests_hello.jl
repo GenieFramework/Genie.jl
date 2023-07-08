@@ -4,7 +4,7 @@
 
   message = "Welcome to Genie!"
 
-  route("/hello") do
+  route("/hello") do _::Params
     message
   end
 

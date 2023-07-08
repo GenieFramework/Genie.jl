@@ -6,7 +6,7 @@
     port = nothing
     port = rand(8500:8900)
 
-    route("/") do
+    route("/") do _
       "GET request"
     end
 
@@ -43,11 +43,11 @@
     port = nothing
     port = rand(8500:8900)
 
-    route("/") do
+    route("/") do _
       "Hello world"
     end
 
-    route("/", method = HEAD) do
+    route("/", method = HEAD) do _
       "Hello world"
     end
 
@@ -85,12 +85,12 @@
 
     request_method = ""
 
-    route("/", named = :get_root) do
+    route("/", named = :get_root) do _
       request_method = "GET"
       "GET request"
     end
 
-    route("/", method = "HEAD", named = :head_root) do
+    route("/", method = "HEAD", named = :head_root) do _
       request_method = "HEAD"
       "HEAD request"
     end

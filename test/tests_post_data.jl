@@ -2,17 +2,17 @@
 
   using Genie, HTTP, Genie.Router, Genie.Requests
 
-  route("/") do
+  route("/") do _
     "GET"
   end
 
-  route("/", method = POST) do
+  route("/", method = POST) do params
     params(:greeting)
   end
 
-  route("/data", method = POST) do
-    fields = postpayload(Symbol("fields[]"))
-    fields[1] * fields[2] * postpayload(:single)
+  route("/data", method = POST) do params
+    fields = postpayload(params)[Symbol("fields[]")]
+    fields[1] * fields[2] * postpayload(params)[:single]
   end
 
   port = nothing
@@ -47,7 +47,7 @@
   response = HTTP.post("http://localhost:$port", [], HTTP.Form(Dict("greeting" => "Hey you there")))
   @test response.status == 200
   @test String(response.body) == "Hey you there"
-  
+
   down()
   sleep(1)
   server = nothing

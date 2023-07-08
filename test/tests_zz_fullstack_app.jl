@@ -27,7 +27,7 @@
     end
     @test isfile(joinpath("app", "resources", "foo", "views", "foo.jl.html")) == true
 
-    route("/test") do
+    route("/test") do _
       Genie.Renderer.Html.html(:foo, :foo)
     end
 

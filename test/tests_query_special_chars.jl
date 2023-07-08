@@ -6,7 +6,7 @@
     port = nothing
     port = rand(8500:8900)
 
-    route("/") do
+    route("/") do params
       params(:x)
     end
 
@@ -34,7 +34,7 @@
     port = nothing
     port = rand(8500:8900)
 
-    route("/") do
+    route("/") do params
       params(:x)
     end
 
@@ -62,7 +62,7 @@
     port = nothing
     port = rand(8500:8900)
 
-    route("/") do
+    route("/") do params
       params(:x)
     end
 
@@ -90,7 +90,7 @@
     port = nothing
     port = rand(8500:8900)
 
-    route("/") do
+    route("/") do params
       params(:x)
     end
 

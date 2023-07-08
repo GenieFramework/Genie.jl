@@ -3,12 +3,12 @@
   using Genie, HTTP
   import Genie.Util: fws
 
-  route("/jsonpayload", method = POST) do
-    Genie.Requests.jsonpayload()
+  route("/jsonpayload", method = POST) do params::Params
+    Genie.Requests.jsonpayload(params)
   end
 
-  route("/jsongreeting", method = POST) do
-    Genie.Requests.jsonpayload("greeting")
+  route("/jsongreeting", method = POST) do params::Params
+    Genie.Requests.jsonpayload(params)["greeting"]
   end
 
   port = nothing
@@ -20,7 +20,7 @@
                   [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
 
   @test response.status == 200
-  @test String(response.body) |> fws == """Dict{String, Any}("greeting" => "hello")""" |> fws
+  @test String(response.body) |> fws == """{"greeting": "hello"}""" |> fws
 
   response = HTTP.request("POST", "http://localhost:$port/jsongreeting",
                   [("Content-Type", "application/json")], """{"greeting":"hello"}""")
@@ -32,7 +32,7 @@
                   [("Content-Type", "application/json")], """{"greeting":"hello"}""")
 
   @test response.status == 200
-  @test String(response.body) |> fws == """Dict{String, Any}("greeting" => "hello")""" |> fws
+  @test String(response.body) |> fws == """{"greeting": "hello"}""" |> fws
 
   response = HTTP.request("POST", "http://localhost:$port/jsongreeting",
                   [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
@@ -46,7 +46,7 @@
                   [("Content-Type", "application/vnd.api+json; charset=utf-8")], """{"greeting":"hello"}""")
 
   @test response.status == 200
-  @test String(response.body) |> fws == """Dict{String, Any}("greeting" => "hello")""" |> fws
+  @test String(response.body) |> fws == """{"greeting": "hello"}""" |> fws
 
   response = HTTP.request("POST", "http://localhost:$port/jsongreeting",
                   [("Content-Type", "application/vnd.api+json; charset=utf-8")], """{"greeting":"hello"}""")
@@ -58,7 +58,7 @@
                   [("Content-Type", "application/vnd.api+json")], """{"greeting":"hello"}""")
 
   @test response.status == 200
-  @test String(response.body) |> fws == """Dict{String, Any}("greeting" => "hello")""" |> fws
+  @test String(response.body) |> fws == """{"greeting": "hello"}""" |> fws
 
   response = HTTP.request("POST", "http://localhost:$port/jsongreeting",
                   [("Content-Type", "application/vnd.api+json")], """{"greeting":"hello"}""")

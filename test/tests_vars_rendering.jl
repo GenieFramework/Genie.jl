@@ -57,6 +57,6 @@
     end;
 
     @test r.status == 200
-    @test r.headers[1]["Content-Type"] == "text/html; charset=utf-8"
+    @test Dict(r.headers[1])["Content-Type"] == "text/html; charset=utf-8"
   end;
 end;

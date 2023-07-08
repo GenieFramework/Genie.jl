@@ -3,7 +3,7 @@
   @safetestset "Basic routing" begin
     using Genie, Genie.Router
 
-    route("/hello") do
+    route("/hello") do _
       "Hello"
     end
 
@@ -12,7 +12,7 @@
   @safetestset "router_delete" begin
     using Genie, Genie.Router
 
-    x = route("/caballo") do
+    x = route("/caballo") do _
       "caballo"
     end
 
@@ -25,7 +25,7 @@
     using Genie, Genie.Router
 
     @test Router.isroute(:get_abcd) == false
-    route("/abcd", named = :get_abcd) do
+    route("/abcd", named = :get_abcd) do _
       "abcd"
     end
     @test Router.isroute(:get_abcd) == true
@@ -34,21 +34,21 @@
   @safetestset "test to_link" begin
     using Genie, Genie.Router
 
-    route("/abcd", named = :get_abcd) do
+    route("/abcd", named = :get_abcd) do _
       "abcd"
     end
 
-    @test Router.to_link(:get_abcd) == "/abcd"
+    @test Router.to_link(Params(), :get_abcd) == "/abcd"
   end
 
   @safetestset "test with basepath" begin
     using Genie, Genie.Router
 
-    route("/abcd", named = :get_abcd) do
+    route("/abcd", named = :get_abcd) do _
       "abcd"
     end
-    
-    @test Router.to_link(:get_abcd, basepath = "/geniedev/9001") == "/geniedev/9001/abcd"
+
+    @test Router.to_link(Params(), :get_abcd, basepath = "/geniedev/9001") == "/geniedev/9001/abcd"
   end
 
 end;

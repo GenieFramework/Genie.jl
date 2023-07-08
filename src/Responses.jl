@@ -3,46 +3,46 @@ Collection of utilities for working with Responses data
 """
 module Responses
 
-import Genie, Genie.Router
-import HTTP
+import Genie, Genie.Router, Genie.Context
+import HTTP, OrderedCollections
 
 export getresponse, getheaders, setheaders, setheaders!, getstatus, setstatus, setstatus!, getbody, setbody, setbody!
 
 
-function getresponse() :: HTTP.Response
-  Router.params(Genie.Router.PARAMS_RESPONSE_KEY)
+function getresponse(params::Genie.Context.Params) :: HTTP.Response
+  params[:RESPONSE]
 end
 
 
-function getheaders(res::HTTP.Response) :: Dict{String,String}
-  Dict{String,String}(res.headers)
+function getheaders(res::HTTP.Response) :: Pair{String,String}
+  res.headers
 end
-function getheaders() :: Dict{String,String}
-  getheaders(getresponse())
+function getheaders(params::Genie.Context.Params) :: Pair{String,String}
+  getheaders(params[:RESPONSE])
 end
 
 
-function setheaders!(res::HTTP.Response, headers::Dict) :: HTTP.Response
+function setheaders!(res::HTTP.Response, headers::D)::HTTP.Response where D<:AbstractDict
   push!(res.headers, [headers...]...)
 
   res
 end
-function setheaders(headers::Dict) :: HTTP.Response
-  setheaders!(getresponse(), headers)
+function setheaders(params::Genie.Context.Params, headers::D)::HTTP.Response where D<:AbstractDict
+  setheaders!(params[:RESPONSE], headers)
 end
-function setheaders(header::Pair{String,String}) :: HTTP.Response
-  setheaders(Dict(header))
+function setheaders(params::Genie.Context.Params, header::Pair{String,String}) :: HTTP.Response
+  setheaders(params, Dict(header))
 end
-function setheaders(headers::Vector{Pair{String,String}}) :: HTTP.Response
-  setheaders(Dict(headers...))
+function setheaders(params::Genie.Context.Params, headers::Vector{Pair{String,String}}) :: HTTP.Response
+  setheaders(params, Dict(headers...))
 end
 
 
 function getstatus(res::HTTP.Response) :: Int
   res.status
 end
-function getstatus() :: Int
-  getstatus(getresponse())
+function getstatus(params::Genie.Context.Params) :: Int
+  getstatus(getresponse(params))
 end
 
 
@@ -51,16 +51,16 @@ function setstatus!(res::HTTP.Response, status::Int) :: HTTP.Response
 
   res
 end
-function setstatus(status::Int) :: HTTP.Response
-  setstatus!(getresponse(), status)
+function setstatus(params::Genie.Context.Params, status::Int) :: HTTP.Response
+  setstatus!(getresponse(params), status)
 end
 
 
 function getbody(res::HTTP.Response) :: String
   String(res.body)
 end
-function getbody() :: String
-  getbody(getresponse())
+function getbody(params::Genie.Context.Params) :: String
+  getbody(getresponse(params))
 end
 
 
@@ -69,8 +69,8 @@ function setbody!(res::HTTP.Response, body::String) :: HTTP.Response
 
   res
 end
-function setbody(body::String) :: HTTP.Response
-  setbody!(getresponse(), body)
+function setbody(params::Genie.Context.Params, body::String) :: HTTP.Response
+  setbody!(getresponse(params), body)
 end
 
 end

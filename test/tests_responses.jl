@@ -2,11 +2,11 @@
 
   using Genie, HTTP, Genie.Responses
 
-  route("/responses", method = GET) do
-    setstatus(301)
-    setheaders(Dict("X-Foo-Bar" => "Baz"))
-    setheaders(Dict("X-A-B" => "C", "X-Moo" => "Cow"))
-    setbody("Hello")
+  route("/responses", method = GET) do params::Params
+    setstatus(params, 301)
+    setheaders(params, Dict("X-Foo-Bar" => "Baz"))
+    setheaders(params, Dict("X-A-B" => "C", "X-Moo" => "Cow"))
+    setbody(params, "Hello")
   end
 
   route("/broken") do

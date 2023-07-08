@@ -3,8 +3,10 @@ Collection of utilities for working with Requests data
 """
 module Requests
 
-import Genie, Genie.Router, Genie.Input
+import Genie, Genie.Router, Genie.Input, Genie.Context
 import HTTP, Reexport
+import Base: ImmutableDict
+import OrderedCollections: LittleDict
 
 export jsonpayload, rawpayload, filespayload, postpayload, getpayload
 export request, getrequest, matchedroute, matchedchannel, wsclient
@@ -12,63 +14,33 @@ export infilespayload, filename, payload, peer, currenturl
 
 
 """
-    jsonpayload()
+    jsonpayload(params::Genie.Context.Params)
 
 Processes an `application/json` `POST` request.
-If it fails to successfully parse the `JSON` data it returns `nothing`. The original payload can still be accessed invoking `rawpayload()`
+If it fails to successfully parse the `JSON` data it returns `nothing`. The original payload can still be accessed invoking `rawpayload(params)`
 """
-function jsonpayload()
-  haskey(Genie.Router.params(), Genie.Router.PARAMS_JSON_PAYLOAD) ? Genie.Router.params(Genie.Router.PARAMS_JSON_PAYLOAD) : nothing
+function jsonpayload(params::Genie.Context.Params)
+  params.collection[:JSON_PAYLOAD]
 end
 
 
 """
-    jsonpayload(v)
-
-Processes an `application/json` `POST` request attempting to return value corresponding to key v.
-"""
-function jsonpayload(v)
-  jsonpayload()[v]
-end
-
-
-"""
-    rawpayload() :: String
+    rawpayload(params::Genie.Context.Params) :: String
 
 Returns the raw `POST` payload as a `String`.
 """
-function rawpayload() :: String
-  haskey(Genie.Router.params(), Genie.Router.PARAMS_RAW_PAYLOAD) ? Genie.Router.params(Genie.Router.PARAMS_RAW_PAYLOAD) : ""
+function rawpayload(params::Genie.Context.Params) :: String
+  params.collection[:RAW_PAYLOAD]
 end
 
 
 """
-    filespayload() :: Dict{String,HttpFile}
+    filespayload(params::Genie.Context.Params)
 
 Collection of form uploaded files.
 """
-function filespayload() :: Dict{String,Input.HttpFile}
-  haskey(Router.params(), Genie.Router.PARAMS_FILES) ? Router.params(Genie.Router.PARAMS_FILES) : Dict{String,Input.HttpFile}()
-end
-
-
-"""
-    filespayload(filename::Union{String,Symbol}) :: HttpFile
-
-Returns the `HttpFile` uploaded through the `key` input name.
-"""
-function filespayload(key::Union{String,Symbol}) :: Input.HttpFile
-  Router.params(Genie.Router.PARAMS_FILES)[string(key)]
-end
-
-
-"""
-    infilespayload(key::Union{String,Symbol}) :: Bool
-
-Checks if the collection of uploaded files contains a file stored under the `key` name.
-"""
-function infilespayload(key::Union{String,Symbol}) :: Bool
-  haskey(filespayload(), string(key))
+function filespayload(params::Genie.Context.Params)
+  params.collection[:FILES]
 end
 
 
@@ -104,164 +76,89 @@ end
 
 
 """
-    postpayload() :: Dict{Symbol,Any}
+    postpayload(params::Genie.Context.Params) :: Dict{Symbol,Any}
 
 A dict representing the POST variables payload of the request (corresponding to a `form-data` request)
 """
-function postpayload() :: Dict{Symbol,Any}
-  haskey(Router.params(), Genie.Router.PARAMS_POST_KEY) ? Router.params(Genie.Router.PARAMS_POST_KEY) : Dict{Symbol,Any}()
+function postpayload(params::Genie.Context.Params)
+  params.collection[:POST]
 end
 
 
 """
-    postpayload(key::Symbol) :: Any
-
-Returns the value of the POST variables `key`.
-"""
-function postpayload(key::Symbol)
-  postpayload()[key]
-end
-
-
-"""
-    postpayload(key::Symbol, default::Any)
-
-Returns the value of the POST variables `key` or the `default` value if `key` is not defined.
-"""
-function postpayload(key::Symbol, default::Any)
-  haskey(postpayload(), key) ? postpayload(key) : default
-end
-
-
-"""
-    getpayload() :: Dict{Symbol,Any}
+    getpayload(params::Genie.Context.Params)
 
 A dict representing the GET/query variables payload of the request (the part corresponding to `?foo=bar&baz=moo`)
 """
-function getpayload() :: Dict{Symbol,Any}
-  haskey(Router.params(), Genie.Router.PARAMS_GET_KEY) ? Router.params(Genie.Router.PARAMS_GET_KEY) : Dict{Symbol,Any}()
+function getpayload(params::Genie.Context.Params)
+  params.collection[:GET]
 end
 
 
 """
-    getpayload(key::Symbol) :: Any
-
-The value of the GET/query variable `key`, as in `?key=value`
-"""
-function getpayload(key::Symbol) :: Any
-  getpayload()[key]
-end
-
-
-"""
-    getpayload(key::Symbol, default::Any) :: Any
-
-The value of the GET/query variable `key`, as in `?key=value`. If `key` is not defined, `default` is returned.
-"""
-function getpayload(key::Symbol, default::Any) :: Any
-  haskey(getpayload(), key) ? getpayload(key) : default
-end
-
-
-"""
-    request() :: HTTP.Request
+    request(params::Genie.Context.Params) :: HTTP.Request
 
 Returns the raw HTTP.Request object associated with the request. If no request is available (not within a
 request/response cycle) returns `nothing`.
 """
-function request() :: Union{HTTP.Request,Nothing}
-  haskey(Router.params(), Genie.Router.PARAMS_REQUEST_KEY) ? Router.params(Genie.Router.PARAMS_REQUEST_KEY) : nothing
-end
-
-const getrequest = request
-
-"""
-    payload() :: Any
-
-Utility function for accessing the `params` collection, which holds the request variables.
-"""
-function payload() :: Dict
-  Router.params()
+function request(params::Genie.Context.Params) :: Union{HTTP.Request,Nothing}
+  params.collection[:REQUEST]
 end
 
 
 """
-    payload(key::Symbol) :: Any
-
-Utility function for accessing the `key` value within the `params` collection of request variables.
-"""
-function payload(key::Symbol) :: Any
-  Router.params()[key]
-end
-
-
-"""
-    payload(key::Symbol, default_value::T) :: Any
-
-Utility function for accessing the `key` value within the `params` collection of request variables.
-If `key` is not defined, `default_value` is returned.
-"""
-function payload(key::Symbol, default_value::T)::T where {T}
-  haskey(Router.params(), key) ? Router.params()[key] : default_value
-end
-
-
-"""
-    matchedroute() :: Route
+    matchedroute(params::Genie.Context.Params) :: Union{Genie.Router.Route,Nothing}
 
 Returns the `Route` object which was matched for the current request or `noting` if no route is available.
 """
-function matchedroute() :: Union{Genie.Router.Route,Nothing}
-  haskey(Router.params(), Genie.Router.PARAMS_ROUTE_KEY) ? Router.params(Genie.Router.PARAMS_ROUTE_KEY) : nothing
+function matchedroute(params::Genie.Context.Params) :: Union{Genie.Router.Route,Nothing}
+  params.collection[:ROUTE]
 end
 
 
 """
-    matchedchannel() :: Channel
+    matchedchannel(params::Genie.Context.Params) :: Union{Genie.Router.Channel,Nothing}
 
 Returns the `Channel` object which was matched for the current request or `nothing` if no channel is available.
 """
-function matchedchannel() :: Union{Genie.Router.Channel,Nothing}
-  haskey(Router.params(), Genie.Router.PARAMS_CHANNELS_KEY) ? Router.params(Genie.Router.PARAMS_CHANNELS_KEY) : nothing
+function matchedchannel(params::Genie.Context.Params) :: Union{Genie.Router.Channel,Nothing}
+  params.collection[:CHANNEL]
 end
 
 
 """
-    wsclient() :: HTTP.WebSockets.WebSocket
+    wsclient(params::Genie.Context.Params) :: Union{HTTP.WebSockets.WebSocket,Nothing}
 
 The web sockets client for the current request or nothing if not available.
 """
-function wsclient() :: Union{HTTP.WebSockets.WebSocket,Nothing}
-  haskey(Router.params(), Genie.Router.PARAMS_WS_CLIENT) ? Router.params(Genie.Router.PARAMS_WS_CLIENT) : nothing
+function wsclient(params::Genie.Context.Params) :: Union{HTTP.WebSockets.WebSocket,Nothing}
+  params.collection[:WS_CLIENT]
 end
 
 
 """
-    wtclient() :: HTTP.WebSockets.WebSocket
+    wtclient(params::Genie.Context.Params) :: UInt
 
 The web sockets client for the current request.
 """
-function wtclient() :: UInt
-  Router.params(:wtclient) |> hash
+function wtclient(params::Genie.Context.Params) :: UInt
+  params.collection[:WT_CLIENT] |> hash
 end
 
 
-function getheaders(req::HTTP.Request) :: Dict{String,String}
-  Dict{String,String}(req.headers)
-end
-function getheaders() :: Dict{String,String}
-  getheaders(getrequest())
+function getheaders(req::HTTP.Request) :: ImmutableDict{<:AbstractString,<:AbstractString}
+  ImmutableDict{String,String}(req.headers)
 end
 
 
 """
-    findheader(key::String, default::Any = nothing) :: Union{String,Nothing}
+    findheader(params::Genie.Context.Params, key::String, default::Any = nothing) :: Union{String,Nothing}
 
 Case insensitive search for the header `key` in the request headers. If `key` is not found, `default` is returned.
 """
-function findheader(key::String, default = nothing) :: Union{String,Nothing}
-  for (k, v) in getheaders()
-    if lowercase(k) == lowercase(key)
+function findheader(params::Genie.Context.Params, key::T, default = nothing)::Union{T,Nothing} where T<:AbstractString
+  for (k, v) in getheaders(params[:REQUEST])
+    if lowercase(k) === lowercase(key)
       return v
     end
   end
@@ -276,7 +173,7 @@ end
 Returns information about the requesting client's IP address as a NamedTuple{(:ip,), Tuple{String}}
 If the client IP address can not be retrieved, the `ip` field will return an empty string `""`.
 """
-function peer() :: NamedTuple{(:ip,:port), Tuple{String,String}}
+function peer()
   unset_peer = (ip = "", port = "")
 
   if haskey(task_local_storage(), :peer)
@@ -297,7 +194,7 @@ end
 
 Attempts to determine if a request is Ajax by sniffing the headers.
 """
-function isajax(req::HTTP.Request = getrequest()) :: Bool
+function isajax(req::HTTP.Request) :: Bool
   for (k,v) in getheaders(req)
     k = replace(k, r"_|-"=>"") |> lowercase
     occursin("requestedwith", k) && occursin("xmlhttp", lowercase(v)) && return true
@@ -319,7 +216,7 @@ currenturl()
 "/products?promotions=yes"
 ```
 """
-function currenturl(req::HTTP.Request = getrequest()) :: String
+function currenturl(req::HTTP.Request) :: String
   req.target
 end
 

@@ -7,7 +7,7 @@
     port = nothing
     port = rand(8500:8900)
 
-    route("/✔/🧞/♥/❤") do
+    route("/✔/🧞/♥/❤") do _
       "/✔/🧞/♥/❤"
     end
 
@@ -34,7 +34,7 @@
     port = nothing
     port = rand(8500:8900)
 
-    route("/✔") do
+    route("/✔") do _
       "All good"
     end
 
@@ -62,7 +62,7 @@
     port = nothing
     port = rand(8500:8900)
 
-    route("/réception") do
+    route("/réception") do _
       "Meet at réception"
     end
 
@@ -90,8 +90,8 @@
     port = nothing
     port = rand(8500:8900)
 
-    route("/:check/:genie/:smallheart/:bigheart") do
-      "/$(payload(:check))/$(payload(:genie))/$(payload(:smallheart))/$(payload(:bigheart))"
+    route("/:check/:genie/:smallheart/:bigheart") do params
+      "/$(params(:check))/$(params(:genie))/$(params(:smallheart))/$(params(:bigheart))"
     end
 
     server = up(port)

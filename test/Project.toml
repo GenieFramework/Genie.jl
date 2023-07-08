@@ -14,9 +14,9 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TestSetExtensions = "98d24dd4-01ad-11ea-1b02-c9a08f80db04"
 
 [compat]
-Genie = "5"
+Genie = "6"
 HTTP = "1"
 LoggingExtras = "1"
-SafeTestsets = "0.0.1"
+SafeTestsets = "0.1.0"
 SearchLight = "2"
 TestSetExtensions = "2.0"

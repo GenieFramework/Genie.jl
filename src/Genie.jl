@@ -31,6 +31,7 @@ include("Generator.jl")
 include("Encryption.jl")
 include("Cookies.jl")
 include("Input.jl")
+include("Context.jl")
 include("Router.jl")
 include("Renderer.jl")
 include("WebChannels.jl")
@@ -46,7 +47,7 @@ include("Logger.jl")
 # === #
 
 export up, down
-@reexport using .Router
+@reexport using .Router, .Context
 
 const assets_config = Genie.Assets.assets_config
 

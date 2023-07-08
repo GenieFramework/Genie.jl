@@ -7,7 +7,9 @@ module Router
 import Revise
 import Reexport, Logging
 import HTTP, HttpCommon, Sockets, Millboard, Dates, OrderedCollections, JSON3, MIMEs
-import Genie
+
+using Genie
+Reexport.@reexport using Genie.Context
 
 export route, routes, channel, channels, download, serve_static_file, serve_file
 export GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
@@ -26,18 +28,6 @@ const DELETE  = "DELETE"
 const OPTIONS = "OPTIONS"
 const HEAD    = "HEAD"
 
-const PARAMS_REQUEST_KEY    = :REQUEST
-const PARAMS_RESPONSE_KEY   = :RESPONSE
-const PARAMS_POST_KEY       = :POST
-const PARAMS_GET_KEY        = :GET
-const PARAMS_WS_CLIENT      = :WS_CLIENT
-const PARAMS_JSON_PAYLOAD   = :JSON_PAYLOAD
-const PARAMS_RAW_PAYLOAD    = :RAW_PAYLOAD
-const PARAMS_FILES          = :FILES
-const PARAMS_ROUTE_KEY      = :ROUTE
-const PARAMS_CHANNELS_KEY   = :CHANNEL
-const PARAMS_MIME_KEY       = :MIME
-
 const OK              = 200
 const CREATED         = 201
 const ACCEPTED        = 202
@@ -46,18 +36,21 @@ const BAD_REQUEST     = 400
 const NOT_FOUND       = 404
 const INTERNAL_ERROR  = 500
 
-const ROUTE_CACHE = Dict{String,Tuple{String,Vector{String},Vector{Any}}}()
+const ROUTE_CACHE = OrderedCollections.LittleDict{String,Tuple{String,Vector{String},Vector{Any}}}()
 
-request_mappings() = Dict{Symbol,Vector{String}}(
-  :text       => ["text/plain"],
-  :html       => ["text/html"],
-  :json       => ["application/json", "application/vnd.api+json"],
-  :javascript => ["application/javascript"],
-  :form       => ["application/x-www-form-urlencoded"],
-  :multipart  => ["multipart/form-data"],
-  :file       => ["application/octet-stream"],
-  :xml        => ["text/xml"]
-)
+function request_mappings()
+  mappings = ImmutableDict(:text => ["text/plain"])
+  ImmutableDict(
+    mappings,
+    :html       => ["text/html"],
+    :json       => ["application/json", "application/vnd.api+json"],
+    :javascript => ["application/javascript"],
+    :form       => ["application/x-www-form-urlencoded"],
+    :multipart  => ["multipart/form-data"],
+    :file       => ["application/octet-stream"],
+    :xml        => ["text/xml"]
+  )
+end
 
 const pre_match_hooks = Function[]
 const pre_response_hooks = Function[]
@@ -77,8 +70,11 @@ mutable struct Route
   context::Module
 end
 
-Route(; method::String = GET, path::String = "", action::Function = (() -> error("Route not set")),
-        name::Union{Symbol,Nothing} = nothing, context::Module = @__MODULE__) = Route(method, path, action, name, context)
+Route(; method::String = GET,
+        path::String = "",
+        action::Function = (() -> error("Route not set")),
+        name::Union{Symbol,Nothing} = nothing,
+        context::Module = @__MODULE__) = Route(method, path, action, name, context)
 
 
 """
@@ -108,22 +104,6 @@ const _channels = OrderedCollections.LittleDict{Symbol,Channel}()
 
 
 """
-    mutable struct Params{T}
-
-Collection of key value pairs representing the parameters of the current request - response cycle.
-"""
-mutable struct Params{T}
-  collection::Dict{Symbol,T}
-end
-Params() = Params(setup_base_params())
-
-Base.Dict(params::Params) = params.collection
-
-Base.getindex(params::Params, keys...) = getindex(Dict(params), keys...)
-Base.getindex(params::Pair, keys...) = getindex(Dict(params), keys...)
-
-
-"""
     ispayload(req::HTTP.Request)
 
 True if the request can carry a payload - that is, it's a `POST`, `PUT`, or `PATCH` request
@@ -132,11 +112,11 @@ ispayload(req::HTTP.Request) = req.method in [POST, PUT, PATCH]
 
 
 """
-    ispayload()
+    ispayload(params::Genie.Context.Params)
 
 True if the request can carry a payload - that is, it's a `POST`, `PUT`, or `PATCH` request
 """
-ispayload() = params()[:REQUEST].method in [POST, PUT, PATCH]
+ispayload(params::Genie.Context.Params) = ispayload(params.collection[:REQUEST])
 
 
 """
@@ -145,19 +125,19 @@ ispayload() = params()[:REQUEST].method in [POST, PUT, PATCH]
 First step in handling a request: sets up params collection, handles query vars, negotiates content.
 """
 function route_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
-  params = Params()
+  params = Params(req, res)
 
   for f in unique(content_negotiation_hooks)
     req, res, params.collection = f(req, res, params.collection)
   end
 
-  if is_static_file(req.target) && req.method == GET
+  if is_static_file(req.target) && req.method === GET
     if isroute(baptizer(req.target, [lowercase(req.method)]))
       @warn "Route matches static file: $(req.target) -- executing route"
     elseif Genie.config.server_handle_static_files
       return serve_static_file(req.target)
     else
-      return error(req.target, response_mime(), Val(404))
+      return error(req.target, response_mime(params.collection), Val(404))
     end
   end
 
@@ -168,11 +148,12 @@ function route_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
   end
 
   matched_route = match_routes(req, res, params)
+
   res = matched_route === nothing ?
     error(req.target, response_mime(params.collection), Val(404)) :
-      run_route(matched_route)
+      run_route(params, matched_route)
 
-  if res.status == 404 && req.method == OPTIONS
+  if res.status === 404 && req.method === OPTIONS
     res = preflight_response()
 
     log_response(req, res)
@@ -213,9 +194,12 @@ end
 First step in handling a web socket request: sets up params collection, handles query vars.
 """
 function route_ws_request(req, msg::Union{String,Vector{UInt8}}, ws_client) :: String
-  params = Params()
+  params = Params(req, req.response)
 
-  params.collection[PARAMS_WS_CLIENT] = ws_client
+  params.collection = ImmutableDict(
+    params.collection,
+    :WS_CLIENT => ws_client
+  )
 
   extract_get_params(HTTP.URIs.URI(req.target), params)
 
@@ -269,22 +253,22 @@ end
 
 
 """
-    routename(params) :: Symbol
+    routename(route) :: Symbol
 
 Computes the name of a route.
 """
-function routename(params::Route) :: Symbol
-  baptizer(params, String[lowercase(params.method)])
+function routename(route::Route) :: Symbol
+  baptizer(route, String[lowercase(route.method)])
 end
 
 
 """
-    channelname(params) :: Symbol
+    channelname(channel) :: Symbol
 
 Computes the name of a channel.
 """
-function channelname(params::Channel) :: Symbol
-  baptizer(params, String[])
+function channelname(channel::Channel) :: Symbol
+  baptizer(channel, String[])
 end
 
 
@@ -389,7 +373,9 @@ end
 """
 Generates the HTTP link corresponding to `route_name` using the parameters in `d`.
 """
-function to_link(route_name::Symbol, d::Dict{Symbol,T}; basepath::String = basepath, preserve_query::Bool = true, extra_query::Dict = Dict())::String where {T}
+function to_link(params::Genie.Context.Params, route_name::Symbol, d::OrderedCollections.LittleDict; basepath::String = basepath,
+                  preserve_query::Bool = true,
+                  extra_query::OrderedCollections.LittleDict = OrderedCollections.LittleDict())::String
   route = get_route(route_name)
 
   newpath = isempty(basepath) ? route.path : basepath * route.path
@@ -412,9 +398,9 @@ function to_link(route_name::Symbol, d::Dict{Symbol,T}; basepath::String = basep
     push!(result, part)
   end
 
-  query_vars = Dict{String,String}()
-  if preserve_query && haskey(task_local_storage(), :__params) && haskey(task_local_storage(:__params), :REQUEST)
-    query = HTTP.URIs.URI(task_local_storage(:__params)[:REQUEST].target).query
+  query_vars = OrderedCollections.LittleDict()
+  if preserve_query
+    query = HTTP.URIs.URI(params[:REQUEST].target).query
     if ! isempty(query)
       for pair in split(query, '&')
         try
@@ -443,14 +429,10 @@ end
 """
 Generates the HTTP link corresponding to `route_name` using the parameters in `route_params`.
 """
-function to_link(route_name::Symbol; basepath::String = Genie.config.base_path, preserve_query::Bool = true, extra_query::Dict = Dict(), route_params...) :: String
-  to_link(route_name, route_params_to_dict(route_params), basepath = basepath, preserve_query = preserve_query, extra_query = extra_query)
+function to_link(params::Genie.Context.Params, route_name::Symbol; basepath::String = Genie.config.base_path, preserve_query::Bool = true,
+                  extra_query::OrderedCollections.LittleDict = OrderedCollections.LittleDict(), route_params...) :: String
+  to_link(params, route_name, route_params_to_dict(route_params); basepath = basepath, preserve_query = preserve_query, extra_query = extra_query)
 end
-
-const link_to = to_link
-const linkto = link_to
-const tolink = to_link
-const toroute = to_link
 
 
 """
@@ -458,8 +440,8 @@ const toroute = to_link
 
 Converts the route params to a `Dict`.
 """
-function route_params_to_dict(route_params) :: Dict{Symbol,Any}
-  Dict{Symbol,Any}(route_params)
+function route_params_to_dict(route_params) :: OrderedCollections.LittleDict
+  OrderedCollections.LittleDict(route_params)
 end
 
 
@@ -468,12 +450,15 @@ end
 
 Sets up the :action_controller, :action, and :controller key - value pairs of the `params` collection.
 """
-function action_controller_params(action::Function, params::Params) :: Nothing
-  params.collection[:action_controller] = action |> string |> Symbol
-  params.collection[:action] = action
-  params.collection[:controller] = (action |> typeof).name.module
+function action_controller_params(action::Function, params::Genie.Context.Params)
+  params.collection = ImmutableDict(
+    params.collection,
+    :action_controller => (action |> string |> Symbol),
+    :action => action,
+    :controller => (action |> typeof).name.module
+  )
 
-  nothing
+  params
 end
 
 
@@ -482,7 +467,7 @@ end
 
 Matches the invoked URL to the corresponding route, sets up the execution environment and invokes the controller method.
 """
-function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: Union{Route,Nothing}
+function match_routes(req::HTTP.Request, res::HTTP.Response, params::Genie.Context.Params) :: Union{Route,Nothing}
   endswith(req.target, "/") && req.target != "/" && (req.target = req.target[1:end-1])
   uri = HTTP.URIs.URI(HTTP.URIs.unescapeuri(req.target))
 
@@ -504,19 +489,21 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
     ROUTE_CATCH_ALL = "/*"
     occursin(regex_route, string(uri.path)) || parsed_route == ROUTE_CATCH_ALL || continue
 
-    params.collection = setup_base_params(req, res, params.collection)
-    task_local_storage(:__params, params.collection)
+    params.collection = Genie.Context.setup_base_params(req, res, params.collection)
 
-    occursin("?", req.target) && extract_get_params(HTTP.URIs.URI(req.target), params)
+    occursin("?", req.target) && (params = extract_get_params(HTTP.URIs.URI(req.target), params))
 
-    extract_uri_params(uri.path |> string, regex_route, param_names, param_types, params) || continue
+    params = extract_uri_params(uri.path |> string, regex_route, param_names, param_types, params)
 
-    ispayload(req) && extract_post_params(req, params)
-    ispayload(req) && extract_request_params(req, params)
-    action_controller_params(r.action, params)
+    ispayload(req) && (params = extract_post_params(params))
+    ispayload(req) && (params = extract_request_params(params))
+    params = action_controller_params(r.action, params)
 
-    params.collection[PARAMS_ROUTE_KEY] = r
-    get!(params.collection, PARAMS_MIME_KEY, MIME(request_type(req)))
+    params.collection = ImmutableDict(
+      params.collection,
+      :ROUTE => r,
+      :MIME => MIME(request_type(req))
+    )
 
     for f in unique(content_negotiation_hooks)
       req, res, params.collection = f(req, res, params.collection)
@@ -529,44 +516,44 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
 end
 
 
-function run_route(r::Route) :: HTTP.Response
+function run_route(params::Genie.Context.Params, r::Route) :: HTTP.Response
   try
     try
-      (r.action)() |> to_response
+      (r.action)(params) |> to_response
     catch ex1
       if isa(ex1, MethodError) && string(ex1.f) == string(r.action)
-        Base.invokelatest(r.action) |> to_response
+        Base.invokelatest(r.action, params) |> to_response
       else
         rethrow(ex1)
       end
     end
   catch ex
-    return handle_exception(ex)
+    return handle_exception(params, ex)
   end
 end
 
 
-function handle_exception(ex::Genie.Exceptions.ExceptionalResponse)
+function handle_exception(_::Genie.Context.Params, ex::Genie.Exceptions.ExceptionalResponse)
   ex.response
 end
 
-function handle_exception(ex::Genie.Exceptions.RuntimeException)
+function handle_exception(_::Genie.Context.Params, ex::Genie.Exceptions.RuntimeException)
   rethrow(ex)
 end
 
-function handle_exception(ex::Genie.Exceptions.InternalServerException)
-  error(ex.message, response_mime(), Val(500))
+function handle_exception(params::Genie.Context.Params, ex::Genie.Exceptions.InternalServerException)
+  error(ex.message, response_mime(params[:REQUEST]), Val(500))
 end
 
-function handle_exception(ex::Genie.Exceptions.NotFoundException)
-  error(ex.resource, response_mime(), Val(404))
+function handle_exception(params::Genie.Context.Params, ex::Genie.Exceptions.NotFoundException)
+  error(ex.resource, response_mime(params[:REQUEST]), Val(404))
 end
 
-function handle_exception(ex::Exception)
+function handle_exception(_::Genie.Context.Params, ex::Exception)
   rethrow(ex)
 end
 
-function handle_exception(ex::Any)
+function handle_exception(_::Genie.Context.Params, ex::Any)
   Base.error(ex |> string)
 end
 
@@ -576,11 +563,11 @@ end
 
 Matches the invoked URL to the corresponding channel, sets up the execution environment and invokes the channel controller method.
 """
-function match_channels(req, msg::String, ws_client, params::Params) :: String
-  payload::Dict{String,Any} = try
-    JSON3.read(msg, Dict{String,Any})
+function match_channels(req, msg::String, ws_client, params::Genie.Context.Params) :: String
+  payload::ImmutableDict{String,Any} = try
+    JSON3.read(msg, ImmutableDict{String,Any})
   catch ex
-    Dict{String,Any}()
+    OrderedCollections.LittleDict{String,Any}()
   end
 
   uri = haskey(payload, "channel") ? '/' * payload["channel"] : '/'
@@ -590,7 +577,7 @@ function match_channels(req, msg::String, ws_client, params::Params) :: String
   for c in channels()
     parsed_channel, param_names, param_types = parse_channel(c.path)
 
-    haskey(payload, "payload") && (params.collection[:payload] = payload["payload"])
+    haskey(payload, "payload") && (params.collection = ImmutableDict(params.collection, :payload => payload["payload"]))
 
     regex_channel = Regex("^" * parsed_channel * "\$")
 
@@ -603,7 +590,10 @@ function match_channels(req, msg::String, ws_client, params::Params) :: String
 
     action_controller_params(c.action, params)
 
-    params.collection[PARAMS_CHANNELS_KEY] = c
+    params.collection = ImmutableDict(
+      params.collection,
+      :CHANNEL => c
+    )
 
     controller = (c.action |> typeof).name.module
 
@@ -716,31 +706,34 @@ parse_param(param_type::Type{T}, param::S) where {T, S} = convert(param_type, pa
 
 Extracts params from request URI and sets up the `params` `Dict`.
 """
-function extract_uri_params(uri::String, regex_route::Regex, param_names::Vector{String}, param_types::Vector{Any}, params::Params) :: Bool
+function extract_uri_params(uri::T, regex_route::Regex, param_names::Vector{T}, param_types::Vector{Any},
+                            params::Genie.Context.Params) where T<:AbstractString
   matches = match(regex_route, uri)
 
   i = 1
   for param_name in param_names
     try
-      params.collection[Symbol(param_name)] = parse_param(param_types[i], matches[param_name])
+      params.collection = ImmutableDict(
+        params.collection,
+        Symbol(param_name) => parse_param(param_types[i], matches[param_name])
+      )
     catch ex
       @error ex
-      return false
     end
 
     i += 1
   end
 
-  true # this must be bool cause it's used in bool context for chaining
+  params
 end
 
 
 """
-    extract_get_params(uri::URI, params::Params) :: Bool
+    extract_get_params(uri::URI, params::Params)
 
 Extracts query vars and adds them to the execution `params` `Dict`.
 """
-function extract_get_params(uri::HTTP.URIs.URI, params::Params) :: Bool
+function extract_get_params(uri::HTTP.URIs.URI, params::Genie.Context.Params)
   if ! isempty(uri.query)
     if occursin("%5B%5D", uri.query) || occursin("[]", uri.query) # array values []
       for query_part in split(uri.query, "&")
@@ -752,80 +745,74 @@ function extract_get_params(uri::HTTP.URIs.URI, params::Params) :: Bool
 
         # collect values like x[] in an array
         if endswith(string(k), "[]")
-          (haskey(params.collection, k) && isa(params.collection[k], Vector)) || (params.collection[k] = String[])
+          (haskey(params.collection, k) && isa(params.collection[k], Vector)) || (params.collection = ImmutableDict(params.collection, k => String[]))
           push!(params.collection[k], v)
-          params.collection[PARAMS_GET_KEY][k] = params.collection[k]
+          params.collection[:GET][k] = params.collection[k]
         else
-          params.collection[k] = params.collection[PARAMS_GET_KEY][k] = v
+          params.collection = ImmutableDict(params.collection, k => (params.collection[:GET][k] = v))
         end
       end
 
     else # no array values
       for (k,v) in HTTP.URIs.queryparams(uri)
         k = Symbol(k)
-        params.collection[k] = params.collection[PARAMS_GET_KEY][k] = v
+        params.collection = ImmutableDict(params.collection, k => (params.collection[:GET][k] = v))
       end
     end
   end
 
-  true # this must be bool cause it's used in bool context for chaining
+  params
 end
 
 
 """
-    extract_post_params(req::Request, params::Params) :: Nothing
+    extract_post_params(params::Params) :: Nothing
 
 Parses POST variables and adds the to the `params` `Dict`.
 """
-function extract_post_params(req::HTTP.Request, params::Params) :: Nothing
-  ispayload(req) || return nothing
-
+function extract_post_params(params::Genie.Context.Params)
   try
-    input = Genie.Input.all(req)
+    input = Genie.Input.all(params[:REQUEST])
 
-    for (k, v) in input.post
-      nested_keys(k, v, params)
-
-      k = Symbol(k)
-      params.collection[k] = params.collection[PARAMS_POST_KEY][k] = v
-    end
-
-    params.collection[PARAMS_FILES] = input.files
+    params.collection = ImmutableDict(
+      params.collection,
+      [(Symbol(k)=>v) for (k,v) in input.post]...,
+      :POST => OrderedCollections.LittleDict(
+        [(Symbol(k)=>v) for (k,v) in input.post]...
+      ),
+      :FILES => input.files
+    )
   catch ex
     @error ex
   end
 
-  nothing
+  params
 end
 
 
 """
-    extract_request_params(req::HTTP.Request, params::Params) :: Nothing
+    extract_request_params(req::HTTP.Request, params::Params)
 
 Sets up the `params` key-value pairs corresponding to a JSON payload.
 """
-function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
-  ispayload(req) || return nothing
-
+function extract_request_params(params::Genie.Context.Params)
+  req = params[:REQUEST]
   req_body = String(req.body)
 
-  params.collection[PARAMS_RAW_PAYLOAD] = req_body
+  params.collection = ImmutableDict(
+    params.collection,
+    :RAW_PAYLOAD => req_body
+  )
 
   if request_type_is(req, :json) && content_length(req) > 0
     try
-      params.collection[PARAMS_JSON_PAYLOAD] = JSON3.read(req_body) |> Dict
-      params.collection[PARAMS_POST_KEY][PARAMS_JSON_PAYLOAD] = params.collection[PARAMS_JSON_PAYLOAD]
+      params.collection[:POST][:JSON_PAYLOAD] = (params.collection = ImmutableDict(params.collection, :JSON_PAYLOAD => JSON3.read(req_body)))
     catch ex
       @error ex
-      @warn "Setting params(:JSON_PAYLOAD) to Nothing"
-
-      params.collection[PARAMS_JSON_PAYLOAD] = nothing
     end
-  else
-    params.collection[PARAMS_JSON_PAYLOAD] = nothing
   end
 
-  nothing
+  params
 end
 
 
@@ -858,8 +845,8 @@ Gets the content-length of the request.
 function content_length(req::HTTP.Request) :: Int
   parse(Int, get(Genie.HTTPUtils.Dict(req), "content-length", "0"))
 end
-function content_length() :: Int
-  content_length(params(PARAMS_REQUEST_KEY))
+function content_length(params::Genie.Context.Params) :: Int
+  content_length(params[:REQUEST])
 end
 
 
@@ -874,8 +861,8 @@ function request_type_is(req::HTTP.Request, reqtype::Symbol) :: Bool
 
   request_type(req) == reqtype
 end
-function request_type_is(reqtype::Symbol) :: Bool
-  request_type_is(params(PARAMS_REQUEST_KEY), reqtype)
+function request_type_is(params::Genie.Context.Params, reqtype::Symbol) :: Bool
+  request_type_is(params[:REQUEST], reqtype)
 end
 
 
@@ -900,51 +887,6 @@ end
 
 
 """
-    nested_keys(k::String, v, params::Params) :: Nothing
-
-Utility function to process nested keys and set them up in `params`.
-"""
-function nested_keys(k::String, v, params::Params) :: Nothing
-  if occursin(".", k)
-    parts = split(k, ".", limit = 2)
-    nested_val_key = Symbol(parts[1])
-
-    if haskey(params.collection, nested_val_key) && isa(params.collection[nested_val_key], Dict)
-      ! haskey(params.collection[nested_val_key], Symbol(parts[2])) && (params.collection[nested_val_key][Symbol(parts[2])] = v)
-    elseif ! haskey(params.collection, nested_val_key)
-      params.collection[nested_val_key] = Dict()
-      params.collection[nested_val_key][Symbol(parts[2])] = v
-    end
-  end
-
-  nothing
-end
-
-
-"""
-    setup_base_params(req::Request, res::Response, params::Dict{Symbol,Any}) :: Dict{Symbol,Any}
-
-Populates `params` with default environment vars.
-"""
-function setup_base_params(req::HTTP.Request = HTTP.Request(), res::Union{HTTP.Response,Nothing} = req.response,
-                            params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Dict{Symbol,Any}
-  params[PARAMS_REQUEST_KEY]   = req
-  params[PARAMS_RESPONSE_KEY]  =  if res === nothing
-                                          req.response = HTTP.Response()
-                                          req.response
-                                        else
-                                          res
-                                        end
-  params[PARAMS_POST_KEY]      = Dict{Symbol,Any}()
-  params[PARAMS_GET_KEY]       = Dict{Symbol,Any}()
-
-  params[PARAMS_FILES]         = Dict{String,Genie.Input.HttpFile}()
-
-  params
-end
-
-
-"""
     to_response(action_result) :: Response
 
 Converts the result of invoking the controller action to a `Response`.
@@ -960,39 +902,20 @@ to_response(action_result::Any)::HTTP.Response = HTTP.Response(string(action_res
 
 
 """
-    function params()
-
-The collection containing the request variables collection.
-"""
-function params()
-  haskey(task_local_storage(), :__params) ? task_local_storage(:__params) : task_local_storage(:__params, setup_base_params())
-end
-function params(key)
-  params()[key]
-end
-function params(key, default)
-  get(params(), key, default)
-end
-function params!(key, value)
-  params()
-  task_local_storage(:__params)[key] = value
-end
-
-
-"""
     function query
 
 The collection containing the query request variables collection (GET params).
 """
-function query()
-  haskey(params(), PARAMS_GET_KEY) ? params(PARAMS_GET_KEY) : Dict()
+function query(params::Genie.Context.Params)
+  params.collection[:GET]
 end
-function query(key)
-  query()[key]
+function query(params::Genie.Context.Params, key)
+  query(params)[key]
 end
-function query(key, default)
-  get(query(), key, default)
+function query(params::Genie.Context.Params, key, default)
+  get(query(params), key, default)
 end
+
 
 
 """
@@ -1000,34 +923,34 @@ end
 
 The collection containing the POST request variables collection.
 """
-function post()
-  haskey(params(), PARAMS_POST_KEY) ? params(PARAMS_POST_KEY) : Dict()
+function post(params::Genie.Context.Params)
+  params[:POST]
 end
-function post(key)
-  post()[key]
+function post(params::Genie.Context.Params, key)
+  post(params)[key]
 end
-function post(key, default)
-  get(post(), key, default)
+function post(params::Genie.Context.Params, key, default)
+  get(post(params), key, default)
 end
 
 
 """
-    function request()
+    function request(params)
 
 The request object.
 """
-function request()
-  params(PARAMS_REQUEST_KEY)
+function request(params::Genie.Context.Params) :: HTTP.Request
+  params(:REQUEST)
 end
 
 
 """
-    function headers()
+    function headers(params)
 
 The current request's headers (as a Dict)
 """
-function headers()
-  Dict{String,String}(request().headers)
+function headers(params::Genie.Context.Params)::OrderedCollections.LittleDict
+  OrderedCollections.LittleDict(request(params).headers)
 end
 
 
@@ -1037,14 +960,11 @@ end
 
 Returns the content-type of the current request-response cycle.
 """
-function response_type(params::Dict{Symbol,T})::Symbol where {T}
-  get(params, :response_type, request_type(params[PARAMS_REQUEST_KEY]))
+function response_type(params_collection::ImmutableDict{Symbol,T})::Symbol where {T}
+  get(params_collection, :response_type, request_type(params_collection[:REQUEST]))
 end
-function response_type(params::Params) :: Symbol
+function response_type(params::Genie.Context.Params)::Symbol
   response_type(params.collection)
-end
-function response_type() :: Symbol
-  response_type(params())
 end
 
 
@@ -1053,8 +973,8 @@ end
 
 Checks if the content-type of the current request-response cycle matches `check`.
 """
-function response_type(check::Symbol, params::Dict{Symbol,T})::Bool where {T}
-  check == response_type(params)
+function response_type(check::Symbol, params_collection::ImmutableDict{Symbol,T})::Bool where {T}
+  check == response_type(params_collection)
 end
 
 
@@ -1066,7 +986,7 @@ const responsetype = response_type
 
 Appends `content` to the app's route file.
 """
-function append_to_routes_file(content::String) :: Nothing
+function append_to_routes_file(content::T)::Nothing where {T<:AbstractString}
   open(Genie.ROUTES_FILE_NAME, "a") do io
     write(io, "\n" * content)
   end
@@ -1080,7 +1000,7 @@ end
 
 Checks if the requested resource is a static file.
 """
-function is_static_file(resource::String) :: Bool
+function is_static_file(resource::T)::Bool where {T<:AbstractString}
   isfile(file_path(HTTP.URIs.URI(resource).path |> string))
 end
 
@@ -1090,7 +1010,7 @@ end
 
 Cleans up paths to resources.
 """
-function escape_resource_path(resource::String)
+function escape_resource_path(resource::T)::String where {T<:AbstractString}
   startswith(resource, '/') || return resource
   resource = resource[2:end]
 
@@ -1103,7 +1023,7 @@ end
 
 Checks if the requested resource is within the public/ folder.
 """
-function is_accessible_resource(resource::String; root = Genie.config.server_document_root) :: Bool
+function is_accessible_resource(resource::T; root = Genie.config.server_document_root)::Bool where {T<:AbstractString}
   startswith(abspath(resource), abspath(root)) # the file path includes the root path
 end
 
@@ -1117,7 +1037,7 @@ end
     serve_static_file(resource::String) :: Response
 Reads the static file and returns the content as a `Response`.
 """
-function serve_static_file(resource::String; root = Genie.config.server_document_root, download=false) :: HTTP.Response
+function serve_static_file(resource::T; root = Genie.config.server_document_root, download = false)::HTTP.Response where {T<:AbstractString}
   startswith(resource, '/') || (resource = "/$(resource)")
   resource_path = try
                     HTTP.URIs.URI(resource).path |> string
@@ -1133,7 +1053,7 @@ function serve_static_file(resource::String; root = Genie.config.server_document
 
   if (isfile(f) || isdir(f)) && ! is_accessible_resource(f; root)
     @error "401 Unauthorised Access $f"
-    return error(resource, response_mime(), Val(401))
+    return error(resource, "text/plain", Val(401))
   end
 
   if isfile(f)
@@ -1147,7 +1067,7 @@ function serve_static_file(resource::String; root = Genie.config.server_document
 
     if ! is_accessible_resource(bundled_path; root = bundles_path())
       @error "401 Unauthorised Access $f"
-      return error(resource, response_mime(), Val(401))
+      return error(resource, "text/plain", Val(401))
     end
 
     if isfile(bundled_path)
@@ -1156,27 +1076,29 @@ function serve_static_file(resource::String; root = Genie.config.server_document
   end
 
   @error "404 Not Found $f [$(abspath(f))]"
-  error(resource, response_mime(), Val(404))
+  error(resource, response_mime(params[:REQUEST]), Val(404))
 end
 
 
-function serve_file(f::String) :: HTTP.Response
+function serve_file(params::Genie.Context.Params, f::T)::HTTP.Response where {T<:AbstractString}
   fileheader = file_headers(f)
   if isfile(f)
     return HTTP.Response(200, fileheader, body = read(f, String))
   else
     @error "404 Not Found $f [$(abspath(f))]"
-    error(f, response_mime(), Val(404))
+    error(f, response_mime(params[:REQUEST]), Val(404))
   end
 end
-
+function serve_file(f::T)::HTTP.Response where {T<:AbstractString}
+  serve_file(f)
+end
 
 
 """
     download(filepath::String; root) :: HTTP.Response
 Download an existing file from the server.
 """
-function download(filepath::String; root)::HTTP.Response
+function download(params::Genie.Context.Params, filepath::T; root)::HTTP.Response where {T<:AbstractString}
   return serve_static_file(filepath; root=root, download=true)
 end
 
@@ -1184,15 +1106,17 @@ end
 
 """
     download(data::Vector{UInt8}, filename::String, mimetype) :: HTTP.Response
+
 Download file from generated stream of bytes
 """
-function download(data::Vector{UInt8}, filename::String, mimetype::String)::HTTP.Response
+function download(data::Vector{UInt8}, filename::T, mimetype::String)::HTTP.Response where {T<:AbstractString}
   if mimetype in values(MIMEs._ext2mime)
     return HTTP.Response(200,
         ("Content-Type" => mimetype, "Content-Disposition" => """attachment; filename=$(filename)"""),
         body=data)
   end
-  @error "415 Unsupported Media Type $mimetype"
+
+  error("415 Unsupported Media Type $mimetype")
 end
 
 
@@ -1207,16 +1131,29 @@ end
 
 
 """
-    response_mime()
+    response_mime(params_collection)
 
 Returns the MIME type of the response.
 """
-function response_mime(params::Dict{Symbol,Any} = params())
-  if isempty(get!(params, PARAMS_MIME_KEY, request_type(params[PARAMS_REQUEST_KEY])) |> string)
-    params[PARAMS_MIME_KEY] = request_type(params[PARAMS_REQUEST_KEY])
+function response_mime(params_collection::ImmutableDict)
+  if ! haskey(params_collection, :MIME)
+    params_collection = ImmutableDict(
+      params_collection,
+      :MIME => response_mime(params_collection[:REQUEST])
+    )
   end
 
-  params[PARAMS_MIME_KEY]
+  if isempty(params_collection[:MIME] |> string)
+    params_collection = ImmutableDict(
+      params_collection,
+      :MIME => request_type(params_collection[:REQUEST])
+    )
+  end
+
+  params_collection[:MIME]
+end
+function response_mime(req::HTTP.Request)
+  request_type(req)
 end
 
 

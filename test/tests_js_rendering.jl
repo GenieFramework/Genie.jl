@@ -10,7 +10,7 @@
     r = js(script)
 
     @test String(r.body) == "var app = new Vue({el: '#app', data: { message: 'Hello Vue!' }})"
-    @test r.headers[1]["Content-Type"] == "application/javascript; charset=utf-8"
+    @test Dict(r.headers[1])["Content-Type"] == "application/javascript; charset=utf-8"
 
     Genie.Renderer.clear_task_storage()
   end;
@@ -29,7 +29,7 @@
     r = js(script, data = data)
 
     @test String(r.body) == "var app = new Vue({el: '#app', data: {\"message\":\"Hi Vue\"}})\n"
-    @test r.headers[1]["Content-Type"] == "application/javascript; charset=utf-8"
+    @test Dict(r.headers[1])["Content-Type"] == "application/javascript; charset=utf-8"
 
     Genie.Renderer.clear_task_storage()
   end;

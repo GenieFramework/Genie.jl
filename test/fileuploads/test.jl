@@ -22,8 +22,6 @@ route("/", method = POST) do
 
   write("-" * params(:FILES)["fileupload"].name, IOBuffer(params(:FILES)["fileupload"].data))
 
-  @show params(:greeting)
-
   params(:greeting)
 end
 

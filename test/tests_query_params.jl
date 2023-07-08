@@ -7,8 +7,8 @@
   port = nothing
   port = rand(8500:8900)
 
-  route("/") do
-    isempty(query()) && return ""
+  route("/") do params
+    isempty(query(params)) && return ""
     isempty(params(:GET)) && return ""
 
     "error"
@@ -39,8 +39,8 @@ end
   port = nothing
   port = rand(8500:8900)
 
-  route("/") do
-    query(:a)
+  route("/") do params
+    query(params, :a)
   end
 
   server = up(port)
@@ -67,8 +67,8 @@ end
   port = nothing
   port = rand(8500:8900)
 
-  route("/") do
-    query(:x, "10") * query(:y, "20")
+  route("/") do params
+    query(params, :x, "10") * query(params, :y, "20")
   end
 
   server = up(port)
@@ -142,8 +142,8 @@ end
   port = nothing
   port = rand(8500:8900)
 
-  route("/") do
-    query(:x)
+  route("/") do params
+    query(params, :x)
   end
 
   server = up(port)
@@ -215,8 +215,8 @@ end
   port = nothing
   port = rand(8500:8900)
 
-  route("/") do
-    query(:x, "10") * join(query(Symbol("x[]"), "100"))
+  route("/") do params
+    query(params, :x, "10") * join(query(params, Symbol("x[]"), "100"))
   end
 
   server = up(port)

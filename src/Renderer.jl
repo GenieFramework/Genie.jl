@@ -2,7 +2,7 @@ module Renderer
 
 export respond, redirect, render
 
-import EzXML, FilePathsBase, HTTP, JuliaFormatter, Logging, Markdown, SHA
+import EzXML, FilePathsBase, HTTP, JuliaFormatter, Logging, Markdown, SHA, OrderedCollections
 import Genie
 
 const DEFAULT_CHARSET = "charset=utf-8"
@@ -19,7 +19,7 @@ const BUILD_NAME = "GenieViews"
 Collection of content-types mappings between user friendly short names and
 MIME types plus charset.
 """
-const CONTENT_TYPES = Dict{Symbol,String}(
+const CONTENT_TYPES = OrderedCollections.LittleDict{Symbol,String}(
   :html       => "text/html; $DEFAULT_CHARSET",
   :text       => "text/plain; $DEFAULT_CHARSET",
   :json       => "application/json; $DEFAULT_CHARSET",
@@ -34,7 +34,7 @@ const CONTENT_TYPES = Dict{Symbol,String}(
   :svg        => "image/svg+xml"
 )
 
-const MIME_TYPES = Dict(
+const MIME_TYPES = OrderedCollections.LittleDict(
   :html       => MIME"text/html",
   :text       => MIME"text/plain",
   :json       => MIME"application/json",
@@ -50,7 +50,7 @@ const MAX_FILENAME_LENGTH = 1_000
 push_content_type(s::Symbol, content_type::String, charset::String = DEFAULT_CHARSET) = (CONTENT_TYPES[s] = "$content_type; $charset")
 
 const ResourcePath = Union{String,Symbol}
-const HTTPHeaders = Dict{String,String}
+const HTTPHeaders = OrderedCollections.LittleDict{String,String}
 
 const Path = FilePathsBase.Path
 const FilePath = Union{FilePathsBase.PosixPath,FilePathsBase.WindowsPath}
@@ -63,6 +63,7 @@ end
 export FilePath, filepath, Path, @path_str
 export vars
 export WebRenderable
+
 
 init_task_local_storage() = (haskey(task_local_storage(), :__vars) || task_local_storage(:__vars, Dict{Symbol,Any}()))
 init_task_local_storage()
@@ -200,16 +201,6 @@ function redirect(location::String, code::Int = 302, headers::HTTPHeaders = HTTP
 end
 @noinline function redirect(named_route::Symbol, code::Int = 302, headers::HTTPHeaders = HTTPHeaders(); route_args...) :: HTTP.Response
   redirect(Genie.Router.linkto(named_route; route_args...), code, headers)
-end
-
-
-"""
-    hasrequested(content_type::Symbol) :: Bool
-
-Checks wheter or not the requested content type matches `content_type`.
-"""
-function hasrequested(content_type::Symbol) :: Bool
-  task_local_storage(:__params)[:response_type] == content_type
 end
 
 
@@ -469,14 +460,18 @@ end
 
 Configures the request, response, and params response content type based on the request and defaults.
 """
-function set_negotiated_content(req::HTTP.Request, res::HTTP.Response, params::Dict{Symbol,Any})
+function set_negotiated_content(req::HTTP.Request, res::HTTP.Response, params_collection::Base.ImmutableDict{Symbol,Any})
   req_type = Genie.Router.request_type(req)
 
-  params[:response_type] = req_type
-  params[Genie.Router.PARAMS_MIME_KEY] = get!(MIME_TYPES, params[:response_type], typeof(MIME(req_type)))
-  push!(res.headers, "Content-Type" => get!(CONTENT_TYPES, params[:response_type], string(MIME(req_type))))
+  params_collection = Base.ImmutableDict(
+    params_collection,
+    :response_type => req_type,
+    :MIME => get!(MIME_TYPES, req_type, typeof(MIME(req_type)))
+  )
 
-  req, res, params
+  push!(res.headers, "Content-Type" => get!(CONTENT_TYPES, params_collection[:response_type], string(MIME(req_type))))
+
+  req, res, params_collection
 end
 
 
@@ -485,62 +480,65 @@ end
 
 Computes the content-type of the `Response`, based on the information in the `Request`.
 """
-function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Dict{Symbol,Any}) :: Tuple{HTTP.Request,HTTP.Response,Dict{Symbol,Any}}
-  headers = Dict(res.headers)
+function negotiate_content(req::HTTP.Request, res::HTTP.Response, params_collection::Base.ImmutableDict{Symbol,Any}) :: Tuple{HTTP.Request,HTTP.Response,Base.ImmutableDict{Symbol,Any}}
+  headers = OrderedCollections.LittleDict(res.headers)
 
-  if haskey(params, :response_type) && in(Symbol(params[:response_type]), collect(keys(CONTENT_TYPES)) )
-    params[:response_type] = Symbol(params[:response_type])
-    params[Genie.Router.PARAMS_MIME_KEY] = MIME_TYPES[params[:response_type]]
-    headers["Content-Type"] = CONTENT_TYPES[params[:response_type]]
+  if haskey(params_collection, :response_type) && in(Symbol(params_collection[:response_type]), collect(keys(CONTENT_TYPES)) )
+    params_collection = Base.ImmutableDict(
+      params_collection,
+      :response_type => Symbol(params_collection[:response_type]),
+      :MIME => MIME_TYPES[Symbol(params_collection[:response_type])]
+    )
+    headers["Content-Type"] = CONTENT_TYPES[params_collection[:response_type]]
 
     res.headers = [k for k in headers]
 
-    return req, res, params
+    return req, res, params_collection
   end
 
   negotiation_header = haskey(headers, "Accept") ? "Accept" :
                         ( haskey(headers, "Content-Type") ? "Content-Type" : "" )
 
   if isempty(negotiation_header)
-    req, res, params = set_negotiated_content(req, res, params)
+    req, res, params_collection = set_negotiated_content(req, res, params_collection)
 
-    return req, res, params
+    return req, res, params_collection
   end
 
   accept_parts = split(headers[negotiation_header], ";")
 
   if isempty(accept_parts)
-    req, res, params = set_negotiated_content(req, res, params)
+    req, res, params_collection = set_negotiated_content(req, res, params_collection)
 
-    return req, res, params
+    return req, res, params_collection
   end
 
   accept_order_parts = split(accept_parts[1], ",")
 
   if isempty(accept_order_parts)
-    req, res, params = set_negotiated_content(req, res, params)
+    req, res, params_collection = set_negotiated_content(req, res, params_collection)
 
-    return req, res, params
+    return req, res, params_collection
   end
 
   for mime in accept_order_parts
     if occursin('/', mime)
       content_type = split(mime, '/')[2] |> lowercase |> Symbol
       if haskey(CONTENT_TYPES, content_type)
-        params[:response_type] = content_type
-        params[Genie.Router.PARAMS_MIME_KEY] = MIME_TYPES[params[:response_type]]
-        headers["Content-Type"] = CONTENT_TYPES[params[:response_type]]
+        params_collection[:response_type] = content_type
+        params_collection[:MIME] = MIME_TYPES[params_collection[:response_type]]
+        headers["Content-Type"] = CONTENT_TYPES[params_collection[:response_type]]
 
         res.headers = [k for k in headers]
 
-        return req, res, params
+        return req, res, params_collection
       end
     end
   end
 
-  req, res, params = set_negotiated_content(req, res, params)
+  req, res, params_collection = set_negotiated_content(req, res, params_collection)
 
-  return req, res, params
+  return req, res, params_collection
 end
 
 push!(Genie.Router.content_negotiation_hooks, negotiate_content)

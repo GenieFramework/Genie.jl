@@ -190,19 +190,19 @@ julia> Genie.serve("public", 8888, async = false, verbose = true)
 [ Info: Accept (1):  🔗    0↑     0↓    1s 127.0.0.1:8888:8888 ≣16
 ```
 """
-function serve(path::String = pwd(), params...; kwparams...)
+function serve(path::String = pwd(), args...; kwargs...)
   path = abspath(path)
 
   Genie.config.server_document_root = path
 
-  Genie.Router.route("/") do
+  Genie.Router.route("/") do _
     Genie.Router.serve_static_file(path; root = path)
   end
-  Genie.Router.route(".*") do
-    Genie.Router.serve_static_file(Genie.Router.params(:REQUEST).target; root = path)
+  Genie.Router.route(".*") do _
+    Genie.Router.serve_static_file(params[:REQUEST].target; root = path)
   end
 
-  up(params...; kwparams...)
+  up(args...; kwargs...)
 end
 
 
@@ -309,7 +309,7 @@ function setup_http_listener(req::HTTP.Request, res::HTTP.Response = HTTP.Respon
         hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, Genie.Exceptions.RuntimeException)
 
       @error ex.captured.ex
-      return Genie.Router.error(ex.captured.ex.code, ex.captured.ex.message, Genie.Router.response_mime(),
+      return Genie.Router.error(ex.captured.ex.code, ex.captured.ex.message, Genie.Router.response_mime(req),
                               error_info = string(ex.captured.ex.code, " ", ex.captured.ex.info))
     end
 
@@ -320,7 +320,7 @@ function setup_http_listener(req::HTTP.Request, res::HTTP.Response = HTTP.Respon
                 "The error has been logged and we'll look into it ASAP." :
                 error_message
 
-    Genie.Router.error(message, Genie.Router.response_mime(), Val(500))
+    Genie.Router.error(message, Genie.Router.response_mime(req), Val(500))
   end
 end
 
