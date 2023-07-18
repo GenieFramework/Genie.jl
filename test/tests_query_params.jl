@@ -9,7 +9,7 @@
 
   route("/") do params
     isempty(query(params)) && return ""
-    isempty(params(:GET)) && return ""
+    isempty(params(:query)) && return ""
 
     "error"
   end

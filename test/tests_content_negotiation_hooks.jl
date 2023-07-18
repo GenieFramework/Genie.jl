@@ -5,8 +5,8 @@
   original_message = "Hello!"
 
   function hook(req, res, params)
-    if params[:ROUTE] !== nothing
-      params[:ROUTE].action = (_::Params) -> custom_message
+    if params[:route] !== nothing
+      params[:route].action = (_::Params) -> custom_message
     end
 
     req, res, params

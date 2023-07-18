@@ -200,7 +200,7 @@ function redirect(location::String, code::Int = 302, headers::HTTPHeaders = HTTP
   WebRenderable("Redirecting you to $location", :html, code, headers) |> respond
 end
 @noinline function redirect(named_route::Symbol, code::Int = 302, headers::HTTPHeaders = HTTPHeaders(); route_args...) :: HTTP.Response
-  redirect(Genie.Router.linkto(named_route; route_args...), code, headers)
+  redirect(Genie.Router.to_url(named_route; route_args...), code, headers)
 end
 
 
@@ -223,7 +223,7 @@ end
 
 
 function respond(body::String, params::Dict{Symbol,T})::HTTP.Response where {T}
-  r = params[:RESPONSE]
+  r = params[:response]
   r.data = body
 
   r |> respond
@@ -466,7 +466,7 @@ function set_negotiated_content(req::HTTP.Request, res::HTTP.Response, params_co
   params_collection = Base.ImmutableDict(
     params_collection,
     :response_type => req_type,
-    :MIME => get!(MIME_TYPES, req_type, typeof(MIME(req_type)))
+    :mime => get!(MIME_TYPES, req_type, typeof(MIME(req_type)))
   )
 
   push!(res.headers, "Content-Type" => get!(CONTENT_TYPES, params_collection[:response_type], string(MIME(req_type))))
@@ -487,7 +487,7 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params_collect
     params_collection = Base.ImmutableDict(
       params_collection,
       :response_type => Symbol(params_collection[:response_type]),
-      :MIME => MIME_TYPES[Symbol(params_collection[:response_type])]
+      :mime => MIME_TYPES[Symbol(params_collection[:response_type])]
     )
     headers["Content-Type"] = CONTENT_TYPES[params_collection[:response_type]]
 
@@ -525,8 +525,11 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params_collect
     if occursin('/', mime)
       content_type = split(mime, '/')[2] |> lowercase |> Symbol
       if haskey(CONTENT_TYPES, content_type)
-        params_collection[:response_type] = content_type
-        params_collection[:MIME] = MIME_TYPES[params_collection[:response_type]]
+        params_collection = Base.ImmutableDict(
+          params_collection,
+          :response_type => content_type,
+          :mime => MIME_TYPES[params_collection[:response_type]]
+        )
         headers["Content-Type"] = CONTENT_TYPES[params_collection[:response_type]]
 
         res.headers = [k for k in headers]

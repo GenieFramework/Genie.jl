@@ -199,7 +199,7 @@ function serve(path::String = pwd(), args...; kwargs...)
     Genie.Router.serve_static_file(path; root = path)
   end
   Genie.Router.route(".*") do _
-    Genie.Router.serve_static_file(params[:REQUEST].target; root = path)
+    Genie.Router.serve_static_file(params[:request].target; root = path)
   end
 
   up(args...; kwargs...)

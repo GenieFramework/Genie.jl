@@ -7,7 +7,7 @@
     port = rand(8500:8900)
 
     route("/") do params
-      params(:x)
+      query(params, :x)
     end
 
     server = up(port)
@@ -35,7 +35,7 @@
     port = rand(8500:8900)
 
     route("/") do params
-      params(:x)
+      query(params, :x)
     end
 
     server = up(port)
@@ -63,7 +63,7 @@
     port = rand(8500:8900)
 
     route("/") do params
-      params(:x)
+      query(params, :x)
     end
 
     server = up(port)
@@ -91,7 +91,7 @@
     port = rand(8500:8900)
 
     route("/") do params
-      params(:x)
+      query(params, :x)
     end
 
     server = up(port)

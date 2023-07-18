@@ -7,7 +7,7 @@
   end
 
   route("/", method = POST) do params
-    params(:greeting)
+    post(params, :greeting)
   end
 
   route("/data", method = POST) do params

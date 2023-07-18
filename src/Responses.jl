@@ -10,7 +10,7 @@ export getresponse, getheaders, setheaders, setheaders!, getstatus, setstatus, s
 
 
 function getresponse(params::Genie.Context.Params) :: HTTP.Response
-  params[:RESPONSE]
+  params[:response]
 end
 
 
@@ -18,7 +18,7 @@ function getheaders(res::HTTP.Response) :: Pair{String,String}
   res.headers
 end
 function getheaders(params::Genie.Context.Params) :: Pair{String,String}
-  getheaders(params[:RESPONSE])
+  getheaders(params[:response])
 end
 
 
@@ -28,7 +28,7 @@ function setheaders!(res::HTTP.Response, headers::D)::HTTP.Response where D<:Abs
   res
 end
 function setheaders(params::Genie.Context.Params, headers::D)::HTTP.Response where D<:AbstractDict
-  setheaders!(params[:RESPONSE], headers)
+  setheaders!(params[:response], headers)
 end
 function setheaders(params::Genie.Context.Params, header::Pair{String,String}) :: HTTP.Response
   setheaders(params, Dict(header))

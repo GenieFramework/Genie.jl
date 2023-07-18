@@ -3,7 +3,7 @@
   using Genie, HTTP
 
   route("/options", method = OPTIONS) do params::Params
-    push!(params(:RESPONSE).headers, "X-Foo-Bar" => "Baz")
+    push!(params(:response).headers, "X-Foo-Bar" => "Baz")
   end
 
   port = nothing

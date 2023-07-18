@@ -20,7 +20,7 @@ Processes an `application/json` `POST` request.
 If it fails to successfully parse the `JSON` data it returns `nothing`. The original payload can still be accessed invoking `rawpayload(params)`
 """
 function jsonpayload(params::Genie.Context.Params)
-  params.collection[:JSON_PAYLOAD]
+  params.collection[:json]
 end
 
 
@@ -30,7 +30,7 @@ end
 Returns the raw `POST` payload as a `String`.
 """
 function rawpayload(params::Genie.Context.Params) :: String
-  params.collection[:RAW_PAYLOAD]
+  params.collection[:raw]
 end
 
 
@@ -40,7 +40,7 @@ end
 Collection of form uploaded files.
 """
 function filespayload(params::Genie.Context.Params)
-  params.collection[:FILES]
+  params.collection[:files]
 end
 
 
@@ -81,7 +81,7 @@ end
 A dict representing the POST variables payload of the request (corresponding to a `form-data` request)
 """
 function postpayload(params::Genie.Context.Params)
-  params.collection[:POST]
+  params.collection[:post]
 end
 
 
@@ -91,7 +91,7 @@ end
 A dict representing the GET/query variables payload of the request (the part corresponding to `?foo=bar&baz=moo`)
 """
 function getpayload(params::Genie.Context.Params)
-  params.collection[:GET]
+  params.collection[:query]
 end
 
 
@@ -102,7 +102,7 @@ Returns the raw HTTP.Request object associated with the request. If no request i
 request/response cycle) returns `nothing`.
 """
 function request(params::Genie.Context.Params) :: Union{HTTP.Request,Nothing}
-  params.collection[:REQUEST]
+  params.collection[:request]
 end
 
 
@@ -112,7 +112,7 @@ end
 Returns the `Route` object which was matched for the current request or `noting` if no route is available.
 """
 function matchedroute(params::Genie.Context.Params) :: Union{Genie.Router.Route,Nothing}
-  params.collection[:ROUTE]
+  params.collection[:route]
 end
 
 
@@ -122,7 +122,7 @@ end
 Returns the `Channel` object which was matched for the current request or `nothing` if no channel is available.
 """
 function matchedchannel(params::Genie.Context.Params) :: Union{Genie.Router.Channel,Nothing}
-  params.collection[:CHANNEL]
+  params.collection[:channel]
 end
 
 
@@ -132,7 +132,7 @@ end
 The web sockets client for the current request or nothing if not available.
 """
 function wsclient(params::Genie.Context.Params) :: Union{HTTP.WebSockets.WebSocket,Nothing}
-  params.collection[:WS_CLIENT]
+  params.collection[:wsclient]
 end
 
 
@@ -142,7 +142,7 @@ end
 The web sockets client for the current request.
 """
 function wtclient(params::Genie.Context.Params) :: UInt
-  params.collection[:WT_CLIENT] |> hash
+  params.collection[:wtclient] |> hash
 end
 
 
@@ -157,7 +157,7 @@ end
 Case insensitive search for the header `key` in the request headers. If `key` is not found, `default` is returned.
 """
 function findheader(params::Genie.Context.Params, key::T, default = nothing)::Union{T,Nothing} where T<:AbstractString
-  for (k, v) in getheaders(params[:REQUEST])
+  for (k, v) in getheaders(params[:request])
     if lowercase(k) === lowercase(key)
       return v
     end

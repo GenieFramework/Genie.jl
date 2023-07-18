@@ -16,11 +16,11 @@ route("/") do
 end
 
 route("/", method = POST) do
-  for (name,file) in params(:FILES)
+  for (name,file) in params(:files)
     write(file.name, IOBuffer(file.data))
   end
 
-  write("-" * params(:FILES)["fileupload"].name, IOBuffer(params(:FILES)["fileupload"].data))
+  write("-" * params(:files)["fileupload"].name, IOBuffer(params(:files)["fileupload"].data))
 
   params(:greeting)
 end

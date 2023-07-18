@@ -1190,10 +1190,7 @@ function serve_error_file(error_code::Int, error_message::String = ""; error_inf
       error_page = replace(error_page, "<error_description/>"=>split(error_message, "\n")[1])
 
       error_message = if Genie.Configuration.isdev()
-                      """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                                     $("\n" ^ 3)""" *
-                      """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(Genie.Router.params()))                        $("\n" ^ 3)""" *
-                      """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Genie.Router.named_routes() |> Dict))  $("\n" ^ 3)""" *
-                      """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$ENV                                               $("\n" ^ 1)"""
+                        """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message$("\n" ^ 3)"""
       else
         ""
       end

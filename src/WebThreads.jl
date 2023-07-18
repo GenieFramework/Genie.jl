@@ -304,10 +304,10 @@ function pull(wt::UInt, channel::ChannelName)
   output
 end
 
-function push(wt::UInt, channel::ChannelName, message::String)
+function push(params::Genie.Router.Params, wt::UInt, channel::ChannelName, message::String)
   timestamp_client(wt)
 
-  Genie.Router.route_ws_request(Genie.Router.params(Genie.Router.PARAMS_REQUEST_KEY), message, wt)
+  Genie.Router.route_ws_request(params[:request], message, wt)
 end
 
 end
