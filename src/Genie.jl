@@ -14,6 +14,7 @@ include("constants.jl")
 
 import Sockets
 import Logging
+import Base.Threads: @spawn
 
 using Reexport
 using Revise
@@ -102,7 +103,7 @@ function loadapp(path::String = "."; autostart::Bool = false, dbadapter::Union{N
 
   if isfile(joinpath(path, Genie.BOOTSTRAP_FILE_NAME))
     Revise.includet(context, joinpath(path, Genie.BOOTSTRAP_FILE_NAME))
-    Genie.config.watch && @async Genie.Watch.watch(path)
+    Genie.config.watch && @spawn Genie.Watch.watch(path)
     autostart && (Core.eval(context, :(up())))
   elseif isfile(joinpath(path, Genie.ROUTES_FILE_NAME)) || isfile(joinpath(path, Genie.APP_FILE_NAME))
     genie(context = context) # load the app
@@ -163,7 +164,7 @@ function genie(; context = @__MODULE__) :: Union{Nothing,Sockets.TCPServer}
   EARLYBINDING = Loader.loadenv(context = context)
   Secrets.load(context = context)
   Loader.load(context = context)
-  Genie.config.watch && @async Watch.watch(pwd())
+  Genie.config.watch && @spawn Watch.watch(pwd())
   run(server = EARLYBINDING)
 
   EARLYBINDING

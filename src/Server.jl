@@ -7,6 +7,7 @@ using HTTP, Sockets, HTTP.WebSockets
 import Millboard, Distributed, Logging
 import Genie
 import Distributed
+import Base.Threads: @spawn
 
 
 """
@@ -99,7 +100,7 @@ function up(port::Int,
   if Genie.config.websockets_server !== nothing && port !== ws_port
     print_server_status("Web Sockets server starting at $host:$ws_port")
 
-    new_server.websockets = @async HTTP.listen(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver,
+    new_server.websockets = @spawn HTTP.listen(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver,
                                                 reuseaddr = reuseaddr, http_kwargs...) do http::HTTP.Stream
       if HTTP.WebSockets.isupgrade(http.message)
         HTTP.WebSockets.upgrade(http) do ws
@@ -131,7 +132,7 @@ function up(port::Int,
 
   status = if async
     print_server_status("Web Server starting at $server_url")
-    @async command()
+    @spawn command()
   else
     print_server_status("Web Server starting at $server_url - press Ctrl/Cmd+C to stop the server.")
     command()
@@ -242,8 +243,8 @@ end
 
 
 function down(server::ServersCollection; webserver::Bool = true, websockets::Bool = true) :: ServersCollection
-  webserver && (@async Base.throwto(server.webserver, InterruptException()))
-  isnothing(websockets) || (websockets && (@async Base.throwto(server.websockets, InterruptException())))
+  webserver && (@spawn Base.throwto(server.webserver, InterruptException()))
+  isnothing(websockets) || (websockets && (@spawn Base.throwto(server.websockets, InterruptException())))
 
   server
 end
