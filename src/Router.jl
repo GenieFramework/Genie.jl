@@ -932,17 +932,17 @@ function extract_get_params(uri::HTTP.URIs.URI, params::Genie.Context.Params)
 
         # collect values like x[] in an array
         if endswith(string(k), "[]")
-          (haskey(params.collection[:query], k) && isa(params.collection[:query][k], Vector)) || (params.collection[:query][k] = String[])
-          push!(params.collection[:query][k], v)
+          (haskey(params[:query], k) && isa(params[:query][k], Vector)) || (params[:query][k] = String[])
+          push!(params[:query][k], v)
         else
-          params.collection[:query][k] = v
+          params[:query][k] = v
         end
       end
 
     else # no array values
       for (k,v) in HTTP.URIs.queryparams(uri)
         k = Symbol(k)
-        params.collection[:query][k] = v
+        params[:query][k] = v
       end
     end
   end
@@ -989,7 +989,7 @@ function extract_request_params(params::Genie.Context.Params)
 
   if request_type_is(req, :json) && content_length(req) > 0
     try
-      params.collection[:post][:json] = (params.collection = ImmutableDict(params.collection, :json => JSON3.read(req_body)))
+      params[:post][:json] = (params.collection = ImmutableDict(params.collection, :json => JSON3.read(req_body)))
     catch ex
       @error ex
     end
@@ -1090,7 +1090,7 @@ to_response(action_result::Any)::HTTP.Response = HTTP.Response(string(action_res
 The collection containing the query request variables collection (GET params).
 """
 function query(params::Genie.Context.Params)
-  params.collection[:query]
+  params[:query]
 end
 function query(params::Genie.Context.Params, key)
   query(params)[key]
@@ -1314,28 +1314,26 @@ end
 
 
 """
-    response_mime(params_collection)
+    response_mime(params)
 
 Returns the MIME type of the response.
 """
 function response_mime(params::Params)
-  params_collection = params.collection
-
-  if params_collection[:mime] === nothing
-    params_collection = ImmutableDict(
-      params_collection,
-      :mime => response_mime(params_collection[:request])
+  if params.collection[:mime] === nothing
+    params.collection = ImmutableDict(
+      params.collection,
+      :mime => response_mime(params[:request])
     )
   end
 
-  if isempty(params_collection[:mime] |> string)
-    params_collection = ImmutableDict(
-      params_collection,
-      :mime => request_type(params_collection[:request])
+  if isempty(params[:mime] |> string)
+    params.collection = ImmutableDict(
+      params.collection,
+      :mime => request_type(params[:request])
     )
   end
 
-  params_collection[:mime]
+  params[:mime]
 end
 function response_mime(req::HTTP.Request)
   request_type(req)
