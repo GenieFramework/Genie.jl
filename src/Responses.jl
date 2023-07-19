@@ -6,7 +6,7 @@ module Responses
 import Genie, Genie.Router, Genie.Context
 import HTTP, OrderedCollections
 
-export getresponse, getheaders, setheaders, setheaders!, getstatus, setstatus, setstatus!, getbody, setbody, setbody!
+export getresponse, getheaders, setheaders, setheaders!, getstatus, setstatus, getbody, setbody
 
 
 function getresponse(params::Genie.Context.Params) :: HTTP.Response
@@ -14,11 +14,8 @@ function getresponse(params::Genie.Context.Params) :: HTTP.Response
 end
 
 
-function getheaders(res::HTTP.Response) :: Pair{String,String}
-  res.headers
-end
 function getheaders(params::Genie.Context.Params) :: Pair{String,String}
-  getheaders(params[:response])
+  params[:response].headers
 end
 
 
@@ -27,50 +24,39 @@ function setheaders!(res::HTTP.Response, headers::D)::HTTP.Response where D<:Abs
 
   res
 end
-function setheaders(params::Genie.Context.Params, headers::D)::HTTP.Response where D<:AbstractDict
-  setheaders!(params[:response], headers)
+function setheaders(params::Genie.Context.Params, headers::D)::Params where D<:AbstractDict
+  params[:response] = setheaders!(params[:response], headers)
+  params
 end
-function setheaders(params::Genie.Context.Params, header::Pair{String,String}) :: HTTP.Response
-  setheaders(params, Dict(header))
+function setheaders(params::Genie.Context.Params, header::Pair{String,String}) :: Params
+  params[:response] = setheaders(params, Dict(header))
+  params
 end
-function setheaders(params::Genie.Context.Params, headers::Vector{Pair{String,String}}) :: HTTP.Response
-  setheaders(params, Dict(headers...))
+function setheaders(params::Genie.Context.Params, headers::Vector{Pair{String,String}}) :: Params
+  params[:response] = setheaders(params, Dict(headers...))
+  params
 end
 
 
-function getstatus(res::HTTP.Response) :: Int
-  res.status
-end
 function getstatus(params::Genie.Context.Params) :: Int
-  getstatus(getresponse(params))
+  params[:res].status
 end
 
 
-function setstatus!(res::HTTP.Response, status::Int) :: HTTP.Response
-  res.status = status
-
-  res
-end
-function setstatus(params::Genie.Context.Params, status::Int) :: HTTP.Response
-  setstatus!(getresponse(params), status)
+function setstatus(params::Genie.Context.Params, status::Int) :: Params
+  params[:res].status = status
+  params
 end
 
 
-function getbody(res::HTTP.Response) :: String
-  String(res.body)
-end
 function getbody(params::Genie.Context.Params) :: String
-  getbody(getresponse(params))
+  String(params[:res].body)
 end
 
 
-function setbody!(res::HTTP.Response, body::String) :: HTTP.Response
-  res.body = collect(body)
-
-  res
-end
-function setbody(params::Genie.Context.Params, body::String) :: HTTP.Response
-  setbody!(getresponse(params), body)
+function setbody(params::Genie.Context.Params, body::String) :: Params
+  params[:res].body = collect(body)
+  params
 end
 
 end

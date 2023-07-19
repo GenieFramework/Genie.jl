@@ -30,9 +30,9 @@ include("FileTemplates.jl")
 include("Toolbox.jl")
 include("Generator.jl")
 include("Encryption.jl")
-include("Cookies.jl")
 include("Input.jl")
 include("Context.jl")
+include("Cookies.jl")
 include("Router.jl")
 include("Renderer.jl")
 include("WebChannels.jl")
@@ -47,7 +47,7 @@ include("Logger.jl")
 
 # === #
 
-export up, down
+export up, down, loadapp, go, 🧞
 @reexport using .Router, .Context
 
 const assets_config = Genie.Assets.assets_config
@@ -115,6 +115,7 @@ function loadapp(path::String = "."; autostart::Bool = false, dbadapter::Union{N
 end
 
 const go = loadapp
+const 🧞 = loadapp
 
 
 """

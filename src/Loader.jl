@@ -83,24 +83,21 @@ end
 
 
 function print_banner()
-  printstyled("""
-
-
- ██████╗ ███████╗███╗   ██╗██╗███████╗    ███████╗
-██╔════╝ ██╔════╝████╗  ██║██║██╔════╝    ██╔════╝
-██║  ███╗█████╗  ██╔██╗ ██║██║█████╗      ███████╗
-██║   ██║██╔══╝  ██║╚██╗██║██║██╔══╝      ╚════██║
-╚██████╔╝███████╗██║ ╚████║██║███████╗    ███████║
- ╚═════╝ ╚══════╝╚═╝  ╚═══╝╚═╝╚══════╝    ╚══════╝
+  printstyled(raw"""
+   ______              _          _____
+  / ____/___   ____   (_)___     / ___/
+ / / __ / _ \ / __ \ / // _ \   / __ \
+/ /_/ //  __// / / // //  __/  / /_/ /
+\____/ \___//_/ /_//_/ \___/   \____/
 
 """, color = :light_black, bold = true)
 
-  printstyled("| Website  https://genieframework.com\n", color = :light_black, bold = true)
-  printstyled("| GitHub   https://github.com/genieframework\n", color = :light_black, bold = true)
-  printstyled("| Docs     https://genieframework.com/docs\n", color = :light_black, bold = true)
-  printstyled("| Discord  https://discord.com/invite/9zyZbD6J7H\n", color = :light_black, bold = true)
-  printstyled("| Twitter  https://twitter.com/essenciary\n\n", color = :light_black, bold = true)
-  printstyled("Active env: $(ENV["GENIE_ENV"] |> uppercase)\n\n", color = :light_blue, bold = true)
+  printstyled("| Website  https://genieframework.com\n", color = :light_black, bold = false)
+  printstyled("| GitHub   https://github.com/genieframework\n", color = :light_black, bold = false)
+  printstyled("| Docs     https://genieframework.com/docs\n", color = :light_black, bold = false)
+  printstyled("| Discord  https://discord.com/invite/9zyZbD6J7H\n", color = :light_black, bold = false)
+  printstyled("| Twitter  https://twitter.com/essenciary\n\n", color = :light_black, bold = false)
+  printstyled("Active env: $(ENV["GENIE_ENV"] |> uppercase)\n\n", color = :light_blue, bold = false)
 
   nothing
 end
@@ -262,7 +259,7 @@ function sort_load_order(rootdir, lsdir::Vector{String})
   autoloadfilepath = isfile(joinpath(pwd(), rootdir, Genie.config.autoload_file)) ? joinpath(pwd(), rootdir, Genie.config.autoload_file) : return lsdir
   autoloadorder = open(f -> ([line for line in eachline(f)]), autoloadfilepath)
   fn_loadorder = []
-  
+
   for file in autoloadorder
     if file in lsdir
       push!(fn_loadorder, file)

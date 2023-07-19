@@ -149,7 +149,7 @@ ispayload(req::HTTP.Request) = req.method in [POST, PUT, PATCH]
 
 True if the request can carry a payload - that is, it's a `POST`, `PUT`, or `PATCH` request
 """
-ispayload(params::Genie.Context.Params) = ispayload(params.collection[:request])
+ispayload(params::Genie.Context.Params) = ispayload(params[:request])
 
 
 """
@@ -161,7 +161,16 @@ function route_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
   params = Params(req, res)
 
   for f in unique(content_negotiation_hooks)
-    req, res, params.collection = f(req, res, params.collection)
+    try
+      req, res, params = f(req, res, params)
+    catch ex
+      @error ex
+      Genie.Configuration.isdev() && rethrow(ex)
+
+      if isa(ex, Genie.Exceptions.ExceptionalResponse)
+        return ex.response
+      end
+    end
   end
 
   if is_static_file(req.target) && req.method === GET
@@ -170,20 +179,29 @@ function route_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
     elseif Genie.config.server_handle_static_files
       return serve_static_file(req.target)
     else
-      return error(req.target, response_mime(params.collection), Val(404))
+      return error(req.target, response_mime(params), Val(404))
     end
   end
 
   Genie.Configuration.isdev() && Revise.revise()
 
   for f in unique(pre_match_hooks)
-    req, res, params.collection = f(req, res, params.collection)
+    try
+      req, res, params = f(req, res, params)
+    catch ex
+      @error ex
+      Genie.Configuration.isdev() && rethrow(ex)
+
+      if isa(ex, Genie.Exceptions.ExceptionalResponse)
+        return ex.response
+      end
+    end
   end
 
   matched_route = match_routes(req, res, params)
 
   res = matched_route === nothing ?
-    error(req.target, response_mime(params.collection), Val(404)) :
+    error(req.target, response_mime(params), Val(404)) :
       run_route(params, matched_route)
 
   if res.status === 404 && req.method === OPTIONS
@@ -195,7 +213,16 @@ function route_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
   end
 
   for f in unique(pre_response_hooks)
-    req, res, params.collection = f(req, res, params.collection)
+    try
+      req, res, params = f(req, res, params)
+    catch ex
+      @error ex
+      Genie.Configuration.isdev() && rethrow(ex)
+
+      if isa(ex, Genie.Exceptions.ExceptionalResponse)
+        return ex.response
+      end
+    end
   end
 
   log_response(req, res)
@@ -483,7 +510,10 @@ end
 """
 Generates the HTTP link corresponding to `route_name` using the parameters in `d`.
 """
-function to_url(params::Genie.Context.Params, route_name::Symbol, d::OrderedCollections.LittleDict; basepath::String = basepath,
+function to_url(  route_name::Symbol,
+                  d::OrderedCollections.LittleDict;
+                  params::Genie.Context.Params = Genie.Context.Params(),
+                  basepath::String = basepath,
                   preserve_query::Bool = true,
                   extra_query::OrderedCollections.LittleDict = OrderedCollections.LittleDict())::String
   route = get_route(route_name)
@@ -544,9 +574,13 @@ end
 """
 Generates the HTTP link corresponding to `route_name` using the parameters in `route_params`.
 """
-function to_url(params::Genie.Context.Params, route_name::Symbol; basepath::String = Genie.config.base_path, preserve_query::Bool = true,
-                  extra_query::OrderedCollections.LittleDict = OrderedCollections.LittleDict(), route_params...) :: String
-  to_url(params, route_name, route_params_to_dict(route_params); basepath = basepath, preserve_query = preserve_query, extra_query = extra_query)
+function to_url(  route_name::Symbol;
+                  params::Genie.Context.Params = Genie.Context.Params(),
+                  basepath::String = Genie.config.base_path,
+                  preserve_query::Bool = true,
+                  extra_query::OrderedCollections.LittleDict = OrderedCollections.LittleDict(),
+                  route_params...) :: String
+  to_url(route_name, route_params_to_dict(route_params); params, basepath, preserve_query, extra_query)
 end
 
 
@@ -604,7 +638,7 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Genie.Conte
     ROUTE_CATCH_ALL = "/*"
     occursin(regex_route, string(uri.path)) || parsed_route == ROUTE_CATCH_ALL || continue
 
-    params.collection = Genie.Context.setup_base_params(req, res, params.collection)
+    params = Genie.Context.setup_base_params(req, res, params)
 
     occursin("?", req.target) && (params = extract_get_params(HTTP.URIs.URI(req.target), params))
 
@@ -621,7 +655,16 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Genie.Conte
     )
 
     for f in unique(content_negotiation_hooks)
-      req, res, params.collection = f(req, res, params.collection)
+      try
+        req, res, params = f(req, res, params)
+      catch ex
+        @error ex
+        Genie.Configuration.isdev() && rethrow(ex)
+
+        if isa(ex, Genie.Exceptions.ExceptionalResponse)
+          return ex.response
+        end
+      end
     end
 
     return r
@@ -636,14 +679,30 @@ function run_route(params::Genie.Context.Params, r::Route) :: HTTP.Response
     # prefer the method that takes params
     for m in methods(r.action)
       if m.sig.parameters |> length === 2
-        return r.action(params) |> to_response # Base.invokelatest(r.action, params) |> to_response
+        try
+          return r.action(params) |> to_response
+        catch ex
+          if isa(ex, MethodError) && string(ex.f) == string(r.action)
+            return Base.invokelatest(r.action, params) |> to_response
+          else
+            rethrow(ex)
+          end
+        end
       end
     end
 
     # fallback to the method that does not take params
     for m in methods(r.action)
       if m.sig.parameters |> length === 1
-        return r.action() |> to_response # Base.invokelatest(r.action) |> to_response
+        try
+          return r.action() |> to_response
+        catch ex
+          if isa(ex, MethodError) && string(ex.f) == string(r.action)
+            return Base.invokelatest(r.action) |> to_response
+          else
+            rethrow(ex)
+          end
+        end
       end
     end
 
@@ -704,8 +763,7 @@ function match_channels(req, msg::String, ws_client, params::Genie.Context.Param
 
     (! occursin(regex_channel, uri)) && continue
 
-    params.collection = setup_base_params(req, nothing, params.collection)
-    task_local_storage(:__params, params.collection)
+    params = setup_base_params(req, nothing, params)
 
     extract_uri_params(uri, regex_channel, param_names, param_types, params) || continue
 
@@ -874,7 +932,6 @@ function extract_get_params(uri::HTTP.URIs.URI, params::Genie.Context.Params)
 
         # collect values like x[] in an array
         if endswith(string(k), "[]")
-          # (haskey(params.collection, k) && isa(params.collection[k], Vector)) || (params.collection = ImmutableDict(params.collection, k => String[]))
           (haskey(params.collection[:query], k) && isa(params.collection[:query][k], Vector)) || (params.collection[:query][k] = String[])
           push!(params.collection[:query][k], v)
         else
@@ -905,7 +962,6 @@ function extract_post_params(params::Genie.Context.Params)
 
     params.collection = ImmutableDict(
       params.collection,
-      # [(Symbol(k)=>v) for (k,v) in input.post]...,
       :post => OrderedCollections.LittleDict([(Symbol(k)=>v) for (k,v) in input.post]...),
       :files => input.files
     )
@@ -1262,7 +1318,9 @@ end
 
 Returns the MIME type of the response.
 """
-function response_mime(params_collection::ImmutableDict)
+function response_mime(params::Params)
+  params_collection = params.collection
+
   if params_collection[:mime] === nothing
     params_collection = ImmutableDict(
       params_collection,

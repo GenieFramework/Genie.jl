@@ -5,7 +5,7 @@ import Genie: Input.HttpFile
 using Base: ImmutableDict
 using OrderedCollections: LittleDict
 
-export ImmutableDict, Params
+export ImmutableDict, Params, params
 
 mutable struct Params
   collection::ImmutableDict{Symbol, Any}
@@ -23,13 +23,13 @@ Base.Dict(params::Params) = params.collection
 Base.getindex(params::Params, keys...) = getindex(params.collection, keys...)
 
 """
-    setup_base_params(req::Request, res::Response, params::Dict{Symbol,Any}) :: Dict{Symbol,Any}
+    setup_base_params(req::Request, res::Response, params::Dict) :: Dict
 
 Populates `params` with default environment vars.
 """
 function setup_base_params( req::HTTP.Request = HTTP.Request(),
                             res::Union{HTTP.Response,Nothing} = req.response,
-                            params_collection = ImmutableDict{Symbol,Any}()
+                            params_collection::ImmutableDict{Symbol,Any} = ImmutableDict{Symbol,Any}()
                           )::ImmutableDict{Symbol,Any}
   ImmutableDict(
     params_collection,
@@ -51,6 +51,11 @@ function setup_base_params( req::HTTP.Request = HTTP.Request(),
     :channel    => nothing,
     :mime       => nothing
   )
+end
+
+function setup_base_params(req::HTTP.Request, res::HTTP.Response, params::Params) :: Params
+  params.collection = setup_base_params(req, res, params.collection)
+  params
 end
 
 end

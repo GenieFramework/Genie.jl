@@ -3,45 +3,14 @@ Collection of utilities for working with Requests data
 """
 module Requests
 
-import Genie, Genie.Router, Genie.Input, Genie.Context
+using Genie
+import Genie.Router, Genie.Input, Genie.Context
 import HTTP, Reexport
 import Base: ImmutableDict
 import OrderedCollections: LittleDict
 
-export jsonpayload, rawpayload, filespayload, postpayload, getpayload
 export request, getrequest, matchedroute, matchedchannel, wsclient
-export infilespayload, filename, payload, peer, currenturl
-
-
-"""
-    jsonpayload(params::Genie.Context.Params)
-
-Processes an `application/json` `POST` request.
-If it fails to successfully parse the `JSON` data it returns `nothing`. The original payload can still be accessed invoking `rawpayload(params)`
-"""
-function jsonpayload(params::Genie.Context.Params)
-  params.collection[:json]
-end
-
-
-"""
-    rawpayload(params::Genie.Context.Params) :: String
-
-Returns the raw `POST` payload as a `String`.
-"""
-function rawpayload(params::Genie.Context.Params) :: String
-  params.collection[:raw]
-end
-
-
-"""
-    filespayload(params::Genie.Context.Params)
-
-Collection of form uploaded files.
-"""
-function filespayload(params::Genie.Context.Params)
-  params.collection[:files]
-end
+export infilespayload, filename, payload, peer
 
 
 """
@@ -75,79 +44,8 @@ function filename(file::Input.HttpFile) :: String
 end
 
 
-"""
-    postpayload(params::Genie.Context.Params) :: Dict{Symbol,Any}
-
-A dict representing the POST variables payload of the request (corresponding to a `form-data` request)
-"""
-function postpayload(params::Genie.Context.Params)
-  params.collection[:post]
-end
-
-
-"""
-    getpayload(params::Genie.Context.Params)
-
-A dict representing the GET/query variables payload of the request (the part corresponding to `?foo=bar&baz=moo`)
-"""
-function getpayload(params::Genie.Context.Params)
-  params.collection[:query]
-end
-
-
-"""
-    request(params::Genie.Context.Params) :: HTTP.Request
-
-Returns the raw HTTP.Request object associated with the request. If no request is available (not within a
-request/response cycle) returns `nothing`.
-"""
-function request(params::Genie.Context.Params) :: Union{HTTP.Request,Nothing}
-  params.collection[:request]
-end
-
-
-"""
-    matchedroute(params::Genie.Context.Params) :: Union{Genie.Router.Route,Nothing}
-
-Returns the `Route` object which was matched for the current request or `noting` if no route is available.
-"""
-function matchedroute(params::Genie.Context.Params) :: Union{Genie.Router.Route,Nothing}
-  params.collection[:route]
-end
-
-
-"""
-    matchedchannel(params::Genie.Context.Params) :: Union{Genie.Router.Channel,Nothing}
-
-Returns the `Channel` object which was matched for the current request or `nothing` if no channel is available.
-"""
-function matchedchannel(params::Genie.Context.Params) :: Union{Genie.Router.Channel,Nothing}
-  params.collection[:channel]
-end
-
-
-"""
-    wsclient(params::Genie.Context.Params) :: Union{HTTP.WebSockets.WebSocket,Nothing}
-
-The web sockets client for the current request or nothing if not available.
-"""
-function wsclient(params::Genie.Context.Params) :: Union{HTTP.WebSockets.WebSocket,Nothing}
-  params.collection[:wsclient]
-end
-
-
-"""
-    wtclient(params::Genie.Context.Params) :: UInt
-
-The web sockets client for the current request.
-"""
-function wtclient(params::Genie.Context.Params) :: UInt
-  params.collection[:wtclient] |> hash
-end
-
-
-function getheaders(req::HTTP.Request) :: ImmutableDict{<:AbstractString,<:AbstractString}
-  ImmutableDict{String,String}(req.headers)
+function getheaders(params::Genie.Context.Params) :: ImmutableDict{<:AbstractString,<:AbstractString}
+  ImmutableDict{String,String}(params[:req].headers)
 end
 
 
@@ -190,34 +88,19 @@ end
 
 
 """
-    isajax(req::HTTP.Request = getrequest()) :: Bool
+    isajax(params::Params) :: Bool
 
 Attempts to determine if a request is Ajax by sniffing the headers.
 """
-function isajax(req::HTTP.Request) :: Bool
+function isajax(params::Genie.Context.Params) :: Bool
+  req = params[:request]
+
   for (k,v) in getheaders(req)
     k = replace(k, r"_|-"=>"") |> lowercase
     occursin("requestedwith", k) && occursin("xmlhttp", lowercase(v)) && return true
   end
 
   return false
-end
-
-
-"""
-    currenturl() :: String
-
-Returns the URL of the current page/request, starting from the path and including the query string.
-
-### Example
-
-```julia
-currenturl()
-"/products?promotions=yes"
-```
-"""
-function currenturl(req::HTTP.Request) :: String
-  req.target
 end
 
 end

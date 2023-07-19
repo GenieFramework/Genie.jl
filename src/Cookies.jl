@@ -5,6 +5,7 @@ module Cookies
 
 import HTTP
 import Genie, Genie.Encryption, Genie.HTTPUtils
+using Genie.Context
 
 
 """
@@ -58,6 +59,8 @@ function get(req::HTTP.Request, key::Union{String,Symbol}; encrypted::Bool = tru
       nothing
 end
 
+get(params::Genie.Context.Params, args...; kwargs...) = get(params[:request], args...; kwargs...)
+
 
 """
     set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attributes::Dict; encrypted::Bool = true) :: HTTP.Response
@@ -96,6 +99,7 @@ function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attribu
 
   r
 end
+set!(params::Genie.Context.Params, args...; kwargs...) = set!(params[:response], args...; kwargs...)
 
 
 """

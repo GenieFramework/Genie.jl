@@ -4,6 +4,7 @@ export respond, redirect, render
 
 import EzXML, FilePathsBase, HTTP, JuliaFormatter, Logging, Markdown, SHA, OrderedCollections
 import Genie
+using Genie.Context
 
 const DEFAULT_CHARSET = "charset=utf-8"
 const DEFAULT_CONTENT_TYPE = :html
@@ -305,7 +306,7 @@ function view_file_info(path::String, supported_extensions::Vector{String}) :: T
     error_message = length(supported_extensions) == 1 ?
                       """Template file "$path$(supported_extensions[1])" does not exist""" :
                       """Template file "$path" with extensions $supported_extensions does not exist"""
-    error(error_message)
+    throw(Genie.Exceptions.ExceptionalResponse(error_message))
   end
 
   return _path, _extension
@@ -460,7 +461,8 @@ end
 
 Configures the request, response, and params response content type based on the request and defaults.
 """
-function set_negotiated_content(req::HTTP.Request, res::HTTP.Response, params_collection::Base.ImmutableDict{Symbol,Any})
+function set_negotiated_content(req::HTTP.Request, res::HTTP.Response, params::Genie.Context.Params) :: Tuple{HTTP.Request,HTTP.Response,Genie.Context.Params}
+  params_collection = params.collection
   req_type = Genie.Router.request_type(req)
 
   params_collection = Base.ImmutableDict(
@@ -471,7 +473,7 @@ function set_negotiated_content(req::HTTP.Request, res::HTTP.Response, params_co
 
   push!(res.headers, "Content-Type" => get!(CONTENT_TYPES, params_collection[:response_type], string(MIME(req_type))))
 
-  req, res, params_collection
+  req, res, params
 end
 
 
@@ -480,7 +482,8 @@ end
 
 Computes the content-type of the `Response`, based on the information in the `Request`.
 """
-function negotiate_content(req::HTTP.Request, res::HTTP.Response, params_collection::Base.ImmutableDict{Symbol,Any}) :: Tuple{HTTP.Request,HTTP.Response,Base.ImmutableDict{Symbol,Any}}
+function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Params) :: Tuple{HTTP.Request,HTTP.Response,Params}
+  params_collection = params.collection
   headers = OrderedCollections.LittleDict(res.headers)
 
   if haskey(params_collection, :response_type) && in(Symbol(params_collection[:response_type]), collect(keys(CONTENT_TYPES)) )
@@ -493,32 +496,32 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params_collect
 
     res.headers = [k for k in headers]
 
-    return req, res, params_collection
+    return req, res, params
   end
 
   negotiation_header = haskey(headers, "Accept") ? "Accept" :
                         ( haskey(headers, "Content-Type") ? "Content-Type" : "" )
 
   if isempty(negotiation_header)
-    req, res, params_collection = set_negotiated_content(req, res, params_collection)
+    req, res, params_collection = set_negotiated_content(req, res, params)
 
-    return req, res, params_collection
+    return req, res, params
   end
 
   accept_parts = split(headers[negotiation_header], ";")
 
   if isempty(accept_parts)
-    req, res, params_collection = set_negotiated_content(req, res, params_collection)
+    req, res, params_collection = set_negotiated_content(req, res, params)
 
-    return req, res, params_collection
+    return req, res, params
   end
 
   accept_order_parts = split(accept_parts[1], ",")
 
   if isempty(accept_order_parts)
-    req, res, params_collection = set_negotiated_content(req, res, params_collection)
+    req, res, params_collection = set_negotiated_content(req, res, params)
 
-    return req, res, params_collection
+    return req, res, params
   end
 
   for mime in accept_order_parts
@@ -528,20 +531,20 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params_collect
         params_collection = Base.ImmutableDict(
           params_collection,
           :response_type => content_type,
-          :mime => MIME_TYPES[params_collection[:response_type]]
+          :mime => MIME_TYPES[content_type]
         )
         headers["Content-Type"] = CONTENT_TYPES[params_collection[:response_type]]
 
         res.headers = [k for k in headers]
 
-        return req, res, params_collection
+        return req, res, params
       end
     end
   end
 
-  req, res, params_collection = set_negotiated_content(req, res, params_collection)
+  req, res, params = set_negotiated_content(req, res, params)
 
-  return req, res, params_collection
+  return req, res, params
 end
 
 push!(Genie.Router.content_negotiation_hooks, negotiate_content)
