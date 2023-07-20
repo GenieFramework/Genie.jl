@@ -27,9 +27,9 @@ function importenv()
 end
 
 
-function loadenv(; context)
+function loadenv(; context::Module, banner::Bool = true) :: Nothing
   haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = "dev")
-  bootstrap(context)
+  bootstrap(context; banner)
 
   haskey(ENV, "GENIE_HOST") && (! isempty(ENV["GENIE_HOST"])) && (Genie.config.server_host = ENV["GENIE_HOST"])
   haskey(ENV, "GENIE_HOST") || (ENV["GENIE_HOST"] = Genie.config.server_host)
@@ -39,17 +39,15 @@ function loadenv(; context)
 
   haskey(ENV, "WSPORT") && (! isempty(ENV["WSPORT"])) && (Genie.config.websockets_port = parse(Int, ENV["WSPORT"]))
 
-  ### EARLY BIND TO PORT FOR HOSTS WITH TIMEOUT ###
-  EARLYBINDING = if haskey(ENV, "EARLYBIND") && strip(lowercase(ENV["EARLYBIND"])) == "true"
-    @info "Binding to host $(ENV["GENIE_HOST"]) and port $(ENV["PORT"]) \n"
-    try
-      Sockets.listen(parse(Sockets.IPAddr, ENV["GENIE_HOST"]), parse(Int, ENV["PORT"]))
-    catch ex
-      @error ex
+  nothing
+end
 
-      @warn "Failed binding! \n"
-      nothing
-    end
+
+function earlybinding()
+  ### EARLY BIND TO PORT FOR HOSTS WITH TIMEOUT ###
+  if haskey(ENV, "EARLYBIND") && strip(lowercase(ENV["EARLYBIND"])) == "true"
+    @info "Binding to host $(ENV["GENIE_HOST"]) and port $(ENV["PORT"]) \n"
+    Sockets.listen(parse(Sockets.IPAddr, ENV["GENIE_HOST"]), parse(Int, ENV["PORT"]))
   else
     nothing
   end
@@ -61,7 +59,7 @@ end
 
 Kickstarts the loading of a Genie app by loading the environment settings.
 """
-function bootstrap(context::Union{Module,Nothing} = default_context(context)) :: Nothing
+function bootstrap(context::Union{Module,Nothing} = default_context(context); banner::Bool = true) :: Nothing
   ENV_FILE_NAME = "env.jl"
   GLOBAL_ENV_FILE_NAME = "global.jl"
 
@@ -72,10 +70,10 @@ function bootstrap(context::Union{Module,Nothing} = default_context(context)) ::
   Genie.config.app_env = ENV["GENIE_ENV"] # ENV might have changed
   importenv()
 
-  get!(ENV, "GENIE_BANNER", "true") |> strip |> lowercase != "false" && print_banner()
+  (banner && get!(ENV, "GENIE_BANNER", "true") |> strip |> lowercase != "false") && print_banner()
 
   if isfile(Genie.config.env_file)
-    DotEnv.config(;path=Genie.config.env_file)
+    DotEnv.config(;path = Genie.config.env_file)
   end
 
   nothing

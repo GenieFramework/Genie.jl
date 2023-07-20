@@ -162,7 +162,7 @@ end
     genie() :: Union{Nothing,Sockets.TCPServer}
 """
 function genie(; context = @__MODULE__) :: Union{Nothing,Sockets.TCPServer}
-  EARLYBINDING = Loader.loadenv(context = context)
+  EARLYBINDING = Loader.earlybinding()
   Secrets.load(context = context)
   Loader.load(context = context)
   Genie.config.watch && @spawn Watch.watch(pwd())
@@ -175,6 +175,9 @@ const bootstrap = genie
 
 function __init__()
   config.path_build = Genie.Configuration.buildpath()
+  Loader.loadenv(context = @__MODULE__)
+
+  nothing
 end
 
 end
