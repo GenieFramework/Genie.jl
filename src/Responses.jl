@@ -7,7 +7,7 @@ import Genie, Genie.Router
 import HTTP, OrderedCollections
 using Genie.Context
 
-export getresponse, getheaders, setheaders, setheaders!, getstatus, setstatus, getbody, setbody
+export getresponse, getheaders, setheaders, setheaders!, getstatus, setstatus, getbody, setbody, response
 
 
 function getresponse(params::Genie.Context.Params) :: HTTP.Response
@@ -57,5 +57,7 @@ function setbody(params::Genie.Context.Params, body::String) :: Genie.Context.Pa
   params[:response].body = collect(body)
   params
 end
+
+response(params::Params) = params[:response]
 
 end

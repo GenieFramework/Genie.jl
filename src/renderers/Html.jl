@@ -5,7 +5,7 @@ import EzXML, HTTP, Logging, Markdown, Millboard, OrderedCollections, Reexport, 
 Reexport.@reexport using Genie
 Reexport.@reexport using Genie.Renderer
 Reexport.@reexport using HttpCommon
-
+using Genie.Context
 
 const DEFAULT_LAYOUT_FILE = :app
 const LAYOUTS_FOLDER = "layouts"
@@ -414,8 +414,11 @@ end
 
 Renders the string as an HTML view.
 """
-function render(data::S; context::Module = @__MODULE__, layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing, vars...)::Function where {S<:AbstractString}
-  Genie.Renderer.registervars(; context = context, vars...)
+function render(data::S;
+                context::Module = @__MODULE__,
+                layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing,
+                vars...)::Function where {S<:AbstractString}
+  Genie.Renderer.registervars(; context, vars...)
 
   if layout !== nothing
     task_local_storage(:__yield, parseview(data, partial = true, context = context))
@@ -431,7 +434,10 @@ end
 
 Renders the template file as an HTML view.
 """
-function render(viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.Renderer.FilePath,String} = nothing, context::Module = @__MODULE__, vars...) :: Function
+function render(viewfile::Genie.Renderer.FilePath;
+                layout::Union{Nothing,Genie.Renderer.FilePath,String} = nothing,
+                context::Module = @__MODULE__,
+                vars...) :: Function
   Genie.Renderer.registervars(; context = context, vars...)
 
   if layout !== nothing
@@ -454,8 +460,6 @@ end
 
 """
     parsehtml(input::String; partial::Bool = true) :: String
-
-
 """
 function parsehtml(input::String; partial::Bool = true) :: String
   content = replace(input, NBSP_REPLACEMENT)
@@ -468,10 +472,14 @@ function parsehtml(input::String; partial::Bool = true) :: String
 end
 
 
-function Genie.Renderer.render(::Type{MIME"text/html"}, data::S; context::Module = @__MODULE__,
-                                layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing, vars...)::Genie.Renderer.WebRenderable where {S<:AbstractString}
+function Genie.Renderer.render(::Type{MIME"text/html"},
+                                data::S;
+                                context::Module = @__MODULE__,
+                                layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing,
+                                params::Params = Params(),
+                                vars...)::Genie.Renderer.WebRenderable where {S<:AbstractString}
   try
-    render(data; context = context, layout = layout, vars...) |> Genie.Renderer.WebRenderable
+    Genie.Renderer.WebRenderable(render(data; context, layout, vars...)::Function, params)
   catch ex
     isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
     rethrow(ex)
@@ -479,11 +487,14 @@ function Genie.Renderer.render(::Type{MIME"text/html"}, data::S; context::Module
 end
 
 
-function Genie.Renderer.render(::Type{MIME"text/html"}, viewfile::Genie.Renderer.FilePath;
+function Genie.Renderer.render(::Type{MIME"text/html"},
+                                viewfile::Genie.Renderer.FilePath;
                                 layout::Union{Nothing,Genie.Renderer.FilePath,String} = nothing,
-                                context::Module = @__MODULE__, vars...) :: Genie.Renderer.WebRenderable
+                                context::Module = @__MODULE__,
+                                params::Params = Params(),
+                                vars...) :: Genie.Renderer.WebRenderable
   try
-    render(viewfile; layout = layout, context = context, vars...) |> Genie.Renderer.WebRenderable
+    Genie.Renderer.WebRenderable(render(viewfile; layout = layout, context = context, vars...)::Function, params)
   catch ex
     isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
     rethrow(ex)
@@ -494,16 +505,21 @@ end
 const MAX_FILENAME_LENGTH = 500
 
 
-function html(resource::Genie.Renderer.ResourcePath, action::Genie.Renderer.ResourcePath;
+function html(resource::Genie.Renderer.ResourcePath,
+                action::Genie.Renderer.ResourcePath;
                 layout::Union{Genie.Renderer.ResourcePath,Nothing,String,Symbol} = DEFAULT_LAYOUT_FILE,
-                context::Module = @__MODULE__, status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(), vars...) :: Genie.Renderer.HTTP.Response
+                context::Module = @__MODULE__,
+                status::Int = 200,
+                headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
+                params::Params = Params(),
+                vars...) :: Genie.Renderer.HTTP.Response
   isa(layout, Symbol) && (layout = string(layout))
   html(Genie.Renderer.Path(joinpath(Genie.config.path_resources, string(resource), Renderer.VIEWS_FOLDER, string(action)));
         layout = (layout === nothing ? nothing :
                     isa(layout, String) && length(layout) < MAX_FILENAME_LENGTH ?
                       Genie.Renderer.Path(joinpath(Genie.config.path_app, LAYOUTS_FOLDER, string(layout))) : layout
                   ),
-        context = context, status = status, headers = headers, vars...)
+        context, status, headers, params, vars...)
 end
 
 
@@ -538,6 +554,7 @@ function html(data::String;
               layout::Union{String,Nothing,Genie.Renderer.FilePath,Function} = nothing,
               forceparse::Bool = false,
               noparse::Bool = false,
+              params::Params = Params(),
               vars...) :: Genie.Renderer.HTTP.Response
 
   layout = if isa(layout, Genie.Renderer.FilePath)
@@ -549,9 +566,9 @@ function html(data::String;
   end
 
   if (occursin(raw"$", data) || occursin(EMBED_JULIA_OPEN_TAG, data) || layout !== nothing || forceparse) && ! noparse
-    html(HTMLString(data); context = context, status = status, headers = headers, layout = layout, vars...)
+    html(HTMLString(data); context, status, headers, layout, params, vars...)
   else
-    html(ParsedHTMLString(data); context, status, headers, layout, vars...)
+    html(ParsedHTMLString(data); context, status, headers, layout, params, vars...)
   end
 end
 
@@ -562,35 +579,40 @@ function html!(data::Function;
   layout::Union{String,Nothing,Genie.Renderer.FilePath,Function} = nothing,
   forceparse::Bool = false,
   noparse::Bool = false,
+  params::Params = Params(),
   vars...) :: Genie.Renderer.HTTP.Response
 
-  html(data() |> string; context, status, headers, layout, forceparse, noparse, vars...)
+  html(data() |> string; context, status, headers, layout, forceparse, noparse, params, vars...)
 end
 
 function html(data::HTMLString;
               context::Module = @__MODULE__,
-              status::Int = 200, headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
+              status::Int = 200,
+              headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
               layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing,
               forceparse::Bool = false,
               noparse::Bool = false,
+              params::Params = Params(),
               vars...) :: Genie.Renderer.HTTP.Response
 
-  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context = context, layout = layout, vars...), status, headers) |> Genie.Renderer.respond
+  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context, layout, vars...), status, headers, params) |> Genie.Renderer.respond
 end
 
 function html(data::ParsedHTMLString;
               status::Int = 200,
               headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
+              params::Params = Params(),
               vars...) :: Genie.Renderer.HTTP.Response
 
-  Genie.Renderer.WebRenderable(body = data.data, status = status, headers = headers) |> Genie.Renderer.respond
+  Genie.Renderer.WebRenderable(; body = data.data, status, headers, params) |> Genie.Renderer.respond
 end
 
 function html!(data::Union{S,Vector{S}};
                 status::Int = 200,
                 headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
+                params::Params = Params(),
                 vars...)::Genie.Renderer.HTTP.Response where {S<:AbstractString}
-  html(ParsedHTMLString(join(data)); headers, vars...)
+  html(ParsedHTMLString(join(data)); headers, params, vars...)
 end
 
 
@@ -605,13 +627,14 @@ function html(md::Markdown.MD;
               headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
               layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing,
               forceparse::Bool = false,
+              params::Params = Params(),
               vars...) :: Genie.Renderer.HTTP.Response
   data = MdHtml.eval_markdown(string(md)) |> Markdown.parse |> Markdown.html
   for kv in vars
     data = replace(data, ":" * string(kv[1]) => "\$" * string(kv[1]))
   end
 
-  html(data; context, status, headers, layout, forceparse, vars...)
+  html(data; context, status, headers, layout, forceparse, params, vars...)
 end
 
 
@@ -633,8 +656,9 @@ function html(viewfile::Genie.Renderer.FilePath;
                 context::Module = @__MODULE__,
                 status::Int = 200,
                 headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
+                params::Params = Params(),
                 vars...) :: Genie.Renderer.HTTP.Response
-  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", viewfile; layout, context, vars...), status, headers) |> Genie.Renderer.respond
+  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", viewfile; layout, context, vars...), status, headers, params) |> Genie.Renderer.respond
 end
 
 

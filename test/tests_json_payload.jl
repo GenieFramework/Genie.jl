@@ -4,11 +4,11 @@
   import Genie.Util: fws
 
   route("/jsonpayload", method = POST) do params::Params
-    Genie.Requests.jsonpayload(params)
+    params[:json]
   end
 
   route("/jsontest", method = POST) do params::Params
-    Genie.Requests.jsonpayload(params)["test"]
+    params[:json]["test"]
   end
 
   port = nothing

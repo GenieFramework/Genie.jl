@@ -1,12 +1,14 @@
 @safetestset "Responses" begin
 
-  using Genie, HTTP, Genie.Responses
+  using Genie, HTTP
 
-  route("/responses", method = GET) do params::Params
+  route("/responses", method = GET) do params
     setstatus(params, 301)
     setheaders(params, Dict("X-Foo-Bar" => "Baz"))
     setheaders(params, Dict("X-A-B" => "C", "X-Moo" => "Cow"))
     setbody(params, "Hello")
+
+    Responses.response(params)
   end
 
   route("/broken") do

@@ -76,7 +76,6 @@
       r = Requests.HTTP.Response()
 
       @testset "String no layout" begin
-        rm("build", force = true, recursive = true)
         r = html(htmlviewfile(), forceparse = true)
 
         @test String(r.body) |> fws ==
@@ -85,7 +84,6 @@
       end;
 
       @testset "String with layout" begin
-        rm("build", force = true, recursive = true)
         r = html(htmlviewfile(), layout = htmltemplatefile())
 
         @test String(r.body) |> fws ==
@@ -94,10 +92,30 @@
               <footer>Just a footer</footer></body></html>" |> fws
       end;
 
+      @testset "Rendering with params headers" begin
+        p = Params()
+        @test isempty(p[:response].headers)
+
+        wr = WebRenderable("hello")
+        @test isempty(wr.headers)
+
+        wr.headers["X-Foo"] = "Bar"
+        @test wr.headers["X-Foo"] == "Bar"
+
+        setheaders(p, ["X-Foo-Bar" => "Bazinga", "Access-Control-Allow-Methods" => "GET, POST, OPTIONS"])
+        @test Dict(p[:response].headers)["X-Foo-Bar"] == "Bazinga"
+        @test Dict(p[:response].headers)["Access-Control-Allow-Methods"] == "GET, POST, OPTIONS"
+
+        setheaders(p, ["X-Foo-Bar" => "Bazinga", "Access-Control-Allow-Methods" => "GET"])
+        @test Dict(p[:response].headers)["Access-Control-Allow-Methods"] == "GET"
+
+        wr = WebRenderable("bye", p)
+        @test wr.headers["X-Foo-Bar"] == "Bazinga"
+        @test wr.headers["Access-Control-Allow-Methods"] == "GET"
+      end;
+
       @test r.status == 200
       @test Dict(r.headers[1])["Content-Type"] == "text/html; charset=utf-8"
-
-      rm("build", force = true, recursive = true)
     end;
   end;
 end

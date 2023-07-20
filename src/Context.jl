@@ -27,6 +27,8 @@ function Base.setindex!(params::Params, value, key)
     key => value
   )
 end
+Base.keys(params::Params) = keys(params.collection)
+Base.values(params::Params) = values(params.collection)
 
 """
     setup_base_params(req::Request, res::Response, params::Dict) :: Dict

@@ -3,13 +3,13 @@ Collection of utilities for working with Requests data
 """
 module Requests
 
-using Genie
-import Genie.Router, Genie.Input, Genie.Context
+using Genie, Genie.Context
+import Genie.Router, Genie.Input
 import HTTP, Reexport
 import Base: ImmutableDict
 import OrderedCollections: LittleDict
 
-export filename, peer, isajax
+export filename, peer, isajax, getheaders, request
 
 
 """
@@ -101,5 +101,8 @@ function isajax(params::Genie.Context.Params) :: Bool
 
   return false
 end
+
+
+request(params::Params) = params[:request]
 
 end

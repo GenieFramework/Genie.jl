@@ -82,6 +82,10 @@ mutable struct WebRenderable
   status::Int
   headers::HTTPHeaders
 end
+function WebRenderable(body::String, content_type::Symbol, status::Int, headers::HTTPHeaders, params::Params)
+  headers = merge(params[:response].headers |> Dict, headers)
+  WebRenderable(body, content_type, status, headers)
+end
 
 
 """
@@ -96,7 +100,7 @@ julia> Genie.Renderer.WebRenderable("hello")
 Genie.Renderer.WebRenderable("hello", :html, 200, Dict{String,String}())
 ```
 """
-WebRenderable(body::String) = WebRenderable(body, DEFAULT_CONTENT_TYPE, 200, HTTPHeaders())
+WebRenderable(body::String, params::Params = Params()) = WebRenderable(body, DEFAULT_CONTENT_TYPE, 200, HTTPHeaders(), params)
 
 
 """
@@ -111,7 +115,7 @@ julia> Genie.Renderer.WebRenderable("hello", :json)
 Genie.Renderer.WebRenderable("hello", :json, 200, Dict{String,String}())
 ```
 """
-WebRenderable(body::String, content_type::Symbol) = WebRenderable(body, content_type, 200, HTTPHeaders())
+WebRenderable(body::String, content_type::Symbol, params::Params = Params()) = WebRenderable(body, content_type, 200, HTTPHeaders(), params)
 
 
 """
@@ -129,8 +133,11 @@ julia> Genie.Renderer.WebRenderable(body = "bye", content_type = :javascript, st
 Genie.Renderer.WebRenderable("bye", :javascript, 301, Dict("Location" => "/bye"))
 ```
 """
-WebRenderable(; body::String = "", content_type::Symbol = DEFAULT_CONTENT_TYPE,
-                status::Int = 200, headers::HTTPHeaders = HTTPHeaders()) = WebRenderable(body, content_type, status, headers)
+WebRenderable(; body::String = "",
+                content_type::Symbol = DEFAULT_CONTENT_TYPE,
+                status::Int = 200,
+                headers::HTTPHeaders = HTTPHeaders(),
+                params::Params = Params()) = WebRenderable(body, content_type, status, headers, params)
 
 
 """
@@ -144,18 +151,18 @@ julia> Genie.Renderer.WebRenderable(Genie.Renderer.WebRenderable(body = "good mo
 Genie.Renderer.WebRenderable("good morning", :javascript, 302, Dict("Location" => "/morning"))
 ```
 """
-function WebRenderable(wr::WebRenderable, status::Int, headers::HTTPHeaders)
+function WebRenderable(wr::WebRenderable, status::Int, headers::HTTPHeaders, params::Params = Params())
   wr.status = status
-  wr.headers = headers
+  wr.headers = merge(params[:response].headers |> Dict, headers)
 
   wr
 end
 
 
-function WebRenderable(wr::WebRenderable, content_type::Symbol, status::Int, headers::HTTPHeaders)
+function WebRenderable(wr::WebRenderable, content_type::Symbol, status::Int, headers::HTTPHeaders, params::Params = Params())
   wr.content_type = content_type
   wr.status = status
-  wr.headers = headers
+  wr.headers = merge(params[:response].headers |> Dict, headers)
 
   wr
 end

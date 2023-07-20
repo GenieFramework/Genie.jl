@@ -11,8 +11,8 @@
   end
 
   route("/data", method = POST) do params
-    fields = postpayload(params)[Symbol("fields[]")]
-    fields[1] * fields[2] * postpayload(params)[:single]
+    fields = params[:post][Symbol("fields[]")]
+    fields[1] * fields[2] * params[:post][:single]
   end
 
   port = nothing
