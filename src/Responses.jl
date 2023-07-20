@@ -3,8 +3,9 @@ Collection of utilities for working with Responses data
 """
 module Responses
 
-import Genie, Genie.Router, Genie.Context
+import Genie, Genie.Router
 import HTTP, OrderedCollections
+using Genie.Context
 
 export getresponse, getheaders, setheaders, setheaders!, getstatus, setstatus, getbody, setbody
 
@@ -28,34 +29,32 @@ function setheaders(params::Genie.Context.Params, headers::D)::Params where D<:A
   params[:response] = setheaders!(params[:response], headers)
   params
 end
-function setheaders(params::Genie.Context.Params, header::Pair{String,String}) :: Params
-  params[:response] = setheaders(params, Dict(header))
-  params
+function setheaders(params::Genie.Context.Params, header::Pair{String,String}) :: Genie.Context.Params
+  params = setheaders(params, Dict(header))
 end
-function setheaders(params::Genie.Context.Params, headers::Vector{Pair{String,String}}) :: Params
-  params[:response] = setheaders(params, Dict(headers...))
-  params
+function setheaders(params::Genie.Context.Params, headers::Vector{Pair{String,String}}) :: Genie.Context.Params
+  params = setheaders(params, Dict(headers...))
 end
 
 
 function getstatus(params::Genie.Context.Params) :: Int
-  params[:res].status
+  params[:response].status
 end
 
 
-function setstatus(params::Genie.Context.Params, status::Int) :: Params
-  params[:res].status = status
+function setstatus(params::Genie.Context.Params, status::Int) :: Genie.Context.Params
+  (params[:response]).status = status
   params
 end
 
 
 function getbody(params::Genie.Context.Params) :: String
-  String(params[:res].body)
+  String(params[:response].body)
 end
 
 
-function setbody(params::Genie.Context.Params, body::String) :: Params
-  params[:res].body = collect(body)
+function setbody(params::Genie.Context.Params, body::String) :: Genie.Context.Params
+  params[:response].body = collect(body)
   params
 end
 

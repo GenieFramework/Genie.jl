@@ -9,8 +9,7 @@ import HTTP, Reexport
 import Base: ImmutableDict
 import OrderedCollections: LittleDict
 
-export request, getrequest, matchedroute, matchedchannel, wsclient
-export infilespayload, filename, payload, peer
+export filename, peer, isajax
 
 
 """

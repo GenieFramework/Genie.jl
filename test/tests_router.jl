@@ -38,7 +38,7 @@
       "abcd"
     end
 
-    @test Router.to_url(Params(), :get_abcd) == "/abcd"
+    @test Router.to_url(:get_abcd) == "/abcd"
   end
 
   @safetestset "test with basepath" begin
@@ -48,7 +48,7 @@
       "abcd"
     end
 
-    @test Router.to_url(Params(), :get_abcd, basepath = "/geniedev/9001") == "/geniedev/9001/abcd"
+    @test Router.to_url(:get_abcd, basepath = "/geniedev/9001") == "/geniedev/9001/abcd"
   end
 
 end;

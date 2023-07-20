@@ -2,14 +2,15 @@
 
   using Genie, HTTP
   using Genie.Router, Genie.Responses
+  using Genie.Context
 
-    route("/headers") do params::Params
-      setheaders(params, "X-Foo-Bar" => "Baz")
+  route("/headers") do params
+    setheaders(params, "X-Foo-Bar" => "Baz")
 
-      "OK"
-    end
+    "OK"
+  end
 
-  route("/headers", method = OPTIONS) do params::Params
+  route("/headers", method = OPTIONS) do params
     setheaders(params, ["X-Foo-Bar" => "Bazinga", "Access-Control-Allow-Methods" => "GET, POST, OPTIONS"])
     setstatus(params, 200)
 

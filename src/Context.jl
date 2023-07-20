@@ -21,6 +21,12 @@ params(params::Params, key) = params[key]
 
 Base.Dict(params::Params) = params.collection
 Base.getindex(params::Params, keys...) = getindex(params.collection, keys...)
+function Base.setindex!(params::Params, value, key)
+  params.collection = ImmutableDict(
+    params.collection,
+    key => value
+  )
+end
 
 """
     setup_base_params(req::Request, res::Response, params::Dict) :: Dict
