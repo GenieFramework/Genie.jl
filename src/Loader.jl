@@ -97,6 +97,8 @@ function print_banner()
   printstyled("| Twitter  https://twitter.com/essenciary\n\n", color = :light_black, bold = false)
   printstyled("Active env: $(ENV["GENIE_ENV"] |> uppercase)\n\n", color = :light_blue, bold = false)
 
+  ENV["GENIE_BANNER"] = "false"
+
   nothing
 end
 
