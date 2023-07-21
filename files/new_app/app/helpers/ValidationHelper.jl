@@ -1,11 +1,11 @@
 module ValidationHelper
 
-using Genie, SearchLight, SearchLight.Validation
+using Genie, Genie.Context, SearchLight, SearchLight.Validation
 
 export output_errors
 
-function output_errors(m::T, field::Symbol)::String where {T<:SearchLight.AbstractModel}
-  v = ispayload() ? validate(m) : ModelValidator()
+function output_errors(params::Params, m::T, field::Symbol)::String where {T<:SearchLight.AbstractModel}
+  v = ispayload(params) ? validate(m) : ModelValidator()
 
   haserrorsfor(v, field) ?
     """

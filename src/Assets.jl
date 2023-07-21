@@ -361,14 +361,14 @@ end
 Registers subscription and unsubscription channels for `channel`.
 """
 function channels_subscribe(channel::AbstractString = Genie.config.webchannels_default_route) :: Nothing
-  Router.channel("/$(channel)/$(Genie.config.webchannels_subscribe_channel)") do
-    WebChannels.subscribe(Genie.Requests.wsclient(), channel)
+  Router.channel("/$(channel)/$(Genie.config.webchannels_subscribe_channel)") do params
+    WebChannels.subscribe(params[:wsclient], channel)
 
     "Subscription: OK"
   end
 
-  Router.channel("/$(channel)/$(Genie.config.webchannels_unsubscribe_channel)") do
-    WebChannels.unsubscribe(Genie.Requests.wsclient(), channel)
+  Router.channel("/$(channel)/$(Genie.config.webchannels_unsubscribe_channel)") do params
+    WebChannels.unsubscribe(params[:wsclient], channel)
     WebChannels.unsubscribe_disconnected_clients()
 
     "Unsubscription: OK"
@@ -451,14 +451,14 @@ end
 Registers subscription and unsubscription routes for `channel`.
 """
 function webthreads_subscribe(channel::String = Genie.config.webthreads_default_route) :: Nothing
-  Router.route("/$(channel)/$(Genie.config.webchannels_subscribe_channel)", method = Router.GET) do
-    WebThreads.subscribe(Genie.Requests.wtclient(), channel)
+  Router.route("/$(channel)/$(Genie.config.webchannels_subscribe_channel)", method = Router.GET) do params
+    WebThreads.subscribe(params[:wtclient], channel)
 
     "Subscription: OK"
   end
 
-  Router.route("/$(channel)/$(Genie.config.webchannels_unsubscribe_channel)", method = Router.GET) do
-    WebThreads.unsubscribe(Genie.Requests.wtclient(), channel)
+  Router.route("/$(channel)/$(Genie.config.webchannels_unsubscribe_channel)", method = Router.GET) do params
+    WebThreads.unsubscribe(params[:wtclient], channel)
     WebThreads.unsubscribe_disconnected_clients()
 
     "Unsubscription: OK"
@@ -474,12 +474,12 @@ end
 Registers push and pull routes for `channel`.
 """
 function webthreads_push_pull(channel::String = Genie.config.webthreads_default_route) :: Nothing
-  Router.route("/$(channel)/$(Genie.config.webthreads_pull_route)", method = Router.POST) do
-    WebThreads.pull(Genie.Requests.wtclient(), channel)
+  Router.route("/$(channel)/$(Genie.config.webthreads_pull_route)", method = Router.POST) do params
+    WebThreads.pull(params[:wtclient], channel)
   end
 
   Router.route("/$(channel)/$(Genie.config.webthreads_push_route)", method = Router.POST) do params
-    WebThreads.push(params, Genie.Requests.wtclient(), channel, params[:raw])
+    WebThreads.push(params, params[:wtclient], channel, params[:raw])
   end
 
   nothing

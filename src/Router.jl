@@ -261,7 +261,7 @@ function route_ws_request(req, msg::Union{String,Vector{UInt8}}, ws_client) :: S
     :wsclient => ws_client
   )
 
-  extract_get_params(HTTP.URIs.URI(req.target), params)
+  occursin("?", req.target) && (params = extract_get_params(HTTP.URIs.URI(req.target), params))
 
   Genie.Configuration.isdev() && Revise.revise()
 
@@ -744,8 +744,8 @@ end
 Matches the invoked URL to the corresponding channel, sets up the execution environment and invokes the channel controller method.
 """
 function match_channels(req, msg::String, ws_client, params::Genie.Context.Params) :: String
-  payload::ImmutableDict{String,Any} = try
-    JSON3.read(msg, ImmutableDict{String,Any})
+  payload::OrderedCollections.LittleDict = try
+    JSON3.read(msg, OrderedCollections.LittleDict{String,Any})
   catch ex
     OrderedCollections.LittleDict{String,Any}()
   end
@@ -763,37 +763,58 @@ function match_channels(req, msg::String, ws_client, params::Genie.Context.Param
 
     (! occursin(regex_channel, uri)) && continue
 
-    params = setup_base_params(req, nothing, params)
-
-    extract_uri_params(uri, regex_channel, param_names, param_types, params) || continue
-
-    action_controller_params(c.action, params)
+    params = Genie.Context.setup_base_params(req, nothing, params)
+    params = extract_uri_params(uri, regex_channel, param_names, param_types, params)
+    params = action_controller_params(c.action, params)
 
     params.collection = ImmutableDict(
       params.collection,
       :channel => c
     )
 
-    controller = (c.action |> typeof).name.module
-
-    return  try
-                result = try
-                  (c.action)() |> string
-                catch ex1
-                  if isa(ex1, MethodError) && string(ex1.f) == string(c.action)
-                    Base.invokelatest(c.action) |> string
-                  else
-                    rethrow(ex1)
-                  end
-                end
-
-                result
-              catch ex
-                isa(ex, Exception) ? sprint(showerror, ex) : rethrow(ex)
-              end
+    return run_channel(params, c)
   end
 
   string("ERROR : 404 - Not found")
+end
+
+
+function run_channel(params::Genie.Context.Params, c::Channel) :: String
+  try
+    # prefer the method that takes params
+    for m in methods(c.action)
+      if m.sig.parameters |> length === 2
+        try
+          return c.action(params) |> string
+        catch ex
+          if isa(ex, MethodError) && string(ex.f) == string(c.action)
+            return Base.invokelatest(c.action, params) |> string
+          else
+            isa(ex, Exception) ? sprint(showerror, ex) : rethrow(ex)
+          end
+        end
+      end
+    end
+
+    # fallback to the method that does not take params
+    for m in methods(c.action)
+      if m.sig.parameters |> length === 1
+        try
+          return c.action() |> string
+        catch ex
+          if isa(ex, MethodError) && string(ex.f) == string(c.action)
+            return Base.invokelatest(c.action) |> string
+          else
+            isa(ex, Exception) ? sprint(showerror, ex) : rethrow(ex)
+          end
+        end
+      end
+    end
+
+    Base.error("No matching method found for channel $(c.path)")
+  catch ex
+    return handle_exception(params, ex)
+  end
 end
 
 

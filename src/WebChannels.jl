@@ -5,6 +5,7 @@ module WebChannels
 
 import HTTP, Distributed, Logging, JSON3, Sockets, Dates
 import Genie, Genie.Renderer
+import OrderedCollections
 
 const ClientId = UInt # web socket hash
 const ChannelName = String
@@ -18,8 +19,8 @@ mutable struct ChannelClient
   channels::Vector{ChannelName}
 end
 
-const ChannelClientsCollection = Dict{ClientId,ChannelClient} # { id(ws) => { :client => ws, :channels => ["foo", "bar", "baz"] } }
-const ChannelSubscriptionsCollection = Dict{ChannelName,Vector{ClientId}}  # { "foo" => ["4", "12"] }
+const ChannelClientsCollection = OrderedCollections.LittleDict{ClientId,ChannelClient} # { id(ws) => { :client => ws, :channels => ["foo", "bar", "baz"] } }
+const ChannelSubscriptionsCollection = OrderedCollections.LittleDict{ChannelName,Vector{ClientId}}  # { "foo" => ["4", "12"] }
 const MessagePayload = Union{Nothing,Dict}
 
 mutable struct ChannelMessage

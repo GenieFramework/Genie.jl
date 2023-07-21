@@ -491,7 +491,7 @@ Computes the content-type of the `Response`, based on the information in the `Re
 function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Params) :: Tuple{HTTP.Request,HTTP.Response,Params}
   headers = OrderedCollections.LittleDict(res.headers)
 
-  if haskey(params.collection, :response_type) && in(Symbol(params[:response_type]), collect(keys(CONTENT_TYPES)) )
+  if haskey(params, :response_type) && in(Symbol(params[:response_type]), collect(keys(CONTENT_TYPES)) )
     params.collection = Base.ImmutableDict(
       params.collection,
       :response_type => Symbol(params[:response_type]),

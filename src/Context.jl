@@ -29,6 +29,7 @@ function Base.setindex!(params::Params, value, key)
 end
 Base.keys(params::Params) = keys(params.collection)
 Base.values(params::Params) = values(params.collection)
+Base.haskey(params::Params, key) = haskey(params.collection, key)
 
 """
     setup_base_params(req::Request, res::Response, params::Dict) :: Dict
@@ -48,20 +49,20 @@ function setup_base_params( req::HTTP.Request = HTTP.Request(),
                     else
                       res
                     end,
-    :post       => LittleDict{Symbol,Any}(),
-    :query      => LittleDict{Symbol,Any}(),
-    :files      => LittleDict{String,HttpFile}(),
-    :wsclient   => nothing,
-    :wtclient   => nothing,
-    :json       => nothing,
-    :raw        => "",
-    :route      => nothing,
-    :channel    => nothing,
-    :mime       => nothing
+    :post       => get(params_collection, :post, LittleDict{Symbol,Any}()),
+    :query      => get(params_collection, :query, LittleDict{Symbol,Any}()),
+    :files      => get(params_collection, :files, LittleDict{String,HttpFile}()),
+    :wsclient   => get(params_collection, :wsclient, nothing),
+    :wtclient   => get(params_collection, :wtclient, nothing),
+    :json       => get(params_collection, :json, nothing),
+    :raw        => get(params_collection, :raw, ""),
+    :route      => get(params_collection, :route, nothing),
+    :channel    => get(params_collection, :channel, nothing),
+    :mime       => get(params_collection, :mime, nothing),
   )
 end
 
-function setup_base_params(req::HTTP.Request, res::HTTP.Response, params::Params) :: Params
+function setup_base_params(req::HTTP.Request, res::Union{HTTP.Response,Nothing}, params::Params) :: Params
   params.collection = setup_base_params(req, res, params.collection)
   params
 end
