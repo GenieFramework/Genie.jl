@@ -47,7 +47,7 @@ include("Logger.jl")
 
 # === #
 
-export up, down, loadapp, go, 🧞
+export up, down, loadapp, @go
 @reexport using .Router, .Context, .Requests, .Responses
 
 const assets_config = Genie.Assets.assets_config
@@ -114,8 +114,11 @@ function loadapp(path::String = "."; autostart::Bool = false, dbadapter::Union{N
   nothing
 end
 
-const go = loadapp
-const 🧞 = loadapp
+macro go() # :: Nothing
+  quote
+    Genie.loadapp(; context = $__module__)
+  end
+end
 
 
 """
@@ -175,7 +178,7 @@ const bootstrap = genie
 
 function __init__()
   config.path_build = Genie.Configuration.buildpath()
-  Loader.loadenv(context = @__MODULE__)
+  Loader.loadenv(context = Main)
 
   nothing
 end

@@ -479,7 +479,7 @@ function Genie.Renderer.render(::Type{MIME"text/html"},
                                 params::Params = Params(),
                                 vars...)::Genie.Renderer.WebRenderable where {S<:AbstractString}
   try
-    Genie.Renderer.WebRenderable(render(data; context, layout, vars...)::Function, params)
+    Genie.Renderer.WebRenderable(render(data; context, layout, params, vars...)::Function, params)
   catch ex
     isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
     rethrow(ex)
@@ -494,7 +494,7 @@ function Genie.Renderer.render(::Type{MIME"text/html"},
                                 params::Params = Params(),
                                 vars...) :: Genie.Renderer.WebRenderable
   try
-    Genie.Renderer.WebRenderable(render(viewfile; layout = layout, context = context, vars...)::Function, params)
+    Genie.Renderer.WebRenderable(render(viewfile; layout, context, params, vars...)::Function, params)
   catch ex
     isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
     rethrow(ex)
@@ -507,7 +507,7 @@ const MAX_FILENAME_LENGTH = 500
 
 function html(resource::Genie.Renderer.ResourcePath,
                 action::Genie.Renderer.ResourcePath;
-                layout::Union{Genie.Renderer.ResourcePath,Nothing,String,Symbol} = DEFAULT_LAYOUT_FILE,
+                layout::Union{Genie.Renderer.ResourcePath,Nothing,String,Symbol} = nothing,
                 context::Module = @__MODULE__,
                 status::Int = 200,
                 headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
@@ -595,7 +595,7 @@ function html(data::HTMLString;
               params::Params = Params(),
               vars...) :: Genie.Renderer.HTTP.Response
 
-  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context, layout, vars...), status, headers, params) |> Genie.Renderer.respond
+  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context, layout, params, vars...), status, headers, params) |> Genie.Renderer.respond
 end
 
 function html(data::ParsedHTMLString;
@@ -658,7 +658,7 @@ function html(viewfile::Genie.Renderer.FilePath;
                 headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
                 params::Params = Params(),
                 vars...) :: Genie.Renderer.HTTP.Response
-  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", viewfile; layout, context, vars...), status, headers, params) |> Genie.Renderer.respond
+  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", viewfile; layout, context, params, vars...), status, headers, params) |> Genie.Renderer.respond
 end
 
 

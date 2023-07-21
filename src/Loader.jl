@@ -65,8 +65,8 @@ function bootstrap(context::Union{Module,Nothing} = default_context(context); ba
 
   haskey(ENV, "GENIE_ENV") && (Genie.config.app_env = ENV["GENIE_ENV"])
 
-  isfile(joinpath(Genie.config.path_env, GLOBAL_ENV_FILE_NAME)) && Base.include(context, joinpath(Genie.config.path_env, GLOBAL_ENV_FILE_NAME))
-  isfile(joinpath(Genie.config.path_env, ENV["GENIE_ENV"] * ".jl")) && Base.include(context, joinpath(Genie.config.path_env, ENV["GENIE_ENV"] * ".jl"))
+  isfile(joinpath(Genie.config.path_env, GLOBAL_ENV_FILE_NAME)) && Base.include(context, joinpath(Genie.config.path_env, GLOBAL_ENV_FILE_NAME) |> abspath)
+  isfile(joinpath(Genie.config.path_env, ENV["GENIE_ENV"] * ".jl")) && Base.include(context, joinpath(Genie.config.path_env, ENV["GENIE_ENV"] * ".jl") |> abspath)
   Genie.config.app_env = ENV["GENIE_ENV"] # ENV might have changed
   importenv()
 

@@ -96,7 +96,7 @@ function render(::Type{MIME"application/javascript"},
                 params::Params = Params(),
                 vars...)::Genie.Renderer.WebRenderable
   try
-    Genie.Renderer.WebRenderable(render(data; context, vars...), :javascript, params)
+    Genie.Renderer.WebRenderable(render(data; context, params, vars...), :javascript, params)
   catch ex
     isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
     rethrow(ex)
@@ -110,7 +110,7 @@ function render(::Type{MIME"application/javascript"},
                 params::Params = Params(),
                 vars...)::Genie.Renderer.WebRenderable
   try
-    Genie.Renderer.WebRenderable(render(viewfile; context, vars...), :javascript, params)
+    Genie.Renderer.WebRenderable(render(viewfile; context, params, vars...), :javascript, params)
   catch ex
     isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
     rethrow(ex)
@@ -126,7 +126,7 @@ function js(data::String;
             params::Params = Params(),
             vars...)::Genie.Renderer.HTTP.Response
   if (occursin(raw"$", data) || forceparse) && ! noparse
-    Genie.Renderer.WebRenderable(render(MIME"application/javascript", data; context, vars...), :javascript, status, headers, params) |> Genie.Renderer.respond
+    Genie.Renderer.WebRenderable(render(MIME"application/javascript", data; context, params, vars...), :javascript, status, headers, params) |> Genie.Renderer.respond
   else
     js!(data; status, headers) |> Genie.Renderer.respond
   end
@@ -146,7 +146,7 @@ function js(viewfile::Genie.Renderer.FilePath;
             headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders("Content-Type" => Genie.Renderer.CONTENT_TYPES[:javascript]),
             params::Params = Params(),
             vars...) :: Genie.Renderer.HTTP.Response
-  Genie.Renderer.WebRenderable(render(MIME"application/javascript", viewfile; context, vars...), :javascript, status, headers, params) |> Genie.Renderer.respond
+  Genie.Renderer.WebRenderable(render(MIME"application/javascript", viewfile; context, params, vars...), :javascript, status, headers, params) |> Genie.Renderer.respond
 end
 
 

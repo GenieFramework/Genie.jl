@@ -76,7 +76,7 @@ function Genie.Renderer.render(::Type{MIME"application/json"},
                                 context::Module = @__MODULE__,
                                 params::Params = Params(),
                                 vars...) :: Genie.Renderer.WebRenderable
-  Genie.Renderer.WebRenderable(render(datafile; context, vars...), :json, params)
+  Genie.Renderer.WebRenderable(render(datafile; context, params, vars...), :json, params)
 end
 
 
@@ -85,7 +85,7 @@ function Genie.Renderer.render(::Type{MIME"application/json"},
                                 context::Module = @__MODULE__,
                                 params::Params = Params(),
                                 vars...) :: Genie.Renderer.WebRenderable
-  Genie.Renderer.WebRenderable(render(data; context = context, vars...), :json, params)
+  Genie.Renderer.WebRenderable(render(data; context, params, vars...), :json, params)
 end
 
 
@@ -94,7 +94,7 @@ function Genie.Renderer.render(::Type{MIME"application/json"},
                                 context::Module = @__MODULE__,
                                 params::Params = Params(),
                                 vars...) :: Genie.Renderer.WebRenderable
-  Genie.Renderer.WebRenderable(render(data), :json, params)
+  Genie.Renderer.WebRenderable(render(data), :json; params)
 end
 
 ### json API
@@ -117,7 +117,7 @@ function json(datafile::Genie.Renderer.FilePath;
               headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
               params::Params = Params(),
               vars...) :: Genie.Renderer.HTTP.Response
-  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"application/json", datafile; context, vars...), :json, status, headers, params) |> Genie.Renderer.respond
+  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"application/json", datafile; context, params, vars...), :json, status, headers, params) |> Genie.Renderer.respond
 end
 
 
@@ -127,7 +127,7 @@ function json(data::String;
               headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
               params::Params = Params(),
               vars...) :: Genie.Renderer.HTTP.Response
-  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"application/json", data; context, vars...), :json, status, headers, params) |> Genie.Renderer.respond
+  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"application/json", data; context, params, vars...), :json, status, headers, params) |> Genie.Renderer.respond
 end
 
 
@@ -135,13 +135,13 @@ function json(data::Any;
               status::Int = 200,
               params::Params = Params(),
               headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders()) :: Genie.Renderer.HTTP.Response
-  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"application/json", data), :json, status, headers, params) |> Genie.Renderer.respond
+  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"application/json", data; params), :json, status, headers, params) |> Genie.Renderer.respond
 end
 
 function json(exception::JSONException;
               params::Params = Params(),
               headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders()) :: Genie.Renderer.HTTP.Response
-  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"application/json", exception.message), :json, exception.status, headers, params) |> Genie.Renderer.respond
+  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"application/json", exception.message; params), :json, exception.status, headers, params) |> Genie.Renderer.respond
 end
 
 
