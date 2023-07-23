@@ -2,13 +2,12 @@ module Context
 
 import HTTP
 import Genie: Input.HttpFile
-using Base: ImmutableDict
 using OrderedCollections: LittleDict
 
-export ImmutableDict, Params, params
+export LittleDict, Params, params
 
 mutable struct Params
-  collection::ImmutableDict{Symbol, Any}
+  collection::LittleDict{Symbol, Any}
 end
 
 Params() = Params(setup_base_params())
@@ -22,10 +21,7 @@ params(params::Params, key) = params[key]
 Base.Dict(params::Params) = params.collection
 Base.getindex(params::Params, keys...) = getindex(params.collection, keys...)
 function Base.setindex!(params::Params, value, key)
-  params.collection = ImmutableDict(
-    params.collection,
-    key => value
-  )
+  params.collection[key] = value
 end
 Base.keys(params::Params) = keys(params.collection)
 Base.values(params::Params) = values(params.collection)
@@ -38,10 +34,10 @@ Populates `params` with default environment vars.
 """
 function setup_base_params( req::HTTP.Request = HTTP.Request(),
                             res::Union{HTTP.Response,Nothing} = req.response,
-                            params_collection::ImmutableDict{Symbol,Any} = ImmutableDict{Symbol,Any}()
-                          )::ImmutableDict{Symbol,Any}
-  ImmutableDict(
-    params_collection,
+                            params_collection::LittleDict{Symbol,Any} = LittleDict{Symbol,Any}()
+                          )::LittleDict{Symbol,Any}
+  LittleDict(
+    params_collection...,
     :request    => req,
     :response   =>  if res === nothing
                       req.response = HTTP.Response()

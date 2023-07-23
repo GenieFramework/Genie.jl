@@ -40,9 +40,8 @@ const INTERNAL_ERROR  = 500
 const ROUTE_CACHE = OrderedCollections.LittleDict{String,Tuple{String,Vector{String},Vector{Any}}}()
 
 function request_mappings()
-  mappings = ImmutableDict(:text => ["text/plain"])
-  ImmutableDict(
-    mappings,
+  OrderedCollections.LittleDict(
+    :text       => ["text/plain"],
     :html       => ["text/html"],
     :json       => ["application/json", "application/vnd.api+json"],
     :javascript => ["application/javascript"],
@@ -255,11 +254,7 @@ First step in handling a web socket request: sets up params collection, handles 
 """
 function route_ws_request(req, msg::Union{String,Vector{UInt8}}, ws_client) :: String
   params = Params(req, req.response)
-
-  params.collection = ImmutableDict(
-    params.collection,
-    :wsclient => ws_client
-  )
+  params.collection[:wsclient] = ws_client
 
   occursin("?", req.target) && (params = extract_get_params(HTTP.URIs.URI(req.target), params))
 
@@ -603,11 +598,8 @@ end
 Sets up the :action_controller, :action, and :controller key - value pairs of the `params` collection.
 """
 function action_controller_params(action::Function, params::Genie.Context.Params)
-  params.collection = ImmutableDict(
-    params.collection,
-    :action => action,
-    :controller => (action |> typeof).name.module
-  )
+  params.collection[:action] = action
+  params.collection[:controller] = (action |> typeof).name.module
 
   params
 end
@@ -653,11 +645,8 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Genie.Conte
       end
     end
 
-    params.collection = ImmutableDict(
-      params.collection,
-      :route => r,
-      :mime => MIME(request_type(req))
-    )
+    params.collection[:route] = r
+    params.collection[:mime] = MIME(request_type(req))
 
     for f in unique(content_negotiation_hooks)
       try
@@ -760,7 +749,7 @@ function match_channels(req, msg::String, ws_client, params::Genie.Context.Param
   for c in channels()
     parsed_channel, param_names, param_types = parse_channel(c.path)
 
-    haskey(payload, "payload") && (params.collection = ImmutableDict(params.collection, :payload => payload["payload"]))
+    haskey(payload, "payload") && (params.collection[:payload] = payload["payload"])
 
     regex_channel = Regex("^" * parsed_channel * "\$")
 
@@ -770,10 +759,7 @@ function match_channels(req, msg::String, ws_client, params::Genie.Context.Param
     params = extract_uri_params(uri, regex_channel, param_names, param_types, params)
     params = action_controller_params(c.action, params)
 
-    params.collection = ImmutableDict(
-      params.collection,
-      :channel => c
-    )
+    params.collection[:channel] = c
 
     return run_channel(params, c)
   end
@@ -924,10 +910,7 @@ function extract_uri_params(uri::T, regex_route::Regex, param_names::Vector{T}, 
   i = 1
   for param_name in param_names
     try
-      params.collection = ImmutableDict(
-        params.collection,
-        Symbol(param_name) => parse_param(param_types[i], matches[param_name])
-      )
+      params.collection[Symbol(param_name)] = parse_param(param_types[i], matches[param_name])
     catch ex
       @error ex
     end
@@ -984,11 +967,8 @@ function extract_post_params(params::Genie.Context.Params)
   try
     input = Genie.Input.all(params[:request])
 
-    params.collection = ImmutableDict(
-      params.collection,
-      :post => OrderedCollections.LittleDict([(Symbol(k)=>v) for (k,v) in input.post]...),
-      :files => input.files
-    )
+    params.collection[:post] = OrderedCollections.LittleDict([(Symbol(k)=>v) for (k,v) in input.post]...)
+    params.collection[:files] = input.files
   catch ex
     @error ex
   end
@@ -1006,14 +986,11 @@ function extract_request_params(params::Genie.Context.Params)
   req = params[:request]
   req_body = String(req.body)
 
-  params.collection = ImmutableDict(
-    params.collection,
-    :raw => req_body
-  )
+  params.collection[:raw] = req_body
 
   if request_type_is(req, :json) && content_length(req) > 0
     try
-      params[:post][:json] = (params.collection = ImmutableDict(params.collection, :json => JSON3.read(req_body)))
+      params[:post][:json] = (params.collection[:json] = JSON3.read(req_body))
     catch ex
       @error ex
     end
@@ -1167,8 +1144,8 @@ end
 
 Returns the content-type of the current request-response cycle.
 """
-function response_type(params_collection::ImmutableDict{Symbol,T})::Symbol where {T}
-  get(params_collection, :response_type, request_type(params_collection[:request]))
+function response_type(params_collection::OrderedCollections.LittleDict{Symbol,T})::Symbol where {T}
+  get(params_collection..., :response_type, request_type(params_collection[:request]))
 end
 function response_type(params::Genie.Context.Params)::Symbol
   response_type(params.collection)
@@ -1180,7 +1157,7 @@ end
 
 Checks if the content-type of the current request-response cycle matches `check`.
 """
-function response_type(check::Symbol, params_collection::ImmutableDict{Symbol,T})::Bool where {T}
+function response_type(check::Symbol, params_collection::OrderedCollections.LittleDict{Symbol,T})::Bool where {T}
   check == response_type(params_collection)
 end
 
@@ -1344,17 +1321,11 @@ Returns the MIME type of the response.
 """
 function response_mime(params::Params)
   if params.collection[:mime] === nothing
-    params.collection = ImmutableDict(
-      params.collection,
-      :mime => response_mime(params[:request])
-    )
+    params.collection[:mime] = response_mime(params[:request])
   end
 
   if isempty(params[:mime] |> string)
-    params.collection = ImmutableDict(
-      params.collection,
-      :mime => request_type(params[:request])
-    )
+    params.collection[:mime] = request_type(params[:request])
   end
 
   params[:mime]

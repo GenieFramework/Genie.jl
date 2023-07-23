@@ -6,7 +6,6 @@ module Requests
 using Genie, Genie.Context
 import Genie.Router, Genie.Input
 import HTTP, Reexport
-import Base: ImmutableDict
 import OrderedCollections: LittleDict
 
 export filename, peer, isajax, getheaders, request
@@ -43,8 +42,8 @@ function filename(file::Input.HttpFile) :: String
 end
 
 
-function getheaders(params::Genie.Context.Params) :: ImmutableDict{<:AbstractString,<:AbstractString}
-  ImmutableDict{String,String}(params[:req].headers)
+function getheaders(params::Genie.Context.Params) :: OrderedCollections.LittleDict{<:AbstractString,<:AbstractString}
+  LittleDict{String,String}(params[:req].headers)
 end
 
 

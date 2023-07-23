@@ -471,11 +471,8 @@ Configures the request, response, and params response content type based on the 
 function set_negotiated_content(req::HTTP.Request, res::HTTP.Response, params::Genie.Context.Params) :: Tuple{HTTP.Request,HTTP.Response,Genie.Context.Params}
   req_type = Genie.Router.request_type(req)
 
-  params.collection = Base.ImmutableDict(
-    params.collection,
-    :response_type => req_type,
-    :mime => get!(MIME_TYPES, req_type, typeof(MIME(req_type)))
-  )
+  params.collection[:response_type] = req_type
+  params.collection[:mime] = get!(MIME_TYPES, req_type, typeof(MIME(req_type)))
 
   push!(res.headers, "Content-Type" => get!(CONTENT_TYPES, params[:response_type], string(MIME(req_type))))
 
@@ -492,11 +489,9 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Params
   headers = OrderedCollections.LittleDict(res.headers)
 
   if haskey(params, :response_type) && in(Symbol(params[:response_type]), collect(keys(CONTENT_TYPES)) )
-    params.collection = Base.ImmutableDict(
-      params.collection,
-      :response_type => Symbol(params[:response_type]),
-      :mime => MIME_TYPES[Symbol(params[:response_type])]
-    )
+    params.collection[:response_type] = Symbol(params[:response_type])
+    params.collection[:mime] = MIME_TYPES[Symbol(params[:response_type])]
+
     headers["Content-Type"] = CONTENT_TYPES[params[:response_type]]
 
     res.headers = [k for k in headers]
@@ -533,11 +528,9 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Params
     if occursin('/', mime)
       content_type = split(mime, '/')[2] |> lowercase |> Symbol
       if haskey(CONTENT_TYPES, content_type)
-        params.collection = Base.ImmutableDict(
-          params.collection,
-          :response_type => content_type,
-          :mime => MIME_TYPES[content_type]
-        )
+        params.collection[:response_type] = content_type
+        params.collection[:mime] = MIME_TYPES[content_type]
+
         headers["Content-Type"] = CONTENT_TYPES[params[:response_type]]
 
         res.headers = [k for k in headers]

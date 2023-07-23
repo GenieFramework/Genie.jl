@@ -3,12 +3,11 @@ Handles Http server related functionality, manages requests and responses and th
 """
 module Server
 
-using HTTP, Sockets, HTTP.WebSockets
+using HTTP, Sockets, HTTP.WebSockets, OrderedCollections
 import Millboard, Distributed, Logging
 import Genie
 import Distributed
 import Base.Threads: @spawn
-
 
 """
     ServersCollection(webserver::Union{Task,Nothing}, websockets::Union{Task,Nothing})

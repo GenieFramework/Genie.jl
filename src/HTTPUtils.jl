@@ -11,10 +11,10 @@ import HTTP, OrderedCollections
 
 Converts a `HTTP.Request` to a `Dict`.
 """
-function Base.Dict(req::HTTP.Request) :: Base.ImmutableDict{String,String}
-  result = Base.ImmutableDict{String,String}()
+function Base.Dict(req::HTTP.Request) :: OrderedCollections.LittleDict{String,String}
+  result = OrderedCollections.LittleDict{String,String}()
   for (k,v) in OrderedCollections.LittleDict(req.headers)
-    result = Base.ImmutableDict(result, lowercase(string(k)) => lowercase(string(v)))
+    result[lowercase(string(k))] = lowercase(string(v))
   end
 
   result
