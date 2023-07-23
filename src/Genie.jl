@@ -48,7 +48,7 @@ include("Logger.jl")
 # === #
 
 export up, down, loadapp, @go
-@reexport using .Router #, .Context, .Requests, .Responses
+@reexport using .Router, .Context, .Requests, .Responses
 
 const assets_config = Genie.Assets.assets_config
 
@@ -116,7 +116,7 @@ end
 
 macro go() # :: Nothing
   quote
-    Genie.loadapp(; context = $__module__)
+    Genie.loadapp(; context = __module__)
   end
 end
 
@@ -178,7 +178,7 @@ const bootstrap = genie
 
 function __init__()
   config.path_build = Genie.Configuration.buildpath()
-  # Loader.loadenv(context = Main)
+  Loader.loadenv(context = Main)
 
   nothing
 end

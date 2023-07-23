@@ -94,7 +94,7 @@ function Genie.Renderer.render(::Type{MIME"application/json"},
                                 context::Module = @__MODULE__,
                                 params::Params = Params(),
                                 vars...) :: Genie.Renderer.WebRenderable
-  Genie.Renderer.WebRenderable(render(data), :json; params)
+  Genie.Renderer.WebRenderable(render(data), :json, params)
 end
 
 ### json API

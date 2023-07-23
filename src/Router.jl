@@ -643,13 +643,16 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Genie.Conte
 
     params = Genie.Context.setup_base_params(req, res, params)
 
-    occursin("?", req.target) && (params = extract_get_params(HTTP.URIs.URI(req.target), params))
-
-    params = extract_uri_params(uri.path |> string, regex_route, param_names, param_types, params)
-
-    ispayload(req) && (params = extract_post_params(params))
-    ispayload(req) && (params = extract_request_params(params))
-    params = action_controller_params(r.action, params)
+    # does the action accept params?
+    for m in methods(r.action)
+      if m.sig.parameters |> length === 2 # yes, it expects params, let's process them extra
+        occursin("?", req.target) && (params = extract_get_params(HTTP.URIs.URI(req.target), params))
+        params = extract_uri_params(uri.path |> string, regex_route, param_names, param_types, params)
+        ispayload(req) && (params = extract_post_params(params))
+        ispayload(req) && (params = extract_request_params(params))
+        params = action_controller_params(r.action, params)
+      end
+    end
 
     params.collection = ImmutableDict(
       params.collection,
@@ -662,10 +665,8 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Genie.Conte
         req, res, params = f(req, res, params)
       catch ex
         @error ex
-        Genie.Configuration.isdev() && rethrow(ex)
-
         if isa(ex, Genie.Exceptions.ExceptionalResponse)
-          return ex.response
+          rethrow(ex)
         end
       end
     end
