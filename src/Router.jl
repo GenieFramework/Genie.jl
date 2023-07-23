@@ -641,11 +641,10 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Genie.Conte
     ROUTE_CATCH_ALL = "/*"
     occursin(regex_route, string(uri.path)) || parsed_route == ROUTE_CATCH_ALL || continue
 
-    params = Genie.Context.setup_base_params(req, res, params)
-
     # does the action accept params?
     for m in methods(r.action)
       if m.sig.parameters |> length === 2 # yes, it expects params, let's process them extra
+        params = Genie.Context.setup_base_params(req, res, params)
         occursin("?", req.target) && (params = extract_get_params(HTTP.URIs.URI(req.target), params))
         params = extract_uri_params(uri.path |> string, regex_route, param_names, param_types, params)
         ispayload(req) && (params = extract_post_params(params))
