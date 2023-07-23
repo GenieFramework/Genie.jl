@@ -680,7 +680,6 @@ end
 function run_route(params::Genie.Context.Params, r::Route) :: HTTP.Response
   try
     # prefer the method that takes params
-    #=
     for m in methods(r.action)
       if m.sig.parameters |> length === 2
         try
@@ -707,17 +706,6 @@ function run_route(params::Genie.Context.Params, r::Route) :: HTTP.Response
             rethrow(ex)
           end
         end
-      end
-    end
-    =#
-
-    try
-      return r.action(params) |> to_response
-    catch ex
-      if isa(ex, MethodError) && string(ex.f) == string(r.action)
-        return Base.invokelatest(r.action, params) |> to_response
-      else
-        rethrow(ex)
       end
     end
 
