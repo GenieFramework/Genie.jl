@@ -312,7 +312,6 @@ macro route(expr...)
 
   for (idx,ex) in enumerate(expr)
     if typeof(ex) === Expr
-
       if ex.head == :kw
         process_kw(ex)
         continue
@@ -328,13 +327,17 @@ macro route(expr...)
           end
         end
       end
-
     end
 
     typeof(ex) === String && (path = ex)
-    typeof(ex) === Symbol && (action = ex)
-    typeof(ex) === Expr && (action = ex)
+    if typeof(ex) === Symbol
+      action = ex
+    elseif typeof(ex) === Expr && ex.head != :(=)
+      action = ex
+    end
   end
+
+  isa(action, Symbol) && (action = getfield(context, action))
 
   quote
     (() -> route($action, $path; method = $method, named = $named, context = $context))()
