@@ -116,7 +116,7 @@ end
 
 macro go() # :: Nothing
   quote
-    Genie.loadapp(; context = __module__)
+    Genie.loadapp(; context = $__module__)
   end
 end
 
