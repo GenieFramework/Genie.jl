@@ -70,6 +70,8 @@ init_task_local_storage() = (haskey(task_local_storage(), :__vars) || task_local
 init_task_local_storage()
 clear_task_storage() = task_local_storage(:__vars, Dict{Symbol,Any}())
 
+response_status(params::Params, status::Int) = params[:response].status != 0 ? params[:response].status : status
+response_content_type(params::Params) = get(params, :response_type, DEFAULT_CONTENT_TYPE)
 
 """
     mutable struct WebRenderable
@@ -100,7 +102,7 @@ julia> Genie.Renderer.WebRenderable("hello")
 Genie.Renderer.WebRenderable("hello", :html, 200, Dict{String,String}())
 ```
 """
-WebRenderable(body::String, params::Params = Params()) = WebRenderable(body, DEFAULT_CONTENT_TYPE, 200, HTTPHeaders(), params)
+WebRenderable(body::String, params::Params = Params()) = WebRenderable(body, response_content_type(params), response_status(params, 200), HTTPHeaders(), params)
 
 
 """
@@ -115,7 +117,7 @@ julia> Genie.Renderer.WebRenderable("hello", :json)
 Genie.Renderer.WebRenderable("hello", :json, 200, Dict{String,String}())
 ```
 """
-WebRenderable(body::String, content_type::Symbol, params::Params = Params()) = WebRenderable(body, content_type, 200, HTTPHeaders(), params)
+WebRenderable(body::String, content_type::Symbol, params::Params = Params()) = WebRenderable(body, content_type, response_status(params, 200), HTTPHeaders(), params)
 
 
 """
@@ -134,10 +136,13 @@ Genie.Renderer.WebRenderable("bye", :javascript, 301, Dict("Location" => "/bye")
 ```
 """
 WebRenderable(; body::String = "",
-                content_type::Symbol = DEFAULT_CONTENT_TYPE,
                 status::Int = 200,
                 headers::HTTPHeaders = HTTPHeaders(),
-                params::Params = Params()) = WebRenderable(body, content_type, status, headers, params)
+                params::Params = Params(),
+                content_type::Symbol = response_content_type(params),
+                kwargs...) = begin
+                  WebRenderable(body, content_type, status, headers, params)
+                end
 
 
 """

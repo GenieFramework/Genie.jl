@@ -4,7 +4,7 @@ import HTTP, Reexport
 import Genie: Input.HttpFile
 
 Reexport.@reexport using OrderedCollections
-export LittleDict, Params #, params, params!
+export LittleDict, Params, params, params!
 
 mutable struct Params
   collection::LittleDict{Symbol, Any}
