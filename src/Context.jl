@@ -32,11 +32,6 @@ function (p::Params)(key::Symbol, value)
 end
 
 
-params(params::Params, key) = params[key]
-params(params::Params, key, default) = get(params, key, default)
-params!(params::Params, key, default) = get!(params, key, default)
-
-
 """
     setup_base_params(req::Request, res::Response, params::Dict) :: Dict
 

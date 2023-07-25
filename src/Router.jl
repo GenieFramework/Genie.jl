@@ -11,7 +11,7 @@ import HTTP, HttpCommon, Sockets, Millboard, Dates, OrderedCollections, JSON3, M
 using Genie
 Reexport.@reexport using Genie.Context
 
-export route, routes, channel, channels, download, serve_static_file, serve_file, responsetype
+export route, routes, channel, channels, download, serve_static_file, serve_file, responsetype, Route
 export GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
 export @get, @post, @put, @patch, @delete, @options, @head, @route
 export params, query, post, headers, request, params!
@@ -75,6 +75,8 @@ Route(; method::String = GET,
         action::Function = (() -> error("Route not set")),
         name::Union{Symbol,Nothing} = nothing,
         context::Module = @__MODULE__) = Route(method, path, action, name, context)
+Route(path::String, action::Function; method = GET, named::Union{Symbol,Nothing} = nothing, context::Module = @__MODULE__) =
+  Route(method = method, path = path, action = action, name = named, context = context)
 
 
 """
@@ -104,10 +106,11 @@ Base.@kwdef mutable struct RoutesGroup
   prefix::String = ""
   postfix::String = ""
 end
+RoutesGroup(routes::Vector{Route}; prefix = "", postfix = "") = RoutesGroup(routes, prefix, postfix)
 
 function routes(g::RoutesGroup)
   for r in g.routes
-    Router.delete!(r.name)
+    r.name !== nothing && Router.delete!(r.name)
 
     if ! isempty(g.prefix)
       endswith(g.prefix, "/") && (g.prefix = g.prefix[1:end-1])

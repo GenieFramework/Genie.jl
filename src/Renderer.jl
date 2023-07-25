@@ -160,6 +160,9 @@ Genie.Renderer.WebRenderable("good morning", :javascript, 302, Dict("Location" =
 ```
 """
 function WebRenderable(wr::WebRenderable, status::Int, headers::HTTPHeaders, params::Params = Params())
+  wr.status = status
+  wr.headers = merge(params[:response].headers |> Dict, headers)
+
   WebRenderable(wr.body, wr.content_type, wr.status, wr.headers, params)
 end
 

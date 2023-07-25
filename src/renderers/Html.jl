@@ -659,7 +659,7 @@ function html(viewfile::Genie.Renderer.FilePath;
                 headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
                 params::Params = Params(),
                 kwvars...) :: Genie.Renderer.HTTP.Response
-  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", viewfile; layout, context, params, kwvars...), status, headers, params) |> Genie.Renderer.respond
+  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", viewfile; layout, context, params, kwvars...), :html, status, headers, params) |> Genie.Renderer.respond
 end
 
 

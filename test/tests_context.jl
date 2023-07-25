@@ -29,7 +29,6 @@
   @test haskey(p, :request) == haskey(p.collection, :request)
   @test get(p, :testkey, "nothere") == get(p.collection, :testkey, "nothere") == "nothere"
   @test get!(p, :testkey, "default") == p.collection[:testkey] == "default"
-  @test params(p, :testkey) == p.collection[:testkey]
   @test p(:testkey) == p.collection[:testkey]
   @test p(:testkey, "value") == p.collection[:testkey] == "value"
 
