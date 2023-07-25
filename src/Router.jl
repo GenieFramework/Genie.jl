@@ -605,6 +605,14 @@ function action_controller_params(action::Function, params::Genie.Context.Params
 end
 
 
+function handler_takes_params(cr::Union{Channel,Route})
+  methods(cr.action) |> length > 1 && error("Found multiple methods for $cr -- can not dispatch. Make sure to have only one method per route/channel handler.")
+  m = methods(cr.action)[1]
+  m.sig.parameters |> length > 2 && error("Channel and Route handlers should take exactly zero or one parameter of type Params -- found $(m.sig.parameters |> length) parameters.")
+  m.sig.parameters |> length === 2
+end
+
+
 """
     match_routes(req::Request, res::Response, params::Params) :: Union{Route,Nothing}
 
@@ -634,15 +642,13 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Genie.Conte
     occursin(regex_route, string(uri.path)) || parsed_route == ROUTE_CATCH_ALL || continue
 
     # does the action accept params?
-    for m in methods(r.action)
-      if m.sig.parameters |> length === 2 # yes, it expects params, let's process them extra
-        params = Genie.Context.setup_base_params(req, res, params)
-        occursin("?", req.target) && (params = extract_get_params(HTTP.URIs.URI(req.target), params))
-        params = extract_uri_params(uri.path |> string, regex_route, param_names, param_types, params)
-        ispayload(req) && (params = extract_post_params(params))
-        ispayload(req) && (params = extract_request_params(params))
-        params = action_controller_params(r.action, params)
-      end
+    if handler_takes_params(r) # yes, it expects params, let's process them extra
+      params = Genie.Context.setup_base_params(req, res, params)
+      occursin("?", req.target) && (params = extract_get_params(HTTP.URIs.URI(req.target), params))
+      params = extract_uri_params(uri.path |> string, regex_route, param_names, param_types, params)
+      ispayload(req) && (params = extract_post_params(params))
+      ispayload(req) && (params = extract_request_params(params))
+      params = action_controller_params(r.action, params)
     end
 
     params.collection[:route] = r
@@ -669,31 +675,26 @@ end
 function run_route(params::Genie.Context.Params, r::Route) :: HTTP.Response
   try
     # prefer the method that takes params
-    for m in methods(r.action)
-      if m.sig.parameters |> length === 2
-        try
-          return r.action(params) |> to_response
-        catch ex
-          if isa(ex, MethodError) && string(ex.f) == string(r.action)
-            return Base.invokelatest(r.action, params) |> to_response
-          else
-            rethrow(ex)
-          end
+    if handler_takes_params(r)
+      try
+        return r.action(params) |> to_response
+      catch ex
+        if isa(ex, MethodError) && string(ex.f) == string(r.action)
+          return Base.invokelatest(r.action, params) |> to_response
+        else
+          rethrow(ex)
         end
       end
-    end
 
     # fallback to the method that does not take params
-    for m in methods(r.action)
-      if m.sig.parameters |> length === 1
-        try
-          return r.action() |> to_response
-        catch ex
-          if isa(ex, MethodError) && string(ex.f) == string(r.action)
-            return Base.invokelatest(r.action) |> to_response
-          else
-            rethrow(ex)
-          end
+    else
+      try
+        return r.action() |> to_response
+      catch ex
+        if isa(ex, MethodError) && string(ex.f) == string(r.action)
+          return Base.invokelatest(r.action) |> to_response
+        else
+          rethrow(ex)
         end
       end
     end
@@ -771,31 +772,26 @@ end
 function run_channel(params::Genie.Context.Params, c::Channel) :: String
   try
     # prefer the method that takes params
-    for m in methods(c.action)
-      if m.sig.parameters |> length === 2
-        try
-          return c.action(params) |> string
-        catch ex
-          if isa(ex, MethodError) && string(ex.f) == string(c.action)
-            return Base.invokelatest(c.action, params) |> string
-          else
-            isa(ex, Exception) ? sprint(showerror, ex) : rethrow(ex)
-          end
+    if handler_takes_params(c)
+      try
+        return c.action(params) |> string
+      catch ex
+        if isa(ex, MethodError) && string(ex.f) == string(c.action)
+          return Base.invokelatest(c.action, params) |> string
+        else
+          isa(ex, Exception) ? sprint(showerror, ex) : rethrow(ex)
         end
       end
-    end
 
     # fallback to the method that does not take params
-    for m in methods(c.action)
-      if m.sig.parameters |> length === 1
-        try
-          return c.action() |> string
-        catch ex
-          if isa(ex, MethodError) && string(ex.f) == string(c.action)
-            return Base.invokelatest(c.action) |> string
-          else
-            isa(ex, Exception) ? sprint(showerror, ex) : rethrow(ex)
-          end
+    else
+      try
+        return c.action() |> string
+      catch ex
+        if isa(ex, MethodError) && string(ex.f) == string(c.action)
+          return Base.invokelatest(c.action) |> string
+        else
+          isa(ex, Exception) ? sprint(showerror, ex) : rethrow(ex)
         end
       end
     end

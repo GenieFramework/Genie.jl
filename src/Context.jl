@@ -1,22 +1,14 @@
 module Context
 
-import HTTP
+import HTTP, Reexport
 import Genie: Input.HttpFile
-using OrderedCollections: LittleDict
 
-export LittleDict, Params, params
+Reexport.@reexport using OrderedCollections
+export LittleDict, Params, params, params!
 
 mutable struct Params
   collection::LittleDict{Symbol, Any}
 end
-
-Params() = Params(setup_base_params())
-Params(req::HTTP.Request, res::HTTP.Response) = Params(setup_base_params(req, res))
-function (p::Params)(key::Symbol)
-  p.collection[key]
-end
-
-params(params::Params, key) = params[key]
 
 Base.Dict(params::Params) = params.collection
 Base.getindex(params::Params, keys...) = getindex(params.collection, keys...)
@@ -26,6 +18,24 @@ end
 Base.keys(params::Params) = keys(params.collection)
 Base.values(params::Params) = values(params.collection)
 Base.haskey(params::Params, key) = haskey(params.collection, key)
+Base.get(params::Params, key, default) = get(params.collection, key, default)
+Base.get!(params::Params, key, default) = get!(params.collection, key, default)
+
+Params() = Params(setup_base_params())
+Params(req::HTTP.Request, res::HTTP.Response) = Params(setup_base_params(req, res))
+
+function (p::Params)(key::Symbol)
+  p.collection[key]
+end
+function (p::Params)(key::Symbol, value)
+  p.collection[key] = value
+end
+
+
+params(params::Params, key) = params[key]
+params(params::Params, key, default) = get(params, key, default)
+params!(params::Params, key, default) = get!(params, key, default)
+
 
 """
     setup_base_params(req::Request, res::Response, params::Dict) :: Dict
