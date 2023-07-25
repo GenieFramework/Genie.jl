@@ -51,7 +51,7 @@ const MAX_FILENAME_LENGTH = 1_000
 push_content_type(s::Symbol, content_type::String, charset::String = DEFAULT_CHARSET) = (CONTENT_TYPES[s] = "$content_type; $charset")
 
 const ResourcePath = Union{String,Symbol}
-const HTTPHeaders = OrderedCollections.LittleDict{String,String}
+const HTTPHeaders = OrderedCollections.LittleDict
 
 const Path = FilePathsBase.Path
 const FilePath = Union{FilePathsBase.PosixPath,FilePathsBase.WindowsPath}
@@ -70,8 +70,8 @@ init_task_local_storage() = (haskey(task_local_storage(), :__vars) || task_local
 init_task_local_storage()
 clear_task_storage() = task_local_storage(:__vars, Dict{Symbol,Any}())
 
-response_status(params::Params, status::Int) = params[:response].status != 0 ? params[:response].status : status
-response_content_type(params::Params) = get(params, :response_type, DEFAULT_CONTENT_TYPE)
+response_status(params::Params, status::Int) = params[:response].status != 0 ? convert(Int, params[:response].status) : status
+response_content_type(params::Params, content_type = DEFAULT_CONTENT_TYPE) = content_type != DEFAULT_CONTENT_TYPE ? content_type : get(params, :response_type, DEFAULT_CONTENT_TYPE)
 
 """
     mutable struct WebRenderable
@@ -85,7 +85,10 @@ mutable struct WebRenderable
   headers::HTTPHeaders
 end
 function WebRenderable(body::String, content_type::Symbol, status::Int, headers::HTTPHeaders, params::Params)
+  status = response_status(params, status)
+  content_type = response_content_type(params, content_type)
   headers = merge(params[:response].headers |> Dict, headers)
+
   WebRenderable(body, content_type, status, headers)
 end
 
@@ -157,10 +160,7 @@ Genie.Renderer.WebRenderable("good morning", :javascript, 302, Dict("Location" =
 ```
 """
 function WebRenderable(wr::WebRenderable, status::Int, headers::HTTPHeaders, params::Params = Params())
-  wr.status = status
-  wr.headers = merge(params[:response].headers |> Dict, headers)
-
-  wr
+  WebRenderable(wr.body, wr.content_type, wr.status, wr.headers, params)
 end
 
 
@@ -169,7 +169,7 @@ function WebRenderable(wr::WebRenderable, content_type::Symbol, status::Int, hea
   wr.status = status
   wr.headers = merge(params[:response].headers |> Dict, headers)
 
-  wr
+  WebRenderable(wr.body, wr.content_type, wr.status, wr.headers, params)
 end
 
 

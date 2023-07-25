@@ -66,7 +66,7 @@ function render(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__
 end
 
 
-function render(data::Any; forceparse::Bool = false, context::Module = @__MODULE__) :: Function
+function render(data::Any; forceparse::Bool = false, context::Module = @__MODULE__, kwargs...) :: Function
   () -> JSONParser.json(data)
 end
 

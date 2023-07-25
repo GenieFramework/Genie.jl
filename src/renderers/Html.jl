@@ -556,7 +556,6 @@ function html(data::String;
               noparse::Bool = false,
               params::Params = Params(),
               kwvars...) :: Genie.Renderer.HTTP.Response
-
   layout = if isa(layout, Genie.Renderer.FilePath)
     read(layout, String)
   elseif isa(layout, Function)
@@ -604,7 +603,7 @@ function html(data::ParsedHTMLString;
               status::Int = 200,
               headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
               params::Params = Params(),
-              _...) :: Genie.Renderer.HTTP.Response
+              kwargs...) :: Genie.Renderer.HTTP.Response
   Genie.Renderer.WebRenderable(; body = data.data, status, headers, params) |> Genie.Renderer.respond
 end
 
