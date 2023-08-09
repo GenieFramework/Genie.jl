@@ -813,7 +813,7 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
 
   if request_type_is(req, :json) && content_length(req) > 0
     try
-      params.collection[PARAMS_JSON_PAYLOAD] = JSON3.read(req_body) |> Dict
+      params.collection[PARAMS_JSON_PAYLOAD] = JSON3.read(req_body) |> stringdict
       params.collection[PARAMS_POST_KEY][PARAMS_JSON_PAYLOAD] = params.collection[PARAMS_JSON_PAYLOAD]
     catch ex
       @error ex
@@ -829,7 +829,7 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
 end
 
 
-function Dict(o::JSON3.Object) :: Dict{String,Any}
+function stringdict(o::JSON3.Object) :: Dict{String,Any}
   r = Dict{String,Any}()
 
   for f in keys(o)
