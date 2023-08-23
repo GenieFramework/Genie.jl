@@ -832,8 +832,8 @@ end
 function stringdict(o::JSON3.Object) :: Dict{String,Any}
   r = Dict{String,Any}()
 
-  for f in keys(o)
-    r[string(f)] = o[string(f)]
+  for (k, v) in o
+    r[string(k)] = v
   end
 
   r
