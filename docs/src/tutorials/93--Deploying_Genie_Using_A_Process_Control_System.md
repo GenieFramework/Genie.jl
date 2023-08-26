@@ -4,7 +4,7 @@ This tutorial shows how to host a Julia/Genie app using process control system. 
 
 ## Prerequisites
 
-Install `supervisor` in system. If you not sure how to install you can find the suitable command from [here](https://command-not-found.com/supervisord) 
+Install `supervisor` in system. If you not sure how to install you can find the suitable command from [here](https://command-not-found.com/supervisord)  or you can [refer to official website](http://supervisord.org/)
 
 ## The application
 
