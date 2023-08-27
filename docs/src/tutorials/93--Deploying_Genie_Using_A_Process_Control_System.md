@@ -56,7 +56,7 @@ stdout_logfile=/var/log/genie-application.log
 stopwaitsecs=3600
 ```
 
-Now application is almost ready to start just need to configure [the secret token](https://genieframework.github.io/Genie.jl/dev/API/secrets.html#Genie.Secrets.secret_token). Go inse the project directory and execute following command. It will generate `secrets.jl` inside `config/secrets.jl` file and if it exists then it will update with new token string.
+Now the application is almost ready to start just need to configure [the secret token](https://genieframework.github.io/Genie.jl/dev/API/secrets.html#Genie.Secrets.secret_token). Go into the project directory and execute the following command. It will generate `secrets.jl` inside `config/secrets.jl` file and if it exists then it will update with a new token string.
 
 ```sh
 julia --project=. --banner=no --eval="using Pkg; using Genie; Genie.Generator.write_secrets_file()"
