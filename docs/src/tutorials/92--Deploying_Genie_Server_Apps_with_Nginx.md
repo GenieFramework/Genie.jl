@@ -55,6 +55,12 @@ Then set the `GENIE_ENV` environment variable to `prod`:
 export GENIE_ENV=prod
 ```
 
+Now application is almost ready to start just need to configure [the secret token](https://genieframework.github.io/Genie.jl/dev/API/secrets.html#Genie.Secrets.secret_token). Go inse the project directory and execute following command. It will generate `secrets.jl` insie `config/secrets.jl` file and if it exeists then it will update with new token string.
+
+```sh
+julia --project=. --banner=no --eval="using Pkg; using Genie; Genie.Generator.write_secrets_file()"
+```
+
 Launch the app:
 
 ```sh
