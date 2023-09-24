@@ -617,7 +617,6 @@ You can add support for additional databases anytime later. ")
     @warn "You need to edit the database configuration file at db/connection.yml to set your database connection info."
   end
 
-  Pkg.activate(".")
   testmode ? Pkg.develop("SearchLight$adapter", io = devnull) : Pkg.add("SearchLight$adapter", io = devnull)
 
   adapter
