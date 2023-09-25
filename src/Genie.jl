@@ -92,7 +92,10 @@ julia> Genie.loadapp(".")
 [ Info: Logging to file at MyGenieApp/log/dev.log
 ```
 """
-function loadapp(path::String = "."; autostart::Bool = false, dbadapter::Union{Nothing,Symbol,String} = nothing, context = Main) :: Nothing
+function loadapp( path::String = ".";
+                  autostart::Bool = false,
+                  dbadapter::Union{Nothing,Symbol,String} = nothing,
+                  context = Main) :: Nothing
   if ! isnothing(dbadapter) && dbadapter != "nothing"
     Genie.Generator.autoconfdb(dbadapter)
   end

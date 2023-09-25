@@ -18,15 +18,16 @@ function execute(config::Genie.Configuration.Settings; server::Union{Sockets.TCP
 
   # overwrite env settings with command line arguments
   Genie.config.server_port = parse(Int, parsed_args["p"])
-  Genie.config.websockets_port = parsed_args["w"] == "nothing" ? nothing : parse(Int, parsed_args["w"])
+  Genie.config.websockets_port = lowercase(parsed_args["w"]) == "nothing" ? nothing : parse(Int, parsed_args["w"])
   Genie.config.server_host = parsed_args["l"]
-  Genie.config.websockets_exposed_host = parsed_args["x"] == "nothing" ? nothing : parsed_args["x"]
-  Genie.config.websockets_exposed_port = parsed_args["y"] == "nothing" ? nothing : parse(Int, parsed_args["y"])
+  Genie.config.websockets_exposed_host = lowercase(parsed_args["x"]) == "nothing" ? nothing : parsed_args["x"]
+  Genie.config.websockets_exposed_port = lowercase(parsed_args["y"]) == "nothing" ? nothing : parse(Int, parsed_args["y"])
   Genie.config.websockets_base_path = parsed_args["W"]
   Genie.config.base_path = parsed_args["b"]
 
-  if (called_command(parsed_args, "s") && get(parsed_args, "s", "false") == "true") ||
-      (haskey(ENV, "STARTSERVER") && parse(Bool, ENV["STARTSERVER"]))
+  if (called_command(parsed_args, "s") && lowercase(get(parsed_args, "s", "false")) == "true") ||
+      (haskey(ENV, "STARTSERVER") && parse(Bool, ENV["STARTSERVER"])) ||
+      (haskey(ENV, "EARLYBIND") && lowercase(get(ENV, "STARTSERVER", "")) != "false")
     Genie.config.run_as_server = true
     Base.invokelatest(Genie.up, Genie.config.server_port, Genie.config.server_host; server = server)
 

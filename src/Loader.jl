@@ -27,7 +27,7 @@ function importenv()
 end
 
 
-function loadenv(; context)
+function loadenv(; context) :: Union{Sockets.TCPServer,Nothing}
   haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = "dev")
   bootstrap(context)
 
@@ -262,7 +262,7 @@ function sort_load_order(rootdir, lsdir::Vector{String})
   autoloadfilepath = isfile(joinpath(pwd(), rootdir, Genie.config.autoload_file)) ? joinpath(pwd(), rootdir, Genie.config.autoload_file) : return lsdir
   autoloadorder = open(f -> ([line for line in eachline(f)]), autoloadfilepath)
   fn_loadorder = []
-  
+
   for file in autoloadorder
     if file in lsdir
       push!(fn_loadorder, file)
