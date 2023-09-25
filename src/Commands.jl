@@ -27,7 +27,7 @@ function execute(config::Genie.Configuration.Settings; server::Union{Sockets.TCP
 
   if (called_command(parsed_args, "s") && lowercase(get(parsed_args, "s", "false")) == "true") ||
       (haskey(ENV, "STARTSERVER") && parse(Bool, ENV["STARTSERVER"])) ||
-      (haskey(ENV, "EARLYBIND") && lowercase(get(ENV, "STARTSERVER", "")) != "false")
+      (haskey(ENV, "EARLYBIND") && lowercase(get(ENV, "STARTSERVER", "true")) != "false")
     Genie.config.run_as_server = true
     Base.invokelatest(Genie.up, Genie.config.server_port, Genie.config.server_host; server = server)
 
