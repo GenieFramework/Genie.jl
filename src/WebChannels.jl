@@ -221,25 +221,29 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}},
 
   isempty(SUBSCRIPTIONS) && return false
 
-  for channel in channels
-    haskey(SUBSCRIPTIONS, channel) || throw(ChannelNotFoundException(channel))
+  try
+    for channel in channels
+      haskey(SUBSCRIPTIONS, channel) || throw(ChannelNotFoundException(channel))
 
-    for client in SUBSCRIPTIONS[channel]
-      except !== nothing && client == id(except) && continue
-      HTTP.WebSockets.isclosed(CLIENTS[client].client) && continue
+      for client in SUBSCRIPTIONS[channel]
+        except !== nothing && client == id(except) && continue
+        HTTP.WebSockets.isclosed(CLIENTS[client].client) && continue
 
-      try
-        payload !== nothing ?
-          message(client, ChannelMessage(channel, client, msg, payload) |> Renderer.Json.JSONParser.json) :
-          message(client, msg)
-      catch ex
-        if isa(ex, Base.IOError)
-          unsubscribe_disconnected_clients(channel)
-        else
-          @error ex
+        try
+          payload !== nothing ?
+            message(client, ChannelMessage(channel, client, msg, payload) |> Renderer.Json.JSONParser.json) :
+            message(client, msg)
+        catch ex
+          if isa(ex, Base.IOError)
+            unsubscribe_disconnected_clients(channel)
+          else
+            @error ex
+          end
         end
       end
     end
+  catch ex
+    @error ex
   end
 
   true
@@ -253,8 +257,13 @@ function broadcast(msg::String;
                     channels::Union{Union{ChannelName,Vector{ChannelName}},Nothing} = nothing,
                     payload::Union{Dict,Nothing} = nothing,
                     except::Union{HTTP.WebSockets.WebSocket,Nothing,UInt} = nothing) :: Bool
-  channels === nothing && (channels = collect(keys(SUBSCRIPTIONS)))
-  broadcast(channels, msg, payload; except = except)
+  try
+    channels === nothing && (channels = collect(keys(SUBSCRIPTIONS)))
+    broadcast(channels, msg, payload; except = except)
+  catch ex
+    @error ex
+    false
+  end
 end
 
 
