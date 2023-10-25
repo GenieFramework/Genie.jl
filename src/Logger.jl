@@ -18,7 +18,7 @@ julia> @info "hello"
 Info2023-10-25 13:36:15 helloMainREPL[5]Main_0f6a5e07REPL[5]1
 ```
 """
-const HANDLERS::Vector{Function} = Function[]
+const HANDLERS = Function[]
 
 function timestamp_logger(logger)
   date_format = Genie.config.log_date_format
