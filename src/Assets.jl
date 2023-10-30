@@ -493,7 +493,7 @@ end
 
 function webthreads_route(channel::String = Genie.config.webthreads_default_route) :: Nothing
   if ! external_assets()
-    Router.route(webthreads_endpoint(channel)) do
+    Router.route(webthreads_endpoint()) do
       Genie.Renderer.Js.js(webthreads(channel))
     end
   end
@@ -504,7 +504,7 @@ end
 
 function webthreads_script_tag(channel::String = Genie.config.webthreads_default_route) :: String
   if ! external_assets()
-    Genie.Renderer.Html.script(src="$(Genie.config.base_path)$(webthreads_endpoint(channel)[2:end])")
+    Genie.Renderer.Html.script(src="$(Genie.config.base_path)$(webthreads_endpoint())")
   else
     Genie.Renderer.Html.script([webthreads(channel)])
   end

@@ -79,12 +79,30 @@ function uri_factory(endpoint) {
   return Genie.WebChannels.server_uri + (Genie.Settings.base_path == '' ? '/' : Genie.Settings.base_path) + Genie.Settings.webthreads_default_route + '/' + endpoint + '?wtclient=' + Genie.WebChannels.wtid;
 }
 
-function subscribe() {
+function displayAlert(content = 'Can not reach the server - please reload the page') {
+  let elemid = 'wsconnectionalert';
+  if (document.getElementById(elemid) === null) {
+    let elem = document.createElement('div');
+    elem.id = elemid;
+    elem.style.cssText = 'position:absolute;width:100%;opacity:0.5;z-index:100;background:#e63946;color:#f1faee;text-align:center;';
+    elem.innerHTML = content + '<a href="javascript:location.reload();" style="color:#a8dadc;padding: 0 10pt;font-weight:bold;">Reload</a>';
+    setTimeout(() => {
+      document.body.appendChild(elem);
+      document.location.href = '#' + elemid;
+    }, Genie.Settings.webchannels_server_gone_alert_timeout);
+  }
+}
+
+function subscribe(trial = 1) {
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
     Genie.WebChannels.channel.start('GET', uri_factory(Genie.Settings.webchannels_subscribe_channel), {}, '');
     pull();
+  } else if (trial < Genie.Settings.webchannels_subscription_trails) {
+    if (isDev()) console.warn('Queuing subscription');
+    trial++;
+    setTimeout(subscribe.bind(this, trial), Genie.WebChannels.poll_interval);
   } else {
-    tm = setTimeout(subscribe, Genie.WebChannels.poll_interval);
+    displayAlert();
   }
 }
 
@@ -124,33 +142,37 @@ Genie.WebChannels.processingHandlers.push(function(json_data){
 
 Genie.WebChannels.messageHandlers.push(function(code, result, headers){
   if ( typeof result === 'string' ) {
-    message = result.trim();
-
-    if (message.startsWith(Genie.Settings.webchannels_eval_command)) {
-      return Function('"use strict";return (' + message.substring(Genie.Settings.webchannels_eval_command.length).trim() + ')')();
-    } else if (message == 'Subscription: OK') {
-      window.subscription_ready();
-    } else {
-      window.process_payload(message);
+    result = result.trim();
+    parts = result.split(',');
+    for (let i = 0; i < parts.length; i++) {
+      message = parts[i].trim();
+      processMessage(message);
     }
   } else if ( typeof result === 'object' && result !== null ) {
-    for ( i=0; i<result.length; i++ ) {
+    for (let i=0; i<result.length; i++ ) {
       message = result[i].trim();
-
-      if (message.startsWith('{') && message.endsWith('}')) {
-        window.parse_payload(JSON.parse(message, function (key, value) {
-          if (value == '__undefined__') {
-            return undefined;
-          } else {
-            return value;
-          }
-        }));
-      } else {
-        window.process_payload(message);
-      }
+      processMessage(message);
     }
   }
 });
+
+function processMessage(message) {
+  if (message.startsWith(Genie.Settings.webchannels_eval_command)) {
+    return Function('"use strict";return (' + message.substring(Genie.Settings.webchannels_eval_command.length).trim() + ')')();
+  } else if (message == 'Subscription: OK') {
+    window.subscription_ready();
+  } else if (message.startsWith('{') && message.endsWith('}')) {
+    window.parse_payload(JSON.parse(message, function (key, value) {
+      if (value == '__undefined__') {
+        return undefined;
+      } else {
+        return value;
+      }
+    }));
+  } else {
+    window.process_payload(message);
+  }
+}
 
 Genie.WebChannels.errorHandlers.push(function(event) {
   if (Genie.Settings.env == 'dev') {
