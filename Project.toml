@@ -64,6 +64,7 @@ Serialization = "1.6"
 Sockets = "1.6"
 UUIDs = "1.6"
 Unicode = "1.6"
+XML2_jll = "=2.10.4"
 YAML = "0.4"
 julia = "1.6"
 
