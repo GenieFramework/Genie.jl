@@ -1,7 +1,7 @@
 name = "Genie"
 uuid = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
 authors = ["Adrian Salceanu <e@essenciary.com>"]
-version = "5.20.0"
+version = "5.20.1"
 
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
@@ -32,6 +32,7 @@ Serialization = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 Sockets = "6462fe0b-24de-5631-8697-dd941f90decc"
 UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 Unicode = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
+XML2_jll = "02c8fc9c-b97f-50b9-bbe4-9be30ff0a78a"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
