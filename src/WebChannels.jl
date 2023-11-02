@@ -3,7 +3,7 @@ Handles WebSockets communication logic.
 """
 module WebChannels
 
-import HTTP, Distributed, Logging, JSON3, Sockets, Dates
+import HTTP, Distributed, Logging, JSON3, Sockets, Dates, Base64
 import Genie, Genie.Renderer
 
 const ClientId = UInt # web socket hash
@@ -288,6 +288,22 @@ function message(client::ClientId, msg::String) :: Int
 end
 function message(client::ChannelClient, msg::String) :: Int
   message(client.client, msg)
+end
+
+
+"""
+Encodes `msg` in Base64 and tags it with `Genie.config.webchannels_base64_marker`.
+"""
+function tagbase64encode(msg)
+  Genie.config.webchannels_base64_marker * Base64.base64encode(msg)
+end
+
+
+"""
+Decodes `msg` from Base64 and removes the `Genie.config.webchannels_base64_marker` tag.
+"""
+function tagbase64decode(msg)
+  Base64.base64decode(msg[length(Genie.config.webchannels_base64_marker):end])
 end
 
 end

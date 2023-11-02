@@ -157,6 +157,10 @@ Genie.WebChannels.messageHandlers.push(function(code, result, headers){
 });
 
 function processMessage(message) {
+  if (message.startsWith(Genie.Settings.webchannels_base64_marker)) {
+    message = atob(message.substring(Genie.Settings.webchannels_base64_marker.length).trim());
+  }
+
   if (message.startsWith(Genie.Settings.webchannels_eval_command)) {
     return Function('"use strict";return (' + message.substring(Genie.Settings.webchannels_eval_command.length).trim() + ')')();
   } else if (message == 'Subscription: OK') {

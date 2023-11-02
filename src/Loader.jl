@@ -61,7 +61,7 @@ end
 
 Kickstarts the loading of a Genie app by loading the environment settings.
 """
-function bootstrap(context::Union{Module,Nothing} = default_context(context)) :: Nothing
+function bootstrap(context::Union{Module,Nothing} = default_context(context); show_banner::Bool = true) :: Nothing
   ENV_FILE_NAME = "env.jl"
   GLOBAL_ENV_FILE_NAME = "global.jl"
 
@@ -76,7 +76,7 @@ function bootstrap(context::Union{Module,Nothing} = default_context(context)) ::
   Genie.config.app_env = ENV["GENIE_ENV"] # ENV might have changed
   importenv()
 
-  get!(ENV, "GENIE_BANNER", "true") |> strip |> lowercase != "false" && print_banner()
+  get!(ENV, "GENIE_BANNER", "true") |> strip |> lowercase != "false" && show_banner && print_banner()
 
   if isfile(Genie.config.env_file)
     DotEnv.config(;path=Genie.config.env_file)

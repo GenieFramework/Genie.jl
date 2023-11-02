@@ -141,26 +141,31 @@ Genie.WebChannels.processingHandlers.push(event => {
 
 Genie.WebChannels.messageHandlers.push(event => {
   try {
-    event.data = event.data.trim();
+    let ed = event.data.trim();
 
-    if (event.data.startsWith('{') && event.data.endsWith('}')) {
-      window.parse_payload(JSON.parse(event.data, function (key, value) {
+    // if payload is marked as base64 encoded, remove the marker and decode
+    if (ed.startsWith(Genie.Settings.webchannels_base64_marker)) {
+      ed = atob(ed.substring(Genie.Settings.webchannels_base64_marker.length).trim());
+    }
+
+    if (ed.startsWith('{') && ed.endsWith('}')) {
+      window.parse_payload(JSON.parse(ed, function (key, value) {
         if (value == '__undefined__') {
           return undefined;
         } else {
           return value;
         }
       }));
-    } else if (event.data.startsWith(Genie.Settings.webchannels_eval_command)) {
-      return Function('"use strict";return (' + event.data.substring(Genie.Settings.webchannels_eval_command.length).trim() + ')')();
-    } else if (event.data == 'Subscription: OK') {
+    } else if (ed.startsWith(Genie.Settings.webchannels_eval_command)) {
+      return Function('"use strict";return (' + ed.substring(Genie.Settings.webchannels_eval_command.length).trim() + ')')();
+    } else if (ed == 'Subscription: OK') {
       window.subscription_ready();
     } else {
       window.process_payload(event);
     }
   } catch (ex) {
     console.error(ex);
-    console.error(event.data);
+    console.error(ed);
   }
 });
 

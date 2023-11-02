@@ -228,6 +228,7 @@ Base.@kwdef mutable struct Settings
   webchannels_unsubscribe_channel::String             = "unsubscribe"
   webchannels_autosubscribe::Bool                     = true
   webchannels_eval_command::String                    = ">eval:"
+  webchannels_base64_marker::String                   = "base64:"
   webchannels_timeout::Int                            = 1_000
   webchannels_keepalive_frequency::Int                = 30_000 # 30 seconds
   webchannels_server_gone_alert_timeout::Int          = 10_000 # 10 seconds
