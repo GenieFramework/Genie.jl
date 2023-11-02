@@ -111,14 +111,14 @@ function up(port::Int,
 
   command = () -> begin
     HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server,
-                                    reuseaddr = reuseaddr, http_kwargs...) do http::HTTP.Stream
+                                    reuseaddr = reuseaddr, http_kwargs...) do stream::HTTP.Stream
       try
-        if Genie.config.websockets_server !== nothing && port === ws_port && HTTP.WebSockets.isupgrade(http.message)
-          HTTP.WebSockets.upgrade(http) do ws
-            setup_ws_handler(http, ws)
+        if Genie.config.websockets_server !== nothing && port === ws_port && HTTP.WebSockets.isupgrade(stream.message)
+          HTTP.WebSockets.upgrade(stream) do ws
+            setup_ws_handler(stream, ws)
           end
         else
-          setup_http_streamer(http)
+          setup_http_streamer(stream)
         end
       catch ex
         isa(ex, Base.IOError) || @error ex
@@ -267,7 +267,7 @@ end
 
 Http server handler function - invoked when the server gets a request.
 """
-function handle_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
+function handle_request(req::HTTP.Request, res::HTTP.Response; stream::Union{HTTP.Stream,Nothing} = nothing) :: HTTP.Response
   try
     req = Genie.Headers.normalize_headers(req)
   catch ex
@@ -275,23 +275,40 @@ function handle_request(req::HTTP.Request, res::HTTP.Response) :: HTTP.Response
   end
 
   try
-    Genie.Headers.set_headers!(req, res, Genie.Router.route_request(req, res))
+    Genie.Headers.set_headers!(req, res, Genie.Router.route_request(req, res; stream))
   catch ex
     rethrow(ex)
   end
 end
 
 
-function setup_http_streamer(http::HTTP.Stream)
+function streamhandler(handler::Function)
+    return function(stream::HTTP.Stream)
+        request::HTTP.Request = stream.message
+        request.body = read(stream)
+
+        closeread(stream)
+        request.response::HTTP.Response = handler(request; stream)
+        request.response.request = request
+
+        startwrite(stream)
+        write(stream, request.response.body)
+
+        return
+    end
+end
+
+
+function setup_http_streamer(stream::HTTP.Stream)
   if Genie.config.features_peerinfo
     try
-      task_local_storage(:peer, Sockets.getpeername( HTTP.IOExtras.tcpsocket(HTTP.Streams.getrawstream(http)) ))
+      task_local_storage(:peer, Sockets.getpeername( HTTP.IOExtras.tcpsocket(HTTP.Streams.getrawstream(stream)) ))
     catch ex
       @error ex
     end
   end
 
-  HTTP.Handlers.streamhandler(setup_http_listener)(http)
+  streamhandler(setup_http_listener)(stream)
 end
 
 
@@ -300,9 +317,9 @@ end
 
 Configures the handler for the HTTP Request and handles errors.
 """
-function setup_http_listener(req::HTTP.Request, res::HTTP.Response = HTTP.Response()) :: HTTP.Response
+function setup_http_listener(req::HTTP.Request, res::HTTP.Response = HTTP.Response(); stream::Union{HTTP.Stream, Nothing} = nothing) :: HTTP.Response
   try
-    Distributed.@fetch handle_request(req, res)
+    Distributed.@fetch handle_request(req, res; stream)
   catch ex # ex is a Distributed.RemoteException
     if isa(ex, Distributed.RemoteException) &&
       hasfield(typeof(ex), :captured) && isa(ex.captured, Distributed.CapturedException) &&
