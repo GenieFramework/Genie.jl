@@ -421,7 +421,7 @@ function render(data::S; context::Module = @__MODULE__, layout::Union{String,Not
     task_local_storage(:__yield, data isa ParsedHTMLString ? () -> data : parseview(data, partial = true, context = context))
     parselayout(layout, context)
   else
-    data isa ParsedHTMLString ? () -> [Genie.Renderer.Html.doctype(), data] : parseview(data, partial = false, context = context)
+    data isa ParsedHTMLString ? () -> [data] : parseview(data, partial = false, context = context)
   end
 end
 
