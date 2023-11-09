@@ -418,10 +418,10 @@ function render(data::S; context::Module = @__MODULE__, layout::Union{String,Not
   Genie.Renderer.registervars(; context = context, vars...)
 
   if layout !== nothing
-    task_local_storage(:__yield, parseview(data, partial = true, context = context))
+    task_local_storage(:__yield, data isa ParsedHTMLString ? () -> data : parseview(data, partial = true, context = context))
     parselayout(layout, context)
   else
-    parseview(data, partial = false, context = context)
+    data isa ParsedHTMLString ? () -> [data] : parseview(data, partial = false, context = context)
   end
 end
 
@@ -564,7 +564,9 @@ function html!(data::Function;
   noparse::Bool = false,
   vars...) :: Genie.Renderer.HTTP.Response
 
-  html(data() |> string; context, status, headers, layout, forceparse, noparse, vars...)
+  view = data()
+  view isa Vector{ParsedHTMLString} && (view = ParsedHTMLString(view))
+  html(view isa ParsedHTMLString ? view : join(view); context, status, headers, layout, forceparse, noparse, vars...)
 end
 
 function html(data::HTMLString;
@@ -579,11 +581,14 @@ function html(data::HTMLString;
 end
 
 function html(data::ParsedHTMLString;
+              context::Module = @__MODULE__,
               status::Int = 200,
               headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
+              layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing,
+              forceparse::Bool = false,
+              noparse::Bool = false,
               vars...) :: Genie.Renderer.HTTP.Response
-
-  Genie.Renderer.WebRenderable(body = data.data, status = status, headers = headers) |> Genie.Renderer.respond
+  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context = context, layout = layout, vars...), status, headers) |> Genie.Renderer.respond
 end
 
 function html!(data::Union{S,Vector{S}};
