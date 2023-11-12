@@ -181,7 +181,7 @@ Genie.WebChannels.messageHandlers.push(event => {
     }
   } catch (ex) {
     console.error(ex);
-    console.error(ed);
+    console.error(event.data);
   }
 });
 
