@@ -136,6 +136,29 @@ function push(body, headers = {}) {
   pull();
 }
 
+
+Genie.pipeRevivers = (revivers) => (key, value) => revivers.reduce((v, f) => f(key, v), value);
+
+Genie.rebuildReviver = function() {
+    Genie.reviver = Genie.pipeRevivers(Genie.revivers)
+}
+
+Genie.addReviver = function(reviver) {
+    Genie.revivers.push(reviver)
+    Genie.reviver = Genie.pipeRevivers(Genie.revivers)
+}
+
+Genie.revive_undefined = function(key, value) {
+    if (value == '__undefined__') {
+        return undefined;
+    } else {
+        return value;
+    }
+}
+
+Genie.revivers = [Genie.revive_undefined]
+Genie.rebuildReviver()
+
 Genie.WebChannels.processingHandlers.push(function(json_data){
   window.parse_payload(json_data);
 });
@@ -166,13 +189,7 @@ function processMessage(message) {
   } else if (message == 'Subscription: OK') {
     window.subscription_ready();
   } else if (message.startsWith('{') && message.endsWith('}')) {
-    window.parse_payload(JSON.parse(message, function (key, value) {
-      if (value == '__undefined__') {
-        return undefined;
-      } else {
-        return value;
-      }
-    }));
+    window.parse_payload(JSON.parse(message, Genie.reviver));
   } else {
     window.process_payload(message);
   }

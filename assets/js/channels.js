@@ -118,6 +118,28 @@ function newSocketConnection(host = Genie.Settings.websockets_exposed_host) {
     return ws
 }
 
+Genie.pipeRevivers = (revivers) => (key, value) => revivers.reduce((v, f) => f(key, v), value);
+
+Genie.rebuildReviver = function() {
+    Genie.reviver = Genie.pipeRevivers(Genie.revivers)
+}
+
+Genie.addReviver = function(reviver) {
+    Genie.revivers.push(reviver)
+    Genie.reviver = Genie.pipeRevivers(Genie.revivers)
+}
+
+Genie.revive_undefined = function(key, value) {
+    if (value == '__undefined__') {
+        return undefined;
+    } else {
+        return value;
+    }
+}
+
+Genie.revivers = [Genie.revive_undefined]
+Genie.rebuildReviver()
+
 Genie.WebChannels.initialize();
 Genie.WebChannels.socket = newSocketConnection();
 
@@ -149,13 +171,7 @@ Genie.WebChannels.messageHandlers.push(event => {
     }
 
     if (ed.startsWith('{') && ed.endsWith('}')) {
-      window.parse_payload(JSON.parse(ed, function (key, value) {
-        if (value == '__undefined__') {
-          return undefined;
-        } else {
-          return value;
-        }
-      }));
+      window.parse_payload(JSON.parse(ed, Genie.reviver));
     } else if (ed.startsWith(Genie.Settings.webchannels_eval_command)) {
       return Function('"use strict";return (' + ed.substring(Genie.Settings.webchannels_eval_command.length).trim() + ')')();
     } else if (ed == 'Subscription: OK') {
