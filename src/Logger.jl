@@ -89,7 +89,7 @@ Logging.shouldlog(logger::GenieLogger, level, _module, group, id) = true
 Logging.catch_exceptions(logger::GenieLogger) = true
 
 function Logging.handle_message(logger::GenieLogger, lvl, msg, _mod, group, id, file, line; kwargs...)
-  logger.action(lvl, msg, _mod, group, id, file, line; kwargs...)
+  logger.action(lvl, msg, _mod, group, id, file, line)
   nothing
 end
 

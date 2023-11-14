@@ -122,16 +122,24 @@ function stream!(message::String; eol::String = "\n\n") :: Nothing
 
   nothing
 end
-function stream(data::String = "", event::String = "") :: Nothing
+function stream(data::String = ""; event::String = "", id::String = "", retry::Int = 0) :: Nothing
   msg = ""
   if ! isempty(data)
-    msg = "data: $data" * msg
+    for line in split(data, "\n")
+      msg = "data: $line\n" * msg
+    end
   end
   if ! isempty(event)
     msg = "event: $event\n" * msg
   end
+  if ! isempty(id)
+    msg = "id: $id\n" * msg
+  end
+  if retry > 0
+    msg = "retry: $retry\n" * msg
+  end
 
-  stream!(msg)
+  stream!(msg * "\n"; eol = "")
 
   nothing
 end
