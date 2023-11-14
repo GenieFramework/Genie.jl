@@ -137,27 +137,28 @@ function push(body, headers = {}) {
 }
 
 
-Genie.pipeRevivers = (revivers) => (key, value) => revivers.reduce((v, f) => f(key, v), value);
+Genie.Revivers = {};
+Genie.Revivers.pipeRevivers = (revivers) => (key, value) => revivers.reduce((v, f) => f(key, v), value);
 
-Genie.rebuildReviver = function() {
-    Genie.reviver = Genie.pipeRevivers(Genie.revivers)
+Genie.Revivers.rebuildReviver = function() {
+  Genie.Revivers.reviver = Genie.Revivers.pipeRevivers(Genie.Revivers.revivers)
 }
 
-Genie.addReviver = function(reviver) {
-    Genie.revivers.push(reviver)
-    Genie.reviver = Genie.pipeRevivers(Genie.revivers)
+Genie.Revivers.addReviver = function(reviver) {
+  Genie.Revivers.revivers.push(reviver)
+  Genie.Revivers.rebuildReviver()
 }
 
-Genie.revive_undefined = function(key, value) {
-    if (value == '__undefined__') {
-        return undefined;
-    } else {
-        return value;
-    }
+Genie.Revivers.revive_undefined = function(key, value) {
+  if (value == '__undefined__') {
+    return undefined;
+  } else {
+    return value;
+  }
 }
 
-Genie.revivers = [Genie.revive_undefined]
-Genie.rebuildReviver()
+Genie.Revivers.revivers = [Genie.Revivers.revive_undefined]
+Genie.Revivers.rebuildReviver()
 
 Genie.WebChannels.processingHandlers.push(function(json_data){
   window.parse_payload(json_data);
@@ -189,7 +190,7 @@ function processMessage(message) {
   } else if (message == 'Subscription: OK') {
     window.subscription_ready();
   } else if (message.startsWith('{') && message.endsWith('}')) {
-    window.parse_payload(JSON.parse(message, Genie.reviver));
+    window.parse_payload(JSON.parse(message, Genie.Revivers.reviver));
   } else {
     window.process_payload(message);
   }
