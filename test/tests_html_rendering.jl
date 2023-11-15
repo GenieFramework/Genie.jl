@@ -99,5 +99,21 @@
 
       rm("build", force = true, recursive = true)
     end;
+
+    @testset "Encoding Test" begin
+        using Genie.Renderer, Genie.Renderer.Html
+
+        path = mktempdir(cleanup=true)
+        fpath = joinpath(path, "welcome.jl.html")
+
+        write(fpath, "welcöme. 不一定要味道好，但一定要有用. äüö&%?#")
+
+        expected = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n\r\n<!DOCTYPE html><html>\n  <body>\n    <p>welcöme. 不一定要味道好，但一定要有用. äüö&%?#\n</p>\n  </body></html>"
+
+        decoded = String(html(filepath(fpath)))
+
+        @test decoded == expected
+    end
+
   end;
 end
