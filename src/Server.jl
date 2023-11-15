@@ -77,6 +77,8 @@ function up(port::Int,
             open_browser::Bool = false,
             reuseaddr::Bool = Distributed.nworkers() > 1,
             updateconfig::Bool = true,
+            protocol::String = "http",
+            query::Dict = Dict(),
             http_kwargs...) :: ServersCollection
 
   if server !== nothing
@@ -127,7 +129,10 @@ function up(port::Int,
     end
   end
 
-  server_url = "http://$host:$port"
+  server_url = "$protocol://$host:$port"
+  if ! isempty(query)
+    server_url *= ("?" * join(["$(k)=$(v)" for (k, v) in query], "&"))
+  end
 
   status = if async
     print_server_status("Web Server starting at $server_url")
