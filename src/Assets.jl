@@ -5,6 +5,7 @@ module Assets
 
 import Genie, Genie.Configuration, Genie.Router, Genie.WebChannels, Genie.WebThreads
 import Genie.Renderer.Json
+import Pkg
 
 export include_asset, css_asset, js_asset, js_settings, css, js
 export embedded, channels_script, channels_support, webthreads_script, webthreads_support
@@ -12,6 +13,13 @@ export favicon_support
 
 
 ### PUBLIC ###
+
+function package_version(package::Union{Module,String}) :: String
+  isa(package, Module) && (package = string(package))
+  endswith(package, ".jl") && (package = String(package[1:end-3]))
+  pkg_dict = filter(x -> x.second.name == package, Pkg.dependencies())
+  isempty(pkg_dict) ? "master" : string(first(pkg_dict)[2].version)
+end
 
 """
     mutable struct AssetsConfig
@@ -22,7 +30,7 @@ add support for asset management for your package through Genie.Assets.
 Base.@kwdef mutable struct AssetsConfig
   host::String = Genie.config.base_path
   package::String = "Genie.jl"
-  version::String = "master"
+  version::String = package_version(package)
 end
 
 const assets_config = AssetsConfig()
@@ -31,7 +39,7 @@ function __init__()::Nothing
   # make sure the assets config is properly initialized
   assets_config.host = Genie.config.base_path
   assets_config.package = "Genie.jl"
-  assets_config.version = "master"
+  assets_config.version = package_version(assets_config.package)
 
   nothing
 end
