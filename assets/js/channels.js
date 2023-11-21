@@ -121,6 +121,31 @@ function newSocketConnection(host = Genie.Settings.websockets_exposed_host) {
 Genie.WebChannels.initialize();
 Genie.WebChannels.socket = newSocketConnection();
 
+// --------------- Revivers ---------------
+
+Genie.Revivers = {};
+Genie.Revivers.pipeRevivers = (revivers) => (key, value) => revivers.reduce((v, f) => f(key, v), value);
+
+Genie.Revivers.rebuildReviver = function() {
+  Genie.Revivers.reviver = Genie.Revivers.pipeRevivers(Genie.Revivers.revivers)
+}
+
+Genie.Revivers.addReviver = function(reviver) {
+  Genie.Revivers.revivers.push(reviver)
+  Genie.Revivers.rebuildReviver()
+}
+
+Genie.Revivers.revive_undefined = function(key, value) {
+  if (value == '__undefined__') {
+    return undefined;
+  } else {
+    return value;
+  }
+}
+
+Genie.Revivers.revivers = [Genie.Revivers.revive_undefined]
+Genie.Revivers.rebuildReviver()
+
 window.addEventListener('beforeunload', _ => {
   if (isDev()) {
     console.info('Preparing to unload');
@@ -149,13 +174,7 @@ Genie.WebChannels.messageHandlers.push(event => {
     }
 
     if (ed.startsWith('{') && ed.endsWith('}')) {
-      window.parse_payload(JSON.parse(ed, function (key, value) {
-        if (value == '__undefined__') {
-          return undefined;
-        } else {
-          return value;
-        }
-      }));
+      window.parse_payload(JSON.parse(ed, Genie.Revivers.reviver));
     } else if (ed.startsWith(Genie.Settings.webchannels_eval_command)) {
       return Function('"use strict";return (' + ed.substring(Genie.Settings.webchannels_eval_command.length).trim() + ')')();
     } else if (ed == 'Subscription: OK') {
@@ -165,7 +184,7 @@ Genie.WebChannels.messageHandlers.push(event => {
     }
   } catch (ex) {
     console.error(ex);
-    console.error(ed);
+    console.error(event.data);
   }
 });
 
