@@ -14,11 +14,23 @@ export favicon_support
 
 ### PUBLIC ###
 
+"""
+    package_version(package::Union{Module,String}) :: String
+
+Returns the version of a package, or "master" if the package is not installed.
+
+### Example
+
+```julia
+
+julia> package_version("Genie.jl")
+"v0.23.0"
+"""
 function package_version(package::Union{Module,String}) :: String
-  isa(package, Module) && (package = string(package))
+  isa(package, Module) && (package = String(nameof(package)))
   endswith(package, ".jl") && (package = String(package[1:end-3]))
   pkg_dict = filter(x -> x.second.name == package, Pkg.dependencies())
-  isempty(pkg_dict) ? "master" : string(first(pkg_dict)[2].version)
+  isempty(pkg_dict) ? "master" : ("v" * string(first(pkg_dict)[2].version))
 end
 
 """
