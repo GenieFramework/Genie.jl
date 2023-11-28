@@ -216,7 +216,8 @@ Pushes `msg` (and `payload`) to all the clients subscribed to the channels in `c
 function broadcast(channels::Union{ChannelName,Vector{ChannelName}},
                     msg::String,
                     payload::Union{Dict,Nothing} = nothing;
-                    except::Union{HTTP.WebSockets.WebSocket,Nothing,UInt} = nothing) :: Bool
+                    except::Union{Nothing,UInt,Vector{UInt}} = nothing,
+                    restrict::Union{Nothing,UInt,Vector{UInt}} = nothing) :: Bool
   isa(channels, Array) || (channels = ChannelName[channels])
 
   isempty(SUBSCRIPTIONS) && return false
@@ -225,8 +226,12 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}},
     for channel in channels
       haskey(SUBSCRIPTIONS, channel) || throw(ChannelNotFoundException(channel))
 
-      for client in SUBSCRIPTIONS[channel]
-        except !== nothing && client == id(except) && continue
+      ids = restrict === nothing ? SUBSCRIPTIONS[channel] : intersect(SUBSCRIPTIONS[channel], restrict)
+      for client in ids
+        if except !== nothing
+          except isa UInt && client == except && continue
+          except isa Vector{UInt} && client ∈ except && continue
+        end
         HTTP.WebSockets.isclosed(CLIENTS[client].client) && continue
 
         try

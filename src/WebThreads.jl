@@ -216,30 +216,9 @@ end
 """
 Pushes `msg` (and `payload`) to all the clients subscribed to the channels in `channels`.
 """
-function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String;
-                    except::Union{HTTP.WebSockets.WebSocket,Nothing,UInt} = nothing) :: Bool
-  isa(channels, Array) || (channels = ChannelName[channels])
-
-  for channel in channels
-    if ! haskey(SUBSCRIPTIONS, channel)
-      @debug(Genie.WebChannels.ChannelNotFoundException(channel))
-      continue
-    end
-
-    for client in SUBSCRIPTIONS[channel]
-      except !== nothing && client == except && continue
-
-      try
-        message(client, msg)
-      catch ex
-        @error ex
-      end
-    end
-  end
-
-  true
-end
-function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String, payload::Dict) :: Bool
+function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String, payload::Union{Dict,Nothing} = nothing;
+                   except::Union{Nothing,UInt,Vector{UInt}} = nothing,
+                   restrict::Union{Nothing,UInt,Vector{UInt}} = nothing) :: Bool
   isa(channels, Array) || (channels = [channels])
 
   for channel in channels
@@ -248,9 +227,17 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String
       continue
     end
 
-    for client in SUBSCRIPTIONS[channel]
+    ids = restrict === nothing ? SUBSCRIPTIONS[channel] : intersect(SUBSCRIPTIONS[channel], restrict)
+    for client in ids
+      if except !== nothing
+        except isa UInt && client == except && continue
+        except isa Vector{UInt} && client ∈ except && continue
+      end
+
       try
-        message(client, ChannelMessage(channel, client, msg, payload) |> Renderer.Json.JSONParser.json)
+        payload !== nothing ?
+          message(client, ChannelMessage(channel, client, msg, payload) |> Renderer.Json.JSONParser.json) :
+          message(client, msg)
       catch ex
         @error ex
       end
@@ -264,10 +251,12 @@ end
 """
 Pushes `msg` (and `payload`) to all the clients subscribed to all the channels.
 """
-function broadcast(msg::String, payload::Union{Dict,Nothing} = nothing) :: Bool
+function broadcast(msg::String, payload::Union{Dict,Nothing} = nothing;
+                   except::Union{Nothing,UInt,Vector{UInt}} = nothing,
+                   restrict::Union{Nothing,UInt,Vector{UInt}} = nothing) :: Bool
   payload === nothing ?
-    broadcast(collect(keys(SUBSCRIPTIONS)), msg) :
-    broadcast(collect(keys(SUBSCRIPTIONS)), msg, payload)
+    broadcast(collect(keys(SUBSCRIPTIONS)), msg; except, restrict) :
+    broadcast(collect(keys(SUBSCRIPTIONS)), msg, payload; except, restrict)
 end
 
 
