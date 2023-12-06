@@ -54,7 +54,7 @@ function initialize_logging(; log_name = default_log_name())
     end
   )
 
-  LoggingExtras.TeeLogger(LoggingExtras.MinLevelLogger(logger, Genie.config.log_level)) |> timestamp_logger |> global_logger
+  LoggingExtras.MinLevelLogger(timestamp_logger(logger), Genie.config.log_level) |> global_logger
 
   nothing
 end
