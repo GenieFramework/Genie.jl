@@ -285,7 +285,7 @@ end
 
 Computes the name of a channel.
 """
-function channelname(params::Channel) :: Symbol
+function channelname(params::Union{Channel,String}) :: Symbol
   baptizer(params, String[])
 end
 
