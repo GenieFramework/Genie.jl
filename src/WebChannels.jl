@@ -248,7 +248,7 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}},
       end
     end
   catch ex
-    @error ex
+    @warn ex
   end
 
   true

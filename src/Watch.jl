@@ -7,6 +7,7 @@ using Dates
 
 const WATCHED_FOLDERS = Ref{Vector{String}}(String[])
 const WATCHING = Ref{Bool}(false)
+const WATCH_HANDLERS = Ref{Dict{String,Vector{Function}}}(Genie.config.watch_handlers)
 
 function collect_watched_files(files::Vector{String} = WATCHED_FOLDERS[], extensions::Vector{String} = Genie.config.watch_extensions) :: Vector{String}
   result = String[]
@@ -23,8 +24,16 @@ function watchpath(path::Union{String,Vector{String}})
   push!(WATCHED_FOLDERS[], path...)
 end
 
+function delete_handlers(key::Any)
+  delete!(WATCH_HANDLERS[], string(key))
+end
+
+function handlers!(key::String, handlers::Vector{Function})
+  WATCH_HANDLERS[][key] = handlers
+end
+
 function handlers() :: Vector{Function}
-  Genie.config.watch_handlers |> values |> collect |> Iterators.flatten |> collect
+  WATCH_HANDLERS[] |> values |> collect |> Iterators.flatten |> collect
 end
 
 function watch(files::Vector{String}, extensions::Vector{String} = Genie.config.watch_extensions; handlers::Vector{Function} = handlers()) :: Nothing
@@ -44,8 +53,12 @@ function watch(files::Vector{String}, extensions::Vector{String} = Genie.config.
     now() - last_watched > Millisecond(Genie.config.watch_frequency) || return
     last_watched = now()
 
-    for f in handlers
-      Base.invokelatest(f)
+    try
+      for f in handlers
+        Base.invokelatest(f)
+      end
+    catch ex
+      @error ex
     end
 
     last_watched = now()
