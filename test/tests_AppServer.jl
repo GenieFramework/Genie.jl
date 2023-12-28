@@ -8,24 +8,24 @@
     empty!(Genie.Server.SERVERS)
 
     servers = Genie.Server.up()
-    @test servers.webserver.state == :runnable
+    @test isopen(servers.webserver)
 
     servers = Genie.Server.down(servers)
     sleep(1)
-    @test servers.webserver.state == :failed
-    @test Genie.Server.SERVERS[1].webserver.state == :failed
+    @test !isopen(servers.webserver)
+    @test !isopen(Genie.Server.SERVERS[1].webserver)
 
     servers = Genie.Server.down!()
     empty!(Genie.Server.SERVERS)
 
     servers = Genie.Server.up(; open_browser = false)
     Genie.Server.down(servers; webserver = false)
-    @test servers.webserver.state == :runnable
+    @test isopen(servers.webserver)
 
     servers = Genie.Server.down(servers; webserver = true)
     sleep(1)
-    @test servers.webserver.state == :failed
-    @test Genie.Server.SERVERS[1].webserver.state == :failed
+    @test !isopen(servers.webserver)
+    @test !isopen(Genie.Server.SERVERS[1].webserver)
 
     servers = nothing
   end;

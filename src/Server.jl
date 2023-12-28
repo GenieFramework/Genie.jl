@@ -7,6 +7,7 @@ using HTTP, Sockets, HTTP.WebSockets
 import Millboard, Distributed, Logging
 import Genie
 import Distributed
+import HTTP.Servers.Listener
 
 
 """
@@ -15,8 +16,8 @@ import Distributed
 Represents a object containing references to Genie's web and websockets servers.
 """
 Base.@kwdef mutable struct ServersCollection
-  webserver::Union{Task,Nothing} = nothing
-  websockets::Union{Task,Nothing} = nothing
+  webserver::Union{T,Nothing} where T <: HTTP.Server = nothing
+  websockets::Union{T,Nothing} where T <: HTTP.Server = nothing
 end
 
 """
@@ -101,7 +102,7 @@ function up(port::Int,
   if Genie.config.websockets_server !== nothing && port !== ws_port
     print_server_status("Web Sockets server starting at $host:$ws_port")
 
-    new_server.websockets = @async HTTP.listen(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver,
+    new_server.websockets = HTTP.listen!(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver,
                                                 reuseaddr = reuseaddr, http_kwargs...) do http::HTTP.Stream
       if HTTP.WebSockets.isupgrade(http.message)
         HTTP.WebSockets.upgrade(http) do ws
@@ -112,7 +113,7 @@ function up(port::Int,
   end
 
   command = () -> begin
-    HTTP.listen(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server,
+    HTTP.listen!(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server,
                                     reuseaddr = reuseaddr, http_kwargs...) do stream::HTTP.Stream
       try
         if Genie.config.websockets_server !== nothing && port === ws_port && HTTP.WebSockets.isupgrade(stream.message)
@@ -134,16 +135,27 @@ function up(port::Int,
     server_url *= ("?" * join(["$(k)=$(v)" for (k, v) in query], "&"))
   end
 
-  status = if async
+  if async
     print_server_status("Web Server starting at $server_url")
-    @async command()
   else
     print_server_status("Web Server starting at $server_url - press Ctrl/Cmd+C to stop the server.")
+  end
+  
+  listener = try
     command()
+  catch
+    nothing
+  end
+  if !async && !isnothing(listener)
+    try
+      wait(listener)
+    finally
+      close(listener)
+    end
   end
 
-  if status !== nothing && status.state === :runnable
-    new_server.webserver = status
+  if listener !== nothing && isopen(listener)
+    new_server.webserver = listener
 
     try
       open_browser && openbrowser(server_url)
@@ -247,8 +259,8 @@ end
 
 
 function down(server::ServersCollection; webserver::Bool = true, websockets::Bool = true) :: ServersCollection
-  webserver && (@async Base.throwto(server.webserver, InterruptException()))
-  isnothing(websockets) || (websockets && (@async Base.throwto(server.websockets, InterruptException())))
+  webserver && !isnothing(server.webserver) && isopen(server.webserver) && close(server.webserver)
+  websockets && !isnothing(server.websockets) && isopen(server.websockets) && close(server.websockets)
 
   server
 end
