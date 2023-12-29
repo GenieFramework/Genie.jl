@@ -153,6 +153,8 @@ function up(port::Int,
       nothing
     finally
       close(listener)
+      # close the corresponding websocket server
+      new_server.websockets !== nothing && isopen(new_server.websockets) && close(new_server.websockets)
     end
   end
 
