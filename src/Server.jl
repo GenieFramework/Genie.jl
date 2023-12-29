@@ -149,6 +149,8 @@ function up(port::Int,
   if !async && !isnothing(listener)
     try
       wait(listener)
+    catch
+      nothing
     finally
       close(listener)
     end
