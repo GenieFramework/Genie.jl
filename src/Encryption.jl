@@ -35,8 +35,8 @@ function decrypt(s::String) :: String
     String(Nettle.trim_padding_PKCS5(deciphertext))
   catch ex
     if Genie.Configuration.isprod()
-      @error ex
-      @error "Could not decrypt data"
+      @debug ex
+      @debug "Could not decrypt data"
     end
     ""
   end
