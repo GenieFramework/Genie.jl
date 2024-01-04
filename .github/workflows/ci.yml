@@ -10,7 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - '1.6'
+          - '1.6' # lts
           - '1' # expands to the latest stable releaase of julia
           - 'nightly'
         os:
