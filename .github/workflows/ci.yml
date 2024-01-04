@@ -11,7 +11,6 @@ jobs:
       matrix:
         version:
           - '1.6'
-          - '1.8'
           - '1' # expands to the latest stable releaase of julia
           - 'nightly'
         os:
