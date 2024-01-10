@@ -24,3 +24,12 @@ Please include the output of
 `julia> versioninfo()`
 and
 `pkg> st`
+
+---
+
+** Please answer these optional questions to help us understand, prioritise, and assign the issue **
+
+1/ Are you using Genie at work or for hobby/personal projects? 
+
+2/ Can you give us, in a few words, some details about the app you're building with Genie?
+
