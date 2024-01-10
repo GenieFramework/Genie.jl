@@ -27,7 +27,7 @@ and
 
 ---
 
-** Please answer these optional questions to help us understand, prioritise, and assign the issue **
+**Please answer these optional questions to help us understand, prioritise, and assign the issue**
 
 1/ Are you using Genie at work or for hobby/personal projects? 
 
