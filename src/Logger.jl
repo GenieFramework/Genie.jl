@@ -34,7 +34,9 @@ end
 
 function initialize_logging(; log_name = default_log_name(), log_path = Genie.config.path_log)
   logger =  if Genie.config.log_to_file
-              isdir(Genie.config.path_log) || mkpath(Genie.config.path_log)
+              log_path = abspath(log_path)
+              isdir(log_path) || mkpath(log_path)
+
               LoggingExtras.TeeLogger(
                 LoggingExtras.FileLogger(joinpath(log_path, log_name), always_flush = true, append = true),
                 Logging.ConsoleLogger(stdout, Genie.config.log_level)
