@@ -66,7 +66,7 @@ function bootstrap(context::Union{Module,Nothing} = default_context(context); sh
   GLOBAL_ENV_FILE_NAME = "global.jl"
 
   if isfile(Genie.config.env_file)
-    DotEnv.config(;path = Genie.config.env_file, override = true)
+    DotEnv.config(; path = Genie.config.env_file, override = true)
   end
 
   if haskey(ENV, "GENIE_ENV")
@@ -101,7 +101,7 @@ function print_banner()
 
   printstyled("| Website  https://genieframework.com\n", color = :light_black, bold = true)
   printstyled("| GitHub   https://github.com/genieframework\n", color = :light_black, bold = true)
-  printstyled("| Docs     https://genieframework.com/docs\n", color = :light_black, bold = true)
+  printstyled("| Docs     https://learn.genieframework.com\n", color = :light_black, bold = true)
   printstyled("| Discord  https://discord.com/invite/9zyZbD6J7H\n", color = :light_black, bold = true)
   printstyled("| Twitter  https://twitter.com/essenciary\n\n", color = :light_black, bold = true)
   printstyled("Active env: $(ENV["GENIE_ENV"] |> uppercase)\n\n", color = :light_blue, bold = true)
