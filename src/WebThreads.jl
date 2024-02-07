@@ -99,6 +99,7 @@ Unsubscribes a web socket client `wt` from `channel`.
 function unsubscribe(wt::UInt, channel::ChannelName) :: ChannelClientsCollection
   haskey(CLIENTS, wt) && deleteat!(CLIENTS[wt].channels, CLIENTS[wt].channels .== channel)
   pop_subscription(wt, channel)
+  delete!(MESSAGE_QUEUE, wt)
 
   CLIENTS
 end

@@ -388,9 +388,10 @@ function channels_subscribe(channel::AbstractString = Genie.config.webchannels_d
     "Subscription: OK"
   end
 
-  Router.channel("/$(channel)/$(Genie.config.webchannels_unsubscribe_channel)") do
+  Router.channel("/$(channel)/$(Genie.config.webchannels_unsubscribe_channel)", named = Symbol(channel)) do
     WebChannels.unsubscribe(Genie.Requests.wsclient(), channel)
     WebChannels.unsubscribe_disconnected_clients()
+    Genie.Router.delete_channel!(Symbol(channel))
 
     "Unsubscription: OK"
   end
@@ -478,9 +479,10 @@ function webthreads_subscribe(channel::String = Genie.config.webthreads_default_
     "Subscription: OK"
   end
 
-  Router.route("/$(channel)/$(Genie.config.webchannels_unsubscribe_channel)", method = Router.GET) do
+  Router.route("/$(channel)/$(Genie.config.webchannels_unsubscribe_channel)", method = Router.GET, named = Symbol(channel)) do
     WebThreads.unsubscribe(Genie.Requests.wtclient(), channel)
     WebThreads.unsubscribe_disconnected_clients()
+    Genie.Router.delete_channel!(Symbol(channel))
 
     "Unsubscription: OK"
   end

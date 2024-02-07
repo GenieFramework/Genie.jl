@@ -389,6 +389,17 @@ end
 
 
 """
+    delete_channel!(channel_name::Symbol)
+
+Removes the channel with the corresponding name from the channels collection and returns the collection of remaining channels.
+"""
+function delete_channel!(key::Symbol) :: Vector{Channel}
+  OrderedCollections.delete!(_channels, key)
+  return channels()
+end
+
+
+"""
 Generates the HTTP link corresponding to `route_name` using the parameters in `d`.
 """
 function to_link(route_name::Symbol, d::Dict{Symbol,T}; basepath::String = basepath, preserve_query::Bool = true, extra_query::Dict = Dict())::String where {T}
