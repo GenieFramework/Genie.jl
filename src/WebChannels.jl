@@ -300,7 +300,6 @@ function message(client::ClientId, msg::String)
 
   # retrieve the message queue or set it up if not present
   q, _ = get!(MESSAGE_QUEUE, client) do
-      println("Setting up websocket queue for $(repr(client)) ...")
       queue = Channel{Tuple{String, Channel{Nothing}}}(10)
       handler = @async while true
           message, future = take!(queue)
