@@ -300,16 +300,18 @@ function message(client::ClientId, msg::String)
 
   # retrieve the message queue or set it up if not present
   q, _ = get!(MESSAGE_QUEUE, client) do
-      queue = Channel{Tuple{String, Channel{Nothing}}}(10)
-      handler = @async while true
-          message, future = take!(queue)
-          try
-              Sockets.send(ws, message)
-          finally
-              put!(future, nothing)
-          end
+    queue = Channel{Tuple{String, Channel{Nothing}}}(10)
+    handler = @async while true
+      message, future = take!(queue)
+      try
+        Sockets.send(ws, message)
+      catch
+        @debug "Sending message to $(repr(client)) failed!"
+      finally
+        put!(future, nothing)
       end
-      queue, handler
+    end
+    queue, handler
   end
 
   put!(q, (msg, myfuture))
