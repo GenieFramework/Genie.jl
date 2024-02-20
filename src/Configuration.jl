@@ -265,6 +265,9 @@ Base.@kwdef mutable struct Settings
   watch_handlers::Dict{Any,Vector{Function}}          = Dict()
   watch_frequency::Int                                = 2_000 # 2 seconds
   watch_exceptions::Vector{String}                    = String["bin/", "build/", "sessions/", "Project.toml", "Manifest.toml"]
+
+  cdn_enabled::Bool                                   = true # if true, the CDN will be used for static assets in prod mode
+  cdn_url::String                                     = "https://cdn.statically.io/gh/GenieFramework" # the URL of the CDN
 end
 
 end
