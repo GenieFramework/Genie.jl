@@ -59,10 +59,12 @@ function parse_commandline_args(config::Genie.Configuration.Settings) :: Dict{St
 
   settings.description = "Genie web framework CLI"
   settings.epilog = "Visit https://genieframework.com for more info"
+  settings.add_help = true
 
   ArgParse.@add_arg_table! settings begin
     "-s"
     help = "Starts HTTP server"
+    default = "false"
 
     "-p"
     help = "Web server port"
@@ -94,6 +96,7 @@ function parse_commandline_args(config::Genie.Configuration.Settings) :: Dict{St
 
     "-r"
     help = "runs Genie.Toolbox task"
+    default = nothing
 
     "-a"
     help = "additional arguments passed into the Genie.Toolbox `runtask` function"

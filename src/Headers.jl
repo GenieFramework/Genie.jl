@@ -70,9 +70,6 @@ function set_access_control_allow_headers!(req::HTTP.Request, res::HTTP.Response
 end
 
 
-
-
-
 """
     normalize_headers(req::HTTP.Request)
 
