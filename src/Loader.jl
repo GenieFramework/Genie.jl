@@ -65,9 +65,7 @@ function bootstrap(context::Union{Module,Nothing} = default_context(context); sh
   ENV_FILE_NAME = "env.jl"
   GLOBAL_ENV_FILE_NAME = "global.jl"
 
-  if isfile(Genie.config.env_file)
-    DotEnv.config(; path = Genie.config.env_file, override = true)
-  end
+  load_dotenv()
 
   if haskey(ENV, "GENIE_ENV")
     Genie.config.app_env = ENV["GENIE_ENV"]
@@ -81,6 +79,18 @@ function bootstrap(context::Union{Module,Nothing} = default_context(context); sh
   importenv()
 
   get!(ENV, "GENIE_BANNER", "true") |> strip |> lowercase != "false" && show_banner && print_banner()
+
+  nothing
+end
+
+
+"""
+Loads .env file if present
+"""
+function load_dotenv()
+  if isfile(Genie.config.env_file)
+    DotEnv.load!(Genie.config.env_file; override = true)
+  end
 
   nothing
 end
