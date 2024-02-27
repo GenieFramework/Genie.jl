@@ -89,7 +89,8 @@ Loads .env file if present
 """
 function load_dotenv()
   if isfile(Genie.config.env_file)
-    DotEnv.load!(Genie.config.env_file; override = true)
+    # DotEnv.load!(Genie.config.env_file; override = true) #TODO: enable this when DotEnv.jl is updated
+    DotEnv.config(; path = Genie.config.env_file, override = true)
   end
 
   nothing
