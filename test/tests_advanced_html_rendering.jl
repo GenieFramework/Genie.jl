@@ -72,4 +72,23 @@
     @test String(r.body) |> fws ==
           "<!DOCTYPE html><html><body><ol><li>a = 200</li><li>b = 200</li><li>c = 200</li></ol></body></html>" |> fws
   end;
+
+  @safetestset "non registered tags are rendered" begin
+    using Genie
+    using Genie.Renderer.Html
+    import Genie.Util: fws
+
+    view = raw"""
+      <div>
+        <custom-tag>
+          <p>hello $name</p>
+        </custom-tag>
+      </div>
+    """
+
+    r = html(view, name = "Adrian")
+
+    @test String(r.body) |> fws ==
+          "<!DOCTYPE html><html><body><div><custom-tag><p>hello Adrian</p></custom-tag></div></body></html>" |> fws
+  end;
 end;
