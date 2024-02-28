@@ -134,7 +134,20 @@ end
 Generates a HTML element in the form <...></...>
 """
 function normal_element(f::Function, elem::Any, args::Vector = [], attrs::Vector{Pair{Symbol,Any}} = Pair{Symbol,Any}[]) :: HTMLString
-  normal_element(Base.invokelatest(f), string(elem), args, attrs...)
+  try
+    normal_element(Base.invokelatest(f), string(elem), args, attrs...)
+  catch ex
+    @warn ex
+    if isa(ex, UndefVarError) # tag function does not exist, let's register it
+      try
+        register_normal_element(ex.var |> string)
+        normal_element(Base.invokelatest(f), string(elem), args, attrs...)
+      catch ex
+        @error ex
+        ""
+      end
+    end
+  end
 end
 function normal_element(children::Union{T,Vector{T}}, elem::Any, args::Vector, attrs::Pair{Symbol,Any})::HTMLString where {T<:AbstractString}
   normal_element(children, string(elem), args, Pair{Symbol,Any}[attrs])
