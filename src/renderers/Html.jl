@@ -138,14 +138,11 @@ function normal_element(f::Function, elem::Any, args::Vector = [], attrs::Vector
     normal_element(Base.invokelatest(f), string(elem), args, attrs...)
   catch ex
     @warn ex
-    if isa(ex, UndefVarError) # tag function does not exist, let's register it
-      try
-        register_normal_element(ex.var |> string)
-        normal_element(Base.invokelatest(f), string(elem), args, attrs...)
-      catch ex
-        @error ex
-        ""
-      end
+    if isa(ex, UndefVarError) && !Genie.config.html_registered_tags_only # tag function does not exist, let's register it
+      register_normal_element(ex.var |> string)
+      normal_element(Base.invokelatest(f), string(elem), args, attrs...)
+    else
+      rethrow(ex)
     end
   end
 end

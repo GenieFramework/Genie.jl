@@ -248,6 +248,7 @@ Base.@kwdef mutable struct Settings
   html_parser_char_dot::String                        = "!"
   html_parser_char_column::String                     = "!"
   html_parser_char_dash::String                       = "__"
+  html_registered_tags_only::Bool                     = false
 
   features_peerinfo::Bool                             = false
 
