@@ -874,6 +874,9 @@ function parsehtml(elem::HTMLParser.Node; partial::Bool = true, indent = 0) :: S
 
   String(take!(io))
 end
+function parsehtml(::Nothing; kwargs...) :: String
+  ""
+end
 
 
 function parsenode(elem::HTMLParser.Node; partial::Bool = true) :: String
