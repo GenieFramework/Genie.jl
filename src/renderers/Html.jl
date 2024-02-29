@@ -139,8 +139,14 @@ function normal_element(f::Function, elem::Any, args::Vector = [], attrs::Vector
   catch ex
     @warn ex
     if isa(ex, UndefVarError) && !Genie.config.html_registered_tags_only # tag function does not exist, let's register it
-      register_normal_element(ex.var |> string)
-      normal_element(Base.invokelatest(f), string(elem), args, attrs...)
+      register_normal_element(ex.var |> string; context = @__MODULE__)
+      Genie.Renderer.purgebuilds()
+      try
+        normal_element(Base.invokelatest(f), string(elem), args, attrs...)
+      catch exx
+        # TODO: decide what to do -- normally this will be fixed on the next page reload with the element registered
+        "Error rendering element: $(ex.var) -- please reload the page to try again."
+      end
     else
       rethrow(ex)
     end
