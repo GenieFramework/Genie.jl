@@ -47,6 +47,7 @@ include("Logger.jl")
 
 export up, down
 @reexport using .Router
+@reexport using .Loader
 
 const assets_config = Genie.Assets.assets_config
 

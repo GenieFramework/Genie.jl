@@ -13,6 +13,8 @@ using DotEnv
 
 const post_load_hooks = Function[]
 
+export @using
+
 ### PRIVATE ###
 
 
@@ -340,5 +342,116 @@ function default_context(context::Union{Module,Nothing} = nothing)
     @__MODULE__
   end
 end
+
+
+function expr_to_path(expr::Union{Expr, Symbol, String})::String
+  path = String[]
+  while expr isa Expr && expr.head == :call && expr.args[1] ∈ (:\, :/)
+      push!(path, String(expr.args[3]))
+      expr = expr.args[2]
+  end
+  push!(path, String(expr))
+  return join(reverse(path), '/')
+end
+
+function _findpackage(package::String)
+  orig_package = package
+  path, package = splitdir(package)
+  validpath = if path != ""
+      loadpath = copy(LOAD_PATH)
+      empty!(LOAD_PATH)
+      push!(LOAD_PATH, path)
+      true
+  else
+      false
+  end
+  
+  p = Base.find_package(package)
+  if p === nothing
+      if isdir(orig_package)
+          pushfirst!(LOAD_PATH, orig_package)
+          p = Base.find_package(package)
+          popfirst!(LOAD_PATH)
+      end
+  end
+
+  if validpath
+      empty!(LOAD_PATH)
+      append!(LOAD_PATH, loadpath)
+  end
+
+  p === nothing && return
+  path, package = splitdir(p)
+  package = splitext(package)[1]
+
+  basedir, parentdir = splitdir(path)
+  # if it is a package structure use the parent directory of the package as LOAD_PATH
+  if parentdir == "src" && basename(basedir) == package
+      path = dirname(basedir)
+  end
+  
+  path, package
+end
+
+"""
+    @using(package_path)
+
+macro to simplify loading of modules that are not located in the LOAD_PATH
+
+`package_path` can be
+- a path to a directory containing a module file of the same name
+    e.g 'models/MyApp' to load 'models/MyApp/MyApp.jl'
+- a path to a module (without extension '.jl')
+    e.g. 'models/MyApp' to load models/MyApp.jl'
+- a path to a package directory containing a 'src' directory and module file therein
+    e.g. 'models/MyApp' to load 'models/MyApp/src/MyApp.jl'
+
+### Examples
+
+```julia
+@using models/MyApp
+
+@using StippleDemos/Vue3/Calendars
+```
+or explicitly
+```julia
+@using StippleDemos/Vue3/Calendars/Calendars
+```
+Note, directories containing special characters like colon (`':'`) or space (`' '`)
+need to be escaped by double quotes.
+```julia
+@using "C:/Program Files/Julia/models/Calendars"
+
+# or
+@using "C:/Program Files"/Julia/models/Calendars
+```
+
+Caveat: Due to precompilation it is not possible to supply variables to the macro.
+Calls need to supply explicit paths.
+"""
+macro _using(package)
+  package = expr_to_path(package)
+  fp = _findpackage(package)
+  if fp === nothing
+      @warn "package $package not found"
+      return nothing
+  end
+  path, package_name = fp
+  package_symbol = Symbol(package_name)
+
+  quote
+      pushfirst!(LOAD_PATH, $path)
+      @debug "using $($package_name) (from '$($path)')"
+      try
+         using $package_symbol 
+      catch
+      finally
+          popfirst!(LOAD_PATH)
+      end
+      nothing
+  end
+end
+
+const var"@using" = var"@_using"
 
 end
