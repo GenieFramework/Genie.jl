@@ -4,6 +4,7 @@ import Genie
 import HTTP
 
 export ExceptionalResponse, RuntimeException, InternalServerException, NotFoundException, FileExistsException
+export @log!!throw, @try!
 
 
 """
@@ -169,5 +170,63 @@ end
 Custom printing for `FileExistsException`
 """
 Base.show(io::IO, ex::FileExistsException) = print(io, "FileExistsException: $(ex.path)")
+
+
+"""
+    @log!!throw(ex)
+
+Macro to log an exception if the app is in production, and rethrow it if the app is in dev mode.
+"""
+macro log!!throw(ex)
+  quote
+    if Genie.Configuration.isprod()
+      @error $ex
+    else
+      rethrow($ex)
+    end
+  end
+end
+
+
+"""
+    @tried(ex1, ex2)
+
+Macro to wrap a try/catch block and @log!!throw the exception.
+
+# Example
+```julia
+julia> @tried(1+1, (ex) -> @warn(ex))
+2
+
+julia> @tried(error("wut?"), (ex) -> @warn(ex)) # in dev mode, exception is rethrown
+ERROR: wut?
+Stacktrace:
+ [1] error(s::String)
+   @ Base ./error.jl:35
+ [2] macro expansion
+   @ REPL[5]:4 [inlined]
+ [3] top-level scope
+   @ REPL[14]:1
+
+julia> @tried(error("wut?"), (ex) -> @warn(ex)) # in prod mode, exception is logged
+┌ Warning: 2024-03-15 13:04:43 ErrorException("wut?")
+└ @ Main REPL[16]:1
+```
+"""
+macro try!(ex1, ex2)
+  quote
+    try
+      $ex1
+    catch e
+      if Genie.Configuration.isprod()
+        @error e
+      else
+        rethrow(e)
+      end
+
+      $ex2(e)
+    end
+  end |> esc
+end
 
 end
