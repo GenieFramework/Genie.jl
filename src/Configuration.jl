@@ -155,9 +155,11 @@ function add_cors_header!(key, value; config = Genie.config)
   if ! haskey(config.cors_headers, key)
     @warn "CORS header key $key does not exist. Creating."
     config.cors_headers[key] = value
+  else
+    config.cors_headers[key] = join(push!([String(strip(h)) for h in split(config.cors_headers[key], ',')], value) |> unique!, ", ")
   end
 
-  config.cors_headers[key] = join(push!([String(strip(h)) for h in split(config.cors_headers[key], ',')], value) |> unique!, ", ")
+  config
 end
 
 
