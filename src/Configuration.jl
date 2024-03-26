@@ -139,6 +139,29 @@ end
 
 
 """
+    add_cors_header!(key, value)
+
+Adds a new CORS header to the `Genie.config.cors_headers` collection as key => value pair.
+
+# Examples
+```julia
+Genie.Configuration.add_cors_header!("Access-Control-Allow-Headers", "Genie-Session-Id")
+```
+"""
+function add_cors_header!(key, value; config = Genie.config)
+  key = string(key)
+  value = string(value)
+
+  if ! haskey(config.cors_headers, key)
+    @warn "CORS header key $key does not exist. Creating."
+    config.cors_headers[key] = value
+  end
+
+  config.cors_headers[key] = join(push!([String(strip(h)) for h in split(config.cors_headers[key], ',')], value) |> unique!, ", ")
+end
+
+
+"""
     mutable struct Settings
 
 App configuration - sets up the app's defaults. Individual options are overwritten in the corresponding environment file.
