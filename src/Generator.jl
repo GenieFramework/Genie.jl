@@ -259,7 +259,11 @@ function write_secrets_file(app_path::String = ".") :: Nothing
   ispath(secrets_path) || mkpath(secrets_path)
 
   open(joinpath(secrets_path, Genie.Secrets.SECRETS_FILE_NAME), "w") do f
-    write(f, """Genie.Secrets.secret_token!("$(Genie.Secrets.secret())") """)
+    write(f, """try
+                  Genie.Secrets.secret_token!("$(Genie.Secrets.secret())")
+                catch
+                end
+                """)
   end
 
   nothing

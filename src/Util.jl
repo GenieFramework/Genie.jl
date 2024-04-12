@@ -65,6 +65,15 @@ function filterwhitespace(s::S, allowed::Vector{Char} = Char[])::String where {S
   filter(x -> (x in allowed) || ! isspace(x), string(s))
 end
 
+
+"""
+    isprecompiling() :: Bool
+
+Returns `true` if the current process is precompiling.
+"""
+isprecompiling() = ccall(:jl_generating_output, Cint, ()) == 1
+
+
 const fws = filterwhitespace
 
 end
