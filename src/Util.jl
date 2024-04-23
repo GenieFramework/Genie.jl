@@ -1,5 +1,6 @@
 module Util
 
+using Pkg
 import Genie
 
 
@@ -75,5 +76,24 @@ isprecompiling() = ccall(:jl_generating_output, Cint, ()) == 1
 
 
 const fws = filterwhitespace
+
+"""
+    package_version(package::Union{Module,String}) :: String
+
+Returns the version of a package, or "master" if the package is not installed.
+
+### Example
+
+```julia
+
+julia> package_version("Genie.jl")
+"v0.23.0"
+"""
+function package_version(package::Union{Module,String}) :: String
+  isa(package, Module) && (package = String(nameof(package)))
+  endswith(package, ".jl") && (package = String(package[1:end-3]))
+  pkg_dict = filter(x -> x.second.name == package, Pkg.dependencies())
+  isempty(pkg_dict) ? "master" : ("v" * string(first(pkg_dict)[2].version))
+end
 
 end
