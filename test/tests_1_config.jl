@@ -31,7 +31,7 @@
 
     Genie.config.server_port  = 8000
     Genie.config.server_host  = "127.0.0.1"
-    Genie.config.websockets_port = 8000
+    Genie.config.websockets_port = nothing
     Genie.config.run_as_server   = false
 
     down()
