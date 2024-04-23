@@ -441,7 +441,7 @@ macro _using(package)
 
   quote
       let pp = split($path, ';')
-        for p in pp
+        for p in reverse(pp)
           pushfirst!(LOAD_PATH, p)
         end
       
