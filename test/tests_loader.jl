@@ -7,4 +7,5 @@
     @test get(ENV, "FOO", "") == ""
     Genie.Loader.load_dotenv()
     @test get(ENV, "FOO", "") == "bar"
+    delete!(ENV, "FOO")
 end

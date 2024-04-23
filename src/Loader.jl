@@ -91,6 +91,11 @@ Loads .env file if present
 """
 function load_dotenv()
   if isfile(Genie.config.env_file)
+        @static if VersionNumber(Genie.Assets.package_version(DotEnv)) >= v"1.0"
+          DotEnv.load!(Genie.config.env_file; override = true)
+        else
+          DotEnv.config(; path = Genie.config.env_file, override = true)
+        end
     DotEnv.load!(Genie.config.env_file; override = true)
   end
 
