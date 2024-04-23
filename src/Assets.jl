@@ -5,7 +5,7 @@ module Assets
 
 import Genie, Genie.Configuration, Genie.Router, Genie.WebChannels, Genie.WebThreads
 import Genie.Renderer.Json
-import Pkg
+import Genie.Util.package_version
 
 export include_asset, css_asset, js_asset, js_settings, css, js
 export embedded, channels_script, channels_support, webthreads_script, webthreads_support
@@ -14,24 +14,6 @@ export favicon_support
 
 ### PUBLIC ###
 
-"""
-    package_version(package::Union{Module,String}) :: String
-
-Returns the version of a package, or "master" if the package is not installed.
-
-### Example
-
-```julia
-
-julia> package_version("Genie.jl")
-"v0.23.0"
-"""
-function package_version(package::Union{Module,String}) :: String
-  isa(package, Module) && (package = String(nameof(package)))
-  endswith(package, ".jl") && (package = String(package[1:end-3]))
-  pkg_dict = filter(x -> x.second.name == package, Pkg.dependencies())
-  isempty(pkg_dict) ? "master" : ("v" * string(first(pkg_dict)[2].version))
-end
 
 """
     mutable struct AssetsConfig

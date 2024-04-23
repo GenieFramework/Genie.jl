@@ -18,13 +18,13 @@ import Logging
 using Reexport
 using Revise
 
+include("Util.jl")
 include("HTTPUtils.jl")
 include("Exceptions.jl")
 include("Repl.jl")
 include("Watch.jl")
 include("Loader.jl")
 include("Secrets.jl")
-include("Util.jl")
 include("FileTemplates.jl")
 include("Toolbox.jl")
 include("Generator.jl")
