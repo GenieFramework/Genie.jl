@@ -65,7 +65,6 @@ If you need help with anything, you can find us on [Discord](https://discord.com
 ---
 
 - [**Features of Genie.jl**](#features-of-genie.jl)
-- [**Community Mentions**](#community-mentions)
 - [**Contributing**](#contributing)
 - [**Special Credits**](#special-credits)
 - [**License**](#license)
