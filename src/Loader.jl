@@ -91,8 +91,11 @@ Loads .env file if present
 """
 function load_dotenv()
   if isfile(Genie.config.env_file)
-    # DotEnv.load!(Genie.config.env_file; override = true) #TODO: enable this when DotEnv.jl is updated
-    DotEnv.config(; path = Genie.config.env_file, override = true)
+    @static if VersionNumber(Genie.Util.package_version(DotEnv)) >= v"1.0"
+      DotEnv.load!(Genie.config.env_file; override = true)
+    else
+      DotEnv.config(; path = Genie.config.env_file, override = true)
+    end
   end
 
   nothing
@@ -385,9 +388,9 @@ function _findpackage(package::String)
   package = splitext(package)[1]
 
   basedir, parentdir = splitdir(path)
-  # if it is a package structure use the parent directory of the package as LOAD_PATH
+  # if it is a package structure prepend parent directory of the package as LOAD_PATH to path
   if parentdir == "src" && basename(basedir) == package
-      path = dirname(basedir)
+      path = "$(dirname(basedir));$path"
   end
   
   path, package
@@ -440,13 +443,20 @@ macro _using(package)
   package_symbol = Symbol(package_name)
 
   quote
-      pushfirst!(LOAD_PATH, $path)
-      @debug "using $($package_name) (from '$($path)')"
-      try
-         using $package_symbol 
-      catch
-      finally
-          popfirst!(LOAD_PATH)
+      let pp = split($path, ';')
+        for p in reverse(pp)
+          pushfirst!(LOAD_PATH, p)
+        end
+      
+        @debug "using $($package_name) (from '$($path)')"
+        try
+          using $package_symbol 
+        catch
+        finally
+            for _ in pp 
+              popfirst!(LOAD_PATH)
+            end
+        end
       end
       nothing
   end
