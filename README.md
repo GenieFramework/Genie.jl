@@ -32,21 +32,8 @@
       </a>
     </sub>
   </p>
-  <br />
-  <p>
-    <a href="https://www.genieframework.com/">
-      <img
-        src="docs/content/img/genie.gif"
-        alt="Screenshot"
-        width="100%"
-      />
-    </a>
-  </p>
 </div>
 
-<p style="font-family:verdana;font-size:60%;margin-bottom:4%" align="center">
-<u>Julia data dashboard powered by Genie. <a href="https://learn.genieframework.com/app-gallery">App gallery</a></u>
-</p>
 
 Genie.jl is the backbone of the [Genie Framework](https://genieframework.com), which provides a streamlined and efficient workflow for developing modern web applications. It builds on Julia's strengths (high-level, high-performance, dynamic, JIT compiled), exposing a rich API and a powerful toolset for productive web development.
 
@@ -61,6 +48,11 @@ To learn more about Genie, visit the [documentation](https://learn.genieframewor
 
 
 If you need help with anything, you can find us on [Discord](https://discord.com/invite/9zyZbD6J7H).
+
+https://github.com/GenieFramework/Genie.jl/assets/5058397/627dcda0-bb13-49f9-8827-2bfb581a9bb7
+<p style="font-family:verdana;font-size:60%;margin-bottom:4%" align="center">
+<u>Julia data dashboard powered by Genie. <a href="https://learn.genieframework.com/app-gallery">App gallery</a></u>
+</p>
 
 ---
 
