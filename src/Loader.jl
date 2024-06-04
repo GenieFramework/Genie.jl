@@ -226,33 +226,47 @@ function autoload(root_dir::String = Genie.config.path_lib;
                   autoload_file::String = Genie.config.autoload_file) :: Nothing
   isdir(root_dir) || return nothing
 
+  included, excluded = sort_load_order(root_dir)
+
   validinclude(fi)::Bool = endswith(fi, ".jl") && match(namematch, fi) !== nothing &&
-                            ((skipmatch !== nothing && match(skipmatch, fi) === nothing) || skipmatch === nothing)
+                            (skipmatch === nothing || match(skipmatch, fi) === nothing)
 
-  for i in sort_load_order(root_dir, readdir(root_dir))
-    (isfile(joinpath(root_dir, autoload_ignore_file)) || i == autoload_file ) && continue
-
-    fi = joinpath(root_dir, i)
-    @debug "Checking $fi"
-    if validinclude(fi)
+  for filename in included
+    fi = joinpath(root_dir, filename)
+    @debug "Checking $filename"
+    if validinclude(filename) && isfile(fi)
       @debug "Auto loading file: $fi"
-      Revise.includet(default_context(context), fi)
+      # Revise.includet(default_context(context), fi)
+    elseif isdir(joinpath(root_dir, fi))
+      @debug "Auto loading directory: $fi"
+      p = joinpath(root_dir, fi)
+      isfile(joinpath(p, autoload_ignore_file)) && break
+
+      for fi in readdir(p, join = true)
+        filename = relpath(fi, root_dir)
+        @debug "Checking $filename"
+        if validinclude(filename) && filename ∉ included && filename ∉ excluded
+          @debug "Auto loading file: $fi"
+          # Revise.includet(default_context(context), fi)
+        end
+      end 
     end
   end
 
   for (root, dirs, files) in walkdir(root_dir)
     for dir in dirs
-      in(dir, skipdirs) && continue
-
       p = joinpath(root, dir)
-      for i in readdir(p)
-        isfile(joinpath(p, autoload_ignore_file)) && continue
+      isfile(joinpath(p, autoload_ignore_file)) && continue
 
-        fi = joinpath(p, i)
+      reldir = relpath(p, root_dir)
+      (dir ∈ skipdirs || reldir ∈ skipdirs || reldir ∈ included || reldir ∈ excluded) && continue
+
+      for fi in readdir(p, join = true)
+        filename = relpath(fi, root_dir)
         @debug "Checking $fi"
-        if validinclude(fi)
+        if validinclude(filename) && filename ∉ included && filename ∉ excluded
           @debug "Auto loading file: $fi"
-          Revise.includet(default_context(context), fi)
+          # Revise.includet(default_context(context), fi)
         end
       end
     end
@@ -278,24 +292,23 @@ end
 
 Returns a sorted list of files based on `.autoload` file. If `.autoload` file is a not present in `rootdir` return original output of `readdir()`.
 """
-function sort_load_order(rootdir, lsdir::Vector{String})
-  autoloadfilepath = isfile(joinpath(pwd(), rootdir, Genie.config.autoload_file)) ? joinpath(pwd(), rootdir, Genie.config.autoload_file) : return lsdir
-  autoloadorder = open(f -> ([line for line in eachline(f)]), autoloadfilepath)
-  fn_loadorder = []
+function sort_load_order(rootdir::AbstractString)
+  files = isempty(rootdir) ? readdir() : readdir(rootdir)
+  Genie.config.autoload_ignore_file ∈ files && return String[]
+  Genie.config.autoload_file ∉ files && return files
+  filter!(!=(Genie.config.autoload_file), files)
 
-  for file in autoloadorder
-    if file in lsdir
-      push!(fn_loadorder, file)
-      filter!(f -> f != file, lsdir)
-    elseif startswith(file, '-') && file[2:end] ∈ lsdir
-      filter!(f -> f != file[2:end], lsdir)
-      continue
-    else
-      continue
-    end
-  end
+  autoloadorder = readlines(joinpath(rootdir, Genie.config.autoload_file))
+  excluded_index = startswith.(autoloadorder, "-")
 
-  append!(fn_loadorder, lsdir)
+  excluded = [joinpath(splitpath(f[2:end])) for f in autoloadorder[excluded_index]]
+  included = [joinpath(splitpath(f)) for f in autoloadorder[.! excluded_index]]
+
+  # files = joinpath.(rootdir, files)
+  filter!(f -> isfile(f) && f ∉ excluded && f ∉ included, files)
+  included = vcat(included, files)
+
+  included, excluded
 end
 
 """
