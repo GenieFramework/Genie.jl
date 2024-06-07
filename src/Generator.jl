@@ -262,7 +262,7 @@ function write_secrets_file(app_path::String = ".") :: Nothing
     write(f, """try
                   Genie.Util.isprecompiling() || Genie.Secrets.secret_token!("$(Genie.Secrets.secret())")
                 catch ex
-                  @error "Failed to generate secrets file: $ex"
+                  @error "Failed to generate secrets file: \$ex"
                 end
                 """)
   end
