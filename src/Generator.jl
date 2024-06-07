@@ -260,8 +260,9 @@ function write_secrets_file(app_path::String = ".") :: Nothing
 
   open(joinpath(secrets_path, Genie.Secrets.SECRETS_FILE_NAME), "w") do f
     write(f, """try
-                  Genie.Secrets.secret_token!("$(Genie.Secrets.secret())")
-                catch
+                  Genie.Util.isprecompiling() || Genie.Secrets.secret_token!("$(Genie.Secrets.secret())")
+                catch ex
+                  @error "Failed to generate secrets file: $ex"
                 end
                 """)
   end
