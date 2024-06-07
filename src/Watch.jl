@@ -57,8 +57,6 @@ function watch(files::Vector{<: AbstractString}, extensions::Vector{<: AbstractS
     now() - last_watched > Millisecond(Genie.config.watch_frequency) || return
     last_watched = now()
 
-    @show handlers
-
     try
       for f in handlers
         Base.invokelatest(f)
