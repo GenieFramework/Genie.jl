@@ -75,8 +75,14 @@ function bootstrap(context::Union{Module,Nothing} = default_context(context); sh
     ENV["GENIE_ENV"] = Genie.config.app_env = "dev"
   end
 
-  isfile(joinpath(Genie.config.path_env, GLOBAL_ENV_FILE_NAME)) && Base.include(context, joinpath(Genie.config.path_env, GLOBAL_ENV_FILE_NAME))
-  isfile(joinpath(Genie.config.path_env, ENV["GENIE_ENV"] * ".jl")) && Base.include(context, joinpath(Genie.config.path_env, ENV["GENIE_ENV"] * ".jl"))
+  isfile(abspath(Genie.config.path_env, GLOBAL_ENV_FILE_NAME)) && begin
+    Base.include(context, abspath(Genie.config.path_env, GLOBAL_ENV_FILE_NAME))
+    Genie.Configuration.isdev() && Revise.track(context, abspath(Genie.config.path_env, GLOBAL_ENV_FILE_NAME))
+  end
+  isfile(abspath(Genie.config.path_env, ENV["GENIE_ENV"] * ".jl")) && begin 
+    Base.include(context, abspath(Genie.config.path_env, ENV["GENIE_ENV"] * ".jl"))
+    Genie.Configuration.isdev() && Revise.track(context, abspath(Genie.config.path_env, ENV["GENIE_ENV"] * ".jl"))
+  end
   Genie.config.app_env = ENV["GENIE_ENV"] # ENV might have changed
   importenv()
 
@@ -192,7 +198,8 @@ end
 Loads the routes file.
 """
 function load_routes(routes_file::String = Genie.ROUTES_FILE_NAME; context::Union{Module,Nothing} = nothing) :: Nothing
-  isfile(routes_file) && Revise.includet(default_context(context), routes_file)
+  # isfile(routes_file) && Revise.includet(default_context(context), routes_file)
+  isfile(routes_file) && autoload(routes_file; context) 
 
   nothing
 end
@@ -204,7 +211,8 @@ end
 Loads the app file (`app.jl` can be used for single file apps, instead of `routes.jl`).
 """
 function load_app(app_file::String = Genie.APP_FILE_NAME; context::Union{Module,Nothing} = nothing) :: Nothing
-  isfile(app_file) && Revise.includet(default_context(context), abspath(app_file))
+  # isfile(app_file) && Revise.includet(default_context(context), abspath(app_file))
+  isfile(app_file) && autoload(abspath(app_file); context)
 
   nothing
 end
@@ -215,6 +223,18 @@ end
 
 Automatically and recursively includes files from the indicated `root_dir` into the indicated `context` module,
 skipping directories from `dir`.
+```julia
+example
+Genie.Loader.autoload(abspath("models"))
+```
+
+Or includes explicitly a file into the indicated `context` module.
+```julia
+example
+Genie.Loader.autoload(abspath("models", "example.jl"))
+```
+
+
 The files are set up with `Revise` to be automatically reloaded when changed (in dev environment).
 """
 function autoload(root_dir::String = Genie.config.path_lib;
@@ -224,23 +244,36 @@ function autoload(root_dir::String = Genie.config.path_lib;
                   skipmatch::Union{Regex,Nothing} = nothing,
                   autoload_ignore_file::String = Genie.config.autoload_ignore_file,
                   autoload_file::String = Genie.config.autoload_file) :: Nothing
-  isdir(root_dir) || return nothing
 
   validinclude(fi)::Bool = endswith(fi, ".jl") && match(namematch, fi) !== nothing &&
                             ((skipmatch !== nothing && match(skipmatch, fi) === nothing) || skipmatch === nothing)
 
-  for i in sort_load_order(root_dir, readdir(root_dir))
-    (isfile(joinpath(root_dir, autoload_ignore_file)) || i == autoload_file ) && continue
+  # check if root_dir is a .jl file and includet it
+  if isfile(abspath(root_dir)) 
+    validinclude(abspath(root_dir)) || return nothing
+    @debug "Auto loading file: $abspath(root_dir)"
+    # Revise.includet(default_context(context), root_dir)
+    Base.include(default_context(context), abspath(root_dir))
+    Genie.Configuration.isdev() && Revise.track(default_context(context), abspath(root_dir))
+    return nothing
+  end
 
-    fi = joinpath(root_dir, i)
+  isdir(abspath(root_dir)) || return nothing   
+
+  for i in sort_load_order(abspath(root_dir), readdir(root_dir))
+    (isfile(joinpath(abspath(root_dir), autoload_ignore_file)) || i == autoload_file ) && continue
+
+    fi = joinpath(abspath(root_dir), i)
     @debug "Checking $fi"
-    if validinclude(fi)
+    if validinclude(abspath(fi))
       @debug "Auto loading file: $fi"
-      Revise.includet(default_context(context), fi)
+      # Revise.includet(default_context(context), fi)
+      Base.include(default_context(context), abspath(fi))
+      Genie.Configuration.isdev() && Revise.track(default_context(context), abspath(fi))
     end
   end
 
-  for (root, dirs, files) in walkdir(root_dir)
+  for (root, dirs, files) in walkdir(abspath(root_dir))
     for dir in dirs
       in(dir, skipdirs) && continue
 
@@ -250,9 +283,11 @@ function autoload(root_dir::String = Genie.config.path_lib;
 
         fi = joinpath(p, i)
         @debug "Checking $fi"
-        if validinclude(fi)
+        if validinclude(abspath(fi))
           @debug "Auto loading file: $fi"
-          Revise.includet(default_context(context), fi)
+          # Revise.includet(default_context(context), fi)
+          Base.include(default_context(context), abspath(fi))
+          Genie.Configuration.isdev() && Revise.track(default_context(context), abspath(fi))
         end
       end
     end
@@ -306,7 +341,7 @@ Main entry point to loading a Genie app.
 function load(; context::Union{Module,Nothing} = nothing) :: Nothing
   context = default_context(context)
 
-  Genie.Configuration.isdev() && Core.eval(context, :(__revise_mode__ = :eval))
+  # Genie.Configuration.isdev() && Core.eval(context, :(__revise_mode__ = :eval))
 
   t = Terminals.TTYTerminal("", stdin, stdout, stderr)
 

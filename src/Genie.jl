@@ -104,7 +104,9 @@ function loadapp( path::String = ".";
   path = normpath(path) |> abspath
 
   if isfile(joinpath(path, Genie.BOOTSTRAP_FILE_NAME))
-    Revise.includet(context, joinpath(path, Genie.BOOTSTRAP_FILE_NAME))
+    # Revise.includet(context, joinpath(path, Genie.BOOTSTRAP_FILE_NAME))
+    Base.include(context, joinpath(path, Genie.BOOTSTRAP_FILE_NAME))
+    Genie.Configuration.isdev() && Revise.track(context, joinpath(path, Genie.BOOTSTRAP_FILE_NAME))
     Genie.config.watch && @async Genie.Watch.watch(path)
     autostart && (Core.eval(context, :(up())))
   elseif isfile(joinpath(path, Genie.ROUTES_FILE_NAME)) || isfile(joinpath(path, Genie.APP_FILE_NAME))

@@ -20,8 +20,10 @@ Here, a temporary one is generated for the current session if no other token is 
 """
 function secret_token(generate_if_missing::Bool = true; context::Union{Module,Nothing} = nothing)
   if isempty(SECRET_TOKEN[])
-    isfile(joinpath(Genie.config.path_config, SECRETS_FILE_NAME)) &&
-      Revise.includet(Genie.Loader.default_context(context), joinpath(Genie.config.path_config, SECRETS_FILE_NAME))
+    isfile(abspath(Genie.config.path_config, SECRETS_FILE_NAME)) && begin
+      Base.include(Genie.Loader.default_context(context), abspath(Genie.config.path_config, SECRETS_FILE_NAME))
+      Revise.track(context, abspath(Genie.config.path_config, SECRETS_FILE_NAME))
+    end
 
     if isempty(SECRET_TOKEN[]) && generate_if_missing && Genie.Configuration.isprod()
       @warn "
@@ -63,7 +65,9 @@ The files are set up with `Revise` to be automatically reloaded.
 """
 function load(root_dir::String = Genie.config.path_config; context::Union{Module,Nothing} = nothing) :: Nothing
   secrets_path = secret_file_path(root_dir)
-  isfile(secrets_path) && Revise.includet(Genie.Loader.default_context(context), secrets_path)
+  # isfile(secrets_path) && Revise.includet(Genie.Loader.default_context(context), abspath(secrets_path))
+  isfile(secrets_path) && Base.include(Genie.Loader.default_context(context), abspath(secrets_path))
+  Genie.Configuration.isdev() && Revise.track(context, abspath(secrets_path))
 
   # check that the secrets_path has called Genie.secret_token!
   if isempty(secret_token(false)) # do not generate a temporary token in this check
