@@ -246,6 +246,7 @@ Base.@kwdef mutable struct Settings
   path_db::String                                     = "db"
   path_bin::String                                    = "bin"
   path_src::String                                    = "src"
+  path_elements_html::String                          = "elements" # the folder where the HTML elements are stored
 
   webchannels_default_route::String                   = "____"
   webchannels_js_file::String                         = "channels.js"
@@ -280,7 +281,7 @@ Base.@kwdef mutable struct Settings
   format_julia_builds::Bool                           = false
   format_html_output::Bool                            = true
   format_html_indentation_string::String              = "  "
-
+  
   autoload::Vector{Symbol}                            = Symbol[:initializers, :helpers, :libs, :resources, :plugins, :routes, :app]
   autoload_file::String                               = ".autoload"
   autoload_ignore_file::String                        = ".autoload_ignore"

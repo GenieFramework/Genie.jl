@@ -199,6 +199,7 @@ Loads the routes file.
 """
 function load_routes(routes_file::String = Genie.ROUTES_FILE_NAME; context::Union{Module,Nothing} = nothing) :: Nothing
   # isfile(routes_file) && Revise.includet(default_context(context), routes_file)
+  println("routes_file: ", routes_file)
   isfile(routes_file) && autoload(routes_file; context) 
 
   nothing
@@ -255,6 +256,7 @@ function autoload(root_dir::String = Genie.config.path_lib;
     # Revise.includet(default_context(context), root_dir)
     Base.include(default_context(context), abspath(root_dir))
     Genie.Configuration.isdev() && Revise.track(default_context(context), abspath(root_dir))
+    println("loaded: ", abspath(root_dir), " in ", default_context(context))
     return nothing
   end
 

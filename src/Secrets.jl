@@ -22,7 +22,7 @@ function secret_token(generate_if_missing::Bool = true; context::Union{Module,No
   if isempty(SECRET_TOKEN[])
     isfile(abspath(Genie.config.path_config, SECRETS_FILE_NAME)) && begin
       Base.include(Genie.Loader.default_context(context), abspath(Genie.config.path_config, SECRETS_FILE_NAME))
-      Revise.track(context, abspath(Genie.config.path_config, SECRETS_FILE_NAME))
+      # Revise.track(context, abspath(Genie.config.path_config, SECRETS_FILE_NAME))
     end
 
     if isempty(SECRET_TOKEN[]) && generate_if_missing && Genie.Configuration.isprod()
