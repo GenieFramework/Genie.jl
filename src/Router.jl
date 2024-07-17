@@ -47,6 +47,7 @@ const NOT_FOUND       = 404
 const INTERNAL_ERROR  = 500
 
 const ROUTE_CACHE = Dict{String,Tuple{String,Vector{String},Vector{Any}}}()
+const WS_PROXIES = Dict{String, Union{String, HTTP.WebSockets.WebSocket}}()
 
 request_mappings() = Dict{Symbol,Vector{String}}(
   :text       => ["text/plain"],
@@ -588,11 +589,66 @@ end
 
 Matches the invoked URL to the corresponding channel, sets up the execution environment and invokes the channel controller method.
 """
-function match_channels(req, msg::String, ws_client, params::Params) :: String
+function match_channels(req, msg::Union{String, Vector{UInt8}}, ws_client, params::Params) :: String
+  proxy_name = if isempty(WS_PROXIES)
+    ""
+  else
+    paths = split(req.target, "/", keepempty = false)
+    index = 1
+    length(paths) >= index && paths[index] == Genie.config.base_path && (index += 1)
+    length(paths) >= index && paths[index] == Genie.config.websockets_base_path && (index += 1)
+    length(paths) >= index ? String(paths[index]) : ""
+  end
+  if contains(proxy_name, "proxy")
+    proxy = get(WS_PROXIES, proxy_name, nothing)
+    if proxy !== nothing
+      if proxy isa String || proxy.writeclosed
+        url = dirname(proxy isa String ? proxy : proxy.request.url.uri) * "/" * join(paths[index + 1:end], "/")
+        @info "Trying to set up ws proxy for $url"
+        lock = Base.Channel(2)
+        @async try
+          HTTP.WebSockets.open(url) do ws
+            WS_PROXIES[proxy_name] = ws
+            @debug """ws proxy out: from $(ws.request.url)
+            ... to ws://$(Dict(ws_client.request.headers)["Origin"])/$(ws_client.request.target)
+            """
+            put!(lock, 1)
+            for msg in ws
+              try
+                @debug "ws proxy ->: $(String(deepcopy(msg)))"
+                HTTP.WebSockets.send(ws_client, msg)
+              catch e
+                @info "error sending msg via proxy"
+                @info e
+                close(ws)
+              end
+            end
+          end
+        catch e
+          put!(lock, 1)
+        end
+        wait(lock)
+        if WS_PROXIES[proxy_name] isa String || WS_PROXIES[proxy_name].writeclosed
+          @info("ws proxy could not be set up")
+        else
+          @info("ws proxy set up successfully!")
+        end
+      end
+      try
+        @debug "ws proxy out: $(String(deepcopy(msg)))"
+        HTTP.WebSockets.send(WS_PROXIES[proxy_name], msg)
+      catch e
+        @info "error sending msg via proxy"
+        @info e
+        close(ws)
+      end
+    end
+  end
+
   payload::Dict{String,Any} = try
     JSON3.read(msg, Dict{String,Any})
   catch ex
-    Dict{String,Any}()
+    Dict{String,Any}("raw" => msg)
   end
 
   uri = haskey(payload, "channel") ? '/' * payload["channel"] : '/'
@@ -603,6 +659,7 @@ function match_channels(req, msg::String, ws_client, params::Params) :: String
     parsed_channel, param_names, param_types = parse_channel(c.path)
 
     haskey(payload, "payload") && (params.collection[:payload] = payload["payload"])
+    haskey(payload, "raw") && (params.collection[:raw] = payload["raw"])
 
     regex_channel = Regex("^" * parsed_channel * "\$")
 
