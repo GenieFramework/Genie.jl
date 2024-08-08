@@ -399,15 +399,17 @@ end
 """
     @using(package_path)
 
-macro to simplify loading of modules that are not located in the LOAD_PATH
+Macro to simplify loading of modules taking advantage of precompilation.
+When called from Main it temporarilty adds the path to LOAD_PATH and loads the module via `using`
+When called from a different module it includes the module file and uses `using .MyModule`
 
-`package_path` can be
-- a path to a directory containing a module file of the same name
-    e.g 'models/MyApp' to load 'models/MyApp/MyApp.jl'
-- a path to a module (without extension '.jl')
-    e.g. 'models/MyApp' to load models/MyApp.jl'
-- a path to a package directory containing a 'src' directory and module file therein
-    e.g. 'models/MyApp' to load 'models/MyApp/src/MyApp.jl'
+`package_path` can be used in several ways
+- as a path to a directory containing a module file of the same name
+    e.g '@using models/MyApp' to load 'models/MyApp/MyApp.jl'
+- as a path to a module (without extension '.jl')
+    e.g. '@using models/MyApp' to load models/MyApp.jl'
+- as a path to a package directory containing a 'src' directory and module file therein
+    e.g. '@using models/MyApp' to load 'models/MyApp/src/MyApp.jl'
 
 ### Examples
 
@@ -433,6 +435,8 @@ Caveat: Due to precompilation it is not possible to supply variables to the macr
 Calls need to supply explicit paths.
 """
 macro _using(package)
+  # determine whether @using is called from Main or a different module
+  is_submodule = __module__ != Base.Main
   package = expr_to_path(package)
   fp = _findpackage(package)
   if fp === nothing
@@ -442,7 +446,17 @@ macro _using(package)
   path, package_name = fp
   package_symbol = Symbol(package_name)
 
-  quote
+  if is_submodule
+    # if called from submodule add module via `include()` and, `using .MyModule`
+    quote
+      include(joinpath($path, "$($package_name).jl"))
+      using .$(package_symbol)
+    end |> esc
+  else
+    # if called from Main add module via setting LOAD_PATH and `using MyModule`
+    quote
+      println("hi $($package_name)")
+
       let pp = split($path, ';')
         for p in reverse(pp)
           pushfirst!(LOAD_PATH, p)
@@ -451,7 +465,8 @@ macro _using(package)
         @debug "using $($package_name) (from '$($path)')"
         try
           using $package_symbol 
-        catch
+        catch e
+          error(e)
         finally
             for _ in pp 
               popfirst!(LOAD_PATH)
@@ -459,6 +474,7 @@ macro _using(package)
         end
       end
       nothing
+    end
   end
 end
 
