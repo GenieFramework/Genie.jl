@@ -154,9 +154,10 @@ function asset_route(file::String; kwargs...) :: String
   asset_route(; file, kwargs...)
 end
 function asset_route(ac::AssetsConfig, tp::Union{Symbol,String}; type::String = string(tp), path::String = "",
-                    file::String = "", ext::String = ".$type", skip_ext::Bool = false, query::String = "") :: String
-  asset_route(package = ac.package, version = ac.version, type = type, path = path, file = file,
-              ext = ext, skip_ext = skip_ext, query = query)
+                    file::String = "", ext::String = ".$type", skip_ext::Bool = false, query::String = "",
+                    kwds...) :: String
+  asset_route(; package = ac.package, version = ac.version, type = type, path = path, file = file,
+              ext = ext, skip_ext = skip_ext, query = query, kwds...)
 end
 
 
