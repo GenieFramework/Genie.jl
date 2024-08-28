@@ -455,8 +455,6 @@ macro _using(package)
   else
     # if called from Main add module via setting LOAD_PATH and `using MyModule`
     quote
-      println("hi $($package_name)")
-
       let pp = split($path, ';')
         for p in reverse(pp)
           pushfirst!(LOAD_PATH, p)
