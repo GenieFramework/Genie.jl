@@ -29,7 +29,11 @@ const NORMAL_ELEMENTS = [ :html, :head, :body, :title, :style, :address, :articl
                           :del, :ins, :caption, :col, :colgroup, :table, :tbody, :td, :tfoot, :th, :thead, :tr,
                           :button, :datalist, :fieldset, :label, :legend, :meter,
                           :output, :progress, :select, :option, :textarea, :details, :dialog, :menu, :menuitem, :summary,
-                          :slot, :template, :blockquote, :center, :iframe, :form]
+                          :slot, :template, :blockquote, :center, :iframe, :form,
+                          :q__drawer, :q__layout, :q__header, :q__toolbar, :q__btn, :q__toolbar__title, :q__list, :q__item__label,
+                          :q__page__container, :q__space, :q__item, :q__item__section, :q__icon, :q__form, :q__card, :q__card__section,
+                          :q__file, :q__input, :q__select, :q__btn__dropdown, :q__btn__dropdown__item, :q__tooltip, :q__badge,
+                          :q__slider, :q__dialog, :q__card__actions, :q__avatar, :q__table, :q__td, :q__toggle, :q__separator, :q__banner,]
 const VOID_ELEMENTS   = [:base, :link, :meta, :hr, :br, :area, :img, :track, :param, :source, :input]
 const NON_EXPORTED = [:main, :map, :filter]
 const SVG_ELEMENTS = [:animate, :circle, :animateMotion, :animateTransform, :clipPath, :defs, :desc, :discard,
@@ -56,6 +60,8 @@ end
 function ParsedHTMLString(v::Vector{T}) where {T}
   join(v) |> ParsedHTMLString
 end
+
+const CachedHTMLString = Dict{String, String}
 
 Base.string(v::Vector{ParsedHTMLString}) = join(v)
 
@@ -373,8 +379,11 @@ function get_template(path::String; partial::Bool = true, context::Module = @__M
 
     f_stale && Genie.Renderer.build_module(parsingfunction(path, partial = partial, extension = extension), path, mod_name)
 
+    # that return a erro when i try compile, and i don't know why    
     return Base.include(context, joinpath(Genie.config.path_build, Genie.Renderer.BUILD_NAME, mod_name))
   end
+
+  println("Returning: ", getfield(context, f_name))
 
   getfield(context, f_name)
 end
@@ -450,6 +459,7 @@ Renders the template file as an HTML view.
 function render(viewfile::Genie.Renderer.FilePath; layout::Union{Nothing,Genie.Renderer.FilePath,String} = nothing, context::Module = @__MODULE__, vars...) :: Function
   Genie.Renderer.registervars(; context = context, vars...)
 
+  println("render")
   if layout !== nothing
     task_local_storage(:__yield, get_template(string(viewfile); partial = true, context = context, vars...))
     parselayout(layout, context; vars...)
@@ -498,8 +508,39 @@ end
 function Genie.Renderer.render(::Type{MIME"text/html"}, viewfile::Genie.Renderer.FilePath;
                                 layout::Union{Nothing,Genie.Renderer.FilePath,String} = nothing,
                                 context::Module = @__MODULE__, vars...) :: Genie.Renderer.WebRenderable
+  println("html4_render")
   try
     render(viewfile; layout = layout, context = context, vars...) |> Genie.Renderer.WebRenderable
+  catch ex
+    isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
+    rethrow(ex)
+  end
+end
+
+"""Render a raw HTML string"""
+function Genie.Renderer.render(::Type{MIME"text/html"}, viewfile::Genie.Renderer.FilePath, cache::Union{Nothing,String};
+                                layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing, vars...)::Genie.Renderer.WebRenderable
+  try
+    sview = read(viewfile, String)
+    if layout !== nothing
+      slayout::String = if isa(layout, Genie.Renderer.FilePath)
+        read(layout, String)
+      else
+        layout
+      end
+      sview = replace(slayout,  r"<%\s*@yield\s*%>" => sview)
+    end
+    
+    for (k, v) in vars
+      pattern = "<%\\s*" * escape_string(k |> string) * "\\s*%>"  # Construct the pattern string with k interpolated
+      regex = Regex(pattern)  # Convert the pattern string into a Regex object
+      sview = replace(sview, regex => v)  # Use the regex in the replace function
+    end
+
+    # remove other <% %> tags
+    sview = replace(sview, r"<%\s*.*\s*%>" => "")
+    
+    Genie.Renderer.WebRenderable(sview)
   catch ex
     isa(ex, KeyError) && Genie.Renderer.changebuilds() # it's a view error so don't reuse them
     rethrow(ex)
@@ -565,8 +606,10 @@ function html(data::String;
   end
 
   if (occursin(raw"$", data) || occursin(EMBED_JULIA_OPEN_TAG, data) || layout !== nothing || forceparse) && ! noparse
+    println("Parsing HTML")
     html(HTMLString(data); context = context, status = status, headers = headers, layout = layout, vars...)
   else
+    println("Rendering HTML")
     html(ParsedHTMLString(data); context, status, headers, layout, vars...)
   end
 end
@@ -592,7 +635,7 @@ function html(data::HTMLString;
               forceparse::Bool = false,
               noparse::Bool = false,
               vars...) :: Genie.Renderer.HTTP.Response
-
+  println("html1")
   Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context = context, layout = layout, vars...), status, headers) |> Genie.Renderer.respond
 end
 
@@ -604,6 +647,7 @@ function html(data::ParsedHTMLString;
               forceparse::Bool = false,
               noparse::Bool = false,
               vars...) :: Genie.Renderer.HTTP.Response
+  println("html2")
   Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", data; context = context, layout = layout, vars...), status, headers) |> Genie.Renderer.respond
 end
 
@@ -627,7 +671,7 @@ function html(md::Markdown.MD;
               layout::Union{String,Nothing,Genie.Renderer.FilePath} = nothing,
               forceparse::Bool = false,
               vars...) :: Genie.Renderer.HTTP.Response
-  data = MdHtml.eval_markdown(string(md)) |> Markdown.parse |> Markdown.html
+  println("html3")  
   for kv in vars
     data = replace(data, ":" * string(kv[1]) => "\$" * string(kv[1]))
   end
@@ -655,9 +699,20 @@ function html(viewfile::Genie.Renderer.FilePath;
                 status::Int = 200,
                 headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
                 vars...) :: Genie.Renderer.HTTP.Response
+
+  println("html4")
   Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", viewfile; layout, context, vars...), status, headers) |> Genie.Renderer.respond
 end
 
+function raw_html(viewfile::Genie.Renderer.FilePath;
+          layout::Union{Nothing,Genie.Renderer.FilePath,String} = nothing,
+          cache::Union{Nothing,String} = nothing,
+          status::Int = 200,
+          headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(),
+          vars...) :: Genie.Renderer.HTTP.Response
+  
+  Genie.Renderer.WebRenderable(Genie.Renderer.render(MIME"text/html", viewfile, cache; layout, vars...), status, headers) |> Genie.Renderer.respond
+end
 
 """
     safe_attr(attr) :: String
@@ -1038,7 +1093,8 @@ end
 
 Generated functions that represent Julia functions definitions corresponding to HTML elements.
 """
-function register_elements(; context = @__MODULE__) :: Nothing
+function register_elements(; context = @__MODULE__) :: Nothing 
+  ENV["PRECOMPILE"] == "true" && return include_elements(context=context)
   for elem in NORMAL_ELEMENTS
     register_normal_element(elem)
   end
@@ -1101,6 +1157,78 @@ function register_normal_element(elem::Union{Symbol,String}; context = @__MODULE
   elem in NON_EXPORTED || Core.eval(context, "export $elem" |> Meta.parse)
 
   nothing
+end
+
+# convert the register_normal_element into a function that create a .jl file and include it in the module
+function include_elements(;elem::Union{Nothing,Vector{Union{Symbol,String}}} = nothing, context::Module = @__MODULE__, path::String = Genie.config.path_elements_html) :: Nothing
+  # create a string with the function definition
+  func_def::Vector{Union{String, Nothing}} = []
+  export_def::Vector{Union{String, Nothing}} = []
+  
+  file_name = abspath(joinpath(path, "elements.jl"))  
+  isdir(abspath(path)) && (Base.include(context, file_name); return nothing)  
+  mkpath(abspath(path))
+
+  for elem in NORMAL_ELEMENTS
+    """
+      function $elem(f::Function, args...; attrs...) :: ParsedHTMLString
+        normal_element(f, "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...])
+      end
+      function $elem(children::Union{String,Vector{String}} = "", args...; attrs...) :: ParsedHTMLString
+        normal_element(children, "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...])
+      end
+      function $elem(children::Any, args...; attrs...) :: ParsedHTMLString
+        normal_element(string(children), "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...])
+      end
+      function $elem(children::Vector{Any}, args...; attrs...) :: ParsedHTMLString
+        normal_element([string(c) for c in children], "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...])
+      end
+    """ |> x -> push!(func_def, x)
+    elem in NON_EXPORTED || push!(export_def, "$elem")
+  end
+
+  for elem in VOID_ELEMENTS
+    """
+      function $elem(args...; attrs...) :: ParsedHTMLString
+        void_element("$(string(elem))", [args...], Pair{Symbol,Any}[attrs...])
+      end
+    """ |> x -> push!(func_def, x)
+    elem in NON_EXPORTED || push!(export_def, "$elem")
+  end
+
+  for elem in SVG_ELEMENTS
+    """
+      function $elem(f::Function, args...; attrs...) :: ParsedHTMLString
+        normal_element(f, "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...])
+      end
+      function $elem(children::Union{String,Vector{String}} = "", args...; attrs...) :: ParsedHTMLString
+        normal_element(children, "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...])
+      end
+      function $elem(children::Any, args...; attrs...) :: ParsedHTMLString
+        normal_element(string(children), "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...])
+      end
+      function $elem(children::Vector{Any}, args...; attrs...) :: ParsedHTMLString
+        normal_element([string(c) for c in children], "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...])
+      end
+    """ |> x -> push!(func_def, x)
+    elem in NON_EXPORTED || push!(export_def, "$elem")
+  end
+
+  # create a file with the function definition (if path does not exist, create it) and include it in the module  
+  open(file_name, "w") do f
+    write(f,
+      """
+      export $(join(export_def, ", "))
+
+      $(join(func_def, "\n"))
+
+      """)
+  end
+
+  Base.include(context, file_name)
+
+  nothing  
+  # 
 end
 
 
