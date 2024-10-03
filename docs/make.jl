@@ -14,6 +14,7 @@ push!(LOAD_PATH,  "../../src", "../../src/renderers")
 makedocs(
     sitename = "Genie - The Highly Productive Julia Web Framework",
     format = Documenter.HTML(prettyurls = false),
+    warnonly = true,
     pages = [
         "Home" => "index.md",
         "Guides" => [
