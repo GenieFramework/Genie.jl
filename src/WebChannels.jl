@@ -110,11 +110,10 @@ Unsubscribes a web socket client `ws` from `channel`.
 """
 function unsubscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelName) :: ChannelClientsCollection
   client = id(ws)
-  
+
   haskey(CLIENTS, client) && deleteat!(CLIENTS[client].channels, CLIENTS[client].channels .== channel)
   pop_subscription(client, channel)
   delete_queue!(MESSAGE_QUEUE, client)
-
 
   @debug "Unsubscribed: $(client) ($(Dates.now()))"
   CLIENTS
@@ -150,6 +149,16 @@ function unsubscribe_client(channel_client::ChannelClient) :: ChannelClientsColl
 end
 
 
+function purge_unnecessary_message_queue()
+  active_clients = keys(CLIENTS) |> collect
+  for id in keys(MESSAGE_QUEUE) |> collect
+    if ! (id in active_clients)
+      delete!(MESSAGE_QUEUE, id)
+    end
+  end
+end
+
+
 """
 unsubscribe_disconnected_clients() :: ChannelClientsCollection
 
@@ -159,6 +168,8 @@ function unsubscribe_disconnected_clients() :: ChannelClientsCollection
   for channel_client in disconnected_clients()
     unsubscribe_client(channel_client)
   end
+
+  @async purge_unnecessary_message_queue() |> errormonitor
 
   CLIENTS
 end
@@ -230,34 +241,42 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}},
 
   isempty(SUBSCRIPTIONS) && return false
 
-  try
-    for channel in channels
-      haskey(SUBSCRIPTIONS, channel) || throw(ChannelNotFoundException(channel))
+  @async unsubscribe_disconnected_clients() |> errormonitor
 
-      ids = restrict === nothing ? SUBSCRIPTIONS[channel] : intersect(SUBSCRIPTIONS[channel], restrict)
-      for client in ids
-        if except !== nothing
-          except isa UInt && client == except && continue
-          except isa Vector{UInt} && client ∈ except && continue
-        end
-        HTTP.WebSockets.isclosed(CLIENTS[client].client) && continue
+  # @show channels
+  # @show CLIENTS
 
-        try
-          payload !== nothing ?
-            message(client, ChannelMessage(channel, client, msg, payload) |> Renderer.Json.JSONParser.json) :
-            message(client, msg)
-        catch ex
-          if isa(ex, Base.IOError)
-            unsubscribe_disconnected_clients(channel)
-          else
-            @error ex
-          end
+  # try
+  for channel in channels
+    if ! haskey(SUBSCRIPTIONS, channel)
+      unsubscribe_disconnected_clients(channel)
+      throw(ChannelNotFoundException(channel))
+    end
+
+    ids = restrict === nothing ? SUBSCRIPTIONS[channel] : intersect(SUBSCRIPTIONS[channel], restrict)
+    for client in ids
+      if except !== nothing
+        except isa UInt && client == except && continue
+        except isa Vector{UInt} && client ∈ except && continue
+      end
+      HTTP.WebSockets.isclosed(CLIENTS[client].client) && continue
+
+      try
+        payload !== nothing ?
+          message(client, ChannelMessage(channel, client, msg, payload) |> Renderer.Json.JSONParser.json) :
+          message(client, msg)
+      catch ex
+        if isa(ex, Base.IOError)
+          unsubscribe_disconnected_clients(channel)
+        else
+          @error ex
         end
       end
     end
-  catch ex
-    @warn ex
   end
+  # catch ex
+  #   @warn ex
+  # end
 
   true
 end
@@ -310,12 +329,13 @@ function message(client::ClientId, msg::String)
       finally
         put!(future, nothing)
       end
-    end
+    end |> errormonitor
+
     queue, handler
   end
 
   put!(q, (msg, myfuture))
-      
+
   take!(myfuture) # Wait until the message is processed
 end
 function message(client::ChannelClient, msg::String) :: Int
@@ -338,7 +358,7 @@ end
 function delete_queue!(d::Dict, client::UInt)
   queue, handler = pop!(MESSAGE_QUEUE, client, (nothing, nothing))
   if queue !== nothing
-    @async Base.throwto(handler, InterruptException())
+    @async Base.throwto(handler, InterruptException()) |> errormonitor
   end
 end
 

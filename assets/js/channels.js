@@ -109,6 +109,11 @@ function newSocketConnection(host = Genie.Settings.websockets_exposed_host) {
           f(event);
         }
       }
+      ws.onmessage = null;
+      ws.onerror = null;
+      ws.onclose = null;
+      ws.onopen = null;
+      ws = null;
     });
 
     ws.addEventListener('error', _ => {
@@ -202,11 +207,11 @@ Genie.WebChannels.closeHandlers.push(event => {
 
 Genie.WebChannels.closeHandlers.push(event => {
   if (Genie.Settings.webchannels_autosubscribe) {
-    if (isDev()) console.info('Attempting to reconnect');
-    setTimeout(function() {
-      Genie.WebChannels.socket = newSocketConnection();
-      subscribe();
-    }, Genie.Settings.webchannels_timeout);
+    if (isDev()) console.info('Attempting to reconnect! ');
+    // setTimeout(function() {
+    Genie.WebChannels.socket = newSocketConnection();
+    subscribe();
+    // }, Genie.Settings.webchannels_timeout);
   }
 });
 
