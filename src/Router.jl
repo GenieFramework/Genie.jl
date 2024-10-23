@@ -146,18 +146,17 @@ First step in handling a request: sets up params collection, handles query vars,
 """
 function route_request(req::HTTP.Request, res::HTTP.Response; stream::Union{HTTP.Stream,Nothing} = nothing) :: HTTP.Response
   params = Params()
-
   params.collection[:STREAM] = stream
 
   for f in unique(content_negotiation_hooks)
     req, res, params.collection = f(req, res, params.collection)
   end
-
-  if is_static_file(req.target) && req.method == GET
-    if isroute(baptizer(req.target, [lowercase(req.method)]))
+  unescaped_target = HTTP.URIs.unescapeuri(req.target)
+  if is_static_file(unescaped_target) && req.method == GET
+    if isroute(baptizer(unescaped_target, [lowercase(req.method)]))
       @warn "Route matches static file: $(req.target) -- executing route"
     elseif Genie.config.server_handle_static_files
-      return serve_static_file(req.target)
+      return serve_static_file(unescaped_target)
     else
       return error(req.target, response_mime(), Val(404))
     end

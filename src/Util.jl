@@ -1,5 +1,6 @@
 module Util
 
+using Pkg
 import Genie
 
 
@@ -19,7 +20,9 @@ end
 Recursively walks dir and `produce`s non directories. If `only_files`, directories will be skipped. If `only_dirs`, files will be skipped.
 """
 function walk_dir(dir, paths = String[];
-                  only_extensions = ["jl"], only_files = true, only_dirs = false,
+                  only_extensions = ["jl"],
+                  only_files = true,
+                  only_dirs = false,
                   exceptions = Genie.config.watch_exceptions,
                   autoload_ignorefile = Genie.config.autoload_ignore_file) :: Vector{String}
   f = readdir(dir)
@@ -65,6 +68,34 @@ function filterwhitespace(s::S, allowed::Vector{Char} = Char[])::String where {S
   filter(x -> (x in allowed) || ! isspace(x), string(s))
 end
 
+
+"""
+    isprecompiling() :: Bool
+
+Returns `true` if the current process is precompiling.
+"""
+isprecompiling() = ccall(:jl_generating_output, Cint, ()) == 1
+
+
 const fws = filterwhitespace
+
+"""
+    package_version(package::Union{Module,String}) :: String
+
+Returns the version of a package, or "master" if the package is not installed.
+
+### Example
+
+```julia
+
+julia> package_version("Genie.jl")
+"v0.23.0"
+"""
+function package_version(package::Union{Module,String}) :: String
+  isa(package, Module) && (package = String(nameof(package)))
+  endswith(package, ".jl") && (package = String(package[1:end-3]))
+  pkg_dict = filter(x -> x.second.name == package, Pkg.dependencies())
+  isempty(pkg_dict) ? "master" : ("v" * string(first(pkg_dict)[2].version))
+end
 
 end

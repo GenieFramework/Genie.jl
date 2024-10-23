@@ -32,40 +32,31 @@
       </a>
     </sub>
   </p>
-  <br />
-  <p>
-    <a href="https://www.genieframework.com/">
-      <img
-        src="docs/content/img/genie.gif"
-        alt="Screenshot"
-        width="100%"
-      />
-    </a>
-  </p>
 </div>
 
-<p style="font-family:verdana;font-size:80%;margin-bottom:4%" align="center">
-<u>Julia data dashboards powered by Genie</u>
+
+Genie.jl is the backbone of the [Genie Framework](https://genieframework.com), which provides a streamlined and efficient workflow for developing modern web applications. It builds on Julia's strengths (high-level, high-performance, dynamic, JIT compiled), exposing a rich API and a powerful toolset for productive web development.
+
+Genie Framework is composed of four main components:
+- **[Genie.jl](https://github.com/GenieFramework/Genie.jl)**: the server backend, providing features for routing, templating, authentication, and much more.
+- **[Stipple.jl](https://github.com/GenieFramework/Stipple.jl)**: a package for building reactive UIs with a simple and powerful low-code API in pure Julia.
+- **[Genie Builder](https://learn.genieframework.com/docs/genie-builder/quick-start)**: a VSCode plugin for building UIs visually in a drag-and-drop editor.
+- **[SearchLight.jl](https://github.com/GenieFramework/SearchLight.jl)**: a complete ORM solution, enabling easy database integration without writing SQL queries.
+
+
+To learn more about Genie, visit the [documentation](https://learn.genieframework.com/docs/guides), and the [app gallery](https://learn.genieframework.com/app-gallery).
+
+
+If you need help with anything, you can find us on [Discord](https://discord.com/invite/9zyZbD6J7H).
+
+https://github.com/GenieFramework/Genie.jl/assets/5058397/627dcda0-bb13-49f9-8827-2bfb581a9bb7
+<p style="font-family:verdana;font-size:60%;margin-bottom:4%" align="center">
+<u>Julia data dashboard powered by Genie. <a href="https://learn.genieframework.com/app-gallery">App gallery</a></u>
 </p>
-
-<p align="center">
-  Genie is a full-stack web framework that provides a streamlined and efficient workflow for developing modern web applications. It builds on Julia's strengths (high-level, high-performance, dynamic, JIT compiled), exposing a rich API and a powerful toolset for productive web development.
-</p>
-
-#### **Need Help?** Reach out on our social media channels.
-
-[![Chat on Discord](https://img.shields.io/badge/chat-Discord-7289DA?logo=discord)](https://discord.com/invite/9zyZbD6J7H) [![Chat on Gitter](https://img.shields.io/badge/gitter-chat-red)](https://gitter.im/essenciary/Genie.jl) [![Discuss on GitHub](https://img.shields.io/badge/discussions-GitHub-333333?logo=github)](https://github.com/GenieFramework/Genie.jl/discussions)
-
-<hr>
-
-<details open>
-  <summary><b>Table of contents</b></summary>
 
 ---
 
-- [**Made With Genie**](#made-with-genie)
-- [**Community Curated Resources**](#community-curated-resources)
-- [**Community Mentions**](#community-mentions)
+- [**Features of Genie.jl**](#features-of-genie.jl)
 - [**Contributing**](#contributing)
 - [**Special Credits**](#special-credits)
 - [**License**](#license)
@@ -74,7 +65,7 @@
 
 </details>
 
-### **Features**
+### **Features of Genie.jl**
 
 🛠**Genie Router:** Genie has a really powerful
 💪 `Router`. Matching web requests to functions, extracting and setting up the request's variables and the execution environment, and invoking the response methods. Features include:
@@ -238,34 +229,6 @@ end
 * `Logging` | `Caching` | `Cookies and Sessions` | `Docker, Heroku, JuliaHub, etc Integrations` | `Genie Deploy`
 * To explore more features check [Genie Documentation](https://www.genieframework.com/docs/genie/tutorials/Overview.html) 🏃‍♂️🏃‍♀️
 
-## **Made With Genie**
-
-- Packages/Libraries:
-
-  * Stipple: [Stipple is a reactive UI library for building interactive data applications in pure Julia](https://github.com/GenieFramework/Stipple.jl)
-
-  * StippleUI: [StippleUI is a library of reactive UI elements for Stipple.jl](https://github.com/GenieFramework/StippleUI.jl)
-
-  * StipplePlotly: [StipplePlotly is a plotting library for Stipple.jl](https://github.com/GenieFramework/StipplePlotly.jl)
-
-  * StippleCharts: [StippleCharts is yet another plotting/charting solution for Stipple.jl](https://github.com/GenieFramework/StippleCharts.jl)
-
-- Demo Apps:
-  * Julia [package download app](https://github.com/GenieFramework/PkgVizBoard) ([data](https://discourse.julialang.org/t/announcing-package-download-stats/69073) provided by Julia Lang)
-  * [German Credit visualization](0https://github.com/GenieFramework/Stipple-Demo-GermanCredits) dashboard
-  * [Iris flowers dataset k-means clustering](https://github.com/GenieFramework/Stipple-Demo-IrisClustering) dashboard
-
-## **Community Curated Resources**
-
-* [![Awesome Genie](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg) **Awesome Genie**](https://github.com/AbhimanyuAryan/genie-awesome): A curated list of awesome things related to Julia's Web framework Genie.
-
-## **Community Mentions**
-
-* [6 Julia Frameworks to Create Desktop GUI’s 🖥 and Web Apps](https://logankilpatrick.medium.com/6-julia-frameworks-to-create-desktop-guis-and-web-apps-9ae1a941f115) by Logan Kilpatrick
-
-* [12 Best Julia web frameworks](https://www.dunebook.com/julia-web-framework/) by Olanrewaju Olakunle
-
-* [What are the best web frameworks for Julia programming language?](https://qr.ae/pG6Zdn) by Morgane Alinaï
 
 ## **Contributing**
 
