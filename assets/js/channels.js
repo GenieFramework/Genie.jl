@@ -4,6 +4,7 @@
 ** GenieFramework.com // Genie.jl
 */
 Genie.WebChannels = {};
+var _lastMessageAt = 0;
 
 Genie.WebChannels.initialize = function() {
   Genie.WebChannels.sendMessageTo = sendMessageTo;
@@ -52,6 +53,7 @@ Genie.WebChannels.initialize = function() {
         console.warn('Could not send message: ' + msg);
       }
     }
+    _lastMessageAt = Date.now();
   }
 }
 
@@ -91,6 +93,7 @@ function newSocketConnection(host = Genie.Settings.websockets_exposed_host) {
           f(event);
         }
       }
+      _lastMessageAt = Date.now();
     });
 
     ws.addEventListener('error', event => {
