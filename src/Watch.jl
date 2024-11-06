@@ -43,26 +43,50 @@ function handlers() :: Vector{<: Function}
   WATCH_HANDLERS[] |> values |> collect |> Iterators.flatten |> collect
 end
 
-function watch(files::Vector{<: AbstractString},
+function watched_files_have_changed(files::Vector{<: AbstractString}) :: Bool
+  files != collect_watched_files(WATCHED_FOLDERS[])
+end
+
+function watch( files::Vector{<: AbstractString},
                 extensions::Vector{<: AbstractString} = Genie.config.watch_extensions;
-                handlers::Vector{<: Function} = handlers()) :: Nothing
-  last_watched = now() - Millisecond(Genie.config.watch_frequency) # to trigger the first watch
+                handlers::Vector{<: Function} = handlers(),
+                watch_frequency::Int = Genie.config.watch_frequency # in milliseconds
+              ) :: Nothing
+  watchpath(files) # add the files to the watch list
+
+  last_watched = now() - Millisecond(watch_frequency) # to trigger the first watch
 
   Genie.Configuration.isdev() && Revise.revise()
 
-  entr(collect_watched_files(WATCHED_FOLDERS[], extensions); all = true) do
-    now() - last_watched > Millisecond(Genie.config.watch_frequency) || return
-    last_watched = now()
+  watched_files = collect_watched_files(WATCHED_FOLDERS[], extensions)
+  try
+    @async entr(watched_files; all = true) do
+      now() - last_watched > Millisecond(watch_frequency) || return
+      last_watched = now()
 
-    try
-      for f in unique!(handlers)
-        Base.invokelatest(f)
+      try
+        for f in unique!(handlers)
+          Base.invokelatest(f)
+        end
+      catch ex
+        @error ex
       end
-    catch ex
-      @error ex
-    end
 
-    last_watched = now()
+      last_watched = now()
+    end |> errormonitor # entr
+  catch ex
+    @error ex
+  end
+
+  @async begin
+    while true
+      sleep(Genie.config.watch_frequency / 100)
+      if watched_files_have_changed(watched_files)
+        watched_files = collect_watched_files(WATCHED_FOLDERS[], extensions)
+        watch(files, extensions; handlers = handlers, watch_frequency = watch_frequency)
+        break
+      end
+    end
   end
 
   nothing
