@@ -62,12 +62,33 @@ function displayAlert(content = 'Can not reach the server - please reload the pa
   if (document.getElementById(elemid) === null) {
     let elem = document.createElement('div');
     elem.id = elemid;
-    elem.style.cssText = 'position:absolute;width:100%;opacity:0.5;z-index:100;background:#e63946;color:#f1faee;text-align:center;';
+    elem.style.cssText = 'position:fixed;top:0;width:100%;opacity:0.5;z-index:100;background:#e63946;color:#f1faee;text-align:center;';
+    elem.style.height = '1.8em';
     elem.innerHTML = content + '<a href="javascript:location.reload();" style="color:#a8dadc;padding: 0 10pt;font-weight:bold;">Reload</a>';
-    setTimeout(() => {
-      document.body.appendChild(elem);
-      document.location.href = '#' + elemid;
+    let elemspacer = document.createElement('div');
+    elemspacer.id = elemid + 'spacer';
+    elemspacer.style.height = (Genie.Settings.webchannels_alert_overlay) ? 0 : elem.style.height;
+    Genie.WebChannels.alertTimeout = setTimeout(() => {
+      if (Genie.Settings.webchannels_show_alert) {
+        document.body.prepend(elem);
+        document.body.prepend(elemspacer);
+      }
+      if (window.GENIEMODEL) GENIEMODEL.ws_disconnected = true;
     }, Genie.Settings.webchannels_server_gone_alert_timeout);
+  }
+}
+
+function deleteAlert() {
+  clearInterval(Genie.WebChannels.alertTimeout);
+  if (window.GENIEMODEL) GENIEMODEL.ws_disconnected = false
+  let elemid = 'wsconnectionalert';
+  let elem = document.getElementById(elemid);
+  let elemspacer = document.getElementById(elemid + 'spacer');
+  if (elem !== null) {
+    elem.remove();
+  }
+  if (elemspacer !== null) {
+    elemspacer.remove();
   }
 }
 
@@ -248,6 +269,7 @@ function subscription_ready() {
     }
   }
 
+  deleteAlert();
   if (isDev()) console.info('Subscription ready');
 };
 
