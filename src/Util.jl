@@ -24,29 +24,35 @@ function walk_dir(dir, paths = String[];
                   only_files = true,
                   only_dirs = false,
                   exceptions = Genie.config.watch_exceptions,
-                  autoload_ignorefile = Genie.config.autoload_ignore_file) :: Vector{String}
+                  autoload_ignorefile = Genie.config.autoload_ignore_file,
+                  test_function::Union{Function,Nothing} = nothing
+                ) :: Vector{String}
   f = readdir(dir)
 
-  exception = false
   for i in f
     full_path = joinpath(dir, i)
 
     for ex in exceptions
       if occursin(ex, full_path)
-        exception = true
-        break
+        continue
       end
     end
 
-    if exception
-      exception = false
-      continue
+    if test_function !== nothing
+      test_function(full_path) || continue
     end
 
     if isdir(full_path)
       isfile(joinpath(full_path, autoload_ignorefile)) && continue
       (! only_files || only_dirs) && push!(paths, full_path)
-      Genie.Util.walk_dir(full_path, paths; only_extensions = only_extensions, only_files = only_files, only_dirs = only_dirs, exceptions = exceptions, autoload_ignorefile = autoload_ignorefile)
+      Genie.Util.walk_dir(full_path, paths;
+                          only_extensions = only_extensions,
+                          only_files = only_files,
+                          only_dirs = only_dirs,
+                          exceptions = exceptions,
+                          autoload_ignorefile = autoload_ignorefile,
+                          test_function = test_function
+                        )
     else
       only_dirs && continue
 

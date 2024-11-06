@@ -50,13 +50,6 @@ function watch(files::Vector{<: AbstractString},
 
   Genie.Configuration.isdev() && Revise.revise()
 
-  # if ! (hash(handlers) in WATCHING[])
-  #   push!(WATCHING[], hash(handlers))
-  # else
-  #   Genie.Configuration.isdev() && @warn("Handlers already registered")
-  #   return
-  # end
-
   entr(collect_watched_files(WATCHED_FOLDERS[], extensions); all = true) do
     now() - last_watched > Millisecond(Genie.config.watch_frequency) || return
     last_watched = now()
