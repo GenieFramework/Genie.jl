@@ -1,5 +1,5 @@
 /*
-** channels.js v1.3 // 7th July 2023
+** channels.js v1.4 // 7th Nov 2024
 ** Author: Adrian Salceanu and contributors // @essenciary
 ** GenieFramework.com // Genie.jl
 */
@@ -57,18 +57,50 @@ Genie.WebChannels.initialize = function() {
   }
 }
 
-function displayAlert(content = 'Can not reach the server - please reload the page') {
-  let elemid = 'wsconnectionalert';
-  if (document.getElementById(elemid) === null) {
-    let elem = document.createElement('div');
-    elem.id = elemid;
-    elem.style.cssText = 'position:absolute;width:100%;opacity:0.5;z-index:100;background:#e63946;color:#f1faee;text-align:center;';
-    elem.innerHTML = content + '<a href="javascript:location.reload();" style="color:#a8dadc;padding: 0 10pt;font-weight:bold;">Reload</a>';
-    setTimeout(() => {
-      document.body.appendChild(elem);
-      document.location.href = '#' + elemid;
-    }, Genie.Settings.webchannels_server_gone_alert_timeout);
+let wsconnectionalert_triggered = false;
+let wsconnectionalert_elemid = 'wsconnectionalert';
+
+function displayAlert(content = 'Can not reach the server. Trying to reconnect...') {
+  if (document.getElementById(wsconnectionalert_elemid) !== null || wsconnectionalert_triggered) return;
+
+  let elem = document.createElement('div');
+  elem.id = wsconnectionalert_elemid;
+  elem.style.cssText = 'position:fixed;top:0;width:100%;z-index:100;background:#e63946;color:#f1faee;text-align:center;';
+  elem.style.height = '1.8em';
+  elem.innerHTML = content;
+
+  let elemspacer = document.createElement('div');
+  elemspacer.id = wsconnectionalert_elemid + 'spacer';
+  elemspacer.style.height = (Genie.Settings.webchannels_alert_overlay) ? 0 : elem.style.height;
+
+  wsconnectionalert_triggered = true;
+
+  Genie.WebChannels.alertTimeout = setTimeout(() => {
+    if (Genie.Settings.webchannels_show_alert) {
+      document.body.prepend(elem);
+      document.body.prepend(elemspacer);
+    }
+    if (window.GENIEMODEL) GENIEMODEL.ws_disconnected = true;
+  }, Genie.Settings.webchannels_server_gone_alert_timeout);
+}
+
+function deleteAlert() {
+  clearInterval(Genie.WebChannels.alertTimeout);
+
+  if (window.GENIEMODEL) GENIEMODEL.ws_disconnected = false;
+
+  let elem = document.getElementById(wsconnectionalert_elemid);
+  let elemspacer = document.getElementById(wsconnectionalert_elemid + 'spacer');
+
+  if (elem !== null) {
+    elem.remove();
   }
+
+  if (elemspacer !== null) {
+    elemspacer.remove();
+  }
+
+  wsconnectionalert_triggered = false;
 }
 
 function newSocketConnection(host = Genie.Settings.websockets_exposed_host) {
@@ -248,6 +280,7 @@ function subscription_ready() {
     }
   }
 
+  deleteAlert();
   if (isDev()) console.info('Subscription ready');
 };
 
