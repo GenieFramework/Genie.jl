@@ -260,6 +260,8 @@ Base.@kwdef mutable struct Settings
   webchannels_connection_attempts                     = 10
   webchannels_reconnect_delay                         = 500 # milliseconds
   webchannels_subscription_trails                     = 4
+  webchannels_show_alert::Bool                        = true
+  webchannels_alert_overlay::Bool                     = false
 
   webthreads_default_route::String                    = webchannels_default_route
   webthreads_js_file::String                          = "webthreads.js"
