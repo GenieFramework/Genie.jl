@@ -5,7 +5,7 @@
 */
 var _lastMessageAt = 0;
 
-Genie.init_webchannel = function(channel = Genie.Settings.webchannels_default_route) {
+Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_route) {
   // A message maps to a channel route so that channel + message = /action/controller
   // The payload is the data exposed in the Channel Controller
   var WebChannel = {};
@@ -281,4 +281,4 @@ function isDev() {
 
 // --------------- Initialize WebChannel ---------------
 
-Genie.WebChannels = Genie.init_webchannel();
+Genie.WebChannels = Genie.initWebChannel();
