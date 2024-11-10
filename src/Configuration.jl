@@ -289,7 +289,7 @@ Base.@kwdef mutable struct Settings
   env_file::String                                    = ".env"
 
   watch::Bool                                         = false
-  watch_extensions::Vector{String}                    = String["jl", "html", "md", "js", "css"]
+  watch_extensions::Vector{String}                    = String["jl", "html", "md", "js", "css", "theme"]
   watch_handlers::Dict{Any,Vector{Function}}          = Dict()
   watch_frequency::Int                                = 2_000 # 2 seconds
   watch_exceptions::Vector{String}                    = String["bin/", "build/", "sessions/", "Project.toml", "Manifest.toml"]
