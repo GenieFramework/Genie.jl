@@ -20,7 +20,7 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
     } else if (Object.keys(payload).length > 0) {
       try {
         await waitForOpenConnection(WebChannel)
-        WebChannel.send(msg);
+        WebChannel.socket.send(msg);
       } catch (err) {
         console.error(err);
         console.warn('Could not send message: ' + msg);
@@ -60,7 +60,7 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
   WebChannel.socket = newSocketConnection(WebChannel);
 
   WebChannel.processingHandlers.push(event => {
-    window.parse_payload(event.data);
+    window.parse_payload(WebChannel, event.data);
   });
   
   WebChannel.messageHandlers.push(event => {
@@ -73,7 +73,7 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
       }
   
       if (ed.startsWith('{') && ed.endsWith('}')) {
-        window.parse_payload(JSON.parse(ed, Genie.Revivers.reviver));
+        window.parse_payload(WebChannel, JSON.parse(ed, Genie.Revivers.reviver));
       } else if (ed.startsWith(Genie.Settings.webchannels_eval_command)) {
         return Function('"use strict";return (' + ed.substring(Genie.Settings.webchannels_eval_command.length).trim() + ')')();
       } else if (ed == 'Subscription: OK') {
@@ -230,7 +230,7 @@ Genie.Revivers.revive_undefined = function(key, value) {
 Genie.Revivers.revivers = [Genie.Revivers.revive_undefined]
 Genie.Revivers.rebuildReviver()
 
-function parse_payload(json_data) {
+function parse_payload(WebChannel, json_data) {
   if (isDev()) {
     console.info('Overwrite window.parse_payload to handle messages from the server');
     console.info(json_data);
