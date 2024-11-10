@@ -281,4 +281,4 @@ function isDev() {
 
 // --------------- Initialize WebChannel ---------------
 
-Genie.WebChannels = Genie.initWebChannel();
+// Genie.WebChannels = Genie.initWebChannel();
