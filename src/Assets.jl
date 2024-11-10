@@ -403,9 +403,9 @@ end
 
 function channels_script_tag(channel::AbstractString = Genie.config.webchannels_default_route) :: String
   if ! external_assets()
-    Genie.Renderer.Html.script(src = assets_endpoint())
+    Genie.Renderer.Html.script(src = assets_endpoint(), defer = true)
   else
-    Genie.Renderer.Html.script([channels(channel)])
+    Genie.Renderer.Html.script([channels(channel)], defer = true)
   end
 end
 
