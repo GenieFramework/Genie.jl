@@ -3,7 +3,6 @@
 ** Author: Adrian Salceanu and contributors // @essenciary
 ** GenieFramework.com // Genie.jl
 */
-var _lastMessageAt = 0;
 
 Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_route) {
   // A message maps to a channel route so that channel + message = /action/controller
@@ -26,7 +25,7 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
         console.warn('Could not send message: ' + msg);
       }
     }
-    _lastMessageAt = Date.now();
+    WebChannel.lastMessageAt = Date.now();
   }
 
   WebChannel.channel = channel;
@@ -172,7 +171,7 @@ function newSocketConnection(WebChannel, host = Genie.Settings.websockets_expose
           f(event);
         }
       }
-      _lastMessageAt = Date.now();
+      WebChannel.lastMessageAt = Date.now();
     });
 
     ws.addEventListener('error', event => {
