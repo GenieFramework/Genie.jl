@@ -253,6 +253,7 @@ Genie.Revivers.rebuildReviver = function() {
 }
 
 Genie.Revivers.addReviver = function(reviver) {
+  if (Genie.Revivers.revivers.includes(reviver)) return
   Genie.Revivers.revivers.push(reviver)
   Genie.Revivers.rebuildReviver()
 }
