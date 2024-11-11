@@ -137,8 +137,16 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
 let wsconnectionalert_elemid = 'wsconnectionalert';
 
 function displayAlert(WebChannel, content = 'Can not reach the server. Trying to reconnect...') {
-  if (document.getElementById(wsconnectionalert_elemid) !== null || WebChannel.wsconnectionalert_triggered) return;
+  if (document.getElementById(wsconnectionalert_elemid) || WebChannel.wsconnectionalert_triggered) return;
 
+  let alreadyAlerted = false;
+  for (let i = 0; i < Genie.AllWebChannels.length; i++) {
+    if (Genie.AllWebChannels[i].wsconnectionalert_triggered) {
+      alreadyAlerted = true;
+      break;
+    }
+  }
+  
   let elem = document.createElement('div');
   elem.id = wsconnectionalert_elemid;
   elem.style.cssText = 'position:fixed;top:0;width:100%;z-index:100;background:#e63946;color:#f1faee;text-align:center;';
@@ -152,7 +160,7 @@ function displayAlert(WebChannel, content = 'Can not reach the server. Trying to
   WebChannel.wsconnectionalert_triggered = true;
 
   WebChannel.alertTimeout = setTimeout(() => {
-    if (Genie.Settings.webchannels_show_alert) {
+    if (Genie.Settings.webchannels_show_alert && !alreadyAlerted) {
       document.body.prepend(elem);
       document.body.prepend(elemspacer);
     }
@@ -173,17 +181,9 @@ function deleteAlert(WebChannel) {
       }
     }
 
-    let elem = document.getElementById(wsconnectionalert_elemid);
-    let elemspacer = document.getElementById(wsconnectionalert_elemid + 'spacer');
-
-    if (elem !== null) {
-      elem.remove();
-    }
-
-    if (elemspacer !== null) {
-      elemspacer.remove();
-    }
-  }, 100);
+    document.getElementById(wsconnectionalert_elemid)?.remove();
+    document.getElementById(wsconnectionalert_elemid + 'spacer')?.remove();
+  }, 0);
 }
 
 function newSocketConnection(WebChannel, host = Genie.Settings.websockets_exposed_host) {
