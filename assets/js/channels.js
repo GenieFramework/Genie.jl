@@ -29,7 +29,6 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
   }
 
   WebChannel.channel = channel;
-  console.log('WebChannel initialized for channel: ' + channel);
   WebChannel.messageHandlers = [];
   WebChannel.errorHandlers = [];
   WebChannel.openHandlers = [];
