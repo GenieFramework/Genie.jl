@@ -88,7 +88,7 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
   
   WebChannel.errorHandlers.push(event => {
     if (isDev()) {
-      console.error(event.data);
+      console.error(event.target);
     }
   });
   
@@ -99,12 +99,12 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
   });
   
   WebChannel.closeHandlers.push(event => {
+    displayAlert(WebChannel);
     if (Genie.Settings.webchannels_autosubscribe) {
       if (isDev()) console.info('Attempting to reconnect! ');
-      // setTimeout(function() {
-      WebChannel.socket = newSocketConnection(WebChannel);
-      subscribe(WebChannel);
-      // }, Genie.Settings.webchannels_timeout);
+      setTimeout(function() {
+        WebChannel.socket = newSocketConnection(WebChannel);
+      }, Genie.Settings.webchannels_reconnect_delay);
     }
   });
   
@@ -170,7 +170,6 @@ function deleteAlert(WebChannel) {
   setTimeout(() => {
     for (let i = 0; i < Genie.AllWebChannels.length; i++) {
       if (Genie.AllWebChannels[i].wsconnectionalert_triggered) {
-        console.info('WebChannel ' + i + ' is still disconnected');
         return
       }
     }
@@ -185,7 +184,7 @@ function deleteAlert(WebChannel) {
     if (elemspacer !== null) {
       elemspacer.remove();
     }
-  }, 20);
+  }, 100);
 }
 
 function newSocketConnection(WebChannel, host = Genie.Settings.websockets_exposed_host) {
@@ -298,9 +297,9 @@ function subscription_ready(WebChannel) {
 
 
 function subscribe(WebChannel, trial = 1) {
-  if (WebChannel.socket.readyState && (document.readyState === 'complete' || document.readyState === 'interactive')) {
+  if (WebChannel.socket.readyState == 1 && (document.readyState === 'complete' || document.readyState === 'interactive')) {
     WebChannel.sendMessageTo(WebChannel.channel, window.Genie.Settings.webchannels_subscribe_channel);
-  } else if (trial < Genie.Settings.webchannels_subscription_trails) {
+  } else if (trial < Genie.Settings.webchannels_subscription_trials) {
     if (isDev()) console.warn('Queuing subscription');
     trial++;
     setTimeout(subscribe.bind(this, WebChannel, trial), Genie.Settings.webchannels_timeout);
