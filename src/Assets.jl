@@ -259,7 +259,7 @@ function js_settings(channel::String = Genie.config.webchannels_default_route) :
   end
 
   """
-  window.Genie = window.Genie || {};
+  window.Genie = {};
   Genie.Settings = $settings;
   """
 end
