@@ -159,9 +159,13 @@ function WebRenderable(wr::WebRenderable, content_type::Symbol, status::Int, hea
 end
 
 
+"""
+Converts a function into a `WebRenderable` object by invoking it and joining the result.
+"""
 function WebRenderable(f::Function, args...)
+  # that convert all back to string mybe not needed same with stipple
   fr::String = Base.invokelatest(f) |> join
-
+  println("WebRenderable 1")
   WebRenderable(fr, args...)
 end
 
@@ -232,6 +236,7 @@ end
 
 
 function respond(body::String, params::Dict{Symbol,T})::HTTP.Response where {T}
+  prinln("respond 4")
   r = params[:RESPONSE]
   r.data = body
 

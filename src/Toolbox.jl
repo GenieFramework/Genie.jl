@@ -38,7 +38,9 @@ function loadtasks(context::Module = Genie.Loader.default_context(); filter_type
   for i in f
     if ( endswith(i, "Task.jl") )
       module_name = Genie.Util.file_name_without_extension(i) |> Symbol
-      Revise.includet(context, joinpath(Genie.config.path_tasks, i))
+      # Revise.includet(context, joinpath(Genie.config.path_tasks, i))
+      Base.include(context, joinpath(Genie.config.path_tasks, i))
+      Revise.track(context, joinpath(Genie.config.path_tasks, i))
 
       ti = TaskInfo(i, module_name, taskdocs(module_name, context = context))
 
