@@ -134,33 +134,34 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
   return WebChannel
 }
 
-let wsconnectionalert_elemid = 'wsconnectionalert';
-
-function displayAlert(WebChannel, content = 'Can not reach the server. Trying to reconnect...') {
-  if (document.getElementById(wsconnectionalert_elemid) || WebChannel.wsconnectionalert_triggered) return;
-
-  let alreadyAlerted = false;
+Genie.wsconnectionalert_elemid = 'wsconnectionalert';
+Genie.allConnected = function() {
   for (let i = 0; i < Genie.AllWebChannels.length; i++) {
-    if (Genie.AllWebChannels[i].wsconnectionalert_triggered) {
-      alreadyAlerted = true;
-      break;
+    if (Genie.AllWebChannels[i].ws_disconnected) {
+      return false
     }
   }
+  return true
+}
+
+function displayAlert(WebChannel, content = 'Can not reach the server. Trying to reconnect...') {
+  if (document.getElementById(Genie.wsconnectionalert_elemid) || WebChannel.ws_disconnected) return;
+
+  let allConnected = Genie.allConnected();
+  WebChannel.ws_disconnected = true;
   
-  let elem = document.createElement('div');
-  elem.id = wsconnectionalert_elemid;
-  elem.style.cssText = 'position:fixed;top:0;width:100%;z-index:100;background:#e63946;color:#f1faee;text-align:center;';
-  elem.style.height = '1.8em';
-  elem.innerHTML = content;
-
-  let elemspacer = document.createElement('div');
-  elemspacer.id = wsconnectionalert_elemid + 'spacer';
-  elemspacer.style.height = (Genie.Settings.webchannels_alert_overlay) ? 0 : elem.style.height;
-
-  WebChannel.wsconnectionalert_triggered = true;
-
   WebChannel.alertTimeout = setTimeout(() => {
-    if (Genie.Settings.webchannels_show_alert && !alreadyAlerted) {
+    if (Genie.Settings.webchannels_show_alert && allConnected) {
+      let elem = document.createElement('div');
+      elem.id = Genie.wsconnectionalert_elemid;
+      elem.style.cssText = 'position:fixed;top:0;width:100%;z-index:100;background:#e63946;color:#f1faee;text-align:center;';
+      elem.style.height = '1.8em';
+      elem.innerHTML = content;
+    
+      let elemspacer = document.createElement('div');
+      elemspacer.id = Genie.wsconnectionalert_elemid + 'spacer';
+      elemspacer.style.height = (Genie.Settings.webchannels_alert_overlay) ? 0 : elem.style.height;
+
       document.body.prepend(elem);
       document.body.prepend(elemspacer);
     }
@@ -169,21 +170,14 @@ function displayAlert(WebChannel, content = 'Can not reach the server. Trying to
 }
 
 function deleteAlert(WebChannel) {
-  WebChannel.wsconnectionalert_triggered = false;
+  WebChannel.ws_disconnected = false;
   clearInterval(WebChannel.alertTimeout);
   if (WebChannel.parent) WebChannel.parent.ws_disconnected = false;
 
-  // if all WebChannels are connected, remove the alert
-  setTimeout(() => {
-    for (let i = 0; i < Genie.AllWebChannels.length; i++) {
-      if (Genie.AllWebChannels[i].wsconnectionalert_triggered) {
-        return
-      }
-    }
-
-    document.getElementById(wsconnectionalert_elemid)?.remove();
-    document.getElementById(wsconnectionalert_elemid + 'spacer')?.remove();
-  }, 0);
+  if (Genie.allConnected()) {
+    document.getElementById(Genie.wsconnectionalert_elemid)?.remove();
+    document.getElementById(Genie.wsconnectionalert_elemid + 'spacer')?.remove();
+  }
 }
 
 function newSocketConnection(WebChannel, host = Genie.Settings.websockets_exposed_host) {
