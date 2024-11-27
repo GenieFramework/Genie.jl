@@ -240,7 +240,7 @@ function js_settings(channel::String = Genie.config.webchannels_default_route) :
     :webchannels_server_gone_alert_timeout => Genie.config.webchannels_server_gone_alert_timeout,
     :webchannels_connection_attempts => Genie.config.webchannels_connection_attempts,
     :webchannels_reconnect_delay     => Genie.config.webchannels_reconnect_delay,
-    :webchannels_subscription_trails => Genie.config.webchannels_subscription_trails,
+    :webchannels_subscription_trials => Genie.config.webchannels_subscription_trials,
     :webchannels_show_alert          => Genie.config.webchannels_show_alert,
     :webchannels_alert_overlay       => Genie.config.webchannels_alert_overlay,
 
@@ -403,9 +403,9 @@ end
 
 function channels_script_tag(channel::AbstractString = Genie.config.webchannels_default_route) :: String
   if ! external_assets()
-    Genie.Renderer.Html.script(src = assets_endpoint())
+    Genie.Renderer.Html.script(src = assets_endpoint(), defer = true)
   else
-    Genie.Renderer.Html.script([channels(channel)])
+    Genie.Renderer.Html.script([channels(channel)], defer = true)
   end
 end
 
