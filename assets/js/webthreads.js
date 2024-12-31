@@ -97,7 +97,7 @@ function subscribe(trial = 1) {
   if (document.readyState === 'complete' || document.readyState === 'interactive') {
     Genie.WebChannels.channel.start('GET', uri_factory(Genie.Settings.webchannels_subscribe_channel), {}, '');
     pull();
-  } else if (trial < Genie.Settings.webchannels_subscription_trails) {
+  } else if (trial < Genie.Settings.webchannels_subscription_trials) {
     if (isDev()) console.warn('Queuing subscription');
     trial++;
     setTimeout(subscribe.bind(this, trial), Genie.WebChannels.poll_interval);

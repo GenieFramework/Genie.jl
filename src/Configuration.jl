@@ -259,7 +259,7 @@ Base.@kwdef mutable struct Settings
   webchannels_server_gone_alert_timeout::Int          = 10_000 # 10 seconds
   webchannels_connection_attempts                     = 10
   webchannels_reconnect_delay                         = 500 # milliseconds
-  webchannels_subscription_trails                     = 4
+  webchannels_subscription_trials                     = 4
   webchannels_show_alert::Bool                        = true
   webchannels_alert_overlay::Bool                     = false
 
