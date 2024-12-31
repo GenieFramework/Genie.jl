@@ -47,6 +47,20 @@ const EMBEDDED_JULIA_PLACEHOLDER = "~~~~~|~~~~~"
 const EMBED_JULIA_OPEN_TAG = "<%"
 const EMBED_JULIA_CLOSE_TAG = "%>"
 
+function parsehtml_with_encoding(htmlstring::AbstractString; encoding::String = "UTF-8", options...)
+  if isempty(htmlstring)
+      throw(ArgumentError("empty HTML string"))
+  end
+  url = C_NULL
+  opts, args = EzXML.parse_options(; options...)
+  doc_ptr = EzXML.@check ccall(
+      (:htmlReadMemory, EzXML.libxml2),
+      Ptr{EzXML._Node},
+      (Cstring, Cint, Cstring, Cstring, Cint),
+      htmlstring, sizeof(htmlstring), url, encoding, opts) != C_NULL
+  EzXML.show_warnings(; args...)
+  return EzXML.Document(doc_ptr)
+end
 
 # ParsedHTMLStrings
 struct ParsedHTMLString <: AbstractString
@@ -479,7 +493,7 @@ function parsehtml(input::String; partial::Bool = true) :: String
 
   # let's get rid of the annoying xml parser warnings
   Logging.with_logger(Logging.SimpleLogger(stdout, Logging.Error)) do
-    parsehtml(HTMLParser.parsehtml(content).root, partial = partial)
+    parsehtml(parsehtml_with_encoding(content).root, partial = partial)
   end
 end
 
