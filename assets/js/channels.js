@@ -13,7 +13,7 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
       'channel': channel,
       'message': message,
       'payload': payload
-    });
+    }, Genie.Serializers.serializer);
     if (WebChannel.socket.readyState === 1) {
       WebChannel.socket.send(msg);
     } else if (Object.keys(payload).length > 0) {
@@ -250,16 +250,54 @@ Genie.Revivers.addReviver = function(reviver) {
   Genie.Revivers.rebuildReviver()
 }
 
-Genie.Revivers.revive_undefined = function(key, value) {
+Genie.Revivers.revive_undefined_inf_nan = function(key, value) {
   if (value == '__undefined__') {
     return undefined;
+  } else if (value==='__nan__') {
+    return NaN
+  } else if (value==='__inf__') {
+    return Infinity
+  } else if (value==='__neginf__') {
+    return -Infinity
   } else {
     return value;
   }
 }
 
-Genie.Revivers.revivers = [Genie.Revivers.revive_undefined]
+Genie.Revivers.revivers = [Genie.Revivers.revive_undefined_inf_nan]
 Genie.Revivers.rebuildReviver()
+
+// --------------- Serializers ---------------
+
+Genie.Serializers = {};
+Genie.Serializers.pipeSerializers = (serializers) => (key, value) => serializers.reduce((v, f) => f(key, v), value);
+
+Genie.Serializers.rebuildSerializer = function() {
+  Genie.Serializers.serializer = Genie.Serializers.pipeSerializers(Genie.Serializers.serializers)
+}
+
+Genie.Serializers.addSerializer = function(serializer) {
+  if (Genie.Serializers.serializers.includes(serializer)) return
+  Genie.Serializers.serializers.push(serializer)
+  Genie.Serializers.rebuildSerializer()
+}
+
+Genie.Serializers.serialize_undefined_inf_nan = function(key, value) {
+  if (value === undefined) {
+    return '__undefined__'
+  } else if (Number.isNaN(value)) {
+    return '__nan__'
+  } else if (value === Infinity) {
+    return '__inf__'
+  } else if (value === -Infinity) {
+    return '__neginf__'
+  } else {
+    return value;
+  }
+}
+
+Genie.Serializers.serializers = [Genie.Serializers.serialize_undefined_inf_nan]
+Genie.Serializers.rebuildSerializer()
 
 function parse_payload(WebChannel, json_data) {
   if (isDev()) {
