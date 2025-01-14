@@ -4,6 +4,22 @@
 ** GenieFramework.com // Genie.jl
 */
 
+// Genie.AllWebChannels holds all the channels created by the initWebChannel function
+Genie.AllWebChannels = [];
+// Genie.WebChannels holds common handlers for all models
+Genie.WebChannels = {};
+Genie.WebChannels.messageHandlers = [];
+Genie.WebChannels.errorHandlers = [];
+Genie.WebChannels.openHandlers = [];
+Genie.WebChannels.closeHandlers = [];
+Genie.WebChannels.subscriptionHandlers = [];
+Genie.WebChannels.processingHandlers = [];
+Genie.WebChannels.sendMessageTo = async (message, payload = {}) => {
+  for (const WebChannel of Genie.AllWebChannels) {
+      WebChannel.sendMessageTo(WebChannel.name, message, payload);
+  }
+};
+
 Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_route) {
   // A message maps to a channel route so that channel + message = /action/controller
   // The payload is the data exposed in the Channel Controller
@@ -127,9 +143,7 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
     }
   });
 
-  Genie.AllWebChannels = Genie.AllWebChannels || [];
   Genie.AllWebChannels.push(WebChannel);
-  Genie.WebChannels = WebChannel; // for compatibility with older code
 
   return WebChannel
 }
@@ -187,8 +201,9 @@ function newSocketConnection(WebChannel, host = Genie.Settings.websockets_expose
     + ( ((Genie.Settings.websockets_base_path.trim() === '' || Genie.Settings.websockets_base_path.startsWith('/')) ? '' : '/') + Genie.Settings.websockets_base_path));
 
     ws.addEventListener('open', event => {
-      for (let i = 0; i < WebChannel.openHandlers.length; i++) {
-        let f = WebChannel.openHandlers[i];
+      const handlers = WebChannel.openHandlers.concat(Genie.WebChannels.openHandlers)
+      for (let i = 0; i < handlers.length; i++) {
+        let f = handlers[i];
         if (typeof f === 'function') {
           f(event);
         }
@@ -196,8 +211,9 @@ function newSocketConnection(WebChannel, host = Genie.Settings.websockets_expose
     });
 
     ws.addEventListener('message', event => {
-      for (let i = 0; i < WebChannel.messageHandlers.length; i++) {
-        let f = WebChannel.messageHandlers[i];
+      const handlers = WebChannel.messageHandlers.concat(Genie.WebChannels.messageHandlers)
+      for (let i = 0; i < handlers.length; i++) {
+        let f = handlers[i];
         if (typeof f === 'function') {
           f(event);
         }
@@ -206,8 +222,9 @@ function newSocketConnection(WebChannel, host = Genie.Settings.websockets_expose
     });
 
     ws.addEventListener('error', event => {
-      for (let i = 0; i < WebChannel.errorHandlers.length; i++) {
-        let f = WebChannel.errorHandlers[i];
+      const handlers = WebChannel.errorHandlers.concat(Genie.WebChannels.errorHandlers)
+      for (let i = 0; i < handlers.length; i++) {
+        let f = handlers[i];
         if (typeof f === 'function') {
           f(event);
         }
@@ -215,8 +232,9 @@ function newSocketConnection(WebChannel, host = Genie.Settings.websockets_expose
     });
 
     ws.addEventListener('close', event => {
-      for (let i = 0; i < WebChannel.closeHandlers.length; i++) {
-        let f = WebChannel.closeHandlers[i];
+      const handlers = WebChannel.closeHandlers.concat(Genie.WebChannels.closeHandlers)
+      for (let i = 0; i < handlers.length; i++) {
+        let f = handlers[i];
         if (typeof f === 'function') {
           f(event);
         }
