@@ -6,9 +6,11 @@
 
 // Genie.AllWebChannels holds all the channels created by the initWebChannel function
 Genie.AllWebChannels = [];
+Genie.findWebchannel = function(channel) {
+  return this.AllWebChannels.find((app) => app.channel == channel);
+}
 Genie.findApp = function(channel) {
-  const index = this.AllWebChannels.findIndex((app) => app.channel === channel);
-  return this.AllWebChannels[index].parent;
+  return this.AllWebChannels.find((app) => app.channel == channel).parent;
 }
 // Genie.WebChannels holds common handlers for all models
 Genie.WebChannels = {};
