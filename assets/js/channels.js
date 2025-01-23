@@ -8,7 +8,7 @@
 Genie.AllWebChannels = [];
 Genie.findApp = function(channel) {
   const index = this.AllWebChannels.findIndex((app) => app.channel === channel);
-  return this.AllWebChannels[index];
+  return this.AllWebChannels[index].parent;
 }
 // Genie.WebChannels holds common handlers for all models
 Genie.WebChannels = {};
