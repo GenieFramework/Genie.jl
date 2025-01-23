@@ -6,6 +6,10 @@
 
 // Genie.AllWebChannels holds all the channels created by the initWebChannel function
 Genie.AllWebChannels = [];
+Genie.findApp = function(channel) {
+  const index = this.AllWebChannels.findIndex((app) => app.channel === channel);
+  return this.AllWebChannels[index];
+}
 // Genie.WebChannels holds common handlers for all models
 Genie.WebChannels = {};
 Genie.WebChannels.messageHandlers = [];
@@ -14,11 +18,15 @@ Genie.WebChannels.openHandlers = [];
 Genie.WebChannels.closeHandlers = [];
 Genie.WebChannels.subscriptionHandlers = [];
 Genie.WebChannels.processingHandlers = [];
-Genie.WebChannels.sendMessageTo = async (message, payload = {}) => {
+Genie.WebChannels.broadcastMessage = async (message, payload = {}) => {
   for (const WebChannel of Genie.AllWebChannels) {
       WebChannel.sendMessageTo(WebChannel.name, message, payload);
   }
 };
+Genie.WebChannels.sendMessageTo = async (channel, message, payload = {}) => {
+  const WebChannel = Genie.findApp(channel);
+  WebChannel.sendMessageTo(channel, message, payload);
+}
 
 Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_route) {
   // A message maps to a channel route so that channel + message = /action/controller
