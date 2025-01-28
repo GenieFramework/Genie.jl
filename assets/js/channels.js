@@ -10,7 +10,8 @@ Genie.findWebchannel = function(channel) {
   return this.AllWebChannels.find((app) => app.channel == channel);
 }
 Genie.findApp = function(channel) {
-  return this.AllWebChannels.find((app) => app.channel == channel).parent;
+  const webchannel = this.findWebchannel(channel);
+  return (webchannel) ? webchannel.parent : this.AllWebChannels[0];
 }
 // Genie.WebChannels holds common handlers for all models
 Genie.WebChannels = {};
@@ -26,7 +27,8 @@ Genie.WebChannels.broadcastMessage = async (message, payload = {}) => {
   }
 };
 Genie.WebChannels.sendMessageTo = async (channel, message, payload = {}) => {
-  const WebChannel = Genie.findApp(channel);
+  var WebChannel = Genie.findApp(channel);
+  (WebChannel) || (WebChannel = GENIEMODEL.WebChannel);
   WebChannel.sendMessageTo(channel, message, payload);
 }
 
