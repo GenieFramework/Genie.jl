@@ -6,11 +6,11 @@
 
 // Genie.AllWebChannels holds all the channels created by the initWebChannel function
 Genie.AllWebChannels = [];
-Genie.findWebchannel = function(channel) {
+Genie.findWebChannel = function(channel) {
   return this.AllWebChannels.find((app) => app.channel == channel);
 }
 Genie.findApp = function(channel) {
-  const webchannel = this.findWebchannel(channel);
+  const webchannel = this.findWebChannel(channel);
   return (webchannel) ? webchannel.parent : this.AllWebChannels[0];
 }
 // Genie.WebChannels holds common handlers for all models
@@ -27,8 +27,8 @@ Genie.WebChannels.broadcastMessage = async (message, payload = {}) => {
   }
 };
 Genie.WebChannels.sendMessageTo = async (channel, message, payload = {}) => {
-  var WebChannel = Genie.findApp(channel);
-  (WebChannel) || (WebChannel = GENIEMODEL.WebChannel);
+  var WebChannel = Genie.findWebChannel(channel);
+  (WebChannel) || (WebChannel = Genie.AllWebChannels[0]);
   WebChannel.sendMessageTo(channel, message, payload);
 }
 
@@ -337,8 +337,9 @@ function parse_payload(WebChannel, json_data) {
 };
 
 function process_payload(WebChannel, event) {
-  for (let i = 0; i < WebChannel.processingHandlers.length; i++) {
-    let f = WebChannel.processingHandlers[i];
+  const handlers = WebChannel.processingHandlers.concat(Genie.WebChannels.processingHandlers);
+  for (let i = 0; i < handlers.length; i++) {
+    let f = handlers[i];
     if (typeof f === 'function') {
       f(event);
     }
@@ -346,8 +347,9 @@ function process_payload(WebChannel, event) {
 };
 
 function subscription_ready(WebChannel) {
-  for (let i = 0; i < WebChannel.subscriptionHandlers.length; i++) {
-    let f = WebChannel.subscriptionHandlers[i];
+  const handlers = WebChannel.subscriptionHandlers.concat(Genie.WebChannels.subscriptionHandlers);
+  for (let i = 0; i < handlers.length; i++) {
+    let f = handlers[i];
     if (typeof f === 'function') {
       f();
     }
@@ -379,5 +381,7 @@ function isDev() {
 }
 
 // --------------- Initialize WebChannel ---------------
-
-// Genie.WebChannels = Genie.initWebChannel();
+// compatibilty with Stipple v0.28
+if (window.CHANNEL !== undefined) {
+  Genie.initWebChannel(window.CHANNEL);
+}
