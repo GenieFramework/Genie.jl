@@ -20,6 +20,7 @@ Genie.WebChannels.errorHandlers = [];
 Genie.WebChannels.openHandlers = [];
 Genie.WebChannels.closeHandlers = [];
 Genie.WebChannels.subscriptionHandlers = [];
+Genie.WebChannels.unsubscriptionHandlers = [];
 Genie.WebChannels.processingHandlers = [];
 Genie.WebChannels.broadcastMessage = async (message, payload = {}) => {
   for (const WebChannel of Genie.AllWebChannels) {
@@ -62,6 +63,7 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
   WebChannel.openHandlers = [];
   WebChannel.closeHandlers = [];
   WebChannel.subscriptionHandlers = [];
+  WebChannel.unsubscriptionHandlers = [];
   WebChannel.processingHandlers = [];
 
   const waitForOpenConnection = (WebChannel) => {
@@ -371,7 +373,26 @@ function subscribe(WebChannel, trial = 1) {
   }
 };
 
-function unsubscribe(WebChannel) {
+async function unsubscribe(WebChannel) {
+  const handlers = WebChannel.unsubscriptionHandlers.concat(Genie.WebChannels.unsubscriptionHandlers);
+  
+  // Wrap all handlers to ensure they are converted to Promises
+  const handlerPromises = handlers.map(f => {
+    if (typeof f === 'function') {
+      try {
+        const result = f();
+        if (result instanceof Promise) return result;
+      } catch (err) {
+        console.error('Error in unsubscription handler:', err);
+      }
+    }
+    return Promise.resolve();
+  });
+
+  // Wait for all handlers to complete
+  await Promise.all(handlerPromises);
+
+  // Now unsubscribe
   WebChannel.sendMessageTo(WebChannel.channel, window.Genie.Settings.webchannels_unsubscribe_channel);
   if (isDev()) console.info('Unsubscription completed');
 };
