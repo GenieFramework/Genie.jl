@@ -88,7 +88,8 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
   WebChannel.socket = newSocketConnection(WebChannel);
 
   WebChannel.processingHandlers.push(event => {
-    window.parse_payload(WebChannel, event.data);
+    // backward compatibility with Genie < v5.32
+    window.parse_payload.length == 2 ? window.parse_payload(WebChannel, event.data) : window.parse_payload(event.data);
   });
   
   WebChannel.messageHandlers.push(event => {
@@ -101,7 +102,9 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
       }
   
       if (ed.startsWith('{') && ed.endsWith('}')) {
-        window.parse_payload(WebChannel, JSON.parse(ed, Genie.Revivers.reviver));
+        const payload = JSON.parse(ed, Genie.Revivers.reviver);
+        // backward compatibility with Genie < v5.32
+        window.parse_payload.length == 2 ? window.parse_payload(WebChannel, payload) : window.parse_payload(payload);
       } else if (ed.startsWith(Genie.Settings.webchannels_eval_command)) {
         return Function('"use strict";return (' + ed.substring(Genie.Settings.webchannels_eval_command.length).trim() + ')')();
       } else if (ed == 'Subscription: OK') {
