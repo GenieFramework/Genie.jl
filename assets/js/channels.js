@@ -334,7 +334,8 @@ Genie.Serializers.serialize_undefined_inf_nan = function(key, value) {
 Genie.Serializers.serializers = [Genie.Serializers.serialize_undefined_inf_nan]
 Genie.Serializers.rebuildSerializer()
 
-function parse_payload(WebChannel, json_data) {
+// prevent overwriting of `parse_payload()` if it already exists
+window.parse_payload = window.parse_payload || function(WebChannel, json_data) {
   if (isDev()) {
     console.info('Overwrite window.parse_payload to handle messages from the server');
     console.info(json_data);
