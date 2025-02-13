@@ -406,7 +406,9 @@ function isDev() {
 }
 
 // --------------- Initialize WebChannel ---------------
-// compatibilty with Stipple v0.28
-if (window.CHANNEL !== undefined) {
+// compatibilty with earlier versions
+if (window.CHANNEL === undefined) {
+  Genie.initWebChannel(Genie.Settings.webchannels_default_route || '____');
+} else if (typeof window.CHANNEL === 'string') {
   Genie.initWebChannel(window.CHANNEL);
 }
