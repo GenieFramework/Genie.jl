@@ -36,6 +36,13 @@ Genie.WebChannels.sendMessageTo = async (channel, message, payload = {}) => {
 Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_route) {
   // A message maps to a channel route so that channel + message = /action/controller
   // The payload is the data exposed in the Channel Controller
+
+  // Avoid creating duplicate channels
+  if (Genie.AllWebChannels.map(w => w.channel).includes(channel)) {
+    console.warn("Channel '" + channel + "' already exists, please use a different name.");
+    return;
+  }
+
   var WebChannel = {};
   WebChannel.sendMessageTo = async (channel, message, payload = {}) => {
     let msg = JSON.stringify({
