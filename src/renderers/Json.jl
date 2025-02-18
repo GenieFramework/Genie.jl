@@ -9,7 +9,8 @@ module JSONParser
 
 import JSON3
 
-const parse = JSON3.read
+parse(x, args...; kwargs...) = JSON3.read(x, args...; kwargs...)
+parse(x::AbstractString, args...; kwargs...) = JSON3.read(codeunits(x), args...; kwargs...)
 
 const json = JSON3.write
 

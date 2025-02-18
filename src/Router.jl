@@ -590,7 +590,7 @@ Matches the invoked URL to the corresponding channel, sets up the execution envi
 """
 function match_channels(req, msg::String, ws_client, params::Params) :: String
   payload::Dict{String,Any} = try
-    JSON3.read(msg, Dict{String,Any})
+    JSON3.read(codeunits(msg), Dict{String,Any})
   catch ex
     Dict{String,Any}()
   end
@@ -819,13 +819,13 @@ Sets up the `params` key-value pairs corresponding to a JSON payload.
 function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
   ispayload(req) || return nothing
 
-  req_body = String(req.body)
+  req_body = String(copy(req.body))
 
   params.collection[PARAMS_RAW_PAYLOAD] = req_body
 
   if request_type_is(req, :json) && content_length(req) > 0
     try
-      params.collection[PARAMS_JSON_PAYLOAD] = JSON3.read(req_body) |> stringdict
+      params.collection[PARAMS_JSON_PAYLOAD] = JSON3.read(req.body) |> stringdict
       params.collection[PARAMS_POST_KEY][PARAMS_JSON_PAYLOAD] = params.collection[PARAMS_JSON_PAYLOAD]
     catch ex
       @error ex
