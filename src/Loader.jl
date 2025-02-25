@@ -361,21 +361,22 @@ function _findpackage(package::String)
   orig_package = package
   path, package = splitdir(package)
   validpath = if path != ""
-      loadpath = copy(LOAD_PATH)
-      empty!(LOAD_PATH)
-      push!(LOAD_PATH, path)
-      true
+    loadpath = copy(LOAD_PATH)
+    empty!(LOAD_PATH)
+    push!(LOAD_PATH, path)
+    true
   else
-      false
+    false
   end
   
   p = Base.find_package(package)
   if p === nothing
-      if isdir(orig_package)
-          pushfirst!(LOAD_PATH, orig_package)
-          p = Base.find_package(package)
-          popfirst!(LOAD_PATH)
-      end
+    parent_dir, current_dirname = splitdir(pwd())
+    if isdir(orig_package) || current_dirname == orig_package
+      pushfirst!(LOAD_PATH, isdir(orig_package) ? orig_package : parent_dir)
+      p = Base.find_package(package)
+      popfirst!(LOAD_PATH)
+    end
   end
 
   if validpath
@@ -438,41 +439,104 @@ macro _using(package)
   # determine whether @using is called from Main or a different module
   is_submodule = __module__ != Base.Main
   package = expr_to_path(package)
-  fp = _findpackage(package)
+  # ensure os-specific path separator
+  Sys.iswindows() && (package = replace(package, '/' => '\\'))
+
+  not_found = false
+  fp = is_submodule ? splitdir(package) : _findpackage(package)
   if fp === nothing
-      @warn "package $package not found"
-      return nothing
+      not_found = true
+      fp = splitdir(package)
   end
   path, package_name = fp
   package_symbol = Symbol(package_name)
 
-  if is_submodule
+  if is_submodule || not_found
     # if called from submodule add module via `include()` and, `using .MyModule`
-    quote
-      include(joinpath($path, "$($package_name).jl"))
-      using .$(package_symbol)
-    end |> esc
+    out = quote
+      try
+        @debug("using $($package_name) (from '$($package)') per 'include()'")
+        let f = $package_name * ".jl", pp = splitpath(joinpath($path, f))
+          let M = try
+            include(joinpath(pp))
+          catch e1
+            if e1 isa SystemError && e1.errnum == 2 # file not found
+              # retrieve filepath from error message
+              d, f = splitdir(Meta.parse(split(e1.prefix)[end]))
+              # if error was from a different file than the one we are looking for, rethrow
+              f == $package_name * ".jl" || rethrow(e1)
+              # otherwise try to load the file from the directory or an included 'src' directory
+              pp = splitpath(joinpath(d, f))
+              f = joinpath(insert!(pp, length(pp), $package_name))
+              if !isfile(f)
+                f = joinpath(insert!(pp, length(pp), "src"))
+                isfile(f) || throw(e1)
+              end
+              include(f)
+            else
+              rethrow(e1)
+            end
+          end # let M = try ...
+            # file was included without error, let's check whether it was really a module, in that case use it
+            if M isa Module
+              if nameof(M) == Symbol($package_name)
+                using .$(package_symbol)
+              else
+                @warn("Module's name doesn't match the filename, expected '$($package_name)', got '$(nameof(M))'")
+                eval(Expr(:using, Expr(:., :., nameof(M))))
+              end
+            else
+              @warn("'$($package_name)' could not be loaded from '$(joinpath(pp))' or is not a module.")
+            end
+          end
+        end
+      catch e
+        throw(e)
+      end
+    end
+    not_found && pushfirst!(out.args,
+      :(@warn("Package $($package_name) not found in LOAD_PATH, trying to add it via 'include()' and 'using'"))
+    )
+    out |> esc
   else
-    # if called from Main add module via setting LOAD_PATH and `using MyModule`
+    # if called from Main add module via setting 'LOAD_PATH' and 'using'
     quote
       let pp = split($path, ';')
-        for p in reverse(pp)
-          pushfirst!(LOAD_PATH, p)
+        for p in pp
+          push!(LOAD_PATH, p)
         end
-      
         @debug "using $($package_name) (from '$($path)')"
-        try
-          using $package_symbol 
-        catch e
-          error(e)
+        success = try
+          using $package_symbol
+          true
+        catch _
+          @warn("Package $($package_name) not found in LOAD_PATH, trying to add it via 'include()' and 'using'")
+          @debug("using $($package_name) (from '$($package)') per 'include()'")
+          false
         finally
-            for _ in pp 
-              popfirst!(LOAD_PATH)
+            for _ in pp
+              pop!(LOAD_PATH)
             end
+        end
+        success || try
+          pp = split($path, ';')
+          # using Pkg
+          # Pkg.activate(basename(pp[end]) == "src" ? dirname(pp[end]) : pp[end])
+          M = include(joinpath(pp[end], "$($package_name).jl"))
+          if M isa Module
+            if nameof(M) == Symbol($package_name)
+              using .$(package_symbol)
+            else
+              @warn("Module's name doesn't match the filename, expected '$($package_name)', got '$(nameof(M))'")
+              eval(Expr(:using, Expr(:., :., nameof(M))))
+            end
+          end
+        catch e
+          rethrow(e)
         end
       end
       nothing
-    end
+    end |> esc
   end
 end
 
