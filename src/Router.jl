@@ -227,7 +227,7 @@ end
 
 
 function Base.push!(collection, name::Symbol, item::Union{Route,Channel})
-  collection[name] = item
+  delete!(collection, name)[name] = item # this is to ensure that the item is always the last one in the collection
 end
 
 
