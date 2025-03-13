@@ -96,7 +96,7 @@ env()::String = Genie.config.app_env
 
 Constructs the temp dir where Genie's view files are built.
 """
-buildpath()::String = Base.Filesystem.mktempdir(prefix="jl_genie_build_")
+buildpath()::String = get(ENV, "GENIE_BUILDPATH", Base.Filesystem.mktempdir(prefix="jl_genie_build_"))
 
 
 """
