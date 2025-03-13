@@ -520,8 +520,6 @@ macro _using(package)
         end
         success || try
           pp = split($path, ';')
-          # using Pkg
-          # Pkg.activate(basename(pp[end]) == "src" ? dirname(pp[end]) : pp[end])
           M = include(joinpath(pp[end], "$($package_name).jl"))
           if M isa Module
             if nameof(M) == Symbol($package_name)
