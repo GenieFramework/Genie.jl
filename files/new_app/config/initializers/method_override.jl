@@ -21,7 +21,6 @@ julia> function method_override(req::HTTP.Request, res::HTTP.Response,
         if haskey(post, :_method)
             m = uppercase(string(post[:_method]))
             if m in ("PUT","PATCH","DELETE")
-                @info "Overriding method POST → $m"
                 req.method = m
             end
         end
@@ -65,7 +64,6 @@ function method_override(req::HTTP.Request, res::HTTP.Response,
         if haskey(post, :_method)
             m = uppercase(string(post[:_method]))
             if m in ("PUT","PATCH","DELETE")
-                @info "Overriding method POST → $m"
                 req.method = m
             end
         end
