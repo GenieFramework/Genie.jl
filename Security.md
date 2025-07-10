@@ -40,7 +40,7 @@ endeavor to keep you informed of the progress towards a fix and full
 announcement, and may ask for additional information or guidance.
 
 Report security bugs in third-party modules to the person or team maintaining
-the module with cc'ed report@stippple.app if Genie.jl is using the module as one of the dependencies
+the module with cc'ed report@stipple.app if Genie.jl is using the module as one of the dependencies
 
 ## Disclosure Policy
 
