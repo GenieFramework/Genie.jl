@@ -350,7 +350,7 @@ end
 function expr_to_path(expr::Union{Expr, Symbol, String})::String
   path = String[]
   while expr isa Expr && expr.head == :call && expr.args[1] ∈ (:\, :/)
-      push!(path, String(expr.args[3]))
+      push!(path, string(expr.args[3]))
       expr = expr.args[2]
   end
   push!(path, String(expr))
