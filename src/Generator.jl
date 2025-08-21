@@ -491,7 +491,7 @@ end
     assert_project(project_dir::String = "."; name = nothing, authors = nothing, version = nothing, uuid = nothing)
 
 Updates the current Project.toml with the values of `name`, `authors`, `version`, and `uuid`.
-If not specified, the values are auto-determined.
+If not specified, reasonable values are auto-determined.
 
 Note: This function doesn't write the Project.toml back to disk. It is meant for pre-checking the
 result. If you want to write the changes to disk, call `assert_project!`
@@ -511,9 +511,9 @@ end
 """
     assert_project!(project_dir::String = "."; name = nothing, authors = nothing, version = nothing, uuid = nothing, force::Bool = false)
 
-Asserts the existence of a Project.toml file (creates a new one, if not present and force = true).
-and makes sure the entries `name`, `authors`, `version`, and `uuid` are set.
-If not specified values are auto-determined.
+Asserts the existence of a Project.toml file (creates a new one, if not present and force = true) with
+the entries `name`, `authors`, `version`, and `uuid` set.
+If not specified reasonable values are auto-determined.
 """
 function assert_project!(project_dir::String = "."; name = nothing, authors = nothing, version = nothing, uuid = nothing, force::Bool = false)
     toml = assert_project(project_dir; name, authors, version, uuid)
