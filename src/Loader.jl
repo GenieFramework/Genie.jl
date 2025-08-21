@@ -347,16 +347,6 @@ function default_context(context::Union{Module,Nothing} = nothing)
 end
 
 
-function expr_to_path(expr::Union{Expr, Symbol, String})::String
-  path = String[]
-  while expr isa Expr && expr.head == :call && expr.args[1] ∈ (:\, :/)
-      push!(path, string(expr.args[3]))
-      expr = expr.args[2]
-  end
-  push!(path, String(expr))
-  return join(reverse(path), '/')
-end
-
 function _findpackage(package::String)
   orig_package = package
   path, package = splitdir(package)
@@ -438,7 +428,7 @@ Calls need to supply explicit paths.
 macro _using(package)
   # determine whether @using is called from Main or a different module
   is_submodule = __module__ != Base.Main
-  package = expr_to_path(package)
+  package = Genie.Util.expr_to_path(package)
   # ensure os-specific path separator
   Sys.iswindows() && (package = replace(package, '/' => '\\'))
 

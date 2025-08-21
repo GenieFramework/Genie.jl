@@ -46,6 +46,7 @@ include("Logger.jl")
 # === #
 
 export up, down
+@reexport using .Util
 @reexport using .Router
 @reexport using .Loader
 

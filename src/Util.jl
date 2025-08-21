@@ -3,6 +3,7 @@ module Util
 using Pkg
 import Genie
 
+export @project_path
 
 """
     file_name_without_extension(file_name, extension = ".jl") :: String
@@ -102,6 +103,71 @@ function package_version(package::Union{Module,String}) :: String
   endswith(package, ".jl") && (package = String(package[1:end-3]))
   pkg_dict = filter(x -> x.second.name == package, Pkg.dependencies())
   isempty(pkg_dict) ? "master" : ("v" * string(first(pkg_dict)[2].version))
+end
+
+function expr_to_path(expr::Union{Expr, Symbol, String})::String
+  path = String[]
+  while expr isa Expr && expr.head == :call && expr.args[1] ∈ (:\, :/)
+      push!(path, string(expr.args[3]))
+      expr = expr.args[2]
+  end
+  push!(path, string(expr))
+  return join(reverse(path), '/')
+end
+
+function project_path(d)
+  while !isfile(joinpath(d, "Project.toml"))
+    d_new = dirname(d)
+    if d_new == d
+        error("Project.toml not found in parent directories")
+    end
+    d = d_new
+  end
+  return d
+end
+
+"""
+    @project_path
+
+Returns the path to the project directory.
+
+    @project_path path
+
+Returns the absolute path of a file or directory within the project directory.
+
+### Examples
+
+```julia
+@project_path
+# "/path/to/project"
+
+@project_path db/connection.yml
+# "/path/to/project/db/connection.yml"
+```
+Paths can be given without double quotes if no special characters are present.
+The determination of the project folder is done by searching for the `Project.toml`
+file in the file's directory and its parents.
+
+Background:
+
+Since Julia v1.11.6 precompilation is no longer executed in the directory of the
+package but in a temporary directory. If it is intended to 
+precompile the Genie app all paths that are executed during compile time need to
+be changed to absolute paths.
+
+This macro is intended to simplify the transition to absolute paths.
+"""
+macro project_path()
+  @info __source__
+  project_path(dirname(String(__source__.file)))
+end
+
+macro project_path(path)
+    path = expr_to_path(path)
+    Sys.iswindows() && (path = replace(path, '/' => '\\'))
+
+    d = project_path(dirname(String(__source__.file)))
+    return joinpath(d, path)
 end
 
 end
