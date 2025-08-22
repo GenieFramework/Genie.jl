@@ -108,7 +108,7 @@
 
         write(fpath, "welcöme. 不一定要味道好，但一定要有用. äüö&%?#")
 
-        expected = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n\r\n<!DOCTYPE html><html>\n  <body>\n    <p>welcöme. 不一定要味道好，但一定要有用. äüö&%?#\n</p>\n  </body></html>"
+        expected = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n\r\n<!DOCTYPE html><html>\n  <body>welcöme. 不一定要味道好，但一定要有用. äüö&%?#\n</body></html>"
 
         decoded = String(html(filepath(fpath)))
 

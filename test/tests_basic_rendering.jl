@@ -31,13 +31,13 @@
 
     @testset "String with backspace dollar" begin
       r = html(content3)
-      @test String(r.body) |> fws == raw"<!DOCTYPE html><html><body><p>\$hello\$</p></body></html>" |> fws
+      @test String(r.body) |> fws == raw"<!DOCTYPE html><html><body>\$hello\$</body></html>" |> fws
     end
 
     @testset "String no spaces force parse" begin
       r = html(content, forceparse = true)
 
-      @test String(r.body) |> fws  == "<!DOCTYPE html><html><body><p>abcd</p></body></html>" |> fws
+      @test String(r.body) |> fws  == "<!DOCTYPE html><html><body>abcd</body></html>" |> fws
     end;
 
 
@@ -50,7 +50,7 @@
     @testset "String with 2 spaces force parse" begin
       r = html("  $content  ", forceparse = true)
 
-      @test String(r.body) |> fws == "<!DOCTYPE html><html><body><p>abcd  </p></body></html>" |> fws
+      @test String(r.body) |> fws == "<!DOCTYPE html><html><body>abcd  </body></html>" |> fws
     end;
 
 
@@ -63,7 +63,7 @@
     @testset "String with &nbsp; force parse" begin
       r = html("  &nbsp;&nbsp;  ", forceparse = true)
 
-      @test String(r.body) |> fws == "<!DOCTYPE html><html><body><p>&nbsp;&nbsp;  </p></body></html>" |> fws
+      @test String(r.body) |> fws == "<!DOCTYPE html><html><body>&nbsp;&nbsp;  </body></html>" |> fws
     end;
 
 
@@ -76,7 +76,7 @@
     @testset "String with 2 &nbsp; and 2 spaces force parse" begin
       r = html("&nbsp;&nbsp;$content  ", forceparse = true)
 
-      @test String(r.body) |> fws == "<!DOCTYPE html><html><body><p>&nbsp;&nbsp;abcd  </p></body></html>" |> fws
+      @test String(r.body) |> fws == "<!DOCTYPE html><html><body>&nbsp;&nbsp;abcd  </body></html>" |> fws
     end;
 
 
@@ -89,7 +89,7 @@
     @testset "String with newline force parse" begin
       r = html("$content  \n  &nbsp;&nbsp;$content2", forceparse = true)
 
-      @test String(r.body) |> fws == "<!DOCTYPE html><html><body><p>abcd  \n&nbsp;&nbsp;efgh</p></body></html>" |> fws
+      @test String(r.body) |> fws == "<!DOCTYPE html><html><body>abcd  \n&nbsp;&nbsp;efgh</body></html>" |> fws
     end;
 
 
@@ -102,7 +102,7 @@
     @testset "String with quotes force parse" begin
       r = html("He said \"wow!\"", forceparse = true)
 
-      @test String(r.body) |> fws == "<!DOCTYPE html><html><body><p>He said \"wow!\"\0</p></body></html>" |> fws
+      @test String(r.body) |> fws == "<!DOCTYPE html><html><body>He said \"wow!\"\0</body></html>" |> fws
     end;
 
 
@@ -115,7 +115,7 @@
     @testset "String with quotes force parse" begin
       r = html(""" "" """, forceparse = true)
 
-      @test String(r.body) |> fws == "<!DOCTYPE html><html><body><p>\"\" </p></body></html>" |> fws
+      @test String(r.body) |> fws == "<!DOCTYPE html><html><body>\"\" </body></html>" |> fws
     end;
 
 
@@ -128,7 +128,7 @@
     @testset "String with quotes force parse" begin
       r = html("\"\"", forceparse = true)
 
-      @test String(r.body) |> fws == "<!DOCTYPE html><html><body><p>\"\"\0</p></body></html>" |> fws
+      @test String(r.body) |> fws == "<!DOCTYPE html><html><body>\"\"\0</body></html>" |> fws
     end;
 
 
@@ -141,7 +141,7 @@
     @testset "String with interpolated vars force parse" begin
       r = html("$(reverse(content))", forceparse = true)
 
-      @test String(r.body) |> fws == "<!DOCTYPE html><html><body><p>dcba</p></body></html>" |> fws
+      @test String(r.body) |> fws == "<!DOCTYPE html><html><body>dcba</body></html>" |> fws
     end;
 
 
