@@ -3,7 +3,7 @@ module Util
 using Pkg
 import Genie
 
-export @project_path
+export project_path, @project_path
 
 """
     file_name_without_extension(file_name, extension = ".jl") :: String
@@ -115,15 +115,27 @@ function expr_to_path(expr::Union{Expr, Symbol, String})::String
   return join(reverse(path), '/')
 end
 
-function project_path(d)
-  while !isfile(joinpath(d, "Project.toml"))
-    d_new = dirname(d)
-    if d_new == d
+"""
+    @project_path
+
+Returns the path to the project directory.
+
+    @project_path path
+
+Returns the absolute path of a file or directory within the project directory.
+
+There's also a macro version `@project_path` of this function that doesn't require double quotes
+"""
+function project_path(path = pwd())
+  isabspath(path) || (path = normpath(joinpath(pwd(), path)))
+  while !isfile(joinpath(path, "Project.toml"))
+    newpath = dirname(path)
+    if newpath == path
         error("Project.toml not found in parent directories")
     end
-    d = d_new
+    path = newpath
   end
-  return d
+  return path
 end
 
 """
