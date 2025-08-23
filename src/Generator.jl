@@ -488,6 +488,48 @@ end
 
 
 """
+    assert_project(project_dir::String = "."; name = nothing, authors = nothing, version = nothing, uuid = nothing)
+
+Updates the current Project.toml with the values of `name`, `authors`, `version`, and `uuid`.
+If not specified, reasonable values are auto-determined.
+
+Note: This function doesn't write the Project.toml back to disk. It is meant for pre-checking the
+result. If you want to write the changes to disk, call `assert_project!`
+"""
+function assert_project(project_dir::String = "."; name = nothing, authors = nothing, version = nothing, uuid = nothing)
+    project_dir = abspath(project_dir)
+    tomlfile = joinpath(project_dir, "Project.toml")
+    toml = isfile(tomlfile) ? Pkg.TOML.parsefile(tomlfile) : Dict{String, Any}()
+    
+    toml["name"] = name !== nothing ? name : get!(toml, "name", splitpath(tomlfile)[end - 1])
+    toml["uuid"] = uuid !== nothing ? uuid : get!(toml, "uuid", string(UUIDs.uuid4()))
+    toml["authors"] = authors !== nothing ? authors : get!(get_authors, toml, "authors")
+    toml["version"] = version !== nothing ? version : get!(toml, "version", "0.1.0")
+    toml
+end
+
+"""
+    assert_project!(project_dir::String = "."; name = nothing, authors = nothing, version = nothing, uuid = nothing, force::Bool = false)
+
+Asserts the existence of a Project.toml file (creates a new one, if not present and force = true) with
+the entries `name`, `authors`, `version`, and `uuid` set.
+If not specified reasonable values are auto-determined.
+"""
+function assert_project!(project_dir::String = "."; name = nothing, authors = nothing, version = nothing, uuid = nothing, force::Bool = false)
+    toml = assert_project(project_dir; name, authors, version, uuid)
+    tomlfile = joinpath(abspath(project_dir), "Project.toml")
+
+    isfile(tomlfile) || force || throw("File $tomlfile does not exist, use `force = true` to create it.")
+    io = IOBuffer()
+    Pkg.TOML.print(io, toml)
+    toml_str = String(take!(io))
+    @info "Asserting '$tomlfile'"
+    write(tomlfile, toml_str)
+
+    nothing
+end
+
+"""
     generate_project(name)
 
 Generate the `Project.toml` with a name and a uuid.
@@ -509,15 +551,15 @@ function generate_project(name::String) :: Nothing
     else
       mv(tmp, "Project_sample.toml"; force = true)
       @warn "$(abspath("."))/Project.toml already exists and will not be replaced. " *
-        "Make sure that it specifies a name and a uuid, using Project_sample.toml as a reference."
+        "Make sure that it specifies a name and a uuid, using Project_sample.toml as a reference " *
+        "or use `assert_project!()` to modify the current Project.toml"
     end
   end # remove tmpdir on completion
 
   nothing
 end
 
-
-function pkgproject(ctx::Pkg.API.Context, pkg::String, dir::String) :: Nothing
+function get_author_info()
   name = email = nothing
 
   gitname = Pkg.LibGit2.getconfig("user.name", "")
@@ -542,8 +584,16 @@ function pkgproject(ctx::Pkg.API.Context, pkg::String, dir::String) :: Nothing
       end
   end
 
-  authors = ["$name " * (email === nothing ? "" : "<$email>")]
+  name, email
+end
 
+function get_authors()
+  name, email = get_author_info()
+  ["$name" * (email === nothing ? "" : " <$email>")]
+end
+
+function pkgproject(ctx::Pkg.API.Context, pkg::String, dir::String) :: Nothing
+  authors = get_authors()
   uuid = UUIDs.uuid4()
 
   pkggenfile(ctx, pkg, dir, "Project.toml") do io
