@@ -1228,10 +1228,25 @@ function serve_error_file(error_code::Int, error_message::String = ""; error_inf
       error_page = replace(error_page, "<error_description/>"=>split(error_message, "\n")[1])
 
       error_message = if Genie.Configuration.isdev()
-                      """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                                     $("\n" ^ 3)""" *
-                      """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(Genie.Router.params()))                        $("\n" ^ 3)""" *
-                      """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Genie.Router.named_routes() |> Dict))  $("\n" ^ 3)""" *
-                      """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$ENV                                               $("\n" ^ 1)"""
+        env = if isempty(Genie.config.env_whitelist)
+          """
+          
+          Currently, no environment variables are displayed.
+          For security reasons variables need to be whitelisted via `Genie.config.env_whitelist` in order to be shown here.
+
+          Example:
+          Genie.config.env_whitelist = ["PATH", "HOME", "SHELL", "USER", r"genie.*"i, r"stipple.*"i]
+          """
+        else
+          stringlist = filter(x -> x isa String, Genie.config.env_whitelist)
+          regexlist = filter(x -> x isa Regex, Genie.config.env_whitelist)
+          filter(x -> x[1] ∈ stringlist || any(occursin.(regexlist, x[1])), ENV)
+        end
+
+        """$("#" ^ 25) ERROR STACKTRACE $("#" ^ 25)\n$error_message                                     $("\n" ^ 3)""" *
+        """$("#" ^ 25)  REQUEST PARAMS  $("#" ^ 25)\n$(Millboard.table(Genie.Router.params()))                        $("\n" ^ 3)""" *
+        """$("#" ^ 25)     ROUTES       $("#" ^ 25)\n$(Millboard.table(Genie.Router.named_routes() |> Dict))  $("\n" ^ 3)""" *
+        """$("#" ^ 25)    JULIA ENV     $("#" ^ 25)\n$(env isa String ? env : join(sort(["$k=$v" for (k, v) in env]), "\n"))                                               $("\n" ^ 1)"""
       else
         ""
       end
