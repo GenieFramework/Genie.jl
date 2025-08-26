@@ -190,6 +190,7 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `path_app::String`: the path to the app files (default "app/")
 - `html_parser_close_tag::String`: default " /". Can be changed to an empty string "" so the single tags would not be closed.
 - `webchannels_keepalive_frequency::Int`: default `30000`. Frequency in milliseconds to send keepalive messages to webchannel/websocket to keep the connection alive. Set to `0` to disable keepalive messages.
+- `env_whitelist`::Vector{<:Union{String, Regex}}: list of environment variables that are allowed to be displayed on the error page in dev mode
 """
 Base.@kwdef mutable struct Settings
   server_port::Int                                    = 8000 # default port for binding the web server
@@ -296,6 +297,8 @@ Base.@kwdef mutable struct Settings
 
   cdn_enabled::Bool                                   = true # if true, the CDN will be used for static assets in prod mode
   cdn_url::String                                     = "https://cdn.statically.io/gh/GenieFramework" # the URL of the CDN
+  
+  env_whitelist::Vector{Union{String, Regex}}         = Union{String, Regex}[]
 end
 
 end
