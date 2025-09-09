@@ -170,7 +170,6 @@ be changed to absolute paths.
 This macro is intended to simplify the transition to absolute paths.
 """
 macro project_path()
-  @info __source__
   project_path(dirname(String(__source__.file)))
 end
 
