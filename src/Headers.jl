@@ -58,8 +58,25 @@ function set_access_control_allow_headers!(req::HTTP.Request, res::HTTP.Response
   request_headers = get(Dict(req.headers), "Access-Control-Request-Headers", "")
 
   if ! isempty(request_headers)
+    if isempty(Genie.config.cors_headers["Access-Control-Allow-Headers"])
+      app_response.status = 403 # Forbidden
+      if Genie.config.isdev
+        @error "Access-Control-Allow-Headers is empty"
+      end
+
+      throw(Genie.Exceptions.ExceptionalResponse(app_response))
+    end
+
+    if Genie.config.cors_headers["Access-Control-Allow-Headers"] == "*"
+      return app_response
+    end
+
     for rqh in split(request_headers, ',')
       if ! occursin(strip(rqh) |> lowercase, Genie.config.cors_headers["Access-Control-Allow-Headers"] |> lowercase)
+        if Genie.config.isdev
+          @error "Access-Control-Allow-Headers mismatch: $rqh" Genie.config.cors_headers["Access-Control-Allow-Headers"]
+        end
+
         app_response.status = 403 # Forbidden
         throw(Genie.Exceptions.ExceptionalResponse(app_response))
       end
