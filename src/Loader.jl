@@ -456,6 +456,9 @@ macro _using(package)
       fp = splitdir(package)
   end
   path, package_name = fp
+  # _findpackage might return an extra loadpath and append it with ';'
+  loadpaths = String.(split(path, ';'))
+  path = loadpaths[1]
   package_symbol = Symbol(package_name)
   f_orig = joinpath(path, "$package_name.jl")
 
@@ -483,7 +486,7 @@ macro _using(package)
         eval(Expr(:using, Expr(:., :., nameof(M))))
       end
     else
-      @warn("'$($package_name)' could not be loaded from '$(joinpath(pp))' or is not a module.")
+      @warn("'$($package_name)' could not be loaded from '$(joinpath($f))' or is not a module.")
     end
   end
 
@@ -492,24 +495,22 @@ macro _using(package)
   else
     # if called from Main add module via setting 'LOAD_PATH' and 'using'
     out = quote
-      let pp = split(dirname($f), ';')
-        for p in pp
-          push!(LOAD_PATH, p)
-        end
-        @debug "using $($package_name) (from '$($path)')"
-        success = try
-          using $package_symbol
-          true
-        catch _
-          @warn("Package $($package_name) not found in LOAD_PATH, trying to add it via 'include()' and 'using'")
-          false
-        finally
-            for _ in pp
-              pop!(LOAD_PATH)
-            end
-        end
-        success && return
+      for p in $loadpaths
+        push!(LOAD_PATH, p)
       end
+      @debug "using $($package_name) (from '$($path)')"
+      success = try
+        using $package_symbol
+        true
+      catch _
+        @warn("Package $($package_name) not found in LOAD_PATH ($LOAD_PATH), trying to add it via 'include()' and 'using'")
+        false
+      finally
+          for _ in $loadpaths
+            pop!(LOAD_PATH)
+          end
+      end
+      success && return
     end
 
     # first try loading via LOAD_PATH and `using`, if that fails fallback to `include()` and `using .MyModule`
