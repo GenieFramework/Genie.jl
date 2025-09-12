@@ -116,22 +116,24 @@ function expr_to_path(expr::Union{Expr, Symbol, String})::String
 end
 
 """
-    @project_path
+    function project_path(path = pwd(), error_if_not_found = true) :: String
 
-Returns the path to the project directory.
+Returns the path to the project directory of `path`.
+If `error_if_not_found` is `false`, the current working directory is returned if no project directory could be found.
 
-    @project_path path
-
-Returns the absolute path of a file or directory within the project directory.
-
-There's also a macro version `@project_path` of this function that doesn't require double quotes
+The macro version `@project_path` returns the project path of the current file.
 """
-function project_path(path = pwd())
+function project_path(path = pwd(); error_if_not_found = true)::String
+  orig_path = path
   isabspath(path) || (path = normpath(joinpath(pwd(), path)))
   while !isfile(joinpath(path, "Project.toml"))
     newpath = dirname(path)
     if newpath == path
-        error("Project.toml not found in parent directories")
+        if error_if_not_found
+            error("Could not find Project.toml in any parent directory of '$path'")
+        else
+            return pwd()
+        end
     end
     path = newpath
   end
@@ -141,11 +143,11 @@ end
 """
     @project_path
 
-Returns the path to the project directory.
+Returns the path to the project directory of the current file.
 
     @project_path path
 
-Returns the absolute path of a file or directory within the project directory.
+Returns the absolute path of a file or directory within the project directory of the current file.
 
 ### Examples
 

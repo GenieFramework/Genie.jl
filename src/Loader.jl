@@ -441,56 +441,47 @@ macro _using(package)
   path, package_name = fp
   package_symbol = Symbol(package_name)
 
-  if is_submodule || not_found
-    # if called from submodule add module via `include()` and, `using .MyModule`
-    out = quote
-      try
-        @debug("using $($package_name) (from '$($package)') per 'include()'")
-        let f = $package_name * ".jl", pp = splitpath(joinpath($path, f))
-          let M = try
-            include(joinpath(pp))
-          catch e1
-            if e1 isa SystemError && e1.errnum == 2 # file not found
-              # retrieve filepath from error message
-              d, f = splitdir(Meta.parse(split(e1.prefix)[end]))
-              # if error was from a different file than the one we are looking for, rethrow
-              f == $package_name * ".jl" || rethrow(e1)
-              # otherwise try to load the file from the directory or an included 'src' directory
-              pp = splitpath(joinpath(d, f))
-              f = joinpath(insert!(pp, length(pp), $package_name))
-              if !isfile(f)
-                f = joinpath(insert!(pp, length(pp), "src"))
-                isfile(f) || throw(e1)
-              end
-              include(f)
-            else
-              rethrow(e1)
-            end
-          end # let M = try ...
-            # file was included without error, let's check whether it was really a module, in that case use it
-            if M isa Module
-              if nameof(M) == Symbol($package_name)
-                using .$(package_symbol)
-              else
-                @warn("Module's name doesn't match the filename, expected '$($package_name)', got '$(nameof(M))'")
-                eval(Expr(:using, Expr(:., :., nameof(M))))
-              end
-            else
-              @warn("'$($package_name)' could not be loaded from '$(joinpath(pp))' or is not a module.")
-            end
-          end
-        end
-      catch e
-        throw(e)
+  f_orig = joinpath(path, "$package_name.jl")
+  f = if isfile(f_orig)
+    f_orig
+  else
+    # otherwise try to load the file from the directory or an included 'src' directory
+    pp = splitpath(joinpath(f_orig))
+    f = joinpath(insert!(pp, length(pp), package_name))
+    if !isfile(f)
+      f = joinpath(insert!(pp, length(pp), "src"))
+      if !isfile(f)
+        # if no file was found try finding it in the project directory
+        f = joinpath(Genie.Util.project_path(".", error_if_not_found = false), f_orig)
+        isfile(f) || @warn("Package $package_name not found in LOAD_PATH or at '$f_orig' or '$f'")
       end
     end
-    not_found && pushfirst!(out.args,
-      :(@warn("Package $($package_name) not found in LOAD_PATH, trying to add it via 'include()' and 'using'"))
-    )
-    out |> esc
+    f
+  end
+
+  # if called from submodule add module via `include()` and, `using .MyModule`
+  f = abspath(f)
+  out_include = quote
+    @debug("using $($package_name) (from '$($package)') per 'include()'")         
+    M = include($f)
+    # file was included without error, let's check whether it was really a module, in that case use it
+    if M isa Module
+      if nameof(M) == Symbol($package_name)
+        using .$(package_symbol)
+      else
+        @warn("Module's name doesn't match the filename, expected '$($package_name)', got '$(nameof(M))'")
+        eval(Expr(:using, Expr(:., :., nameof(M))))
+      end
+    else
+      @warn("'$($package_name)' could not be loaded from '$(joinpath(pp))' or is not a module.")
+    end
+  end
+
+  if is_submodule || not_found
+    out_include |> esc
   else
     # if called from Main add module via setting 'LOAD_PATH' and 'using'
-    quote
+    out = quote
       let pp = split($path, ';')
         for p in pp
           push!(LOAD_PATH, p)
@@ -501,30 +492,19 @@ macro _using(package)
           true
         catch _
           @warn("Package $($package_name) not found in LOAD_PATH, trying to add it via 'include()' and 'using'")
-          @debug("using $($package_name) (from '$($package)') per 'include()'")
           false
         finally
             for _ in pp
               pop!(LOAD_PATH)
             end
         end
-        success || try
-          pp = split($path, ';')
-          M = include(joinpath(pp[end], "$($package_name).jl"))
-          if M isa Module
-            if nameof(M) == Symbol($package_name)
-              using .$(package_symbol)
-            else
-              @warn("Module's name doesn't match the filename, expected '$($package_name)', got '$(nameof(M))'")
-              eval(Expr(:using, Expr(:., :., nameof(M))))
-            end
-          end
-        catch e
-          rethrow(e)
-        end
+        success && return
       end
-      nothing
-    end |> esc
+    end
+
+    # first try loading via LOAD_PATH and `using`, if that fails fallback to `include()` and `using .MyModule`
+    push!(out.args, out_include.args...)
+    out |> esc
   end
 end
 
