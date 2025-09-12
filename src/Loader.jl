@@ -432,35 +432,38 @@ macro _using(package)
   # ensure os-specific path separator
   Sys.iswindows() && (package = replace(package, '/' => '\\'))
 
-  not_found = false
   fp = is_submodule ? splitdir(package) : _findpackage(package)
   if fp === nothing
-      not_found = true
       fp = splitdir(package)
   end
   path, package_name = fp
   package_symbol = Symbol(package_name)
-
   f_orig = joinpath(path, "$package_name.jl")
-  f = if isfile(f_orig)
-    f_orig
+
+  # first search relative to the directory of the calling file,
+  f = joinpath(dirname(String(__source__.file)), f_orig)
+  f = if isfile(f)
+    f
   else
     # otherwise try to load the file from the directory or an included 'src' directory
-    pp = splitpath(joinpath(f_orig))
+    pp = splitpath(f)
     f = joinpath(insert!(pp, length(pp), package_name))
     if !isfile(f)
       f = joinpath(insert!(pp, length(pp), "src"))
       if !isfile(f)
         # if no file was found try finding it in the project directory
         f = joinpath(Genie.Util.project_path(".", error_if_not_found = false), f_orig)
-        isfile(f) || @warn("Package $package_name not found in LOAD_PATH or at '$f_orig' or '$f'")
+        if !isfile(f)
+          @warn("Package $package_name not found in LOAD_PATH or at '$f_orig' or '$f'")
+          return
+        end
       end
     end
     f
   end
 
   # if called from submodule add module via `include()` and, `using .MyModule`
-  f = abspath(f)
+  f = normpath(f)
   out_include = quote
     @debug("using $($package_name) (from '$($package)') per 'include()'")         
     M = include($f)
@@ -477,12 +480,12 @@ macro _using(package)
     end
   end
 
-  if is_submodule || not_found
+  if is_submodule
     out_include |> esc
   else
     # if called from Main add module via setting 'LOAD_PATH' and 'using'
     out = quote
-      let pp = split($path, ';')
+      let pp = split(dirname($f), ';')
         for p in pp
           push!(LOAD_PATH, p)
         end
