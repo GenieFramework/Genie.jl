@@ -387,6 +387,22 @@ function _findpackage(package::String)
   path, package
 end
 
+function find_module_file(modulepath::String)::Union{String,Nothing}
+  f = endswith(modulepath, ".jl") ? modulepath : "$modulepath.jl"
+  f = if isfile(f)
+    f
+  else
+    # otherwise try to locate the file from a directory with the same name or an included 'src' directory
+    package_name = basename(f)[1:end-3]
+    pp = splitpath(f)
+    f = joinpath(insert!(pp, length(pp), package_name))
+    if !isfile(f)
+      f = joinpath(insert!(pp, length(pp), "src"))
+      isfile(f) ? f : nothing
+    end
+  end
+end
+
 """
     @using(package_path)
 
@@ -401,6 +417,9 @@ When called from a different module it includes the module file and uses `using 
     e.g. '@using models/MyApp' to load models/MyApp.jl'
 - as a path to a package directory containing a 'src' directory and module file therein
     e.g. '@using models/MyApp' to load 'models/MyApp/src/MyApp.jl'
+
+The relative path is relative to the file's directory. In case that the path is not found the search
+is repeated relative to the project directory.
 
 ### Examples
 
@@ -441,25 +460,13 @@ macro _using(package)
   f_orig = joinpath(path, "$package_name.jl")
 
   # first search relative to the directory of the calling file,
-  f = joinpath(dirname(String(__source__.file)), f_orig)
-  f = if isfile(f)
-    f
-  else
-    # otherwise try to load the file from the directory or an included 'src' directory
-    pp = splitpath(f)
-    f = joinpath(insert!(pp, length(pp), package_name))
-    if !isfile(f)
-      f = joinpath(insert!(pp, length(pp), "src"))
-      if !isfile(f)
-        # if no file was found try finding it in the project directory
-        f = joinpath(Genie.Util.project_path(".", error_if_not_found = false), f_orig)
-        if !isfile(f)
-          @warn("Package $package_name not found in LOAD_PATH or at '$f_orig' or '$f'")
-          return
-        end
-      end
-    end
-    f
+  f = find_module_file(joinpath(dirname(String(__source__.file)), f_orig))
+  if f === nothing
+    f = find_module_file(joinpath(Genie.Util.project_path(".", error_if_not_found = false), f_orig))
+  end
+  if f === nothing
+    @warn("Package $package_name not found in LOAD_PATH or at '$f_orig' or '$f'")
+    return
   end
 
   # if called from submodule add module via `include()` and, `using .MyModule`
