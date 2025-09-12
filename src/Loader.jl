@@ -395,9 +395,9 @@ function find_module_file(modulepath::String)::Union{String,Nothing}
     # otherwise try to locate the file from a directory with the same name or an included 'src' directory
     package_name = basename(f)[1:end-3]
     pp = splitpath(f)
-    f = joinpath(insert!(pp, length(pp), package_name))
+    f = joinpath(insert!(pp, length(pp), package_name)...)
     if !isfile(f)
-      f = joinpath(insert!(pp, length(pp), "src"))
+      f = joinpath(insert!(pp, length(pp), "src")...)
       isfile(f) ? f : nothing
     end
   end
