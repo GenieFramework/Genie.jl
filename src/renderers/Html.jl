@@ -824,7 +824,6 @@ function parsehtml(elem::HTMLParser.Node; partial::Bool = true, indent = 0) :: S
 
     if (elem.type == HTMLParser.ELEMENT_NODE)
       attrs_dict = LittleDict{String,Any}()
-      @show attrs_dict
       for a in HTMLParser.attributes(elem)
         try
           attrs_dict[a.name] = elem[a.name]
