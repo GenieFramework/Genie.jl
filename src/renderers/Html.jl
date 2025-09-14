@@ -1,6 +1,7 @@
 module Html
 
 import EzXML, HTTP, Logging, Markdown, Millboard, OrderedCollections, Reexport, YAML
+import OrderedCollections: OrderedDict
 
 Reexport.@reexport using Genie
 Reexport.@reexport using Genie.Renderer
@@ -822,7 +823,7 @@ function parsehtml(elem::HTMLParser.Node; partial::Bool = true, indent = 0) :: S
     invalid_tag || print(io, "$mdl$(tag_name)(" )
 
     if (elem.type == HTMLParser.ELEMENT_NODE)
-      attrs_dict = Dict{String,Any}()
+      attrs_dict = OrderedDict{String,Any}()
       for a in HTMLParser.attributes(elem)
         try
           attrs_dict[a.name] = elem[a.name]
