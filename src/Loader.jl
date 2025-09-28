@@ -29,9 +29,9 @@ function importenv()
 end
 
 
-function loadenv(; context) :: Union{Sockets.TCPServer,Nothing}
+function loadenv(; context, show_banner::Bool = true) :: Union{Sockets.TCPServer,Nothing}
   haskey(ENV, "GENIE_ENV") || (ENV["GENIE_ENV"] = "dev")
-  bootstrap(context)
+  bootstrap(context; show_banner)
 
   haskey(ENV, "GENIE_HOST") && (! isempty(ENV["GENIE_HOST"])) && (Genie.config.server_host = ENV["GENIE_HOST"])
   haskey(ENV, "GENIE_HOST") || (ENV["GENIE_HOST"] = Genie.config.server_host)
