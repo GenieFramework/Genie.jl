@@ -148,11 +148,15 @@ function up(port::Int,
   end
   if !async && !isnothing(listener)
     try
-      wait(listener)
-    catch
+      Base.isinteractive() ? wait(listener) : while true
+        sleep(0.5)  # interruptible version for non-interactive sessions
+      end
+    catch e
+      e isa InterruptException || @warn "Server error: $e"
       nothing
     finally
       close(listener)
+      Base.isinteractive() || Base.exit_on_sigint(true)  # restore default behavior
       # close the corresponding websocket server
       new_server.websockets !== nothing && isopen(new_server.websockets) && close(new_server.websockets)
     end
@@ -179,7 +183,7 @@ function up(; port = Genie.config.server_port, ws_port = Genie.config.websockets
 end
 
 
-print_server_status(status::String) = @info "\n$status \n"
+print_server_status(status::String) = (println(); @info "$status \n")
 
 
 @static if Sys.isapple()
