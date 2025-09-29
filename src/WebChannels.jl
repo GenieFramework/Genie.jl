@@ -4,7 +4,7 @@ Handles WebSockets communication logic.
 module WebChannels
 
 import HTTP, Distributed, Logging, JSON3, Sockets, Dates, Base64
-import Genie, Genie.Renderer
+import Genie, Genie.Renderer, Genie.Util.killtask
 
 const ClientId = UInt # web socket hash
 const ChannelName = String
@@ -359,7 +359,7 @@ end
 function delete_queue!(d::Dict, client::UInt)
   queue, handler = pop!(MESSAGE_QUEUE, client, (nothing, nothing))
   if queue !== nothing
-    @async Base.throwto(handler, InterruptException()) |> errormonitor
+    killtask(handler) |> errormonitor
   end
 end
 

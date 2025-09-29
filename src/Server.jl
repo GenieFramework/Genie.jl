@@ -8,6 +8,7 @@ import Millboard, Distributed, Logging
 import Genie
 import Distributed
 import HTTP.Servers: Listener, forceclose
+import HTTP.URI
 
 
 """
@@ -194,13 +195,22 @@ print_server_status(status::String) = (println(); @info "$status \n")
 
 
 @static if Sys.isapple()
-  openbrowser(url::String) = run(`open $url`)
+  openbrowser(url::URI) = run(`open $url`)
 elseif Sys.islinux()
-  openbrowser(url::String) = run(`xdg-open $url`)
+  openbrowser(url::URI) = run(`xdg-open $url`)
 elseif Sys.iswindows()
-  openbrowser(url::String) = run(`cmd /C start $url`)
+  openbrowser(url::URI) = run(`cmd /C start $url`)
 end
 
+function openbrowser(target::AbstractString = ""; port::Int = Genie.config.server_port)
+  uri = URI(target)
+  isempty(uri.port) || (port = uri.port)
+  host = isempty(uri.host) ? "localhost" : uri.host
+  scheme = isempty(uri.scheme) ? "http" : uri.scheme
+  uri = URI("$scheme://$host:$port$(uri.path)$(isempty(uri.query) ? "" : "?" * uri.query)")
+  
+  openbrowser(uri)
+end
 
 """
     serve(path::String = pwd(), params...; kwparams...)

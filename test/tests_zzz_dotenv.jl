@@ -48,7 +48,7 @@
     # @test eobj["HOST"] == ENV["HOST"]
 
     # try
-    #   @async Base.throwto(task, InterruptException())
+    #   Genie.Util.killtask(task)
     # catch
     # end
 

@@ -3,7 +3,7 @@ module Util
 using Pkg
 import Genie
 
-export project_path, @project_path
+export project_path, @project_path, @wait
 
 """
     file_name_without_extension(file_name, extension = ".jl") :: String
@@ -183,4 +183,80 @@ macro project_path(path)
     return joinpath(d, path)
 end
 
+"""
+    killtask(task::Task)
+
+Attempts to kill a task by scheduling an `InterruptException()` on it.
+"""
+function killtask(task::Task)
+    schedule(task, InterruptException(), error = true)
 end
+
+"""
+    @wait
+    @wait(exit_msg)
+    @wait(start_msg, exit_msg)
+
+Utility macro to pause script execution until interrupted by the user (Ctrl/Cmd+C).
+In interactive sessions returns immediately.
+If a cmdline argument `serve` is present, the wait is forced also in interactive sessions.
+If a cmdline argument `noserve` is present, the wait is skipped even in non-interactive sessions.
+
+### Examples
+
+from the commandline
+```
+julia --project -e 'using MyApp; @wait'
+```
+or
+```
+julia --project app.jl
+```
+from within julia
+```
+push!(ARGS, "serve")
+include("app.jl")
+```
+"""
+macro wait()
+    :(Base.wait(Val(Genie), exit_msg = "$($__module__) stopped."))
+end
+
+macro wait(exit_msg)
+    :(Base.wait(Val(Genie), exit_msg = $exit_msg))
+end
+
+macro wait(start_msg, exit_msg)
+    :(Base.wait(Val(Genie), start_msg = $start_msg, exit_msg = $exit_msg))
+end
+
+
+"""
+    Base.wait(::Val{Genie}; start_msg::String="Press Ctrl/Cmd+C to interrupt.", exit_msg::String="Genie stopped.")
+
+Utility function to pause script execution until interrupted by the user (Ctrl/Cmd+C).
+In interactive sessions returns immediately.
+If a cmdline argument `serve` is present, the wait is forced also in interactive sessions.
+If a cmdline argument `noserve` is present, the wait is skipped even in non-interactive sessions.
+"""
+function Base.wait(::Val{Genie}; start_msg::String="Press Ctrl/Cmd+C to interrupt.", exit_msg::String="Genie stopped.")
+    (Base.isinteractive() && "serve" ∉ ARGS || "noserve" ∈ ARGS) && return
+    
+    Base.exit_on_sigint(false)   # don’t kill process immediately on Ctrl-C
+    try
+        isempty(start_msg) || println("\n$start_msg")
+        Base.isinteractive() ? wait(Condition()) : while true
+            sleep(0.5)  # interruptible version for non-interactive sessions
+        end
+    catch e
+        if e isa InterruptException
+            isempty(exit_msg) || println("\n$exit_msg\n")
+        else
+            rethrow()
+        end
+    finally
+        Base.exit_on_sigint(! Base.isinteractive())  # restore default behavior
+    end
+end
+
+end # module Util
