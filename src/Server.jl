@@ -162,6 +162,7 @@ function up(port::Int,
       nothing
     finally
       close(listener)
+      sleep(0.1)
       Base.isinteractive() || Base.exit_on_sigint(true)  # restore default behavior
       # close the corresponding websocket server
       new_server.websockets !== nothing && isopen(new_server.websockets) && close(new_server.websockets)
