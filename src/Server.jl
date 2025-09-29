@@ -148,8 +148,14 @@ function up(port::Int,
   end
   if !async && !isnothing(listener)
     try
-      Base.isinteractive() ? wait(listener) : while true
-        sleep(0.5)  # interruptible version for non-interactive sessions
+      if Base.isinteractive()
+        wait(listener)
+      else
+        # interruptible version for non-interactive sessions
+        Base.exit_on_sigint(false)
+        while true
+          sleep(0.5)
+        end
       end
     catch e
       e isa InterruptException || @warn "Server error: $e"
