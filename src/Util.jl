@@ -189,7 +189,14 @@ end
 Attempts to kill a task by scheduling an `InterruptException()` on it.
 """
 function killtask(task::Task)
-    schedule(task, InterruptException(), error = true)
+  # make it never-throwing and safe against race conditions
+  if !(istaskdone(task) || istaskfailed(task))
+    try
+      schedule(task, InterruptException(), error = true)
+    catch
+    end
+  end
+  return task
 end
 
 """
@@ -219,7 +226,8 @@ include("app.jl")
 ```
 """
 macro wait()
-    :(wait_for_sigint(exit_msg = "$($__module__) stopped."))
+    project = basename(dirname(Base.active_project()))
+    :(wait_for_sigint(exit_msg = "$($project) stopped."))
 end
 
 macro wait(exit_msg)
