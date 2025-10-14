@@ -3,9 +3,8 @@ Helper functions for working with frontend assets (including JS, CSS, etc files)
 """
 module Assets
 
-import Genie, Genie.Configuration, Genie.Router, Genie.WebChannels, Genie.WebThreads
-import Genie.Renderer.Json
-import Genie.Util.package_version
+import Genie: Genie, Configuration, Router, WebChannels, WebThreads
+import Genie: JSONParser, Util.package_version
 
 export include_asset, css_asset, js_asset, js_settings, css, js
 export embedded, channels_script, channels_support, webthreads_script, webthreads_support
@@ -218,7 +217,7 @@ end
 Sets up a `window.Genie.Settings` JavaScript object which exposes relevant Genie app settings from `Genie.config`
 """
 function js_settings(channel::String = Genie.config.webchannels_default_route) :: String
-  settings = Json.JSONParser.json(Dict(
+  settings = JSONParser.json(Dict(
     :server_host                      => Genie.config.server_host,
     :server_port                      => Genie.config.server_port,
 

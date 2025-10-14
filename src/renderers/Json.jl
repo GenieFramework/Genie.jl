@@ -1,27 +1,11 @@
 module Json
 
-import JSON3, HTTP, Reexport
+import HTTP, Reexport
+import Genie.JSONParser
 
 Reexport.@reexport using Genie
 Reexport.@reexport using Genie.Renderer
 
-module JSONParser
-
-import JSON3
-
-parse(x, args...; kwargs...) = JSON3.read(x, args...; kwargs...)
-parse(x::AbstractString, args...; kwargs...) = JSON3.read(codeunits(x), args...; kwargs...)
-
-const json = JSON3.write
-
-# ugly but necessary
-JSON3.StructTypes.StructType(::T) where {T<:DataType} = JSON3.StructTypes.Struct()
-
-end
-
-using .JSONParser
-
-const JSON = JSONParser
 const JSON_FILE_EXT = ".json.jl"
 const JSONString = String
 
