@@ -313,7 +313,9 @@ function add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::Abstr
   basedir = pwd(),
   type::Union{Nothing, String} = nothing,
   content_type::Union{Nothing, Symbol} = nothing,
-  ext::Union{Nothing, String} = nothing, named::Union{Symbol, Nothing} = nothing, kwargs...)
+  ext::Union{Nothing, String} = nothing,
+  named::Union{Symbol, Nothing} = nothing,
+  path::String = "", kwargs...)
 
   file, ex = splitext(filename)
   ext = isnothing(ext) ? ex : ext
@@ -330,9 +332,9 @@ function add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::Abstr
     Symbol("*.*")
   end : content_type
 
-  Genie.Router.route(Genie.Assets.asset_path(assets_config, type; file, ext, kwargs...); named) do
+  Genie.Router.route(Genie.Assets.asset_path(assets_config, type; file, ext, path, kwargs...); named) do
     Genie.Renderer.WebRenderable(
-      Genie.Assets.embedded(Genie.Assets.asset_file(cwd=basedir; type, file)),
+      Genie.Assets.embedded(Genie.Assets.asset_file(cwd=basedir; type, file, path)),
     content_type) |> Genie.Renderer.respond
   end
 end
