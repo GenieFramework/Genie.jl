@@ -243,7 +243,7 @@ end
 function route(r::Route) :: Route
   r.name === nothing && (r.name = routename(r))
 
-  Router.push!(_routes, r.name, r)
+  Router.push!(_routes, r.name::Symbol, r)
 end
 function routes(args...; method::Vector{<:AbstractString}, kwargs...)
   for m in method
