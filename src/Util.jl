@@ -116,14 +116,15 @@ function expr_to_path(expr::Union{Expr, Symbol, String})::String
 end
 
 """
-    function project_path(path = pwd(), error_if_not_found = true) :: String
+    function project_path(path = dirname(Base.active_project()), error_if_not_found = true) :: String
 
-Returns the path to the project directory of `path`.
+Returns the path to the project directory of `path`. If no path is specified project_path returns the
+project path of the active project.
 If `error_if_not_found` is `false`, the current working directory is returned if no project directory could be found.
 
 The macro version `@project_path` returns the project path of the current file.
 """
-function project_path(path = pwd(); error_if_not_found = true)::String
+function project_path(path = dirname(Base.active_project()); error_if_not_found = true)::String
   orig_path = path
   isabspath(path) || (path = normpath(joinpath(pwd(), path)))
   while !isfile(joinpath(path, "Project.toml"))
@@ -188,15 +189,22 @@ end
 
 Attempts to kill a task by scheduling an `InterruptException()` on it.
 """
-function killtask(task::Task)
-  # make it never-throwing and safe against race conditions
-  if !(istaskdone(task) || istaskfailed(task))
-    try
-      schedule(task, InterruptException(), error = true)
-    catch
+function killtask(task::Task; retry::Integer = false, sleep_interval::Real = 0.01, wait_for_started_duration::Real = 0.1)
+    # never-throwing and safe against race conditions
+    sleep(wait_for_started_duration) # give the task some time to start
+    if !istaskstarted(task)
+        @warn "Task not started!\n consider increasing wait_for_started_duration"
+        return task
     end
-  end
-  return task
+    while !(istaskdone(task) || istaskfailed(task)) && retry ≥ 0
+        try
+            schedule(task, InterruptException(), error = true)
+        catch
+        end
+        retry -= 1
+        retry ≥ 0 && sleep(sleep_interval)
+    end
+    return task
 end
 
 """
