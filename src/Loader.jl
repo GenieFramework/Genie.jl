@@ -465,7 +465,7 @@ macro _using(package)
   # first search relative to the directory of the calling file,
   f = find_module_file(joinpath(dirname(String(__source__.file)), f_orig))
   if f === nothing
-    f = find_module_file(joinpath(Genie.Util.project_path(".", error_if_not_found = false), f_orig))
+    f = find_module_file(joinpath(Genie.Util.project_path(dirname(String(__source__.file)), error_if_not_found = false), f_orig))
   end
   if f === nothing
     @warn("Package $package_name not found in LOAD_PATH or at '$f_orig' or '$f'")
