@@ -80,17 +80,19 @@ end
 """
     trydecrypt(s::String)
 
-Tests whether `s` contains an encrypted value and returns it, otherwise returns `""`.
-Values can be wrapped in `__`.
-CAVEAT: if the encrypted string was `""` it cannot not be distinguished from a decryption failure.
+Tests whether `s` contains an encrypted value and returns it, otherwise returns nothing.
 """
 function trydecrypt(s::String)
     if has_encryption_format(s)
-        decrypt(s)
-    elseif startswith(s, "__") && endswith(s, "__") && has_encryption_format(String(s[3:end-2]))
-      decrypt(String(s[3:end-2]))
+      x = decrypt(s)
+      if length(x) > 0
+        x
+      else
+        # if decryption returns "" check whether it was a decryption error or the value was really an empty string
+        encrypt("") == s ? "" : nothing
+      end
     else
-      ""
+      nothing
     end
 end
 
@@ -100,7 +102,7 @@ end
 Determines whether `s` contains an encrypted value.
 """
 function isencrypted(s::String)
-    length(trydecrypt(s)) > 0
+    trydecrypt(s) !== nothing
 end
 
 
@@ -134,25 +136,30 @@ julia> get_env_secret!("Hello", delete = true)
 julia> haskey(ENV, "Hello")
 false
 ```
-
 """
-function get_env_secret!(key::String, default::Union{String, Nothing} = nothing; delete::Bool = Genie.isprod())
-    if ! haskey(ENV, key)
-        default === nothing && return ""
-        delete || (ENV[key] = "__$(encrypt(default))__")
-        return default
+function get_env_secret!(key::String, default::Union{String, Nothing} = nothing; delete::Bool = false, encrypted::Bool = false)
+    local val::String, val_encrypted::String
+    
+    value_exists = haskey(ENV, key)
+    ! value_exists && default === nothing && return ""
+    val = value_exists ? ENV[key] : default::String
+    # check whether the value was previously encrypted and stored
+    newval = value_exists && length(val) > 5 && startswith(val, "__") && endswith(val, "__") ? trydecrypt(String(val[3:end-2])) : nothing
+    if newval !== nothing
+      # decryption was successful
+      val_encrypted = val
+      val = newval::String
+    else
+      # only encrypt if needed, i.e. not to be deleted or output encrypted
+      val_encrypted = ! delete || encrypted ? "__$(encrypt(val))__" : ""
+    end
+    if delete
+      delete!(ENV, key)
+    else
+      ENV[key] = val_encrypted
     end
     
-    val = ENV[key]
-    delete && delete!(ENV, key)
-    newval = startswith(val, "__") ? trydecrypt(val) : ""
-    if length(newval) > 0
-        # val was encrypted so we return the decrypted value
-        newval
-    else
-        delete || (ENV[key] = "__$(encrypt(val))__")
-        val
-    end
+    encrypted ? val_encrypted : val
 end
 
 end
