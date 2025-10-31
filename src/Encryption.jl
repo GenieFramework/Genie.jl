@@ -107,41 +107,67 @@ end
 
 
 """
-    get_env_secret!(key::String, default::Union{String, Nothing} = nothing; delete::Bool = Genie.isprod())
+    get_env_secret!(key::String, default::Union{String, Nothing} = nothing; delete::Bool = false, encrypted::Bool = false)
 
-A method to safely consume confidential information from environment variables.
-It retrieves a value from environment variable and stores the encrypted value back, to allow for later consumption or alternatively deletes the value.
+A method to consume confidential information from environment variables. It reads `ENV[key]`, decrypts if the value is an encrypted marker, and then either deletes the entry or replaces it with an encrypted marker to reduce accidental exposure.
+
 Parameters:
-- `default`: if ENV has no key `key` and if `default` is a `String`, return this value and store the encrypted value in `ENV`
-- `delete`: if `true`, don't store the encrypted value, but rather delete the entry from `ENV`
+- key::String
+- default::Union{String, Nothing} = nothing  
+  - If `ENV[key]` is absent and `default` is a `String`, returns `default` and writes an encrypted marker to `ENV`.  
+  - If `ENV[key]` is absent and `default` is `nothing`, returns `nothing`.
+- delete::Bool = false  
+  - If `true`, deletes `ENV[key]`; otherwise writes an encrypted marker to `ENV`.
+- encrypted::Bool = false  
+  - If `true`, returns the encrypted value; otherwise returns plaintext.
 
-This method is intended to be used in Docker containers where confidential information is often stored in environment variables.
-In order to remove the unecrypted value from the memory, we store the encrypted version instead.
+Behavior:
+- Retrieves values from `ENV[key]`.
+- Detects previously stored encrypted markers of the form `"__<ciphertext>__"` and returns
+  the plaintext.
+- If not deleting, sets `ENV[key]` to `"__\$(encrypt(plaintext))__"`; if deleting, removes `ENV[key]`.
+- Mutates `ENV`.
 
-### Example
+Returns:
+- By default, the plaintext value.
+- If `encrypted = true`, the ciphertext.
+- `nothing` if the key is missing and `default` was not provided.
 
+Examples:
 ```julia-repl
-julia> ENV["Hello"] = "World!"
+julia> ENV["HELLO"] = "World!"
 "World!"
 
-julia> get_env_secret!("Hello")
+julia> get_env_secret!("HELLO")
 "World!"
 
-julia> ENV["Hello"]
-"__4c41b6c3edb4ed1c17a076119d164498__"
+julia> ENV["HELLO"]
+"__<ciphertext>__"
 
-julia> get_env_secret!("Hello", delete = true)
+julia> get_env_secret!("HELLO", delete = true)
 "World!"
 
-julia> haskey(ENV, "Hello")
+julia> haskey(ENV, "HELLO")
 false
+
+# Missing key with no default
+julia> get_env_secret!("MISSING")
+
+# nothing
+
+# Return encrypted marker instead of plaintext
+julia> ENV["TOKEN"] = "s3cr3t"
+"s3cr3t"
+
+julia> get_env_secret!("TOKEN", encrypted = true)
+"__<ciphertext>__"
 ```
 """
 function get_env_secret!(key::String, default::Union{String, Nothing} = nothing; delete::Bool = false, encrypted::Bool = false)
     local val::String, val_encrypted::String
     
     value_exists = haskey(ENV, key)
-    ! value_exists && default === nothing && return ""
+    ! value_exists && default === nothing && return nothing
     val = value_exists ? ENV[key] : default::String
     # check whether the value was previously encrypted and stored
     newval = value_exists && length(val) > 5 && startswith(val, "__") && endswith(val, "__") ? trydecrypt(String(val[3:end-2])) : nothing
