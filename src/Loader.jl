@@ -13,7 +13,7 @@ using DotEnv
 
 const post_load_hooks = Function[]
 
-export @using
+export @using, @import
 
 ### PRIVATE ###
 
@@ -444,7 +444,9 @@ need to be escaped by double quotes.
 Caveat: Due to precompilation it is not possible to supply variables to the macro.
 Calls need to supply explicit paths.
 """
-macro _using(package)
+macro _using(package, mode = QuoteNode(:using))
+  mode in (QuoteNode(:using), QuoteNode(:import)) || error(ArgumentError("Invalid mode '$mode', expected ':using' or ':import'"))
+
   # determine whether @using is called from Main or a different module
   is_submodule = __module__ != Base.Main
   package = Genie.Util.expr_to_path(package)
@@ -480,10 +482,10 @@ macro _using(package)
     # file was included without error, let's check whether it was really a module, in that case use it
     if M isa Module
       if nameof(M) == Symbol($package_name)
-        using .$(package_symbol)
+        $mode == :using && (using .$(package_symbol))
       else
         @warn("Module's name doesn't match the filename, expected '$($package_name)', got '$(nameof(M))'")
-        eval(Expr(:using, Expr(:., :., nameof(M))))
+        eval(Expr($mode, Expr(:., :., nameof(M))))
       end
     else
       @warn("'$($package_name)' could not be loaded from '$(joinpath($f))' or is not a module.")
@@ -500,7 +502,7 @@ macro _using(package)
       end
       @debug "using $($package_name) (from '$($path)')"
       success = try
-        using $package_symbol
+        $mode == :using ? (using $package_symbol) : (import $package_symbol)
         true
       catch _
         @warn("Package $($package_name) not found in LOAD_PATH ($LOAD_PATH), trying to add it via 'include()' and 'using'")
@@ -519,6 +521,11 @@ macro _using(package)
   end
 end
 
+macro _import(package)
+  :(@_using $package :import)
+end
+
 const var"@using" = var"@_using"
+const var"@import" = var"@_import"
 
 end
