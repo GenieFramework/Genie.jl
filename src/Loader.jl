@@ -419,7 +419,7 @@ When called from a different module it includes the module file and uses `using 
     e.g. '@using models/MyApp' to load 'models/MyApp/src/MyApp.jl'
 
 The relative path is relative to the file's directory. In case that the path is not found the search
-is repeated relative to the project directory.
+is repeated relative to the project directory. See also [`@using`](@ref).
 
 ### Examples
 
@@ -524,6 +524,47 @@ macro _using(package, mode = QuoteNode(:using), src_file = nothing, context = no
   end
 end
 
+"""
+    @import(package_path)
+
+Macro to simplify loading of modules taking advantage of precompilation.
+When called from Main it temporarilty adds the path to LOAD_PATH and loads the module via `import`
+When called from a different module it includes the module file and uses `import .MyModule`
+
+`package_path` can be used in several ways
+- as a path to a directory containing a module file of the same name
+    e.g '@import models/MyApp' to load 'models/MyApp/MyApp.jl'
+- as a path to a module (without extension '.jl')
+    e.g. '@import models/MyApp' to load models/MyApp.jl'
+- as a path to a package directory containing a 'src' directory and module file therein
+    e.g. '@import models/MyApp' to load 'models/MyApp/src/MyApp.jl'
+
+The relative path is relative to the file's directory. In case that the path is not found the search
+is repeated relative to the project directory. See also [`@import`](@ref).
+
+### Examples
+
+```julia
+@import models/MyApp
+
+@import StippleDemos/Vue3/Calendars
+```
+or explicitly
+```julia
+@import StippleDemos/Vue3/Calendars/Calendars
+```
+Note, directories containing special characters like colon (`':'`) or space (`' '`)
+need to be escaped by double quotes.
+```julia
+@import "C:/Program Files/Julia/models/Calendars"
+
+# or
+@import "C:/Program Files"/Julia/models/Calendars
+```
+
+Caveat: Due to precompilation it is not possible to supply variables to the macro.
+Calls need to supply explicit paths.
+"""
 macro _import(package)
   src_file = String(__source__.file)
 
