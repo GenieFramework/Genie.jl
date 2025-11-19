@@ -444,7 +444,9 @@ need to be escaped by double quotes.
 Caveat: Due to precompilation it is not possible to supply variables to the macro.
 Calls need to supply explicit paths.
 """
-macro _using(package, mode = QuoteNode(:using))
+macro _using(package, mode = QuoteNode(:using), src_file = nothing, context = nothing)
+  src_file = src_file === nothing ? String(__source__.file) : String(src_file)
+  context = context === nothing ? __module__ : context
   mode in (QuoteNode(:using), QuoteNode(:import)) || error(ArgumentError("Invalid mode '$mode', expected ':using' or ':import'"))
 
   # determine whether @using is called from Main or a different module
@@ -465,12 +467,13 @@ macro _using(package, mode = QuoteNode(:using))
   f_orig = joinpath(path, "$package_name.jl")
 
   # first search relative to the directory of the calling file,
-  f = find_module_file(joinpath(dirname(String(__source__.file)), f_orig))
+  f = find_module_file(joinpath(dirname(src_file), f_orig))
   if f === nothing
-    f = find_module_file(joinpath(Genie.Util.project_path(dirname(String(__source__.file)), error_if_not_found = false), f_orig))
+    tryfile = joinpath(Genie.Util.project_path(dirname(src_file), error_if_not_found = false), f_orig)
+    f = find_module_file(tryfile)
   end
   if f === nothing
-    @warn("Package $package_name not found in LOAD_PATH or at '$f_orig' or '$f'")
+    @warn("Package $package_name not found in LOAD_PATH or at '$f_orig'")
     return
   end
 
@@ -478,7 +481,7 @@ macro _using(package, mode = QuoteNode(:using))
   f = normpath(f)
   out_include = quote
     @debug("using $($package_name) (from '$($package)') per 'include()'")         
-    M = include($f)
+    M = $context.include($f)
     # file was included without error, let's check whether it was really a module, in that case use it
     if M isa Module
       if nameof(M) == Symbol($package_name)
@@ -522,7 +525,11 @@ macro _using(package, mode = QuoteNode(:using))
 end
 
 macro _import(package)
-  :(@_using $package :import)
+  src_file = String(__source__.file)
+
+  quote
+    @_using $package :import $src_file $__module__
+  end
 end
 
 const var"@using" = var"@_using"
