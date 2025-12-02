@@ -56,7 +56,7 @@ function typify!(@nospecialize(v))
     return v
 end
 
-@static if pkgversion(JSON) >= v"1-"
+@static if VersionNumber(package_version(JSON)) >= v"1-"
     function parse(x, args...; dicttype = DEFAULT_DICT_TYPE, allownan = true, nan = "\"__nan__\"", inf = "\"__inf__\"", ninf = "\"__neginf__\"", kwargs...)
       JSON.parse(x, args...; dicttype, allownan, nan, inf, ninf, kwargs...) |> typify!
     end
