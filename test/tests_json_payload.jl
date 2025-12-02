@@ -8,7 +8,7 @@
   end
 
   route("/jsontest", method = POST) do
-    Genie.Requests.jsonpayload("test")
+    Genie.Requests.jsonpayload("test") |> string
   end
 
   port = nothing

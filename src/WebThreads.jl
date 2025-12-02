@@ -237,7 +237,7 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}}, msg::String
 
       try
         payload !== nothing ?
-          message(client, ChannelMessage(channel, client, msg, payload) |> Renderer.Json.JSONParser.json) :
+          message(client, ChannelMessage(channel, client, msg, payload) |> Genie.JSONParser.json) :
           message(client, msg)
       catch ex
         @error ex
@@ -285,7 +285,7 @@ end
 function pull(wt::UInt, channel::ChannelName)
   output = ""
   if haskey(MESSAGE_QUEUE, wt) && ! isempty(MESSAGE_QUEUE[wt])
-    output = MESSAGE_QUEUE[wt] |> Renderer.Json.JSONParser.json
+    output = MESSAGE_QUEUE[wt] |> Genie.JSONParser.json
     empty!(MESSAGE_QUEUE[wt])
   end
 
