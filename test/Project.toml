@@ -13,10 +13,6 @@ Sockets = "6462fe0b-24de-5631-8697-dd941f90decc"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TestSetExtensions = "98d24dd4-01ad-11ea-1b02-c9a08f80db04"
 
-[sources]
-Genie = {path = "/home/adri/.julia/dev/Genie"}
-SearchLight = {path = "/home/adri/.julia/dev/SearchLight"}
-
 [compat]
 Genie = "5"
 HTTP = "1"
