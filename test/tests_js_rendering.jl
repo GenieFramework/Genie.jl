@@ -20,7 +20,7 @@
     using Genie
     using Genie.Renderer
     using Genie.Renderer.Js
-    using Genie.Renderer.Json.JSONParser
+    using Genie.JSONParser
 
     data = JSONParser.json(("message" => "Hi Vue"))
 

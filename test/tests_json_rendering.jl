@@ -20,7 +20,7 @@
       Genie.Renderer.clear_task_storage()
     end;
 
-    @safetestset "JSON3 struct rendering" begin
+    @safetestset "JSON struct rendering" begin
       struct Person
         name::String
         age::Int

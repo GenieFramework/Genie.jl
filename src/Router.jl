@@ -6,7 +6,7 @@ module Router
 
 import Revise
 import Reexport, Logging
-import HTTP, HttpCommon, Sockets, Millboard, Dates, OrderedCollections, JSON3, MIMEs
+import HTTP, HttpCommon, Sockets, Millboard, Dates, OrderedCollections, JSON, MIMEs
 import Genie
 
 export route, routes, channel, channels, download, serve_static_file, serve_file
@@ -590,9 +590,9 @@ Matches the invoked URL to the corresponding channel, sets up the execution envi
 """
 function match_channels(req, msg::String, ws_client, params::Params) :: String
   payload::Dict{String,Any} = try
-    JSON3.read(codeunits(msg), Dict{String,Any})
+    Genie.JSONParser.parse(msg)
   catch ex
-    Dict{String,Any}()
+    Genie.JSONParser.parse("{}")
   end
 
   uri = haskey(payload, "channel") ? '/' * payload["channel"] : '/'
@@ -825,7 +825,7 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
 
   if request_type_is(req, :json) && content_length(req) > 0
     try
-      params.collection[PARAMS_JSON_PAYLOAD] = JSON3.read(req.body) |> stringdict
+      params.collection[PARAMS_JSON_PAYLOAD] = Genie.JSONParser.parse(req_body) |> stringdict
       params.collection[PARAMS_POST_KEY][PARAMS_JSON_PAYLOAD] = params.collection[PARAMS_JSON_PAYLOAD]
     catch ex
       @error ex
@@ -841,7 +841,7 @@ function extract_request_params(req::HTTP.Request, params::Params) :: Nothing
 end
 
 
-function stringdict(o::JSON3.Object) :: Dict{String,Any}
+function stringdict(o::Genie.JSONParser.DEFAULT_DICT_TYPE) :: Dict{String,Any}
   r = Dict{String,Any}()
 
   for (k, v) in o
