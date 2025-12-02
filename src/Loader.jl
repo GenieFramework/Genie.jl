@@ -13,7 +13,7 @@ using DotEnv
 
 const post_load_hooks = Function[]
 
-export @using, @import
+export @using, @import, @delay
 
 ### PRIVATE ###
 
@@ -575,5 +575,41 @@ end
 
 const var"@using" = var"@_using"
 const var"@import" = var"@_import"
+
+"""
+    @delay module symbol
+    @delay expression
+
+Delays execution of a function call to avoid world age issues in Julia 1.12+.
+
+When called with two arguments (`module` and `symbol`), wraps `getfield(module, symbol)()` in `Base.invokelatest`.
+When called with a single expression, wraps the expression in a lambda and passes it to `Base.invokelatest`.
+
+# Examples
+```julia
+@delay SearchLight.Migrations :allup
+@delay SearchLight :connect
+@delay SearchLight.Configuration.load(path)
+@delay Core.eval(@__MODULE__, Meta.parse("using SomePackage"))
+```
+"""
+macro delay(args...)
+  if length(args) == 1
+    # Single expression: wrap in lambda
+    expr = esc(args[1])
+    quote
+      Base.invokelatest(() -> $expr)
+    end
+  elseif length(args) == 2
+    # Two arguments: module and symbol
+    module_expr_esc = esc(args[1])
+    symbol_esc = esc(args[2])
+    quote
+      Base.invokelatest(() -> getfield($module_expr_esc, $symbol_esc)())
+    end
+  else
+    error("@delay expects 1 or 2 arguments, got $(length(args))")
+  end
+end
 
 end
