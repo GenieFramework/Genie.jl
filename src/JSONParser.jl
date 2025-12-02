@@ -60,9 +60,17 @@ end
     function parse(x, args...; dicttype = DEFAULT_DICT_TYPE, allownan = true, nan = "\"__nan__\"", inf = "\"__inf__\"", ninf = "\"__neginf__\"", kwargs...)
       JSON.parse(x, args...; dicttype, allownan, nan, inf, ninf, kwargs...) |> typify!
     end
-    
+
+    # Helper to convert non-serializable types
+    sanitize_for_json(x::Module) = string(x)
+    sanitize_for_json(x::Pair) = sanitize_for_json(x.first) => sanitize_for_json(x.second)
+    sanitize_for_json(x::AbstractDict) = Dict(sanitize_for_json(k) => sanitize_for_json(v) for (k, v) in pairs(x))
+    sanitize_for_json(x::AbstractVector) = [sanitize_for_json(v) for v in x]
+    sanitize_for_json(x::Tuple) = tuple((sanitize_for_json(v) for v in x)...)
+    sanitize_for_json(x) = x
+
     function json(x; allownan = true, nan = "\"__nan__\"", inf = "\"__inf__\"", ninf = "\"__neginf__\"", kwargs...)
-        JSON.json(x; allownan = allownan, nan, inf, ninf, kwargs...)
+        JSON.json(sanitize_for_json(x); allownan = allownan, nan, inf, ninf, kwargs...)
     end
 else
     # don't support allownan etc for older JSON versions, they are either not supported or behave differently (danger of interpreting "Infinity" as `Inf`)
@@ -70,9 +78,17 @@ else
     function parse(x, args...; dicttype = DEFAULT_DICT_TYPE, kwargs...)
       JSON.parse(x, args...; dicttype, kwargs...) |> typify!
     end
-    
+
+    # Helper to convert non-serializable types
+    sanitize_for_json(x::Module) = string(x)
+    sanitize_for_json(x::Pair) = sanitize_for_json(x.first) => sanitize_for_json(x.second)
+    sanitize_for_json(x::AbstractDict) = Dict(sanitize_for_json(k) => sanitize_for_json(v) for (k, v) in pairs(x))
+    sanitize_for_json(x::AbstractVector) = [sanitize_for_json(v) for v in x]
+    sanitize_for_json(x::Tuple) = tuple((sanitize_for_json(v) for v in x)...)
+    sanitize_for_json(x) = x
+
     function json(x; kwargs...)
-        JSON.json(x; kwargs...)
+        JSON.json(sanitize_for_json(x); kwargs...)
     end
 end
 
