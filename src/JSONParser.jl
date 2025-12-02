@@ -3,10 +3,9 @@ module JSONParser
 import JSON, OrderedCollections
 import ..Util: package_version
 
-DEFAULT_DICT_TYPE::DataType = @static if isdefined(JSON, :Object)
+const DEFAULT_DICT_TYPE = @static if isdefined(JSON, :Object)
     JSON.Object{String, Any}
 else
-    #JSON.StructUtils.lower(m::Module) = string(m)
     OrderedCollections.OrderedDict{String, Any}
 end
 
