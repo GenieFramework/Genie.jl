@@ -9,6 +9,10 @@ else
     OrderedCollections.OrderedDict{String, Any}
 end
 
+@static if isdefined(JSON, :StructUtils)
+    JSON.StructUtils.lowerkey(::JSON.JSONWriteStyle, x::Module) = string(x)
+end
+
 @inline typify(x) = x
 typify(x::Number) = isinteger(x) && typemin(Int) ≤ x ≤ typemax(Int) ? Int(x) : x
 typify!(x::Number) = isinteger(x) && typemin(Int) ≤ x ≤ typemax(Int) ? Int(x) : x
