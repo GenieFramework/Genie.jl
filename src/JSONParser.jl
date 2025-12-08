@@ -44,7 +44,7 @@ function typify!(@nospecialize(v))
                 end
             end
         else
-            if all(isinteger, v) .&& !any(isa.(v, Bool))
+            if all(isinteger, v) && !any(isa.(v, Bool))
                 return convert(Vector{Int}, v)
             end
         end
