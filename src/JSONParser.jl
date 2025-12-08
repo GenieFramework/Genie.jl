@@ -36,20 +36,26 @@ function typify!(@nospecialize(v))
         end
     elseif v isa Vector{Any} || v isa Vector{<:Number}
         # Mutate recursively
+        @show v
+
         if Int <: eltype(v)
+            @info 2
             for i in eachindex(v)
                 x = v[i]
+                @show x
                 if x isa Vector{Any} || x isa AbstractDict || x isa Vector{<:Number} || x isa Number
                     v[i] = typify!(x)
                 end
             end
+            @show v
         else
+            @info 1
             if all(isinteger, v) && !any(isa.(v, Bool))
                 return convert(Vector{Int}, v)
             end
         end
         # Try to promote element types
-        T = promote_type(union(map(typeof, v))...)
+        T = !any(isa.(v, Bool)) ? promote_type(union(map(typeof, v))...) : Any
         if T != Any
             try
                 return convert(Vector{T}, v)
