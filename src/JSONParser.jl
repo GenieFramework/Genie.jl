@@ -14,8 +14,8 @@ end
 end
 
 @inline typify(x) = x
-typify(x::Number) = isinteger(x) && typemin(Int) ≤ x ≤ typemax(Int) ? Int(x) : x
-typify!(x::Number) = isinteger(x) && typemin(Int) ≤ x ≤ typemax(Int) ? Int(x) : x
+typify(x::Number) = isinteger(x) && !isa(x, Bool) && typemin(Int) ≤ x ≤ typemax(Int) ? Int(x) : x
+typify!(x::Number) = isinteger(x) && !isa(x, Bool) && typemin(Int) ≤ x ≤ typemax(Int) ? Int(x) : x
 
 # Entry point for JSON objects
 @inline function typify(d::AbstractDict{String, Any})
@@ -44,7 +44,7 @@ function typify!(@nospecialize(v))
                 end
             end
         else
-            if all(isinteger, v)
+            if all(isinteger, v) .&& !any(isa.(v, Bool))
                 return convert(Vector{Int}, v)
             end
         end
