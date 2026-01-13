@@ -1,7 +1,7 @@
 name = "Genie"
 uuid = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
-authors = ["The amazing Genie contributors ♥️"]
 version = "5.35.5"
+authors = ["The amazing Genie contributors ♥️"]
 
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
