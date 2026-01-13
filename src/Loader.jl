@@ -211,11 +211,16 @@ end
 
 
 """
-    autoload
+    autoload(root_dir; context, skipdirs, ...)
 
-Automatically and recursively includes files from the indicated `root_dir` into the indicated `context` module,
-skipping directories from `dir`.
-The files are set up with `Revise` to be automatically reloaded when changed (in dev environment).
+Recursively includes all files that match the configured filters from `root_dir` into `context`.
+
+Arguments mirror the exported `autoload` helpers used by Genie when loading `lib`, `helpers`, `routes`, etc.:
+  * `context` – module where the files will be brought in (defaults to the app module);
+  * `skipdirs`/`namematch`/`skipmatch` – fine-grained filters to limit which directories or files are traversed;
+  * `autoload_file`/`autoload_ignore_file` – names of the files that drive ordered loading or global exclusions.
+
+Files are loaded via `Revise.includet` so changes are picked up automatically during development.
 """
 function autoload(root_dir::String = Genie.config.path_lib;
                   context::Union{Module,Nothing} = nothing,
