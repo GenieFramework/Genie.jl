@@ -24,7 +24,7 @@ end
 """
     decrypt(s::AbstractString) :: String
 
-Decrypts `s` (a `SubString{String}` previously encrypted by Genie).
+Decrypts `s` (a `AbstractString` previously encrypted by Genie).
 """
 function decrypt(s::AbstractString ) :: String
   (key32, iv16) = encryption_sauce()
