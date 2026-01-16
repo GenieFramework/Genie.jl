@@ -90,7 +90,8 @@ end
 
         Genie.Loader.autoload(test_dir, context=target)
 
-        @test invokelatest(() -> getproperty(target, :AUTO_MESSAGE)) == "loaded"
+        #@test invokelatest(() -> getproperty(target, :AUTO_MESSAGE)) == "loaded"
+        @test getproperty(target, :AUTO_MESSAGE) == "loaded"
         @test !isdefined(Main, :AUTO_MESSAGE)
     finally
         rm(test_dir, recursive=true)
