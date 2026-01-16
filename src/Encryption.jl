@@ -22,11 +22,11 @@ end
 
 
 """
-    decrypt(s::String) :: String
+    decrypt(s::AbstractString) :: String
 
-Decrypts `s` (a `string` previously encrypted by Genie).
+Decrypts `s` (a `AbstractString` previously encrypted by Genie).
 """
-function decrypt(s::String) :: String
+function decrypt(s::AbstractString ) :: String
   (key32, iv16) = encryption_sauce()
   decryptor = Nettle.Decryptor(ENCRYPTION_METHOD, key32)
   deciphertext = Nettle.decrypt(decryptor, :CBC, iv16, s |> hex2bytes)

@@ -146,7 +146,12 @@ function nullablevalue(payload::Union{HTTP.Response,HTTP.Request}, key::Union{St
   for cookie in split(Dict(payload)["cookie"], ';')
     cookie = strip(cookie)
     if startswith(lowercase(cookie), lowercase(string(key)))
-      value = split(cookie, '=')[2] |> String
+      idx = findfirst('=', cookie)
+      value = idx !== nothing ? strip(strip(cookie[idx+1:end], '"')) : ""
+      if length(value) > 4096
+        @debug "Cookie value too large"
+        return nothing
+      end
       encrypted && (value = Genie.Encryption.decrypt(value))
 
       return string(value)
