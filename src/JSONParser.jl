@@ -18,7 +18,7 @@ typify(x::Number) = isinteger(x) && !isa(x, Bool) && typemin(Int) ≤ x ≤ type
 typify!(x::Number) = isinteger(x) && !isa(x, Bool) && typemin(Int) ≤ x ≤ typemax(Int) ? Int(x) : x
 
 # Entry point for JSON objects
-@inline function typify(d::AbstractDict{String, Any})
+@inline function typify(d::AbstractDict{<:Any, Any})
     typify!(deepcopy(d))   # copy so we don't mutate user data
 end
 
@@ -28,7 +28,7 @@ end
 end
 
 function typify!(@nospecialize(v))
-    if v isa AbstractDict{String, Any}
+    if v isa AbstractDict{<:Any, Any}
         for (k, val) in v
             if val isa Vector{Any} || val isa AbstractDict || val isa Vector{<:Number} || val isa Number
                 v[k] = typify!(val)
