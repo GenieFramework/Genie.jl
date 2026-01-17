@@ -1,6 +1,6 @@
 name = "Genie"
 uuid = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
-version = "5.35.5"
+version = "5.35.6"
 authors = ["The amazing Genie contributors ♥️"]
 
 [deps]
