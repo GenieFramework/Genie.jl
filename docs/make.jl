@@ -23,6 +23,8 @@ makedocs(
           "Working With Genie Apps: Intermediate Topics [WIP]" => "guides/Working_With_Genie_Apps_Intermediary_Topics.md",
           "Using Genie in an interactive environment" => "guides/Interactive_environment.md",
           "Developing an API backend" => "guides/Simple_API_backend.md",
+          "Working with Cookies" => "guides/Working_with_Cookies.md",
+          "Working with Sessions" => "guides/Working_with_Sessions.md",
           "Using Genie Plugins" => "guides/Genie_Plugins.md",
           "Deploying Genie Apps On AWS" => "guides/Deploying_Genie_Apps_On_AWS.md",
           "Controlling Load Order of Genie Apps"=> "guides/Controlling_Load_Order_Of_Genie_Apps.md"
