@@ -211,11 +211,16 @@ end
 
 
 """
-    autoload
+    autoload(root_dir; context, skipdirs, ...)
 
-Automatically and recursively includes files from the indicated `root_dir` into the indicated `context` module,
-skipping directories from `dir`.
-The files are set up with `Revise` to be automatically reloaded when changed (in dev environment).
+Recursively includes all files that match the configured filters from `root_dir` into `context`.
+
+Arguments mirror the exported `autoload` helpers used by Genie when loading `lib`, `helpers`, `routes`, etc.:
+  * `context` – module where the files will be brought in (defaults to the app module);
+  * `skipdirs`/`namematch`/`skipmatch` – fine-grained filters to limit which directories or files are traversed;
+  * `autoload_file`/`autoload_ignore_file` – names of the files that drive ordered loading or global exclusions.
+
+Files are loaded via `Revise.includet` so changes are picked up automatically during development.
 """
 function autoload(root_dir::String = Genie.config.path_lib;
                   context::Union{Module,Nothing} = nothing,
@@ -237,24 +242,14 @@ function autoload(root_dir::String = Genie.config.path_lib;
     if validinclude(fi)
       @debug "Auto loading file: $fi"
       Revise.includet(default_context(context), fi)
-    end
-  end
-
-  for (root, dirs, files) in walkdir(root_dir)
-    for dir in dirs
-      in(dir, skipdirs) && continue
-
-      p = joinpath(root, dir)
-      for i in readdir(p)
-        isfile(joinpath(p, autoload_ignore_file)) && continue
-
-        fi = joinpath(p, i)
-        @debug "Checking $fi"
-        if validinclude(fi)
-          @debug "Auto loading file: $fi"
-          Revise.includet(default_context(context), fi)
-        end
-      end
+    elseif isdir(fi)
+      i ∈ skipdirs && continue
+      autoload(fi; context=context,
+                 skipdirs=skipdirs,
+                 namematch=namematch,
+                 skipmatch=skipmatch,
+                 autoload_ignore_file=autoload_ignore_file,
+                 autoload_file=autoload_file)
     end
   end
 
@@ -279,18 +274,19 @@ end
 Returns a sorted list of files based on `.autoload` file. If `.autoload` file is a not present in `rootdir` return original output of `readdir()`.
 """
 function sort_load_order(rootdir, lsdir::Vector{String})
-  autoloadfilepath = isfile(joinpath(pwd(), rootdir, Genie.config.autoload_file)) ? joinpath(pwd(), rootdir, Genie.config.autoload_file) : return lsdir
-  autoloadorder = open(f -> ([line for line in eachline(f)]), autoloadfilepath)
+  autoloadfilepath = joinpath(rootdir, Genie.config.autoload_file)
+  isfile(autoloadfilepath) || return lsdir
+
+  autoloadorder = open(f -> ([strip(line) for line in eachline(f)]), autoloadfilepath)
   fn_loadorder = []
 
   for file in autoloadorder
+    isempty(file) && continue
     if file in lsdir
       push!(fn_loadorder, file)
       filter!(f -> f != file, lsdir)
     elseif startswith(file, '-') && file[2:end] ∈ lsdir
       filter!(f -> f != file[2:end], lsdir)
-      continue
-    else
       continue
     end
   end

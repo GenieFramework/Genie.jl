@@ -23,7 +23,7 @@ macro includetests(testarg...)
 
       if length(tests) == 0
           tests = readdir(dirname(rootfile))
-          tests = filter(f->endswith(f, ".jl") && f!= basename(rootfile), tests)
+          tests = filter(f->endswith(f, ".jl") && f!= basename(rootfile) && f != "common_setup.jl", tests)
       else
           tests = map(f->string(f, ".jl"), tests)
       end
