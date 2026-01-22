@@ -97,6 +97,7 @@ Returns the version of a package, or "master" if the package is not installed.
 
 julia> package_version("Genie.jl")
 "v0.23.0"
+```
 """
 function package_version(package::Union{Module,String}) :: String
   isa(package, Module) && (package = String(nameof(package)))
