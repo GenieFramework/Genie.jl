@@ -106,5 +106,22 @@ function secret_file_path(root_dir::String = Genie.config.path_config) :: String
   joinpath(root_dir, SECRETS_FILE_NAME)
 end
 
+"""
+read_secret(name::String)::Union{String,Nothing}
+Look first in Docker’s `/run/secrets/NAME`, then in ENV["NAME"].
+Returns `nothing` if neither is set or is empty.
+"""
+function read_secret(name::String)::Union{String,Nothing}
+  # docker-secrets always lowercase
+  docker_file=joinpath("/run/secrets", lowercase(name))
+  if isfile(docker_file)
+    tok=strip(read(docker_file, String))
+    isempty(tok) ? nothing : tok
+  elseif haskey(ENV,name) && !isempty(ENV[name])
+    ENV[name]
+  else
+    nothing
+  end
+end
 
 end
