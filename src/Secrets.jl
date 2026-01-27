@@ -72,7 +72,7 @@ end
 """
     load(root_dir::String = Genie.config.path_config; context::Union{Module,Nothing} = nothing) :: Nothing
 
-Loads (includes) the framework's secrets.jl file into the app's module `context`.
+Load (include) the framework's secrets.jl file into the app's module `context`.
 The files are set up with `Revise` to be automatically reloaded.
 """
 function load(root_dir::String = Genie.config.path_config; context::Union{Module,Nothing} = nothing) :: Nothing
@@ -109,12 +109,23 @@ function secret() :: String
   bytes2hex(buf)
 end
 
+"""
+    secret_file_exists(root_dir = Genie.config.path_config)::Bool
 
+Check whether `secrets.jl` exists in `root_dir`.
+
+See also [`Genie.Secrets.secret_file_path`](@ref).
+"""
 function secret_file_exists(root_dir::String = Genie.config.path_config) :: Bool
   secret_file_path(root_dir) |> isfile
 end
 
+"""
+    secret_file_path(root_dir = Genie.config.path_config)::String
 
+Return the full filesystem path to `secrets.jl` under `root_dir`.
+See also [`Genie.Secrets.secret_file_exists`](@ref).
+"""
 function secret_file_path(root_dir::String = Genie.config.path_config) :: String
   joinpath(root_dir, SECRETS_FILE_NAME)
 end
