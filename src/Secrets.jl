@@ -29,6 +29,8 @@ Return the secret token used in the app for encryption and salting.
 Usually, this token is defined through `Genie.Secrets.secret_token!` in the `config/secrets.jl` file.
 Here, a temporary one is generated for the current session if no other token is defined and
 `generate_if_missing` is true.
+
+See [`Genie.Secrets.secret_token!`](@ref) and [`Genie.Secrets.load`](@ref).
 """
 function secret_token(generate_if_missing::Bool = true; context::Union{Module,Nothing} = nothing)
   if isempty(SECRET_TOKEN[])
