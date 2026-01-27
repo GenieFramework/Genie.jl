@@ -5,6 +5,7 @@ import SHA
 import Logging
 import Revise
 import Genie
+import Random: rand!, RandomDevice
 
 const SECRET_TOKEN = Ref{String}("") # global state
 const SECRETS_FILE_NAME = "secrets.jl"
@@ -75,12 +76,24 @@ end
 
 
 """
-    secret() :: String
+    secret()::String
 
-Generates a random secret token to be used for configuring the call to `Genie.Secrets.secret_token!`.
+Generate a new cryptographically secure random token (32 raw bytes → 64 hex chars)
+using the system RNG.
+
+# Examples
+```jldoctest
+julia> using Genie.Secrets
+julia> length(Secrets.secret())
+64
+```
+
+See also [`Genie.Secrets.secret_token!`](@ref).
 """
 function secret() :: String
-  SHA.sha256("$(randn()) $(Dates.now())") |> bytes2hex
+  buf = Vector{UInt8}(undef, 32)
+  rand!(RandomDevice(), buf)
+  bytes2hex(buf)
 end
 
 
