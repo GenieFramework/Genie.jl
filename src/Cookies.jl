@@ -138,9 +138,10 @@ end
 Attempts to retrieve a cookie value stored at `key` in the `payload object` and returns a `Union{Nothing,String}`
 
 # Arguments
-- `payload::Union{HTTP.Response,HTTP.Request}`: the request or response object containing the Cookie headers
-- `key::Union{String,Symbol}`: the name of the cookie value
-- `encrypted::Bool`: if `true` the value stored on the cookie is automatically decrypted
+- `payload::Union{HTTP.Response,HTTP.Request}`: the request or response object containing the Cookie headers.
+- `key::Union{String,Symbol}`: the name of the cookie value.
+- `encrypted::Bool`: if `true` the value stored on the cookie is automatically decrypted.
+- `maxlen::Int`: maximum allowed length of the cookie value; values longer than this return `nothing`.
 """
 function nullablevalue(
   payload::Union{HTTP.Request,HTTP.Response},
