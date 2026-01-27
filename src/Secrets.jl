@@ -1,3 +1,14 @@
+"""
+    module Secrets
+
+Manage the application’s secret token: generation, storage, loading,
+and file‐path utilities.
+
+A secret token is used for all cryptographic operations in Genie (cookie signing,
+encryption, HMAC).  By default, a temporary token is generated in development
+if none is present.  In production, you should generate and commit a stable
+`config/secrets.jl` file by calling `Genie.Secrets.secret_token!()` once.
+"""
 module Secrets
 
 import Dates
