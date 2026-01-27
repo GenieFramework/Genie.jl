@@ -142,25 +142,33 @@ Attempts to retrieve a cookie value stored at `key` in the `payload object` and 
 - `key::Union{String,Symbol}`: the name of the cookie value
 - `encrypted::Bool`: if `true` the value stored on the cookie is automatically decrypted
 """
-function nullablevalue(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}; encrypted::Bool = true) :: Union{Nothing,String}
-  for cookie in split(Dict(payload)["cookie"], ';')
-    cookie = strip(cookie)
-    if startswith(lowercase(cookie), lowercase(string(key)))
-      idx = findfirst('=', cookie)
-      value = idx !== nothing ? strip(strip(cookie[idx+1:end], '"')) : ""
-      if length(value) > 4096
-        @debug "Cookie value too large"
-        return nothing
-      end
-      encrypted && (value = Genie.Encryption.decrypt(value))
+function nullablevalue(
+  payload::Union{HTTP.Request,HTTP.Response},
+  key::Union{String,Symbol};
+  encrypted::Bool=true,
+  maxlen::Int=4096)::Union{String,Nothing}
 
-      return string(value)
+  target=lowercase(strip(string(key)))
+
+  for c in HTTP.Cookies.cookies(payload)
+    cname=lowercase(strip(c.name))
+    cname == target || continue
+
+    val=strip(c.value)
+
+    if length(val) ≥ 2 && val[1] == '"' && val[end] == '"'
+      val=val[2:end-1]
     end
+
+    isempty(val) && return ""
+
+    length(val) > maxlen && return nothing
+
+    return encrypted ? Genie.Encryption.decrypt(val) : val
   end
 
   nothing
 end
-
 
 """
     getcookies(req::HTTP.Request) :: Vector{HTTP.Cookies.Cookie}

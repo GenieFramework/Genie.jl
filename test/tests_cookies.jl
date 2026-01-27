@@ -113,7 +113,7 @@
 
     @test result == data
   end
- 
+
 
   @testset "Whitespace Handling in Cookie Value" begin
     data = "whitespace-test"
