@@ -299,6 +299,8 @@ Base.@kwdef mutable struct Settings
   cdn_url::String                                     = "https://cdn.statically.io/gh/GenieFramework" # the URL of the CDN
   
   env_whitelist::Vector{Union{String, Regex}}         = Union{String, Regex}[]
+
+  error_layout::Union{Symbol,String,Nothing} = nothing
 end
 
 end
