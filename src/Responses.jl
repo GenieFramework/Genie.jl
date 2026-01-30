@@ -91,7 +91,7 @@ route("/test") do
         end
     end
 end
-````
+```
 """
 macro streamhandler(body)
   quote

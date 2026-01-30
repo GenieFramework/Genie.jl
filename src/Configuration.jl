@@ -270,6 +270,9 @@ Base.@kwdef mutable struct Settings
   webthreads_push_route::String                       = "push"
   webthreads_connection_threshold::Dates.Millisecond  = Dates.Millisecond(60_000) # 1 minute
 
+  max_cookie_size::Union{Nothing,Int}                 = nothing # Maximum allowed cookie value size in bytes; nothing = no limit
+  cookie_defaults::Union{Nothing,Dict}                = nothing # Default cookie options
+
   html_attributes_replacements::Dict{String,String}   = Dict("v__on!" => "v-on:")
   html_parser_close_tag::String                       = " /"
   html_parser_char_at::String                         = "!!"
