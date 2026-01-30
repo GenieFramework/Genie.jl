@@ -269,6 +269,18 @@
   # EDGE CASE TESTS
   # ============================================================================
 
+  @testset "EDGE: Cookie Name is Prefix of Another" begin
+    data1 = "short"
+    data2 = "long"
+    req = HTTP.Request("GET", "/", ["Cookie" => "username=$data2; user=$data1"])
+    
+    result_short = Genie.Cookies.get(req, "user", encrypted=false)
+    result_long = Genie.Cookies.get(req, "username", encrypted=false)
+
+    @test result_short == data1
+    @test result_long == data2
+  end
+
   @testset "EDGE: Cookie Name at End of Header" begin
     data = "end-value"
     req = HTTP.Request("GET", "/", ["Cookie" => "first=val1; last=$data"])
@@ -538,6 +550,25 @@
     
     result = Genie.Cookies.get(res, "mixed_case", encrypted=false)
     @test result == "mixed_value"
+  end
+
+  @testset "SET: Cookie with Legacy CamelCase Attributes" begin
+    res = HTTP.Response(200)
+    attrs = Dict(
+      "Path" => "/legacy",
+      "HttpOnly" => true,
+      "SameSite" => "Strict",
+      "MaxAge" => 3600
+    )
+    res = Genie.Cookies.set!(res, "legacy_attrs", "legacy_value", attrs, encrypted=false)
+
+    header = HTTP.header(res, "Set-Cookie")
+    header_lower = lowercase(header)
+
+    @test occursin("path=/legacy", header_lower)
+    @test occursin("httponly", header_lower)
+    @test occursin("samesite=strict", header_lower)
+    @test occursin("max-age=3600", header_lower)
   end
 
   @testset "SET: Cookie with Numeric Value" begin
@@ -1211,6 +1242,747 @@
     # After clear, should be empty
     result_after = Genie.Cookies.get(res_cleared, "GENIE_SESSION", encrypted=false)
     @test result_after == ""
+  end
+
+  # ============================================================================
+  # TYPED GET WITH INVALID VALUES (tryparse) - ROBUSTNESS
+  # ============================================================================
+
+  @testset "ROBUSTNESS: Typed get with Invalid Values (Parse Errors)" begin
+    # Behavior: Parse errors are intentional and propagate.
+    # If a cookie exists but cannot be parsed to the requested type, 
+    # an ArgumentError is raised. This allows developers and security analysts
+    # to detect tampering or misconfiguration.
+    
+    # Scenario 1: Cookie exists with invalid Int value
+    # Throws error when value cannot be parsed
+    req_invalid_int = HTTP.Request("GET", "/", ["Cookie" => "counter=invalid_text"])
+    @test_throws ArgumentError Genie.Cookies.get(req_invalid_int, "counter", 0, encrypted=false)
+
+    # Scenario 2: Cookie exists with valid Int value
+    # Should parse correctly and return 42
+    req_valid_int = HTTP.Request("GET", "/", ["Cookie" => "counter=42"])
+    result_valid_int = Genie.Cookies.get(req_valid_int, "counter", 10, encrypted=false)
+
+    @test result_valid_int == 42
+    @test isa(result_valid_int, Int)
+
+    # Scenario 3: Cookie with invalid Float value
+    # Throws error when value cannot be parsed
+    req_invalid_float = HTTP.Request("GET", "/", ["Cookie" => "temperature=not_a_number"])
+    @test_throws ArgumentError Genie.Cookies.get(req_invalid_float, "temperature", 1.5, encrypted=false)
+    
+    # Scenario 4: Cookie with valid Float value
+    req_valid_float = HTTP.Request("GET", "/", ["Cookie" => "temperature=36.5"])
+    result_valid_float = Genie.Cookies.get(req_valid_float, "temperature", 1.5, encrypted=false)
+
+    @test result_valid_float == 36.5
+    @test isa(result_valid_float, Float64)
+
+    # Scenario 5: Cookie with invalid Bool value
+    # Throws error when value cannot be parsed
+    req_invalid_bool = HTTP.Request("GET", "/", ["Cookie" => "is_admin=maybe"])
+    @test_throws ArgumentError Genie.Cookies.get(req_invalid_bool, "is_admin", false, encrypted=false)
+    
+    # Scenario 6: Cookie with valid Bool values
+    req_bool_true = HTTP.Request("GET", "/", ["Cookie" => "is_admin=true"])
+    result_bool_true = Genie.Cookies.get(req_bool_true, "is_admin", false, encrypted=false)
+    @test result_bool_true == true
+    @test isa(result_bool_true, Bool)
+
+    req_bool_false = HTTP.Request("GET", "/", ["Cookie" => "is_admin=false"])
+    result_bool_false = Genie.Cookies.get(req_bool_false, "is_admin", true, encrypted=false)
+    @test result_bool_false == false
+    @test isa(result_bool_false, Bool)
+
+    # Scenario 7: Missing cookie returns default (still works)
+    # A missing cookie is not an error; the default is returned
+    req_missing = HTTP.Request("GET", "/")
+    result_missing_int = Genie.Cookies.get(req_missing, "nonexistent", 99, encrypted=false)
+    result_missing_float = Genie.Cookies.get(req_missing, "nonexistent", 3.14, encrypted=false)
+    result_missing_bool = Genie.Cookies.get(req_missing, "nonexistent", true, encrypted=false)
+
+    @test result_missing_int == 99
+    @test result_missing_float == 3.14
+    @test result_missing_bool == true
+
+    # Scenario 8: Edge case - empty cookie value
+    # Empty string cannot be parsed as Int, throws error
+    req_empty = HTTP.Request("GET", "/", ["Cookie" => "value="])
+    @test_throws ArgumentError Genie.Cookies.get(req_empty, "value", 42, encrypted=false)
+
+    # Scenario 9: Whitespace-only values
+    # Whitespace-only string cannot be parsed as Int, throws error
+    req_whitespace = HTTP.Request("GET", "/", ["Cookie" => "value=   "])
+    @test_throws ArgumentError Genie.Cookies.get(req_whitespace, "value", 77, encrypted=false)
+
+    # Scenario 10: Cookie with leading zeros (valid Int)
+    # Leading zeros are allowed; "0042" parses successfully as 42
+    req_leading_zeros = HTTP.Request("GET", "/", ["Cookie" => "count=0042"])
+    result_leading_zeros = Genie.Cookies.get(req_leading_zeros, "count", 0, encrypted=false)
+    
+    @test result_leading_zeros == 42
+    @test isa(result_leading_zeros, Int)
+  end
+
+  # ============================================================================
+  # CONFIG VALIDATION TESTS (load_cookie_settings!)
+  # ============================================================================
+
+  @testset "CONFIG: Valid cookie_defaults Config" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "samesite" => "lax",
+        "path" => "/",
+        "httponly" => true,
+        "secure" => false
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      # Should succeed without errors
+      @test isa(Genie.config.cookie_defaults, Dict)
+      @test haskey(Genie.config.cookie_defaults, :samesite)
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Parse String max_age to Int64" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "max_age" => "3600"
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      @test Genie.config.cookie_defaults[:maxage] == 3600
+      @test isa(Genie.config.cookie_defaults[:maxage], Int)
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Parse String secure to Bool (true)" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "secure" => "true"
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      @test Genie.config.cookie_defaults[:secure] === true
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Parse String secure to Bool (1)" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "secure" => "1"
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      @test Genie.config.cookie_defaults[:secure] === true
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Parse String httponly to Bool (false)" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "httponly" => "false"
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      @test Genie.config.cookie_defaults[:httponly] === false
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Parse String httponly to Bool (no)" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "httponly" => "no"
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      @test Genie.config.cookie_defaults[:httponly] === false
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Invalid SameSite Mode Throws Error" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "samesite" => "invalid_mode"
+      )
+      
+      @test_throws ArgumentError Genie.Cookies.load_cookie_settings!()
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Invalid max_age (non-numeric String) Throws Error" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "max_age" => "not_a_number"
+      )
+      
+      @test_throws ArgumentError Genie.Cookies.load_cookie_settings!()
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Invalid secure (non-Bool String) Throws Error" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "secure" => "maybe"
+      )
+      
+      @test_throws ArgumentError Genie.Cookies.load_cookie_settings!()
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Invalid httponly (non-Bool String) Throws Error" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "httponly" => "kind_of"
+      )
+      
+      @test_throws ArgumentError Genie.Cookies.load_cookie_settings!()
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Unknown Attribute Throws Error" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "foo_bar" => "invalid"
+      )
+      
+      @test_throws ArgumentError Genie.Cookies.load_cookie_settings!()
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Invalid Path (doesn't start with /) Throws Error" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "path" => "no_leading_slash"
+      )
+      
+      @test_throws ArgumentError Genie.Cookies.load_cookie_settings!()
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Multiple Errors Collected and Thrown Together" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "samesite" => "bad",
+        "max_age" => "xyz",
+        "secure" => "maybe",
+        "unknown_field" => "value"
+      )
+      
+      error_caught = false
+      error_msg = ""
+      try
+        Genie.Cookies.load_cookie_settings!()
+      catch e
+        error_caught = true
+        error_msg = string(e)
+      end
+      
+      @test error_caught
+      @test occursin("samesite", error_msg)
+      @test occursin("max_age", error_msg)
+      @test occursin("secure", error_msg)
+      @test occursin("unknown_field", error_msg)
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: No-op if cookie_defaults not Set" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = nothing
+      
+      # Should not throw
+      Genie.Cookies.load_cookie_settings!()
+      
+      @test Genie.config.cookie_defaults === nothing
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Convert String Keys to Symbol Keys" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "path" => "/app",
+        "samesite" => "lax"
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      @test haskey(Genie.config.cookie_defaults, :path)
+      @test haskey(Genie.config.cookie_defaults, :samesite)
+      @test !haskey(Genie.config.cookie_defaults, "path")
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Numeric max_age already Int stays Int" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "max_age" => 7200
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      @test Genie.config.cookie_defaults[:maxage] == 7200
+      @test isa(Genie.config.cookie_defaults[:maxage], Int)
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Bool secure already Bool stays Bool" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "secure" => true
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      @test Genie.config.cookie_defaults[:secure] === true
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: SameSite String Converted to Enum" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "samesite" => "strict"
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      @test Genie.config.cookie_defaults[:samesite] == HTTP.Cookies.SameSiteStrictMode
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Complex Valid Config with All Types" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "path" => "/api",
+        "domain" => "example.com",
+        "samesite" => "none",
+        "secure" => "yes",
+        "httponly" => "1",
+        "max_age" => "86400",
+        "expires" => "Wed, 09 Jun 2025 10:18:14 GMT"
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      @test Genie.config.cookie_defaults[:path] == "/api"
+      @test Genie.config.cookie_defaults[:domain] == "example.com"
+      @test Genie.config.cookie_defaults[:samesite] == HTTP.Cookies.SameSiteNoneMode
+      @test Genie.config.cookie_defaults[:secure] === true
+      @test Genie.config.cookie_defaults[:httponly] === true
+      @test Genie.config.cookie_defaults[:maxage] == 86400
+      @test Genie.config.cookie_defaults[:expires] == "Wed, 09 Jun 2025 10:18:14 GMT"
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  # ============================================================================
+  # DOMAIN PROCESSING TESTS (Normalization & Validation)
+  # ============================================================================
+
+  @testset "CONFIG: Domain Trim and Lowercase" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict("domain" => "  EXAMPLE.COM  ")
+      Genie.Cookies.load_cookie_settings!()
+      @test Genie.config.cookie_defaults[:domain] == "example.com"
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Domain Invalid Type Throws Error" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict("domain" => 123)
+      @test_throws ArgumentError Genie.Cookies.load_cookie_settings!()
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Malformed Domain Throws Error" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict("domain" => "bad domain.com")
+      @test_throws ArgumentError Genie.Cookies.load_cookie_settings!()
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "SET: Domain Default Propagates To Set-Cookie Header" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict("domain" => "EXAMPLE.COM")
+      Genie.Cookies.load_cookie_settings!()
+
+      res = HTTP.Response(200)
+      res = Genie.Cookies.set!(res, "domained", "value", encrypted=false)
+      header = HTTP.header(res, "Set-Cookie")
+      @test occursin("domain=example.com", lowercase(header))
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "CONFIG: Domain Leading Dot Preserved and Lowercased" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict("domain" => "  .EXAMPLE.COM  ")
+      Genie.Cookies.load_cookie_settings!()
+      @test Genie.config.cookie_defaults[:domain] == ".example.com"
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "SET: Domain Attribute Override Propagates" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict("domain" => "example.com")
+      Genie.Cookies.load_cookie_settings!()
+
+      res = HTTP.Response(200)
+      res = Genie.Cookies.set!(res, "over", "v", Dict("domain" => "Other.COM"), encrypted=false)
+      header = HTTP.header(res, "Set-Cookie")
+      @test occursin("domain=other.com", lowercase(header))
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "SET: Reject Malformed Domain on set!" begin
+    res = HTTP.Response(200)
+    @test_throws ArgumentError Genie.Cookies.set!(res, "bad", "v", Dict("domain" => "bad domain.com"), encrypted=false)
+  end
+
+  @testset "SET: Reject Domain with Port on set!" begin
+    res = HTTP.Response(200)
+    @test_throws ArgumentError Genie.Cookies.set!(res, "badport", "v", Dict("domain" => "example.com:8080"), encrypted=false)
+  end
+
+  @testset "SET: Accept Localhost Domain" begin
+    res = HTTP.Response(200)
+    res = Genie.Cookies.set!(res, "local", "v", Dict("domain" => "localhost"), encrypted=false)
+    header = HTTP.header(res, "Set-Cookie")
+    @test occursin("domain=localhost", lowercase(header))
+  end
+
+  # ============================================================================
+  # EXPIRES PROCESSING TESTS (Comprehensive)
+  # ============================================================================
+
+  @testset "EXPIRES: Valid RFC 2822 Format String" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "expires" => "Wed, 09 Jun 2025 10:18:14 GMT"
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      @test Genie.config.cookie_defaults[:expires] == "Wed, 09 Jun 2025 10:18:14 GMT"
+      @test isa(Genie.config.cookie_defaults[:expires], String)
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "EXPIRES: Valid ISO 8601 Format String" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "expires" => "2025-06-09T10:18:14Z"
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      @test Genie.config.cookie_defaults[:expires] == "2025-06-09T10:18:14Z"
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "EXPIRES: Unix Timestamp as String" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "expires" => "1747483094"
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      @test Genie.config.cookie_defaults[:expires] == "1747483094"
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "EXPIRES: Empty String (Edge Case)" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "expires" => ""
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      @test Genie.config.cookie_defaults[:expires] == ""
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "EXPIRES: Invalid Type (Integer) Throws Error" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "expires" => 1747483094
+      )
+      
+      @test_throws ArgumentError Genie.Cookies.load_cookie_settings!()
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "EXPIRES: Invalid Type (Bool) Throws Error" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "expires" => true
+      )
+      
+      @test_throws ArgumentError Genie.Cookies.load_cookie_settings!()
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "EXPIRES: Invalid Type (Array) Throws Error" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "expires" => ["Wed", "09", "Jun"]
+      )
+      
+      @test_throws ArgumentError Genie.Cookies.load_cookie_settings!()
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+
+
+  @testset "EXPIRES: Combined with max_age (Both Set)" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "max_age" => "3600",
+        "expires" => "Thu, 01 Jan 2026 00:00:00 GMT"
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      @test Genie.config.cookie_defaults[:maxage] == 3600
+      @test Genie.config.cookie_defaults[:expires] == "Thu, 01 Jan 2026 00:00:00 GMT"
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "EXPIRES: Special Characters (URL-encoded)" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "expires" => "Wed%2C+09+Jun+2025+10%3A18%3A14+GMT"
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      @test Genie.config.cookie_defaults[:expires] == "Wed%2C+09+Jun+2025+10%3A18%3A14+GMT"
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  @testset "EXPIRES: With All Cookie Attributes" begin
+    original_config = Genie.config.cookie_defaults
+    try
+      Genie.config.cookie_defaults = Dict(
+        "path" => "/api",
+        "domain" => "example.com",
+        "samesite" => "lax",
+        "secure" => true,
+        "httponly" => true,
+        "max_age" => "86400",
+        "expires" => "Thu, 01 Jan 2026 00:00:00 GMT"
+      )
+      
+      Genie.Cookies.load_cookie_settings!()
+      
+      # All should be processed and stored
+      @test Genie.config.cookie_defaults[:path] == "/api"
+      @test Genie.config.cookie_defaults[:domain] == "example.com"
+      @test Genie.config.cookie_defaults[:samesite] == HTTP.Cookies.SameSiteLaxMode
+      @test Genie.config.cookie_defaults[:secure] === true
+      @test Genie.config.cookie_defaults[:httponly] === true
+      @test Genie.config.cookie_defaults[:maxage] == 86400
+      @test Genie.config.cookie_defaults[:expires] == "Thu, 01 Jan 2026 00:00:00 GMT"
+    finally
+      Genie.config.cookie_defaults = original_config
+    end
+  end
+
+  # ============================================================================
+  # SPA & MODERN WEB COMPATIBILITY TESTS
+  # ============================================================================
+
+  @testset "SPA: Auto-Secure enforcement for SameSite=None" begin
+    # Scenario: Developer configures SameSite=None (for CORS/SPA) but forgets Secure.
+    # Genie should auto-enforce this to prevent browser rejection.
+    
+    res = HTTP.Response(200)
+    # Note: Not explicitly passing 'secure'
+    attrs = Dict("samesite" => "none", "path" => "/") 
+    
+    res = Genie.Cookies.set!(res, "spa_session", "xyz", attrs, encrypted=false)
+    header = lowercase(HTTP.header(res, "Set-Cookie"))
+    
+    # Verify Secure flag was auto-added
+    @test occursin("secure", header)
+    @test occursin("samesite=none", header)
+  end
+
+  @testset "SPA: Logout Pattern (Max-Age=0)" begin
+    # Scenario: SPAs frequently perform logout by setting max-age=0.
+    # HTTP.jl may ignore max-age=0, so we convert it to an expires date in the past
+    # (Unix epoch: 1970) to ensure browsers recognize cookie invalidation.
+    
+    res = HTTP.Response(200)
+    
+    # Test with Int(0)
+    res = Genie.Cookies.set!(res, "logout_int", "", Dict("max_age" => 0), encrypted=false)
+    
+    # Test with String("0")
+    res = Genie.Cookies.set!(res, "logout_str", "", Dict("max_age" => "0"), encrypted=false)
+    
+    # Helper function to check if cookie is properly invalidated
+    function check_cookie_invalidation(response, cookie_name)
+      for (name, val) in HTTP.headers(response)
+        if name == "Set-Cookie" && occursin(cookie_name, val)
+          val_lower = lowercase(val)
+          # Check if expires is set to 1970 (standard logout pattern)
+          if occursin("jan 1970", val_lower) || occursin("1970", val_lower)
+            return true
+          end
+        end
+      end
+      return false
+    end
+
+    # 1. Verify cookie values are set to empty string
+    @test Genie.Cookies.get(res, "logout_int", encrypted=false) == ""
+    @test Genie.Cookies.get(res, "logout_str", encrypted=false) == ""
+
+    # 2. Verify browser receives invalidation signal (Expires in 1970)
+    @test check_cookie_invalidation(res, "logout_int") == true
+    @test check_cookie_invalidation(res, "logout_str") == true
+  end
+
+  @testset "INTEGRATION: set! uses Loaded Config Defaults" begin
+    # Scenario: User defines global defaults in Genie.config
+    # and calls set! without extra attributes. Cookie should inherit defaults.
+    
+    original_defaults = Genie.config.cookie_defaults
+    
+    try
+      # 1. Configure global defaults
+      Genie.config.cookie_defaults = Dict(
+        "httponly" => true,
+        "path" => "/app",
+        "samesite" => "lax"
+      )
+      
+      # 2. Process (initial load)
+      Genie.Cookies.load_cookie_settings!()
+      
+      # 3. Create cookie without extra attributes
+      res = HTTP.Response(200)
+      res = Genie.Cookies.set!(res, "default_cookie", "val", encrypted=false)
+      
+      header = lowercase(HTTP.header(res, "Set-Cookie"))
+      
+      # 4. Verify all defaults were inherited
+      @test occursin("httponly", header)
+      @test occursin("path=/app", header)
+      @test occursin("samesite=lax", header)
+      
+    finally
+      Genie.config.cookie_defaults = original_defaults
+    end
   end
 
 end

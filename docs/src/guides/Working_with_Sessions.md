@@ -1,644 +1,263 @@
 # Working with Sessions
 
-Sessions are a crucial part of web application development, allowing you to maintain state across multiple requests from the same user. Genie provides comprehensive session management through the **GenieSession.jl** plugin, which builds on Genie's encrypted cookie infrastructure.
+Sessions are crucial for maintaining user state across multiple HTTP requests (like keeping a user logged in or maintaining a shopping cart). Genie provides robust session management through the **GenieSession.jl** plugin, built on top of the secure `Genie.Cookies` infrastructure.
 
 ## What are Sessions?
 
-A **session** is a way to store user-specific data on the server and maintain it across multiple HTTP requests. Unlike cookies, which are stored on the client, sessions keep data secure on the server and use encrypted cookies only as a transport mechanism.
+A **session** stores user-specific data **on the server**. Unlike cookies, which store data in the client's browser, sessions keep the actual data secure on the backend and use an encrypted cookie (`__geniesid`) only as a transport key.
 
-### Sessions vs Cookies
+### Sessions vs. Cookies
 
 | Aspect | Cookies | Sessions |
-|--------|---------|----------|
-| **Storage** | Client-side browser | Server-side storage |
-| **Security** | Limited (can be encrypted) | High (data never leaves server) |
-| **Size** | ~4KB limit | Unlimited (limited by storage) |
-| **Data Type** | Strings | Any Julia object |
-| **Use Case** | Preferences, tracking | User auth, sensitive data |
+|---|---|---|
+| **Storage** | Client Browser | Server (Memory/File/DB) |
+| **Security** | Medium (can be stolen/read if not careful) | High (data never leaves the server) |
+| **Size Limit** | ~4KB | Unlimited (depends on server storage) |
+| **Data Type** | Strings only | Any Julia object (Dicts, Structs, Arrays) |
+| **Best For** | UI preferences, opaque IDs | User Authentication, sensitive data |
 
-### How Sessions Work in Genie
+---
 
-1. User data is stored in a session object on the server
-2. A unique session ID is generated
-3. The session ID is encrypted and sent to the client as a cookie
-4. On subsequent requests, the client sends the encrypted session ID
-5. Genie decrypts the ID and retrieves the session from storage
-6. After the request completes, the session is persisted back to storage
+## Configuration & Installation
 
-## Getting Started with GenieSession
+### 1. Installation
 
-### Installation
-
-GenieSession is added to your Genie app's test dependencies by default. To use it in your app:
+GenieSession is usually included in standard Genie app templates. If you need to add it manually:
 
 ```julia
 using Pkg
 Pkg.add("GenieSession")
+# For persistent file storage (Recommended for Production)
+Pkg.add("GenieSessionFileSession") 
 ```
 
-### Basic Configuration
+### 2. Global Security Configuration
 
-In your Genie app, GenieSession requires:
+Thanks to the integration with Genie's Cookie system, you **do not** need to configure low-level cookie options (like `HttpOnly` or `Secure`) inside the session code. The session automatically inherits the global defaults defined in your `config/env/*.jl`.
 
-1. **A secret token** for encryption:
-```julia
-# config/secrets.jl or config/env/production.jl
-Genie.Secrets.secret_token!("your-long-random-secret-key-here")
-```
-
-2. **A storage adapter** (file-based by default):
-```julia
-# Import GenieSession to activate its default adapter
-using GenieSession
-```
-
-For file-based persistent storage:
-```julia
-using GenieSession
-using GenieSessionFileSession
-```
-
-## Session Basics
-
-### Setting Session Data
+**Recommended Setup (`config/env/prod.jl`):**
 
 ```julia
-using GenieSession
+using Genie
 
-# Get the current session (created if it doesn't exist)
-session = Genie.Router.params(:session)
-
-# Set session data
-GenieSession.set!(session, :user_id, 42)
-GenieSession.set!(session, :username, "alice")
-GenieSession.set!(session, :preferences, Dict("theme" => "dark"))
-```
-
-### Retrieving Session Data
-
-```julia
-# Get a value
-user_id = GenieSession.get(session, :user_id)  # Returns 42
-
-# Get with a default value
-theme = GenieSession.get(session, :theme, "light")  # Returns "light" if not set
-
-# Check if a key exists
-if GenieSession.isset(session, :user_id)
-    println("User is logged in")
-end
-```
-
-### Modifying and Removing Data
-
-```julia
-# Update a value
-GenieSession.set!(session, :page_views, 5)
-GenieSession.set!(session, :page_views, 6)  # Overwrites previous value
-
-# Remove a value
-GenieSession.unset!(session, :preferences)
-
-# Check after removal
-GenieSession.isset(session, :preferences)  # Returns false
-```
-
-## Working with Complex Data
-
-Sessions can store any Julia object, making them perfect for complex data structures:
-
-```julia
-# Store nested structures
-user_data = Dict(
-    "id" => 1,
-    "profile" => Dict(
-        "name" => "Alice",
-        "email" => "alice@example.com",
-        "preferences" => ["dark_mode", "notifications"]
-    )
+# Session cookies will obey these rules automatically:
+Genie.config.cookie_defaults = Dict(
+  "httponly" => true,      # Essential: JS cannot read the session ID
+  "secure"   => true,      # Force HTTPS
+  "samesite" => "strict",  # Maximum CSRF protection
+  "maxage"   => 2592000    # Session valid for 30 days
 )
 
-GenieSession.set!(session, :user_data, user_data)
-
-# Retrieve and access
-data = GenieSession.get(session, :user_data)
-println(data["profile"]["name"])  # "Alice"
-
-# Store collections
-cart = [
-    Dict("product_id" => 101, "quantity" => 2),
-    Dict("product_id" => 102, "quantity" => 1)
-]
-
-GenieSession.set!(session, :cart, cart)
+# Mandatory: Secret token to encrypt the session ID
+Genie.Secrets.secret_token!("your-generated-secret-token-here")
 ```
 
-## Session Storage Adapters
+> **Note:** If you are building an API for an SPA on a different domain (CORS), use `samesite => "none"` and `secure => true`.
 
-GenieSession's power comes from its pluggable adapter system. Different adapters allow you to store sessions in different places.
+### 3. Choosing a Storage Adapter
 
-### In-Memory Sessions (Development)
+In your main app file (`src/App.jl` or `bootstrap.jl`):
 
-Perfect for development and testing:
-
+**Option A: In-Memory (Development)**
+Fast, but data is lost if the server restarts.
 ```julia
-# Default in-memory storage
 using GenieSession
 ```
 
-**Pros:**
-- Fast (no I/O)
-- Perfect for testing
-- No dependencies
-
-**Cons:**
-- Sessions lost on server restart
-- Not suitable for production
-- Single-server only
-
-### File-Based Sessions (Production)
-
-For persistent, scalable storage:
-
+**Option B: File System (Production)**
+Persistent and robust.
 ```julia
 using GenieSession
 using GenieSessionFileSession
 
-# Configure storage location (optional)
-GenieSessionFileSession.sessions_path("/var/sessions")
+# Optional: Custom path
+GenieSessionFileSession.sessions_path("storage/sessions")
 ```
 
-**Pros:**
-- Persistent across restarts
-- Works across multiple servers (with shared filesystem)
-- No database required
+---
 
-**Cons:**
-- Slower than in-memory
-- Requires filesystem access
-- Not suitable for distributed setups without shared storage
+## Basic Usage
 
-### Implementing Custom Adapters
+### Accessing and Modifying Data
 
-You can implement your own adapter by defining two functions:
+The `session` object is retrieved via request parameters. If it doesn't exist, Genie creates a new one automatically.
 
 ```julia
-# Load a session from your storage backend
-function GenieSession.load(session_id::String) :: GenieSession.Session
-    # Try to load from your storage
-    # If not found, return a new session
-    if session_in_storage(session_id)
-        return retrieve_from_storage(session_id)
-    else
-        return GenieSession.Session(session_id)
-    end
+using Genie, GenieSession
+
+route("/cart/add") do
+  # Retrieve current session
+  session = Genie.Router.params(:session)
+
+  # Write data (key, value)
+  GenieSession.set!(session, :product_id, 101)
+  GenieSession.set!(session, :qty, 5)
+
+  "Product added"
 end
 
-# Persist a session to your storage backend
-function GenieSession.persist(s::GenieSession.Session) :: GenieSession.Session
-    # Save the session to your storage
-    save_to_storage(s)
-    return s
-end
+route("/cart/view") do
+  session = Genie.Router.params(:session)
 
-# Router hook signature (for Genie.Router integration)
-function GenieSession.persist(req::HTTP.Request, res::HTTP.Response, params::Dict{Symbol,Any})
-    if haskey(params, GenieSession.PARAMS_SESSION_KEY)
-        session = params[GenieSession.PARAMS_SESSION_KEY]
-        GenieSession.persist(session)
-    end
-    return req, res, params
-end
-```
-
-Example: Database Adapter
-
-```julia
-using SearchLight
-
-function GenieSession.load(session_id::String) :: GenieSession.Session
-    session_data = SessionModel |> (s -> s.id == session_id) |> findone
-    
-    if session_data !== nothing
-        # Deserialize data from database
-        return GenieSession.Session(session_id, session_data.data)
-    else
-        return GenieSession.Session(session_id)
-    end
-end
-
-function GenieSession.persist(s::GenieSession.Session) :: GenieSession.Session
-    session_model = SessionModel(id=s.id, data=s.data)
-    save(session_model)
-    return s
-end
-```
-
-## Real-World Patterns
-
-### User Login Flow
-
-```julia
-# In your login handler
-function handle_login()
-    user = authenticate_user(username, password)
-    
-    if user !== nothing
-        session = Genie.Router.params(:session)
-        
-        # Store user information
-        GenieSession.set!(session, :user_id, user.id)
-        GenieSession.set!(session, :username, user.username)
-        GenieSession.set!(session, :is_authenticated, true)
-        
-        # Session is automatically persisted by Genie.Router
-    else
-        return error_response(401, "Invalid credentials")
-    end
-end
-
-# In protected routes
-function protected_route()
-    session = Genie.Router.params(:session)
-    
-    if !GenieSession.isset(session, :is_authenticated)
-        return redirect_to_login()
-    end
-    
-    user_id = GenieSession.get(session, :user_id)
-    # ... handle authenticated request
-end
-```
-
-### Shopping Cart Management
-
-```julia
-# Add to cart
-function add_to_cart(product_id, quantity)
-    session = Genie.Router.params(:session)
-    
-    cart = GenieSession.get(session, :cart, [])
-    
-    # Check if product already in cart
-    existing = findfirst(item -> item["product_id"] == product_id, cart)
-    
-    if existing !== nothing
-        cart[existing]["quantity"] += quantity
-    else
-        push!(cart, Dict("product_id" => product_id, "quantity" => quantity))
-    end
-    
-    GenieSession.set!(session, :cart, cart)
-    json("Cart updated")
-end
-
-# Checkout
-function checkout()
-    session = Genie.Router.params(:session)
-    cart = GenieSession.get(session, :cart, [])
-    
-    if isempty(cart)
-        return error_response(400, "Cart is empty")
-    end
-    
-    # Process order...
-    
-    # Clear cart
-    GenieSession.unset!(session, :cart)
-end
-```
-
-### User Preferences
-
-```julia
-function update_preferences()
-    session = Genie.Router.params(:session)
-    
-    prefs = Dict(
-        "theme" => "dark",
-        "language" => "en",
-        "notifications_enabled" => true,
-        "items_per_page" => 20
-    )
-    
-    GenieSession.set!(session, :preferences, prefs)
-    json("Preferences saved")
-end
-
-function get_preferences()
-    session = Genie.Router.params(:session)
-    
-    prefs = GenieSession.get(session, :preferences, Dict())
-    json(prefs)
-end
-```
-
-### Multi-Step Forms
-
-```julia
-function step1_form()
-    session = Genie.Router.params(:session)
-    
-    # Store step 1 data
-    form_data = GenieSession.get(session, :form_data, Dict())
-    form_data["step1"] = @params
-    
-    GenieSession.set!(session, :form_data, form_data)
-    
-    redirect("/step2")
-end
-
-function step2_form()
-    session = Genie.Router.params(:session)
-    
-    # Retrieve and display previous data
-    form_data = GenieSession.get(session, :form_data, Dict())
-    
-    # Store step 2 data
-    form_data["step2"] = @params
-    GenieSession.set!(session, :form_data, form_data)
-    
-    redirect("/step3")
-end
-
-def submit_form()
-    session = Genie.Router.params(:session)
-    
-    # Get complete form data
-    form_data = GenieSession.get(session, :form_data)
-    
-    # Process submission...
-    
-    # Clear session data
-    GenieSession.unset!(session, :form_data)
-end
-```
-
-## Session Lifecycle
-
-### Creation
-
-A session is automatically created when first accessed:
-
-```julia
-# In any route handler
-session = Genie.Router.params(:session)  # Created if doesn't exist
-
-# A unique session ID is generated and encrypted cookie is set
-```
-
-### Usage Across Requests
-
-```
-Request 1: POST /login
-  └─ Session created with user_id=42
-  └─ Encrypted session ID sent as cookie
-
-Request 2: GET /dashboard  
-  └─ Browser sends encrypted session ID cookie
-  └─ Genie decrypts and loads session
-  └─ Access user_id from session
-  └─ Session updated if modified
+  # Read data (with default value if missing)
+  qty = GenieSession.get(session, :qty, 0)
   
-Request 3: GET /profile
-  └─ Browser sends same encrypted session ID
-  └─ Session persisted across requests
-```
-
-### Logout / Clearing Sessions
-
-```julia
-function logout()
-    session = Genie.Router.params(:session)
-    
-    # Option 1: Clear specific data
-    GenieSession.unset!(session, :user_id)
-    GenieSession.unset!(session, :is_authenticated)
-    
-    # Option 2: Clear entire session (implementation-dependent)
-    # This would be handled by your storage adapter
-    
-    redirect("/login")
+  "You have $qty items"
 end
 ```
 
-## Router Integration & Hooks
-
-Genie automatically manages session persistence through the Router hook mechanism. Here's what happens behind the scenes:
-
-### Automatic Persistence
+### Removing Data
 
 ```julia
-# When you modify a session:
-GenieSession.set!(session, :data, value)
+# Remove a specific key
+GenieSession.unset!(session, :product_id)
 
-# Genie.Router automatically calls after each request:
-GenieSession.persist(request, response, params)
-
-# This delegates to your adapter's persist function
-```
-
-### Hook Signature
-
-The Router calls persist with this exact signature:
-
-```julia
-function GenieSession.persist(
-    req::HTTP.Request,
-    res::HTTP.Response,
-    params::Dict{Symbol,Any}
-) :: Tuple{HTTP.Request, HTTP.Response, Dict{Symbol,Any}}
-    
-    # Extract session from params
-    # Persist to storage
-    # Return unchanged request, response, params
-    
-    return req, res, params
+# Check if key exists
+if GenieSession.isset(session, :product_id)
+  # ...
 end
 ```
 
-### How to Implement
+---
 
-When creating a custom adapter, implement both signatures:
+## User Authentication
+
+The most common use case for sessions is Authentication. The Genie community uses the **`GenieAuthentication.jl`** plugin, which abstracts the complexity of managing user IDs in the session.
+
+### 1. Setup
 
 ```julia
-# For direct programmatic use
-function GenieSession.persist(s::GenieSession.Session) :: GenieSession.Session
-    # Save session
-    return s
-end
-
-# For Router hook use
-function GenieSession.persist(
-    req::HTTP.Request,
-    res::HTTP.Response,
-    params::Dict{Symbol,Any}
-)
-    if haskey(params, GenieSession.PARAMS_SESSION_KEY)
-        GenieSession.persist(params[GenieSession.PARAMS_SESSION_KEY])
-    end
-    return req, res, params
-end
+using GenieAuthentication
+# Adds methods like authenticate(), current_user(), logout(), etc.
 ```
 
-## Best Practices
+### 2. The Login Flow (HTML vs. SPA)
 
-### 1. Security
+The session logic is identical, but the response format differs depending on your frontend.
+
+#### Scenario A: Genie HTML App (Traditional MVC)
+Uses `redirect` and Flash Messages.
 
 ```julia
-# ✅ DO: Store sensitive identifiers
-GenieSession.set!(session, :user_id, user.id)
-
-# ❌ DON'T: Store sensitive data directly
-# DON'T: GenieSession.set!(session, :password, user.password)
-# DON'T: GenieSession.set!(session, :credit_card, "4111111111111111")
-
-# ✅ DO: Validate session data on each request
-function get_user_from_session()
-    session = Genie.Router.params(:session)
-    user_id = GenieSession.get(session, :user_id)
+route("/login", method = POST) do
+  user = findone(User, username = params(:username))
+  
+  if !isnothing(user) && verify_password(user.password, params(:password))
+    # Securely stores User ID in session
+    authenticate(user.id, GenieSession.session(params()))
     
-    # Verify user still exists and is valid
-    user = User |> (u -> u.id == user_id) |> findone
-    
-    return user
+    return redirect(:dashboard)
+  end
+  
+  flash("Invalid username or password")
+  redirect(:login_page)
 end
 ```
 
-### 2. Performance
+#### Scenario B: SPA API (React / Vue / Quasar)
+Uses JSON responses. The browser handles the cookie automatically.
 
 ```julia
-# ✅ DO: Store only necessary data
-# ✅ DO: Use IDs instead of full objects when possible
-GenieSession.set!(session, :user_id, 42)  # Good
-
-# ❌ DON'T: Store large objects
-# User = load_full_user_with_all_relationships()
-# GenieSession.set!(session, :user, user)  # Bad
-
-# ✅ DO: Clean up old sessions
-# Implement session garbage collection in your adapter
-```
-
-### 3. Data Organization
-
-```julia
-# ✅ DO: Organize related data together
-user_context = Dict(
-    "id" => user.id,
-    "role" => user.role,
-    "permissions" => user.permissions
-)
-GenieSession.set!(session, :user, user_context)
-
-# ❌ DON'T: Scatter related data across session
-GenieSession.set!(session, :user_id, user.id)
-GenieSession.set!(session, :user_role, user.role)
-GenieSession.set!(session, :user_permissions, user.permissions)
-```
-
-### 4. Expiration Strategy
-
-```julia
-# Track session creation/access time
-GenieSession.set!(session, :created_at, now())
-GenieSession.set!(session, :last_activity, now())
-
-# Implement timeout in your adapter
-function GenieSession.load(session_id::String)
-    session = load_from_storage(session_id)
+route("/api/login", method = POST) do
+  user = findone(User, username = params(:username))
+  
+  if !isnothing(user) && verify_password(user.password, params(:password))
+    # 1. Authenticate in Session (Server-Side)
+    authenticate(user.id, GenieSession.session(params()))
     
-    if session !== nothing
-        last_activity = GenieSession.get(session, :last_activity)
-        
-        # 30 minute timeout
-        if now() - last_activity > Minute(30)
-            delete_from_storage(session_id)
-            return GenieSession.Session(session_id)
-        end
-    end
-    
-    return session
+    # 2. Return JSON (The __geniesid cookie is in the Set-Cookie header)
+    return json(Dict("status" => "success", "user" => user.name))
+  end
+  
+  json(Dict("error" => "Invalid credentials"), status=401)
 end
 ```
 
-### 5. Testing Sessions
+### 3. Logging Out
+
+The `logout` function removes the user ID from the session and handles cookie invalidation.
 
 ```julia
-using Test
-using GenieSession
-
-@testset "Session Tests" begin
-    # Create a session for testing
-    session = GenieSession.Session("test_id")
-    
-    @testset "Setting and getting data" begin
-        GenieSession.set!(session, :test_key, "test_value")
-        @test GenieSession.get(session, :test_key) == "test_value"
-    end
-    
-    @testset "Complex data structures" begin
-        data = Dict("nested" => Dict("value" => 42))
-        GenieSession.set!(session, :complex, data)
-        @test GenieSession.get(session, :complex)["nested"]["value"] == 42
-    end
-    
-    @testset "Default values" begin
-        val = GenieSession.get(session, :nonexistent, "default")
-        @test val == "default"
-    end
+route("/logout", method = POST) do
+  # Removes user from current session
+  logout(GenieSession.session(params()))
+  
+  json(Dict("status" => "logged_out"))
 end
 ```
 
-## Troubleshooting
+---
 
-### Session Data Not Persisting
+## Flash Messages
 
-1. Check that your storage adapter's `persist()` function is implemented
-2. Verify the storage location is writable (for file-based sessions)
-3. Ensure the secret token is configured
+Flash messages are temporary messages stored in the session that persist only until the **next request** (perfect for "Login Successful" or "Save Failed").
 
 ```julia
-# Debug session persistence
-session = Genie.Router.params(:session)
-GenieSession.set!(session, :debug, true)
-println("Session ID: $(session.id)")
-println("Session data: $(session.data)")
-```
+using GenieSession.Flash
 
-### Session ID Changes on Each Request
+route("/process") do
+  # Set the message
+  flash("Operation completed successfully!")
+  redirect("/")
+end
 
-This usually means the session isn't being loaded correctly:
-
-```julia
-# Check your load() adapter implementation
-# It should return the SAME session for the same ID
-
-function GenieSession.load(session_id::String)
-    # This must return a session with matching ID
-    existing = get_from_storage(session_id)
-    
-    if existing !== nothing
-        return existing  # Same session
-    else
-        return GenieSession.Session(session_id)  # New session
-    end
+route("/") do
+  # Read the message (it is automatically cleared after reading)
+  msg = flash() 
+  
+  "System Message: $msg"
 end
 ```
 
-### Sessions Lost After Restart
+**Note for SPAs:** Flash messages are rarely useful for SPAs (React/Vue), as the frontend usually displays notifications based on the immediate JSON response rather than reading from a redirected session state.
 
-If using in-memory sessions (default in development), sessions are lost when the server restarts. For persistent storage, use `GenieSessionFileSession`:
+---
+
+## Storing Complex Data
+
+Because sessions live on the server, you can store complex Julia structures (Nested Dicts, Arrays, Custom Structs) without worrying about JSON serialization limits or cookie size constraints.
 
 ```julia
-using GenieSession
-using GenieSessionFileSession
+# Example: Multi-step Wizard
+route("/step1", method=POST) do
+  session = GenieSession.session(params())
+  
+  complex_data = Dict(
+    "user" => Dict("name" => "Alice", "roles" => ["admin", "editor"]),
+    "history" => [10, 20, 30],
+    "timestamp" => now()
+  )
+  
+  GenieSession.set!(session, :wizard_data, complex_data)
+  json("Saved")
+end
 ```
 
-## Related Resources
+---
 
-- [GenieSession.jl GitHub](https://github.com/GenieFramework/GenieSession.jl)
-- [Working with Cookies](Working_with_Cookies.md) - Learn about cookies and encryption
-- [Router Documentation](../API/router.md) - Understanding Genie's Router
-- [Genie Security](../API/encryption.md) - Security best practices
+## Common Troubleshooting
 
+### "Session is lost on every request"
+1.  Check if the browser is accepting cookies.
+2.  **Development Environment:** If accessing via IP (`192.168.x.x`) and your config has `secure => true`, the browser will block the cookie. Set `secure => false` in `config/env/dev.jl`.
+3.  **Cross-Domain (CORS):** If your frontend is on `localhost:8080` and Genie on `localhost:8000`, you **must** configure:
+    ```julia
+    Genie.config.cookie_defaults = Dict(
+      "samesite" => "none",
+      "secure" => true
+    )
+    ```
+
+### "Error: InvalidSessionIdException"
+You forgot to configure the secret token. Add this to `config/secrets.jl`:
+```julia
+Genie.Secrets.secret_token!("your-secret-key-here")
+```
+
+---
+
+## Next Steps
+
+- [Cookie Configuration](Working_with_Cookies_Configuration.md) - Define global security policies.
+- [Cookie Security](Working_with_Cookies_Security.md) - Learn about XSS/CSRF protection.
+- [GenieAuthentication API](https://github.com/GenieFramework/GenieAuthentication.jl) - Official documentation for the auth plugin.

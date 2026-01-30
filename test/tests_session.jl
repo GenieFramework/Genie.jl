@@ -171,6 +171,60 @@ end
         @test val2 == "actual_value"
     end
 
+    @testset "Legacy CamelCase Attribute Keys (GenieSession Compatibility)" begin
+        # GenieSession historically uses CamelCase keys like "MaxAge" and "HttpOnly"
+        # The helper functions must normalize these to work with HTTP.Cookies
+        res = HTTP.Response()
+        
+        # Emulate exactly what GenieSession.start() does:
+        # It passes "MaxAge" (no hyphen), "HttpOnly" (CamelCase)
+        legacy_options = Dict{String,Any}(
+            "Path" => "/app",
+            "HttpOnly" => true,
+            "SameSite" => "Strict",
+            "MaxAge" => 3600  # Note: GenieSession uses "MaxAge", standard is "Max-Age"
+        )
+        
+        Genie.Cookies.set!(res, "session_test", "data", legacy_options, encrypted=true)
+        
+        header = HTTP.header(res, "Set-Cookie")
+        header_lower = lowercase(header)
+        
+        # Verify attributes were recognized and properly normalized in header
+        @test contains(header_lower, "httponly")
+        @test contains(header_lower, "path=/app")
+        @test contains(header_lower, "samesite=strict")
+        @test contains(header_lower, "max-age=3600")  # Must normalize "MaxAge" -> "max-age"
+    end
+
+    @testset "Flash Message Integration with GenieSession" begin
+        # Flash messages are a GenieSession feature for one-time notifications
+        # They rely on the session object to persist data across the set! call
+        sid = GenieSession.id()
+        s = GenieSession.Session(sid)
+        
+        # Simulate setting a flash message
+        # GenieSession.Flash.flash("Login failed") internally calls:
+        # GenieSession.set!(session, :__flash, message)
+        GenieSession.set!(s, :__flash, "Login failed")
+        GenieSession.persist(s)
+        
+        # New request loads session
+        s_loaded = GenieSession.load(sid)
+        flash_msg = GenieSession.get(s_loaded, :__flash)
+        
+        # Verify flash message persisted correctly
+        @test flash_msg == "Login failed"
+        
+        # Simulate clearing the flash after it's been displayed
+        GenieSession.unset!(s_loaded, :__flash)
+        GenieSession.persist(s_loaded)
+        
+        # Next request should have no flash
+        s_reloaded = GenieSession.load(sid)
+        @test GenieSession.isset(s_reloaded, :__flash) == false
+    end
+
 end
 
 # ==========================================================================
