@@ -55,7 +55,7 @@
   @test response.status == 200
   @test String(response.body) == "[1, 2, 3]"
 
-  @test roundtrip(Dict(:a => "b")).a == "b"
+  @test roundtrip(Dict(:a => "b"))["a"] == "b"
   @test eltype(roundtrip([nothing, 1])) === Union{Int, Nothing}
   @test eltype(roundtrip([nothing])) === Any
 
