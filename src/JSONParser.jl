@@ -9,13 +9,23 @@ else
     OrderedCollections.OrderedDict{String, Any}
 end
 
+const UNDEFINED_PLACEHOLDER = Ref{String}("__undefined__")
+const UNDEFINED_REPLACEMENT = Ref{Any}(nothing)
+const UNDEFINED_TYPE = Ref{DataType}(typeof(UNDEFINED_REPLACEMENT[]))
+
+function set_undefined_replacement(x)
+    UNDEFINED_REPLACEMENT[] = x
+    UNDEFINED_TYPE[] = typeof(x)
+    nothing
+end
+
 @static if isdefined(JSON, :StructUtils)
     JSON.StructUtils.lowerkey(::JSON.JSONWriteStyle, x::Module) = string(x)
 end
 
 @inline typify(x) = x
+typify(x::String) = x == UNDEFINED_PLACEHOLDER[] ? UNDEFINED_REPLACEMENT[] : x
 typify(x::Number) = isinteger(x) && !isa(x, Bool) && typemin(Int) ≤ x ≤ typemax(Int) ? Int(x) : x
-typify!(x::Number) = isinteger(x) && !isa(x, Bool) && typemin(Int) ≤ x ≤ typemax(Int) ? Int(x) : x
 
 # Entry point for JSON objects
 @inline function typify(d::AbstractDict{<:Any, Any})
@@ -28,31 +38,42 @@ end
 end
 
 function typify!(@nospecialize(v))
+    v isa Number && return isinteger(v) && !isa(v, Bool) && typemin(Int) ≤ v ≤ typemax(Int) ? Int(v) : v
+
+    v == UNDEFINED_PLACEHOLDER[] && return UNDEFINED_REPLACEMENT[]
+    
     if v isa AbstractDict{<:Any, Any}
         for (k, val) in v
-            if val isa Vector{Any} || val isa AbstractDict || val isa Vector{<:Number} || val isa Number
+            if val == UNDEFINED_PLACEHOLDER[]
+                v[k] = UNDEFINED_REPLACEMENT[]
+            elseif val isa Vector{Any} || val isa AbstractDict || val isa Vector{<:Number} || val isa Number || val isa Vector{<:AbstractString}
                 v[k] = typify!(val)
             end
         end
-    elseif v isa Vector{Any} || v isa Vector{<:Number}
+    elseif v isa Vector{Any} || v isa Vector{<:Number} || v isa Vector{<:AbstractString}
         # Mutate recursively
-        if Int <: eltype(v)
-            for i in eachindex(v)
-                x = v[i]
-                if x isa Vector{Any} || x isa AbstractDict || x isa Vector{<:Number} || x isa Number
-                    v[i] = typify!(x)
+        for i in eachindex(v)
+            x = v[i]
+            if x == UNDEFINED_PLACEHOLDER[]
+                if ! (UNDEFINED_TYPE[] <: eltype(v))
+                    v = Vector{Any}(v)
                 end
-            end
-        else
-            if all(isinteger, v) && !any(isa.(v, Bool))
-                return convert(Vector{Int}, v)
+                v[i] = UNDEFINED_REPLACEMENT[]
+            elseif x isa Vector{Any} || x isa AbstractDict || x isa Vector{<:Number} || x isa Number || x isa Vector{<:AbstractString}
+                v[i] = typify!(x)
             end
         end
+
+        # if all are Integer and not a single Boolean, return a Vector{Int}
+        if all(Base.Fix2(isa, Number), v) && all(isinteger, v) && !any(isa.(v, Bool))
+            return convert(Vector{Int}, v)
+        end
         # Try to promote element types
-        T = !any(isa.(v, Bool)) ? promote_type(union(map(typeof, v))...) : Any
-        if T != Any
+        T = any(isa.(v, Bool)) ? Any : promote_type(union(map(typeof, v))...)
+        # don't convert to promotetype if T is Any or UNDEFINED_TYPE
+        if T !== Any && (T !== UNDEFINED_TYPE[] || any(UNDEFINED_REPLACEMENT[] .!= v))
             try
-                return convert(Vector{T}, v)
+                v = convert(Vector{T}, v)
             catch
             end
         end

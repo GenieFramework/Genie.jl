@@ -11,6 +11,21 @@
     Genie.Requests.jsonpayload("test") |> string
   end
 
+  route("/jsonroundtrip", method = POST) do
+    global json_result = Genie.Requests.jsonpayload()
+    "ok"
+  end
+  
+  function roundtrip(x)
+    global json_result
+    HTTP.request("POST",
+      "http://localhost:$port/jsonroundtrip",
+      [("Content-Type", "application/json")],
+      Genie.JSONParser.json(Dict(:payload => x))
+    )
+    json_result["payload"]
+  end
+
   port = nothing
   port = rand(8500:8900)
 
@@ -39,6 +54,10 @@
 
   @test response.status == 200
   @test String(response.body) == "[1, 2, 3]"
+
+  @test roundtrip(Dict(:a => "b")).a == "b"
+  @test eltype(roundtrip([nothing, 1])) === Union{Int, Nothing}
+  @test eltype(roundtrip([nothing])) === Any
 
   route("/json-error", method = POST) do
     error("500, sorry")
