@@ -56,7 +56,6 @@ https://github.com/GenieFramework/Genie.jl/assets/5058397/627dcda0-bb13-49f9-882
 
 ---
 
-- [**Features of Genie.jl**](#features-of-genie.jl)
 - [**Contributing**](#contributing)
 - [**Special Credits**](#special-credits)
 - [**License**](#license)
@@ -112,7 +111,8 @@ julia> channel("/foo/bar") do
 [WS] /foo/bar => #1 | :foo_bar
 ```
 
-📃 **Templating:** Built-in templates support for `HTML`, `JSON`, `Markdown`, `JavaScript` views.
+📃 **Templating:** Built-in templates support for `HTML`, `JSON`, `Markdown`, `JavaScript` views. 
+   - **Custom Error Layouts:** Configure `Genie.config.error_layout` to wrap 404/500 pages in your application layout (useful for Legal/Privacy links).
 
 🔐 **Authentication:** Easy to add database backed authentication for restricted area of a website.
 
