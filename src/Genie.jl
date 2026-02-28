@@ -107,6 +107,7 @@ function loadapp( path::String = ".";
 
   if isfile(joinpath(path, Genie.BOOTSTRAP_FILE_NAME))
     Revise.includet(context, joinpath(path, Genie.BOOTSTRAP_FILE_NAME))
+    Genie.Cookies.load_cookie_settings!()
     Genie.config.watch && @async Genie.Watch.watch(path)
     autostart && (Core.eval(context, :(up())))
   elseif isfile(joinpath(path, Genie.ROUTES_FILE_NAME)) || isfile(joinpath(path, Genie.APP_FILE_NAME))
@@ -168,6 +169,7 @@ function genie(; context = @__MODULE__) :: Union{Nothing,Sockets.TCPServer}
   EARLYBINDING = Loader.loadenv(context = context)
   Secrets.load(context = context)
   Loader.load(context = context)
+  Genie.Cookies.load_cookie_settings!()
   Genie.config.watch && @async Watch.watch(pwd())
   run(server = EARLYBINDING)
 
