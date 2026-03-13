@@ -104,14 +104,16 @@ Generates the path to an asset file.
 """
 function asset_path(; file::String, host::String = Genie.config.base_path, package::String = "", version::String = "",
                       prefix::String = "assets", type::String = "$(split(file, '.')[end])", path::String = "", min::Bool = false,
-                      ext::String = "$(endswith(file, type) ? "" : ".$type")", skip_ext::Bool = false, query::String = "") :: String
-  endswith(host, '/') ||  (host *= '/')
+                      ext::String = "$(endswith(file, type) ? "" : ".$type")", skip_ext::Bool = false, query::String = ""
+) :: String
+  host = strip(host, '/')  * '/'
   path = strip(path, '/')
   external = external_assets(host)
-  
+  external || startswith(host, '/') || (host = "/$host")
+  package_version = join(filter(!isempty, [package, version]), external ? '@' : '/')
   assetpath = string(
     host,
-    join(filter(!isempty, [join([package, version], external ? '@' : '/'), prefix, type, path, file*(min ? ".min" : "")*(skip_ext ? "" : ext)]), '/'),
+    join(filter(!isempty, [package_version, prefix, type, path, file*(min ? ".min" : "")*(skip_ext ? "" : ext)]), '/'),
     query
   )
   return external ? assetpath : lowercase(assetpath)
