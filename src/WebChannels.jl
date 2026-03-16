@@ -83,6 +83,10 @@ end
 Subscribes a web socket client `ws` to `channel`.
 """
 function subscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelName) :: ChannelClientsCollection
+  # Clean up stale entries from previous connections on this channel so that
+  # disconnected clients (and their handler tasks) do not accumulate on reconnect.
+  unsubscribe_disconnected_clients(channel)
+
   if haskey(CLIENTS, id(ws))
     in(channel, CLIENTS[id(ws)].channels) || push!(CLIENTS[id(ws)].channels, channel)
   else
@@ -123,12 +127,14 @@ end
 Unsubscribes a web socket client `ws` from all the channels.
 """
 function unsubscribe_client(ws::HTTP.WebSockets.WebSocket) :: ChannelClientsCollection
-  if haskey(CLIENTS, id(ws))
-    for channel_id in CLIENTS[id(ws)].channels
-      pop_subscription(id(ws), channel_id)
+  client_id = id(ws)
+  if haskey(CLIENTS, client_id)
+    for channel_id in CLIENTS[client_id].channels
+      pop_subscription(client_id, channel_id)
     end
 
-    delete!(CLIENTS, id(ws))
+    delete_queue!(MESSAGE_QUEUE, client_id)
+    delete!(CLIENTS, client_id)
   end
 
   CLIENTS
@@ -149,7 +155,7 @@ function purge_unnecessary_message_queue()
   active_clients = keys(CLIENTS) |> collect
   for id in keys(MESSAGE_QUEUE) |> collect
     if ! (id in active_clients)
-      delete!(MESSAGE_QUEUE, id)
+      delete_queue!(MESSAGE_QUEUE, id)  # kills the handler task, not just the dict entry
     end
   end
 end
@@ -326,6 +332,8 @@ function message(client::ClientId, msg::String)
       finally
         put!(future, nbytes)
       end
+      # Self-terminate when the socket is closed to avoid orphaned tasks.
+      HTTP.WebSockets.isclosed(ws) && break
     end |> errormonitor
 
     queue, handler

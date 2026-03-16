@@ -1,5 +1,5 @@
 /*
-** channels.js v1.3 // 7th July 2023
+** channels.js v1.4 // 16th March 2026
 ** Author: Adrian Salceanu and contributors // @essenciary
 ** GenieFramework.com // Genie.jl
 */
@@ -74,7 +74,12 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
   WebChannel.processingHandlers = [];
 
   const waitForOpenConnection = (WebChannel) => {
-    return new Promise((resolve, reject) => {
+    // Reuse a single shared promise while a reconnection is in progress to
+    // avoid spawning one interval per queued message (memory leak).
+    if (WebChannel._openConnectionPromise) {
+      return WebChannel._openConnectionPromise;
+    }
+    WebChannel._openConnectionPromise = new Promise((resolve, reject) => {
         const maxNumberOfAttempts = Genie.Settings.webchannels_connection_attempts;
         const delay = Genie.Settings.webchannels_reconnect_delay;
 
@@ -82,14 +87,17 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
         const interval = setInterval(() => {
             if (currentAttempt > maxNumberOfAttempts - 1) {
                 clearInterval(interval);
+                WebChannel._openConnectionPromise = null;
                 reject(new Error('Maximum number of attempts exceeded: Message not sent.'));
             } else if (WebChannel.socket.readyState === 1) {
                 clearInterval(interval);
+                WebChannel._openConnectionPromise = null;
                 resolve();
             };
             currentAttempt++;
         }, delay)
-    })
+    });
+    return WebChannel._openConnectionPromise;
   }
 
   WebChannel.socket = newSocketConnection(WebChannel);
@@ -141,7 +149,9 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
     displayAlert(WebChannel);
     if (Genie.Settings.webchannels_autosubscribe) {
       if (isDev()) console.info('Attempting to reconnect! ');
-      setTimeout(function() {
+      clearTimeout(WebChannel._reconnectTimer);
+      WebChannel._reconnectTimer = setTimeout(function() {
+        WebChannel._openConnectionPromise = null;
         WebChannel.socket = newSocketConnection(WebChannel);
       }, Genie.Settings.webchannels_reconnect_delay);
     }
@@ -209,7 +219,7 @@ function displayAlert(WebChannel, content = 'Can not reach the server. Trying to
 
 function deleteAlert(WebChannel) {
   WebChannel.ws_disconnected = false;
-  clearInterval(WebChannel.alertTimeout);
+  clearTimeout(WebChannel.alertTimeout);
   if (WebChannel.parent) WebChannel.parent.ws_disconnected = false;
 
   if (Genie.allConnected()) {
@@ -219,12 +229,25 @@ function deleteAlert(WebChannel) {
 }
 
 function newSocketConnection(WebChannel, host = Genie.Settings.websockets_exposed_host) {
+  // Remove listeners from the previous socket before creating a new one so
+  // the old WebSocket object can be garbage-collected.
+  if (WebChannel._socketListeners) {
+    const prev = WebChannel._socketListeners.socket;
+    if (prev) {
+      prev.removeEventListener('open',    WebChannel._socketListeners.open);
+      prev.removeEventListener('message', WebChannel._socketListeners.message);
+      prev.removeEventListener('error',   WebChannel._socketListeners.error);
+      prev.removeEventListener('close',   WebChannel._socketListeners.close);
+    }
+    WebChannel._socketListeners = null;
+  }
+
   let ws = new WebSocket(Genie.Settings.websockets_protocol + '//' + host
     + (Genie.Settings.websockets_exposed_port > 0 ? (':' + Genie.Settings.websockets_exposed_port) : '')
     + ( ((Genie.Settings.base_path.trim() === '' || Genie.Settings.base_path.startsWith('/')) ? '' : '/') + Genie.Settings.base_path)
     + ( ((Genie.Settings.websockets_base_path.trim() === '' || Genie.Settings.websockets_base_path.startsWith('/')) ? '' : '/') + Genie.Settings.websockets_base_path));
 
-    ws.addEventListener('open', event => {
+    const onOpen = event => {
       const handlers = WebChannel.openHandlers.concat(Genie.WebChannels.openHandlers)
       for (let i = 0; i < handlers.length; i++) {
         let f = handlers[i];
@@ -232,9 +255,9 @@ function newSocketConnection(WebChannel, host = Genie.Settings.websockets_expose
           f(event);
         }
       }
-    });
+    };
 
-    ws.addEventListener('message', event => {
+    const onMessage = event => {
       const handlers = WebChannel.messageHandlers.concat(Genie.WebChannels.messageHandlers)
       for (let i = 0; i < handlers.length; i++) {
         let f = handlers[i];
@@ -243,9 +266,9 @@ function newSocketConnection(WebChannel, host = Genie.Settings.websockets_expose
         }
       }
       WebChannel.lastMessageAt = Date.now();
-    });
+    };
 
-    ws.addEventListener('error', event => {
+    const onError = event => {
       const handlers = WebChannel.errorHandlers.concat(Genie.WebChannels.errorHandlers)
       for (let i = 0; i < handlers.length; i++) {
         let f = handlers[i];
@@ -253,9 +276,9 @@ function newSocketConnection(WebChannel, host = Genie.Settings.websockets_expose
           f(event);
         }
       }
-    });
+    };
 
-    ws.addEventListener('close', event => {
+    const onClose = event => {
       const handlers = WebChannel.closeHandlers.concat(Genie.WebChannels.closeHandlers)
       for (let i = 0; i < handlers.length; i++) {
         let f = handlers[i];
@@ -263,16 +286,15 @@ function newSocketConnection(WebChannel, host = Genie.Settings.websockets_expose
           f(event);
         }
       }
-      ws.onmessage = null;
-      ws.onerror = null;
-      ws.onclose = null;
-      ws.onopen = null;
-      ws = null;
-    });
+    };
 
-    ws.addEventListener('error', _ => {
-      // WebChannel.socket = newSocketConnection();
-    });
+    ws.addEventListener('open',    onOpen);
+    ws.addEventListener('message', onMessage);
+    ws.addEventListener('error',   onError);
+    ws.addEventListener('close',   onClose);
+
+    // Store named listener refs so they can be removed on the next reconnect.
+    WebChannel._socketListeners = { socket: ws, open: onOpen, message: onMessage, error: onError, close: onClose };
 
     return ws
 }
@@ -377,8 +399,8 @@ function subscribe(WebChannel, trial = 1) {
     WebChannel.sendMessageTo(WebChannel.channel, window.Genie.Settings.webchannels_subscribe_channel);
   } else if (trial < Genie.Settings.webchannels_subscription_trials) {
     if (isDev()) console.warn('Queuing subscription');
-    trial++;
-    setTimeout(subscribe.bind(this, WebChannel, trial), Genie.Settings.webchannels_timeout);
+    clearTimeout(WebChannel._subscribeTimer);
+    WebChannel._subscribeTimer = setTimeout(subscribe.bind(this, WebChannel, trial + 1), Genie.Settings.webchannels_timeout);
   } else {
     displayAlert(WebChannel);
   }
