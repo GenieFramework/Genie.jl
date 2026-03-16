@@ -83,10 +83,6 @@ end
 Subscribes a web socket client `ws` to `channel`.
 """
 function subscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelName) :: ChannelClientsCollection
-  # Clean up stale entries from previous connections on this channel so that
-  # disconnected clients (and their handler tasks) do not accumulate on reconnect.
-  unsubscribe_disconnected_clients(channel)
-
   if haskey(CLIENTS, id(ws))
     in(channel, CLIENTS[id(ws)].channels) || push!(CLIENTS[id(ws)].channels, channel)
   else
@@ -94,6 +90,10 @@ function subscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelName) :: Chann
   end
 
   push_subscription(id(ws), channel)
+
+  # Clean up stale entries from previous connections on this channel so that
+  # disconnected clients (and their handler tasks) do not accumulate on reconnect.
+  unsubscribe_disconnected_clients(channel)
 
   @debug "Subscribed: $(id(ws)) ($(Dates.now()))"
   CLIENTS
@@ -245,10 +245,6 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}},
 
   @async unsubscribe_disconnected_clients() |> errormonitor
 
-  # @show channels
-  # @show CLIENTS
-
-  # try
   for channel in channels
     if ! haskey(SUBSCRIPTIONS, channel)
       unsubscribe_disconnected_clients(channel)
@@ -276,9 +272,6 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}},
       end
     end
   end
-  # catch ex
-  #   @warn ex
-  # end
 
   true
 end
