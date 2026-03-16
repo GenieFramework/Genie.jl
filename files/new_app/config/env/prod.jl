@@ -8,7 +8,8 @@ Genie.Configuration.config!(
   server_handle_static_files      = true, # for best performance set up Nginx or Apache web proxies and set this to false
   path_build                      = "build",
   format_julia_builds             = false,
-  format_html_output              = false
+  format_html_output              = false,
+  max_cookie_size                 = nothing, # consider use 4 KB limit for cookie values setting this as 4096
 )
 
 if Genie.config.server_handle_static_files
