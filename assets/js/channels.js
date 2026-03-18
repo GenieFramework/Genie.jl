@@ -238,6 +238,11 @@ function newSocketConnection(WebChannel, host = Genie.Settings.websockets_expose
       prev.removeEventListener('message', WebChannel._socketListeners.message);
       prev.removeEventListener('error',   WebChannel._socketListeners.error);
       prev.removeEventListener('close',   WebChannel._socketListeners.close);
+      // Explicitly close the old socket if it is still CONNECTING or OPEN so the
+      // browser releases the underlying TCP connection and can GC the object promptly.
+      // Without this, rapidly-retried reconnect attempts accumulate unclosed
+      // WebSocket objects in memory until the browser's GC decides to collect them.
+      if (prev.readyState < 2) { prev.close(); }
     }
     WebChannel._socketListeners = null;
   }
