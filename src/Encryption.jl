@@ -1,66 +1,134 @@
 """
-Provides Genie with encryption and decryption capabilities.
+Encryption
+High-level symmetric encryption for Genie apps.
+Under the hood it uses XChaCha20-Poly1305 authenticated encryption,
+wrapping everything in two simple functions:
+
+- `encrypt`](@ref): Return a hex string containing nonce ∥ ciphertext ∥ tag.
+- `decrypt`](@ref): verify the tag, decrypts, and return
+  the original plaintext (or an empty string on any error).
+
+All keys are derived from your 64-hex-char secret token.
+See also `encrypt`](@ref) and `decrypt`](@ref).
 """
 module Encryption
+using Sodium
+import Sodium.LibSodium
+import Genie.Secrets: secret_token
 
-import Genie, Nettle
-
-const ENCRYPTION_METHOD = "AES256"
-
+const KEYBYTES=LibSodium.crypto_aead_xchacha20poly1305_ietf_KEYBYTES
+const NONCEBYTES=LibSodium.crypto_aead_xchacha20poly1305_ietf_NPUBBYTES
+const TAGBYTES=LibSodium.crypto_aead_xchacha20poly1305_ietf_ABYTES
 
 """
-    encrypt{T}(s::T) :: String
+_derive_key()::Vector{UInt8}
 
-Encrypts `s`.
+Derive a 32-byte encryption key from the Genie secret token.
+Secret token must be exactly 64 hex characters.
+
+# Example
+
+```jldoctest
+julia> using Genie
+julia> Genie.Secrets.secret_token!(
+       "f00df00df00df00df00df00df00df00df00df00df00df00df00df00df00df00d");
+julia> key = Genie.Encryption._derive_key()
+32-element Vector{UInt8}: [...]
+```
 """
-function encrypt(s::T)::String where T
-  (key32, iv16) = encryption_sauce()
-  encryptor = Nettle.Encryptor(ENCRYPTION_METHOD, key32)
-
-  Nettle.encrypt(encryptor, :CBC, iv16, Nettle.add_padding_PKCS5(Vector{UInt8}(s), 16)) |> bytes2hex
+function _derive_key()
+  tok=secret_token(false)
+  isempty(tok) && error("No Genie secret_token found; call `Genie.Secrets.secret_token!()` first")
+  length(tok)!=64 && error("Secret token must be exactly 64 hex chars")
+  hex2bytes(tok)
 end
 
-
 """
-    decrypt(s::AbstractString) :: String
+encrypt(plain::AbstractString)::String
 
-Decrypts `s` (a `AbstractString` previously encrypted by Genie).
+Encrypt `plain` using XChaCha20-Poly1305 authenticated encryption.
+Returns `hex(nonce ∥ ciphertext ∥ tag)`.
+
+The nonce is randomly generated for each encryption, and the key is
+derived from your secret token. No associated data is used.
+
+# Examples
+
+```jldoctest
+julia> using Genie; using Genie.Secrets
+julia> Genie.Secrets.secret_token!(
+       "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
+julia> token = Genie.Encryption.encrypt("hello");
+julia> typeof(token)
+String
+```
 """
-function decrypt(s::AbstractString ) :: String
-  (key32, iv16) = encryption_sauce()
-  decryptor = Nettle.Decryptor(ENCRYPTION_METHOD, key32)
-  deciphertext = Nettle.decrypt(decryptor, :CBC, iv16, s |> hex2bytes)
+function encrypt(plain::AbstractString)::String
+  key=_derive_key()
+  nonce=rand(UInt8,NONCEBYTES)
+  msg=collect(codeunits(plain))
+  outlen=UInt64(length(msg)+TAGBYTES)
+  c=Vector{UInt8}(undef,Int(outlen))
+  clen=Ref{UInt64}()
 
-  try
-    String(Nettle.trim_padding_PKCS5(deciphertext))
-  catch ex
-    if Genie.Configuration.isprod()
-      @debug ex
-      @debug "Could not decrypt data"
-    end
-    ""
-  end
+  res=LibSodium.crypto_aead_xchacha20poly1305_ietf_encrypt(
+    c,clen,
+    msg,UInt64(length(msg)),
+    C_NULL,UInt64(0),
+    C_NULL,
+    nonce,
+    key,
+  )
+  res!=0 && error("AEAD‐encrypt failed (code=$res)")
+
+  bytes2hex(vcat(nonce,c[1:Int(clen[])]))
 end
 
-
 """
-    encryption_sauce() :: Tuple{Vector{UInt8},Vector{UInt8}}
+decrypt(token::String)::String
 
-Generates a pair of key32 and iv16 with salt for encryption/decryption
+Reverse of `encrypt`: hex→(nonce ∥ ciphertext ∥ tag), verify authentication,
+and decrypt using XChaCha20-Poly1305.
+
+# Examples
+
+```jldoctest
+julia> using Genie,Genie.Secrets
+julia> Genie.Secrets.secret_token!(
+       "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef");
+julia> t = Genie.Encryption.encrypt("world");
+julia> Genie.Encryption.decrypt(t)
+"world"
+julia> Genie.Encryption.decrypt("badhex")
+""
+```
 """
-function encryption_sauce() :: Tuple{Vector{UInt8},Vector{UInt8}}
-  if length(Genie.Secrets.secret_token()) < 64
-    if ! Genie.Configuration.isprod()
-      Genie.Secrets.secret_token!()
-    else
-      error("Can't encrypt - make sure that Genie.Secrets.secret_token!(token) is called in config/secrets.jl")
-    end
+function decrypt(token::String)::String
+  raw=try
+    hex2bytes(token)
+  catch
+    return ""
   end
 
-  token = Genie.Secrets.secret_token()
-  passwd = token[1:32]
-  salt = hex2bytes(token[33:64])
-  Nettle.gen_key32_iv16(Vector{UInt8}(passwd), salt)
+  length(raw)<=NONCEBYTES+TAGBYTES && return ""
+
+  key=_derive_key()
+  nonce=raw[1:NONCEBYTES]
+  body=raw[NONCEBYTES+1:end]
+  mlen=Ref{UInt64}()
+  m=Vector{UInt8}(undef,length(body))
+
+  res=LibSodium.crypto_aead_xchacha20poly1305_ietf_decrypt(
+    m,mlen,
+    C_NULL,
+    body,UInt64(length(body)),
+    C_NULL,UInt64(0),
+    nonce,
+    key,
+  )
+  res!=0 && return ""
+
+  String(m[1:Int(mlen[])])
 end
 
 end
