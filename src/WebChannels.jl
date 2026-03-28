@@ -171,7 +171,7 @@ function unsubscribe_disconnected_clients() :: ChannelClientsCollection
     unsubscribe_client(channel_client)
   end
 
-  @async purge_unnecessary_message_queue() |> errormonitor
+  @async(purge_unnecessary_message_queue()) |> errormonitor
 
   CLIENTS
 end
@@ -243,7 +243,7 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}},
 
   isempty(SUBSCRIPTIONS) && return false
 
-  @async unsubscribe_disconnected_clients() |> errormonitor
+  @async(unsubscribe_disconnected_clients()) |> errormonitor
 
   for channel in channels
     if ! haskey(SUBSCRIPTIONS, channel)
@@ -315,8 +315,7 @@ function message(client::ClientId, msg::String)
   # retrieve the message queue or set it up if not present
   q, _ = get!(MESSAGE_QUEUE, client) do
     queue = Channel{Tuple{String, Channel{Int}}}(10)
-    handler = @async while true
-      message, future = take!(queue)
+    handler = @async(for (message, future) in queue
       nbytes = 0
       try
         nbytes = Sockets.send(ws, message)
@@ -326,8 +325,11 @@ function message(client::ClientId, msg::String)
         put!(future, nbytes)
       end
       # Self-terminate when the socket is closed to avoid orphaned tasks.
-      HTTP.WebSockets.isclosed(ws) && break
-    end |> errormonitor
+      if HTTP.WebSockets.isclosed(ws)
+        @info "closing ws"
+        break
+      end
+    end) |> errormonitor
 
     queue, handler
   end
@@ -356,8 +358,11 @@ end
 function delete_queue!(d::Dict, client::UInt)
   queue, handler = pop!(MESSAGE_QUEUE, client, (nothing, nothing))
   if queue !== nothing
-    killtask(handler) |> errormonitor
+    close(queue)
+    # close(queue) will normally cause the handler task to exit, but we add a killtask to be sure.
+    @async(killtask(handler, wait_for_started_duration = 0.1) |> errormonitor)
   end
+  return d
 end
 
 """
