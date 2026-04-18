@@ -44,6 +44,67 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
   }
 
   var WebChannel = {};
+  WebChannel._isUnloading = false;
+  WebChannel._reconnectAttempts = 0;
+  WebChannel._reconnectMinDelay = Genie.Settings.webchannels_reconnect_delay;
+  WebChannel._reconnectMaxDelay = Math.max(30000, Genie.Settings.webchannels_reconnect_delay * 16);
+
+  const logDev = (...args) => {
+    if (isDev()) console.info('[Genie.WebChannels]', ...args);
+  };
+
+  const warnDev = (...args) => {
+    if (isDev()) console.warn('[Genie.WebChannels]', ...args);
+  };
+
+  const nextReconnectDelay = () => {
+    const expDelay = Math.min(
+      WebChannel._reconnectMaxDelay,
+      WebChannel._reconnectMinDelay * Math.pow(2, WebChannel._reconnectAttempts)
+    );
+    // Add jitter so multiple clients do not reconnect in lockstep.
+    const jitter = Math.floor(expDelay * 0.25 * Math.random());
+    return expDelay + jitter;
+  };
+
+  const scheduleReconnect = (reason = 'close') => {
+    if (WebChannel._isUnloading || !Genie.Settings.webchannels_autosubscribe) {
+      return;
+    }
+
+    clearTimeout(WebChannel._reconnectTimer);
+    const delay = nextReconnectDelay();
+    warnDev('Scheduling reconnect', {
+      channel: WebChannel.channel,
+      reason,
+      attempt: WebChannel._reconnectAttempts + 1,
+      delay
+    });
+
+    WebChannel._reconnectTimer = setTimeout(function() {
+      if (WebChannel._isUnloading) return;
+      WebChannel._openConnectionPromise = null;
+      WebChannel._reconnectAttempts++;
+      logDev('Reconnecting now', {
+        channel: WebChannel.channel,
+        attempt: WebChannel._reconnectAttempts
+      });
+      WebChannel.socket = newSocketConnection(WebChannel);
+    }, delay);
+  };
+
+  const triggerImmediateReconnect = (reason = 'manual') => {
+    if (WebChannel._isUnloading || !Genie.Settings.webchannels_autosubscribe) {
+      return;
+    }
+    if (!WebChannel.socket || WebChannel.socket.readyState > 1) {
+      warnDev('Immediate reconnect trigger', { channel: WebChannel.channel, reason });
+      clearTimeout(WebChannel._reconnectTimer);
+      WebChannel._openConnectionPromise = null;
+      WebChannel.socket = newSocketConnection(WebChannel);
+    }
+  };
+
   WebChannel.sendMessageTo = async (channel, message, payload = {}) => {
     let msg = JSON.stringify({
       'channel': channel,
@@ -140,33 +201,55 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
   });
   
   WebChannel.closeHandlers.push(event => {
-    if (isDev()) {
-      console.warn('WebSocket connection closed: ' + event.code + ' ' + event.reason + ' ' + event.wasClean);
-    }
+    warnDev('WebSocket closed', {
+      channel: WebChannel.channel,
+      code: event.code,
+      reason: event.reason,
+      wasClean: event.wasClean
+    });
   });
   
   WebChannel.closeHandlers.push(event => {
     displayAlert(WebChannel);
-    if (Genie.Settings.webchannels_autosubscribe) {
-      if (isDev()) console.info('Attempting to reconnect! ');
-      clearTimeout(WebChannel._reconnectTimer);
-      WebChannel._reconnectTimer = setTimeout(function() {
-        WebChannel._openConnectionPromise = null;
-        WebChannel.socket = newSocketConnection(WebChannel);
-      }, Genie.Settings.webchannels_reconnect_delay);
-    }
+    scheduleReconnect('socket-close');
   });
   
   WebChannel.openHandlers.push(event => {
+    WebChannel._reconnectAttempts = 0;
+    clearTimeout(WebChannel._reconnectTimer);
+    logDev('WebSocket opened', { channel: WebChannel.channel });
     if (Genie.Settings.webchannels_autosubscribe) {
       subscribe(WebChannel);
     }
   });
+
+  WebChannel.errorHandlers.push(event => {
+    warnDev('WebSocket error observed', {
+      channel: WebChannel.channel,
+      readyState: WebChannel.socket?.readyState,
+      type: event.type
+    });
+  });
+
+  WebChannel._onWindowFocus = _ => triggerImmediateReconnect('window-focus');
+  WebChannel._onWindowOnline = _ => triggerImmediateReconnect('browser-online');
+  WebChannel._onVisibilityChange = _ => {
+    if (document.visibilityState === 'visible') {
+      triggerImmediateReconnect('visibility-visible');
+    }
+  };
+  window.addEventListener('focus', WebChannel._onWindowFocus);
+  window.addEventListener('online', WebChannel._onWindowOnline);
+  document.addEventListener('visibilitychange', WebChannel._onVisibilityChange);
   
   window.addEventListener('beforeunload', _ => {
-    if (isDev()) {
-      console.info('Preparing to unload');
-    }
+    WebChannel._isUnloading = true;
+    logDev('Preparing to unload', { channel: WebChannel.channel });
+    clearTimeout(WebChannel._reconnectTimer);
+
+    if (WebChannel._onWindowFocus) window.removeEventListener('focus', WebChannel._onWindowFocus);
+    if (WebChannel._onWindowOnline) window.removeEventListener('online', WebChannel._onWindowOnline);
+    if (WebChannel._onVisibilityChange) document.removeEventListener('visibilitychange', WebChannel._onVisibilityChange);
   
     if (Genie.Settings.webchannels_autosubscribe) {
       unsubscribe(WebChannel);
@@ -401,12 +484,14 @@ function subscription_ready(WebChannel) {
 
 function subscribe(WebChannel, trial = 1) {
   if (WebChannel.socket.readyState == 1 && (document.readyState === 'complete' || document.readyState === 'interactive')) {
+    if (isDev()) console.info('[Genie.WebChannels] Sending subscription request', { channel: WebChannel.channel, trial });
     WebChannel.sendMessageTo(WebChannel.channel, window.Genie.Settings.webchannels_subscribe_channel);
   } else if (trial < Genie.Settings.webchannels_subscription_trials) {
-    if (isDev()) console.warn('Queuing subscription');
+    if (isDev()) console.warn('[Genie.WebChannels] Queuing subscription', { channel: WebChannel.channel, trial, state: WebChannel.socket.readyState });
     clearTimeout(WebChannel._subscribeTimer);
     WebChannel._subscribeTimer = setTimeout(subscribe.bind(this, WebChannel, trial + 1), Genie.Settings.webchannels_timeout);
   } else {
+    if (isDev()) console.warn('[Genie.WebChannels] Subscription retries exhausted; waiting for reconnect triggers', { channel: WebChannel.channel, trial });
     displayAlert(WebChannel);
   }
 };
