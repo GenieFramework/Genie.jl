@@ -86,8 +86,14 @@ end
       JSON.parse(x, args...; dicttype, allownan, nan, inf, ninf, kwargs...) |> typify!
     end
 
-    function json(x; allownan = true, nan = "\"__nan__\"", inf = "\"__inf__\"", ninf = "\"__neginf__\"", kwargs...)
-        JSON.json(x; allownan = allownan, nan, inf, ninf, kwargs...)
+    @static if VersionNumber(package_version(JSON)) < v"1.5-"
+        function json(x; allownan = true, nan = "\"__nan__\"", inf = "\"__inf__\"", ninf = "\"__neginf__\"", kwargs...)
+            JSON.json(x; allownan = allownan, nan, inf, ninf, kwargs...)
+        end
+    else
+        function json(x; allownan = true, nan = "\"__nan__\"", inf = "\"__inf__\"", ninf = "\"__neginf__\"", kwargs...)
+            JSON.json(x; allownan = allownan, nan, inf, ninf, sort_keys = x isa Dict, kwargs...)
+        end
     end
 else
     # don't support allownan etc for older JSON versions, they are either not supported or behave differently (danger of interpreting "Infinity" as `Inf`)
