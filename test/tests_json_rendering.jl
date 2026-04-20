@@ -17,7 +17,7 @@
 
       json_str = String(r.body)
       @test json_str == """{"greetings":{"en":"Hello","it":"Ciao","pt":"Ola","es":"Hola"}}""" ||
-            json_str == """{"greetings":{"en":"Hello","es":"Hola","it":"Ciao","pt":"Ola"}]"""
+            json_str == """{"greetings":{"en":"Hello","es":"Hola","it":"Ciao","pt":"Ola"}}"""
 
       Genie.Renderer.clear_task_storage()
     end;
