@@ -477,17 +477,18 @@ macro _using(package, mode = QuoteNode(:using), src_file = nothing, context = no
   f = normpath(f)
   out_include = quote
     @debug("using $($package_name) (from '$($package)') per 'include()'")         
-    M = $context.include($f)
-    # file was included without error, let's check whether it was really a module, in that case use it
-    if M isa Module
-      if nameof(M) == Symbol($package_name)
-        $mode == :using && (using .$(package_symbol))
+    let M = $context.include($f)
+      # file was included without error, let's check whether it was really a module, in that case use it
+      if M isa Module
+        if nameof(M) == Symbol($package_name)
+          $mode == :using && (using .$(package_symbol))
+        else
+          @warn("Module's name doesn't match the filename, expected '$($package_name)', got '$(nameof(M))'")
+          eval(Expr($mode, Expr(:., :., nameof(M))))
+        end
       else
-        @warn("Module's name doesn't match the filename, expected '$($package_name)', got '$(nameof(M))'")
-        eval(Expr($mode, Expr(:., :., nameof(M))))
+        @warn("'$($package_name)' could not be loaded from '$(joinpath($f))' or is not a module.")
       end
-    else
-      @warn("'$($package_name)' could not be loaded from '$(joinpath($f))' or is not a module.")
     end
   end
 
