@@ -1109,66 +1109,75 @@ function escape_resource_path(resource::String)
   '/' * join(map(x -> HTTP.URIs.escapeuri(x), split(resource, '?')), '?')
 end
 
-
-"""
-    is_accessible_resource(resource::String) :: Bool
-
-Checks if the requested resource is within the public/ folder.
-"""
-function is_accessible_resource(resource::String; root = Genie.config.server_document_root) :: Bool
-  startswith(abspath(resource), abspath(root)) # the file path includes the root path
-end
-
-
 function bundles_path() :: String
   joinpath(@__DIR__, "..", "files", "static") |> normpath |> abspath
 end
 
+const PATHSEP=Sys.iswindows() ? '\\' : '/'
 
 """
-    serve_static_file(resource::String) :: Response
-Reads the static file and returns the content as a `Response`.
+under_root(path,root)::Bool
+
+Check that the filesystem entry at `path` lives inside `root` (or is `root` itself).
+Resolve “..” segments and follow symlinks so no escape is possible.
 """
-function serve_static_file(resource::String; root = Genie.config.server_document_root, download=false) :: HTTP.Response
-  startswith(resource, '/') || (resource = "/$(resource)")
-  resource_path = try
-                    HTTP.URIs.URI(resource).path |> string
-                  catch ex
-                    resource
-                  end
+function under_root(path::AbstractString,root::AbstractString)::Bool
+  root_abs=realpath(abspath(root))
+  cand=normpath(joinpath(root,path))
+  resolved=ispath(cand) || islink(cand) ? realpath(cand) : abspath(cand)
+  resolved==root_abs || startswith(resolved,root_abs*PATHSEP)
+end
 
-  f = file_path(resource_path; root = root)
-  isempty(f) && (f = pwd() |> relpath)
+"""
+  serve_static_file(resource::String; root, download=false)::HTTP.Response
 
-  fileheader = file_headers(f)
-  download && push!(fileheader, ("Content-Disposition" => """attachment; filename=$(basename(f))"""))
+Normalize `resource` under `root`, block any “..” or symlink escape, and serve:
 
-  if (isfile(f) || isdir(f)) && ! is_accessible_resource(f; root)
-    @error "401 Unauthorised Access $f"
-    return error(resource, response_mime(), Val(401))
+  - 200 OK + file contents
+  - 200 OK + directory/index.html
+  - 403 Forbidden if the path escapes `root`
+  - 404 Not Found if nothing exists
+
+Set `download=true` to add a Content-Disposition attachment header.
+"""
+function serve_static_file(resource::String;
+    root=Genie.config.server_document_root,
+    download=false)::HTTP.Response
+
+  uri=try
+    HTTP.URIs.URI(resource)
+  catch
+    nothing
+  end
+  raw=uri!==nothing ? HTTP.URIs.unescapeuri(uri.path) : resource
+  raw=startswith(raw,"/") ? raw[2:end] : raw
+
+  candidate=normpath(joinpath(root,raw))
+
+  if !under_root(candidate,root)
+    @error "403 Forbidden (path traversal) $candidate"
+    return error(resource,response_mime(),Val(403))
   end
 
-  if isfile(f)
-    return HTTP.Response(200, fileheader, body = read(f, String))
-  elseif isdir(f)
-    for fn in ["index.html", "index.htm", "index.txt"]
-      isfile(joinpath(f, fn)) && return serve_static_file(joinpath(f, fn), root = root)
+  if isfile(candidate)
+    hdrs=file_headers(candidate)
+    if download
+      push!(hdrs,"Content-Disposition"=>"attachment; filename=$(basename(candidate))")
     end
-  else
-    bundled_path = joinpath(bundles_path(), resource[2:end])
+    return HTTP.Response(200,hdrs,body=read(candidate,String))
+  end
 
-    if ! is_accessible_resource(bundled_path; root = bundles_path())
-      @error "401 Unauthorised Access $f"
-      return error(resource, response_mime(), Val(401))
-    end
-
-    if isfile(bundled_path)
-      return HTTP.Response(200, file_headers(bundled_path), body = read(bundled_path, String))
+  if isdir(candidate)
+    for idx in ("index.html","index.htm","index.txt")
+      idxf=joinpath(candidate,idx)
+      if isfile(idxf)
+        return serve_static_file("/"*joinpath(raw,idx); root=root, download=download)
+      end
     end
   end
 
-  @error "404 Not Found $f [$(abspath(f))]"
-  error(resource, response_mime(), Val(404))
+  @error "404 Not Found $candidate [$(abspath(candidate))]"
+  error(resource,response_mime(),Val(404))
 end
 
 
@@ -1258,6 +1267,9 @@ function error(error_message::String, mime::Any, ::Val{401}; error_info::String 
   HTTP.Response(401, ["Content-Type" => string(trymime(mime))], body = "401 Unauthorised - $error_message. $error_info")
 end
 
+function error(error_message::String, mime::Any, ::Val{403}; error_info::String="")::HTTP.Response
+    HTTP.Response(403, ["Content-Type" => string(trymime(mime))], body="403 Forbidden - $error_message. $error_info")
+end
 
 function error(error_message::String, mime::Any, ::Val{404}; error_info::String = "") :: HTTP.Response
   HTTP.Response(404, ["Content-Type" => string(trymime(mime))], body = "404 Not Found - $error_message. $error_info")
