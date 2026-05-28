@@ -1,7 +1,7 @@
 name = "Genie"
 uuid = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
-version = "5.35.14"
 authors = ["The amazing Genie contributors ♥️"]
+version = "5.35.14"
 
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
@@ -45,7 +45,7 @@ Distributed = "1.6"
 DotEnv = "0.3, 1"
 EzXML = "1"
 FilePathsBase = "0.9"
-HTTP = "1"
+HTTP = "1, 2"
 HttpCommon = "0.5"
 Inflector = "1.1"
 JSON = "0.21, 1"
