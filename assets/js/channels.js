@@ -250,15 +250,27 @@ Genie.initWebChannel = function(channel = Genie.Settings.webchannels_default_rou
     if (WebChannel._onWindowFocus) window.removeEventListener('focus', WebChannel._onWindowFocus);
     if (WebChannel._onWindowOnline) window.removeEventListener('online', WebChannel._onWindowOnline);
     if (WebChannel._onVisibilityChange) document.removeEventListener('visibilitychange', WebChannel._onVisibilityChange);
-  
+
     if (Genie.Settings.webchannels_autosubscribe) {
       unsubscribe(WebChannel);
     }
-  
+
     if (WebChannel.socket.readyState === 1) {
       WebChannel.socket.close();
     }
   });
+
+  // Initialize keepalive if enabled and initKeepalive function is available
+  if (Genie.Settings.webchannels_keepalive_frequency > 0 && typeof initKeepalive === 'function') {
+    try {
+      initKeepalive(WebChannel);
+      logDev('Keepalive initialized', { channel: WebChannel.channel });
+    } catch (e) {
+      if (isDev()) {
+        console.error('[Genie.WebChannels] Error initializing keepalive:', e);
+      }
+    }
+  }
 
   Genie.AllWebChannels.push(WebChannel);
 
@@ -478,6 +490,17 @@ function subscription_ready(WebChannel) {
     }
   }
   deleteAlert(WebChannel);
+
+  // Start keepalive timer after subscription is ready
+  if (Genie.Settings.webchannels_keepalive_frequency > 0 && typeof keepaliveTimer === 'function') {
+    try {
+      keepaliveTimer(WebChannel, 0);
+      if (isDev()) console.info('[Genie.WebChannels] Keepalive timer started');
+    } catch (e) {
+      if (isDev()) console.error('[Genie.WebChannels] Error starting keepalive timer:', e);
+    }
+  }
+
   if (isDev()) console.info('Subscription ready');
 };
 

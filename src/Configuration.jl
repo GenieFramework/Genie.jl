@@ -190,6 +190,7 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `path_app::String`: the path to the app files (default "app/")
 - `html_parser_close_tag::String`: default " /". Can be changed to an empty string "" so the single tags would not be closed.
 - `webchannels_keepalive_frequency::Int`: default `30000`. Frequency in milliseconds to send keepalive messages to webchannel/websocket to keep the connection alive. Set to `0` to disable keepalive messages.
+- `webchannels_keepalive_timeout::Int`: default `5000`. Maximum time in milliseconds to wait for a keepalive pong response before marking the channel as unresponsive.
 - `env_whitelist`::Vector{<:Union{String, Regex}}: list of environment variables that are allowed to be displayed on the error page in dev mode
 """
 Base.@kwdef mutable struct Settings
@@ -257,6 +258,7 @@ Base.@kwdef mutable struct Settings
   webchannels_base64_marker::String                   = "base64:"
   webchannels_timeout::Int                            = 1_000
   webchannels_keepalive_frequency::Int                = 30_000 # 30 seconds
+  webchannels_keepalive_timeout::Int                  = 5_000 # 5 seconds - pong timeout
   webchannels_server_gone_alert_timeout::Int          = 10_000 # 10 seconds
   webchannels_connection_attempts                     = 10
   webchannels_reconnect_delay                         = 500 # milliseconds

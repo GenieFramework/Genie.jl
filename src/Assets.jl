@@ -234,6 +234,7 @@ function js_settings(channel::String = Genie.config.webchannels_default_route) :
     :webchannels_base64_marker        => Genie.config.webchannels_base64_marker,
     :webchannels_timeout              => Genie.config.webchannels_timeout,
     :webchannels_keepalive_frequency  => Genie.config.webchannels_keepalive_frequency,
+    :webchannels_keepalive_timeout    => Genie.config.webchannels_keepalive_timeout,
     :webchannels_server_gone_alert_timeout => Genie.config.webchannels_server_gone_alert_timeout,
     :webchannels_connection_attempts => Genie.config.webchannels_connection_attempts,
     :webchannels_reconnect_delay     => Genie.config.webchannels_reconnect_delay,
@@ -347,15 +348,35 @@ end
 
 
 """
+    keepalive() :: String
+
+Outputs the `keepalive.js` file included with the Genie package.
+"""
+function keepalive() :: String
+  embedded(Genie.Assets.asset_file(cwd=normpath(joinpath(@__DIR__, "..")), type = "js", file = "keepalive"))
+end
+
+
+"""
+    keepalive_script() :: String
+
+Outputs the keepalive JavaScript content within `<script>...</script>` tags, for embedding into the page.
+"""
+function keepalive_script() :: String
+  string("<script>\n", keepalive(), "\n</script>")
+end
+
+
+"""
     channels_script(channel::AbstractString = Genie.config.webchannels_default_route) :: String
 
 Outputs the channels JavaScript content within `<script>...</script>` tags, for embedding into the page.
 """
 function channels_script(channel::AbstractString = Genie.config.webchannels_default_route) :: String
+  keepalive_content = (Genie.config.webchannels_keepalive_frequency > 0) ? "\n$(keepalive())\n" : ""
 """
 <script>
-$(channels(channel))
-</script>
+$(channels(channel))$(keepalive_content)</script>
 """
 end
 
