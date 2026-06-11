@@ -294,7 +294,7 @@ function respond(r::WebRenderable) :: HTTP.Response
   if haskey(Genie.Router.params(), Genie.Router.PARAMS_RESPONSE_KEY)
     params_resp = Genie.Router.params(Genie.Router.PARAMS_RESPONSE_KEY)
     # Merge headers from params response (e.g., Set-Cookie from sessions)
-    append!(r.headers, params_resp.headers)
+    union!(append!(r.headers.entries, HTTP.mkheaders(params_resp.headers)))
   end
 
   HTTP.Response(r.status, r.headers, body = r.body)
