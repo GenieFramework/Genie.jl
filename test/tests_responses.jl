@@ -24,10 +24,10 @@
   @test Dict(response.headers)["X-A-B"] == "C"
   @test Dict(response.headers)["X-Moo"] == "Cow"
 
-  @test String(response.body) == "\0\0\0H\0\0\0e\0\0\0l\0\0\0l\0\0\0o" #"Hello" -- wth?!!!
-  @test_broken String(response.body) == "Hello"
+  # In HTTP.jl v2, the body is correctly a String, not Vector{Char}
+  @test String(response.body) == "Hello"
 
-  @test_throws HTTP.ExceptionRequest.StatusError HTTP.request("GET", "http://localhost:$port/broken", ["Content-Type"=>"text/plain"])
+  @test_throws HTTP.StatusError HTTP.request("GET", "http://localhost:$port/broken", ["Content-Type"=>"text/plain"])
 
   down()
   sleep(1)

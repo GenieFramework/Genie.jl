@@ -50,7 +50,7 @@ const MAX_FILENAME_LENGTH = 1_000
 push_content_type(s::Symbol, content_type::String, charset::String = DEFAULT_CHARSET) = (CONTENT_TYPES[s] = "$content_type; $charset")
 
 const ResourcePath = Union{String,Symbol}
-const HTTPHeaders = Dict{String,String}
+const HTTPHeaders = HTTP.Headers
 
 const Path = FilePathsBase.Path
 const FilePath = Union{FilePathsBase.PosixPath,FilePathsBase.WindowsPath}
@@ -60,7 +60,75 @@ macro path_str(s)
   :(FilePathsBase.@p_str($s))
 end
 
+"""
+    to_wire_format(r::HTTP.Response) :: String
+
+Converts an HTTP.Response to its wire format string representation (status line + headers + body).
+This is primarily used for testing purposes to verify the complete HTTP response.
+"""
+function to_wire_format(r::HTTP.Response) :: String
+  # Helper function to get status text
+  function status_text(status::Int)
+    status == 200 && return "OK"
+    status == 201 && return "Created"
+    status == 204 && return "No Content"
+    status == 301 && return "Moved Permanently"
+    status == 302 && return "Found"
+    status == 304 && return "Not Modified"
+    status == 400 && return "Bad Request"
+    status == 401 && return "Unauthorized"
+    status == 403 && return "Forbidden"
+    status == 404 && return "Not Found"
+    status == 405 && return "Method Not Allowed"
+    status == 500 && return "Internal Server Error"
+    status == 502 && return "Bad Gateway"
+    status == 503 && return "Service Unavailable"
+    return "Unknown"
+  end
+
+  # Build status line
+  status_line = "HTTP/1.1 $(r.status) $(status_text(r.status))\r\n"
+
+  # Build headers
+  headers_str = join(["$(k): $(v)\r\n" for (k, v) in r.headers], "")
+
+  # Get body as string
+  body_str = if r.body isa AbstractString
+    r.body
+  elseif r.body isa AbstractVector{UInt8}
+    String(copy(r.body))
+  elseif r.body isa HTTP.EmptyBody
+    ""
+  elseif r.body isa HTTP.BytesBody
+    String(copy(r.body.data))
+  else
+    # For other body types, try to read them
+    buf = IOBuffer()
+    body = r.body
+    if body isa HTTP.AbstractBody
+      chunk_buf = Vector{UInt8}(undef, 16 * 1024)
+      try
+        while true
+          n = HTTP.body_read!(body, chunk_buf)
+          n == 0 && break
+          write(buf, @view(chunk_buf[1:n]))
+        end
+      finally
+        try
+          HTTP.body_close!(body)
+        catch
+          # Ignore close errors
+        end
+      end
+    end
+    String(take!(buf))
+  end
+
+  return status_line * headers_str * "\r\n" * body_str
+end
+
 export FilePath, filepath, Path, @path_str
+export to_wire_format
 export vars
 export WebRenderable
 
@@ -195,7 +263,7 @@ Redirecting you to /index
 
 """
 function redirect(location::String, code::Int = 302, headers::HTTPHeaders = HTTPHeaders()) :: HTTP.Response
-  headers["Location"] = location
+  HTTP.setheader(headers, "Location", location)
   WebRenderable("Redirecting you to $location", :html, code, headers) |> respond
 end
 @noinline function redirect(named_route::Symbol, code::Int = 302, headers::HTTPHeaders = HTTPHeaders(); route_args...) :: HTTP.Response
@@ -220,9 +288,16 @@ end
 Constructs a `Response` corresponding to the Content-Type of the request.
 """
 function respond(r::WebRenderable) :: HTTP.Response
-  haskey(r.headers, "Content-Type") || (r.headers["Content-Type"] = CONTENT_TYPES[r.content_type])
+  haskey(r.headers, "Content-Type") || push!(r.headers, "Content-Type" => CONTENT_TYPES[r.content_type])
 
-  HTTP.Response(r.status, [h for h in r.headers], body = r.body)
+  # Merge session headers from params[:RESPONSE] if available (for session cookies)
+  if haskey(Genie.Router.params(), Genie.Router.PARAMS_RESPONSE_KEY)
+    params_resp = Genie.Router.params(Genie.Router.PARAMS_RESPONSE_KEY)
+    # Merge headers from params response (e.g., Set-Cookie from sessions)
+    append!(r.headers, params_resp.headers)
+  end
+
+  HTTP.Response(r.status, r.headers, body = r.body)
 end
 
 
@@ -486,14 +561,20 @@ end
 Computes the content-type of the `Response`, based on the information in the `Request`.
 """
 function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Dict{Symbol,Any}) :: Tuple{HTTP.Request,HTTP.Response,Dict{Symbol,Any}}
-  headers = Dict(res.headers)
+  headers = res.headers
 
-  if haskey(params, :response_type) && in(Symbol(params[:response_type]), collect(keys(CONTENT_TYPES)) )
+  if haskey(params, :response_type) && in(Symbol(params[:response_type]), keys(CONTENT_TYPES))
     params[:response_type] = Symbol(params[:response_type])
     params[Genie.Router.PARAMS_MIME_KEY] = MIME_TYPES[params[:response_type]]
-    headers["Content-Type"] = CONTENT_TYPES[params[:response_type]]
+    HTTP.setheader(headers, "Content-Type", CONTENT_TYPES[params[:response_type]])
 
-    res.headers = [k for k in headers]
+    # In HTTP.jl v2, we need to create a new Response with updated headers
+    res = HTTP.Response(
+      res.status;
+      headers = HTTP.mkheaders([k for k in headers]),
+      body = res.body,
+      request = res.request
+    )
 
     return req, res, params
   end
@@ -529,9 +610,15 @@ function negotiate_content(req::HTTP.Request, res::HTTP.Response, params::Dict{S
       if haskey(CONTENT_TYPES, content_type)
         params[:response_type] = content_type
         params[Genie.Router.PARAMS_MIME_KEY] = MIME_TYPES[params[:response_type]]
-        headers["Content-Type"] = CONTENT_TYPES[params[:response_type]]
+        HTTP.setheader(headers, "Content-Type", CONTENT_TYPES[params[:response_type]])
 
-        res.headers = [k for k in headers]
+        # In HTTP.jl v2, we need to create a new Response with updated headers
+        res = HTTP.Response(
+          res.status;
+          headers = HTTP.mkheaders([k for k in headers]),
+          body = res.body,
+          request = res.request
+        )
 
         return req, res, params
       end

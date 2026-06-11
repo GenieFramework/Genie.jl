@@ -110,7 +110,7 @@ end
 
 
 function js(data::String; context::Module = @__MODULE__, status::Int = 200,
-            headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders("Content-Type" => Genie.Renderer.CONTENT_TYPES[:javascript]),
+            headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(["Content-Type" => Genie.Renderer.CONTENT_TYPES[:javascript]]),
             forceparse::Bool = false, noparse::Bool = false, vars...) :: Genie.Renderer.HTTP.Response
   if (occursin(raw"$", data) || forceparse) && ! noparse
     Genie.Renderer.WebRenderable(render(MIME"application/javascript", data; context = context, vars...), :javascript, status, headers) |> Genie.Renderer.respond
@@ -120,13 +120,14 @@ function js(data::String; context::Module = @__MODULE__, status::Int = 200,
 end
 
 function js!(data::S; status::Int = 200,
-              headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders("Content-Type" => Genie.Renderer.CONTENT_TYPES[:javascript]))::Genie.Renderer.HTTP.Response where {S<:AbstractString}
-  Genie.Renderer.WebRenderable(data, :javascript, status, headers) |> Genie.Renderer.respond
+              headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(["Content-Type" => Genie.Renderer.CONTENT_TYPES[:javascript]]))::Genie.Renderer.HTTP.Response where {S<:AbstractString}
+  @show headers
+              Genie.Renderer.WebRenderable(data, :javascript, status, headers) |> Genie.Renderer.respond
 end
 
 
 function js(viewfile::Genie.Renderer.FilePath; context::Module = @__MODULE__, status::Int = 200,
-            headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders("Content-Type" => Genie.Renderer.CONTENT_TYPES[:javascript]), vars...) :: Genie.Renderer.HTTP.Response
+            headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(["Content-Type" => Genie.Renderer.CONTENT_TYPES[:javascript]]), vars...) :: Genie.Renderer.HTTP.Response
   Genie.Renderer.WebRenderable(render(MIME"application/javascript", viewfile; context = context, vars...), :javascript, status, headers) |> Genie.Renderer.respond
 end
 

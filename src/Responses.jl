@@ -15,10 +15,10 @@ function getresponse() :: HTTP.Response
 end
 
 
-function getheaders(res::HTTP.Response) :: Dict{String,String}
-  Dict{String,String}(res.headers)
+@inline function getheaders(res::HTTP.Response) :: HTTP.Headers
+  res.headers
 end
-function getheaders() :: Dict{String,String}
+function getheaders() :: HTTP.Headers
   getheaders(getresponse())
 end
 
@@ -47,10 +47,16 @@ function getstatus() :: Int
 end
 
 
-function setstatus!(res::HTTP.Response, status::Int) :: HTTP.Response
-  res.status = status
+# Helper function to update response and store it in params
+# In HTTP.jl v2, Response fields are immutable, so we create a new Response
+function _update_response!(new_res::HTTP.Response) :: HTTP.Response
+  Router.params()[Genie.Router.PARAMS_RESPONSE_KEY] = new_res
+  new_res
+end
 
-  res
+
+function setstatus!(res::HTTP.Response, status::Int) :: HTTP.Response
+  _update_response!(HTTP.Response(status, res.headers, body = res.body))
 end
 function setstatus(status::Int) :: HTTP.Response
   setstatus!(getresponse(), status)
@@ -66,9 +72,7 @@ end
 
 
 function setbody!(res::HTTP.Response, body::String) :: HTTP.Response
-  res.body = collect(body)
-
-  res
+  _update_response!(HTTP.Response(res.status, res.headers, body = body))
 end
 function setbody(body::String) :: HTTP.Response
   setbody!(getresponse(), body)

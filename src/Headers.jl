@@ -30,9 +30,14 @@ function set_headers!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.
       push!(header_names, h.first)
     end
   end
-  app_response.headers = headers
 
-  app_response
+  # In HTTP.jl v2, create a new Response with updated headers
+  return HTTP.Response(
+    app_response.status;
+    headers=HTTP.mkheaders(headers),
+    body=app_response.body,
+    request=app_response.request
+  )
 end
 
 function set_access_control_allow_origin!(req::HTTP.Request, res::HTTP.Response, app_response::HTTP.Response) :: HTTP.Response
@@ -47,10 +52,18 @@ function set_access_control_allow_origin!(req::HTTP.Request, res::HTTP.Response,
     )
     allowed_origin_dict["Vary"] = "Origin"
 
-    app_response.headers = [d for d in merge(Genie.config.cors_headers, allowed_origin_dict, Dict(res.headers), Dict(app_response.headers))]
+    merged_headers = [d for d in merge(Genie.config.cors_headers, allowed_origin_dict, Dict(res.headers), Dict(app_response.headers))]
+
+    # In HTTP.jl v2, create a new Response with updated headers
+    return HTTP.Response(
+      app_response.status;
+      headers=HTTP.mkheaders(merged_headers),
+      body=app_response.body,
+      request=app_response.request
+    )
   end
 
-  app_response
+  return app_response
 end
 
 
@@ -92,7 +105,7 @@ end
 
 Makes request headers case insensitive.
 """
-function normalize_headers(req::Union{HTTP.Request,HTTP.Response})
+function normalize_headers(req::HTTP.Request)
   normalized_headers = Pair{String,String}[]
 
   for (k,v) in req.headers
@@ -103,9 +116,40 @@ function normalize_headers(req::Union{HTTP.Request,HTTP.Response})
     end
   end
 
-  req.headers = normalized_headers
+  # In HTTP.jl v2, we need to create a new Request with normalized headers
+  return HTTP.Request(
+    req.method,
+    req.target;
+    headers=HTTP.mkheaders(normalized_headers),
+    trailers=req.trailers,
+    body=req.body,
+    host=req.host,
+    content_length=req.content_length,
+    proto_major=req.proto_major,
+    proto_minor=req.proto_minor,
+    close=req.close,
+    context=HTTP.get_request_context(req)
+  )
+end
 
-  req
+function normalize_headers(res::HTTP.Response)
+  normalized_headers = Pair{String,String}[]
+
+  for (k,v) in res.headers
+    if string(k) in NORMALIZED_HEADERS
+      push!(normalized_headers, normalize_header_key(string(k)) => string(v))
+    else
+      push!(normalized_headers, string(k) => string(v))
+    end
+  end
+
+  # In HTTP.jl v2, we need to create a new Response with normalized headers
+  return HTTP.Response(
+    res.status;
+    headers=HTTP.mkheaders(normalized_headers),
+    body=res.body,
+    request=res.request
+  )
 end
 
 

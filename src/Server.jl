@@ -7,7 +7,7 @@ using HTTP, Sockets, HTTP.WebSockets
 import Millboard, Distributed, Logging
 import Genie
 import Distributed
-import HTTP.Servers: Listener, forceclose
+import HTTP: forceclose, startwrite, closeread, body_read!, body_close!
 import HTTP.URI
 
 
@@ -18,7 +18,7 @@ Represents a object containing references to Genie's web and websockets servers.
 """
 Base.@kwdef mutable struct ServersCollection
   webserver::Union{T,Nothing} where T <: HTTP.Server = nothing
-  websockets::Union{T,Nothing} where T <: HTTP.Server = nothing
+  websockets::Union{W,Nothing} where W <: HTTP.WebSockets.Server = nothing
 end
 
 """
@@ -73,11 +73,10 @@ function up(port::Int,
             ws_port::Union{Int,Nothing} = Genie.config.websockets_port,
             async::Bool = ! Genie.config.run_as_server,
             verbose::Bool = false,
-            ratelimit::Union{Rational{Int},Nothing} = nothing,
             server::Union{Sockets.TCPServer,Nothing} = nothing,
             wsserver::Union{Sockets.TCPServer,Nothing} = server,
             open_browser::Bool = false,
-            reuseaddr::Bool = Distributed.nworkers() > 1,
+            reuseaddr::Bool = true,
             updateconfig::Bool = true,
             protocol::String = "http",
             query::Dict = Dict(),
@@ -102,31 +101,31 @@ function up(port::Int,
 
   if Genie.config.websockets_server !== nothing && port !== ws_port
     print_server_status("Web Sockets server starting at $host:$ws_port")
-
-    new_server.websockets = HTTP.listen!(host, ws_port; verbose = verbose, rate_limit = ratelimit, server = wsserver,
-                                                reuseaddr = reuseaddr, http_kwargs...) do http::HTTP.Stream
-      if HTTP.WebSockets.isupgrade(http.message)
-        HTTP.WebSockets.upgrade(http) do ws
-          setup_ws_handler(http, ws)
-        end
-      end
+    new_server.websockets = HTTP.WebSockets.listen!(host, ws_port; check_origin=(req) -> true) do ws
+      setup_ws_handler(ws)
     end
+  elseif Genie.config.websockets_server !== nothing && port == ws_port
+    print_server_status("Web Sockets available at $host:$port (via HTTP upgrade)")
   end
 
   command = () -> begin
-    HTTP.listen!(parse(Sockets.IPAddr, host), port; verbose = verbose, rate_limit = ratelimit, server = server,
-                                    reuseaddr = reuseaddr, http_kwargs...) do stream::HTTP.Stream
-      try
-        if Genie.config.websockets_server !== nothing && port === ws_port && HTTP.WebSockets.isupgrade(stream.message)
-          HTTP.WebSockets.upgrade(stream) do ws
-            setup_ws_handler(stream, ws)
-          end
-        else
+    if server !== nothing
+      HTTP.listen!(server; reuseaddr = reuseaddr, http_kwargs...) do stream::HTTP.Stream
+        try
           setup_http_streamer(stream)
+        catch ex
+          @error "Error in HTTP stream handler" exception=(ex, catch_backtrace())
+          isa(ex, Base.IOError) || rethrow(ex)
         end
-      catch ex
-        isa(ex, Base.IOError) || @error ex
-        nothing
+      end
+    else
+      HTTP.listen!(host, port; reuseaddr = reuseaddr, http_kwargs...) do stream::HTTP.Stream
+        try
+          setup_http_streamer(stream)
+        catch ex
+          @error "Error in HTTP stream handler" exception=(ex, catch_backtrace())
+          isa(ex, Base.IOError) || rethrow(ex)
+        end
       end
     end
   end
@@ -142,11 +141,8 @@ function up(port::Int,
     print_server_status("Web Server starting at $server_url - press Ctrl/Cmd+C to stop the server.")
   end
   
-  listener = try
-    command()
-  catch
-    nothing
-  end
+  listener = command()
+
   if !async && !isnothing(listener)
     try
       if Base.isinteractive()
@@ -279,14 +275,50 @@ function down(; webserver::Bool = true, websockets::Bool = true, force::Bool = t
     down(SERVERS[i]; webserver, websockets, force)
   end
 
+  # CRITICAL: Close idle HTTP client connections to prevent "Connection reset by peer"
+  # errors when restarting servers on the same port. HTTP.jl v2 maintains a connection
+  # pool that can try to reuse connections from a previous server instance.
+  try
+    HTTP.close_idle_connections!(HTTP._default_client!().transport)
+  catch ex
+    @debug "Error closing idle HTTP connections: $ex"
+  end
+
   SERVERS
 end
 
 
-function down(server::ServersCollection; webserver::Bool = true, websockets::Bool = true, force::Bool = true) :: ServersCollection
-  close_cmd = force ? forceclose : close
-  webserver && !isnothing(server.webserver) && isopen(server.webserver) && close_cmd(server.webserver)
-  websockets && !isnothing(server.websockets) && isopen(server.websockets) && close_cmd(server.websockets)
+function down(server::ServersCollection; webserver::Bool = true, websockets::Bool = true, force::Bool = false) :: ServersCollection
+  if webserver && !isnothing(server.webserver)
+    try
+      # First, clean up WebChannels to close all websocket connections
+      try
+        Genie.WebChannels.unsubscribe_disconnected_clients()
+      catch
+        # May error if WebChannels not loaded
+      end
+
+      if force
+        forceclose(server.webserver)
+      else
+        close(server.webserver)
+      end
+
+      # Give the OS time to fully release the socket binding
+      # This prevents "Address already in use" errors when tests restart servers quickly
+      sleep(0.1)
+    catch ex
+      @debug "Error closing webserver: $ex"
+    end
+  end
+
+  if websockets && !isnothing(server.websockets)
+    try
+      close(server.websockets)
+    catch ex
+      @debug "Error closing websocket server: $ex"
+    end
+  end
 
   server
 end
@@ -327,31 +359,85 @@ end
 
 function streamhandler(handler::Function)
     return function(stream::HTTP.Stream)
-        request::HTTP.Request = stream.message
-        request.body = read(stream)
+        try
+            request::HTTP.Request = stream.message
+            body_bytes = read(stream)
 
-        closeread(stream)
-        request.response::HTTP.Response = handler(request; stream)
-        request.response.request = request
+            # In HTTP.jl v2, Request is parameterized by body type, so we need to create a new one with the correct body
+            body = isempty(body_bytes) ? HTTP.EmptyBody() : HTTP.BytesBody(body_bytes)
+            request = HTTP.Request(
+                request.method,
+                request.target;
+                headers=request.headers,
+                trailers=request.trailers,
+                body=body,
+                host=request.host,
+                content_length=length(body_bytes),
+                proto_major=request.proto_major,
+                proto_minor=request.proto_minor,
+                close=request.close,
+                context=HTTP.get_request_context(request)
+            )
 
-        startwrite(stream)
-        write(stream, request.response.body)
+            closeread(stream)
 
-        return
+            # In HTTP.jl v2, Request no longer has a response field
+            # Get the response from the handler and set it on the stream
+            response::HTTP.Response = handler(request; stream)
+            response.request = request
+            stream.response = response
+
+            startwrite(stream)
+
+            # Write the response body properly based on its type
+            body = response.body
+            if body isa AbstractString
+                write(stream, body)
+            elseif body isa AbstractVector{UInt8}
+                write(stream, body)
+            elseif body isa HTTP.AbstractBody
+                buf = Vector{UInt8}(undef, 16 * 1024)
+                try
+                    while true
+                        n = HTTP.body_read!(body, buf)
+                        n == 0 && break
+                        write(stream, @view(buf[1:n]))
+                    end
+                finally
+                    try
+                        HTTP.body_close!(body)
+                    catch
+                        # Ignore close errors
+                    end
+                end
+            else
+                error("Unsupported body type: $(typeof(body))")
+            end
+
+            return
+        catch ex
+            @error "Error in streamhandler" exception=(ex, catch_backtrace())
+            rethrow(ex)
+        end
     end
 end
 
 
 function setup_http_streamer(stream::HTTP.Stream)
-  if Genie.config.features_peerinfo
-    try
-      task_local_storage(:peer, Sockets.getpeername( HTTP.IOExtras.tcpsocket(HTTP.Streams.getrawstream(stream)) ))
-    catch ex
-      @error ex
+  if Genie.config.websockets_server !== nothing && HTTP.WebSockets.isupgrade(stream.message)
+    HTTP.WebSockets.upgrade(stream; check_origin=(req) -> true) do ws
+      setup_ws_handler(ws)
     end
+  else
+    if Genie.config.features_peerinfo
+      try
+        task_local_storage(:peer, Sockets.getpeername( HTTP.IOExtras.tcpsocket(HTTP.Streams.getrawstream(stream)) ))
+      catch ex
+        @error ex
+      end
+    end
+    streamhandler(setup_http_listener)(stream)
   end
-
-  streamhandler(setup_http_listener)(stream)
 end
 
 
@@ -386,37 +472,50 @@ end
 
 
 """
-    setup_ws_handler(stream::HTTP.Stream, ws_client) :: Nothing
+    setup_ws_handler(ws::HTTP.WebSockets.WebSocket) :: Nothing
 
-Configures the handler for WebSockets requests.
+Handles WebSocket connections. The handshake request is available as `ws.handshake_request`.
 """
-function setup_ws_handler(stream::HTTP.Stream, ws_client) :: Nothing
-  req = stream.message
+function setup_ws_handler(ws::HTTP.WebSockets.WebSocket) :: Nothing
+  # In HTTP.jl v2, the handshake request is stored in the WebSocket object
+  req = ws.handshake_request
 
   try
-    req = stream.message
-
-    while ! HTTP.WebSockets.isclosed(ws_client) && ! ws_client.writeclosed && isopen(ws_client.io)
-      Sockets.send(ws_client, Distributed.@fetch handle_ws_request(req; message = HTTP.WebSockets.receive(ws_client), client = ws_client))
+    while ! HTTP.WebSockets.isclosed(ws)
+      message = HTTP.WebSockets.receive(ws)
+      response = Distributed.@fetch handle_ws_request(req; message = message, client = ws)
+      # Check if WebSocket is still open before sending (client might have disconnected during processing)
+      HTTP.WebSockets.isclosed(ws) && break
+      HTTP.WebSockets.send(ws, response)
     end
   catch ex
-    if isa(ex, Distributed.RemoteException) &&
-      hasfield(typeof(ex), :captured) && isa(ex.captured, Distributed.CapturedException) &&
-        hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, HTTP.WebSockets.CloseFrameBody) # && ex.captured.ex.code == 1000
-
-      @info "WebSocket closed"
-
+    # Handle WebSocketError (normal close or protocol error)
+    if isa(ex, HTTP.WebSockets.WebSocketError)
+      # Check if it's a normal/expected close (1000, 1001, 1005, 1006)
+      if ex.message.code in (1000, 1001, 1005, 1006)
+        Genie.WebChannels.unsubscribe_client(ws)
+        return nothing
+      end
+      @error "WebSocket error" exception=(ex, catch_backtrace())
+      Genie.WebChannels.unsubscribe_client(ws)
       return nothing
+    # Handle RemoteException wrapping CloseFrameBody
+    elseif isa(ex, Distributed.RemoteException) &&
+      hasfield(typeof(ex), :captured) && isa(ex.captured, Distributed.CapturedException) &&
+        hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, HTTP.WebSockets.CloseFrameBody)
+      Genie.WebChannels.unsubscribe_client(ws)
+      return nothing
+    # Handle RemoteException wrapping RuntimeException
     elseif isa(ex, Distributed.RemoteException) &&
       hasfield(typeof(ex), :captured) && isa(ex.captured, Distributed.CapturedException) &&
         hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, Genie.Exceptions.RuntimeException)
-
       @error ex.captured.ex
-
+      Genie.WebChannels.unsubscribe_client(ws)
       return nothing
+    else
+      @error "WebSocket handler error" exception=(ex, catch_backtrace())
+      Genie.WebChannels.unsubscribe_client(ws)
     end
-
-    # rethrow(ex)
   end
 
   nothing

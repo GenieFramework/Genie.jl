@@ -318,7 +318,7 @@ function message(client::ClientId, msg::String)
     handler = @async(for (message, future) in queue
       nbytes = 0
       try
-        nbytes = Sockets.send(ws, message)
+        nbytes = HTTP.WebSockets.send(ws, message)
       catch
         @debug "Sending message to $(repr(client)) failed!"
       finally
@@ -346,7 +346,7 @@ function message(ws::HTTP.WebSockets.WebSocket, msg::String) :: Int
 end
 
 function message_unsafe(ws::HTTP.WebSockets.WebSocket, msg::String) :: Int
-  Sockets.send(ws, msg)
+  HTTP.WebSockets.send(ws, msg)
 end
 function message_unsafe(client::ClientId, msg::String) :: Int
   message_unsafe(CLIENTS[client].client, msg)

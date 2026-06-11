@@ -15,7 +15,7 @@ TestSetExtensions = "98d24dd4-01ad-11ea-1b02-c9a08f80db04"
 
 [compat]
 Genie = "5"
-HTTP = "1"
+HTTP = "2.1.1"
 LoggingExtras = "1"
 SafeTestsets = "0.1"
 SearchLight = "2"

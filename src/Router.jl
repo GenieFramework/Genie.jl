@@ -187,7 +187,11 @@ function route_request(req::HTTP.Request, res::HTTP.Response; stream::Union{HTTP
 
   log_response(req, res)
 
-  req.method == HEAD && (res.body = UInt8[])
+  # In HTTP.jl v2, Response body type is parameterized and immutable
+  # For HEAD requests, create a new Response with empty body
+  if req.method == HEAD
+    res = HTTP.Response(res.status, res.headers, body = "")
+  end
 
   res
 end
@@ -938,12 +942,11 @@ end
 
 Populates `params` with default environment vars.
 """
-function setup_base_params(req::HTTP.Request = HTTP.Request(), res::Union{HTTP.Response,Nothing} = req.response,
+function setup_base_params(req::HTTP.Request = HTTP.Request(), res::Union{HTTP.Response,Nothing} = nothing,
                             params::Dict{Symbol,Any} = Dict{Symbol,Any}()) :: Dict{Symbol,Any}
   params[PARAMS_REQUEST_KEY]   = req
   params[PARAMS_RESPONSE_KEY]  =  if res === nothing
-                                          req.response = HTTP.Response()
-                                          req.response
+                                          HTTP.Response()
                                         else
                                           res
                                         end

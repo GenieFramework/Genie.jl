@@ -72,7 +72,6 @@ Sets `value` under the `key` label on the `Cookie`.
 - `encrypted::Bool`: if `true` the value is stored encoded
 """
 function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attributes::Dict{String,<:Any} = Dict{String,Any}(); encrypted::Bool = true) :: HTTP.Response
-  r = Genie.Headers.normalize_headers(res)
   normalized_attrs = Dict{Symbol,Any}()
   for (k,v) in attributes
     normalized_attrs[Symbol(lowercase(string(k)))] = v
@@ -92,9 +91,10 @@ function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attribu
   encrypted && (value = Genie.Encryption.encrypt(value))
   cookie = HTTP.Cookies.Cookie(string(key), value; normalized_attrs...)
 
-  HTTP.Cookies.addcookie!(r, cookie)
+  # HTTP.jl v2: Headers are mutable and auto-normalize - can push! directly
+  push!(res.headers, "Set-Cookie" => HTTP.Cookies.stringify(cookie))
 
-  r
+  res
 end
 
 

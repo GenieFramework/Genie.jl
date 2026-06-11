@@ -70,7 +70,7 @@
     @test r.headers[1]["Content-Type"] == "text/html; charset=utf-8"
 
     @testset "HTML rendering with view file no layout with vars custom headers" begin
-      r = html(Genie.Renderer.Path(viewfile[1]), headers = Genie.Renderer.HTTPHeaders("Cache-Control" => "no-cache"), greeting = greeting, name = Genie)
+      r = html(Genie.Renderer.Path(viewfile[1]), headers = Genie.Renderer.HTTPHeaders(["Cache-Control" => "no-cache"]), greeting = greeting, name = Genie)
 
       @test String(r.body) |> fws ==
             "<!DOCTYPE html><html><body><h1>$greeting</h1><div><p>This is a $name test</p></div>
@@ -80,7 +80,7 @@
     end;
 
     @testset "HTML rendering with view file and layout with vars custom headers" begin
-      r = html(Genie.Renderer.Path(viewfile[1]), layout = Genie.Renderer.Path(templatefile[1]), headers = Genie.Renderer.HTTPHeaders("Cache-Control" => "no-cache"), greeting = greeting, name = Genie)
+      r = html(Genie.Renderer.Path(viewfile[1]), layout = Genie.Renderer.Path(templatefile[1]), headers = Genie.Renderer.HTTPHeaders(["Cache-Control" => "no-cache"]), greeting = greeting, name = Genie)
 
       @test String(r.body) |> fws ==
             "<!DOCTYPE html><html><head><title>$name test</title></head><body><div class=\"template\">
@@ -91,7 +91,7 @@
     end;
 
     @testset "HTML rendering with view file no layout with vars custom headers custom status" begin
-      r = html(Genie.Renderer.Path(viewfile[1]), headers = Genie.Renderer.HTTPHeaders("Cache-Control" => "no-cache"), status = 500, greeting = greeting, name = Genie)
+      r = html(Genie.Renderer.Path(viewfile[1]), headers = Genie.Renderer.HTTPHeaders(["Cache-Control" => "no-cache"]), status = 500, greeting = greeting, name = Genie)
 
       @test String(r.body) |> fws ==
             "<!DOCTYPE html><html><body><h1>$greeting</h1><div><p>This is a $name test</p></div>
@@ -104,7 +104,7 @@
 
     @testset "HTML rendering with view file and layout with vars custom headers custom status" begin
       r = html(Genie.Renderer.Path(viewfile[1]), layout = Genie.Renderer.Path(templatefile[1]),
-                headers = Genie.Renderer.HTTPHeaders("Cache-Control" => "no-cache"), status = 404, greeting = greeting, name = Genie)
+                headers = Genie.Renderer.HTTPHeaders(["Cache-Control" => "no-cache"]), status = 404, greeting = greeting, name = Genie)
 
       @test String(r.body) |> fws ==
             "<!DOCTYPE html><html><head><title>$name test</title></head><body><div class=\"template\">

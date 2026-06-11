@@ -60,11 +60,26 @@ end
 
 ###
 
+# Helper function to extract bytes from HTTP.jl v2 body types
+function _body_bytes(body)
+  if body isa Vector{UInt8}
+    return body
+  elseif body isa HTTP.BytesBody
+    return body.data
+  elseif body isa HTTP.EmptyBody
+    return UInt8[]
+  else
+    # Fallback for other body types
+    return UInt8[]
+  end
+end
+
 function post_from_request!(request::HTTP.Request, input::HttpInput)
   headers = Dict(request.headers)
+  body_bytes = _body_bytes(request.body)
 
   if first(something(findfirst("application/x-www-form-urlencoded", get(headers, "Content-Type", "")), 0:-1)) != 0
-    post_url_encoded!(request.body, input.post)
+    post_url_encoded!(body_bytes, input.post)
   elseif first(something(findfirst("multipart/form-data", get(headers, "Content-Type", "")), 0:-1)) != 0
     post_multipart!(request, input.post, input.files)
   end
@@ -108,8 +123,9 @@ function post_multipart!(request::HTTP.Request, post_data::HttpPostData, files::
 
   if boundary_length > 0
     form_parts::Array{HttpFormPart} = HttpFormPart[]
+    body_bytes = _body_bytes(request.body)
 
-    get_multiform_parts!(request.body, form_parts, boundary, boundary_length)
+    get_multiform_parts!(body_bytes, form_parts, boundary, boundary_length)
 
     ### Process form parts
 

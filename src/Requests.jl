@@ -246,10 +246,10 @@ function wtclient() :: UInt
 end
 
 
-function getheaders(req::HTTP.Request) :: Dict{String,String}
-  Dict{String,String}(req.headers)
+@inline function getheaders(req::HTTP.Request) :: HTTP.Headers
+  req.headers
 end
-function getheaders() :: Dict{String,String}
+function getheaders() :: HTTP.Headers
   getheaders(getrequest())
 end
 
