@@ -73,7 +73,7 @@ UUIDs = "1.6"
 Unicode = "1.6"
 XML2_jll = "2"
 YAML = "0.4"
-julia = "1.6"
+julia = "1.10"
 
 [extras]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
