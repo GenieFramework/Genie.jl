@@ -4,4 +4,4 @@ Genie = "c43c736e-a2d1-11e8-161f-af95117fbd1e"
 
 [compat]
 Documenter = "1.7.0"
-Genie = "5"
+Genie = "5, 6"
