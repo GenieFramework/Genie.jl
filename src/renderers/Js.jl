@@ -121,7 +121,6 @@ end
 
 function js!(data::S; status::Int = 200,
               headers::Genie.Renderer.HTTPHeaders = Genie.Renderer.HTTPHeaders(["Content-Type" => Genie.Renderer.CONTENT_TYPES[:javascript]]))::Genie.Renderer.HTTP.Response where {S<:AbstractString}
-  @show headers
               Genie.Renderer.WebRenderable(data, :javascript, status, headers) |> Genie.Renderer.respond
 end
 
