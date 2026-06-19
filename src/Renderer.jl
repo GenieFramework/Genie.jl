@@ -548,8 +548,8 @@ function set_negotiated_content(req::HTTP.Request, res::HTTP.Response, params::D
   req_type = Genie.Router.request_type(req)
 
   params[:response_type] = req_type
-  params[Genie.Router.PARAMS_MIME_KEY] = get!(MIME_TYPES, params[:response_type], typeof(MIME(req_type)))
-  push!(res.headers, "Content-Type" => get!(CONTENT_TYPES, params[:response_type], string(MIME(req_type))))
+  params[Genie.Router.PARAMS_MIME_KEY] = get(MIME_TYPES, params[:response_type], typeof(MIME(req_type)))
+  push!(res.headers, "Content-Type" => get(CONTENT_TYPES, params[:response_type], string(MIME(req_type))))
 
   req, res, params
 end
