@@ -91,8 +91,9 @@ function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attribu
   encrypted && (value = Genie.Encryption.encrypt(value))
   cookie = HTTP.Cookies.Cookie(string(key), value; normalized_attrs...)
 
-  # HTTP.jl v2: Headers are mutable and auto-normalize - can push! directly
-  push!(res.headers, "Set-Cookie" => HTTP.Cookies.stringify(cookie))
+  @show cookie
+  # Use HTTP.Cookies.addcookie! which correctly handles Set-Cookie header
+  HTTP.Cookies.addcookie!(res, cookie)
 
   res
 end
