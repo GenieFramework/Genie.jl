@@ -105,6 +105,8 @@ end
 
 const _routes = OrderedCollections.LittleDict{Symbol,Route}()
 const _channels = OrderedCollections.LittleDict{Symbol,Channel}()
+const _routes_lock = ReentrantLock()
+const _channels_lock = ReentrantLock()
 
 
 """
@@ -230,8 +232,16 @@ function route_ws_request(req, msg::Union{String,Vector{UInt8}}, ws_client) :: S
 end
 
 
-function Base.push!(collection, name::Symbol, item::Union{Route,Channel})
-  Base.delete!(collection, name)[name] = item # this is to ensure that the item is always the last one in the collection
+function Base.push!(collection::OrderedCollections.LittleDict{Symbol,Route}, name::Symbol, item::Route)
+  lock(_routes_lock) do
+    Base.delete!(collection, name)[name] = item # this is to ensure that the item is always the last one in the collection
+  end
+end
+
+function Base.push!(collection::OrderedCollections.LittleDict{Symbol,Channel}, name::Symbol, item::Channel)
+  lock(_channels_lock) do
+    Base.delete!(collection, name)[name] = item # this is to ensure that the item is always the last one in the collection
+  end
 end
 
 
@@ -386,7 +396,9 @@ end
 Removes the route with the corresponding name from the routes collection and returns the collection of remaining routes.
 """
 function delete!(key::Symbol) :: Vector{Route}
-  OrderedCollections.delete!(_routes, key)
+  lock(_routes_lock) do
+    OrderedCollections.delete!(_routes, key)
+  end
   return routes()
 end
 
@@ -397,7 +409,9 @@ end
 Removes the channel with the corresponding name from the channels collection and returns the collection of remaining channels.
 """
 function delete_channel!(key::Symbol) :: Vector{Channel}
-  OrderedCollections.delete!(_channels, key)
+  lock(_channels_lock) do
+    OrderedCollections.delete!(_channels, key)
+  end
   return channels()
 end
 
