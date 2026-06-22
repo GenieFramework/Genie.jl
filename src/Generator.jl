@@ -250,23 +250,42 @@ end
 
 
 """
-    write_secrets_file(app_path=".")
+write_secrets_file(app_path=".")::Nothing
 
-Generates a valid `config/secrets.jl` file with a random secret token.
+Generate a valid `config/secrets.jl` file with a random secret token.
 """
-function write_secrets_file(app_path::String = ".") :: Nothing
-  secrets_path = joinpath(app_path, Genie.config.path_config)
+function write_secrets_file(app_path::String=".")::Nothing
+  secrets_path=joinpath(app_path,Genie.config.path_config)
   ispath(secrets_path) || mkpath(secrets_path)
 
-  open(joinpath(secrets_path, Genie.Secrets.SECRETS_FILE_NAME), "w") do f
-    write(f, """try
-                  Genie.Util.isprecompiling() || Genie.Secrets.secret_token!("$(Genie.Secrets.secret())")
-                catch ex
-                  @error "Failed to generate secrets file: \$ex"
-                end
-                """)
-  end
+  modname,_=Genie.FileTemplates.appmodule(basename(app_path))
+  upname=uppercase(modname)
 
+  open(joinpath(secrets_path,Genie.Secrets.SECRETS_FILE_NAME),"w") do f
+    write(
+      f,
+      """#=
+Your 64-hex secret token lives here.
+
+Out of the box: we embed a randomly generated fallback.
+_Do not_ use this hard-coded token in production!
+
+PRODUCTION WORKFLOW:
+1) Copy the embedded fallback into your secret store:
+  • Docker secret: /run/secrets/SECRET_$upname
+  • Environment variable: SECRET_$upname
+2) Uncomment and use the `read_secret(...)` line below to load it.
+=#
+try
+  # Don't use the first line in production.
+  Genie.Util.isprecompiling() || Genie.Secrets.secret_token!("$(Genie.Secrets.secret())")
+  # Genie.Util.isprecompiling() || Genie.Secrets.secret_token!(Genie.Secrets.read_secret("$(string("SECRET_",upname,"\")")))
+catch ex
+  @error "Failed to generate secrets file: \$ex"
+end
+""",
+    )
+  end
   nothing
 end
 
@@ -500,7 +519,7 @@ function assert_project(project_dir::String = "."; name = nothing, authors = not
     project_dir = abspath(project_dir)
     tomlfile = joinpath(project_dir, "Project.toml")
     toml = isfile(tomlfile) ? Pkg.TOML.parsefile(tomlfile) : Dict{String, Any}()
-    
+
     toml["name"] = name !== nothing ? name : get!(toml, "name", splitpath(tomlfile)[end - 1])
     toml["uuid"] = uuid !== nothing ? uuid : get!(toml, "uuid", string(UUIDs.uuid4()))
     toml["authors"] = authors !== nothing ? authors : get!(get_authors, toml, "authors")
