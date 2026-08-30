@@ -12,8 +12,9 @@
   port = rand(8500:8900)
 
   up(port)
-
-  response = HTTP.get("http://localhost:$port/hello")
+  client = HTTP.Client()
+  
+  response = HTTP.get(client, "http://localhost:$port/hello")
 
   @test response.status == 200
   @test String(response.body) == message

@@ -10,9 +10,10 @@
     end
 
     server = up(port)
+    client = HTTP.Client()
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port")
+      HTTP.request(client, "GET", "http://127.0.0.1:$port")
     catch ex
       ex.response
     end
@@ -31,9 +32,10 @@
     end
 
     server = up(port)
+    client = HTTP.Client()
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port")
+      HTTP.request(client, "GET", "http://127.0.0.1:$port")
     catch ex
       ex.response
     end

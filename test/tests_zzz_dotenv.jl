@@ -38,7 +38,7 @@
 
     # sleep(10)
 
-    # r = Genie.Requests.HTTP.request("GET", "http://$(ENV["HOST"]):$(ENV["PORT"])/")
+    # r = Genie.Requests.HTTP.request(client, "GET", "http://$(ENV["HOST"]):$(ENV["PORT"])/")
     # @test r.status == Genie.Router.OK
 
     # eobj = Genie.JSONParser.parse(String(r.body))

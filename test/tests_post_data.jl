@@ -19,32 +19,33 @@
   port = rand(8500:8900)
 
   up(port; open_browser = false)
+  client = HTTP.Client()
 
-  response = HTTP.request("POST", "http://localhost:$port/", ["Content-Type" => "application/x-www-form-urlencoded"], "greeting=Hello")
+  response = HTTP.request(client, "POST", "http://localhost:$port/", ["Content-Type" => "application/x-www-form-urlencoded"], "greeting=Hello")
   @test response.status == 200
   @test String(response.body) == "Hello"
 
-  response = HTTP.request("POST", "http://localhost:$port/", ["Content-Type" => "application/x-www-form-urlencoded"], "greeting=Hey you there")
+  response = HTTP.request(client, "POST", "http://localhost:$port/", ["Content-Type" => "application/x-www-form-urlencoded"], "greeting=Hey you there")
   @test response.status == 200
   @test String(response.body) == "Hey you there"
 
-  response = HTTP.request("GET", "http://localhost:$port/", ["Content-Type" => "application/x-www-form-urlencoded"], "greeting=Hello")
+  response = HTTP.request(client, "GET", "http://localhost:$port/", ["Content-Type" => "application/x-www-form-urlencoded"], "greeting=Hello")
   @test response.status == 200
   @test String(response.body) == "GET"
 
-  response = HTTP.request("POST", "http://localhost:$port/data", ["Content-Type" => "application/x-www-form-urlencoded"], "fields%5B%5D=Hey you there&fields%5B%5D=&single=")
+  response = HTTP.request(client, "POST", "http://localhost:$port/data", ["Content-Type" => "application/x-www-form-urlencoded"], "fields%5B%5D=Hey you there&fields%5B%5D=&single=")
   @test response.status == 200
   @test String(response.body) == "Hey you there"
 
-  response = HTTP.request("POST", "http://localhost:$port/data", ["Content-Type" => "application/x-www-form-urlencoded"], "fields%5B%5D=1&fields%5B%5D=2&single=3")
+  response = HTTP.request(client, "POST", "http://localhost:$port/data", ["Content-Type" => "application/x-www-form-urlencoded"], "fields%5B%5D=1&fields%5B%5D=2&single=3")
   @test response.status == 200
   @test String(response.body) == "123"
 
-  response = HTTP.post("http://localhost:$port", [], HTTP.Form(Dict("greeting" => "Hello")))
+  response = HTTP.post(client, "http://localhost:$port", [], HTTP.Form(Dict("greeting" => "Hello")))
   @test response.status == 200
   @test String(response.body) == "Hello"
 
-  response = HTTP.post("http://localhost:$port", [], HTTP.Form(Dict("greeting" => "Hey you there")))
+  response = HTTP.post(client, "http://localhost:$port", [], HTTP.Form(Dict("greeting" => "Hey you there")))
   @test response.status == 200
   @test String(response.body) == "Hey you there"
   

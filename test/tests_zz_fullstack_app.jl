@@ -8,6 +8,7 @@
     using Pkg
 
     using Genie
+    import HTTP
 
     content = "Test OK!"
 
@@ -32,9 +33,10 @@
     end
 
     up(9999)
+    client = HTTP.Client()
     sleep(10)
 
-    r = Genie.Requests.HTTP.request("GET", "http://localhost:9999/test")
+    r = HTTP.request(client, "GET", "http://localhost:9999/test")
 
     @test occursin(content, String(r.body)) == true
 

@@ -20,14 +20,15 @@
   port = rand(8500:8900)
 
   up(port; open_browser = false, verbose = true)
+  client = HTTP.Client()
 
-  response = HTTP.request("GET", "http://localhost:$port/headers") # unhandled, should get default response
+  response = HTTP.request(client, "GET", "http://localhost:$port/headers") # unhandled, should get default response
   @test response.status == 200
   @test String(response.body) == "OK"
   @test Dict(response.headers)["X-Foo-Bar"] == "Baz"
   @test get(Dict(response.headers), "Access-Control-Allow-Methods", nothing) == nothing
 
-  response = HTTP.request("OPTIONS", "http://localhost:$port/headers") # handled
+  response = HTTP.request(client, "OPTIONS", "http://localhost:$port/headers") # handled
   @test response.status == 200
   @test String(response.body) == "OOKK"
   @test Dict(response.headers)["X-Foo-Bar"] == "Bazinga"

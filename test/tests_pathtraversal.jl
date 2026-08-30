@@ -8,11 +8,12 @@
 
     port = rand(8000:10_000)
     server = up(port)
+    client = HTTP.Client()
 
-    req = HTTP.request("GET", "http://localhost:$port////etc/hosts"; status_exception = false)
+    req = HTTP.request(client, "GET", "http://localhost:$port////etc/hosts"; status_exception = false)
     @test req.status == (Sys.iswindows() ? 404 : 401)
 
-    # req = HTTP.request("GET", "http://localhost:$port/../../src/mimetypes.jl"; status_exception = false)
+    # req = HTTP.request(client, "GET", "http://localhost:$port/../../src/mimetypes.jl"; status_exception = false)
     # @test req.status == 401
 
     Genie.Server.down!()
@@ -28,10 +29,10 @@
 
   #   port = rand(8000:10_000)
   #   server = Genie.Server.serve(; port)
-  #   req = HTTP.request("GET", "http://localhost:$port//etc/passwd"; status_exception = false)
+  #   req = HTTP.request(client, "GET", "http://localhost:$port//etc/passwd"; status_exception = false)
   #   @test req.status == (Sys.iswindows() ? 404 : 401)
 
-  #   req = HTTP.request("GET", "http://localhost:$port/../../src/mimetypes.jl"; status_exception = false)
+  #   req = HTTP.request(client, "GET", "http://localhost:$port/../../src/mimetypes.jl"; status_exception = false)
   #   @test req.status == 401
 
   #   Genie.Server.down!()

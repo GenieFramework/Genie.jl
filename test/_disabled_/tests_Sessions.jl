@@ -16,9 +16,10 @@
 #     end
 
 #     server = up()
+#     client = HTTP.Client()
 
 #     # TODO: extend to use the cookie and increment the count
-#     response = HTTP.get("http://$(Genie.config.server_host):$(Genie.config.server_port)/home")
+#     response = HTTP.get(client, "http://$(Genie.config.server_host):$(Genie.config.server_port)/home")
 #     @test response.body |> String == "1"
 
 #     down()

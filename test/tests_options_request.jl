@@ -10,13 +10,14 @@
   port = rand(8500:8900)
 
   server = up(port)
+  client = HTTP.Client()
   sleep(1)
 
-  response = HTTP.request("OPTIONS", "http://localhost:$port") # unhandled, should get default response
+  response = HTTP.request(client, "OPTIONS", "http://localhost:$port") # unhandled, should get default response
   @test response.status == 200
   @test get(Dict(response.headers), "X-Foo-Bar", nothing) == nothing
 
-  response = HTTP.request("OPTIONS", "http://localhost:$port/options") # handled
+  response = HTTP.request(client, "OPTIONS", "http://localhost:$port/options") # handled
   @test response.status == 200
   @test get(Dict(response.headers), "X-Foo-Bar", nothing) == "Baz"
 

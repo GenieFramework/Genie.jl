@@ -18,7 +18,7 @@
   
   function roundtrip(x)
     global json_result
-    HTTP.request("POST",
+    HTTP.request(client, "POST",
       "http://localhost:$port/jsonroundtrip",
       [("Content-Type", "application/json")],
       Genie.JSONParser.json(Dict(:payload => x))
@@ -29,26 +29,27 @@
   port = rand(8500:8900)
 
   server = up(port)
+  client = HTTP.Client()
 
-  response = HTTP.request("POST", "http://localhost:$port/jsonpayload",
+  response = HTTP.request(client, "POST", "http://localhost:$port/jsonpayload",
                   [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
 
   @test response.status == 200
   @test String(response.body) |> fws == """Dict{String, Any}("greeting" => "hello")""" |> fws
 
-  response = HTTP.request("POST", "http://localhost:$port/jsontest",
+  response = HTTP.request(client, "POST", "http://localhost:$port/jsontest",
                   [("Content-Type", "application/json; charset=utf-8")], """{"test":[1,2,3]}""")
 
   @test response.status == 200
   @test String(response.body) == "[1, 2, 3]"
 
-  response = HTTP.request("POST", "http://localhost:$port/jsonpayload",
+  response = HTTP.request(client, "POST", "http://localhost:$port/jsonpayload",
                   [("Content-Type", "application/json")], """{"greeting":"hello"}""")
 
   @test response.status == 200
   @test String(response.body) |> fws == """Dict{String, Any}("greeting" => "hello")""" |> fws
 
-  response = HTTP.request("POST", "http://localhost:$port/jsontest",
+  response = HTTP.request(client, "POST", "http://localhost:$port/jsontest",
                   [("Content-Type", "application/json")], """{"test":[1,2,3]}""")
 
   @test response.status == 200
@@ -62,7 +63,7 @@
     error("500, sorry")
   end
 
-  @test_throws HTTP.StatusError HTTP.request("POST", "http://localhost:$port/json-error", [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
+  @test_throws HTTP.StatusError HTTP.request(client, "POST", "http://localhost:$port/json-error", [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
 
   down()
   sleep(1)

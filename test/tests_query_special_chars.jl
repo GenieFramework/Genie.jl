@@ -11,9 +11,10 @@
     end
 
     server = up(port)
+    client = HTTP.Client()
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port/?x=foo+bar")
+      HTTP.request(client, "GET", "http://127.0.0.1:$port/?x=foo+bar")
     catch ex
       ex.response
     end
@@ -39,9 +40,10 @@
     end
 
     server = up(port)
+    client = HTTP.Client()
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port/?x=foo%20bar")
+      HTTP.request(client, "GET", "http://127.0.0.1:$port/?x=foo%20bar")
     catch ex
       ex.response
     end
@@ -67,9 +69,10 @@
     end
 
     server = up(port)
+    client = HTTP.Client()
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port/?x=foo%2Bbar")
+      HTTP.request(client, "GET", "http://127.0.0.1:$port/?x=foo%2Bbar")
     catch ex
       ex.response
     end
@@ -95,9 +98,10 @@
     end
 
     server = up(port)
+    client = HTTP.Client()
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port/?x=✔+🧞+♥")
+      HTTP.request(client, "GET", "http://127.0.0.1:$port/?x=✔+🧞+♥")
     catch ex
       ex.response
     end

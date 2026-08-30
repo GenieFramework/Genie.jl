@@ -14,9 +14,10 @@
   port = rand(8500:8900)
 
   server = up(port; open_browser = false)
+  client = HTTP.Client()
 
-  response = HTTP.get("http://localhost:$port/getparams/foo/23.43/18/2019-02-15")
-
+  response = HTTP.get(client, "http://localhost:$port/getparams/foo/23.43/18/2019-02-15")
+  
   @test response.status == 200
   @test String(response.body) == "s = foo / f = 23.43 / i = 18 / 2019-02-15"
 

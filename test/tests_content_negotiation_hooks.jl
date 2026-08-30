@@ -20,15 +20,16 @@
   port = rand(8500:8900)
 
   server = up(port)
+  client = HTTP.Client()
 
-  response = HTTP.request("GET", "http://localhost:$port")
+  response = HTTP.request(client, "GET", "http://localhost:$port")
   @test response.status == 200
   @test String(response.body) == original_message
 
 
   push!(Genie.Router.content_negotiation_hooks, hook)
 
-  response = HTTP.request("GET", "http://localhost:$port")
+  response = HTTP.request(client, "GET", "http://localhost:$port")
   @test response.status == 200
   @test String(response.body) == custom_message
 

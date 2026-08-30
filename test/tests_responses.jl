@@ -17,8 +17,9 @@
   port = rand(8500:8900)
 
   server = up(port)
+  client = HTTP.Client()
 
-  response = HTTP.request("GET", "http://localhost:$port/responses")
+  response = HTTP.request(client, "GET", "http://localhost:$port/responses")
   @test response.status == 301
   @test Dict(response.headers)["X-Foo-Bar"] == "Baz"
   @test Dict(response.headers)["X-A-B"] == "C"
@@ -27,7 +28,7 @@
   # In HTTP.jl v2, the body is correctly a String, not Vector{Char}
   @test String(response.body) == "Hello"
 
-  @test_throws HTTP.StatusError HTTP.request("GET", "http://localhost:$port/broken", ["Content-Type"=>"text/plain"])
+  @test_throws HTTP.StatusError HTTP.request(client, "GET", "http://localhost:$port/broken", ["Content-Type"=>"text/plain"])
 
   down()
   sleep(1)
