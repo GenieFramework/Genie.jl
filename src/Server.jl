@@ -431,7 +431,7 @@ function setup_http_streamer(stream::HTTP.Stream)
   else
     if Genie.config.features_peerinfo
       try
-        task_local_storage(:peer, Sockets.getpeername( HTTP.IOExtras.tcpsocket(HTTP.Streams.getrawstream(stream)) ))
+        task_local_storage(:peer, HTTP.peeraddr(stream))
       catch ex
         @error ex
       end
