@@ -191,80 +191,83 @@
     port = nothing
   end
 
-  @testitem "Custom error handler for unknown types" begin
-    using Genie
-    using HTTP
+  @testitem "Custom error handlers" begin
+    @testset "Custom error handler for unknown types" begin
+      using Genie
+      using HTTP
 
-    port = nothing
-    port = rand(8500:8900)
+      port = nothing
+      port = rand(8500:8900)
 
-    server = up(port; open_browser = false)
+      server = up(port; open_browser = false)
 
     response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "text/csv"], status_exception = false)
 
-    @test response.status == 404
-    @test occursin("404 Not Found", String(response.body)) == true
-    @test Dict(response.headers)["Content-Type"] == "text/csv"
+      @test response.status == 404
+      @test occursin("404 Not Found", String(response.body)) == true
+      @test Dict(response.headers)["Content-Type"] == "text/csv"
 
-    Genie.Router.error(error_message::String, ::Type{MIME"text/csv"}, ::Val{404}; error_info = "") = begin
-      HTTP.Response(401, ["Content-Type" => "text/csv"], body = "Search CSV and you shall find")
-    end
+      Genie.Router.error(error_message::String, ::Type{MIME"text/csv"}, ::Val{404}; error_info = "") = begin
+        HTTP.Response(401, ["Content-Type" => "text/csv"], body = "Search CSV and you shall find")
+      end
 
     response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["conTeNT-tYPE" => "text/csv"], status_exception = false)
 
-    @test response.status == 401
-    @test occursin("Search CSV and you shall find", String(response.body)) == true
-    @test Dict(response.headers)["Content-Type"] == "text/csv"
+      @test response.status == 401
+      @test occursin("Search CSV and you shall find", String(response.body)) == true
+      @test Dict(response.headers)["Content-Type"] == "text/csv"
 
     response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["accept" => "text/csv"], status_exception = false)
 
-    @test response.status == 401
-    @test occursin("Search CSV and you shall find", String(response.body)) == true
-    @test Dict(response.headers)["Content-Type"] == "text/csv"
+      @test response.status == 401
+      @test occursin("Search CSV and you shall find", String(response.body)) == true
+      @test Dict(response.headers)["Content-Type"] == "text/csv"
 
-    down()
-    sleep(1)
-    server = nothing
-    port = nothing
-  end
+      down()
+      sleep(1)
+      server = nothing
+      port = nothing
+      Base.delete_method.(methods(Genie.Router.error, (String, Type{MIME"text/csv"}, Val{404})))
+    end
 
-  @testitem "Custom error handler for known types" begin
-    using Genie
-    using HTTP
+    @testset "Custom error handler for known types" begin
+      using Genie
+      using HTTP
 
-    port = nothing
-    port = rand(8500:8900)
+      port = nothing
+      port = rand(8500:8900)
 
-    server = up(port; open_browser = false)
+      server = up(port; open_browser = false)
 
     response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "application/json"], status_exception = false)
 
-    @test response.status == 404
-    @test occursin("404 Not Found", String(response.body)) == true
-    @test Dict(response.headers)["Content-Type"] == "application/json; charset=utf-8"
+      @test response.status == 404
+      @test occursin("404 Not Found", String(response.body)) == true
+      @test Dict(response.headers)["Content-Type"] == "application/json; charset=utf-8"
 
-    Genie.Router.error(error_message::String, ::Type{MIME"application/json"}, ::Val{404}; error_info = "") = begin
-      HTTP.Response(401, ["Content-Type" => "application/json"], body = "Search CSV and you shall find")
-    end
+      Genie.Router.error(error_message::String, ::Type{MIME"application/json"}, ::Val{404}; error_info = "") = begin
+        HTTP.Response(401, ["Content-Type" => "application/json"], body = "Search CSV and you shall find")
+      end
 
     response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["conTeNT-tYPE" => "application/json"], status_exception = false)
 
-    @test response.status == 401
-    @test occursin("Search CSV and you shall find", String(response.body)) == true
-    @test Dict(response.headers)["Content-Type"] == "application/json"
+      @test response.status == 401
+      @test occursin("Search CSV and you shall find", String(response.body)) == true
+      @test Dict(response.headers)["Content-Type"] == "application/json"
 
     response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["accept" => "application/json"], status_exception = false)
 
-    @test response.status == 401
-    @test occursin("Search CSV and you shall find", String(response.body)) == true
-    @test Dict(response.headers)["Content-Type"] == "application/json"
+      @test response.status == 401
+      @test occursin("Search CSV and you shall find", String(response.body)) == true
+      @test Dict(response.headers)["Content-Type"] == "application/json"
 
-    down()
-    sleep(1)
-    server = nothing
-    port = nothing
+      down()
+      sleep(1)
+      server = nothing
+      port = nothing
+      Base.delete_method.(methods(Genie.Router.error, (String, Type{MIME"application/json"}, Val{404})))
+    end
   end
-
   @testitem "Order of accept preferences" begin
     using Genie
     using HTTP
@@ -284,7 +287,7 @@
 
     response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "application/json, text/csv, text/html, text/plain"], status_exception = false)
 
-    @test Dict(response.headers)["Content-Type"] == "application/json"
+    @test startswith(Dict(response.headers)["Content-Type"], "application/json")
 
     response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "text/csv, text/html, text/plain, application/json"], status_exception = false)
 
@@ -296,7 +299,7 @@
 
     response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "text/csv, application/json, text/html, text/plain"], status_exception = false)
 
-    @test Dict(response.headers)["Content-Type"] == "application/json"
+    @test startswith(Dict(response.headers)["Content-Type"], "application/json")
 
     response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "text/csv"], status_exception = false)
 

@@ -1,10 +1,10 @@
 # @testitem "App Config" begin
-  @testitem "Custom server startup overwrites app config" begin
-    using Genie
-
+  @testitem "Custom server startup overwrites app config" setup=[GenieTestSetup] begin
+    GenieTestSetup.__init__()
+    
     @test Genie.config.server_port  == 8000
     @test Genie.config.server_host  == "127.0.0.1"
-    @test Genie.config.websockets_port == nothing
+    @test Genie.config.websockets_port === nothing
     @test Genie.config.run_as_server   == false
 
     server = up(9000, "0.0.0.0")
