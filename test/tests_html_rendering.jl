@@ -1,4 +1,4 @@
-@safetestset "HTML rendering" begin
+@testitem "HTML rendering" begin
   using Genie, Genie.Renderer.Html, Genie.Requests
 
   greeting = "Welcome"

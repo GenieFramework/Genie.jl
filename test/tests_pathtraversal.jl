@@ -1,6 +1,6 @@
-@safetestset "Path traversal" begin
+# @testitem "Path traversal" begin
 
-  @safetestset "Returns 401 unauthorised" begin
+  @testitem "Returns 401 unauthorised" begin
     using Genie
     using HTTP
 
@@ -20,7 +20,7 @@
   end
 
   # Tests pass OK but for some reason some state remains and breaks next batch of tests... :-(
-  # @safetestset "Authorised static server responses" begin
+  # @testitem "Authorised static server responses" begin
   #   using Genie
   #   using HTTP
 
@@ -38,7 +38,7 @@
   #   server = nothing
   # end
 
-  @safetestset "serve_static_file does not serve unauthorised requests" begin
+  @testitem "serve_static_file does not serve unauthorised requests" begin
     using Genie
 
     response = Genie.Router.serve_static_file("//etc/passwd", root = "public")
@@ -48,4 +48,4 @@
     @test response.status == 401
   end
 
-end
+# end

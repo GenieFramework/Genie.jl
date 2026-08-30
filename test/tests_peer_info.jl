@@ -1,5 +1,5 @@
-@safetestset "Peer info" begin
-  @safetestset "Peer info is disabled by default" begin
+# @testitem "Peer info" begin
+  @testitem "Peer info is disabled by default but can be activated" begin
     using Genie, Genie.Requests
     using HTTP
 
@@ -23,14 +23,7 @@
 
     down()
     sleep(1)
-    server = nothing
-  end;
 
-  @safetestset "Peer info can be activated" begin
-    using Genie, Genie.Requests
-    using HTTP
-
-    port = rand(8500:8900)
     Genie.config.features_peerinfo = true
 
     route("/") do
@@ -55,4 +48,4 @@
     port = nothing
   end;
 
-end
+# end

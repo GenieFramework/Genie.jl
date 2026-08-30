@@ -1,5 +1,5 @@
-@safetestset "HEAD requests" begin
-  @safetestset "HEAD requests should be by default handled by GET" begin
+# @testitem "HEAD requests" begin
+  @testitem "HEAD requests should be by default handled by GET" begin
     using Genie
     using HTTP
 
@@ -36,7 +36,7 @@
     port = nothing
   end;
 
-  @safetestset "HEAD requests have no body" begin
+  @testitem "HEAD requests have no body" begin
     using Genie
     using HTTP
 
@@ -76,22 +76,22 @@
     port = nothing
   end;
 
-  @safetestset "HEAD requests should overwrite GET" begin
+  @testitem "HEAD requests should overwrite GET" begin
     using Genie
     using HTTP
 
     port = nothing
     port = rand(8500:8900)
 
-    request_method = ""
+    request_method = Ref("")
 
     route("/", named = :get_root) do
-      request_method = "GET"
+      request_method[] = "GET"
       "GET request"
     end
 
     route("/", method = "HEAD", named = :head_root) do
-      request_method = "HEAD"
+      request_method[] = "HEAD"
       "HEAD request"
     end
 
@@ -105,7 +105,7 @@
     end
 
     @test response.status == 200
-    @test request_method == "GET"
+    @test request_method[] == "GET"
 
     response = try
       HTTP.request("HEAD", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
@@ -114,7 +114,7 @@
     end
 
     @test response.status == 200
-    @test request_method == "HEAD"
+    @test request_method[] == "HEAD"
 
     down()
     sleep(1)
@@ -122,4 +122,4 @@
     port = nothing
   end;
 
-end;
+# end;

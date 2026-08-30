@@ -1,4 +1,4 @@
-@safetestset "Files vars rendering" begin
+@testitem "Files vars rendering" begin
   using Genie
   using Genie.Renderer.Html, Genie.Requests
   using Random

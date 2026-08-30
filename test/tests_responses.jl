@@ -1,4 +1,4 @@
-@safetestset "Responses" begin
+@testitem "Responses" begin
 
   using Genie, HTTP, Genie.Responses
 

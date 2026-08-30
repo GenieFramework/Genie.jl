@@ -1,6 +1,6 @@
-@safetestset "Server functionality" begin
+# @testitem "Server functionality" begin
 
-  @safetestset "Start/stop servers" begin
+  @testitem "Start/stop servers" begin
     using Genie
     using Genie.Server
 
@@ -30,7 +30,7 @@
     servers = nothing
   end;
 
-  @safetestset "Update config when custom startup args" begin
+  @testitem "Update config when custom startup args" begin
     using Genie
     using Genie.Server
 
@@ -50,4 +50,4 @@
     server = nothing
   end;
 
-end;
+# end;

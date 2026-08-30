@@ -1,4 +1,4 @@
-@safetestset "Parsing of route arguments with types" begin
+@testitem "Parsing of route arguments with types" begin
 
   using Genie, Dates, HTTP
 

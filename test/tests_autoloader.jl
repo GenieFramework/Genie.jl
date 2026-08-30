@@ -1,5 +1,5 @@
 # julia --project=test test/runtests.jl tests_autoloader
-@safetestset "Autoload Basic Functionality" begin
+@testitem "Autoload Basic Functionality" begin
   using Genie, Genie.Loader
 
   loader_path = joinpath(@__DIR__, "loader")
@@ -23,7 +23,7 @@
   @test xyz_idx < my_test_idx < def_idx < abc_idx
 end
 
-@safetestset "Autoload Recursive Persistent" begin
+@testitem "Autoload Recursive Persistent" begin
     using Genie, Genie.Loader
 
     Core.eval(Main, :(LOAD_ORDER = String[]))
@@ -40,7 +40,7 @@ end
 
 
 
-@safetestset "Autoload Missing File Tolerance" begin
+@testitem "Autoload Missing File Tolerance" begin
     using Genie, Genie.Loader
 
     Core.eval(Main, :(LOAD_ORDER = String[]))
@@ -59,7 +59,7 @@ end
     end
 end
 
-@safetestset "Autoload Ignore Directive" begin
+@testitem "Autoload Ignore Directive" begin
     using Genie, Genie.Loader
 
     Core.eval(Main, :(LOAD_ORDER = String[]))
@@ -79,7 +79,7 @@ end
     end
 end
 
-@safetestset "Autoload Custom Context" begin
+@testitem "Autoload Custom Context" begin
     using Genie, Genie.Loader
 
     test_dir = mktempdir()

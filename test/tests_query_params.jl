@@ -1,6 +1,6 @@
-@safetestset "Query params" begin
+# @testitem "Query params" begin
 
-@safetestset "No query params" begin
+@testitem "No query params" begin
   using Genie
   using HTTP
 
@@ -32,7 +32,7 @@
 end
 
 
-@safetestset "No defaults errors out" begin
+@testitem "No defaults errors out" begin
   using Genie
   using HTTP
 
@@ -60,7 +60,7 @@ end
 end
 
 
-@safetestset "Defaults when no query params" begin
+@testitem "Defaults when no query params" begin
   using Genie
   using HTTP
 
@@ -135,7 +135,7 @@ end
 end
 
 
-@safetestset "Query params processing" begin
+@testitem "Query params processing" begin
   using Genie
   using HTTP
 
@@ -208,7 +208,7 @@ end
 end
 
 
-@safetestset "Array query params" begin
+@testitem "Array query params" begin
   using Genie
   using HTTP
 
@@ -282,4 +282,4 @@ end
   port = nothing
 end
 
-end
+# end

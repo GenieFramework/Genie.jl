@@ -1,6 +1,6 @@
-@safetestset "HTML+Julia rendering" begin
+# @testitem "HTML+Julia rendering" begin
 
-  @safetestset "Simple tag rendering" begin
+  @testitem "Simple tag rendering" begin
     using Genie
     using Genie.Renderer.Html
     import Genie.Util: fws
@@ -25,4 +25,4 @@
           "<span class=\"focus\" data-process=\"pre-process\" Important message><a>Click here to read message</a></span>" |> fws
   end;
 
-end;
+# end;

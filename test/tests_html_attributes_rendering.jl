@@ -1,12 +1,12 @@
-@safetestset "HTML attributes rendering" begin
-  @safetestset "No attributes" begin
+# @testitem "HTML attributes rendering" begin
+  @testitem "No attributes" begin
     using Genie.Renderer.Html
 
     r = html("<div></div>")
     @test String(r.body) == "<div></div>"
   end;
 
-  @safetestset "No attributes force parse" begin
+  @testitem "No attributes force parse" begin
     using Genie.Renderer.Html
     import Genie.Util: fws
 
@@ -15,7 +15,7 @@
   end;
 
 
-  @safetestset "Regular attribute" begin
+  @testitem "Regular attribute" begin
     using Genie.Renderer.Html
     import Genie.Util: fws
 
@@ -23,7 +23,7 @@
     @test String(r.body) |> fws == """<div class="foo"></div>""" |> fws
   end;
 
-  @safetestset "Regular attribute force parse" begin
+  @testitem "Regular attribute force parse" begin
     using Genie.Renderer.Html
     import Genie.Util: fws
 
@@ -32,7 +32,7 @@
   end;
 
 
-  @safetestset "Dashed attributes" begin
+  @testitem "Dashed attributes" begin
     using Genie.Renderer.Html
     import Genie.Util: fws
 
@@ -40,7 +40,7 @@
     @test String(r.body) |> fws == """<div data-arg="foo"></div>""" |> fws
   end;
 
-  @safetestset "Dashed attributes force parse" begin
+  @testitem "Dashed attributes force parse" begin
     using Genie.Renderer.Html
     import Genie.Util: fws
 
@@ -49,7 +49,7 @@
   end;
 
 
-  @safetestset "Multiple dashed attributes" begin
+  @testitem "Multiple dashed attributes" begin
     using Genie.Renderer.Html
     import Genie.Util: fws
 
@@ -57,7 +57,7 @@
     @test String(r.body) |> fws == """<div data-arg="foo bar" data-moo-hoo="123"></div>""" |> fws
   end;
 
-  @safetestset "Multiple dashed attributes force parse" begin
+  @testitem "Multiple dashed attributes force parse" begin
     using Genie.Renderer.Html
     import Genie.Util: fws
 
@@ -65,7 +65,7 @@
     @test String(r.body) |> fws == """<!DOCTYPE html><html><body><div data-arg="foo bar" data-moo-hoo="123"></div></body></html>""" |> fws
   end;
 
-  @safetestset "Attribute value with `=` character" begin
+  @testitem "Attribute value with `=` character" begin
     using Genie.Renderer.Html
     import Genie.Util: fws
 
@@ -80,7 +80,7 @@
     @test String(r.body) |> fws == """<!DOCTYPE html><html><body><div v-on:click="event = true"></div></body></html>""" |> fws
   end;
 
-  @safetestset "Single quotes" begin
+  @testitem "Single quotes" begin
     using Genie.Renderer.Html
     import Genie.Util: fws
 
@@ -88,7 +88,7 @@
     @test String(r.body) |> fws == """<div class='foo'></div>""" |> fws
   end;
 
-  @safetestset "Single quotes force parse" begin
+  @testitem "Single quotes force parse" begin
     using Genie.Renderer.Html
     import Genie.Util: fws
 
@@ -97,7 +97,7 @@
   end;
 
 
-  @safetestset "Vue args force parse" begin
+  @testitem "Vue args force parse" begin
     using Genie
     using Genie.Renderer.Html
     import Genie.Util: fws
@@ -203,7 +203,7 @@
           </body></html>""" |> fws
   end;
 
-  @safetestset "Embedded Julia" begin
+  @testitem "Embedded Julia" begin
     using Genie
     using Genie.Renderer.Html
     import Genie.Util: fws
@@ -221,4 +221,4 @@
     r = html("""<span $("foo=$(string(:disabled))")></span>""", forceparse = true)
     @test String(r.body) |> fws == """<!DOCTYPE html><html><body><span foo="disabled"></span></body></html>""" |> fws
   end;
-end;
+# end;

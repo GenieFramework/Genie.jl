@@ -1,4 +1,4 @@
-@safetestset "OPTIONS requests" begin
+@testitem "OPTIONS requests" begin
 
   using Genie, HTTP
 

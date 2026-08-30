@@ -1,6 +1,6 @@
-@safetestset "JS rendering" begin
+# @testitem "JS rendering" begin
 
-  @safetestset "Plain JS rendering" begin
+  @testitem "Plain JS rendering" begin
     using Genie
     using Genie.Renderer
     using Genie.Renderer.Js
@@ -16,7 +16,7 @@
   end;
 
 
-  @safetestset "Vars JS rendering" begin
+  @testitem "Vars JS rendering" begin
     using Genie
     using Genie.Renderer
     using Genie.Renderer.Js
@@ -34,4 +34,4 @@
     Genie.Renderer.clear_task_storage()
   end;
 
-end;
+# end;

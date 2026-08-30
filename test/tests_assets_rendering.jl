@@ -1,6 +1,6 @@
-@safetestset "Assets rendering" begin
+# @testitem "Assets rendering" begin
 
-  @safetestset "Embedded assets" begin
+  @testitem "Embedded assets" begin
     using Genie
     using Genie.Renderer
     using Genie.Assets
@@ -14,4 +14,4 @@
     @test Assets.channels_script()[1:28] == "<script>\nwindow.Genie = {};\n"
   end;
 
-end;
+# end;

@@ -1,4 +1,4 @@
-@safetestset "JSON payload" begin
+@testitem "JSON payload" begin
 
   using Genie, HTTP
   import Genie.Util: fws

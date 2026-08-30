@@ -1,4 +1,4 @@
-@safetestset "<select> test" begin
+@testitem "<select> test" begin
 
   using Genie
   using Genie.Renderer.Html

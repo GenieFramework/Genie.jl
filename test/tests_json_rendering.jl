@@ -1,6 +1,6 @@
-@safetestset "JS rendering" begin
-  @safetestset "JSON rendering" begin
-    @safetestset "JSON view rendering with vars" begin
+# @testitem "JS rendering" begin
+  # @testitem "JSON rendering" begin
+    @testitem "JSON view rendering with vars" begin
       using Genie, Genie.Renderer, Genie.Renderer.Json
 
       jsonview = raw"
@@ -22,7 +22,7 @@
       Genie.Renderer.clear_task_storage()
     end;
 
-    @safetestset "JSON struct rendering" begin
+    @testitem "JSON struct rendering" begin
       struct Person
         name::String
         age::Int
@@ -34,5 +34,5 @@
 
       @test String(json(p).body) == """{"name":"John Doe","age":42}"""
     end
-  end;
-end;
+  # end;
+# end;

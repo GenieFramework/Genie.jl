@@ -1,5 +1,5 @@
-@safetestset "Special chars in GET params (query)" begin
-  @safetestset "<a+b> should be <a b>" begin
+# @testitem "Special chars in GET params (query)" begin
+  @testitem "<a+b> should be <a b>" begin
     using Genie
     using HTTP
 
@@ -27,7 +27,7 @@
     port = nothing
   end;
 
-  @safetestset "<a%20b> should be <a b>" begin
+  @testitem "<a%20b> should be <a b>" begin
     using Genie
     using HTTP
 
@@ -55,7 +55,7 @@
     port = nothing
   end;
 
-  @safetestset "<a%2Bb> should be <a+b>" begin
+  @testitem "<a%2Bb> should be <a+b>" begin
     using Genie
     using HTTP
 
@@ -83,7 +83,7 @@
     port = nothing
   end;
 
-  @safetestset "emoji support" begin
+  @testitem "emoji support" begin
     using Genie
     using HTTP
 
@@ -111,4 +111,4 @@
     port = nothing
   end;
 
-end
+# end

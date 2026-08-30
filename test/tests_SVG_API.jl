@@ -1,6 +1,6 @@
-@safetestset "SVG API support in Renderer.Html" begin
+# @testitem "SVG API support in Renderer.Html" begin
 
-  @safetestset "SVG API is available" begin
+  @testitem "SVG API is available" begin
     using Genie
     using Genie.Renderer.Html
     import Genie.Util: fws
@@ -12,4 +12,4 @@
     @test clipPath() |> fws == "<clipPath></clipPath>" |> fws
   end;
 
-end;
+# end;

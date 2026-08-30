@@ -1,4 +1,4 @@
-@safetestset "Assets config" begin
+@testitem "Assets config" begin
   using Genie, Genie.Assets
 
   @test Genie.Assets.AssetsConfig().host == Genie.config.base_path

@@ -1,6 +1,6 @@
-@safetestset "Routing edge cases" begin
+# @testitem "Routing edge cases" begin
 
-  @safetestset "Emoji routing" begin
+  @testitem "Emoji routing" begin
     using Genie
     using HTTP
 
@@ -27,7 +27,7 @@
     server = nothing
   end;
 
-  @safetestset "Emoji routing ✔" begin
+  @testitem "Emoji routing ✔" begin
     using Genie
     using HTTP
 
@@ -55,7 +55,7 @@
     port = nothing
   end;
 
-  @safetestset "Encoded urls é" begin
+  @testitem "Encoded urls é" begin
     using Genie
     using HTTP
 
@@ -83,7 +83,7 @@
     port = nothing
   end;
 
-  @safetestset "Emoji routing with params" begin
+  @testitem "Emoji routing with params" begin
     using Genie, Genie.Requests
     using HTTP
 
@@ -111,4 +111,4 @@
     port = nothing
   end;
 
-end
+# end

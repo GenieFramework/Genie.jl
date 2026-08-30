@@ -1,4 +1,4 @@
-@safetestset "Hello Genie" begin
+@testitem "Hello Genie" begin
 
   using Genie, HTTP
 

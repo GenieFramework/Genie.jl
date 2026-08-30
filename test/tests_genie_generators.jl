@@ -1,12 +1,12 @@
 #=
 
-@safetestset "Create new app" begin
+@testitem "Create new app" begin
 
   testdir = pwd()
   using Pkg
 
 
-  @safetestset "Do not autostart app" begin
+  @testitem "Do not autostart app" begin
     using Genie
 
     workdir = Base.Filesystem.mktempdir()
@@ -23,7 +23,7 @@
   # Pkg.activate(".")
 
 
-  # @safetestset "Autostart app" begin
+  # @testitem "Autostart app" begin
   #   using Genie
 
   #   workdir = Base.Filesystem.mktempdir()
@@ -38,7 +38,7 @@
   Pkg.activate(".")
 
 
-  @safetestset "Microstack file structure" begin
+  @testitem "Microstack file structure" begin
     using Genie
 
     workdir = Base.Filesystem.mktempdir()
@@ -59,7 +59,7 @@
   Pkg.activate(".")
 
 
-  @safetestset "DB support file structure" begin
+  @testitem "DB support file structure" begin
     using Genie
 
     workdir = Base.Filesystem.mktempdir()
@@ -79,7 +79,7 @@
   Pkg.activate(".")
 
 
-  @safetestset "MVC support file structure" begin
+  @testitem "MVC support file structure" begin
     using Genie
 
     workdir = Base.Filesystem.mktempdir()
@@ -98,7 +98,7 @@
   Pkg.activate(".")
 
 
-  @safetestset "New controller" begin
+  @testitem "New controller" begin
     using Genie
 
     workdir = Base.Filesystem.mktempdir()
@@ -115,7 +115,7 @@
   Pkg.activate(".")
 
 
-  @safetestset "New resource" begin
+  @testitem "New resource" begin
     using Genie
 
     workdir = Base.Filesystem.mktempdir()
@@ -133,7 +133,7 @@
   Pkg.activate(".")
 
 
-  @safetestset "New task" begin
+  @testitem "New task" begin
     using Genie, Genie.Exceptions
 
     workdir = Base.Filesystem.mktempdir()

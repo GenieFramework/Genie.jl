@@ -1,4 +1,4 @@
-@safetestset "JSON payload correctly identified" begin
+@testitem "JSON payload correctly identified" begin
 
   using Genie, HTTP
   import Genie.Util: fws

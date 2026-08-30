@@ -1,4 +1,4 @@
-@safetestset "POST form payload" begin
+@testitem "POST form payload" begin
 
   using Genie, HTTP, Genie.Router, Genie.Requests
 

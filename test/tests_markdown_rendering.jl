@@ -1,6 +1,6 @@
-@safetestset "Markdown rendering" begin
+# @testitem "Markdown rendering" begin
 
-  @safetestset "String markdown rendering" begin
+  @testitem "String markdown rendering" begin
     using Genie
     using Genie.Renderer.Html
     using Markdown
@@ -36,7 +36,7 @@
             </section><footer><h4>Layout footer</h4></footer></div></body></html>" |> fws
   end;
 
-  @safetestset "Template markdown rendering" begin
+  @testitem "Template markdown rendering" begin
     using Genie, Genie.Renderer
     using Genie.Renderer.Html
     import Genie.Util: fws
@@ -54,7 +54,7 @@
       </section><footer><h4>Layout footer</h4></footer></div></body></html>""" |> fws
   end
 
-  @safetestset "Markdown rendering with embedded variables" begin
+  @testitem "Markdown rendering with embedded variables" begin
     using Genie, Genie.Renderer
     using Genie.Renderer.Html
     import Genie.Util: fws
@@ -66,4 +66,4 @@
       </body></html>""" |> fws
   end;
 
-end;
+# end;

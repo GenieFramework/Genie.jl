@@ -1,4 +1,4 @@
-@safetestset "Vars rendering" begin
+@testitem "Vars rendering" begin
   using Genie
   using Genie.Renderer.Html, Genie.Requests
 

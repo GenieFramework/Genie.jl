@@ -1,6 +1,6 @@
-@safetestset "Assets functionality" begin
+# @testitem "Assets functionality" begin
 
-  @safetestset "Assets paths" begin
+  @testitem "Assets paths" begin
     using Genie, Genie.Assets
 
     Genie.config.base_path = "/proxy/8000"
@@ -31,4 +31,4 @@
     Genie.config.base_path = ""
   end;
 
-end;
+# end;

@@ -1,5 +1,5 @@
-@safetestset "Escaping quotes" begin
-  @safetestset "Double quoted arguments" begin
+# @testitem "Escaping quotes" begin
+  @testitem "Double quoted arguments" begin
     using Genie, Genie.Renderer
     using Genie.Renderer.Html
 
@@ -16,7 +16,7 @@
       """<body onload="alert("Hello");"><p>Good morning</p></body>"""
   end
 
-  @safetestset "Single quoted arguments" begin
+  @testitem "Single quoted arguments" begin
     using Genie, Genie.Renderer
     using Genie.Renderer.Html
 
@@ -30,7 +30,7 @@
       """<body onload='alert("Hello");'><p>Good morning</p></body>"""
   end
 
-  @safetestset "Arguments in templates" begin
+  @testitem "Arguments in templates" begin
     using Genie, Genie.Renderer
     using Genie.Renderer.Html
     import Genie.Util: fws
@@ -50,4 +50,4 @@
               <p onclick="alert('Hello');">Greetings</p></section><footer><h4>Layout footer</h4></footer></div></body>
               </html>""" |> fws
   end
-end
+# end

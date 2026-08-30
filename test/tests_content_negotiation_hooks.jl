@@ -1,4 +1,4 @@
-@safetestset "Content negotiation hooks" begin
+@testitem "Content negotiation hooks" begin
   using Genie, HTTP
 
   custom_message = "Got you!"

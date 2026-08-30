@@ -1,4 +1,4 @@
-@safetestset "Setting and getting headers" begin
+@testitem "Setting and getting headers" begin
 
   using Genie, HTTP
   using Genie.Router, Genie.Responses

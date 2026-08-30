@@ -1,6 +1,6 @@
-@safetestset "Assets functionality" begin
+# @testitem "Assets functionality" begin
 
-  @safetestset "Assets paths" begin
+  @testitem "Assets paths" begin
     using Genie, Genie.Assets
 
     @test include_asset(:css, "foo")  == "/assets/css/foo.css"
@@ -10,15 +10,16 @@
     @test js_asset("foo") == js("foo") == "/assets/js/foo.js"
   end;
 
-  @safetestset "Expose settings" begin
+  @testitem "Expose settings" begin
     using Genie, Genie.Assets
-    Genie.config.websockets_port = 8000 # state gets affected depending on how tests are run -- let's set it explicitly
-
-    @test strip(js_settings()) == strip("window.Genie = {};\nGenie.Settings = {\"webchannels_keepalive_timeout\":5000,\"websockets_exposed_port\":window.location.port,\"server_host\":\"127.0.0.1\",\"webchannels_autosubscribe\":true,\"webchannels_reconnect_delay\":500,\"env\":\"dev\",\"webchannels_eval_command\":\">eval:\",\"webchannels_alert_overlay\":false,\"websockets_host\":\"127.0.0.1\",\"webchannels_show_alert\":true,\"webthreads_js_file\":\"webthreads.js\",\"webchannels_base64_marker\":\"base64:\",\"webchannels_unsubscribe_channel\":\"unsubscribe\",\"webthreads_default_route\":\"____\",\"webchannels_subscription_trials\":4,\"webchannels_subscribe_channel\":\"subscribe\",\"server_port\":8000,\"webchannels_keepalive_frequency\":30000,\"websockets_exposed_host\":window.location.hostname,\"webchannels_connection_attempts\":10,\"base_path\":\"\",\"websockets_protocol\":window.location.protocol.replace('http', 'ws'),\"webthreads_pull_route\":\"pull\",\"webchannels_default_route\":\"____\",\"webchannels_server_gone_alert_timeout\":10000,\"webchannels_timeout\":1000,\"webthreads_push_route\":\"push\",\"websockets_port\":null,\"websockets_base_path\":\"\"};\n") ||
-          strip(js_settings()) == strip("window.Genie = {};\nGenie.Settings = {\"base_path\":\"\",\"env\":\"dev\",\"server_host\":\"127.0.0.1\",\"server_port\":8000,\"webchannels_alert_overlay\":false,\"webchannels_autosubscribe\":true,\"webchannels_base64_marker\":\"base64:\",\"webchannels_connection_attempts\":10,\"webchannels_default_route\":\"____\",\"webchannels_eval_command\":\">eval:\",\"webchannels_keepalive_frequency\":30000,\"webchannels_keepalive_timeout\":5000,\"webchannels_reconnect_delay\":500,\"webchannels_server_gone_alert_timeout\":10000,\"webchannels_show_alert\":true,\"webchannels_subscribe_channel\":\"subscribe\",\"webchannels_subscription_trials\":4,\"webchannels_timeout\":1000,\"webchannels_unsubscribe_channel\":\"unsubscribe\",\"websockets_base_path\":\"\",\"websockets_exposed_host\":window.location.hostname,\"websockets_exposed_port\":window.location.port,\"websockets_host\":\"127.0.0.1\",\"websockets_port\":8000,\"websockets_protocol\":window.location.protocol.replace('http', 'ws'),\"webthreads_default_route\":\"____\",\"webthreads_js_file\":\"webthreads.js\",\"webthreads_pull_route\":\"pull\",\"webthreads_push_route\":\"push\"};")
+    port = Genie.config.server_port
+    ws_port = Genie.config.websockets_port === nothing ? "null" : string(Genie.config.websockets_port)
+    
+    @test strip(js_settings()) == strip("window.Genie = {};\nGenie.Settings = {\"webchannels_keepalive_timeout\":5000,\"websockets_exposed_port\":window.location.port,\"server_host\":\"127.0.0.1\",\"webchannels_autosubscribe\":true,\"webchannels_reconnect_delay\":500,\"env\":\"dev\",\"webchannels_eval_command\":\">eval:\",\"webchannels_alert_overlay\":false,\"websockets_host\":\"127.0.0.1\",\"webchannels_show_alert\":true,\"webthreads_js_file\":\"webthreads.js\",\"webchannels_base64_marker\":\"base64:\",\"webchannels_unsubscribe_channel\":\"unsubscribe\",\"webthreads_default_route\":\"____\",\"webchannels_subscription_trials\":4,\"webchannels_subscribe_channel\":\"subscribe\",\"server_port\":$port,\"webchannels_keepalive_frequency\":30000,\"websockets_exposed_host\":window.location.hostname,\"webchannels_connection_attempts\":10,\"base_path\":\"\",\"websockets_protocol\":window.location.protocol.replace('http', 'ws'),\"webthreads_pull_route\":\"pull\",\"webchannels_default_route\":\"____\",\"webchannels_server_gone_alert_timeout\":10000,\"webchannels_timeout\":1000,\"webthreads_push_route\":\"push\",\"websockets_port\":$ws_port,\"websockets_base_path\":\"\"};\n") ||
+          strip(js_settings()) == strip("window.Genie = {};\nGenie.Settings = {\"base_path\":\"\",\"env\":\"dev\",\"server_host\":\"127.0.0.1\",\"server_port\":$port,\"webchannels_alert_overlay\":false,\"webchannels_autosubscribe\":true,\"webchannels_base64_marker\":\"base64:\",\"webchannels_connection_attempts\":10,\"webchannels_default_route\":\"____\",\"webchannels_eval_command\":\">eval:\",\"webchannels_keepalive_frequency\":30000,\"webchannels_keepalive_timeout\":5000,\"webchannels_reconnect_delay\":500,\"webchannels_server_gone_alert_timeout\":10000,\"webchannels_show_alert\":true,\"webchannels_subscribe_channel\":\"subscribe\",\"webchannels_subscription_trials\":4,\"webchannels_timeout\":1000,\"webchannels_unsubscribe_channel\":\"unsubscribe\",\"websockets_base_path\":\"\",\"websockets_exposed_host\":window.location.hostname,\"websockets_exposed_port\":window.location.port,\"websockets_host\":\"127.0.0.1\",\"websockets_port\":$ws_port,\"websockets_protocol\":window.location.protocol.replace('http', 'ws'),\"webthreads_default_route\":\"____\",\"webthreads_js_file\":\"webthreads.js\",\"webthreads_pull_route\":\"pull\",\"webthreads_push_route\":\"push\"};")
   end
 
-  @safetestset "Embedded assets" begin
+  @testitem "Embedded assets" begin
     using Genie, Genie.Assets
 
     @test Assets.channels()[1:18] == "window.Genie = {};"
@@ -32,4 +33,4 @@
     @test favicon_support() == "<link rel=\"icon\" type=\"image/x-icon\" href=\"/favicon.ico\" />"
   end
 
-end;
+# end;

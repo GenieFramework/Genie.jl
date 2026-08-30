@@ -1,5 +1,5 @@
-@safetestset "App Config" begin
-  @safetestset "Custom server startup overwrites app config" begin
+# @testitem "App Config" begin
+  @testitem "Custom server startup overwrites app config" begin
     using Genie
 
     @test Genie.config.server_port  == 8000
@@ -39,4 +39,4 @@
     server = nothing
 
   end;
-end;
+# end;

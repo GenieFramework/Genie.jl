@@ -1,6 +1,6 @@
-@safetestset "Fullstack app" begin
+# @testitem "Fullstack app" begin
 
-  @safetestset "Create and run a full stack app with resources" begin
+  @testitem "Create and run a full stack app with resources" begin
     using Logging
     Logging.global_logger(NullLogger())
 
@@ -45,4 +45,4 @@
     Pkg.activate(".")
   end;
 
-end;
+# end;

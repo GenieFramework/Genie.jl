@@ -1,6 +1,6 @@
-@safetestset "DotEnv functionality" begin
+# @testitem "DotEnv functionality" begin
 
-  @safetestset "ENV variables JSON endpoint check" begin
+  @testitem "ENV variables JSON endpoint check" begin
     # using Logging
     # Logging.global_logger(NullLogger())
 
@@ -58,4 +58,4 @@
     # cd(testdir)
     # Pkg.activate(".")
   end
-end
+# end
