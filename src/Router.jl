@@ -124,6 +124,15 @@ Base.Dict(params::Params) = params.collection
 Base.getindex(params::Params, keys...) = getindex(Dict(params), keys...)
 Base.getindex(params::Pair, keys...) = getindex(Dict(params), keys...)
 
+"""
+    get_unescaped_path(path::AbstractString) :: String
+
+Returns the unescaped path of a URI, replacing any percent-encoded characters with their literal representation. Spaces are replaced with `%20` before unescaping.
+"""
+function get_unescaped_path(path::AbstractString) :: String
+  uri_str = contains(path, ' ') ? replace(path, ' ' => "%20") : path
+  HTTP.URIs.unescapeuri(HTTP.URIs.URI(uri_str).path) |> String
+end
 
 """
     ispayload(req::HTTP.Request)
@@ -514,7 +523,7 @@ Matches the invoked URL to the corresponding route, sets up the execution enviro
 """
 function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: Union{Route,Nothing}
   endswith(req.target, "/") && req.target != "/" && (req.target = req.target[1:end-1])
-  uri = HTTP.URIs.URI(HTTP.URIs.unescapeuri(req.target))
+  unescaped_path = get_unescaped_path(req.target)
 
   for r in routes()
     # method must match but we can also handle HEAD requests with GET routes
@@ -532,14 +541,14 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
     end
 
     ROUTE_CATCH_ALL = "/*"
-    occursin(regex_route, string(uri.path)) || parsed_route == ROUTE_CATCH_ALL || continue
+    occursin(regex_route, unescaped_path) || parsed_route == ROUTE_CATCH_ALL || continue
 
     params.collection = setup_base_params(req, res, params.collection)
     task_local_storage(:__params, params.collection)
 
     occursin("?", req.target) && extract_get_params(HTTP.URIs.URI(req.target), params)
 
-    extract_uri_params(uri.path |> string, regex_route, param_names, param_types, params) || continue
+    extract_uri_params(unescaped_path, regex_route, param_names, param_types, params) || continue
 
     ispayload(req) && extract_post_params(req, params)
     ispayload(req) && extract_request_params(req, params)
@@ -1110,7 +1119,7 @@ end
 Checks if the requested resource is a static file.
 """
 function is_static_file(resource::String) :: Bool
-  isfile(file_path(HTTP.URIs.URI(resource).path |> string))
+  isfile(file_path(get_unescaped_path(resource)))
 end
 
 
