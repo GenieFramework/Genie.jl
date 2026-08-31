@@ -1,7 +1,7 @@
 # @testitem "Content negotiation" setup=[GenieTestSetup] begin
 
-  # @testitem "Response type matches request type" setup=[GenieTestSetup] begin
-    @testitem "Not found matches request type -- Content-Type -- custom HTML Genie page" setup=[GenieTestSetup] begin
+  @testitem "Response type matches request type" setup=[GenieTestSetup] begin
+    @testset "Not found matches request type -- Content-Type -- custom HTML Genie page" begin
       server, port = unique_server()
 
       response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "text/html"], status_exception = false)
@@ -22,7 +22,7 @@
       port = nothing
     end
 
-    @testitem "Not found matches request type -- Accept -- custom HTML Genie page" setup=[GenieTestSetup] begin
+    @testset "Not found matches request type -- Accept -- custom HTML Genie page" begin
       server, port = unique_server()
 
       response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "text/html"], status_exception = false)
@@ -43,7 +43,7 @@
       port = nothing
     end
 
-    @testitem "Not found matches request type -- Content-Type -- custom JSON Genie handler" setup=[GenieTestSetup] begin
+    @testset "Not found matches request type -- Content-Type -- custom JSON Genie handler" begin
       server, port = unique_server()
 
       response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "application/json"], status_exception = false)
@@ -64,7 +64,7 @@
       port = nothing
     end
 
-    @testitem "Not found matches request type -- Accept -- custom JSON Genie handler" setup=[GenieTestSetup] begin
+    @testset "Not found matches request type -- Accept -- custom JSON Genie handler" begin
       server, port = unique_server()
 
       response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "application/json"], status_exception = false)
@@ -85,7 +85,7 @@
       port = nothing
     end
 
-    @testitem "Not found matches request type -- Content-Type -- custom text Genie handler" setup=[GenieTestSetup] begin
+    @testset "Not found matches request type -- Content-Type -- custom text Genie handler" begin
       server, port = unique_server()
 
 
@@ -106,11 +106,10 @@
       server = nothing
       port = nothing
     end
-  # end;
+  end;
 
   @testitem "Not found matches request type -- Content-Type -- unknown content type get same response" setup=[GenieTestSetup] begin
-      server, port = unique_server()
-
+    server, port = unique_server()
 
     response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "text/csv"], status_exception = false)
 
