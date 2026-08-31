@@ -25,7 +25,7 @@ end
 
 @testitem "Autoload Recursive Persistent" setup=[GenieTestSetup] begin
     using Genie, Genie.Loader
-    isdefined(Main, :LOAD_PATH) || Core.eval(Main, :(LOAD_ORDER = String[]))
+    isdefined(Main, :LOAD_ORDER) || Core.eval(Main, :(LOAD_ORDER = String[]))
 
     try
         lib_dir = joinpath(@__DIR__, "loader_recursive")
