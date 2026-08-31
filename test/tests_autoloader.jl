@@ -25,7 +25,6 @@ end
 
 @testitem "Autoload Recursive Persistent" setup=[GenieTestSetup] begin
     using Genie, Genie.Loader
-    Main.LOAD_ORDER = ["Z", "C", "D", "B", "A"]
     isdefined(Main, :LOAD_PATH) || Core.eval(Main, :(LOAD_ORDER = String[]))
 
     try
