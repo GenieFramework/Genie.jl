@@ -1,7 +1,6 @@
-# @testitem "Server functionality" begin
+# @testitem "Server functionality" setup=[GenieTestSetup] begin
 
-  @testitem "Start/stop servers" begin
-    using Genie
+  @testitem "Start/stop servers" setup=[GenieTestSetup] begin
     using Genie.Server
 
     Genie.Server.down!()
@@ -30,12 +29,11 @@
     servers = nothing
   end;
 
-  @testitem "Update config when custom startup args" begin
-    using Genie
+  @testitem "Update config when custom startup args" setup=[GenieTestSetup] begin
     using Genie.Server
 
     port = Genie.config.server_port
-    ws_port = Genie.config.websockets_port
+    ws_port = Genie.config.websockets_port === nothing ? port : Genie.config.websockets_port
 
     server = Genie.Server.up(port+1_000; ws_port = ws_port+1_000, open_browser = false)
 

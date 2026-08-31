@@ -1,5 +1,4 @@
-@testitem "Vars rendering" begin
-  using Genie
+@testitem "Vars rendering" setup=[GenieTestSetup] begin
   using Genie.Renderer.Html, Genie.Requests
 
   greeting = "Welcome"
@@ -33,7 +32,6 @@
   end
 
   @testset "String HTML rendering with vars" begin
-    using Genie
     using Genie.Renderer.Html, Genie.Requests
     import Genie.Util: fws
 

@@ -1,11 +1,7 @@
-# @testitem "Routing edge cases" begin
+# @testitem "Routing edge cases" setup=[GenieTestSetup] begin
 
-  @testitem "Emoji routing" begin
-    using Genie
-    using HTTP
-
-    port = nothing
-    port = rand(8500:8900)
+  @testitem "Emoji routing" setup=[GenieTestSetup] begin
+    port = unique_test_port()
 
     route("/✔/🧞/♥/❤") do
       "/✔/🧞/♥/❤"
@@ -27,12 +23,8 @@
     server = nothing
   end;
 
-  @testitem "Emoji routing ✔" begin
-    using Genie
-    using HTTP
-
-    port = nothing
-    port = rand(8500:8900)
+  @testitem "Emoji routing ✔" setup=[GenieTestSetup] begin
+    port = unique_test_port()
 
     route("/✔") do
       "All good"
@@ -55,12 +47,8 @@
     port = nothing
   end;
 
-  @testitem "Encoded urls é" begin
-    using Genie
-    using HTTP
-
-    port = nothing
-    port = rand(8500:8900)
+  @testitem "Encoded urls é" setup=[GenieTestSetup] begin
+    port = unique_test_port()
 
     route("/réception") do
       "Meet at réception"
@@ -83,12 +71,9 @@
     port = nothing
   end;
 
-  @testitem "Emoji routing with params" begin
+  @testitem "Emoji routing with params" setup=[GenieTestSetup] begin
     using Genie, Genie.Requests
-    using HTTP
-
-    port = nothing
-    port = rand(8500:8900)
+    port = unique_test_port()
 
     route("/:check/:genie/:smallheart/:bigheart") do
       "/$(payload(:check))/$(payload(:genie))/$(payload(:smallheart))/$(payload(:bigheart))"

@@ -1,10 +1,6 @@
-# @testitem "Special chars in GET params (query)" begin
-  @testitem "<a+b> should be <a b>" begin
-    using Genie
-    using HTTP
-
-    port = nothing
-    port = rand(8500:8900)
+# @testitem "Special chars in GET params (query)" setup=[GenieTestSetup] begin
+  @testitem "<a+b> should be <a b>" setup=[GenieTestSetup] begin
+    port = unique_test_port()
 
     route("/") do
       params(:x)
@@ -27,12 +23,8 @@
     port = nothing
   end;
 
-  @testitem "<a%20b> should be <a b>" begin
-    using Genie
-    using HTTP
-
-    port = nothing
-    port = rand(8500:8900)
+  @testitem "<a%20b> should be <a b>" setup=[GenieTestSetup] begin
+    port = unique_test_port()
 
     route("/") do
       params(:x)
@@ -55,12 +47,8 @@
     port = nothing
   end;
 
-  @testitem "<a%2Bb> should be <a+b>" begin
-    using Genie
-    using HTTP
-
-    port = nothing
-    port = rand(8500:8900)
+  @testitem "<a%2Bb> should be <a+b>" setup=[GenieTestSetup] begin
+    port = unique_test_port()
 
     route("/") do
       params(:x)
@@ -83,12 +71,8 @@
     port = nothing
   end;
 
-  @testitem "emoji support" begin
-    using Genie
-    using HTTP
-
-    port = nothing
-    port = rand(8500:8900)
+  @testitem "emoji support" setup=[GenieTestSetup] begin
+    port = unique_test_port()
 
     route("/") do
       params(:x)

@@ -1,6 +1,6 @@
-# @testitem "DotEnv functionality" begin
+# @testitem "DotEnv functionality" setup=[GenieTestSetup] begin
 
-  @testitem "ENV variables JSON endpoint check" begin
+  @testitem "ENV variables JSON endpoint check" setup=[GenieTestSetup] begin
     # using Logging
     # Logging.global_logger(NullLogger())
 

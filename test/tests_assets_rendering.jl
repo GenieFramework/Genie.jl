@@ -1,7 +1,6 @@
-# @testitem "Assets rendering" begin
+# @testitem "Assets rendering" setup=[GenieTestSetup] begin
 
-  @testitem "Embedded assets" begin
-    using Genie
+  @testitem "Embedded assets" setup=[GenieTestSetup] begin
     using Genie.Renderer
     using Genie.Assets
 

@@ -1,12 +1,8 @@
-# @testitem "Content negotiation" begin
+# @testitem "Content negotiation" setup=[GenieTestSetup] begin
 
-  # @testitem "Response type matches request type" begin
-    @testitem "Not found matches request type -- Content-Type -- custom HTML Genie page" begin
-      using Genie
-      using HTTP
-
-      port = nothing
-      port = rand(8500:8900)
+  # @testitem "Response type matches request type" setup=[GenieTestSetup] begin
+    @testitem "Not found matches request type -- Content-Type -- custom HTML Genie page" setup=[GenieTestSetup] begin
+      port = unique_test_port()
 
       server = up(port; open_browser = false)
 
@@ -28,12 +24,8 @@
       port = nothing
     end
 
-    @testitem "Not found matches request type -- Accept -- custom HTML Genie page" begin
-      using Genie
-      using HTTP
-
-      port = nothing
-      port = rand(8500:8900)
+    @testitem "Not found matches request type -- Accept -- custom HTML Genie page" setup=[GenieTestSetup] begin
+      port = unique_test_port()
 
       server = up(port; open_browser = false)
 
@@ -55,12 +47,8 @@
       port = nothing
     end
 
-    @testitem "Not found matches request type -- Content-Type -- custom JSON Genie handler" begin
-      using Genie
-      using HTTP
-
-      port = nothing
-      port = rand(8500:8900)
+    @testitem "Not found matches request type -- Content-Type -- custom JSON Genie handler" setup=[GenieTestSetup] begin
+      port = unique_test_port()
 
       server = up(port; open_browser = false)
 
@@ -82,12 +70,8 @@
       port = nothing
     end
 
-    @testitem "Not found matches request type -- Accept -- custom JSON Genie handler" begin
-      using Genie
-      using HTTP
-
-      port = nothing
-      port = rand(8500:8900)
+    @testitem "Not found matches request type -- Accept -- custom JSON Genie handler" setup=[GenieTestSetup] begin
+      port = unique_test_port()
 
       server = up(port; open_browser = false)
 
@@ -109,12 +93,8 @@
       port = nothing
     end
 
-    @testitem "Not found matches request type -- Content-Type -- custom text Genie handler" begin
-      using Genie
-      using HTTP
-
-      port = nothing
-      port = rand(8500:8900)
+    @testitem "Not found matches request type -- Content-Type -- custom text Genie handler" setup=[GenieTestSetup] begin
+      port = unique_test_port()
 
       server = up(port; open_browser = false)
 
@@ -137,12 +117,8 @@
     end
   # end;
 
-  @testitem "Not found matches request type -- Content-Type -- unknown content type get same response" begin
-    using Genie
-    using HTTP
-
-    port = nothing
-    port = rand(8500:8900)
+  @testitem "Not found matches request type -- Content-Type -- unknown content type get same response" setup=[GenieTestSetup] begin
+    port = unique_test_port()
 
     server = up(port; open_browser = false)
 
@@ -164,12 +140,8 @@
     port = nothing
   end
 
-  @testitem "Not found matches request type -- Accept -- unknown content type get same response" begin
-    using Genie
-    using HTTP
-
-    port = nothing
-    port = rand(8500:8900)
+  @testitem "Not found matches request type -- Accept -- unknown content type get same response" setup=[GenieTestSetup] begin
+    port = unique_test_port()
 
     server = up(port; open_browser = false)
 
@@ -191,13 +163,9 @@
     port = nothing
   end
 
-  @testitem "Custom error handlers" begin
+  @testitem "Custom error handlers" setup=[GenieTestSetup] begin
     @testset "Custom error handler for unknown types" begin
-      using Genie
-      using HTTP
-
-      port = nothing
-      port = rand(8500:8900)
+      port = unique_test_port()
 
       server = up(port; open_browser = false)
 
@@ -231,11 +199,7 @@
     end
 
     @testset "Custom error handler for known types" begin
-      using Genie
-      using HTTP
-
-      port = nothing
-      port = rand(8500:8900)
+      port = unique_test_port()
 
       server = up(port; open_browser = false)
 
@@ -268,12 +232,8 @@
       Base.delete_method.(methods(Genie.Router.error, (String, Type{MIME"application/json"}, Val{404})))
     end
   end
-  @testitem "Order of accept preferences" begin
-    using Genie
-    using HTTP
-
-    port = nothing
-    port = rand(8500:8900)
+  @testitem "Order of accept preferences" setup=[GenieTestSetup] begin
+    port = unique_test_port()
 
     server = up(port; open_browser = false)
 

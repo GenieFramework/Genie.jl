@@ -1,6 +1,6 @@
-# @testitem "JS rendering" begin
-  # @testitem "JSON rendering" begin
-    @testitem "JSON view rendering with vars" begin
+# @testitem "JS rendering" setup=[GenieTestSetup] begin
+  # @testitem "JSON rendering" setup=[GenieTestSetup] begin
+    @testitem "JSON view rendering with vars" setup=[GenieTestSetup] begin
       using Genie, Genie.Renderer, Genie.Renderer.Json
 
       jsonview = raw"
@@ -22,7 +22,7 @@
       Genie.Renderer.clear_task_storage()
     end;
 
-    @testitem "JSON struct rendering" begin
+    @testitem "JSON struct rendering" setup=[GenieTestSetup] begin
       struct Person
         name::String
         age::Int

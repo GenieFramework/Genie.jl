@@ -1,6 +1,4 @@
-@testitem "<select> test" begin
-
-  using Genie
+@testitem "<select> test" setup=[GenieTestSetup] begin
   using Genie.Renderer.Html
   import Genie.Util: fws
 
@@ -17,5 +15,4 @@
           </select>
         </div>
         <button type="submit" class="btn btn-primary">Submit</button>\r\n</form></body></html>""" |> fws
-
 end

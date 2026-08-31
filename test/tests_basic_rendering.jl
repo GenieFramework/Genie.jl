@@ -1,5 +1,4 @@
-@testitem "basic rendering" begin
-  using Genie
+@testitem "basic rendering" setup=[GenieTestSetup] begin
   using Genie.Renderer.Html
   using Genie.Requests
   import Genie.Util: fws

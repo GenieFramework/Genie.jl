@@ -1,7 +1,6 @@
-# @testitem "Advanced rendering" begin
+# @testitem "Advanced rendering" setup=[GenieTestSetup] begin
 
-  @testitem "for_each renders local variables" begin
-    using Genie
+  @testitem "for_each renders local variables" setup=[GenieTestSetup] begin
     using Genie.Renderer.Html
     import Genie.Util: fws
 
@@ -21,8 +20,7 @@
   # TODO: this test doesn't seem to check the right things - and most likely was passing by accident
   # disabled for now -- to review
 
-#   @testitem "for_each can not access module variables" begin
-#     using Genie
+#   @testitem "for_each can not access module variables" setup=[GenieTestSetup] begin
 #     using Genie.Renderer.Html
 
 #     x = 100
@@ -37,8 +35,7 @@
 #     @test_throws UndefVarError html(view)
 #   end;
 
-  @testitem "for_each can access view variables" begin
-    using Genie
+  @testitem "for_each can access view variables" setup=[GenieTestSetup] begin
     using Genie.Renderer.Html
     import Genie.Util: fws
 
@@ -55,8 +52,7 @@
           "<!DOCTYPE html><html><body><ol><li>a = 100</li><li>b = 100</li><li>c = 100</li></ol></body></html>" |> fws
   end;
 
-  @testitem "for_each can access context variables" begin
-    using Genie
+  @testitem "for_each can access context variables" setup=[GenieTestSetup] begin
     using Genie.Renderer.Html
     import Genie.Util: fws
 
@@ -73,8 +69,7 @@
           "<!DOCTYPE html><html><body><ol><li>a = 200</li><li>b = 200</li><li>c = 200</li></ol></body></html>" |> fws
   end;
 
-  @testitem "non registered tags are rendered" begin
-    using Genie
+  @testitem "non registered tags are rendered" setup=[GenieTestSetup] begin
     using Genie.Renderer.Html
     import Genie.Util: fws
 

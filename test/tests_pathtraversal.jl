@@ -1,12 +1,9 @@
-# @testitem "Path traversal" begin
+# @testitem "Path traversal" setup=[GenieTestSetup] begin
 
-  @testitem "Returns 401 unauthorised" begin
-    using Genie
-    using HTTP
-
+  @testitem "Returns 401 unauthorised" setup=[GenieTestSetup] begin
     isdir(Genie.config.server_document_root) || mkdir(Genie.config.server_document_root)
 
-    port = rand(8000:10_000)
+    port = unique_test_port()
     server = up(port)
 
     req = HTTP.request("GET", "http://localhost:$port////etc/hosts"; status_exception = false)
@@ -20,13 +17,13 @@
   end
 
   # Tests pass OK but for some reason some state remains and breaks next batch of tests... :-(
-  # @testitem "Authorised static server responses" begin
+  # @testitem "Authorised static server responses" setup=[GenieTestSetup] begin
   #   using Genie
   #   using HTTP
 
   #   isdir(Genie.config.server_document_root) || mkdir(Genie.config.server_document_root)
 
-  #   port = rand(8000:10_000)
+  #   port = unique_test_port()
   #   server = Genie.Server.serve(; port)
   #   req = HTTP.request("GET", "http://localhost:$port//etc/passwd"; status_exception = false)
   #   @test req.status == (Sys.iswindows() ? 404 : 401)
@@ -38,9 +35,7 @@
   #   server = nothing
   # end
 
-  @testitem "serve_static_file does not serve unauthorised requests" begin
-    using Genie
-
+  @testitem "serve_static_file does not serve unauthorised requests" setup=[GenieTestSetup] begin
     response = Genie.Router.serve_static_file("//etc/passwd", root = "public")
     @test response.status == 401
 

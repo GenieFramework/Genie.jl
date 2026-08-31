@@ -1,4 +1,4 @@
-@testitem "Setting and getting headers" begin
+@testitem "Setting and getting headers" setup=[GenieTestSetup] begin
 
   using Genie, HTTP
   using Genie.Router, Genie.Responses
@@ -16,8 +16,7 @@
     "OOKK"
   end
 
-  port = nothing
-  port = rand(8500:8900)
+  port = unique_test_port()
 
   up(port; open_browser = false, verbose = true)
 

@@ -1,7 +1,6 @@
-# @testitem "JS rendering" begin
+# @testitem "JS rendering" setup=[GenieTestSetup] begin
 
-  @testitem "Plain JS rendering" begin
-    using Genie
+  @testitem "Plain JS rendering" setup=[GenieTestSetup] begin
     using Genie.Renderer
     using Genie.Renderer.Js
 
@@ -16,8 +15,7 @@
   end;
 
 
-  @testitem "Vars JS rendering" begin
-    using Genie
+  @testitem "Vars JS rendering" setup=[GenieTestSetup] begin
     using Genie.Renderer
     using Genie.Renderer.Js
     using Genie.JSONParser

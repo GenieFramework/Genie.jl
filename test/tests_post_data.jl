@@ -1,4 +1,4 @@
-@testitem "POST form payload" begin
+@testitem "POST form payload" setup=[GenieTestSetup] begin
 
   using Genie, HTTP, Genie.Router, Genie.Requests
 
@@ -15,8 +15,7 @@
     fields[1] * fields[2] * postpayload(:single)
   end
 
-  port = nothing
-  port = rand(8500:8900)
+  port = unique_test_port()
 
   up(port; open_browser = false)
 

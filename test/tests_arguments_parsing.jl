@@ -1,4 +1,4 @@
-@testitem "Parsing of route arguments with types" begin
+@testitem "Parsing of route arguments with types" setup=[GenieTestSetup] begin
 
   using Genie, Dates, HTTP
 
@@ -10,8 +10,7 @@
     "s = $(params(:s)) / f = $(params(:f)) / i = $(params(:i)) / $(params(:d))"
   end
 
-  port = nothing
-  port = rand(8500:8900)
+  port = unique_test_port()
 
   server = up(port; open_browser = false)
 

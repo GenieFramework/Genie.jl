@@ -1,4 +1,4 @@
-@testitem "OPTIONS requests" begin
+@testitem "OPTIONS requests" setup=[GenieTestSetup] begin
 
   using Genie, HTTP
 
@@ -6,8 +6,7 @@
     push!(params(:RESPONSE).headers, "X-Foo-Bar" => "Baz")
   end
 
-  port = nothing
-  port = rand(8500:8900)
+  port = unique_test_port()
 
   server = up(port)
   sleep(1)

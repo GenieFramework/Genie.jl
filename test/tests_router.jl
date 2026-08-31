@@ -1,6 +1,6 @@
-# @testitem "Router tests" begin
+# @testitem "Router tests" setup=[GenieTestSetup] begin
 
-  @testitem "Basic routing" begin
+  @testitem "Basic routing" setup=[GenieTestSetup] begin
     using Genie, Genie.Router
 
     route("/hello") do
@@ -9,7 +9,7 @@
 
   end;
 
-  @testitem "router_delete" begin
+  @testitem "router_delete" setup=[GenieTestSetup] begin
     using Genie, Genie.Router
 
     x = route("/caballo") do
@@ -21,7 +21,7 @@
     @test (x in routes()) == false
   end;
 
-  @testitem "isroute checks" begin
+  @testitem "isroute checks" setup=[GenieTestSetup] begin
     using Genie, Genie.Router
 
     @test Router.isroute(:get_abcde) == false
@@ -29,9 +29,11 @@
       "abcde"
     end
     @test Router.isroute(:get_abcde) == true
+    Router.delete!(:get_abcde)
+    @test Router.isroute(:get_abcde) == false
   end;
 
-  @testitem "test to_link" begin
+  @testitem "test to_link" setup=[GenieTestSetup] begin
     using Genie, Genie.Router
 
     route("/abcd", named = :get_abcd) do
@@ -41,7 +43,7 @@
     @test Router.to_link(:get_abcd) == "/abcd"
   end
 
-  @testitem "test with basepath" begin
+  @testitem "test with basepath" setup=[GenieTestSetup] begin
     using Genie, Genie.Router
 
     route("/abcd", named = :get_abcd) do

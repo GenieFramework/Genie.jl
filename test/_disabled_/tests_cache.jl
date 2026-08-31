@@ -1,4 +1,4 @@
-# @testitem "No Caching" begin
+# @testitem "No Caching" setup=[GenieTestSetup] begin
 #   using Genie, Genie.Cache
 
 #   Cache.init()
@@ -25,7 +25,7 @@
 # end
 
 
-# @testitem "cache" begin
+# @testitem "cache" setup=[GenieTestSetup] begin
 #   using Genie, Genie.Cache
 
 #   function f()

@@ -1,14 +1,12 @@
 #=
 
-@testitem "Create new app" begin
+@testitem "Create new app" setup=[GenieTestSetup] begin
 
   testdir = pwd()
   using Pkg
 
 
-  @testitem "Do not autostart app" begin
-    using Genie
-
+  @testitem "Do not autostart app" setup=[GenieTestSetup] begin
     workdir = Base.Filesystem.mktempdir()
 
     cd(workdir)
@@ -23,7 +21,7 @@
   # Pkg.activate(".")
 
 
-  # @testitem "Autostart app" begin
+  # @testitem "Autostart app" setup=[GenieTestSetup] begin
   #   using Genie
 
   #   workdir = Base.Filesystem.mktempdir()
@@ -38,9 +36,7 @@
   Pkg.activate(".")
 
 
-  @testitem "Microstack file structure" begin
-    using Genie
-
+  @testitem "Microstack file structure" setup=[GenieTestSetup] begin
     workdir = Base.Filesystem.mktempdir()
 
     cd(workdir)
@@ -59,9 +55,7 @@
   Pkg.activate(".")
 
 
-  @testitem "DB support file structure" begin
-    using Genie
-
+  @testitem "DB support file structure" setup=[GenieTestSetup] begin
     workdir = Base.Filesystem.mktempdir()
 
     cd(workdir)
@@ -79,9 +73,7 @@
   Pkg.activate(".")
 
 
-  @testitem "MVC support file structure" begin
-    using Genie
-
+  @testitem "MVC support file structure" setup=[GenieTestSetup] begin
     workdir = Base.Filesystem.mktempdir()
 
     cd(workdir)
@@ -98,9 +90,7 @@
   Pkg.activate(".")
 
 
-  @testitem "New controller" begin
-    using Genie
-
+  @testitem "New controller" setup=[GenieTestSetup] begin
     workdir = Base.Filesystem.mktempdir()
 
     cd(workdir)
@@ -115,9 +105,7 @@
   Pkg.activate(".")
 
 
-  @testitem "New resource" begin
-    using Genie
-
+  @testitem "New resource" setup=[GenieTestSetup] begin
     workdir = Base.Filesystem.mktempdir()
 
     cd(workdir)
@@ -133,7 +121,7 @@
   Pkg.activate(".")
 
 
-  @testitem "New task" begin
+  @testitem "New task" setup=[GenieTestSetup] begin
     using Genie, Genie.Exceptions
 
     workdir = Base.Filesystem.mktempdir()

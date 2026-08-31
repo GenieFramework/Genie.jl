@@ -1,7 +1,6 @@
-# @testitem "SVG API support in Renderer.Html" begin
+# @testitem "SVG API support in Renderer.Html" setup=[GenieTestSetup] begin
 
-  @testitem "SVG API is available" begin
-    using Genie
+  @testitem "SVG API is available" setup=[GenieTestSetup] begin
     using Genie.Renderer.Html
     import Genie.Util: fws
 

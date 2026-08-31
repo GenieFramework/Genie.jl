@@ -1,11 +1,7 @@
-# @testitem "Query params" begin
+# @testitem "Query params" setup=[GenieTestSetup] begin
 
-@testitem "No query params" begin
-  using Genie
-  using HTTP
-
-  port = nothing
-  port = rand(8500:8900)
+@testitem "No query params" setup=[GenieTestSetup] begin
+  port = unique_test_port()
 
   route("/") do
     isempty(query()) && return ""
@@ -32,12 +28,8 @@
 end
 
 
-@testitem "No defaults errors out" begin
-  using Genie
-  using HTTP
-
-  port = nothing
-  port = rand(8500:8900)
+@testitem "No defaults errors out" setup=[GenieTestSetup] begin
+  port = unique_test_port()
 
   route("/") do
     query(:a)
@@ -60,12 +52,8 @@ end
 end
 
 
-@testitem "Defaults when no query params" begin
-  using Genie
-  using HTTP
-
-  port = nothing
-  port = rand(8500:8900)
+@testitem "Defaults when no query params" setup=[GenieTestSetup] begin
+  port = unique_test_port()
 
   route("/") do
     query(:x, "10") * query(:y, "20")
@@ -135,12 +123,8 @@ end
 end
 
 
-@testitem "Query params processing" begin
-  using Genie
-  using HTTP
-
-  port = nothing
-  port = rand(8500:8900)
+@testitem "Query params processing" setup=[GenieTestSetup] begin
+  port = unique_test_port()
 
   route("/") do
     query(:x)
@@ -208,12 +192,8 @@ end
 end
 
 
-@testitem "Array query params" begin
-  using Genie
-  using HTTP
-
-  port = nothing
-  port = rand(8500:8900)
+@testitem "Array query params" setup=[GenieTestSetup] begin
+  port = unique_test_port()
 
   route("/") do
     query(:x, "10") * join(query(Symbol("x[]"), "100"))

@@ -1,4 +1,4 @@
-@testitem "Hello Genie" begin
+@testitem "Hello Genie" setup=[GenieTestSetup] begin
 
   using Genie, HTTP
 
@@ -8,8 +8,7 @@
     message
   end
 
-  port = nothing
-  port = rand(8500:8900)
+  port = unique_test_port()
 
   up(port)
 
