@@ -17,7 +17,7 @@
     servers = Genie.Server.down!()
     empty!(Genie.Server.SERVERS)
 
-    servers = Genie.Server.up(; open_browser = false)
+    servers = Genie.Server.up()
     Genie.Server.down(servers; webserver = false)
     @test isopen(servers.webserver)
 
@@ -35,7 +35,7 @@
     port = Genie.config.server_port
     ws_port = Genie.config.websockets_port === nothing ? port : Genie.config.websockets_port
 
-    server = Genie.Server.up(port+1_000; ws_port = ws_port+1_000, open_browser = false)
+    server = Genie.Server.up(port+1_000; ws_port = ws_port+1_000)
 
     @test Genie.config.server_port == port+1_000
     @test Genie.config.websockets_port == ws_port+1_000

@@ -1,12 +1,10 @@
 # @testitem "Special chars in GET params (query)" setup=[GenieTestSetup] begin
   @testitem "<a+b> should be <a b>" setup=[GenieTestSetup] begin
-    port = unique_test_port()
-
     route("/") do
       params(:x)
     end
 
-    server = up(port)
+    server, port = unique_server()
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:$port/?x=foo+bar")
@@ -24,13 +22,11 @@
   end;
 
   @testitem "<a%20b> should be <a b>" setup=[GenieTestSetup] begin
-    port = unique_test_port()
-
     route("/") do
       params(:x)
     end
 
-    server = up(port)
+    server, port = unique_server()
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:$port/?x=foo%20bar")
@@ -48,13 +44,11 @@
   end;
 
   @testitem "<a%2Bb> should be <a+b>" setup=[GenieTestSetup] begin
-    port = unique_test_port()
-
     route("/") do
       params(:x)
     end
 
-    server = up(port)
+    server, port = unique_server()
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:$port/?x=foo%2Bbar")
@@ -72,13 +66,11 @@
   end;
 
   @testitem "emoji support" setup=[GenieTestSetup] begin
-    port = unique_test_port()
-
     route("/") do
       params(:x)
     end
 
-    server = up(port)
+    server, port = unique_server()
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:$port/?x=✔+🧞+♥")

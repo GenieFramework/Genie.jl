@@ -6,9 +6,7 @@
     push!(params(:RESPONSE).headers, "X-Foo-Bar" => "Baz")
   end
 
-  port = unique_test_port()
-
-  server = up(port)
+  server, port = unique_server()
   sleep(1)
 
   response = HTTP.request("OPTIONS", "http://localhost:$port") # unhandled, should get default response

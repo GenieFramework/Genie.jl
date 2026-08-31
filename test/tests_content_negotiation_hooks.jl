@@ -16,9 +16,7 @@
     original_message
   end
 
-  port = unique_test_port()
-
-  server = up(port)
+  server, port = unique_server()
 
   response = HTTP.request("GET", "http://localhost:$port")
   @test response.status == 200

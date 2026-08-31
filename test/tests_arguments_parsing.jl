@@ -10,10 +10,8 @@
     "s = $(params(:s)) / f = $(params(:f)) / i = $(params(:i)) / $(params(:d))"
   end
 
-  port = unique_test_port()
-
-  server = up(port; open_browser = false)
-
+  server, port = unique_server()
+  
   response = HTTP.get("http://localhost:$port/getparams/foo/23.43/18/2019-02-15")
 
   @test response.status == 200

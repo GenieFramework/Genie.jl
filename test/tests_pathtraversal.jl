@@ -3,8 +3,7 @@
   @testitem "Returns 401 unauthorised" setup=[GenieTestSetup] begin
     isdir(Genie.config.server_document_root) || mkdir(Genie.config.server_document_root)
 
-    port = unique_test_port()
-    server = up(port)
+    server, port = unique_server()
 
     req = HTTP.request("GET", "http://localhost:$port////etc/hosts"; status_exception = false)
     @test req.status == (Sys.iswindows() ? 404 : 401)

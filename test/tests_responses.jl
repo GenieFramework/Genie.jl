@@ -13,9 +13,7 @@
     omg!()
   end
 
-  port = unique_test_port()
-
-  server = up(port)
+  server, port = unique_server()
 
   response = HTTP.request("GET", "http://localhost:$port/responses")
   @test response.status == 301

@@ -1,8 +1,6 @@
 # @testitem "Query params" setup=[GenieTestSetup] begin
 
 @testitem "No query params" setup=[GenieTestSetup] begin
-  port = unique_test_port()
-
   route("/") do
     isempty(query()) && return ""
     isempty(params(:GET)) && return ""
@@ -10,7 +8,7 @@
     "error"
   end
 
-  server = up(port)
+  server, port = unique_server()
 
   response = try
     HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
@@ -29,13 +27,11 @@ end
 
 
 @testitem "No defaults errors out" setup=[GenieTestSetup] begin
-  port = unique_test_port()
-
   route("/") do
     query(:a)
   end
 
-  server = up(port)
+  server, port = unique_server()
 
   response = try
     HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
@@ -53,13 +49,11 @@ end
 
 
 @testitem "Defaults when no query params" setup=[GenieTestSetup] begin
-  port = unique_test_port()
-
   route("/") do
     query(:x, "10") * query(:y, "20")
   end
 
-  server = up(port)
+  server, port = unique_server()
 
   # ====
 
@@ -124,13 +118,11 @@ end
 
 
 @testitem "Query params processing" setup=[GenieTestSetup] begin
-  port = unique_test_port()
-
   route("/") do
     query(:x)
   end
 
-  server = up(port)
+  server, port = unique_server()
 
   response = try
     HTTP.request("GET", "http://127.0.0.1:$port?x=1", ["Content-Type" => "text/html"])
@@ -193,13 +185,11 @@ end
 
 
 @testitem "Array query params" setup=[GenieTestSetup] begin
-  port = unique_test_port()
-
   route("/") do
     query(:x, "10") * join(query(Symbol("x[]"), "100"))
   end
 
-  server = up(port)
+  server, port = unique_server()
 
   # ====
 

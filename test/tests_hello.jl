@@ -8,9 +8,7 @@
     message
   end
 
-  port = unique_test_port()
-
-  up(port)
+  server, port = unique_server()
 
   response = HTTP.get("http://localhost:$port/hello")
 

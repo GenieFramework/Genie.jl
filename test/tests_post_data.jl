@@ -15,9 +15,7 @@
     fields[1] * fields[2] * postpayload(:single)
   end
 
-  port = unique_test_port()
-
-  up(port; open_browser = false)
+  server, port = unique_server()
 
   response = HTTP.request("POST", "http://localhost:$port/", ["Content-Type" => "application/x-www-form-urlencoded"], "greeting=Hello")
   @test response.status == 200

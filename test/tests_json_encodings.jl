@@ -11,9 +11,7 @@
     Genie.Requests.jsonpayload("greeting")
   end
 
-  port = unique_test_port()
-
-  server = up(port)
+  server, port = unique_server()
 
   response = HTTP.request("POST", "http://localhost:$port/jsonpayload",
                   [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")

@@ -25,15 +25,20 @@ end
 
 @testitem "Autoload Recursive Persistent" setup=[GenieTestSetup] begin
     using Genie, Genie.Loader
-    isdefined(Main, :LOAD_ORDER) || Core.eval(Main, :(LOAD_ORDER = String[]))
-
-    try
-        lib_dir = joinpath(@__DIR__, "loader_recursive")
-        Genie.Loader.autoload(lib_dir, context=Main)
-
-        @test Main.LOAD_ORDER == ["Z", "C", "D", "B", "A"]
-    finally
+    # loading only works once, so we skip this test if the LOAD_ORDER variable is already defined
+    if ! isdefined(Main, :LOAD_ORDER)
         Core.eval(Main, :(LOAD_ORDER = String[]))
+        try
+            lib_dir = joinpath(@__DIR__, "loader_recursive")
+            Genie.Loader.autoload(lib_dir, context=Main)
+
+            @test Main.LOAD_ORDER == ["Z", "C", "D", "B", "A"]
+        finally
+            Core.eval(Main, :(LOAD_ORDER = String[]))
+        end
+    else
+        @warn "LOAD_ORDER already defined, skipping test"
+        @test_broken false
     end
 end
 

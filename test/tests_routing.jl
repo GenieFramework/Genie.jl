@@ -1,13 +1,11 @@
 # @testitem "Routing edge cases" setup=[GenieTestSetup] begin
 
   @testitem "Emoji routing" setup=[GenieTestSetup] begin
-    port = unique_test_port()
-
     route("/✔/🧞/♥/❤") do
       "/✔/🧞/♥/❤"
     end
 
-    server = up(port)
+    server, port = unique_server()
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:$port/✔/🧞/♥/❤")
@@ -24,13 +22,11 @@
   end;
 
   @testitem "Emoji routing ✔" setup=[GenieTestSetup] begin
-    port = unique_test_port()
-
     route("/✔") do
       "All good"
     end
 
-    server = up(port)
+    server, port = unique_server()
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:$port/✔")
@@ -48,13 +44,11 @@
   end;
 
   @testitem "Encoded urls é" setup=[GenieTestSetup] begin
-    port = unique_test_port()
-
     route("/réception") do
       "Meet at réception"
     end
 
-    server = up(port)
+    server, port = unique_server()
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:$port/réception")
@@ -73,13 +67,11 @@
 
   @testitem "Emoji routing with params" setup=[GenieTestSetup] begin
     using Genie, Genie.Requests
-    port = unique_test_port()
-
     route("/:check/:genie/:smallheart/:bigheart") do
       "/$(payload(:check))/$(payload(:genie))/$(payload(:smallheart))/$(payload(:bigheart))"
     end
 
-    server = up(port)
+    server, port = unique_server()
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:$port/✔/🧞/♥/❤")

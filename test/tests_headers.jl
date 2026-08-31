@@ -16,9 +16,8 @@
     "OOKK"
   end
 
-  port = unique_test_port()
-
-  up(port; open_browser = false, verbose = true)
+  server = up(unique_test_port();verbose = true)
+  port = server.webserver.bound_port
 
   response = HTTP.request("GET", "http://localhost:$port/headers") # unhandled, should get default response
   @test response.status == 200
