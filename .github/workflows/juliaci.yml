@@ -3,36 +3,61 @@ name: Julia CI
 on:
   push:
     branches: [main, master]
+
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+      - converted_to_draft
+
   issue_comment:
-    types: [created]
+    types:
+      - created
+
   workflow_dispatch:
     inputs:
       feature:
         type: choice
         description: What to run
-        options: [DocDeploy, LintAndTest, TagBot]
+        options:
+          - DocDeploy
+          - LintAndTest
+          - TagBot
 
 jobs:
   julia-ci:
     uses: julia-testitems/testitem-workflow/.github/workflows/juliaci.yml@v2
+
     with:
+      # Select only the current stable Julia release.
+      # If the current stable release is Julia 1.12, this produces Julia 1.12.
+      include-release-versions: true
+      include-lts-versions: false
+      include-all-compatible-minor-versions: false
+      include-smallest-compatible-minor-versions: false
+      include-rc-versions: false
+      include-beta-versions: false
+      include-alpha-versions: false
+      include-nightly-versions: false
+
+      # Keep only Ubuntu Linux x64 and Ubuntu Linux x86.
+      include-windows-x64: false
       include-windows-x86: false
+      include-linux-x64: true
       include-linux-x86: true
+      include-macos-x64: false
+      include-macos-aarch64: false
 
-      allow-failure: "*~x86,*:macos-26-intel"
+      # Preserve the previous policy: x86 may fail without failing the workflow.
+      allow-failure: "*~x86"
 
-      env: '{"JULIA_PKG_PRECOMPILE_AUTO":"0","JULIA_NUM_PRECOMPILE_TASKS":"1"}'
+      # First diagnostic change: remove test-item and Julia thread concurrency.
       max-workers: "1"
       threads: "1"
-      gc-between-testitems: "true"
-
-      activation-timeout: "120"
-      run-stall: "300"
-      output-mode: "all"
-      schedule: "contiguous"
 
     permissions: write-all
+
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
