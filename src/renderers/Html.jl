@@ -1184,7 +1184,7 @@ end
 Returns a 500 error response as an HTML doc.
 """
 function Genie.Router.error(error_message::String, ::Type{MIME"text/html"}, ::Val{500}; error_info::String = "") :: HTTP.Response
-  serve_error_file(500, error_message, error_info = error_info)
+  serve_error_page(500, error_message, info=error_info)
 end
 
 
@@ -1194,7 +1194,7 @@ end
 Returns a 404 error response as an HTML doc.
 """
 function Genie.Router.error(error_message::String, ::Type{MIME"text/html"}, ::Val{404}; error_info::String = "") :: HTTP.Response
-  serve_error_file(404, error_message, error_info = error_info)
+  serve_error_page(404, error_message, info=error_info)
 end
 
 
@@ -1204,7 +1204,7 @@ end
 Returns an error response as an HTML doc.
 """
 function Genie.Router.error(error_code::Int, error_message::String, ::Type{MIME"text/html"}; error_info::String = "") :: HTTP.Response
-  serve_error_file(error_code, error_message, error_info = error_info)
+  serve_error_page(error_code, error_message, info=error_info)
 end
 
 
@@ -1268,6 +1268,27 @@ function serve_error_file(error_code::Int, error_message::String = ""; error_inf
   end
 end
 
+
+"""
+    serve_error_page(status::Int, message::String; info::String = "")
+
+Renders an error page using the configured layout if present, otherwise falls back to static file.
+"""
+function serve_error_page(status::Int, message::String; info::String="")
+
+  if Genie.config.error_layout !== nothing
+    #    It expects views at: resources/errors/views/error_XXX.jl.html
+    return Genie.Renderer.Html.html(:errors, Symbol("error_$(status)"), context=@__MODULE__;
+      layout=Genie.config.error_layout,
+      status=status,
+      message=message,
+      info=info
+    )
+  end
+
+  #Fallback
+  serve_error_file(status, message, error_info=info)
+end
 
 ### === ###
 
