@@ -23,5 +23,6 @@ jobs:
       include-rc-versions: true
       allow-failure: "*~x86,*:macos-26-intel"
     permissions: write-all
+    timeout-minutes: 25
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}

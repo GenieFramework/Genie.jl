@@ -1,0 +1,39 @@
+name: Auto Retry Flaky Legs
+on:
+  workflow_run:
+    workflows: ["Julia CI"] 
+    types: [completed]
+
+jobs:
+  retry-failed-legs:
+    # Trigger only if the overall run failed and we have not exceeded 1 retries (2 total attempts)
+    if: ${{ github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.run_attempt <= 1 }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write # Required permission to trigger job re-runs
+    steps:
+      - name: Check for Timeout and Trigger Rerun
+        run: |
+          RUN_ID="${{ github.event.workflow_run.id }}"
+          REPO="${{ github.repository }}"
+          
+          echo "Checking if the workflow failure was caused by a timeout..."
+          
+          # Fetch all jobs from the failed run and filter specifically for the 'timed_out' conclusion
+          TIMED_OUT_JOBS=$(gh api /repos/$REPO/actions/runs/$RUN_ID/jobs \
+            --jq '.jobs[] | select(.conclusion == "timed_out") | .name')
+
+          if [ -n "$TIMED_OUT_JOBS" ]; then
+            echo "The following job(s) timed out:"
+            echo "$TIMED_OUT_JOBS"
+            echo "Triggering a rerun of the failed matrix legs..."
+            
+            gh api \
+              --method POST \
+              -H "Accept: application/vnd.github+json" \
+              /repos/$REPO/actions/runs/$RUN_ID/rerun-failed-jobs
+          else
+            echo "No jobs timed out. Actual code or test failure detected, skipping auto-retry."
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
