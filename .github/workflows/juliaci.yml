@@ -19,8 +19,20 @@ jobs:
     uses: julia-testitems/testitem-workflow/.github/workflows/juliaci.yml@v2
     with:
       include-windows-x86: false
-      include-rc-versions: true
+      include-linux-x86: true
+
       allow-failure: "*~x86,*:macos-26-intel"
+
+      env: '{"JULIA_PKG_PRECOMPILE_AUTO":"0","JULIA_NUM_PRECOMPILE_TASKS":"1"}'
+      max-workers: "1"
+      threads: "1"
+      gc-between-testitems: "true"
+
+      activation-timeout: "120"
+      run-stall: "300"
+      output-mode: "all"
+      schedule: "contiguous"
+
     permissions: write-all
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
