@@ -14,8 +14,6 @@ on:
         description: What to run
         options: [DocDeploy, LintAndTest, TagBot]
 
-timeout-minutes: 60 
-
 jobs:
   julia-ci:
     uses: julia-testitems/testitem-workflow/.github/workflows/juliaci.yml@v2
@@ -24,6 +22,8 @@ jobs:
       include-linux-x86: false
       include-rc-versions: true
       allow-failure: "*~x86,*:macos-26-intel"
+      activation-timeout: 1500
+      run-stall: 300
     permissions: write-all
     secrets:
       codecov_token: ${{ secrets.CODECOV_TOKEN }}
