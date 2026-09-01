@@ -1,16 +1,10 @@
-# @testitem "HEAD requests" begin
-  @testitem "HEAD requests should be by default handled by GET" begin
-    using Genie
-    using HTTP
-
-    port = nothing
-    port = rand(8500:8900)
-
+# @testitem "HEAD requests" setup=[GenieTestSetup] begin
+  @testitem "HEAD requests should be by default handled by GET" setup=[GenieTestSetup] begin
     route("/") do
       "GET request"
     end
 
-    server = up(port)
+    server, port = unique_server()
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
@@ -36,13 +30,7 @@
     port = nothing
   end;
 
-  @testitem "HEAD requests have no body" begin
-    using Genie
-    using HTTP
-
-    port = nothing
-    port = rand(8500:8900)
-
+  @testitem "HEAD requests have no body" setup=[GenieTestSetup] begin
     route("/") do
       "Hello world"
     end
@@ -51,7 +39,7 @@
       "Hello world"
     end
 
-    server = up(port; open_browser = false)
+    server, port = unique_server()
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
@@ -76,13 +64,7 @@
     port = nothing
   end;
 
-  @testitem "HEAD requests should overwrite GET" begin
-    using Genie
-    using HTTP
-
-    port = nothing
-    port = rand(8500:8900)
-
+  @testitem "HEAD requests should overwrite GET" setup=[GenieTestSetup] begin
     request_method = Ref("")
 
     route("/", named = :get_root) do
@@ -95,7 +77,7 @@
       "HEAD request"
     end
 
-    server = up(port)
+    server, port = unique_server()
     sleep(1)
 
     response = try

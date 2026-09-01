@@ -1,4 +1,4 @@
-@testitem "OPTIONS requests" begin
+@testitem "OPTIONS requests" setup=[GenieTestSetup] begin
 
   using Genie, HTTP
 
@@ -6,10 +6,7 @@
     push!(params(:RESPONSE).headers, "X-Foo-Bar" => "Baz")
   end
 
-  port = nothing
-  port = rand(8500:8900)
-
-  server = up(port)
+  server, port = unique_server()
   sleep(1)
 
   response = HTTP.request("OPTIONS", "http://localhost:$port") # unhandled, should get default response

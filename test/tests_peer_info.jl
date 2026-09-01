@@ -1,15 +1,11 @@
-# @testitem "Peer info" begin
-  @testitem "Peer info is disabled by default but can be activated" begin
+# @testitem "Peer info" setup=[GenieTestSetup] begin
+  @testitem "Peer info is disabled by default but can be activated" setup=[GenieTestSetup] begin
     using Genie, Genie.Requests
-    using HTTP
-
-    port = rand(8500:8900)
-
     route("/") do
       "$(peer().ip)-$(peer().port)"
     end
 
-    server = up(port)
+    server, port = unique_server()
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:$port")
@@ -30,7 +26,7 @@
       "$(peer().ip)-$(peer().port)"
     end
 
-    server = up(port)
+    server, port = unique_server()
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:$port")
@@ -46,6 +42,7 @@
     sleep(1)
     server = nothing
     port = nothing
+    Genie.config.features_peerinfo = false
   end;
 
 # end

@@ -1,0 +1,27 @@
+name: Julia CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      feature:
+        type: choice
+        description: What to run
+        options: [DocDeploy, LintAndTest, TagBot]
+
+jobs:
+  julia-ci:
+    uses: julia-testitems/testitem-workflow/.github/workflows/juliaci.yml@v2
+    with:
+      include-windows-x86: false
+      include-linux-x86: false
+      include-rc-versions: true
+      allow-failure: "*~x86,*:macos-26-intel"
+    permissions: write-all
+    secrets:
+      codecov_token: ${{ secrets.CODECOV_TOKEN }}

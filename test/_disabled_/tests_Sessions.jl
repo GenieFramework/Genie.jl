@@ -1,6 +1,6 @@
-# # @testitem "Sessions functionality" begin
+# # @testitem "Sessions functionality" setup=[GenieTestSetup] begin
 
-#   @testitem "Simple session setting and getting" begin
+#   @testitem "Simple session setting and getting" setup=[GenieTestSetup] begin
 #     using Genie, Genie.Sessions
 #     using Genie.Router
 #     using HTTP

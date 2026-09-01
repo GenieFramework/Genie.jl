@@ -1,4 +1,4 @@
-@testitem "Assets config" begin
+@testitem "Assets config" setup=[GenieTestSetup] begin
   using Genie, Genie.Assets
 
   @test Genie.Assets.AssetsConfig().host == Genie.config.base_path
@@ -11,4 +11,5 @@
 
   Genie.Assets.assets_config!(host = "foo")
   @test Genie.Assets.assets_config.host == "foo"
+  Genie.Assets.assets_config!(host = "")
 end;

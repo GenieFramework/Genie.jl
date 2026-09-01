@@ -1,4 +1,4 @@
-@testitem "Parsing of route arguments with types" begin
+@testitem "Parsing of route arguments with types" setup=[GenieTestSetup] begin
 
   using Genie, Dates, HTTP
 
@@ -10,11 +10,8 @@
     "s = $(params(:s)) / f = $(params(:f)) / i = $(params(:i)) / $(params(:d))"
   end
 
-  port = nothing
-  port = rand(8500:8900)
-
-  server = up(port; open_browser = false)
-
+  server, port = unique_server()
+  
   response = HTTP.get("http://localhost:$port/getparams/foo/23.43/18/2019-02-15")
 
   @test response.status == 200

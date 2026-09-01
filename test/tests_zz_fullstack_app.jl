@@ -1,14 +1,11 @@
-# @testitem "Fullstack app" begin
+# @testitem "Fullstack app" setup=[GenieTestSetup] begin
 
-  @testitem "Create and run a full stack app with resources" begin
+  @testitem "Create and run a full stack app with resources" setup=[GenieTestSetup] begin
     using Logging
     Logging.global_logger(NullLogger())
 
     testdir = pwd()
     using Pkg
-
-    using Genie
-
     content = "Test OK!"
 
     workdir = Base.Filesystem.mktempdir()

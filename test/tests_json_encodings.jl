@@ -1,4 +1,4 @@
-@testitem "JSON payload correctly identified" begin
+@testitem "JSON payload correctly identified" setup=[GenieTestSetup] begin
 
   using Genie, HTTP
   import Genie.Util: fws
@@ -11,10 +11,7 @@
     Genie.Requests.jsonpayload("greeting")
   end
 
-  port = nothing
-  port = rand(8500:8900)
-
-  server = up(port)
+  server, port = unique_server()
 
   response = HTTP.request("POST", "http://localhost:$port/jsonpayload",
                   [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")

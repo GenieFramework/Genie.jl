@@ -1,5 +1,4 @@
-@testitem "Files vars rendering" begin
-  using Genie
+@testitem "Files vars rendering" setup=[GenieTestSetup] begin
   using Genie.Renderer.Html, Genie.Requests
   using Random
   import Base.Filesystem: mktemp
@@ -44,7 +43,6 @@
   close(templatefile[2])
 
   @testset "HTML rendering with view files" begin
-    using Genie
     using Genie.Renderer.Html, Genie.Requests
 
     r = Requests.HTTP.Response()

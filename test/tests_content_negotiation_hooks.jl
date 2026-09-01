@@ -1,4 +1,4 @@
-@testitem "Content negotiation hooks" begin
+@testitem "Content negotiation hooks" setup=[GenieTestSetup] begin
   using Genie, HTTP
 
   custom_message = "Got you!"
@@ -16,10 +16,7 @@
     original_message
   end
 
-  port = nothing
-  port = rand(8500:8900)
-
-  server = up(port)
+  server, port = unique_server()
 
   response = HTTP.request("GET", "http://localhost:$port")
   @test response.status == 200

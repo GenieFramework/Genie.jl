@@ -1,7 +1,6 @@
-# @testitem "HTML+Julia rendering" begin
+# @testitem "HTML+Julia rendering" setup=[GenieTestSetup] begin
 
-  @testitem "Simple tag rendering" begin
-    using Genie
+  @testitem "Simple tag rendering" setup=[GenieTestSetup] begin
     using Genie.Renderer.Html
     import Genie.Util: fws
 

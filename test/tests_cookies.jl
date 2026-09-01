@@ -1,4 +1,4 @@
-@testitem "Cookies with Encrypted Values" begin
+@testitem "Cookies with Encrypted Values" setup=[GenieTestSetup] begin
 
   using Genie, Genie.Cookies, Genie.Encryption, HTTP, Test
 

@@ -1,5 +1,5 @@
-# @testitem "Escaping quotes" begin
-  @testitem "Double quoted arguments" begin
+# @testitem "Escaping quotes" setup=[GenieTestSetup] begin
+  @testitem "Double quoted arguments" setup=[GenieTestSetup] begin
     using Genie, Genie.Renderer
     using Genie.Renderer.Html
 
@@ -16,7 +16,7 @@
       """<body onload="alert("Hello");"><p>Good morning</p></body>"""
   end
 
-  @testitem "Single quoted arguments" begin
+  @testitem "Single quoted arguments" setup=[GenieTestSetup] begin
     using Genie, Genie.Renderer
     using Genie.Renderer.Html
 
@@ -30,7 +30,7 @@
       """<body onload='alert("Hello");'><p>Good morning</p></body>"""
   end
 
-  @testitem "Arguments in templates" begin
+  @testitem "Arguments in templates" setup=[GenieTestSetup] begin
     using Genie, Genie.Renderer
     using Genie.Renderer.Html
     import Genie.Util: fws

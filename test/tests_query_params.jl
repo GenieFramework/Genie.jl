@@ -1,12 +1,6 @@
-# @testitem "Query params" begin
+# @testitem "Query params" setup=[GenieTestSetup] begin
 
-@testitem "No query params" begin
-  using Genie
-  using HTTP
-
-  port = nothing
-  port = rand(8500:8900)
-
+@testitem "No query params" setup=[GenieTestSetup] begin
   route("/") do
     isempty(query()) && return ""
     isempty(params(:GET)) && return ""
@@ -14,7 +8,7 @@
     "error"
   end
 
-  server = up(port)
+  server, port = unique_server()
 
   response = try
     HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
@@ -32,18 +26,12 @@
 end
 
 
-@testitem "No defaults errors out" begin
-  using Genie
-  using HTTP
-
-  port = nothing
-  port = rand(8500:8900)
-
+@testitem "No defaults errors out" setup=[GenieTestSetup] begin
   route("/") do
     query(:a)
   end
 
-  server = up(port)
+  server, port = unique_server()
 
   response = try
     HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
@@ -60,18 +48,12 @@ end
 end
 
 
-@testitem "Defaults when no query params" begin
-  using Genie
-  using HTTP
-
-  port = nothing
-  port = rand(8500:8900)
-
+@testitem "Defaults when no query params" setup=[GenieTestSetup] begin
   route("/") do
     query(:x, "10") * query(:y, "20")
   end
 
-  server = up(port)
+  server, port = unique_server()
 
   # ====
 
@@ -135,18 +117,12 @@ end
 end
 
 
-@testitem "Query params processing" begin
-  using Genie
-  using HTTP
-
-  port = nothing
-  port = rand(8500:8900)
-
+@testitem "Query params processing" setup=[GenieTestSetup] begin
   route("/") do
     query(:x)
   end
 
-  server = up(port)
+  server, port = unique_server()
 
   response = try
     HTTP.request("GET", "http://127.0.0.1:$port?x=1", ["Content-Type" => "text/html"])
@@ -208,18 +184,12 @@ end
 end
 
 
-@testitem "Array query params" begin
-  using Genie
-  using HTTP
-
-  port = nothing
-  port = rand(8500:8900)
-
+@testitem "Array query params" setup=[GenieTestSetup] begin
   route("/") do
     query(:x, "10") * join(query(Symbol("x[]"), "100"))
   end
 
-  server = up(port)
+  server, port = unique_server()
 
   # ====
 

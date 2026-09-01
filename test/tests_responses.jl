@@ -1,4 +1,4 @@
-@testitem "Responses" begin
+@testitem "Responses" setup=[GenieTestSetup] begin
 
   using Genie, HTTP, Genie.Responses
 
@@ -13,10 +13,7 @@
     omg!()
   end
 
-  port = nothing
-  port = rand(8500:8900)
-
-  server = up(port)
+  server, port = unique_server()
 
   response = HTTP.request("GET", "http://localhost:$port/responses")
   @test response.status == 301

@@ -1,6 +1,4 @@
-@testitem "Sort Load Order based on .autoload" begin
-    using Genie
-
+@testitem "Sort Load Order based on .autoload" setup=[GenieTestSetup] begin
     order = Genie.Loader.sort_load_order("loader", readdir("loader"))
     @test order == ["xyz.jl", "-my-test-file.jl", "def.jl", "Abc.jl", ".autoload", "Aaa.jl", "Abb.jl"]
 
@@ -10,7 +8,7 @@
     delete!(ENV, "FOO")
 end
 
-@testitem "Loading of submodules via @using" begin
+@testitem "Loading of submodules via @using" setup=[GenieTestSetup] begin
     # @test_logs (:info, "loading MyModule") include(joinpath(@__DIR__, "loader_using/include-mymodule-1.jl"))
     # somehow the above test doesn't capture the output, so we're just testing the success
 

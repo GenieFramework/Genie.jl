@@ -1,4 +1,4 @@
-@testitem "Output <script> tags" begin
+@testitem "Output <script> tags" setup=[GenieTestSetup] begin
   using Genie, Genie.Renderer
   using Genie.Renderer.Html
   import Genie.Util: fws

@@ -1,4 +1,4 @@
-# @testitem "Sessions id test" begin
+# @testitem "Sessions id test" setup=[GenieTestSetup] begin
 #     using Genie
 
 #     @test !isempty(Genie.secret_token())

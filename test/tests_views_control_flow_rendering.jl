@@ -1,7 +1,6 @@
-# @testitem "Control flow rendering" begin
-  # @testitem "IF conditional rendering" begin
-    @testitem "IF true" begin
-      using Genie
+# @testitem "Control flow rendering" setup=[GenieTestSetup] begin
+  # @testitem "IF conditional rendering" setup=[GenieTestSetup] begin
+    @testitem "IF true" setup=[GenieTestSetup] begin
       using Genie.Renderer.Html
       import Genie.Util: fws
 
@@ -17,8 +16,7 @@
             """<!DOCTYPE html><html><body><section class="block"><h1>Hello</h1><p>Welcome</p></section></body></html>""" |> fws
     end;
 
-    @testitem "IF false" begin
-      using Genie
+    @testitem "IF false" setup=[GenieTestSetup] begin
       using Genie.Renderer.Html
       import Genie.Util: fws
 

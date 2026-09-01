@@ -1,6 +1,6 @@
-# @testitem "Assets functionality" begin
+# @testitem "Assets functionality" setup=[GenieTestSetup] begin
 
-  @testitem "Assets paths" begin
+  @testitem "Assets paths" setup=[GenieTestSetup] begin
     using Genie, Genie.Assets
 
     Genie.config.base_path = "/proxy/8000"

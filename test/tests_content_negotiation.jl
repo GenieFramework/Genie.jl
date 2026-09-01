@@ -1,14 +1,8 @@
-# @testitem "Content negotiation" begin
+# @testitem "Content negotiation" setup=[GenieTestSetup] begin
 
-  # @testitem "Response type matches request type" begin
-    @testitem "Not found matches request type -- Content-Type -- custom HTML Genie page" begin
-      using Genie
-      using HTTP
-
-      port = nothing
-      port = rand(8500:8900)
-
-      server = up(port; open_browser = false)
+  @testitem "Response type matches request type" setup=[GenieTestSetup] begin
+    @testset "Not found matches request type -- Content-Type -- custom HTML Genie page" begin
+      server, port = unique_server()
 
       response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "text/html"], status_exception = false)
 
@@ -28,14 +22,8 @@
       port = nothing
     end
 
-    @testitem "Not found matches request type -- Accept -- custom HTML Genie page" begin
-      using Genie
-      using HTTP
-
-      port = nothing
-      port = rand(8500:8900)
-
-      server = up(port; open_browser = false)
+    @testset "Not found matches request type -- Accept -- custom HTML Genie page" begin
+      server, port = unique_server()
 
       response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "text/html"], status_exception = false)
 
@@ -55,14 +43,8 @@
       port = nothing
     end
 
-    @testitem "Not found matches request type -- Content-Type -- custom JSON Genie handler" begin
-      using Genie
-      using HTTP
-
-      port = nothing
-      port = rand(8500:8900)
-
-      server = up(port; open_browser = false)
+    @testset "Not found matches request type -- Content-Type -- custom JSON Genie handler" begin
+      server, port = unique_server()
 
       response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "application/json"], status_exception = false)
 
@@ -82,14 +64,8 @@
       port = nothing
     end
 
-    @testitem "Not found matches request type -- Accept -- custom JSON Genie handler" begin
-      using Genie
-      using HTTP
-
-      port = nothing
-      port = rand(8500:8900)
-
-      server = up(port; open_browser = false)
+    @testset "Not found matches request type -- Accept -- custom JSON Genie handler" begin
+      server, port = unique_server()
 
       response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "application/json"], status_exception = false)
 
@@ -109,14 +85,9 @@
       port = nothing
     end
 
-    @testitem "Not found matches request type -- Content-Type -- custom text Genie handler" begin
-      using Genie
-      using HTTP
+    @testset "Not found matches request type -- Content-Type -- custom text Genie handler" begin
+      server, port = unique_server()
 
-      port = nothing
-      port = rand(8500:8900)
-
-      server = up(port; open_browser = false)
 
       response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "text/plain"], status_exception = false)
 
@@ -135,16 +106,10 @@
       server = nothing
       port = nothing
     end
-  # end;
+  end;
 
-  @testitem "Not found matches request type -- Content-Type -- unknown content type get same response" begin
-    using Genie
-    using HTTP
-
-    port = nothing
-    port = rand(8500:8900)
-
-    server = up(port; open_browser = false)
+  @testitem "Not found matches request type -- Content-Type -- unknown content type get same response" setup=[GenieTestSetup] begin
+    server, port = unique_server()
 
     response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "text/csv"], status_exception = false)
 
@@ -164,14 +129,8 @@
     port = nothing
   end
 
-  @testitem "Not found matches request type -- Accept -- unknown content type get same response" begin
-    using Genie
-    using HTTP
-
-    port = nothing
-    port = rand(8500:8900)
-
-    server = up(port; open_browser = false)
+  @testitem "Not found matches request type -- Accept -- unknown content type get same response" setup=[GenieTestSetup] begin
+    server, port = unique_server()
 
     response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "text/csv"], status_exception = false)
 
@@ -191,17 +150,11 @@
     port = nothing
   end
 
-  @testitem "Custom error handlers" begin
+  @testitem "Custom error handlers" setup=[GenieTestSetup] begin
     @testset "Custom error handler for unknown types" begin
-      using Genie
-      using HTTP
+      server, port = unique_server()
 
-      port = nothing
-      port = rand(8500:8900)
-
-      server = up(port; open_browser = false)
-
-    response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "text/csv"], status_exception = false)
+      response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "text/csv"], status_exception = false)
 
       @test response.status == 404
       @test occursin("404 Not Found", String(response.body)) == true
@@ -231,15 +184,9 @@
     end
 
     @testset "Custom error handler for known types" begin
-      using Genie
-      using HTTP
+      server, port = unique_server()
 
-      port = nothing
-      port = rand(8500:8900)
-
-      server = up(port; open_browser = false)
-
-    response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "application/json"], status_exception = false)
+      response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "application/json"], status_exception = false)
 
       @test response.status == 404
       @test occursin("404 Not Found", String(response.body)) == true
@@ -268,14 +215,8 @@
       Base.delete_method.(methods(Genie.Router.error, (String, Type{MIME"application/json"}, Val{404})))
     end
   end
-  @testitem "Order of accept preferences" begin
-    using Genie
-    using HTTP
-
-    port = nothing
-    port = rand(8500:8900)
-
-    server = up(port; open_browser = false)
+  @testitem "Order of accept preferences" setup=[GenieTestSetup] begin
+    server, port = unique_server()
 
     response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "text/html, text/plain, application/json, text/csv"], status_exception = false)
 

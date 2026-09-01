@@ -1,4 +1,4 @@
-@testitem "Setting and getting headers" begin
+@testitem "Setting and getting headers" setup=[GenieTestSetup] begin
 
   using Genie, HTTP
   using Genie.Router, Genie.Responses
@@ -16,10 +16,8 @@
     "OOKK"
   end
 
-  port = nothing
-  port = rand(8500:8900)
-
-  up(port; open_browser = false, verbose = true)
+  server = up(unique_test_port();verbose = true)
+  port = server.webserver.bound_port
 
   response = HTTP.request("GET", "http://localhost:$port/headers") # unhandled, should get default response
   @test response.status == 200
