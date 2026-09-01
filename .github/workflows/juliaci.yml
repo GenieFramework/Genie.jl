@@ -22,9 +22,9 @@ on:
         type: choice
         description: What to run
         options:
-          - DocDeploy
+          # - DocDeploy
           - LintAndTest
-          - TagBot
+          # - TagBot
 
 jobs:
   julia-ci:
