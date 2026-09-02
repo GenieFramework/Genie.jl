@@ -11,8 +11,6 @@
     Genie.Requests.jsonpayload("greeting")
   end
 
-  server, port = unique_server()
-
   response = HTTP.request("POST", "http://localhost:$port/jsonpayload",
                   [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
 
@@ -62,9 +60,4 @@
 
   @test response.status == 200
   @test String(response.body) |> fws == """hello""" |> fws
-
-  down()
-  sleep(1)
-  server = nothing
-  port = nothing
 end;

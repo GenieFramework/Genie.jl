@@ -26,8 +26,6 @@
     json_result["payload"]
   end
 
-  server, port = unique_server()
-
   response = HTTP.request("POST", "http://localhost:$port/jsonpayload",
                   [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
 
@@ -61,9 +59,4 @@
   end
 
   @test_throws HTTP.StatusError HTTP.request("POST", "http://localhost:$port/json-error", [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
-
-  down()
-  sleep(1)
-  server = nothing
-  port = nothing
 end;

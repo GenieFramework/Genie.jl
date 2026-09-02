@@ -3,16 +3,11 @@
   @testitem "Returns 401 unauthorised" setup=[GenieTestSetup] begin
     isdir(Genie.config.server_document_root) || mkdir(Genie.config.server_document_root)
 
-    server, port = unique_server()
-
     req = HTTP.request("GET", "http://localhost:$port////etc/hosts"; status_exception = false)
     @test req.status == (Sys.iswindows() ? 404 : 401)
 
     # req = HTTP.request("GET", "http://localhost:$port/../../src/mimetypes.jl"; status_exception = false)
     # @test req.status == 401
-
-    Genie.Server.down!()
-    server = nothing
   end
 
   # Tests pass OK but for some reason some state remains and breaks next batch of tests... :-(

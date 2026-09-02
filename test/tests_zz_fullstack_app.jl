@@ -35,9 +35,6 @@
 
     @test occursin(content, String(r.body)) == true
 
-    down()
-    sleep(1)
-
     cd(testdir)
     Pkg.activate(".")
   end;

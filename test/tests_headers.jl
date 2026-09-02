@@ -16,8 +16,7 @@
     "OOKK"
   end
 
-  server = up(unique_test_port();verbose = true)
-  port = server.webserver.bound_port
+  sleep(0)
 
   response = HTTP.request("GET", "http://localhost:$port/headers") # unhandled, should get default response
   @test response.status == 200
@@ -30,9 +29,4 @@
   @test String(response.body) == "OOKK"
   @test Dict(response.headers)["X-Foo-Bar"] == "Bazinga"
   @test get(Dict(response.headers), "Access-Control-Allow-Methods", nothing) == "GET, POST, OPTIONS"
-
-  down()
-  sleep(1)
-  server = nothing
-  port = nothing
 end

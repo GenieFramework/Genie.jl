@@ -4,8 +4,6 @@
       "GET request"
     end
 
-    server, port = unique_server()
-
     response = try
       HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
     catch ex
@@ -23,11 +21,6 @@
 
     @test response.status == 200
     @test String(response.body) == ""
-
-    down()
-    sleep(1)
-    server = nothing
-    port = nothing
   end;
 
   @testitem "HEAD requests have no body" setup=[GenieTestSetup] begin
@@ -38,8 +31,6 @@
     route("/", method = HEAD) do
       "Hello world"
     end
-
-    server, port = unique_server()
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
@@ -57,11 +48,6 @@
     end
     @test response.status == 200
     @test isempty(String(response.body)) == true
-
-    down()
-    sleep(1)
-    server = nothing
-    port = nothing
   end;
 
   @testitem "HEAD requests should overwrite GET" setup=[GenieTestSetup] begin
@@ -76,9 +62,6 @@
       request_method[] = "HEAD"
       "HEAD request"
     end
-
-    server, port = unique_server()
-    sleep(1)
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
@@ -97,11 +80,6 @@
 
     @test response.status == 200
     @test request_method[] == "HEAD"
-
-    down()
-    sleep(1)
-    server = nothing
-    port = nothing
   end;
 
 # end;

@@ -11,7 +11,9 @@
   end;
 
   @testitem "Expose settings" setup=[GenieTestSetup] begin
+    local port, ws_port
     using Genie, Genie.Assets
+    
     port = Genie.config.server_port
     ws_port = Genie.config.websockets_port === nothing ? "null" : string(Genie.config.websockets_port)
     

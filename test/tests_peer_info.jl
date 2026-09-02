@@ -5,8 +5,6 @@
       "$(peer().ip)-$(peer().port)"
     end
 
-    server, port = unique_server()
-
     response = try
       HTTP.request("GET", "http://127.0.0.1:$port")
     catch ex
@@ -17,16 +15,15 @@
     @test response.status == 200
     @test String(response.body) == "-"
 
-    down()
-    sleep(1)
+    Genie.Server.down!()
+    sleep(0)
+    start_unique_server()
 
     Genie.config.features_peerinfo = true
 
     route("/") do
       "$(peer().ip)-$(peer().port)"
     end
-
-    server, port = unique_server()
 
     response = try
       HTTP.request("GET", "http://127.0.0.1:$port")
@@ -37,11 +34,6 @@
     @test Genie.config.features_peerinfo == true
     @test response.status == 200
     @test_broken String(response.body) == "127.0.0.1-$port"
-
-    down()
-    sleep(1)
-    server = nothing
-    port = nothing
     Genie.config.features_peerinfo = false
   end;
 

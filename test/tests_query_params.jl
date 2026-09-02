@@ -8,8 +8,6 @@
     "error"
   end
 
-  server, port = unique_server()
-
   response = try
     HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
   catch ex
@@ -18,11 +16,6 @@
 
   @test response.status == 200
   @test isempty(String(response.body)) == true
-
-  down()
-  sleep(1)
-  server = nothing
-  port = nothing
 end
 
 
@@ -31,8 +24,6 @@ end
     query(:a)
   end
 
-  server, port = unique_server()
-
   response = try
     HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
   catch ex
@@ -40,11 +31,6 @@ end
   end
 
   @test response.status == 500
-
-  down()
-  sleep(1)
-  server = nothing
-  port = nothing
 end
 
 
@@ -52,8 +38,6 @@ end
   route("/") do
     query(:x, "10") * query(:y, "20")
   end
-
-  server, port = unique_server()
 
   # ====
 
@@ -109,11 +93,6 @@ end
 
   @test response.status == 200
   @test isempty(String(response.body)) == true
-
-  down()
-  sleep(1)
-  server = nothing
-  port = nothing
 end
 
 
@@ -121,8 +100,6 @@ end
   route("/") do
     query(:x)
   end
-
-  server, port = unique_server()
 
   response = try
     HTTP.request("GET", "http://127.0.0.1:$port?x=1", ["Content-Type" => "text/html"])
@@ -176,11 +153,6 @@ end
 
   @test response.status == 200
   @test String(response.body) == "0"
-
-  down()
-  sleep(1)
-  server = nothing
-  port = nothing
 end
 
 
@@ -188,8 +160,6 @@ end
   route("/") do
     query(:x, "10") * join(query(Symbol("x[]"), "100"))
   end
-
-  server, port = unique_server()
 
   # ====
 
@@ -245,11 +215,6 @@ end
 
   @test response.status == 200
   @test String(response.body) == "910002000"
-
-  down()
-  sleep(1)
-  server = nothing
-  port = nothing
 end
 
 # end

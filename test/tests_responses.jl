@@ -13,8 +13,6 @@
     omg!()
   end
 
-  server, port = unique_server()
-
   response = HTTP.request("GET", "http://localhost:$port/responses")
   @test response.status == 301
   @test Dict(response.headers)["X-Foo-Bar"] == "Baz"
@@ -25,9 +23,4 @@
   @test String(response.body) == "Hello"
 
   @test_throws HTTP.StatusError HTTP.request("GET", "http://localhost:$port/broken", ["Content-Type"=>"text/plain"])
-
-  down()
-  sleep(1)
-  server = nothing
-  port = nothing
 end

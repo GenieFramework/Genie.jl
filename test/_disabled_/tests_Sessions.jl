@@ -20,10 +20,6 @@
 #     # TODO: extend to use the cookie and increment the count
 #     response = HTTP.get("http://$(Genie.config.server_host):$(Genie.config.server_port)/home")
 #     @test response.body |> String == "1"
-
-#     down()
-#     sleep(1)
-#     server = nothing
 #   end;
 
 # # end;

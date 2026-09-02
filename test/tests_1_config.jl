@@ -1,11 +1,13 @@
 # @testitem "App Config" setup=[GenieTestSetup] begin
   @testitem "Custom server startup overwrites app config" setup=[GenieTestSetup] begin
     Genie.config.server_port = 8000
+    Genie.config.server_host  = "127.0.0.1"
     Genie.config.websockets_port = nothing
 
     @test Genie.config.server_host  == "127.0.0.1"
     @test Genie.config.run_as_server   == false
 
+    Genie.down!()
     server = up(9000, "0.0.0.0")
 
     @test Genie.config.server_port  == 9000
@@ -13,9 +15,8 @@
     @test Genie.config.websockets_port == 9000
     @test Genie.config.run_as_server   == false
 
-    down()
-    sleep(1)
-    server = nothing
+    Genie.down!()
+    sleep(0)
 
     server = up(9000, "0.0.0.0", ws_port = 9999)
 
@@ -24,18 +25,13 @@
     @test Genie.config.websockets_port == 9999
     @test Genie.config.run_as_server   == false
 
-    down()
-    sleep(1)
-    server = nothing
-
     Genie.config.server_port  = 8000
     Genie.config.server_host  = "127.0.0.1"
     Genie.config.websockets_port = nothing
     Genie.config.run_as_server   = false
 
-    down()
-    sleep(1)
-    server = nothing
-
+    Genie.down!()
+    sleep(0)
+    start_unique_server()
   end;
 # end;

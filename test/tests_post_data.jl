@@ -1,6 +1,5 @@
 @testitem "POST form payload" setup=[GenieTestSetup] begin
-
-  using Genie, HTTP, Genie.Router, Genie.Requests
+  using Genie.Router, Genie.Requests
 
   route("/") do
     "GET"
@@ -15,7 +14,8 @@
     fields[1] * fields[2] * postpayload(:single)
   end
 
-  server, port = unique_server()
+  sleep(0)
+  start_unique_server()
 
   response = HTTP.request("POST", "http://localhost:$port/", ["Content-Type" => "application/x-www-form-urlencoded"], "greeting=Hello")
   @test response.status == 200
@@ -44,9 +44,4 @@
   response = HTTP.post("http://localhost:$port", [], HTTP.Form(Dict("greeting" => "Hey you there")))
   @test response.status == 200
   @test String(response.body) == "Hey you there"
-  
-  down()
-  sleep(1)
-  server = nothing
-  port = nothing
 end
