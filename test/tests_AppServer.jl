@@ -32,7 +32,10 @@
   @testitem "Update config when custom startup args" setup=[GenieTestSetup] begin
     using Genie.Server
 
-    port = Genie.config.server_port
+    save_port = Genie.config.server_port
+    save_ws_port = Genie.config.websockets_port
+
+    port = Genie.config.server_port == 0 ? 8000 : Genie.config.server_port
     ws_port = Genie.config.websockets_port === nothing ? port : Genie.config.websockets_port
 
     Genie.Server.down!()
@@ -41,8 +44,8 @@
     @test Genie.config.server_port == port+1_000
     @test Genie.config.websockets_port == ws_port+1_000
 
-    Genie.config.server_port = port
-    Genie.config.websockets_port = ws_port
+    Genie.config.server_port = save_port
+    Genie.config.websockets_port = save_ws_port
 
     Genie.Server.down!()
     sleep(0)
