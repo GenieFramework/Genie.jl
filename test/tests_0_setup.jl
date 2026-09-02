@@ -6,8 +6,8 @@
     using Sockets
     using Test
 
-    PORT::Int = haskey(ENV, "WORKER_PORT") ? parse(Int, ENV["WORKER_PORT"]) : Genie.config.server_port
-    WS_PORT::Int = haskey(ENV, "WORKER_WS_PORT") ? parse(Int, ENV["WORKER_WS_PORT"]) : Genie.config.websockets_port === nothing ? 0 : Genie.config.websockets_port
+    PORT::Int = haskey(ENV, "WORKER_PORT") ? parse(Int, ENV["WORKER_PORT"]) : copy(Genie.config.server_port)
+    WS_PORT::Int = haskey(ENV, "WORKER_WS_PORT") ? parse(Int, ENV["WORKER_WS_PORT"]) : Genie.config.websockets_port === nothing ? 0 : copy(Genie.config.websockets_port)
 
     const PORTS = Set{Int}()
 

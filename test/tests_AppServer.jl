@@ -35,6 +35,7 @@
     port = Genie.config.server_port
     ws_port = Genie.config.websockets_port === nothing ? port : Genie.config.websockets_port
 
+    Genie.Server.down!()
     server = Genie.Server.up(port+1_000; ws_port = ws_port+1_000)
 
     @test Genie.config.server_port == port+1_000
