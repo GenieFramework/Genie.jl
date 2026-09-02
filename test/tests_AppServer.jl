@@ -10,7 +10,7 @@
     @test isopen(servers.webserver)
 
     servers = Genie.Server.down(servers)
-    sleep(1)
+    sleep(0)
     @test !isopen(servers.webserver)
     @test !isopen(Genie.Server.SERVERS[1].webserver)
 
@@ -22,30 +22,34 @@
     @test isopen(servers.webserver)
 
     servers = Genie.Server.down(servers; webserver = true)
-    sleep(1)
+    sleep(0)
     @test !isopen(servers.webserver)
     @test !isopen(Genie.Server.SERVERS[1].webserver)
 
-    servers = nothing
+    start_unique_server()
   end;
 
   @testitem "Update config when custom startup args" setup=[GenieTestSetup] begin
     using Genie.Server
 
-    port = Genie.config.server_port
+    save_port = Genie.config.server_port
+    save_ws_port = Genie.config.websockets_port
+
+    port = Genie.config.server_port == 0 ? 8000 : Genie.config.server_port
     ws_port = Genie.config.websockets_port === nothing ? port : Genie.config.websockets_port
 
+    Genie.Server.down!()
     server = Genie.Server.up(port+1_000; ws_port = ws_port+1_000)
 
     @test Genie.config.server_port == port+1_000
     @test Genie.config.websockets_port == ws_port+1_000
 
-    Genie.config.server_port = port
-    Genie.config.websockets_port = ws_port
+    Genie.config.server_port = save_port
+    Genie.config.websockets_port = save_ws_port
 
-    Genie.Server.down()
-    sleep(1)
-    server = nothing
+    Genie.Server.down!()
+    sleep(0)
+    start_unique_server()
   end;
 
 # end;

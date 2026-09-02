@@ -19,34 +19,32 @@
   function roundtrip(x)
     global json_result
     HTTP.request("POST",
-      "http://localhost:$port/jsonroundtrip",
+      "http://localhost:$PORT/jsonroundtrip",
       [("Content-Type", "application/json")],
       Genie.JSONParser.json(Dict(:payload => x))
     )
     json_result["payload"]
   end
 
-  server, port = unique_server()
-
-  response = HTTP.request("POST", "http://localhost:$port/jsonpayload",
+  response = HTTP.request("POST", "http://localhost:$PORT/jsonpayload",
                   [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
 
   @test response.status == 200
   @test String(response.body) |> fws == """Dict{String, Any}("greeting" => "hello")""" |> fws
 
-  response = HTTP.request("POST", "http://localhost:$port/jsontest",
+  response = HTTP.request("POST", "http://localhost:$PORT/jsontest",
                   [("Content-Type", "application/json; charset=utf-8")], """{"test":[1,2,3]}""")
 
   @test response.status == 200
   @test String(response.body) == "[1, 2, 3]"
 
-  response = HTTP.request("POST", "http://localhost:$port/jsonpayload",
+  response = HTTP.request("POST", "http://localhost:$PORT/jsonpayload",
                   [("Content-Type", "application/json")], """{"greeting":"hello"}""")
 
   @test response.status == 200
   @test String(response.body) |> fws == """Dict{String, Any}("greeting" => "hello")""" |> fws
 
-  response = HTTP.request("POST", "http://localhost:$port/jsontest",
+  response = HTTP.request("POST", "http://localhost:$PORT/jsontest",
                   [("Content-Type", "application/json")], """{"test":[1,2,3]}""")
 
   @test response.status == 200
@@ -60,10 +58,5 @@
     error("500, sorry")
   end
 
-  @test_throws HTTP.StatusError HTTP.request("POST", "http://localhost:$port/json-error", [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
-
-  down()
-  sleep(1)
-  server = nothing
-  port = nothing
+  @test_throws HTTP.StatusError HTTP.request("POST", "http://localhost:$PORT/json-error", [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
 end;

@@ -29,17 +29,33 @@ ServersCollection constant containing references to the current app's web and we
 const SERVERS = ServersCollection[]
 const Servers = SERVERS
 
+function isrunning(server::HTTP.Server) :: Bool
+  server.state == HTTP._ServerState.RUNNING
+end
+
+function isrunning(server::HTTP.WebSockets.Server) :: Bool
+  task = server.serve_task
+  task !== nothing && istaskstarted(task) && !istaskdone(task)
+end
 
 function isrunning(server::ServersCollection, prop::Symbol = :webserver) :: Bool
-  isa(getfield(server, prop), Task) && ! istaskdone(getfield(server, prop))
+  server = getfield(server, prop)
+  if server isa HTTP.Server
+    isrunning(server)
+  elseif server isa HTTP.WebSockets.Server
+    isrunning(server)
+  else
+    false
+  end
 end
+
 function isrunning(prop::Symbol = :webserver) :: Bool
-  isempty(SERVERS) ? false : isrunning(SERVERS[1], prop)
+  isempty(SERVERS) ? false : isrunning(SERVERS[end], prop)
 end
 
 function server_status(server::ServersCollection, prop::Symbol) :: Nothing
   if isrunning(server, prop)
-    @info("✔️ server is running.")
+    @info("✔️  server is running.")
   else
     @error("❌ $server is not running.")
     isa(getfield(server, prop), Task) && fetch(getfield(server, prop))

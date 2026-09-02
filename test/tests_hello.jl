@@ -8,15 +8,8 @@
     message
   end
 
-  server, port = unique_server()
-
-  response = HTTP.get("http://localhost:$port/hello")
+  response = HTTP.get("http://localhost:$PORT/hello")
 
   @test response.status == 200
   @test String(response.body) == message
-
-  down()
-  sleep(1)
-  server = nothing
-  port = nothing
 end

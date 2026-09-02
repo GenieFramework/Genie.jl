@@ -4,10 +4,8 @@
       "GET request"
     end
 
-    server, port = unique_server()
-
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+      HTTP.request("GET", "http://127.0.0.1:$PORT", ["Content-Type" => "text/html"])
     catch ex
       ex.response
     end
@@ -16,18 +14,13 @@
     @test String(response.body) == "GET request"
 
     response = try
-      HTTP.request("HEAD", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+      HTTP.request("HEAD", "http://127.0.0.1:$PORT", ["Content-Type" => "text/html"])
     catch ex
       ex.response
     end
 
     @test response.status == 200
     @test String(response.body) == ""
-
-    down()
-    sleep(1)
-    server = nothing
-    port = nothing
   end;
 
   @testitem "HEAD requests have no body" setup=[GenieTestSetup] begin
@@ -39,10 +32,8 @@
       "Hello world"
     end
 
-    server, port = unique_server()
-
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+      HTTP.request("GET", "http://127.0.0.1:$PORT", ["Content-Type" => "text/html"])
     catch ex
       ex.response
     end
@@ -51,17 +42,12 @@
     @test String(response.body) == "Hello world"
 
     response = try
-      HTTP.request("HEAD", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+      HTTP.request("HEAD", "http://127.0.0.1:$PORT", ["Content-Type" => "text/html"])
     catch ex
       ex.response
     end
     @test response.status == 200
     @test isempty(String(response.body)) == true
-
-    down()
-    sleep(1)
-    server = nothing
-    port = nothing
   end;
 
   @testitem "HEAD requests should overwrite GET" setup=[GenieTestSetup] begin
@@ -77,11 +63,8 @@
       "HEAD request"
     end
 
-    server, port = unique_server()
-    sleep(1)
-
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+      HTTP.request("GET", "http://127.0.0.1:$PORT", ["Content-Type" => "text/html"])
     catch ex
       ex.response
     end
@@ -90,18 +73,13 @@
     @test request_method[] == "GET"
 
     response = try
-      HTTP.request("HEAD", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+      HTTP.request("HEAD", "http://127.0.0.1:$PORT", ["Content-Type" => "text/html"])
     catch ex
       ex.response
     end
 
     @test response.status == 200
     @test request_method[] == "HEAD"
-
-    down()
-    sleep(1)
-    server = nothing
-    port = nothing
   end;
 
 # end;

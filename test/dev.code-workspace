@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		},
+		{
+			"path": "../../Dev"
+		},
+		{
+			"path": "../../PlotlyJSDev"
+		},
+		{
+			"path": "../../DataDeps"
+		},
+		{
+			"path": "../../GenieFramework"
+		}
+	],
+	"settings": {
+		"julia.environmentPath": "\\Users\\helmu\\.julia\\dev\\Stipple"
+	}
+}

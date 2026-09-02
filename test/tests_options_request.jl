@@ -6,19 +6,11 @@
     push!(params(:RESPONSE).headers, "X-Foo-Bar" => "Baz")
   end
 
-  server, port = unique_server()
-  sleep(1)
-
-  response = HTTP.request("OPTIONS", "http://localhost:$port") # unhandled, should get default response
+  response = HTTP.request("OPTIONS", "http://localhost:$PORT") # unhandled, should get default response
   @test response.status == 200
   @test get(Dict(response.headers), "X-Foo-Bar", nothing) == nothing
 
-  response = HTTP.request("OPTIONS", "http://localhost:$port/options") # handled
+  response = HTTP.request("OPTIONS", "http://localhost:$PORT/options") # handled
   @test response.status == 200
   @test get(Dict(response.headers), "X-Foo-Bar", nothing) == "Baz"
-
-  down()
-  sleep(1)
-  server = nothing
-  port = nothing
 end
