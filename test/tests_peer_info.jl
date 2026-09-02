@@ -6,7 +6,7 @@
     end
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port")
+      HTTP.request("GET", "http://127.0.0.1:$PORT")
     catch ex
       ex.response
     end
@@ -26,14 +26,14 @@
     end
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port")
+      HTTP.request("GET", "http://127.0.0.1:$PORT")
     catch ex
       ex.response
     end
 
     @test Genie.config.features_peerinfo == true
     @test response.status == 200
-    @test_broken String(response.body) == "127.0.0.1-$port"
+    @test_broken String(response.body) == "127.0.0.1-$PORT"
     Genie.config.features_peerinfo = false
   end;
 

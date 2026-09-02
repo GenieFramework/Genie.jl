@@ -6,7 +6,7 @@
     end
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port/✔/🧞/♥/❤")
+      HTTP.request("GET", "http://127.0.0.1:$PORT/✔/🧞/♥/❤")
     catch ex
       ex.response
     end
@@ -21,7 +21,7 @@
     end
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port/✔")
+      HTTP.request("GET", "http://127.0.0.1:$PORT/✔")
     catch ex
       ex.response
     end
@@ -36,7 +36,7 @@
     end
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port/réception")
+      HTTP.request("GET", "http://127.0.0.1:$PORT/réception")
     catch ex
       ex.response
     end
@@ -52,7 +52,7 @@
     end
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port/✔/🧞/♥/❤")
+      HTTP.request("GET", "http://127.0.0.1:$PORT/✔/🧞/♥/❤")
     catch ex
       ex.response
     end

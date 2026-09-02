@@ -5,7 +5,7 @@
     end
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port/?x=foo+bar")
+      HTTP.request("GET", "http://127.0.0.1:$PORT/?x=foo+bar")
     catch ex
       ex.response
     end
@@ -20,7 +20,7 @@
     end
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port/?x=foo%20bar")
+      HTTP.request("GET", "http://127.0.0.1:$PORT/?x=foo%20bar")
     catch ex
       ex.response
     end
@@ -35,7 +35,7 @@
     end
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port/?x=foo%2Bbar")
+      HTTP.request("GET", "http://127.0.0.1:$PORT/?x=foo%2Bbar")
     catch ex
       ex.response
     end
@@ -50,7 +50,7 @@
     end
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port/?x=✔+🧞+♥")
+      HTTP.request("GET", "http://127.0.0.1:$PORT/?x=✔+🧞+♥")
     catch ex
       ex.response
     end

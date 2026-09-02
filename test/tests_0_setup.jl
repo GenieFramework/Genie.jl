@@ -6,12 +6,12 @@
     using Sockets
     using Test
 
-    port::Int = haskey(ENV, "WORKER_PORT") ? parse(Int, ENV["WORKER_PORT"]) : Genie.config.server_port
-    ws_port::Int = haskey(ENV, "WORKER_WS_PORT") ? parse(Int, ENV["WORKER_WS_PORT"]) : Genie.config.websockets_port === nothing ? 0 : Genie.config.websockets_port
+    PORT::Int = haskey(ENV, "WORKER_PORT") ? parse(Int, ENV["WORKER_PORT"]) : Genie.config.server_port
+    WS_PORT::Int = haskey(ENV, "WORKER_WS_PORT") ? parse(Int, ENV["WORKER_WS_PORT"]) : Genie.config.websockets_port === nothing ? 0 : Genie.config.websockets_port
 
     const PORTS = Set{Int}()
 
-    export unique_test_port, start_unique_server, port, ws_port
+    export unique_test_port, start_unique_server, PORT, WS_PORT
 
     # provides and blocks a free port for 1s for a test server to bind to
     function unique_test_port()
@@ -34,20 +34,20 @@
     end
 
     function start_unique_server(; single_port = true, async = true)
-        global port, ws_port
-        ws_port = single_port ? 0 : unique_test_port()
+        global PORT, WS_PORT
+        WS_PORT = single_port ? 0 : unique_test_port()
         Genie.Server.down!()
-        server = up(; port = 0, ws_port, async)
-        ENV["WORKER_PORT"] = port = server.webserver.bound_port
-        ws_port = if server.websockets === nothing
-            port
+        server = up(; port = 0, ws_port = WS_PORT, async)
+        ENV["WORKER_PORT"] = PORT = server.webserver.bound_port
+        WS_PORT = if server.websockets === nothing
+            PORT
         else
             server.websockets.listener === nothing ? 0 : Int(server.websockets.listener.fd.laddr.port)
         end
         return server
     end
 
-    if !Genie.Server.isrunning(:webserver) || ws_port != 0
+    if !Genie.Server.isrunning(:webserver) || WS_PORT != 0
         Genie.Server.down!
         start_unique_server()
     else

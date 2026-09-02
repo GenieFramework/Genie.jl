@@ -13,7 +13,7 @@
     omg!()
   end
 
-  response = HTTP.request("GET", "http://localhost:$port/responses")
+  response = HTTP.request("GET", "http://localhost:$PORT/responses")
   @test response.status == 301
   @test Dict(response.headers)["X-Foo-Bar"] == "Baz"
   @test Dict(response.headers)["X-A-B"] == "C"
@@ -22,5 +22,5 @@
   # In HTTP.jl v2, the body is correctly a String, not Vector{Char}
   @test String(response.body) == "Hello"
 
-  @test_throws HTTP.StatusError HTTP.request("GET", "http://localhost:$port/broken", ["Content-Type"=>"text/plain"])
+  @test_throws HTTP.StatusError HTTP.request("GET", "http://localhost:$PORT/broken", ["Content-Type"=>"text/plain"])
 end

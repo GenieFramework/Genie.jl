@@ -11,25 +11,25 @@
     Genie.Requests.jsonpayload("greeting")
   end
 
-  response = HTTP.request("POST", "http://localhost:$port/jsonpayload",
+  response = HTTP.request("POST", "http://localhost:$PORT/jsonpayload",
                   [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
 
   @test response.status == 200
   @test String(response.body) |> fws == """Dict{String, Any}("greeting" => "hello")""" |> fws
 
-  response = HTTP.request("POST", "http://localhost:$port/jsongreeting",
+  response = HTTP.request("POST", "http://localhost:$PORT/jsongreeting",
                   [("Content-Type", "application/json")], """{"greeting":"hello"}""")
 
   @test response.status == 200
   @test String(response.body) |> fws == """hello""" |> fws
 
-  response = HTTP.request("POST", "http://localhost:$port/jsonpayload",
+  response = HTTP.request("POST", "http://localhost:$PORT/jsonpayload",
                   [("Content-Type", "application/json")], """{"greeting":"hello"}""")
 
   @test response.status == 200
   @test String(response.body) |> fws == """Dict{String, Any}("greeting" => "hello")""" |> fws
 
-  response = HTTP.request("POST", "http://localhost:$port/jsongreeting",
+  response = HTTP.request("POST", "http://localhost:$PORT/jsongreeting",
                   [("Content-Type", "application/json; charset=utf-8")], """{"greeting":"hello"}""")
 
   @test response.status == 200
@@ -37,25 +37,25 @@
 
   #===#
 
-  response = HTTP.request("POST", "http://localhost:$port/jsonpayload",
+  response = HTTP.request("POST", "http://localhost:$PORT/jsonpayload",
                   [("Content-Type", "application/vnd.api+json; charset=utf-8")], """{"greeting":"hello"}""")
 
   @test response.status == 200
   @test String(response.body) |> fws == """Dict{String, Any}("greeting" => "hello")""" |> fws
 
-  response = HTTP.request("POST", "http://localhost:$port/jsongreeting",
+  response = HTTP.request("POST", "http://localhost:$PORT/jsongreeting",
                   [("Content-Type", "application/vnd.api+json; charset=utf-8")], """{"greeting":"hello"}""")
 
   @test response.status == 200
   @test String(response.body) |> fws == """hello""" |> fws
 
-  response = HTTP.request("POST", "http://localhost:$port/jsonpayload",
+  response = HTTP.request("POST", "http://localhost:$PORT/jsonpayload",
                   [("Content-Type", "application/vnd.api+json")], """{"greeting":"hello"}""")
 
   @test response.status == 200
   @test String(response.body) |> fws == """Dict{String, Any}("greeting" => "hello")""" |> fws
 
-  response = HTTP.request("POST", "http://localhost:$port/jsongreeting",
+  response = HTTP.request("POST", "http://localhost:$PORT/jsongreeting",
                   [("Content-Type", "application/vnd.api+json")], """{"greeting":"hello"}""")
 
   @test response.status == 200

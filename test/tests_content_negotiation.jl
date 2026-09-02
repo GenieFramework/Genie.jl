@@ -2,13 +2,13 @@
 
   @testitem "Response type matches request type" setup=[GenieTestSetup] begin
     @testset "Not found matches request type -- Content-Type -- custom HTML Genie page" begin
-      response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "text/html"], status_exception = false)
+      response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Content-Type" => "text/html"], status_exception = false)
 
       @test response.status == 404
       @test occursin("Sorry, we can not find", String(response.body)) == true
       @test Dict(response.headers)["Content-Type"] == "text/html"
 
-      response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["COnTeNT-TyPe" => "text/html"], status_exception = false)
+      response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["COnTeNT-TyPe" => "text/html"], status_exception = false)
 
       @test response.status == 404
       @test occursin("Sorry, we can not find", String(response.body)) == true
@@ -16,13 +16,13 @@
     end
 
     @testset "Not found matches request type -- Accept -- custom HTML Genie page" begin
-      response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "text/html"], status_exception = false)
+      response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Accept" => "text/html"], status_exception = false)
 
       @test response.status == 404
       @test occursin("Sorry, we can not find", String(response.body)) == true
       @test Dict(response.headers)["Content-Type"] == "text/html"
 
-      response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["AcCePt" => "text/html"], status_exception = false)
+      response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["AcCePt" => "text/html"], status_exception = false)
 
       @test response.status == 404
       @test occursin("Sorry, we can not find", String(response.body)) == true
@@ -30,13 +30,13 @@
     end
 
     @testset "Not found matches request type -- Content-Type -- custom JSON Genie handler" begin
-      response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "application/json"], status_exception = false)
+      response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Content-Type" => "application/json"], status_exception = false)
 
       @test response.status == 404
       @test occursin("404 Not Found", String(response.body)) == true
       @test Dict(response.headers)["Content-Type"] == "application/json; charset=utf-8"
 
-      response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["CoNtEnt-TyPe" => "application/json"], status_exception = false)
+      response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["CoNtEnt-TyPe" => "application/json"], status_exception = false)
 
       @test response.status == 404
       @test occursin("404 Not Found", String(response.body)) == true
@@ -44,13 +44,13 @@
     end
 
     @testset "Not found matches request type -- Accept -- custom JSON Genie handler" begin
-      response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "application/json"], status_exception = false)
+      response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Accept" => "application/json"], status_exception = false)
 
       @test response.status == 404
       @test occursin("404 Not Found", String(response.body)) == true
       @test Dict(response.headers)["Content-Type"] == "application/json; charset=utf-8"
 
-      response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["acCepT" => "application/json"], status_exception = false)
+      response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["acCepT" => "application/json"], status_exception = false)
 
       @test response.status == 404
       @test occursin("404 Not Found", String(response.body)) == true
@@ -59,13 +59,13 @@
 
     @testset "Not found matches request type -- Content-Type -- custom text Genie handler" begin
 
-      response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "text/plain"], status_exception = false)
+      response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Content-Type" => "text/plain"], status_exception = false)
 
       @test response.status == 404
       @test occursin("404 Not Found", String(response.body)) == true
       @test Dict(response.headers)["Content-Type"] == "text/plain"
 
-      response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["conTeNT-tYPE" => "text/plain"], status_exception = false)
+      response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["conTeNT-tYPE" => "text/plain"], status_exception = false)
 
       @test response.status == 404
       @test occursin("404 Not Found", String(response.body)) == true
@@ -74,13 +74,13 @@
   end;
 
   @testitem "Not found matches request type -- Content-Type -- unknown content type get same response" setup=[GenieTestSetup] begin
-    response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "text/csv"], status_exception = false)
+    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Content-Type" => "text/csv"], status_exception = false)
 
     @test response.status == 404
     @test occursin("404 Not Found", String(response.body)) == true
     @test Dict(response.headers)["Content-Type"] == "text/csv"
 
-    response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["conTeNT-tYPE" => "text/csv"], status_exception = false)
+    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["conTeNT-tYPE" => "text/csv"], status_exception = false)
 
     @test response.status == 404
     @test occursin("404 Not Found", String(response.body)) == true
@@ -88,13 +88,13 @@
   end
 
   @testitem "Not found matches request type -- Accept -- unknown content type get same response" setup=[GenieTestSetup] begin
-    response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "text/csv"], status_exception = false)
+    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Accept" => "text/csv"], status_exception = false)
 
     @test response.status == 404
     @test occursin("404 Not Found", String(response.body)) == true
     @test Dict(response.headers)["Content-Type"] == "text/csv"
 
-    response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["accEPT" => "text/csv"], status_exception = false)
+    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["accEPT" => "text/csv"], status_exception = false)
 
     @test response.status == 404
     @test occursin("404 Not Found", String(response.body)) == true
@@ -103,7 +103,7 @@
 
   @testitem "Custom error handlers" setup=[GenieTestSetup] begin
     @testset "Custom error handler for unknown types" begin
-      response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "text/csv"], status_exception = false)
+      response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Content-Type" => "text/csv"], status_exception = false)
 
       @test response.status == 404
       @test occursin("404 Not Found", String(response.body)) == true
@@ -113,13 +113,13 @@
         HTTP.Response(401, ["Content-Type" => "text/csv"], body = "Search CSV and you shall find")
       end
 
-    response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["conTeNT-tYPE" => "text/csv"], status_exception = false)
+    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["conTeNT-tYPE" => "text/csv"], status_exception = false)
 
       @test response.status == 401
       @test occursin("Search CSV and you shall find", String(response.body)) == true
       @test Dict(response.headers)["Content-Type"] == "text/csv"
 
-    response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["accept" => "text/csv"], status_exception = false)
+    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["accept" => "text/csv"], status_exception = false)
 
       @test response.status == 401
       @test occursin("Search CSV and you shall find", String(response.body)) == true
@@ -128,7 +128,7 @@
     end
 
     @testset "Custom error handler for known types" begin
-      response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Content-Type" => "application/json"], status_exception = false)
+      response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Content-Type" => "application/json"], status_exception = false)
 
       @test response.status == 404
       @test occursin("404 Not Found", String(response.body)) == true
@@ -138,13 +138,13 @@
         HTTP.Response(401, ["Content-Type" => "application/json"], body = "Search CSV and you shall find")
       end
 
-    response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["conTeNT-tYPE" => "application/json"], status_exception = false)
+    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["conTeNT-tYPE" => "application/json"], status_exception = false)
 
       @test response.status == 401
       @test occursin("Search CSV and you shall find", String(response.body)) == true
       @test Dict(response.headers)["Content-Type"] == "application/json"
 
-    response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["accept" => "application/json"], status_exception = false)
+    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["accept" => "application/json"], status_exception = false)
 
       @test response.status == 401
       @test occursin("Search CSV and you shall find", String(response.body)) == true
@@ -153,31 +153,31 @@
     end
   end
   @testitem "Order of accept preferences" setup=[GenieTestSetup] begin
-    response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "text/html, text/plain, application/json, text/csv"], status_exception = false)
+    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Accept" => "text/html, text/plain, application/json, text/csv"], status_exception = false)
 
     @test Dict(response.headers)["Content-Type"] == "text/html"
 
-    response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "text/plain, application/json, text/csv, text/html"], status_exception = false)
+    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Accept" => "text/plain, application/json, text/csv, text/html"], status_exception = false)
 
     @test Dict(response.headers)["Content-Type"] == "text/plain"
 
-    response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "application/json, text/csv, text/html, text/plain"], status_exception = false)
+    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Accept" => "application/json, text/csv, text/html, text/plain"], status_exception = false)
 
     @test startswith(Dict(response.headers)["Content-Type"], "application/json")
 
-    response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "text/csv, text/html, text/plain, application/json"], status_exception = false)
+    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Accept" => "text/csv, text/html, text/plain, application/json"], status_exception = false)
 
     @test Dict(response.headers)["Content-Type"] == "text/html"
 
-    response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "text/csv, text/plain, application/json, text/html"], status_exception = false)
+    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Accept" => "text/csv, text/plain, application/json, text/html"], status_exception = false)
 
     @test Dict(response.headers)["Content-Type"] == "text/plain"
 
-    response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "text/csv, application/json, text/html, text/plain"], status_exception = false)
+    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Accept" => "text/csv, application/json, text/html, text/plain"], status_exception = false)
 
     @test startswith(Dict(response.headers)["Content-Type"], "application/json")
 
-    response = HTTP.request("GET", "http://127.0.0.1:$port/notexisting", ["Accept" => "text/csv"], status_exception = false)
+    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Accept" => "text/csv"], status_exception = false)
 
     @test Dict(response.headers)["Content-Type"] == "text/csv"
   end

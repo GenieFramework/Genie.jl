@@ -9,7 +9,7 @@
   end
 
   response = try
-    HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+    HTTP.request("GET", "http://127.0.0.1:$PORT", ["Content-Type" => "text/html"])
   catch ex
     ex.response
   end
@@ -25,7 +25,7 @@ end
   end
 
   response = try
-    HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+    HTTP.request("GET", "http://127.0.0.1:$PORT", ["Content-Type" => "text/html"])
   catch ex
     ex.response
   end
@@ -42,7 +42,7 @@ end
   # ====
 
   response = try
-    HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+    HTTP.request("GET", "http://127.0.0.1:$PORT", ["Content-Type" => "text/html"])
   catch ex
     ex.response
   end
@@ -53,7 +53,7 @@ end
   # ====
 
   response = try
-    HTTP.request("GET", "http://127.0.0.1:$port/?", ["Content-Type" => "text/html"])
+    HTTP.request("GET", "http://127.0.0.1:$PORT/?", ["Content-Type" => "text/html"])
   catch ex
     ex.response
   end
@@ -64,7 +64,7 @@ end
   # ====
 
   response = try
-    HTTP.request("GET", "http://127.0.0.1:$port/?x", ["Content-Type" => "text/html"])
+    HTTP.request("GET", "http://127.0.0.1:$PORT/?x", ["Content-Type" => "text/html"])
   catch ex
     ex.response
   end
@@ -75,7 +75,7 @@ end
   # ====
 
   response = try
-    HTTP.request("GET", "http://127.0.0.1:$port/?x&a=3", ["Content-Type" => "text/html"])
+    HTTP.request("GET", "http://127.0.0.1:$PORT/?x&a=3", ["Content-Type" => "text/html"])
   catch ex
     ex.response
   end
@@ -86,7 +86,7 @@ end
   # ====
 
   response = try
-    HTTP.request("GET", "http://127.0.0.1:$port/?x&y", ["Content-Type" => "text/html"])
+    HTTP.request("GET", "http://127.0.0.1:$PORT/?x&y", ["Content-Type" => "text/html"])
   catch ex
     ex.response
   end
@@ -102,7 +102,7 @@ end
   end
 
   response = try
-    HTTP.request("GET", "http://127.0.0.1:$port?x=1", ["Content-Type" => "text/html"])
+    HTTP.request("GET", "http://127.0.0.1:$PORT?x=1", ["Content-Type" => "text/html"])
   catch ex
     ex.response
   end
@@ -113,7 +113,7 @@ end
   # ====
 
   response = try
-    HTTP.request("GET", "http://127.0.0.1:$port?x=1&x=2", ["Content-Type" => "text/html"])
+    HTTP.request("GET", "http://127.0.0.1:$PORT?x=1&x=2", ["Content-Type" => "text/html"])
   catch ex
     ex.response
   end
@@ -124,7 +124,7 @@ end
   # ====
 
   response = try
-    HTTP.request("GET", "http://127.0.0.1:$port?x=1&x=2&x=3", ["Content-Type" => "text/html"])
+    HTTP.request("GET", "http://127.0.0.1:$PORT?x=1&x=2&x=3", ["Content-Type" => "text/html"])
   catch ex
     ex.response
   end
@@ -135,7 +135,7 @@ end
   # ====
 
   response = try
-    HTTP.request("GET", "http://127.0.0.1:$port?x=1&x=2&x=3&y=0", ["Content-Type" => "text/html"])
+    HTTP.request("GET", "http://127.0.0.1:$PORT?x=1&x=2&x=3&y=0", ["Content-Type" => "text/html"])
   catch ex
     ex.response
   end
@@ -146,7 +146,7 @@ end
   # ====
 
   response = try
-    HTTP.request("GET", "http://127.0.0.1:$port?x=0&x[]=1&x[]=2", ["Content-Type" => "text/html"])
+    HTTP.request("GET", "http://127.0.0.1:$PORT?x=0&x[]=1&x[]=2", ["Content-Type" => "text/html"])
   catch ex
     ex.response
   end
@@ -164,7 +164,7 @@ end
   # ====
 
   response = try
-    HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+    HTTP.request("GET", "http://127.0.0.1:$PORT", ["Content-Type" => "text/html"])
   catch ex
     ex.response
   end
@@ -175,7 +175,7 @@ end
   # ====
 
   response = try
-    HTTP.request("GET", "http://127.0.0.1:$port/?x&x[]=1000", ["Content-Type" => "text/html"])
+    HTTP.request("GET", "http://127.0.0.1:$PORT/?x&x[]=1000", ["Content-Type" => "text/html"])
   catch ex
     ex.response
   end
@@ -186,7 +186,7 @@ end
   # ====
 
   response = try
-    HTTP.request("GET", "http://127.0.0.1:$port/?x&x[]=1000&x[]=2000", ["Content-Type" => "text/html"])
+    HTTP.request("GET", "http://127.0.0.1:$PORT/?x&x[]=1000&x[]=2000", ["Content-Type" => "text/html"])
   catch ex
     ex.response
   end
@@ -197,7 +197,7 @@ end
   # ====
 
   response = try
-    HTTP.request("GET", "http://127.0.0.1:$port/?x=9&x[]=1000&x[]=2000", ["Content-Type" => "text/html"])
+    HTTP.request("GET", "http://127.0.0.1:$PORT/?x=9&x[]=1000&x[]=2000", ["Content-Type" => "text/html"])
   catch ex
     ex.response
   end
@@ -208,7 +208,7 @@ end
   # ====
 
   response = try
-    HTTP.request("GET", "http://127.0.0.1:$port/?x=9&x[]=1000&x[]=2000&y[]=8", ["Content-Type" => "text/html"])
+    HTTP.request("GET", "http://127.0.0.1:$PORT/?x=9&x[]=1000&x[]=2000&y[]=8", ["Content-Type" => "text/html"])
   catch ex
     ex.response
   end

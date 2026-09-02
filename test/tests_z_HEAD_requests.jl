@@ -5,7 +5,7 @@
     end
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+      HTTP.request("GET", "http://127.0.0.1:$PORT", ["Content-Type" => "text/html"])
     catch ex
       ex.response
     end
@@ -14,7 +14,7 @@
     @test String(response.body) == "GET request"
 
     response = try
-      HTTP.request("HEAD", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+      HTTP.request("HEAD", "http://127.0.0.1:$PORT", ["Content-Type" => "text/html"])
     catch ex
       ex.response
     end
@@ -33,7 +33,7 @@
     end
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+      HTTP.request("GET", "http://127.0.0.1:$PORT", ["Content-Type" => "text/html"])
     catch ex
       ex.response
     end
@@ -42,7 +42,7 @@
     @test String(response.body) == "Hello world"
 
     response = try
-      HTTP.request("HEAD", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+      HTTP.request("HEAD", "http://127.0.0.1:$PORT", ["Content-Type" => "text/html"])
     catch ex
       ex.response
     end
@@ -64,7 +64,7 @@
     end
 
     response = try
-      HTTP.request("GET", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+      HTTP.request("GET", "http://127.0.0.1:$PORT", ["Content-Type" => "text/html"])
     catch ex
       ex.response
     end
@@ -73,7 +73,7 @@
     @test request_method[] == "GET"
 
     response = try
-      HTTP.request("HEAD", "http://127.0.0.1:$port", ["Content-Type" => "text/html"])
+      HTTP.request("HEAD", "http://127.0.0.1:$PORT", ["Content-Type" => "text/html"])
     catch ex
       ex.response
     end

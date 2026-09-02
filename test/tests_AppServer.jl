@@ -31,7 +31,6 @@
 
   @testitem "Update config when custom startup args" setup=[GenieTestSetup] begin
     using Genie.Server
-    local port
 
     port = Genie.config.server_port
     ws_port = Genie.config.websockets_port === nothing ? port : Genie.config.websockets_port

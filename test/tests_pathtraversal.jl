@@ -3,10 +3,10 @@
   @testitem "Returns 401 unauthorised" setup=[GenieTestSetup] begin
     isdir(Genie.config.server_document_root) || mkdir(Genie.config.server_document_root)
 
-    req = HTTP.request("GET", "http://localhost:$port////etc/hosts"; status_exception = false)
+    req = HTTP.request("GET", "http://localhost:$PORT////etc/hosts"; status_exception = false)
     @test req.status == (Sys.iswindows() ? 404 : 401)
 
-    # req = HTTP.request("GET", "http://localhost:$port/../../src/mimetypes.jl"; status_exception = false)
+    # req = HTTP.request("GET", "http://localhost:$PORT/../../src/mimetypes.jl"; status_exception = false)
     # @test req.status == 401
   end
 
@@ -19,10 +19,10 @@
 
   #   port = unique_test_port()
   #   server = Genie.Server.serve(; port)
-  #   req = HTTP.request("GET", "http://localhost:$port//etc/passwd"; status_exception = false)
+  #   req = HTTP.request("GET", "http://localhost:$PORT//etc/passwd"; status_exception = false)
   #   @test req.status == (Sys.iswindows() ? 404 : 401)
 
-  #   req = HTTP.request("GET", "http://localhost:$port/../../src/mimetypes.jl"; status_exception = false)
+  #   req = HTTP.request("GET", "http://localhost:$PORT/../../src/mimetypes.jl"; status_exception = false)
   #   @test req.status == 401
 
   #   Genie.Server.down!()
