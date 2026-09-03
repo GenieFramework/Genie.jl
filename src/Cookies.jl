@@ -81,9 +81,9 @@ function set!(res::HTTP.Response, key::Union{String,Symbol}, value::Any, attribu
     if lowercase(normalized_attrs[:samesite]) == "lax"
       normalized_attrs[:samesite] = HTTP.Cookies.SameSiteLaxMode
     elseif lowercase(normalized_attrs[:samesite]) == "none"
-      normalized_attrs[:samesite] = HTTP.Cookies.SameSiteLaxNone
+      normalized_attrs[:samesite] = HTTP.Cookies.SameSiteNoneMode
     elseif lowercase(normalized_attrs[:samesite]) == "strict"
-      normalized_attrs[:samesite] = HTTP.Cookies.SameSiteLaxStrict
+      normalized_attrs[:samesite] = HTTP.Cookies.SameSiteStrictMode
     end
   end
 

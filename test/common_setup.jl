@@ -3,7 +3,7 @@ cd(@__DIR__)
 using Pkg
 Pkg.activate(".")
 
-using Test, TestSetExtensions, SafeTestsets, Logging
+using Test, Logging
 using Genie
 
 

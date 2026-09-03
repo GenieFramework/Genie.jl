@@ -365,7 +365,7 @@ function parse_semicolon_fields(dataString::String)
       if length(workingString) > 0
         decoded = parse_quoted_params(workingString)
 
-        if decoded != nothing
+        if decoded !== nothing
           (key, value) = decoded
 
           data[key] = value
