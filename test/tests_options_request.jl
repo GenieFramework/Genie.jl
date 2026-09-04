@@ -8,7 +8,7 @@
 
   response = HTTP.request("OPTIONS", "http://localhost:$PORT") # unhandled, should get default response
   @test response.status == 200
-  @test get(Dict(response.headers), "X-Foo-Bar", nothing) == nothing
+  @test get(Dict(response.headers), "X-Foo-Bar", nothing) === nothing
 
   response = HTTP.request("OPTIONS", "http://localhost:$PORT/options") # handled
   @test response.status == 200

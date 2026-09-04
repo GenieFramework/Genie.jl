@@ -6,6 +6,9 @@
     using Sockets
     using Test
 
+    import Genie: route, params, GET, POST
+    export HTTP, Genie, route, params, GET, POST
+
     PORT::Int = parse(Int, get(ENV, "WORKER_PORT", string(Genie.config.server_port)))
     WS_PORT::Int = parse(Int, get(ENV, "WORKER_WS_PORT", string(Genie.config.websockets_port === nothing ? 0 : Genie.config.websockets_port)))
 

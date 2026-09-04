@@ -89,8 +89,7 @@ Base.isvalid(s::ParsedHTMLString, i::Int) = Base.isvalid(s.data, i)
 
 Base.convert(::Type{ParsedHTMLString}, v::Vector{T}) where {T} = ParsedHTMLString(v)
 
-import Base: (*)
-(*)(s::ParsedHTMLString, t::ParsedHTMLString) = string(s.data, t.data)
+Base.:*(s::ParsedHTMLString, t::ParsedHTMLString) = string(s.data, t.data)
 
 # end ParsedHTMLStrings
 
@@ -121,8 +120,7 @@ Base.isvalid(s::HTMLString, i::Int) = Base.isvalid(s.data, i)
 
 Base.convert(::Type{HTMLString}, v::Vector{T}) where {T} = HTMLString(v)
 
-import Base: (*)
-(*)(s::HTMLString, t::HTMLString) = string(s.data, t.data)
+Base.:*(s::HTMLString, t::HTMLString) = string(s.data, t.data)
 
 # end HTMLStrings
 

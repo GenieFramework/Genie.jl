@@ -163,7 +163,7 @@
 
     response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Accept" => "application/json, text/csv, text/html, text/plain"], status_exception = false)
 
-    @test startswith(Dict(response.headers)["Content-Type"], "application/json")
+    @test Dict(response.headers)["Content-Type"] == "application/json; charset=utf-8"
 
     response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Accept" => "text/csv, text/html, text/plain, application/json"], status_exception = false)
 
@@ -175,7 +175,7 @@
 
     response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Accept" => "text/csv, application/json, text/html, text/plain"], status_exception = false)
 
-    @test startswith(Dict(response.headers)["Content-Type"], "application/json")
+    @test Dict(response.headers)["Content-Type"] == "application/json; charset=utf-8"
 
     response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["Accept" => "text/csv"], status_exception = false)
 

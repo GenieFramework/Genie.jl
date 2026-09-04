@@ -1,5 +1,4 @@
 @testitem "Hello Genie" setup=[GenieTestSetup] begin
-
   using Genie, HTTP
 
   message = "Welcome to Genie!"
