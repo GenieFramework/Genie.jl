@@ -54,7 +54,7 @@ function typify!(@nospecialize(v))
         # Mutate recursively
         for i in eachindex(v)
             x = v[i]
-            if x == UNDEFINED_PLACEHOLDER[]
+            if x === missing || x == UNDEFINED_PLACEHOLDER[]
                 if ! (UNDEFINED_TYPE[] <: eltype(v))
                     v = Vector{Any}(v)
                 end
