@@ -21,7 +21,7 @@ jobs:
       include-windows-x86: false
       include-linux-x86: false
       include-rc-versions: true
-      allow-failure: "*~x86,*:macos-26-intel"
+      allow-failure: "*~x86,1.10*:macos-*"
       activation-timeout: 1500
       run-stall: 300
     permissions: write-all
