@@ -464,8 +464,18 @@ Configures the handler for the HTTP Request and handles errors.
 """
 function setup_http_listener(req::HTTP.Request, res::HTTP.Response = HTTP.Response(); stream::Union{HTTP.Stream, Nothing} = nothing) :: HTTP.Response
   try
-    Distributed.@fetch handle_request(req, res; stream)
-  catch ex # ex is a Distributed.RemoteException
+    if Genie.config.server_handlers_distributed
+      Distributed.@fetch handle_request(req, res; stream)
+    else
+      fetch(Threads.@spawn handle_request(req, res; stream))
+    end
+  catch ex
+    # ex is a Distributed.RemoteException when dispatched via Distributed,
+    # or a TaskFailedException (unwrapped below) when dispatched via Threads
+    if isa(ex, Base.TaskFailedException)
+      ex = ex.task.result
+    end
+
     if isa(ex, Distributed.RemoteException) &&
       hasfield(typeof(ex), :captured) && isa(ex.captured, Distributed.CapturedException) &&
         hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, Genie.Exceptions.RuntimeException)
@@ -473,6 +483,10 @@ function setup_http_listener(req::HTTP.Request, res::HTTP.Response = HTTP.Respon
       @error ex.captured.ex
       return Genie.Router.error(ex.captured.ex.code, ex.captured.ex.message, Genie.Router.response_mime(),
                               error_info = string(ex.captured.ex.code, " ", ex.captured.ex.info))
+    elseif isa(ex, Genie.Exceptions.RuntimeException)
+      @error ex
+      return Genie.Router.error(ex.code, ex.message, Genie.Router.response_mime(),
+                              error_info = string(ex.code, " ", ex.info))
     end
 
     error_message = string(sprint(showerror, ex), "\n\n")
@@ -499,7 +513,11 @@ function setup_ws_handler(ws::HTTP.WebSockets.WebSocket) :: Nothing
   try
     while ! HTTP.WebSockets.isclosed(ws)
       message = HTTP.WebSockets.receive(ws)
-      response = Distributed.@fetch handle_ws_request(req; message = message, client = ws)
+      response = if Genie.config.server_handlers_distributed
+        Distributed.@fetch handle_ws_request(req; message = message, client = ws)
+      else
+        fetch(Threads.@spawn handle_ws_request(req; message = message, client = ws))
+      end
       # Check if WebSocket is still open before sending (client might have disconnected during processing)
       HTTP.WebSockets.isclosed(ws) && break
       HTTP.WebSockets.send(ws, response)
@@ -515,17 +533,27 @@ function setup_ws_handler(ws::HTTP.WebSockets.WebSocket) :: Nothing
       @error "WebSocket error" exception=(ex, catch_backtrace())
       Genie.WebChannels.unsubscribe_client(ws)
       return nothing
-    # Handle RemoteException wrapping CloseFrameBody
-    elseif isa(ex, Distributed.RemoteException) &&
+    end
+
+    # ex is a Distributed.RemoteException when dispatched via Distributed,
+    # or a TaskFailedException (unwrapped below) when dispatched via Threads
+    if isa(ex, Base.TaskFailedException)
+      ex = ex.task.result
+    end
+
+    # Handle CloseFrameBody (possibly wrapped in a RemoteException)
+    if isa(ex, HTTP.WebSockets.CloseFrameBody) ||
+      (isa(ex, Distributed.RemoteException) &&
       hasfield(typeof(ex), :captured) && isa(ex.captured, Distributed.CapturedException) &&
-        hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, HTTP.WebSockets.CloseFrameBody)
+        hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, HTTP.WebSockets.CloseFrameBody))
       Genie.WebChannels.unsubscribe_client(ws)
       return nothing
-    # Handle RemoteException wrapping RuntimeException
-    elseif isa(ex, Distributed.RemoteException) &&
+    # Handle RuntimeException (possibly wrapped in a RemoteException)
+    elseif isa(ex, Genie.Exceptions.RuntimeException) ||
+      (isa(ex, Distributed.RemoteException) &&
       hasfield(typeof(ex), :captured) && isa(ex.captured, Distributed.CapturedException) &&
-        hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, Genie.Exceptions.RuntimeException)
-      @error ex.captured.ex
+        hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, Genie.Exceptions.RuntimeException))
+      @error isa(ex, Genie.Exceptions.RuntimeException) ? ex : ex.captured.ex
       Genie.WebChannels.unsubscribe_client(ws)
       return nothing
     else

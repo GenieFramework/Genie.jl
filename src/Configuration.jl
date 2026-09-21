@@ -5,6 +5,7 @@ module Configuration
 
 import Pkg
 import Dates
+import Distributed
 
 using Random
 
@@ -182,6 +183,7 @@ App configuration - sets up the app's defaults. Individual options are overwritt
 - `log_requests::Bool`: if true, requests will be automatically logged
 - `inflector_irregulars::Vector{Tuple{String,String}}`: additional irregular singular-plural forms to be used by the Inflector
 - `run_as_server::Bool`: when true the server thread is launched synchronously to avoid that the script exits
+- `server_handlers_distributed::Bool`: if true, request/websocket handlers are dispatched via `Distributed` (across worker processes); if false, they fall back to running via `Threads` (`Threads.@spawn`) on the current process
 - `websockets_server::Bool`: if true, the websocket server is also started together with the web server
 - `websockets_port::Int`: the port for the websocket server (default `server_port`)
 - `initializers_folder::String`: the folder where the initializers are located (default "initializers/")
@@ -221,6 +223,8 @@ Base.@kwdef mutable struct Settings
   inflector_irregulars::Vector{Tuple{String,String}}  = Tuple{String,String}[]
 
   run_as_server::Bool                                 = false
+
+  server_handlers_distributed::Bool                   = Distributed.nprocs() > 1
 
   base_path::String                                   = ""
 
