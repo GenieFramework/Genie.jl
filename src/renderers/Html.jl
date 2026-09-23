@@ -103,7 +103,10 @@ function HTMLString(v::Vector{T}) where {T}
 end
 
 Base.string(v::Vector{HTMLString}) = join(v)
-Base.string(v::Vector{AbstractString}) = join(v)
+
+# removing the following line due to type piracy
+# please report an issue, if this change severely affects your project
+# Base.string(v::Vector{AbstractString}) = join(v)
 
 HTMLString(args...) = HTMLString([args...])
 
