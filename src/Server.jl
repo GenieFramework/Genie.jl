@@ -467,7 +467,7 @@ function setup_http_listener(req::HTTP.Request, res::HTTP.Response = HTTP.Respon
     if Genie.config.server_handlers_distributed
       Distributed.@fetch handle_request(req, res; stream)
     else
-      fetch(Threads.@spawn handle_request(req, res; stream))
+      fetch(Threads.@spawn Base.invokelatest(handle_request, req, res; stream))
     end
   catch ex
     # ex is a Distributed.RemoteException when dispatched via Distributed,

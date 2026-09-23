@@ -224,7 +224,7 @@ Base.@kwdef mutable struct Settings
 
   run_as_server::Bool                                 = false
 
-  server_handlers_distributed::Bool                   = Distributed.nprocs() > 1
+  server_handlers_distributed::Bool                   = true
 
   base_path::String                                   = ""
 
