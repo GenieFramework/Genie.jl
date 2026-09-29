@@ -98,6 +98,19 @@ function up(port::Int,
             query::Dict = Dict(),
             http_kwargs...) :: ServersCollection
 
+  if Threads.nthreads(:interactive) > 1 &&
+      (Genie.config.server_handler_mode == :sequential || Genie.config.server_ws_handler_mode == :sequential)
+    @warn """
+    More than one interactive thread is configured (Threads.nthreads(:interactive) = $(Threads.nthreads(:interactive))).
+    `:sequential` handler mode relies on HTTP.jl scheduling all request/websocket handling onto a SINGLE
+    interactive thread, so that requests are effectively handled one at a time without needing explicit locking
+    around shared request-handling state (route cache, channel registries, and any shared state touched by app
+    code). With more than one interactive thread, that assumption no longer holds — requests can run truly
+    concurrently even in `:sequential` mode, exposing the same races that `:threads` mode requires locking for.
+    Start Julia with a single interactive thread (e.g. `julia --threads=N,1`) or switch to `:distributed` mode.
+    """
+  end
+
   if server !== nothing
     try
       socket_info = Sockets.getsockname(server)
@@ -464,10 +477,14 @@ Configures the handler for the HTTP Request and handles errors.
 """
 function setup_http_listener(req::HTTP.Request, res::HTTP.Response = HTTP.Response(); stream::Union{HTTP.Stream, Nothing} = nothing) :: HTTP.Response
   try
-    if Genie.config.server_handlers_distributed
+    if Genie.config.server_handler_mode == :distributed
       Distributed.@fetch handle_request(req, res; stream)
-    else
+    elseif Genie.config.server_handler_mode == :threads
       fetch(Threads.@spawn Base.invokelatest(handle_request, req, res; stream))
+    elseif Genie.config.server_handler_mode == :sequential
+      Base.invokelatest(handle_request, req, res; stream)
+    else
+      Base.error("Unknown server_handler_mode: $(Genie.config.server_handler_mode). Expected :distributed, :threads, or :sequential.")
     end
   catch ex
     # ex is a Distributed.RemoteException when dispatched via Distributed,
@@ -513,10 +530,16 @@ function setup_ws_handler(ws::HTTP.WebSockets.WebSocket) :: Nothing
   try
     while ! HTTP.WebSockets.isclosed(ws)
       message = HTTP.WebSockets.receive(ws)
-      response = if Genie.config.server_handlers_distributed
+      # for performance reasons we don't call handle_ws_request via invokelatest
+      # in order to make the handler aware of changes, restart the server
+      response = if Genie.config.server_ws_handler_mode == :distributed
         Distributed.@fetch handle_ws_request(req; message = message, client = ws)
-      else
+      elseif Genie.config.server_ws_handler_mode == :threads
         fetch(Threads.@spawn handle_ws_request(req; message = message, client = ws))
+      elseif Genie.config.server_ws_handler_mode == :sequential
+        handle_ws_request(req; message = message, client = ws)
+      else
+        Base.error("Unknown server_ws_handler_mode: $(Genie.config.server_ws_handler_mode). Expected :distributed, :threads, or :sequential.")
       end
       # Check if WebSocket is still open before sending (client might have disconnected during processing)
       HTTP.WebSockets.isclosed(ws) && break
