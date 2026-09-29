@@ -113,18 +113,23 @@
         HTTP.Response(401, ["Content-Type" => "text/csv"], body = "Search CSV and you shall find")
       end
 
-    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["conTeNT-tYPE" => "text/csv"], status_exception = false)
+      try
+        response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["conTeNT-tYPE" => "text/csv"], status_exception = false)
 
-      @test response.status == 401
-      @test occursin("Search CSV and you shall find", String(response.body)) == true
-      @test Dict(response.headers)["Content-Type"] == "text/csv"
+        @test response.status == 401
+        @test occursin("Search CSV and you shall find", String(response.body)) == true
+        @test Dict(response.headers)["Content-Type"] == "text/csv"
 
-    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["accept" => "text/csv"], status_exception = false)
+        response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["accept" => "text/csv"], status_exception = false)
 
-      @test response.status == 401
-      @test occursin("Search CSV and you shall find", String(response.body)) == true
-      @test Dict(response.headers)["Content-Type"] == "text/csv"
-      Base.delete_method.(methods(Genie.Router.error, (String, Type{MIME"text/csv"}, Val{404})))
+        @test response.status == 401
+        @test occursin("Search CSV and you shall find", String(response.body)) == true
+        @test Dict(response.headers)["Content-Type"] == "text/csv"
+      finally
+        # Guarantees the process-wide override is undone even if a request above throws,
+        # since other test items on the same worker share this Router.error method table.
+        Base.delete_method.(methods(Genie.Router.error, (String, Type{MIME"text/csv"}, Val{404})))
+      end
     end
 
     @testset "Custom error handler for known types" begin
@@ -138,18 +143,35 @@
         HTTP.Response(401, ["Content-Type" => "application/json"], body = "Search CSV and you shall find")
       end
 
-    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["conTeNT-tYPE" => "application/json"], status_exception = false)
+      try
+        response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["conTeNT-tYPE" => "application/json"], status_exception = false)
 
-      @test response.status == 401
-      @test occursin("Search CSV and you shall find", String(response.body)) == true
-      @test Dict(response.headers)["Content-Type"] == "application/json"
+        @test response.status == 401
+        @test occursin("Search CSV and you shall find", String(response.body)) == true
+        @test Dict(response.headers)["Content-Type"] == "application/json"
 
-    response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["accept" => "application/json"], status_exception = false)
+        response = HTTP.request("GET", "http://127.0.0.1:$PORT/notexisting", ["accept" => "application/json"], status_exception = false)
 
-      @test response.status == 401
-      @test occursin("Search CSV and you shall find", String(response.body)) == true
-      @test Dict(response.headers)["Content-Type"] == "application/json"
-      Base.delete_method.(methods(Genie.Router.error, (String, Type{MIME"application/json"}, Val{404})))
+        @test response.status == 401
+        @test occursin("Search CSV and you shall find", String(response.body)) == true
+        @test Dict(response.headers)["Content-Type"] == "application/json"
+      finally
+        # Genie already ships a specific method for this exact signature
+        # (src/renderers/Json.jl:111), and the redefinition above replaced it rather than
+        # shadowing it, since both share the same signature. On Julia 1.10,
+        # `Base.delete_method` on the replacement does NOT bring the original back — it
+        # leaves no specific method at all, so dispatch permanently falls through to the
+        # generic `mime::Any` handler for the rest of this worker's tests, which formats
+        # Content-Type without the "; charset=utf-8" suffix (verified directly: same
+        # sequence, same Genie code, only the Julia version differs). Julia 1.11+ happens
+        # to revive the original method on delete, which is why this doesn't reproduce
+        # locally on newer Julia. Restore the original body explicitly so behavior doesn't
+        # depend on that version difference, and wrap in `try`/`finally` so it still
+        # happens even if a request above throws.
+        Genie.Router.error(error_message::String, ::Type{MIME"application/json"}, ::Val{404}; error_info::String = "") = begin
+          Genie.Renderer.Json.json(Dict("error" => "404 Not Found - $error_message", "info" => error_info), status = 404)
+        end
+      end
     end
   end
   @testitem "Order of accept preferences" setup=[GenieTestSetup] begin
