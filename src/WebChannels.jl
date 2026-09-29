@@ -36,17 +36,37 @@ end
 const CLIENTS = ChannelClientsCollection()
 const SUBSCRIPTIONS = ChannelSubscriptionsCollection()
 
+"""
+Guards `CLIENTS`, `SUBSCRIPTIONS`, and `MESSAGE_QUEUE`. All three are mutated
+together by subscribe/unsubscribe, and under `server_ws_handler_mode = :threads`
+concurrent WebSocket connections can dispatch handler code (and therefore these
+mutations) onto different threads at once — a plain `Dict` is not safe for that.
+One lock is used for all three (rather than per-collection) because they're
+always touched as a unit here, which avoids any lock-ordering concern.
+"""
+const WEBCHANNELS_LOCK = ReentrantLock()
 
-clients() = collect(values(CLIENTS))
-subscriptions() = SUBSCRIPTIONS
+
+clients() = lock(WEBCHANNELS_LOCK) do
+  collect(values(CLIENTS))
+end
+subscriptions() = lock(WEBCHANNELS_LOCK) do
+  Dict(k => copy(v) for (k, v) in SUBSCRIPTIONS)
+end
 websockets() = map(c -> c.client, clients())
-channels() = collect(keys(SUBSCRIPTIONS))
+channels() = lock(WEBCHANNELS_LOCK) do
+  collect(keys(SUBSCRIPTIONS))
+end
 
 
 function connected_clients(channel::ChannelName) :: Vector{ChannelClient}
+  candidates = lock(WEBCHANNELS_LOCK) do
+    [CLIENTS[client_id] for client_id in SUBSCRIPTIONS[channel]]
+  end
+
   clients = ChannelClient[]
-  for client_id in SUBSCRIPTIONS[channel]
-    ! HTTP.WebSockets.isclosed(CLIENTS[client_id].client) && push!(clients, CLIENTS[client_id])
+  for channel_client in candidates
+    ! HTTP.WebSockets.isclosed(channel_client.client) && push!(clients, channel_client)
   end
 
   clients
@@ -62,9 +82,13 @@ end
 
 
 function disconnected_clients(channel::ChannelName) :: Vector{ChannelClient}
+  candidates = lock(WEBCHANNELS_LOCK) do
+    [CLIENTS[client_id] for client_id in SUBSCRIPTIONS[channel]]
+  end
+
   clients = ChannelClient[]
-  for client_id in SUBSCRIPTIONS[channel]
-    HTTP.WebSockets.isclosed(CLIENTS[client_id].client) && push!(clients, CLIENTS[client_id])
+  for channel_client in candidates
+    HTTP.WebSockets.isclosed(channel_client.client) && push!(clients, channel_client)
   end
 
   clients
@@ -83,20 +107,22 @@ end
 Subscribes a web socket client `ws` to `channel`.
 """
 function subscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelName) :: ChannelClientsCollection
-  if haskey(CLIENTS, id(ws))
-    in(channel, CLIENTS[id(ws)].channels) || push!(CLIENTS[id(ws)].channels, channel)
-  else
-    CLIENTS[id(ws)] = ChannelClient(ws, ChannelName[channel])
+  lock(WEBCHANNELS_LOCK) do
+    if haskey(CLIENTS, id(ws))
+      in(channel, CLIENTS[id(ws)].channels) || push!(CLIENTS[id(ws)].channels, channel)
+    else
+      CLIENTS[id(ws)] = ChannelClient(ws, ChannelName[channel])
+    end
+
+    push_subscription(id(ws), channel)
+
+    # Clean up stale entries from previous connections on this channel so that
+    # disconnected clients (and their handler tasks) do not accumulate on reconnect.
+    unsubscribe_disconnected_clients(channel)
+
+    @debug "Subscribed: $(id(ws)) ($(Dates.now()))"
+    CLIENTS
   end
-
-  push_subscription(id(ws), channel)
-
-  # Clean up stale entries from previous connections on this channel so that
-  # disconnected clients (and their handler tasks) do not accumulate on reconnect.
-  unsubscribe_disconnected_clients(channel)
-
-  @debug "Subscribed: $(id(ws)) ($(Dates.now()))"
-  CLIENTS
 end
 
 
@@ -109,14 +135,16 @@ end
 Unsubscribes a web socket client `ws` from `channel`.
 """
 function unsubscribe(ws::HTTP.WebSockets.WebSocket, channel::ChannelName) :: ChannelClientsCollection
-  client = id(ws)
+  lock(WEBCHANNELS_LOCK) do
+    client = id(ws)
 
-  haskey(CLIENTS, client) && deleteat!(CLIENTS[client].channels, CLIENTS[client].channels .== channel)
-  pop_subscription(client, channel)
-  delete_queue!(MESSAGE_QUEUE, client)
+    haskey(CLIENTS, client) && deleteat!(CLIENTS[client].channels, CLIENTS[client].channels .== channel)
+    pop_subscription(client, channel)
+    delete_queue!(MESSAGE_QUEUE, client)
 
-  @debug "Unsubscribed: $(client) ($(Dates.now()))"
-  CLIENTS
+    @debug "Unsubscribed: $(client) ($(Dates.now()))"
+    CLIENTS
+  end
 end
 function unsubscribe(channel_client::ChannelClient, channel::ChannelName) :: ChannelClientsCollection
   unsubscribe(channel_client.client, channel)
@@ -127,20 +155,25 @@ end
 Unsubscribes a web socket client `ws` from all the channels.
 """
 function unsubscribe_client(ws::HTTP.WebSockets.WebSocket) :: ChannelClientsCollection
-  client_id = id(ws)
-  if haskey(CLIENTS, client_id)
-    for channel_id in CLIENTS[client_id].channels
-      pop_subscription(client_id, channel_id)
+  lock(WEBCHANNELS_LOCK) do
+    client_id = id(ws)
+    if haskey(CLIENTS, client_id)
+      for channel_id in CLIENTS[client_id].channels
+        pop_subscription(client_id, channel_id)
+      end
+
+      delete_queue!(MESSAGE_QUEUE, client_id)
+      delete!(CLIENTS, client_id)
     end
 
-    delete_queue!(MESSAGE_QUEUE, client_id)
-    delete!(CLIENTS, client_id)
+    CLIENTS
   end
-
-  CLIENTS
 end
 function unsubscribe_client(client_id::ClientId) :: ChannelClientsCollection
-  unsubscribe_client(CLIENTS[client_id].client)
+  ws = lock(WEBCHANNELS_LOCK) do
+    CLIENTS[client_id].client
+  end
+  unsubscribe_client(ws)
 
   CLIENTS
 end
@@ -152,10 +185,12 @@ end
 
 
 function purge_unnecessary_message_queue()
-  active_clients = keys(CLIENTS) |> collect
-  for id in keys(MESSAGE_QUEUE) |> collect
-    if ! (id in active_clients)
-      delete_queue!(MESSAGE_QUEUE, id)  # kills the handler task, not just the dict entry
+  lock(WEBCHANNELS_LOCK) do
+    active_clients = keys(CLIENTS) |> collect
+    for id in keys(MESSAGE_QUEUE) |> collect
+      if ! (id in active_clients)
+        delete_queue!(MESSAGE_QUEUE, id)  # kills the handler task, not just the dict entry
+      end
     end
   end
 end
@@ -188,13 +223,15 @@ end
 Adds a new subscription for `client` to `channel`.
 """
 function push_subscription(client_id::ClientId, channel::ChannelName) :: ChannelSubscriptionsCollection
-  if haskey(SUBSCRIPTIONS, channel)
-    ! in(client_id, SUBSCRIPTIONS[channel]) && push!(SUBSCRIPTIONS[channel], client_id)
-  else
-    SUBSCRIPTIONS[channel] = ClientId[client_id]
-  end
+  lock(WEBCHANNELS_LOCK) do
+    if haskey(SUBSCRIPTIONS, channel)
+      ! in(client_id, SUBSCRIPTIONS[channel]) && push!(SUBSCRIPTIONS[channel], client_id)
+    else
+      SUBSCRIPTIONS[channel] = ClientId[client_id]
+    end
 
-  SUBSCRIPTIONS
+    SUBSCRIPTIONS
+  end
 end
 function push_subscription(channel_client::ChannelClient, channel::ChannelName) :: ChannelSubscriptionsCollection
   push_subscription(id(channel_client.client), channel)
@@ -205,14 +242,16 @@ end
 Removes the subscription of `client` to `channel`.
 """
 function pop_subscription(client::ClientId, channel::ChannelName) :: ChannelSubscriptionsCollection
-  if haskey(SUBSCRIPTIONS, channel)
-    filter!(SUBSCRIPTIONS[channel]) do (client_id)
-      client_id != client
+  lock(WEBCHANNELS_LOCK) do
+    if haskey(SUBSCRIPTIONS, channel)
+      filter!(SUBSCRIPTIONS[channel]) do (client_id)
+        client_id != client
+      end
+      isempty(SUBSCRIPTIONS[channel]) && delete!(SUBSCRIPTIONS, channel)
     end
-    isempty(SUBSCRIPTIONS[channel]) && delete!(SUBSCRIPTIONS, channel)
-  end
 
-  SUBSCRIPTIONS
+    SUBSCRIPTIONS
+  end
 end
 function pop_subscription(channel_client::ChannelClient, channel::ChannelName) :: ChannelSubscriptionsCollection
   pop_subscription(id(channel_client.client), channel)
@@ -223,11 +262,13 @@ end
 Removes all subscriptions of `client`.
 """
 function pop_subscription(channel::ChannelName) :: ChannelSubscriptionsCollection
-  if haskey(SUBSCRIPTIONS, channel)
-    delete!(SUBSCRIPTIONS, channel)
-  end
+  lock(WEBCHANNELS_LOCK) do
+    if haskey(SUBSCRIPTIONS, channel)
+      delete!(SUBSCRIPTIONS, channel)
+    end
 
-  SUBSCRIPTIONS
+    SUBSCRIPTIONS
+  end
 end
 
 
@@ -241,23 +282,35 @@ function broadcast(channels::Union{ChannelName,Vector{ChannelName}},
                     restrict::Union{Nothing,UInt,Vector{UInt}} = nothing) :: Bool
   isa(channels, Array) || (channels = ChannelName[channels])
 
-  isempty(SUBSCRIPTIONS) && return false
+  lock(WEBCHANNELS_LOCK) do
+    isempty(SUBSCRIPTIONS)
+  end && return false
 
   @async(unsubscribe_disconnected_clients()) |> errormonitor
 
   for channel in channels
-    if ! haskey(SUBSCRIPTIONS, channel)
+    # Snapshot the subscriber ids and their current client objects under the
+    # lock, and iterate the snapshot below — not the live SUBSCRIPTIONS[channel]
+    # vector, which the `unsubscribe_disconnected_clients` task above can
+    # mutate in place (via `filter!`) while this loop is still running.
+    ids, client_lookup = lock(WEBCHANNELS_LOCK) do
+      haskey(SUBSCRIPTIONS, channel) || return (nothing, nothing)
+      ids_ = restrict === nothing ? copy(SUBSCRIPTIONS[channel]) : intersect(SUBSCRIPTIONS[channel], restrict)
+      (ids_, Dict(cid => CLIENTS[cid] for cid in ids_ if haskey(CLIENTS, cid)))
+    end
+
+    if ids === nothing
       unsubscribe_disconnected_clients(channel)
       throw(ChannelNotFoundException(channel))
     end
 
-    ids = restrict === nothing ? SUBSCRIPTIONS[channel] : intersect(SUBSCRIPTIONS[channel], restrict)
     for client in ids
       if except !== nothing
         except isa UInt && client == except && continue
         except isa Vector{UInt} && client ∈ except && continue
       end
-      HTTP.WebSockets.isclosed(CLIENTS[client].client) && continue
+      haskey(client_lookup, client) || continue
+      HTTP.WebSockets.isclosed(client_lookup[client].client) && continue
 
       try
         payload !== nothing ?
@@ -285,7 +338,9 @@ function broadcast(msg::String;
                     payload::Union{Dict,Nothing} = nothing,
                     except::Union{HTTP.WebSockets.WebSocket,Nothing,UInt} = nothing) :: Bool
   try
-    channels === nothing && (channels = collect(keys(SUBSCRIPTIONS)))
+    channels === nothing && (channels = lock(WEBCHANNELS_LOCK) do
+      collect(keys(SUBSCRIPTIONS))
+    end)
     broadcast(channels, msg, payload; except = except)
   catch ex
     @error ex
@@ -308,30 +363,36 @@ end
 Writes `msg` to web socket for `client`.
 """
 function message(client::ClientId, msg::String)
-  ws = Genie.WebChannels.CLIENTS[client].client
   # setup a reply channel
   myfuture = Channel{Int}(1)
 
-  # retrieve the message queue or set it up if not present
-  q, _ = get!(MESSAGE_QUEUE, client) do
-    queue = Channel{Tuple{String, Channel{Int}}}(10)
-    handler = @async(for (message, future) in queue
-      nbytes = 0
-      try
-        nbytes = HTTP.WebSockets.send(ws, message)
-      catch
-        @debug "Sending message to $(repr(client)) failed!"
-      finally
-        put!(future, nbytes)
-      end
-      # Self-terminate when the socket is closed to avoid orphaned tasks.
-      if HTTP.WebSockets.isclosed(ws)
-        @info "closing ws"
-        break
-      end
-    end) |> errormonitor
+  # retrieve the message queue or set it up if not present. Only the dict
+  # touch itself is locked — the queue's handler task (started below) does
+  # the actual blocking network send, which must not happen while holding
+  # WEBCHANNELS_LOCK.
+  q, _ = lock(WEBCHANNELS_LOCK) do
+    ws = CLIENTS[client].client
 
-    queue, handler
+    get!(MESSAGE_QUEUE, client) do
+      queue = Channel{Tuple{String, Channel{Int}}}(10)
+      handler = @async(for (message, future) in queue
+        nbytes = 0
+        try
+          nbytes = HTTP.WebSockets.send(ws, message)
+        catch
+          @debug "Sending message to $(repr(client)) failed!"
+        finally
+          put!(future, nbytes)
+        end
+        # Self-terminate when the socket is closed to avoid orphaned tasks.
+        if HTTP.WebSockets.isclosed(ws)
+          @info "closing ws"
+          break
+        end
+      end) |> errormonitor
+
+      queue, handler
+    end
   end
 
   put!(q, (msg, myfuture))
@@ -349,14 +410,19 @@ function message_unsafe(ws::HTTP.WebSockets.WebSocket, msg::String) :: Int
   HTTP.WebSockets.send(ws, msg)
 end
 function message_unsafe(client::ClientId, msg::String) :: Int
-  message_unsafe(CLIENTS[client].client, msg)
+  ws = lock(WEBCHANNELS_LOCK) do
+    CLIENTS[client].client
+  end
+  message_unsafe(ws, msg)
 end
 function message_unsafe(client::ChannelClient, msg::String) :: Int
   message_unsafe(client.client, msg)
 end
 
 function delete_queue!(d::Dict, client::UInt)
-  queue, handler = pop!(MESSAGE_QUEUE, client, (nothing, nothing))
+  queue, handler = lock(WEBCHANNELS_LOCK) do
+    pop!(MESSAGE_QUEUE, client, (nothing, nothing))
+  end
   if queue !== nothing
     close(queue)
     # close(queue) will normally cause the handler task to exit, but we add a killtask to be sure.

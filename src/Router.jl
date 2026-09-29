@@ -47,6 +47,19 @@ const NOT_FOUND       = 404
 const INTERNAL_ERROR  = 500
 
 const ROUTE_CACHE = Dict{String,Tuple{String,Vector{String},Vector{Any}}}()
+const ROUTE_CACHE_LOCK = ReentrantLock()
+
+"""
+    cached_parse_route(path::String; context::Module) :: Tuple{String,Vector{String},Vector{Any}}
+
+Thread-safe accessor for `ROUTE_CACHE`. `Dict` is not safe for concurrent
+mutation, and under `server_handler_mode = :threads` multiple requests can
+call this from different threads at once — an unlocked `get!` here can
+corrupt the cache.
+"""
+function cached_parse_route(path::String; context::Module)
+  Base.@lock ROUTE_CACHE_LOCK get!(ROUTE_CACHE, path, parse_route(path, context = context))
+end
 
 request_mappings() = Dict{Symbol,Vector{String}}(
   :text       => ["text/plain"],
@@ -342,7 +355,9 @@ const namedroutes = named_routes
 
 
 function ischannel(channel_name::Symbol) :: Bool
-  haskey(named_channels(), channel_name)
+  lock(_channels_lock) do
+    haskey(_channels, channel_name)
+  end
 end
 
 
@@ -358,7 +373,9 @@ const namedchannels = named_channels
 
 
 function isroute(route_name::Symbol) :: Bool
-  haskey(named_routes(), route_name)
+  lock(_routes_lock) do
+    haskey(_routes, route_name)
+  end
 end
 
 
@@ -366,15 +383,17 @@ end
 Gets the `Route` corresponding to `routename`
 """
 function get_route(route_name::Symbol; default::Union{Route,Nothing} = Route()) :: Route
-  isroute(route_name) ?
-    named_routes()[route_name] :
-    (if default === nothing
-      Base.error("Route named `$route_name` is not defined")
-    else
-      Genie.Configuration.isdev() && @debug "Route named `$route_name` is not defined"
+  lock(_routes_lock) do
+    haskey(_routes, route_name) ?
+      _routes[route_name] :
+      (if default === nothing
+        Base.error("Route named `$route_name` is not defined")
+      else
+        Genie.Configuration.isdev() && @debug "Route named `$route_name` is not defined"
 
-      default
-    end)
+        default
+      end)
+  end
 end
 const getroute = get_route
 
@@ -385,7 +404,9 @@ const getroute = get_route
 Returns a vector of defined routes.
 """
 function routes(; reversed::Bool = true) :: Vector{Route}
-  collect(values(_routes)) |> (reversed ? reverse : identity)
+  lock(_routes_lock) do
+    collect(values(_routes)) |> (reversed ? reverse : identity)
+  end
 end
 
 
@@ -395,7 +416,9 @@ end
 Returns a vector of defined channels.
 """
 function channels() :: Vector{Channel}
-  collect(values(_channels)) |> reverse
+  lock(_channels_lock) do
+    collect(values(_channels)) |> reverse
+  end
 end
 
 
@@ -530,7 +553,7 @@ function match_routes(req::HTTP.Request, res::HTTP.Response, params::Params) :: 
     (r.method == req.method) || (r.method == GET && req.method == HEAD) || continue
 
     parsed_route, param_names, param_types = Genie.Configuration.isprod() ?
-                                              get!(ROUTE_CACHE, r.path, parse_route(r.path, context = r.context)) :
+                                              cached_parse_route(r.path, context = r.context) :
                                                 parse_route(r.path, context = r.context)
     regex_route = try
       Regex("^" * parsed_route * "\$")

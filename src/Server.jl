@@ -98,6 +98,19 @@ function up(port::Int,
             query::Dict = Dict(),
             http_kwargs...) :: ServersCollection
 
+  if Threads.nthreads(:interactive) > 1 &&
+      (Genie.config.server_handler_mode == :sequential || Genie.config.server_ws_handler_mode == :sequential)
+    @warn """
+    More than one interactive thread is configured (Threads.nthreads(:interactive) = $(Threads.nthreads(:interactive))).
+    `:sequential` handler mode relies on HTTP.jl scheduling all request/websocket handling onto a SINGLE
+    interactive thread, so that requests are effectively handled one at a time without needing explicit locking
+    around shared request-handling state (route cache, channel registries, and any shared state touched by app
+    code). With more than one interactive thread, that assumption no longer holds — requests can run truly
+    concurrently even in `:sequential` mode, exposing the same races that `:threads` mode requires locking for.
+    Start Julia with a single interactive thread (e.g. `julia --threads=N,1`) or switch to `:distributed` mode.
+    """
+  end
+
   if server !== nothing
     try
       socket_info = Sockets.getsockname(server)
@@ -464,8 +477,22 @@ Configures the handler for the HTTP Request and handles errors.
 """
 function setup_http_listener(req::HTTP.Request, res::HTTP.Response = HTTP.Response(); stream::Union{HTTP.Stream, Nothing} = nothing) :: HTTP.Response
   try
-    Distributed.@fetch handle_request(req, res; stream)
-  catch ex # ex is a Distributed.RemoteException
+    if Genie.config.server_handler_mode == :distributed
+      Distributed.@fetch handle_request(req, res; stream)
+    elseif Genie.config.server_handler_mode == :threads
+      fetch(Threads.@spawn Base.invokelatest(handle_request, req, res; stream))
+    elseif Genie.config.server_handler_mode == :sequential
+      Base.invokelatest(handle_request, req, res; stream)
+    else
+      Base.error("Unknown server_handler_mode: $(Genie.config.server_handler_mode). Expected :distributed, :threads, or :sequential.")
+    end
+  catch ex
+    # ex is a Distributed.RemoteException when dispatched via Distributed,
+    # or a TaskFailedException (unwrapped below) when dispatched via Threads
+    if isa(ex, Base.TaskFailedException)
+      ex = ex.task.result
+    end
+
     if isa(ex, Distributed.RemoteException) &&
       hasfield(typeof(ex), :captured) && isa(ex.captured, Distributed.CapturedException) &&
         hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, Genie.Exceptions.RuntimeException)
@@ -473,6 +500,10 @@ function setup_http_listener(req::HTTP.Request, res::HTTP.Response = HTTP.Respon
       @error ex.captured.ex
       return Genie.Router.error(ex.captured.ex.code, ex.captured.ex.message, Genie.Router.response_mime(),
                               error_info = string(ex.captured.ex.code, " ", ex.captured.ex.info))
+    elseif isa(ex, Genie.Exceptions.RuntimeException)
+      @error ex
+      return Genie.Router.error(ex.code, ex.message, Genie.Router.response_mime(),
+                              error_info = string(ex.code, " ", ex.info))
     end
 
     error_message = string(sprint(showerror, ex), "\n\n")
@@ -499,7 +530,17 @@ function setup_ws_handler(ws::HTTP.WebSockets.WebSocket) :: Nothing
   try
     while ! HTTP.WebSockets.isclosed(ws)
       message = HTTP.WebSockets.receive(ws)
-      response = Distributed.@fetch handle_ws_request(req; message = message, client = ws)
+      # for performance reasons we don't call handle_ws_request via invokelatest
+      # in order to make the handler aware of changes, restart the server
+      response = if Genie.config.server_ws_handler_mode == :distributed
+        Distributed.@fetch handle_ws_request(req; message = message, client = ws)
+      elseif Genie.config.server_ws_handler_mode == :threads
+        fetch(Threads.@spawn handle_ws_request(req; message = message, client = ws))
+      elseif Genie.config.server_ws_handler_mode == :sequential
+        handle_ws_request(req; message = message, client = ws)
+      else
+        Base.error("Unknown server_ws_handler_mode: $(Genie.config.server_ws_handler_mode). Expected :distributed, :threads, or :sequential.")
+      end
       # Check if WebSocket is still open before sending (client might have disconnected during processing)
       HTTP.WebSockets.isclosed(ws) && break
       HTTP.WebSockets.send(ws, response)
@@ -515,17 +556,27 @@ function setup_ws_handler(ws::HTTP.WebSockets.WebSocket) :: Nothing
       @error "WebSocket error" exception=(ex, catch_backtrace())
       Genie.WebChannels.unsubscribe_client(ws)
       return nothing
-    # Handle RemoteException wrapping CloseFrameBody
-    elseif isa(ex, Distributed.RemoteException) &&
+    end
+
+    # ex is a Distributed.RemoteException when dispatched via Distributed,
+    # or a TaskFailedException (unwrapped below) when dispatched via Threads
+    if isa(ex, Base.TaskFailedException)
+      ex = ex.task.result
+    end
+
+    # Handle CloseFrameBody (possibly wrapped in a RemoteException)
+    if isa(ex, HTTP.WebSockets.CloseFrameBody) ||
+      (isa(ex, Distributed.RemoteException) &&
       hasfield(typeof(ex), :captured) && isa(ex.captured, Distributed.CapturedException) &&
-        hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, HTTP.WebSockets.CloseFrameBody)
+        hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, HTTP.WebSockets.CloseFrameBody))
       Genie.WebChannels.unsubscribe_client(ws)
       return nothing
-    # Handle RemoteException wrapping RuntimeException
-    elseif isa(ex, Distributed.RemoteException) &&
+    # Handle RuntimeException (possibly wrapped in a RemoteException)
+    elseif isa(ex, Genie.Exceptions.RuntimeException) ||
+      (isa(ex, Distributed.RemoteException) &&
       hasfield(typeof(ex), :captured) && isa(ex.captured, Distributed.CapturedException) &&
-        hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, Genie.Exceptions.RuntimeException)
-      @error ex.captured.ex
+        hasfield(typeof(ex.captured), :ex) && isa(ex.captured.ex, Genie.Exceptions.RuntimeException))
+      @error isa(ex, Genie.Exceptions.RuntimeException) ? ex : ex.captured.ex
       Genie.WebChannels.unsubscribe_client(ws)
       return nothing
     else
