@@ -48,6 +48,11 @@ const EMBEDDED_JULIA_PLACEHOLDER = "~~~~~|~~~~~"
 const EMBED_JULIA_OPEN_TAG = "<%"
 const EMBED_JULIA_CLOSE_TAG = "%>"
 
+# helper function to stringify content (required after removing type pirating definition for Base.string)
+function _string(c)
+    c isa AbstractVector ? join(c) : string(c)
+end
+
 function parsehtml_with_encoding(htmlstring::AbstractString; encoding::String = "UTF-8", options...)
   if isempty(htmlstring)
       throw(ArgumentError("empty HTML string"))
@@ -226,7 +231,7 @@ function normal_element(_::Nothing, __::Any) :: HTMLString
   ""
 end
 function normal_element(children::Vector{T}, elem::Any, args::Vector{T})::HTMLString where {T}
-  normal_element(join([(isa(f, Function) ? f() : string(f)) for f in children]), elem, args)
+  normal_element(join([(isa(f, Function) ? f() : _string(f)) for f in children]), elem, args)
 end
 
 
@@ -1104,13 +1109,13 @@ function register_normal_element(elem::Union{Symbol,String}; context = @__MODULE
 
   Core.eval(context, """
     function $elem(children::Any, args...; attrs...) :: ParsedHTMLString
-      \"\"\"\$(normal_element(string(children), "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
+      \"\"\"\$(normal_element(_string(children), "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
 
   Core.eval(context, """
     function $elem(children::Vector{Any}, args...; attrs...) :: ParsedHTMLString
-      \"\"\"\$(normal_element([string(c) for c in children], "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
+      \"\"\"\$(normal_element([_string(c) for c in children], "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
 
