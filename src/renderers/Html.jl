@@ -1109,13 +1109,13 @@ function register_normal_element(elem::Union{Symbol,String}; context = @__MODULE
 
   Core.eval(context, """
     function $elem(children::Any, args...; attrs...) :: ParsedHTMLString
-      \"\"\"\$(normal_element(_string(children), "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
+      \"\"\"\$(normal_element($(@__MODULE__)._string(children), "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
 
   Core.eval(context, """
     function $elem(children::Vector{Any}, args...; attrs...) :: ParsedHTMLString
-      \"\"\"\$(normal_element([_string(c) for c in children], "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
+      \"\"\"\$(normal_element([$(@__MODULE__)._string(c) for c in children], "$(string(elem))", [args...], Pair{Symbol,Any}[attrs...]))\"\"\"
     end
   """ |> Meta.parse)
 
