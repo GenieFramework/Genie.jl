@@ -100,7 +100,7 @@ julia> package_version("Genie.jl")
 ```
 """
 function package_version(package::Union{Module,String}) :: String
-  isa(package, Module) && return Base.pkgversion(package)
+  isa(package, Module) && return string(Base.pkgversion(package))
   endswith(package, ".jl") && (package = String(package[1:end-3]))
   pkg_dict = filter(x -> x.second.name == package, Pkg.dependencies())
   isempty(pkg_dict) ? "main" : ("v" * string(first(pkg_dict)[2].version))
