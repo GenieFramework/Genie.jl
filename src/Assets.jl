@@ -23,12 +23,25 @@ export favicon_support
 Manages the assets configuration for the current package. Define your own instance of AssetsConfig if you want to
 add support for asset management for your package through Genie.Assets.
 """
-Base.@kwdef mutable struct AssetsConfig
-  host::String = Genie.config.base_path
-  package::String = "Genie.jl"
-  version::String = package_version(package)
+mutable struct AssetsConfig
+  host::String
+  package::String
+  version::String
+  function AssetsConfig(;
+    host::String = Genie.config.base_path,
+    package::Union{String,Module} = "Genie.jl",
+    version::Union{String,Nothing} = package_version(package),
+  )
+    version === nothing && (version = package_version(package))
+    package isa Module && (package = String(nameof(package)))
+    new(host, package, version)
+  end
 end
-
+function AssetsConfig(package::Module;
+  host::String = Genie.config.base_path,
+  version::String = package_version(package))
+    AssetsConfig(; host, package, version)
+end
 const assets_config = AssetsConfig()
 
 function __init__()::Nothing
