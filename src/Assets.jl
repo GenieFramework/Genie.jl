@@ -5,11 +5,14 @@ module Assets
 
 import Genie: Genie, Configuration, Router, WebChannels, WebThreads
 import Genie: JSONParser, Util.package_version
+import HTTP
+using Compat
 
 export include_asset, css_asset, js_asset, js_settings, css, js
 export embedded, channels_script, channels_support, webthreads_script, webthreads_support
 export favicon_support
 
+@compat public package_version
 
 ### PUBLIC ###
 
@@ -283,13 +286,33 @@ function embedded_path(path::String) :: String
 end
 
 """
-  add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::AbstractString;
-    basedir = pwd(),
-    type::Union{Nothing, String} = nothing,
-    content_type::Union{Nothing, Symbol} = nothing,
-    ext::Union{Nothing, String} = nothing, kwargs...)
+    add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::AbstractString;
+      basedir = pwd(),
+      type::Union{Nothing, String} = nothing,
+      content_type::Union{Nothing, Symbol} = nothing,
+      ext::Union{Nothing, String} = nothing,
+      named::Union{Symbol, Nothing} = nothing,
+      cache_control::Union{String, Nothing} = nothing,
+      headers = HTTP.Headers(),
+      path::String = "", kwargs...)
 
-Helper function to add a file route to the assets based on asset_config and filename.
+Registers a Genie route that serves `filename` as a static asset, embedding its contents
+in the response at request time. The route path is derived from `assets_config` and
+`filename` via [`asset_path`](@ref), while the file itself is read from disk (relative to
+`basedir`) via [`asset_file`](@ref) and [`embedded`](@ref).
+
+### Arguments
+- `assets_config`: the `AssetsConfig` (host/package/version) used to build the route path.
+- `filename`: name of the file to serve; its extension is used to infer `type` and `content_type` unless they are explicitly provided.
+- `basedir`: directory the file is resolved from on disk (defaults to the current working directory).
+- `type`: asset type/subfolder (e.g. `"js"`, `"css"`); defaults to the file's extension.
+- `content_type`: response `Content-Type`, inferred from `type` when not given (`:javascript`, `:css`, an image/video type for known extensions, or `:binary` as a fallback for anything else).
+- `ext`: file extension to use when resolving the file path, if different from `filename`'s own extension.
+- `named`: optional route name passed through to `Genie.Router.route`.
+- `cache_control`: when given, sets the `Cache-Control` response header.
+- `headers`: base `HTTP.Headers` to send with the response; `cache_control` is appended to these.
+- `path`: extra path segment inserted between the asset type and the filename, both in the route and when locating the file.
+- `kwargs...`: forwarded to `asset_path` (e.g. `host`, `package`, `version`, `min`, `skip_ext`, `query`).
 
 # Example
 
@@ -313,6 +336,8 @@ function add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::Abstr
   content_type::Union{Nothing, Symbol} = nothing,
   ext::Union{Nothing, String} = nothing,
   named::Union{Symbol, Nothing} = nothing,
+  cache_control::Union{String, Nothing} = nothing,
+  headers = HTTP.Headers(),
   path::String = "", kwargs...)
 
   file, ex = splitext(filename)
@@ -324,16 +349,20 @@ function add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::Abstr
   elseif type == "css"
     :css
   elseif type in ["jpg", "jpeg", "svg", "mov", "avi", "png", "gif", "tif", "tiff"]
-    imagetype = replace(type, Dict("jpg" => "jpeg", "mpg" => "mpeg", "tif" => "tiff")...)
-    Symbol("image/$imagetype")
+    Symbol(type)
   else
-    Symbol("*.*")
+    :binary
   end : content_type
+
+  # assert Header type
+  headers = HTTP.Headers(headers)
+  cache_control !== nothing && append!(headers, "Cache-Control" => cache_control)
 
   Genie.Router.route(Genie.Assets.asset_path(assets_config, type; file, ext, path, kwargs...); named) do
     Genie.Renderer.WebRenderable(
-      Genie.Assets.embedded(Genie.Assets.asset_file(cwd=basedir; type, file, path)),
-    content_type) |> Genie.Renderer.respond
+      body = Genie.Assets.embedded(Genie.Assets.asset_file(cwd=basedir; type, file, path));
+      content_type, headers
+    ) |> Genie.Renderer.respond
   end
 end
 

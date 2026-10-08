@@ -204,4 +204,39 @@
     @test Dict(response.headers)["Content-Type"] == "text/csv"
   end
 
+  @testitem "respond(WebRenderable) doesn't duplicate Content-Type and keeps baseline Set-Cookie" setup=[GenieTestSetup] begin
+    using Genie, Genie.Router, Genie.Responses, HTTP
+
+    # Regression test: pre-match content negotiation stamps a baseline Content-Type
+    # (here :html, since the request below sends no Accept/Content-Type header) onto
+    # params[:RESPONSE]. respond(::WebRenderable) used to merge that baseline's headers
+    # in via union!(append!(...)), which only dedups identical (key, value) pairs -- so
+    # an explicitly different Content-Type set by the route handler ended up duplicated
+    # alongside the baseline one instead of replacing it. Set-Cookie must still
+    # accumulate rather than being replaced.
+    route("/response-header-merge-test") do
+      setheaders("Set-Cookie" => "session=abc123")
+
+      Genie.Renderer.WebRenderable(body = "binary-data", content_type = :binary) |> Genie.Renderer.respond
+    end
+
+    sleep(0)
+
+    response = HTTP.request("GET", "http://127.0.0.1:$PORT/response-header-merge-test")
+
+    @test response.status == 200
+    @test String(response.body) == "binary-data"
+
+    content_types = [v for (k, v) in response.headers if lowercase(k) == "content-type"]
+    @test content_types == ["application/octet-stream"]
+
+    # Note: Server.jl's set_headers! separately merges in the original baseline response
+    # (which setheaders() mutates in place) alongside this one and never dedups Set-Cookie,
+    # so the same cookie can legitimately appear more than once here -- that's unrelated to
+    # this fix. What matters is that the cookie survives the respond() merge at all.
+    set_cookies = [v for (k, v) in response.headers if lowercase(k) == "set-cookie"]
+    @test !isempty(set_cookies)
+    @test all(c -> occursin("session=abc123", c), set_cookies)
+  end
+
 # end;

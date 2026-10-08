@@ -957,7 +957,7 @@ function request_type(req::HTTP.Request) :: Symbol
     end
   end
 
-  isempty(accepted_encodings[1]) ? Symbol(request_mappings()[:html]) : Symbol(accepted_encodings[1])
+  isempty(accepted_encodings[1]) ? :html : Symbol(accepted_encodings[1])
 end
 
 

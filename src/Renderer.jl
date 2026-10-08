@@ -31,7 +31,14 @@ const CONTENT_TYPES = Dict{Symbol,String}(
   :favicon    => "image/x-icon",
   :png        => "image/png",
   :jpg        => "image/jpeg",
-  :svg        => "image/svg+xml"
+  :jpeg       => "image/jpeg",
+  :svg        => "image/svg+xml",
+  :gif        => "image/gif",
+  :tif        => "image/tiff",
+  :tiff       => "image/tiff",
+  :mov        => "video/quicktime",
+  :avi        => "video/x-msvideo",
+  :binary     => "application/octet-stream"
 )
 
 const MIME_TYPES = Dict(
@@ -290,11 +297,14 @@ Constructs a `Response` corresponding to the Content-Type of the request.
 function respond(r::WebRenderable) :: HTTP.Response
   haskey(r.headers, "Content-Type") || push!(r.headers, "Content-Type" => CONTENT_TYPES[r.content_type])
 
-  # Merge session headers from params[:RESPONSE] if available (for session cookies)
+  # Merge session headers from params[:RESPONSE] (e.g. Set-Cookie). Headers already
+  # set on `r` (e.g. Content-Type) take precedence; Set-Cookie entries accumulate.
   if haskey(Genie.Router.params(), Genie.Router.PARAMS_RESPONSE_KEY)
     params_resp = Genie.Router.params(Genie.Router.PARAMS_RESPONSE_KEY)
-    # Merge headers from params response (e.g., Set-Cookie from sessions)
-    union!(append!(r.headers.entries, HTTP.mkheaders(params_resp.headers)))
+    merged_headers = HTTP.Headers()
+    merge!(merged_headers, params_resp.headers)
+    merge!(merged_headers, r.headers)
+    r.headers = merged_headers
   end
 
   HTTP.Response(r.status, r.headers, body = r.body)
