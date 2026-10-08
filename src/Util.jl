@@ -89,7 +89,7 @@ const fws = filterwhitespace
 """
     package_version(package::Union{Module,String}) :: String
 
-Returns the version of a package, or "master" if the package is not installed.
+Returns the version of a package, or "main" if the package is not installed.
 
 ### Example
 
@@ -100,10 +100,10 @@ julia> package_version("Genie.jl")
 ```
 """
 function package_version(package::Union{Module,String}) :: String
-  isa(package, Module) && (package = String(nameof(package)))
+  isa(package, Module) && return Base.pkgversion(package)
   endswith(package, ".jl") && (package = String(package[1:end-3]))
   pkg_dict = filter(x -> x.second.name == package, Pkg.dependencies())
-  isempty(pkg_dict) ? "master" : ("v" * string(first(pkg_dict)[2].version))
+  isempty(pkg_dict) ? "main" : ("v" * string(first(pkg_dict)[2].version))
 end
 
 function expr_to_path(expr::Union{Expr, Symbol, String})::String

@@ -6,6 +6,7 @@ authors = ["The amazing Genie contributors ♥️"]
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
 Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
+Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 DotEnv = "4dc1fcf4-5e3b-5448-94ab-0c38ec0385c1"
@@ -40,6 +41,7 @@ YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 [compat]
 ArgParse = "1"
 Base64 = "1.6"
+Compat = "4.18.1"
 Dates = "1.6"
 Distributed = "1.6"
 DotEnv = "0.3, 1"
