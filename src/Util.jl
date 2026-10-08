@@ -2,6 +2,7 @@ module Util
 
 using Pkg
 import Genie
+using Compat
 
 export project_path, @project_path, @wait
 
@@ -100,7 +101,7 @@ julia> package_version("Genie.jl")
 ```
 """
 function package_version(package::Union{Module,String}) :: String
-  isa(package, Module) && return string(Base.pkgversion(package))
+  isa(package, Module) && return string('v', pkgversion(package))
   endswith(package, ".jl") && (package = String(package[1:end-3]))
   pkg_dict = filter(x -> x.second.name == package, Pkg.dependencies())
   isempty(pkg_dict) ? "main" : ("v" * string(first(pkg_dict)[2].version))
@@ -255,7 +256,6 @@ In interactive sessions returns immediately.
 If a cmdline argument `serve` is present, the wait is forced also in interactive sessions.
 If a cmdline argument `noserve` is present, the wait is skipped even in non-interactive sessions.
 """
-
 function wait_for_sigint(; start_msg::String="Press Ctrl/Cmd+C to interrupt.", exit_msg::String="Genie stopped.")
   (Base.isinteractive() && "serve" ∉ ARGS || "noserve" ∈ ARGS) && return
   
