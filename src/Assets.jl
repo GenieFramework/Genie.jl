@@ -119,6 +119,37 @@ function assets_config!(; config...) :: Nothing
   assets_config!([@__MODULE__]; config...)
 end
 
+
+"""
+    reinit_assets!(packages::Vector{Module}; cache_maxage::Union{Int,Nothing} = nothing) :: Nothing
+
+Re-runs `__init__()` for each package in `packages`, re-registering their asset file
+routes (e.g. to pick up a changed `GENIE_ASSETS_CACHE_MAXAGE`). Safe to call at any time,
+including repeatedly: Genie's router replaces same-named routes in place rather than
+accumulating duplicates, and the asset-registration `__init__()`s of Genie/Stipple/
+StippleUI/StipplePlotly only ever overwrite-by-key or dedupe-in-place the other state they
+touch (themes, mixins, plugins, components) -- no manual cleanup is needed.
+
+If `cache_maxage` is given, it's written to `ENV["GENIE_ASSETS_CACHE_MAXAGE"]` before
+re-running `__init__()`, so the newly re-registered routes pick it up immediately.
+
+### Example
+
+```julia
+Genie.Assets.reinit_assets!([Stipple, StippleUI, StipplePlotly]; cache_maxage = 3600)
+```
+"""
+function reinit_assets!(packages::Vector{Module}; cache_maxage::Union{Int,Nothing} = nothing) :: Nothing
+  cache_maxage !== nothing && (ENV["GENIE_ASSETS_CACHE_MAXAGE"] = string(cache_maxage))
+
+  for p in packages
+    Base.invokelatest(getfield(p, :__init__))
+  end
+
+  nothing
+end
+
+
 """
     external_assets(host::String) :: Bool
     external_assets(ac::AssetsConfig) :: Bool
