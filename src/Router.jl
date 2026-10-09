@@ -908,7 +908,7 @@ end
 Gets the content-type of the request.
 """
 function content_type(req::HTTP.Request) :: String
-  get(Genie.HTTPUtils.Dict(req), "content-type", get(Genie.HTTPUtils.Dict(req), "accept", ""))
+  lowercase(HTTP.header(req, "content-type", HTTP.header(req, "accept", "")))
 end
 
 
@@ -918,7 +918,7 @@ end
 Gets the content-length of the request.
 """
 function content_length(req::HTTP.Request) :: Int
-  parse(Int, get(Genie.HTTPUtils.Dict(req), "content-length", "0"))
+  parse(Int, HTTP.header(req, "content-length", "0"))
 end
 function content_length() :: Int
   content_length(params(PARAMS_REQUEST_KEY))
@@ -1083,12 +1083,12 @@ end
 
 
 """
-    function headers()
+    function headers() :: HTTP.Headers
 
-The current request's headers (as a Dict)
+The current request's headers.
 """
-function headers()
-  Dict{String,String}(request().headers)
+function headers() :: HTTP.Headers
+  HTTP.Headers(request().headers)
 end
 
 

@@ -166,7 +166,7 @@ default content type, no headers, and 200 status code.
 #Examples
 ```jldoctest
 julia> Genie.Renderer.WebRenderable("hello")
-Genie.Renderer.WebRenderable("hello", :html, 200, Dict{String,String}())
+Genie.Renderer.WebRenderable("hello", :html, 200, HTTP.Headers([]))
 ```
 """
 WebRenderable(body::String) = WebRenderable(body, DEFAULT_CONTENT_TYPE, 200, HTTPHeaders())
@@ -181,7 +181,7 @@ Creates a new instance of `WebRenderable` with `body` as the body of the respons
 #Examples
 ```jldoctest
 julia> Genie.Renderer.WebRenderable("hello", :json)
-Genie.Renderer.WebRenderable("hello", :json, 200, Dict{String,String}())
+Genie.Renderer.WebRenderable("hello", :json, 200, HTTP.Headers([]))
 ```
 """
 WebRenderable(body::String, content_type::Symbol) = WebRenderable(body, content_type, 200, HTTPHeaders())
@@ -196,10 +196,10 @@ Creates a new instance of `WebRenderable` using the values passed as keyword arg
 #Examples
 ```jldoctest
 julia> Genie.Renderer.WebRenderable()
-Genie.Renderer.WebRenderable("", :html, 200, Dict{String,String}())
+Genie.Renderer.WebRenderable("", :html, 200, HTTP.Headers([]))
 
-julia> Genie.Renderer.WebRenderable(body = "bye", content_type = :javascript, status = 301, headers = Dict("Location" => "/bye"))
-Genie.Renderer.WebRenderable("bye", :javascript, 301, Dict("Location" => "/bye"))
+julia> Genie.Renderer.WebRenderable(body = "bye", content_type = :javascript, status = 301, headers = HTTP.Headers(["Location" => "/bye"]))
+Genie.Renderer.WebRenderable("bye", :javascript, 301, HTTP.Headers(["Location" => "/bye"]))
 ```
 """
 WebRenderable(; body::String = "", content_type::Symbol = DEFAULT_CONTENT_TYPE,
