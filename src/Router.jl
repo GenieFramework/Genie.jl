@@ -1347,12 +1347,30 @@ file_extension(f) :: String = ormatch(match(r"(?<=\.)[^\.\\/]*$", f), "")
 
 
 """
+    default_static_cache_control() :: Union{String,Nothing}
+
+The `Cache-Control` header value added to static files served from the public folder
+(via `serve_static_file`/`serve_file`). Controlled by the `GENIE_STATIC_CACHE_MAXAGE` env
+var (max-age in seconds); unset or empty means no `Cache-Control` header is added,
+preserving prior behaviour.
+"""
+function default_static_cache_control() :: Union{String,Nothing}
+  maxage = get(ENV, "GENIE_STATIC_CACHE_MAXAGE", "")
+  isempty(maxage) ? nothing : "public, max-age=$maxage"
+end
+
+
+"""
     file_headers(f) :: Dict{String,String}
 
 Returns the file headers of `f`.
 """
 function file_headers(f) :: Vector{Pair{String,String}}
-  ["Content-Type" => get(MIMEs._ext2mime, file_extension(f), "application/octet-stream")]
+  headers = ["Content-Type" => get(MIMEs._ext2mime, file_extension(f), "application/octet-stream")]
+  cache_control = default_static_cache_control()
+  cache_control === nothing || push!(headers, "Cache-Control" => cache_control)
+
+  headers
 end
 
 
