@@ -1361,12 +1361,12 @@ end
 
 
 """
-    file_headers(f) :: Dict{String,String}
+    file_headers(f) :: HTTP.Headers
 
 Returns the file headers of `f`.
 """
-function file_headers(f) :: Vector{Pair{String,String}}
-  headers = ["Content-Type" => get(MIMEs._ext2mime, file_extension(f), "application/octet-stream")]
+function file_headers(f) :: HTTP.Headers
+  headers = HTTP.Headers(["Content-Type" => get(MIMEs._ext2mime, file_extension(f), "application/octet-stream")])
   cache_control = default_static_cache_control()
   cache_control === nothing || push!(headers, "Cache-Control" => cache_control)
 
