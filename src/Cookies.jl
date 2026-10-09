@@ -4,7 +4,7 @@ Functionality for dealing with HTTP cookies.
 module Cookies
 
 import HTTP
-import Genie, Genie.Encryption, Genie.HTTPUtils
+import Genie, Genie.Encryption
 
 
 """
@@ -36,9 +36,7 @@ Retrieves a value stored on the cookie as `key` from the `Respose` object.
 - `encrypted::Bool`: if `true` the value stored on the cookie is automatically decrypted
 """
 function get(res::HTTP.Response, key::Union{String,Symbol}; encrypted::Bool = true) :: Union{Nothing,String}
-  (haskey(HTTPUtils.Dict(res), "Set-Cookie") || haskey(HTTPUtils.Dict(res), "set-cookie")) ?
-    nullablevalue(res, key, encrypted = encrypted) :
-      nothing
+  nullablevalue(res, key, encrypted = encrypted)
 end
 
 
@@ -53,9 +51,7 @@ Retrieves a value stored on the cookie as `key` from the `Request` object.
 - `encrypted::Bool`: if `true` the value stored on the cookie is automatically decrypted
 """
 function get(req::HTTP.Request, key::Union{String,Symbol}; encrypted::Bool = true) :: Union{Nothing,String}
-  (haskey(HTTPUtils.Dict(req), "cookie") || haskey(HTTPUtils.Dict(req), "Cookie")) ?
-    nullablevalue(req, key, encrypted = encrypted) :
-      nothing
+  nullablevalue(req, key, encrypted = encrypted)
 end
 
 
@@ -99,29 +95,39 @@ end
 
 
 """
+    cookie_header_name(::HTTP.Request) :: String
+    cookie_header_name(::HTTP.Response) :: String
+
+The header name carrying cookie data for each kind of payload: `Cookie` for a request
+(the browser sends all its cookies combined in a single header), `Set-Cookie` for a
+response (the server may send one such header per cookie -- there can be more than one).
+"""
+cookie_header_name(::HTTP.Request) :: String = "Cookie"
+cookie_header_name(::HTTP.Response) :: String = "Set-Cookie"
+
+
+"""
     Dict(req::Request) :: Dict{String,String}
 
-Extracts the `Cookie` and `Set-Cookie` data from the `Request` and `Response` objects and converts it into a Dict.
+Extracts the `Cookie` (from a request) or `Set-Cookie` (from a response) data and
+converts it into a Dict. A response may carry multiple `Set-Cookie` headers (one per
+cookie); all of them are included.
 """
 function Base.Dict(r::Union{HTTP.Request,HTTP.Response}) :: Dict{String,String}
   r = Genie.Headers.normalize_headers(r)
+  header_name = cookie_header_name(r)
   d = Dict{String,String}()
-  headers = Dict(r.headers)
 
-  h = if haskey(headers, "Cookie")
-    split(headers["Cookie"], ";")
-  elseif haskey(headers, "Set-Cookie")
-    split(headers["Set-Cookie"], ";")
-  else
-    []
-  end
+  for (k,v) in r.headers
+    k == header_name || continue
 
-  for cookie in h
-    cookie_parts = split(cookie, "=")
-    if length(cookie_parts) == 2
-      d[strip(cookie_parts[1])] = cookie_parts[2]
-    else
-      d[strip(cookie_parts[1])] = ""
+    for cookie in split(v, ';')
+      cookie_parts = split(strip(cookie), "=")
+      if length(cookie_parts) == 2
+        d[strip(cookie_parts[1])] = cookie_parts[2]
+      else
+        d[strip(cookie_parts[1])] = ""
+      end
     end
   end
 
@@ -143,18 +149,25 @@ Attempts to retrieve a cookie value stored at `key` in the `payload object` and 
 - `encrypted::Bool`: if `true` the value stored on the cookie is automatically decrypted
 """
 function nullablevalue(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}; encrypted::Bool = true) :: Union{Nothing,String}
-  for cookie in split(Dict(payload)["cookie"], ';')
-    cookie = strip(cookie)
-    if startswith(lowercase(cookie), lowercase(string(key)))
-      idx = findfirst('=', cookie)
-      value = idx !== nothing ? strip(strip(cookie[idx+1:end], '"')) : ""
-      if length(value) > 4096
-        @debug "Cookie value too large"
-        return nothing
-      end
-      encrypted && (value = Genie.Encryption.decrypt(value))
+  payload = Genie.Headers.normalize_headers(payload)
+  header_name = cookie_header_name(payload)
 
-      return string(value)
+  for (k,v) in payload.headers
+    k == header_name || continue
+
+    for cookie in split(v, ';')
+      cookie = strip(cookie)
+      if startswith(lowercase(cookie), lowercase(string(key)))
+        idx = findfirst('=', cookie)
+        value = idx !== nothing ? strip(strip(cookie[idx+1:end], '"')) : ""
+        if length(value) > 4096
+          @debug "Cookie value too large"
+          return nothing
+        end
+        encrypted && (value = Genie.Encryption.decrypt(value))
+
+        return string(value)
+      end
     end
   end
 
