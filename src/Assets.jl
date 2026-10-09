@@ -6,6 +6,7 @@ module Assets
 import Genie: Genie, Configuration, Router, WebChannels, WebThreads
 import Genie: JSONParser, Util.package_version
 import HTTP
+import Pkg
 using Compat
 
 export include_asset, css_asset, js_asset, js_settings, css, js
@@ -15,6 +16,29 @@ export favicon_support
 @compat public package_version
 
 ### PUBLIC ###
+
+
+"""
+    dev_branch(package::Module) :: Union{String,Nothing}
+
+Returns the current git branch of `package`'s source checkout, or `nothing` unless
+`package` is actually dev'd -- i.e. `Pkg.dependencies()` reports it as tracking a local
+path rather than a registry-resolved version. Uses Pkg's bundled LibGit2 bindings rather
+than shelling out to a `git` executable, which may not be installed/on PATH.
+"""
+function dev_branch(package::Module) :: Union{String,Nothing}
+  uuid = Base.PkgId(package).uuid
+  uuid === nothing && return nothing
+
+  info = get(Pkg.dependencies(), uuid, nothing)
+  (info === nothing || !info.is_tracking_path) && return nothing
+
+  try
+    Pkg.LibGit2.headname(Pkg.LibGit2.GitRepo(info.source))
+  catch
+    nothing
+  end
+end
 
 
 """
@@ -30,8 +54,13 @@ mutable struct AssetsConfig
   function AssetsConfig(;
     host::String = Genie.config.base_path,
     package::Union{String,Module} = "Genie.jl",
-    version::Union{String,Nothing} = package_version(package),
+    version::Union{String,Nothing} = nothing,
   )
+    # A dev'd package (git checkout) can advance past its last tagged release, so prefer
+    # the live branch name over a possibly-stale version tag whenever it's dev'd.
+    if version === nothing && package isa Module
+      version = dev_branch(package)
+    end
     version === nothing && (version = package_version(package))
     package isa Module && (package = String(nameof(package)))
     new(host, package, version)
@@ -39,7 +68,7 @@ mutable struct AssetsConfig
 end
 function AssetsConfig(package::Module;
   host::String = Genie.config.base_path,
-  version::String = package_version(package))
+  version::Union{String,Nothing} = nothing)
     AssetsConfig(; host, package, version)
 end
 const assets_config = AssetsConfig()
