@@ -384,6 +384,18 @@ draggabletree_deps() = [
 Stipple.DEPS[:qdraggabletree] = draggabletree_deps
 ```
 """
+function infer_content_type(type::AbstractString) :: Symbol
+  if type == "js"
+    :javascript
+  elseif type == "css"
+    :css
+  elseif type in ["jpg", "jpeg", "svg", "mov", "avi", "png", "gif", "tif", "tiff"]
+    Symbol(type)
+  else
+    :binary
+  end
+end
+
 function add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::AbstractString;
   basedir = pwd(),
   type::Union{Nothing, String} = nothing,
@@ -398,15 +410,7 @@ function add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::Abstr
   ext = isnothing(ext) ? ex : ext
   type = isnothing(type) ? ex[2:end] : type
 
-  content_type = isnothing(content_type) ? if type == "js"
-    :javascript
-  elseif type == "css"
-    :css
-  elseif type in ["jpg", "jpeg", "svg", "mov", "avi", "png", "gif", "tif", "tiff"]
-    Symbol(type)
-  else
-    :binary
-  end : content_type
+  content_type = isnothing(content_type) ? infer_content_type(type) : content_type
 
   # assert Header type
   headers = HTTP.Headers(headers)
@@ -415,6 +419,55 @@ function add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::Abstr
   Genie.Router.route(Genie.Assets.asset_path(assets_config, type; file, ext, path, kwargs...); named) do
     Genie.Renderer.WebRenderable(
       body = Genie.Assets.embedded(Genie.Assets.asset_file(cwd=basedir; type, file, path));
+      content_type, headers
+    ) |> Genie.Renderer.respond
+  end
+end
+
+"""
+    add_fileroute(route::String, filename::AbstractString;
+      basedir = pwd(),
+      content_type::Union{Nothing, Symbol} = nothing,
+      named::Union{Symbol, Nothing} = nothing,
+      cache_control::Union{String, Nothing} = default_cache_control(),
+      headers = HTTP.Headers())
+
+Registers a Genie route at the literal `route` path that serves `filename` (resolved as
+`joinpath(basedir, filename)`) as a static asset. Unlike the `AssetsConfig`-based method,
+`route` is used verbatim -- there's no `assets/<type>/` path convention or package
+host/version involved. Useful for exposing an individual file (e.g. a document) at a
+specific URL with its own caching behaviour.
+
+`cache_control` defaults to [`default_cache_control`](@ref) (the `GENIE_ASSETS_CACHE_MAXAGE`
+env var) like the other method, but since this method targets one specific route rather
+than a whole package's assets, passing `cache_control` explicitly here is the way to give
+that one route a `Cache-Control` different from the general setting -- including
+`cache_control = nothing` to suppress the header for just this route.
+
+### Example
+
+```
+add_fileroute("/docs/handbook.pdf", "handbook.pdf"; basedir = "files", cache_control = "no-cache")
+```
+"""
+function add_fileroute(route::String, filename::AbstractString;
+  basedir = pwd(),
+  content_type::Union{Nothing, Symbol} = nothing,
+  named::Union{Symbol, Nothing} = nothing,
+  cache_control::Union{String, Nothing} = default_cache_control(),
+  headers = HTTP.Headers())
+
+  _, ext = splitext(filename)
+  content_type = isnothing(content_type) ? infer_content_type(ext[2:end]) : content_type
+
+  headers = HTTP.Headers(headers)
+  cache_control !== nothing && append!(headers, "Cache-Control" => cache_control)
+
+  filepath = joinpath(basedir, filename)
+
+  Genie.Router.route(route; named) do
+    Genie.Renderer.WebRenderable(
+      body = Genie.Assets.embedded(filepath);
       content_type, headers
     ) |> Genie.Renderer.respond
   end
