@@ -328,13 +328,25 @@ function embedded_path(path::String) :: String
 end
 
 """
+    default_cache_control() :: Union{String,Nothing}
+
+The `Cache-Control` header value `add_fileroute` falls back to when a caller doesn't pass
+one explicitly. Controlled by the `GENIE_ASSETS_CACHE_MAXAGE` env var (max-age in seconds);
+unset or empty means no `Cache-Control` header is added, preserving prior behaviour.
+"""
+function default_cache_control() :: Union{String,Nothing}
+  maxage = get(ENV, "GENIE_ASSETS_CACHE_MAXAGE", "")
+  isempty(maxage) ? nothing : "public, max-age=$maxage"
+end
+
+"""
     add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::AbstractString;
       basedir = pwd(),
       type::Union{Nothing, String} = nothing,
       content_type::Union{Nothing, Symbol} = nothing,
       ext::Union{Nothing, String} = nothing,
       named::Union{Symbol, Nothing} = nothing,
-      cache_control::Union{String, Nothing} = nothing,
+      cache_control::Union{String, Nothing} = default_cache_control(),
       headers = HTTP.Headers(),
       path::String = "", kwargs...)
 
@@ -351,7 +363,7 @@ in the response at request time. The route path is derived from `assets_config` 
 - `content_type`: response `Content-Type`, inferred from `type` when not given (`:javascript`, `:css`, an image/video type for known extensions, or `:binary` as a fallback for anything else).
 - `ext`: file extension to use when resolving the file path, if different from `filename`'s own extension.
 - `named`: optional route name passed through to `Genie.Router.route`.
-- `cache_control`: when given, sets the `Cache-Control` response header.
+- `cache_control`: sets the `Cache-Control` response header; defaults to [`default_cache_control`](@ref) (env-var controlled) when not given.
 - `headers`: base `HTTP.Headers` to send with the response; `cache_control` is appended to these.
 - `path`: extra path segment inserted between the asset type and the filename, both in the route and when locating the file.
 - `kwargs...`: forwarded to `asset_path` (e.g. `host`, `package`, `version`, `min`, `skip_ext`, `query`).
@@ -378,7 +390,7 @@ function add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::Abstr
   content_type::Union{Nothing, Symbol} = nothing,
   ext::Union{Nothing, String} = nothing,
   named::Union{Symbol, Nothing} = nothing,
-  cache_control::Union{String, Nothing} = nothing,
+  cache_control::Union{String, Nothing} = default_cache_control(),
   headers = HTTP.Headers(),
   path::String = "", kwargs...)
 
