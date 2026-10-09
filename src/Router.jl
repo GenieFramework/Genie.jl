@@ -1190,7 +1190,7 @@ function serve_static_file(resource::String; root = Genie.config.server_document
   isempty(f) && (f = pwd() |> relpath)
 
   fileheader = file_headers(f)
-  download && push!(fileheader, ("Content-Disposition" => """attachment; filename=$(basename(f))"""))
+  download && HTTP.setheader!(fileheader, "Content-Disposition" => """attachment; filename=$(basename(f))""")
 
   if (isfile(f) || isdir(f)) && ! is_accessible_resource(f; root)
     @error "401 Unauthorised Access $f"
@@ -1368,7 +1368,7 @@ Returns the file headers of `f`.
 function file_headers(f) :: HTTP.Headers
   headers = HTTP.Headers(["Content-Type" => get(MIMEs._ext2mime, file_extension(f), "application/octet-stream")])
   cache_control = default_static_cache_control()
-  cache_control === nothing || push!(headers, "Cache-Control" => cache_control)
+  cache_control === nothing || HTTP.setheader!(headers, "Cache-Control" => cache_control)
 
   headers
 end

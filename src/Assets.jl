@@ -414,7 +414,7 @@ function add_fileroute(assets_config::Genie.Assets.AssetsConfig, filename::Abstr
 
   # assert Header type
   headers = HTTP.Headers(headers)
-  cache_control !== nothing && append!(headers, "Cache-Control" => cache_control)
+  cache_control !== nothing && HTTP.setheader!(headers, "Cache-Control" => cache_control)
 
   Genie.Router.route(Genie.Assets.asset_path(assets_config, type; file, ext, path, kwargs...); named) do
     Genie.Renderer.WebRenderable(
@@ -461,7 +461,7 @@ function add_fileroute(route::String, filename::AbstractString;
   content_type = isnothing(content_type) ? infer_content_type(ext[2:end]) : content_type
 
   headers = HTTP.Headers(headers)
-  cache_control !== nothing && append!(headers, "Cache-Control" => cache_control)
+  cache_control !== nothing && HTTP.setheader!(headers, "Cache-Control" => cache_control)
 
   filepath = joinpath(basedir, filename)
 
