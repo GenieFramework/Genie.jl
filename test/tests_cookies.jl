@@ -147,4 +147,61 @@
   end
 
 
+  # Regression tests: Genie.Cookies.get(::HTTP.Response, key) used to always return
+  # `nothing`, regardless of whether the cookie was actually set. Root cause: Dict(payload)
+  # dispatches to Genie.HTTPUtils.Dict(req::HTTP.Request) for a Request (more specific than
+  # Cookies' own Union{Request,Response} method), which returns {"cookie" => "<raw value>"}
+  # as expected -- but HTTPUtils only defines that method for Request, not Response, so for
+  # a Response the only applicable Dict method was Cookies' own, returning
+  # {cookie_name => value} pairs instead, so `Dict(payload)["cookie"]` never matched.
+
+  @testset "Cookie Retrieval from a Response (single cookie)" begin
+    res = HTTP.Response(200)
+    Genie.Cookies.set!(res, "my_session", "hello-response"; encrypted = false)
+
+    @test Genie.Cookies.get(res, "my_session", encrypted = false) == "hello-response"
+    @test Genie.Cookies.get(res, "nonexistent", encrypted = false) === nothing
+  end
+
+  @testset "Cookie Retrieval from a Response (multiple Set-Cookie headers)" begin
+    # A response can carry more than one Set-Cookie header, one per cookie -- this must
+    # not collapse to only the last one being readable.
+    res = HTTP.Response(200)
+    Genie.Cookies.set!(res, "a", "1"; encrypted = false)
+    Genie.Cookies.set!(res, "b", "2"; encrypted = false)
+
+    @test length([h for h in res.headers if h.first == "Set-Cookie"]) == 2
+    @test Genie.Cookies.get(res, "a", encrypted = false) == "1"
+    @test Genie.Cookies.get(res, "b", encrypted = false) == "2"
+  end
+
+  @testset "Dict(res) aggregates across multiple Set-Cookie headers" begin
+    res = HTTP.Response(200)
+    Genie.Cookies.set!(res, "a", "1"; encrypted = false)
+    Genie.Cookies.set!(res, "b", "2"; encrypted = false)
+
+    @test Dict(res) == Dict("a" => "1", "b" => "2")
+  end
+
+  @testset "Cookie attributes (Path, HttpOnly) on a Response don't interfere" begin
+    res = HTTP.Response(200)
+    Genie.Cookies.set!(res, "sess", "xyz", Dict("path" => "/", "httponly" => true); encrypted = false)
+
+    @test Genie.Cookies.get(res, "sess", encrypted = false) == "xyz"
+  end
+
+  @testset "Encrypted cookie round-trip on a Response" begin
+    data = "secret-response-value"
+    res = HTTP.Response(200)
+    Genie.Cookies.set!(res, "enc", data; encrypted = true)
+
+    @test Genie.Cookies.get(res, "enc", encrypted = true) == data
+  end
+
+  @testset "Response with no Set-Cookie header at all" begin
+    res = HTTP.Response(200)
+
+    @test Genie.Cookies.get(res, "anything", encrypted = false) === nothing
+  end
+
 end
