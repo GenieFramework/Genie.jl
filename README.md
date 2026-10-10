@@ -56,21 +56,20 @@ https://github.com/GenieFramework/Genie.jl/assets/5058397/627dcda0-bb13-49f9-882
 
 ---
 
-- [**What's New**](#whats-new)
-- [**Features of Genie.jl**](#features-of-genie.jl)
 - [**Contributing**](#contributing)
 - [**Special Credits**](#special-credits)
 - [**License**](#license)
 
 ---
 
-### **What's New**
+### **What's New since Genie 6.0**
 
 - 🔌 **HTTP.jl v2** — Genie's networking core moved to the modern HTTP.jl v2.
 - 📦 **JSON.jl** — switched the JSON backend from JSON3 to JSON.jl.
 - ⚡ **Flexible concurrency** — request handling can now run distributed, threaded, or sequential, your choice.
 - 🍪 **More reliable cookies & CORS** — several rounds of fixes to cookie handling and cross-origin headers, including dropped cookies on cross-origin requests and reading cookies back off a response.
-- 🗄 **Smarter asset caching** — opt in to browser caching for assets and static files with a single environment variable, refreshable at runtime with no restart.
+- 🗄 **Smarter asset caching** — opt in to browser caching for assets and static files with a single environment variables "GENIE_ASSETS_CACHE_MAXAGE" and "GENIE_STATIC_CACHE_MAXAGE", refreshable at runtime with no restart
+- `add_fileroute()`: support kwargs `chache_control`and `headers`, new method to overwrite cache settings for single routes/files.
 - 🧪 **Faster, more isolated tests** — the test suite moved to `TestItems.jl`.
 
 ### **Features of Genie.jl**
