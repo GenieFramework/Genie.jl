@@ -116,3 +116,36 @@ end
     Genie.config.cors_headers["Access-Control-Allow-Origin"] = old_acao_default
   end
 end
+
+
+@testitem "normalize_headers! and normalize_headers in-place mutation" setup=[GenieTestSetup] begin
+  using Genie, HTTP
+
+  # Standalone HTTP.Headers
+  h = HTTP.Headers(["cookie" => "a=b", "content-type" => "text/plain", "x-keep" => "1"])
+  norm_h = Genie.Headers.normalize_headers!(h)
+  @test norm_h === h
+  @test h[1].first == "Cookie"
+  @test h[2].first == "Content-Type"
+  @test h[3].first == "x-keep"
+
+  # Request normalization with normalize_headers!
+  req = HTTP.Request("GET", "/", ["cookie" => "session=xyz", "origin" => "http://foo.com"])
+  norm_req = Genie.Headers.normalize_headers!(req)
+  @test norm_req === req
+  @test req.headers[1].first == "Cookie"
+  @test req.headers[2].first == "Origin"
+
+  # Backward compatibility: normalize_headers alias also works and mutates in place
+  req2 = HTTP.Request("GET", "/", ["cookie" => "session=abc"])
+  norm_req2 = Genie.Headers.normalize_headers(req2)
+  @test norm_req2 === req2
+  @test req2.headers[1].first == "Cookie"
+
+  # Response normalization
+  res = HTTP.Response(200, ["set-cookie" => "id=123", "server" => "Genie"])
+  norm_res = Genie.Headers.normalize_headers!(res)
+  @test norm_res === res
+  @test res.headers[1].first == "Set-Cookie"
+  @test res.headers[2].first == "Server"
+end

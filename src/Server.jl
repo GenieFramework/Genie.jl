@@ -373,7 +373,7 @@ Http server handler function - invoked when the server gets a request.
 """
 function handle_request(req::HTTP.Request, res::HTTP.Response; stream::Union{HTTP.Stream,Nothing} = nothing) :: HTTP.Response
   try
-    req = Genie.Headers.normalize_headers(req)
+    Genie.Headers.normalize_headers!(req)
   catch ex
     @error ex
   end

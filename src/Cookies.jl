@@ -114,7 +114,7 @@ converts it into a Dict. A response may carry multiple `Set-Cookie` headers (one
 cookie); all of them are included.
 """
 function Base.Dict(r::Union{HTTP.Request,HTTP.Response}) :: Dict{String,String}
-  r = Genie.Headers.normalize_headers(r)
+  Genie.Headers.normalize_headers!(r)
   header_name = cookie_header_name(r)
   d = Dict{String,String}()
 
@@ -149,7 +149,7 @@ Attempts to retrieve a cookie value stored at `key` in the `payload object` and 
 - `encrypted::Bool`: if `true` the value stored on the cookie is automatically decrypted
 """
 function nullablevalue(payload::Union{HTTP.Response,HTTP.Request}, key::Union{String,Symbol}; encrypted::Bool = true) :: Union{Nothing,String}
-  payload = Genie.Headers.normalize_headers(payload)
+  Genie.Headers.normalize_headers!(payload)
   header_name = cookie_header_name(payload)
 
   for (k,v) in payload.headers

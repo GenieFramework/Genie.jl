@@ -102,50 +102,33 @@ end
 
 
 """
-    normalize_headers(req::HTTP.Request)
+    normalize_headers!(headers::HTTP.Headers) :: HTTP.Headers
+    normalize_headers!(msg::Union{HTTP.Request,HTTP.Response}) :: Union{HTTP.Request,HTTP.Response}
+    normalize_headers(msg)
 
-Makes request headers case insensitive.
+Brings select known headers to standard casing in-place.
 """
-function normalize_headers(req::HTTP.Request)
-  normalized_headers = HTTP.Headers()
-
-  for (k,v) in req.headers
-    k = string(k) in NORMALIZED_HEADERS ? normalize_header_key(string(k)) : string(k)
-    push!(normalized_headers, k => string(v))
+function normalize_headers!(headers::HTTP.Headers) :: HTTP.Headers
+  for i in eachindex(headers)
+    k, v = headers[i]
+    ks = string(k)
+    if lowercase(ks) in NORMALIZED_HEADERS
+      norm_k = normalize_header_key(ks)
+      if ks != norm_k
+        headers[i] = norm_k => string(v)
+      end
+    end
   end
 
-  # In HTTP.jl v2, we need to create a new Request with normalized headers
-  return HTTP.Request(
-    req.method,
-    req.target;
-    headers=normalized_headers,
-    trailers=req.trailers,
-    body=req.body,
-    host=req.host,
-    content_length=req.content_length,
-    proto_major=req.proto_major,
-    proto_minor=req.proto_minor,
-    close=req.close,
-    context=HTTP.get_request_context(req)
-  )
+  headers
 end
 
-function normalize_headers(res::HTTP.Response)
-  normalized_headers = HTTP.Headers()
-
-  for (k,v) in res.headers
-    k = string(k) in NORMALIZED_HEADERS ? normalize_header_key(string(k)) : string(k)
-    push!(normalized_headers, k => string(v))
-  end
-
-  # In HTTP.jl v2, we need to create a new Response with normalized headers
-  return HTTP.Response(
-    res.status;
-    headers=normalized_headers,
-    body=res.body,
-    request=res.request
-  )
+function normalize_headers!(msg::Union{HTTP.Request,HTTP.Response}) :: Union{HTTP.Request,HTTP.Response}
+  normalize_headers!(msg.headers)
+  msg
 end
+
+const normalize_headers = normalize_headers!
 
 
 """
