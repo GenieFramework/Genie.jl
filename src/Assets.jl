@@ -505,12 +505,43 @@ function add_fileroute(route::String, filename::AbstractString;
 end
 
 """
+    channels_js() :: String
+
+Outputs the unmodified contents of the `channels.js` file included with the Genie package.
+
+This content is static for a given Genie version, so unlike [`channels_config`](@ref) it
+can be served with long-lived caching headers -- see [`channels_route`](@ref).
+"""
+function channels_js() :: String
+  embedded(Genie.Assets.asset_file(cwd=normpath(joinpath(@__DIR__, "..")), type = "js", file = "channels"))
+end
+
+
+"""
+    channels_config(channel::AbstractString = Genie.config.webchannels_default_route) :: String
+
+Outputs the `window.Genie.Settings` JavaScript object that [`channels_js`](@ref) relies on.
+
+Unlike `channels_js`, this depends on the request/configuration (e.g. `channel`), so it
+must not be cached.
+"""
+function channels_config(channel::AbstractString = Genie.config.webchannels_default_route) :: String
+  js_settings(channel)
+end
+
+
+"""
     channels(channel::AbstractString = Genie.config.webchannels_default_route) :: String
 
-Outputs the `channels.js` file included with the Genie package.
+Outputs the `channels.js` file included with the Genie package, prefixed with its
+`window.Genie.Settings` configuration object.
+
+This bundles [`channels_config`](@ref) and [`channels_js`](@ref) together for inline
+embedding (e.g. [`channels_script`](@ref)); [`channels_route`](@ref) serves them as two
+separate assets so the static part can be cached independently.
 """
 function channels(channel::AbstractString = Genie.config.webchannels_default_route) :: String
-  string(js_settings(channel), embedded(Genie.Assets.asset_file(cwd=normpath(joinpath(@__DIR__, "..")), type = "js", file = "channels")))
+  string(channels_config(channel), channels_js())
 end
 
 
@@ -577,10 +608,95 @@ function assets_endpoint(f::Function = Genie.Assets.asset_path) :: String
 end
 
 
+"""
+    channels_config_js_file() :: String
+
+The file name used for the `channels_config.js` asset -- the `channels.js` file name
+(from `Genie.config.webchannels_js_file`) with a `_config` suffix inserted before the
+extension.
+"""
+function channels_config_js_file() :: String
+  name, ext = splitext(Genie.config.webchannels_js_file)
+  string(name, "_config", ext)
+end
+
+
+function channels_config_endpoint(f::Function = Genie.Assets.asset_path) :: String
+  f(assets_config, :js, file = channels_config_js_file(), skip_ext = true)
+end
+
+
+function keepalive_endpoint(f::Function = Genie.Assets.asset_path) :: String
+  f(assets_config, :js, file = "keepalive.js", skip_ext = true)
+end
+
+
+function cache_control_headers() :: HTTP.Headers
+  headers = HTTP.Headers()
+  cache_control = default_cache_control()
+  cache_control !== nothing && HTTP.setheader!(headers, "Cache-Control" => cache_control)
+
+  headers
+end
+
+
+"""
+    keepalive_route() :: Nothing
+
+Registers a route serving the static, cacheable [`keepalive`](@ref) content (with
+`Cache-Control` set per [`default_cache_control`](@ref) if configured).
+
+Only registered when `Genie.config.webchannels_keepalive_frequency > 0`, matching the
+condition under which `channels.js` attempts to initialize keepalive.
+"""
+function keepalive_route() :: Nothing
+  if ! external_assets() && Genie.config.webchannels_keepalive_frequency > 0
+    Router.route(keepalive_endpoint(Genie.Assets.asset_route)) do
+      Genie.Renderer.Js.js(keepalive(); headers = cache_control_headers())
+    end
+  end
+
+  nothing
+end
+
+
+"""
+    keepalive_script_tag() :: String
+
+Returns the `<script>` tag for the [`keepalive`](@ref) content backed by [`keepalive_route`](@ref)
+(or an inline `<script>` tag when `external_assets()`), or an empty string when keepalive is
+disabled (`Genie.config.webchannels_keepalive_frequency == 0`).
+
+Call [`keepalive_route`](@ref) first to register the backing route.
+"""
+function keepalive_script_tag() :: String
+  Genie.config.webchannels_keepalive_frequency == 0 && return ""
+
+  external_assets() ? keepalive_script() : Genie.Renderer.Html.script(src = keepalive_endpoint(), defer = true)
+end
+
+
+"""
+    channels_route(channel::AbstractString = Genie.config.webchannels_default_route) :: Nothing
+
+Registers the routes backing [`channels_script_tag`](@ref): one serving the static,
+cacheable [`channels_js`](@ref) content (with `Cache-Control` set per
+[`default_cache_control`](@ref) if configured), and one serving the small, per-request
+[`channels_config`](@ref) content, which must not be cached since it depends on
+`channel`/the live server configuration.
+
+Note this does not register [`keepalive_route`](@ref) -- callers that need keepalive
+(e.g. [`channels_support`](@ref)) must wire it up themselves, since some consumers (e.g.
+Stipple) already manage the `keepalive.js` asset on their own.
+"""
 function channels_route(channel::AbstractString = Genie.config.webchannels_default_route) :: Nothing
   if ! external_assets()
     Router.route(assets_endpoint(Genie.Assets.asset_route)) do
-      Genie.Renderer.Js.js(channels(channel))
+      Genie.Renderer.Js.js(channels_js(); headers = cache_control_headers())
+    end
+
+    Router.route(channels_config_endpoint(Genie.Assets.asset_route)) do
+      Genie.Renderer.Js.js(channels_config(channel))
     end
   end
 
@@ -590,7 +706,10 @@ end
 
 function channels_script_tag(channel::AbstractString = Genie.config.webchannels_default_route) :: String
   if ! external_assets()
-    Genie.Renderer.Html.script(src = assets_endpoint(), defer = true)
+    string(
+      Genie.Renderer.Html.script(src = channels_config_endpoint(), defer = true),
+      Genie.Renderer.Html.script(src = assets_endpoint(), defer = true)
+    )
   else
     Genie.Renderer.Html.script([channels(channel)], defer = true)
   end
@@ -601,12 +720,22 @@ end
     channels_support(channel = Genie.config.webchannels_default_route) :: String
 
 Provides full web channels support, setting up routes for loading support JS files, web sockets subscription and
-returning the `<script>` tag for including the linked JS file into the web page.
+returning the `<script>` tag(s) for including the linked JS file(s) into the web page.
+
+Also wires up [`keepalive_route`](@ref) and [`keepalive_script_tag`](@ref) when
+`Genie.config.webchannels_keepalive_frequency > 0`, so apps using this convenience
+function get keepalive support out of the box. Consumers that compose
+[`channels_route`](@ref) / [`channels_script_tag`](@ref) directly instead of calling this
+function (e.g. Stipple) are responsible for calling [`keepalive_route`](@ref) /
+[`keepalive_script_tag`](@ref) themselves if they need keepalive support, to avoid
+registering/serving `keepalive.js` twice.
 """
 function channels_support(channel::AbstractString = Genie.config.webchannels_default_route) :: String
   channels_route(channel)
   channels_subscribe(channel)
-  channels_script_tag(channel)
+  keepalive_route()
+
+  string(channels_script_tag(channel), keepalive_script_tag())
 end
 
 

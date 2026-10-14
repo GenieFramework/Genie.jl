@@ -26,8 +26,10 @@
     @test Assets.channels()[1:18] == "window.Genie = {};"
     @test channels_script()[1:27] == "<script>\nwindow.Genie = {};"
 
-    @test channels_support() == "<script src=\"/genie.jl/$(Genie.Assets.package_version("Genie"))/assets/js/channels.js\" defer></script>"
-    @test Genie.Router.routes()[1].path == "/genie.jl/$(Genie.Assets.package_version("Genie"))/assets/js/channels.js"
+    @test channels_support() == "<script src=\"/genie.jl/$(Genie.Assets.package_version("Genie"))/assets/js/channels_config.js\" defer></script><script src=\"/genie.jl/$(Genie.Assets.package_version("Genie"))/assets/js/channels.js\" defer></script><script src=\"/genie.jl/$(Genie.Assets.package_version("Genie"))/assets/js/keepalive.js\" defer></script>"
+    @test Genie.Router.routes()[1].path == "/genie.jl/$(Genie.Assets.package_version("Genie"))/assets/js/keepalive.js"
+    @test Genie.Router.routes()[2].path == "/genie.jl/$(Genie.Assets.package_version("Genie"))/assets/js/channels_config.js"
+    @test Genie.Router.routes()[3].path == "/genie.jl/$(Genie.Assets.package_version("Genie"))/assets/js/channels.js"
     @test Genie.Router.channels()[1].path == "/$(Genie.config.webchannels_default_route)/unsubscribe"
     @test Genie.Router.channels()[2].path == "/$(Genie.config.webchannels_default_route)/subscribe"
 
