@@ -631,29 +631,19 @@ function keepalive_endpoint(f::Function = Genie.Assets.asset_path) :: String
 end
 
 
-function cache_control_headers() :: HTTP.Headers
-  headers = HTTP.Headers()
-  cache_control = default_cache_control()
-  cache_control !== nothing && HTTP.setheader!(headers, "Cache-Control" => cache_control)
-
-  headers
-end
-
-
 """
     keepalive_route() :: Nothing
 
-Registers a route serving the static, cacheable [`keepalive`](@ref) content (with
-`Cache-Control` set per [`default_cache_control`](@ref) if configured).
+Registers a route serving the static, cacheable [`keepalive`](@ref) content via
+[`add_fileroute`](@ref) -- the same mechanism (and `Cache-Control` handling, via
+[`default_cache_control`](@ref)) used for every other static JS dependency.
 
 Only registered when `Genie.config.webchannels_keepalive_frequency > 0`, matching the
 condition under which `channels.js` attempts to initialize keepalive.
 """
 function keepalive_route() :: Nothing
   if ! external_assets() && Genie.config.webchannels_keepalive_frequency > 0
-    Router.route(keepalive_endpoint(Genie.Assets.asset_route)) do
-      Genie.Renderer.Js.js(keepalive(); headers = cache_control_headers())
-    end
+    add_fileroute(assets_config, "keepalive.js"; basedir = normpath(joinpath(@__DIR__, "..")))
   end
 
   nothing
@@ -680,10 +670,10 @@ end
     channels_route(channel::AbstractString = Genie.config.webchannels_default_route) :: Nothing
 
 Registers the routes backing [`channels_script_tag`](@ref): one serving the static,
-cacheable [`channels_js`](@ref) content (with `Cache-Control` set per
-[`default_cache_control`](@ref) if configured), and one serving the small, per-request
-[`channels_config`](@ref) content, which must not be cached since it depends on
-`channel`/the live server configuration.
+cacheable [`channels_js`](@ref) content via [`add_fileroute`](@ref) (`Cache-Control` set
+per [`default_cache_control`](@ref) if configured, same as every other static JS
+dependency), and one serving the small, per-request [`channels_config`](@ref) content,
+which must not be cached since it depends on `channel`/the live server configuration.
 
 Note this does not register [`keepalive_route`](@ref) -- callers that need keepalive
 (e.g. [`channels_support`](@ref)) must wire it up themselves, since some consumers (e.g.
@@ -691,9 +681,7 @@ Stipple) already manage the `keepalive.js` asset on their own.
 """
 function channels_route(channel::AbstractString = Genie.config.webchannels_default_route) :: Nothing
   if ! external_assets()
-    Router.route(assets_endpoint(Genie.Assets.asset_route)) do
-      Genie.Renderer.Js.js(channels_js(); headers = cache_control_headers())
-    end
+    add_fileroute(assets_config, Genie.config.webchannels_js_file; basedir = normpath(joinpath(@__DIR__, "..")))
 
     Router.route(channels_config_endpoint(Genie.Assets.asset_route)) do
       Genie.Renderer.Js.js(channels_config(channel))
