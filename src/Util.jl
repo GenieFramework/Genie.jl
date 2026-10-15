@@ -88,9 +88,38 @@ isprecompiling() = ccall(:jl_generating_output, Cint, ()) == 1
 const fws = filterwhitespace
 
 """
+    dev_version(source::String) :: Union{String,Nothing}
+
+Returns `"<branch>-<short-sha>"` for the git checkout at `source` (a `Pkg.develop`'d
+package's path), using `Pkg`'s own bundled `LibGit2` rather than shelling out to an
+external `git` binary. Returns `nothing` if `source` isn't a git repository, or on any
+other git error (detached submodule, corrupted repo, etc.).
+"""
+function dev_version(source::String) :: Union{String,Nothing}
+  try
+    repo = Pkg.LibGit2.GitRepo(source)
+    try
+      branch = Pkg.LibGit2.shortname(Pkg.LibGit2.head(repo))
+      sha = string(Pkg.LibGit2.head_oid(repo))[1:7]
+      replace("$branch-$sha", r"[^0-9a-zA-Z_.-]+" => "_")
+    finally
+      close(repo)
+    end
+  catch
+    nothing
+  end
+end
+
+"""
     package_version(package::Union{Module,String}) :: String
 
 Returns the version of a package, or "main" if the package is not installed.
+
+If the package is `Pkg.develop`'d (tracking a local path rather than a registry
+release), returns [`dev_version`](@ref)'s `"<branch>-<short-sha>"` instead of its
+`Project.toml` version -- editing a dev'd package's source doesn't bump that version, so
+using it here would silently keep stale asset URLs (see `Genie.Assets.assets_config`)
+pointing at content that's since changed.
 
 ### Example
 
@@ -101,13 +130,23 @@ julia> package_version("Genie.jl")
 ```
 """
 function package_version(package::Union{Module,String}) :: String
+  name = isa(package, Module) ? String(nameof(package)) : package
+  endswith(name, ".jl") && (name = String(name[1:end-3]))
+
+  pkg_dict = filter(x -> x.second.name == name, Pkg.dependencies())
+  if !isempty(pkg_dict)
+    dep = first(pkg_dict)[2]
+    if dep.is_tracking_path
+      dv = dev_version(dep.source)
+      dv !== nothing && return dv
+    end
+  end
+
   if isa(package, Module)
     version = pkgversion(package)
     version !== nothing && return "v$version"
-    package = String(nameof(package))
   end
-  endswith(package, ".jl") && (package = String(package[1:end-3]))
-  pkg_dict = filter(x -> x.second.name == package, Pkg.dependencies())
+
   isempty(pkg_dict) ? "main" : ("v" * string(first(pkg_dict)[2].version))
 end
 

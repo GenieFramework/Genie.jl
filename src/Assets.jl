@@ -149,6 +149,51 @@ function reinit_assets!(packages::Vector{Module}; cache_maxage::Union{Int,Nothin
   nothing
 end
 
+"""
+    refresh_assets_version!(ac::AssetsConfig) :: String
+    refresh_assets_version!(package::Module) :: String
+    refresh_assets_version!(packages::Vector{Module}) :: Nothing
+
+Re-derives `version` on an `AssetsConfig` (or on `package`'s/each of `packages`'s own
+`assets_config`) via [`Genie.Util.package_version`](@ref), and writes it back in place.
+
+For a `Pkg.develop`'d package this picks up the current git branch/commit (see
+[`Genie.Util.dev_version`](@ref)) rather than the (possibly stale, since editing a dev'd
+package's source doesn't bump its `Project.toml`) version that was resolved when the
+config was first constructed -- so every asset URL generated afterwards reflects what's
+actually on disk, and any already-cached copies under the old version are naturally
+bypassed.
+
+Typically called from a [`Revise.add_callback`](https://timholy.github.io/Revise.jl)
+hook (`all = true`) so that `assets_config.version` stays in sync with the dev checkout
+across the whole session, without requiring a restart:
+
+```julia
+using Revise
+Revise.add_callback(String[], [Genie, Stipple]; all = true) do
+  Genie.Assets.refresh_assets_version!([Genie, Stipple])
+end
+```
+
+Safe to call at any time, including repeatedly, and independently of
+[`reinit_assets!`](@ref) (which handles route re-registration and
+`GENIE_ASSETS_CACHE_MAXAGE`, an orthogonal concern).
+"""
+function refresh_assets_version!(ac::AssetsConfig) :: String
+  ac.version = Genie.Util.package_version(ac.package)
+end
+
+function refresh_assets_version!(package::Module) :: String
+  refresh_assets_version!(getfield(package, :assets_config))
+end
+
+function refresh_assets_version!(packages::Vector{Module}) :: Nothing
+  for p in packages
+    refresh_assets_version!(getfield(p, :assets_config))
+  end
+
+  nothing
+end
 
 """
     external_assets(host::String) :: Bool
